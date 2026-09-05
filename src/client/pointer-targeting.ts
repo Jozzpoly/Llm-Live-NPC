@@ -13,9 +13,7 @@ export interface WorldExtent {
   height: number;
 }
 
-export interface CameraWorldMapper {
-  getWorldPoint(x: number, y: number, output?: WorldPoint): WorldPoint;
-}
+export type ScreenToWorldMapper = (x: number, y: number) => WorldPoint;
 
 export interface PointerTargetSample {
   screen: ScreenPoint;
@@ -24,11 +22,11 @@ export interface PointerTargetSample {
 }
 
 export function resolvePointerTarget(
-  camera: CameraWorldMapper,
+  mapScreenToWorld: ScreenToWorldMapper,
   screen: ScreenPoint,
   extent: WorldExtent
 ): PointerTargetSample {
-  const world = camera.getWorldPoint(screen.x, screen.y, { x: 0, y: 0 });
+  const world = mapScreenToWorld(screen.x, screen.y);
   const insideWorld =
     Number.isFinite(world.x) &&
     Number.isFinite(world.y) &&
