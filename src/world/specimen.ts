@@ -86,7 +86,7 @@ export function createP1Specimen(): WorldSpecimen {
   return {
     width: 1440,
     height: 900,
-    playerSpeed: 190,
+    actorSpeed: 190,
     entities: structuredClone(entities),
     blockers: structuredClone(blockers),
     locations: structuredClone(locations),
