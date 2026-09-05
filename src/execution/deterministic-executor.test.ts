@@ -67,6 +67,27 @@ describe("B2 deterministic executor", () => {
     expect(leftWorld.lastActionResult()).toEqual(rightWorld.lastActionResult());
   });
 
+  it("rejects invalid external player control before consuming executor state or mutating world state", () => {
+    const world = new World(createP1Specimen());
+    const executor = new DeterministicExecutor();
+    const driver = new ExecutionDriver(world, executor);
+    executor.start({ kind: "approach-and-interact", actorId: "npc.001", targetId: "item.lantern" });
+
+    const worldBefore = world.snapshot();
+    const eventsBefore = world.recentEvents(128);
+    const actionBefore = world.lastActionResult();
+    const executorBefore = executor.state();
+
+    expect(() =>
+      driver.step({ playerControl: { moveX: Number.NaN, moveY: 0 } })
+    ).toThrow("Player control requires a finite movement vector.");
+
+    expect(executor.state()).toEqual(executorBefore);
+    expect(world.snapshot()).toEqual(worldBefore);
+    expect(world.recentEvents(128)).toEqual(eventsBefore);
+    expect(world.lastActionResult()).toEqual(actionBefore);
+  });
+
   it("fails causally when the requested target does not exist instead of inventing a fallback", () => {
     const world = new World(createP1Specimen());
     const executor = new DeterministicExecutor();
