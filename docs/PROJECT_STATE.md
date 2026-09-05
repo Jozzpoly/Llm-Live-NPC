@@ -18,7 +18,7 @@ The world remains authoritative about what exists, what an actor can perceive, w
 
 - integration branch: `p1/playable-world-slice`
 - integration PR: `#3 — P1 integration — refound world before cognition`
-- latest integrated runtime stage: **R5b authored PlacementSite domain seam**, squash `51d19a191d89a81ed15e733bd60d1569a62caa13`
+- latest integrated domain stage: **R6a placement target validation**, squash `6183d28410512634d822f73f44ef9d84d2dccfbd`
 - latest integrated qualification: **R5a placement-site semantics**, squash `2f286a6117742da7c1f532cfa48741c26f69059b`
 - `main` remains the proven P0 cloud/AI baseline until P1 is genuinely cognition-ready.
 
@@ -54,7 +54,7 @@ Durable boundary:
 
 Phaser is not canonical world state.
 
-Current specimen is roughly `1440 × 900` with Common Yard, Workshop, Cottage, Grove and North Path; Jozz; one static NPC shell; hammer, mug and lantern; blockers/doorways/table/trees; 30 Hz fixed simulation; world-owned movement/collision; pickup/drop; location events; one authored semantic table placement site; and a deterministic geometric LOS probe.
+Current specimen is roughly `1440 × 900` with Common Yard, Workshop, Cottage, Grove and North Path; Jozz; one static NPC shell; hammer, mug and lantern; blockers/doorways/table/trees; 30 Hz fixed simulation; world-owned movement/collision; pickup/drop; location events; one authored semantic table placement site; a non-mutating placement-target validator; and a deterministic geometric LOS probe.
 
 No Box2D/Arcade Physics is currently justified. Physics remains a later qualification only if it buys meaningful player ↔ NPC ↔ world interaction.
 
@@ -69,14 +69,16 @@ Worth preserving:
 - zoom, optional overlays and persistent Debug Workspace improved usability;
 - presentation is replaceable and has a minimal explicit seam;
 - pointer→world mapping survives camera follow/zoom well enough for future targeted interaction work;
-- world-domain now has a minimal semantic placement-site concept separate from collision geometry.
+- world-domain has semantic placement sites separate from collision geometry;
+- placement target legality is now world-owned and non-mutating rather than a future UI/renderer heuristic.
 
 Still inadequate:
 
 - the world reads mainly as a technical diagram;
 - visual representation needs a major professional lift;
 - automatic drop gives too little spatial agency and cannot intentionally place objects on surfaces;
-- placement legality, item support relation and controlled placement do not exist yet;
+- controlled placement execution and persistent item↔support relation do not exist yet;
+- actor ownership/holding/reach/LOS preconditions for placement remain undesigned;
 - world richness is too low for meaningful free-play;
 - current LOS is only a geometric probe, not NPC sight;
 - sight needs real actor facing, FOV, range, occlusion and temporal perception state;
@@ -147,10 +149,28 @@ Established:
 - P1 specimen authors exactly one site: `yard.table.top` over the existing yard work table footprint;
 - authored placement sites are included in `WorldSnapshot` as static canonical semantics;
 - `World.placementSitesAt(point)` returns all matching sites as isolated copies in deterministic id order;
-- overlap deliberately has no implicit winning-site policy yet;
-- tests cover inside/outside query behavior, caller isolation, overlap ordering and deterministic snapshot state.
+- overlap deliberately has no implicit winning-site policy yet.
 
-R5b **does not** implement placement legality, target selection policy, item↔site support state, cursor placement, new action/event semantics or any change to the existing automatic `Q` drop.
+R5b does not execute placement or alter the existing automatic `Q` drop.
+
+### R6a — non-mutating placement target validation — CLOSED / PASS
+
+PR #11 merged into P1 as `6183d28410512634d822f73f44ef9d84d2dccfbd` after strict TypeScript/tests/Vite/preview validation and Cloudflare PASS. No Owner runtime gate was required because there is no new input/UI or intended user-visible behavior.
+
+Established:
+
+- `World.validatePlacementTarget(itemId, point)` as a world-owned, non-mutating spatial/site legality query;
+- accepted targets distinguish ordinary `ground` support from an authored `site` + semantic relation;
+- explicit rejection reasons cover non-finite points, unknown/non-item ids, world bounds, ambiguous authored sites, footprint not fitting a site and blocker collisions;
+- site placement requires the current circular item footprint to fit fully inside the authored site bounds;
+- ground placement requires the footprint to fit inside world bounds and avoid blockers;
+- overlapping site candidates are rejected as `ambiguous_site` rather than silently prioritized;
+- `PlacementSite.supportBlockerId` is optional and exists only when an authored semantic surface lies on collision geometry; the table site references `yard.table`;
+- validation ignores only the named support blocker and still rejects unrelated blockers;
+- malformed support-blocker references fail fast;
+- validation leaves snapshot, semantic events and last action result unchanged.
+
+R6a deliberately does **not** check actor provenance/ownership, whether the item is currently held, reach/LOS, task lifecycle, input semantics or execute/mutate placement. It does not persist item↔support relation or emit a placement event.
 
 ## Architecture conclusions currently considered durable
 
@@ -176,7 +196,7 @@ Do not collapse all behavior into one universal action system. Keep distinct:
 
 Future LLM cognition should operate mainly at the intent/task level. A deterministic non-LLM executor should translate tasks into continuous control and validated atomic actions. Player/scripted/LLM provenance must not change world legality.
 
-Interaction offers describe semantics/conditions while execution remains separate. Placement now has concrete authored-site evidence, but selection, legality and execution remain deliberately unresolved.
+Interaction offers describe semantics/conditions while execution remains separate. Placement now has concrete authored-site and target-legality evidence; actor/action preconditions, execution and persistent support state remain deliberately separate.
 
 ## Working method
 
@@ -193,7 +213,8 @@ Directional only:
 - **R2b candidate:** world-event vs action-outcome observability, if this becomes the largest apparatus weakness;
 - **R4c+:** first materially better visual slice / first concrete authored-map or visual-descriptor evidence;
 - **R5a/R5b:** placement semantics + minimal authored site seam — CLOSED / PASS;
-- **R6 candidate:** placement validation/controlled placement, now able to depend on proven R3a targeting + R5b site semantics;
+- **R6a:** non-mutating placement target validation — CLOSED / PASS;
+- **R6b candidate:** first controlled placement action/execution slice, but only after fresh design of actor/holding/reach semantics and without bypassing R6a legality;
 - **R7:** non-LLM actor orientation/execution/task lifecycle;
 - **R8:** sight research + implementation;
 - **R9:** grounded speech stimulus + hearing;
@@ -206,15 +227,15 @@ Memory/long-term beliefs remain intentionally undesigned until real cognition ev
 
 **No next implementation stage is pre-authorized.**
 
-R5b establishes that the world can name/query authored placement sites. It does not decide whether a particular item may be placed at a particular point, how a site is chosen, how item support state is represented, or how player input requests placement.
+R6a establishes world-owned target legality but still does not create a placement action. At the next `kontynuuj`, reground and choose exactly one bounded problem from fresh evidence.
 
-At the next `kontynuuj`, reground and choose one bounded problem from fresh evidence. Strong candidates now include:
+Strong current candidates:
 
-- a **placement-validation qualification/domain stage** that answers legality and semantic support without yet adding cursor UI;
-- a first small visual evidence slice using the R4 seam if diagram-like representation is the dominant blocker;
-- R2b action-outcome observability if causal debug becomes limiting.
+- a narrow **placement-action/execution qualification**: actor/holding/reach semantics, support-state persistence and event/outcome contract before cursor UI;
+- a first small visual evidence slice using the R4 seam if diagram-like representation is now the dominant blocker;
+- R2b action-outcome observability if richer actions make causal debug the highest-leverage need.
 
-Do not begin a large Tiled migration, asset system, map rewrite, cursor placement, perception or LLM work implicitly.
+Do not implicitly jump from validation to cursor placement, large Tiled migration, asset system, map rewrite, perception or LLM cognition.
 
 ## P1 closure principle
 
