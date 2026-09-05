@@ -13,7 +13,8 @@ const player: WorldEntity = {
   label: "Player",
   position: { x: 10, y: 20 },
   radius: 12,
-  heldItemId: null
+  heldItemId: null,
+  facing: { x: 1, y: 0 }
 };
 
 const npc: WorldEntity = {
@@ -22,7 +23,8 @@ const npc: WorldEntity = {
   label: "NPC",
   position: { x: 30, y: 40 },
   radius: 12,
-  heldItemId: null
+  heldItemId: null,
+  facing: { x: -1, y: 0 }
 };
 
 const item: WorldEntity = {
