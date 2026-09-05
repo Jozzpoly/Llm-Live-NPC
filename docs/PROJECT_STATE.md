@@ -18,10 +18,10 @@ The world remains authoritative about what exists, what an actor can perceive, w
 
 - integration branch: `p1/playable-world-slice`
 - integration PR: `#3 — P1 integration — refound world before cognition`
-- current integrated head after R4b: `abef7653c128def3eddc507a1d89efcc49108708`
+- latest integrated runtime stage: **R3a pointer/world targeting**, squash `c3ca2ae3cbfe23bd02299d4e4b3bb64770a35cdd`
 - `main` remains the proven P0 cloud/AI baseline until P1 is genuinely cognition-ready.
 
-Owner testing showed that the current world is mechanically useful but still too diagram-like, interaction-poor and perception-naive to justify serious cognition work. Refoundation proceeds one bounded stage per work cycle.
+Owner testing shows that the current world is mechanically useful but still too diagram-like, interaction-poor and perception-naive to justify serious cognition work. Refoundation proceeds one bounded stage per work cycle.
 
 ## Proven foundations worth preserving
 
@@ -66,7 +66,8 @@ Worth preserving:
 - movement/authored collision and pickup/drop are coherent;
 - geometric LOS reacts to blockers;
 - zoom, optional overlays and persistent Debug Workspace improved usability;
-- presentation is replaceable and now has a minimal explicit seam.
+- presentation is replaceable and has a minimal explicit seam;
+- pointer→world mapping now survives camera follow/zoom well enough for future targeted interaction work.
 
 Still inadequate:
 
@@ -122,16 +123,23 @@ Qualified direction:
 
 PR #7 merged into P1 as `abef7653c128def3eddc507a1d89efcc49108708` after automated validation + Cloudflare preview PASS. No Owner gate was required because visuals/behavior were intentionally preserved.
 
+Established pure presentation resolvers for current entity/blocker/location visuals, explicit depth strata, separate ground/scenery graphics and pure Node presentation-contract tests. No `src/world` changes, asset IDs, archetype schema, Tiled adapter or visual rewrite were introduced.
+
+### R3a — pointer ↔ world targeting contract — CLOSED / PASS
+
+PR #8 merged into P1 as `c3ca2ae3cbfe23bd02299d4e4b3bb64770a35cdd` after automated validation + focused Owner runtime PASS.
+
 Established:
 
-- pure presentation resolver for current entity/blocker/location fallback visuals;
-- explicit presentation depth strata;
-- separate ground/scenery graphics instead of one monolithic static graphics object;
-- `WorldScene` no longer owns hard-coded entity colors/location color switch/blocker visual mapping;
-- pure Node presentation contract tests, including layer ordering and deterministic fallback behavior;
-- no `src/world` changes, asset IDs, archetype schema, Tiled adapter or visual rewrite.
+- explicit camera-driven `screen → world` conversion through Phaser `camera.getWorldPoint`;
+- no runtime dependency on ambiguous `pointer.worldX/worldY`;
+- pointer validity separate from last coordinates so leaving the game canvas invalidates the target rather than preserving a stale actionable point;
+- world-bounds classification without clamping;
+- optional `Pointer probe` in Debug Workspace with screen/world coordinates and a presentation-only crosshair;
+- pure Node tests for mapper delegation, out-of-bounds and non-finite inputs;
+- no click action, placement, authored interaction, `World` mutation or world event/action from the probe.
 
-This is a seam for future visual work, not an asset system.
+Owner judgement: the probe appeared correct in use. The supplied recording materially supports stable target/crosshair behavior across camera follow and multiple zoom levels; no obvious pointer drift was visible. This is sufficient to close R3a, but it is **not** evidence that placement semantics are designed or correct.
 
 ## Architecture conclusions currently considered durable
 
@@ -172,10 +180,9 @@ One bounded stage per work cycle/message:
 Directional only:
 
 - **R2b candidate:** world-event vs action-outcome observability, if this becomes the largest apparatus weakness;
-- **R3:** camera + reliable screen↔world pointer/targeting contract;
 - **R4c+:** first materially better visual slice / first concrete authored-map or visual-descriptor evidence, bounded tightly enough not to become a large rewrite;
 - **R5:** authored interactions/support surfaces and concrete affordance evidence;
-- **R6:** controlled object placement;
+- **R6:** controlled object placement, now able to depend on the proven R3a pointer/world target;
 - **R7:** non-LLM actor orientation/execution/task lifecycle;
 - **R8:** sight research + implementation;
 - **R9:** grounded speech stimulus + hearing;
@@ -188,13 +195,13 @@ Memory/long-term beliefs remain intentionally undesigned until real cognition ev
 
 **No next implementation stage is pre-authorized.**
 
-R4b only established the presentation seam. At the next `kontynuuj`, reground and choose one bounded next problem from current evidence.
+R3a established targeting infrastructure only. At the next `kontynuuj`, reground and choose one bounded next problem from current evidence.
 
 Strong candidates now include:
 
-- R3 pointer/world targeting, because controlled placement and inspection depend on it;
-- a first **small visual evidence slice** using the R4 seam, if diagram-like representation is still the dominant blocker;
-- R2b action-outcome observability if debug causality becomes the limiting apparatus issue.
+- a small authored-interaction/support-surface qualification before placement, so targeting does not become `click anywhere = mutate world`;
+- a first **small visual evidence slice** using the R4 seam, if diagram-like representation remains the dominant blocker;
+- R2b action-outcome observability if causal debug becomes the limiting apparatus issue.
 
 Do not begin a large Tiled migration, asset system, map rewrite, placement system, perception or LLM work implicitly.
 
