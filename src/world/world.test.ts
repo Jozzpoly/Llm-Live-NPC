@@ -13,8 +13,14 @@ function playerSnapshot(world: World) {
   return player;
 }
 
+function entitySnapshot(world: World, id: string) {
+  const entity = world.snapshot().entities.find((entry) => entry.id === id);
+  if (!entity) throw new Error(`Missing entity ${id} in snapshot`);
+  return entity;
+}
+
 describe("P1 World", () => {
-  it("is deterministic for the same fixed-step input sequence", () => {
+  it("is deterministic for the same fixed-step control and atomic-action sequence", () => {
     const left = new World(createP1Specimen());
     const right = new World(createP1Specimen());
 
@@ -22,7 +28,6 @@ describe("P1 World", () => {
       ...Array.from({ length: 24 }, () => ({ moveX: 1, moveY: 0 })),
       ...Array.from({ length: 18 }, () => ({ moveX: 0, moveY: -1 })),
       ...Array.from({ length: 12 }, () => ({ moveX: -1, moveY: 1 })),
-      { moveX: 0, moveY: 0, interactPressed: true },
       ...Array.from({ length: 8 }, () => ({ moveX: 1, moveY: 1 }))
     ];
 
@@ -30,10 +35,20 @@ describe("P1 World", () => {
       left.step(input);
       right.step(input);
     }
+    left.attemptAction({ action: "interact", actorId: "player.jozz" });
+    right.attemptAction({ action: "interact", actorId: "player.jozz" });
 
     expect(left.snapshot()).toEqual(right.snapshot());
     expect(left.recentEvents(128)).toEqual(right.recentEvents(128));
     expect(left.lastActionResult()).toEqual(right.lastActionResult());
+  });
+
+  it("keeps continuous stepping separate from atomic action outcomes", () => {
+    const world = new World(createP1Specimen());
+    world.step({ moveX: 0, moveY: 0 });
+
+    expect(world.tick).toBe(1);
+    expect(world.lastActionResult()).toBeNull();
   });
 
   it("keeps the player outside authored blockers", () => {
@@ -45,27 +60,29 @@ describe("P1 World", () => {
     expect(player.position.y).toBeCloseTo(420, 5);
   });
 
-  it("supports pickup and drop as world-authoritative events with separate action outcomes", () => {
+  it("preserves contextual pickup and drop through the atomic action seam", () => {
     const world = new World(createP1Specimen());
 
     stepMany(world, 37, { moveX: 0, moveY: 1 });
     stepMany(world, 51, { moveX: -1, moveY: 0 });
-    world.step({ moveX: 0, moveY: 0, interactPressed: true });
+    world.attemptAction({ action: "interact", actorId: "player.jozz" });
 
     expect(playerSnapshot(world).heldItemId).toBe("item.mug");
     expect(world.recentEvents(20).some((event) => event.type === "item.picked_up" && event.entityId === "item.mug")).toBe(true);
     expect(world.lastActionResult()).toMatchObject({
       action: "interact",
+      actorId: "player.jozz",
       status: "succeeded",
       code: "picked_up_item",
       targetId: "item.mug"
     });
 
-    world.step({ moveX: 0, moveY: 0, dropPressed: true });
+    world.attemptAction({ action: "drop", actorId: "player.jozz" });
     expect(playerSnapshot(world).heldItemId).toBeNull();
     expect(world.recentEvents(20).some((event) => event.type === "item.dropped" && event.entityId === "item.mug")).toBe(true);
     expect(world.lastActionResult()).toMatchObject({
       action: "drop",
+      actorId: "player.jozz",
       status: "succeeded",
       code: "dropped_item",
       targetId: "item.mug"
@@ -79,7 +96,7 @@ describe("P1 World", () => {
     expect(world.hasLineOfSight({ x: 900, y: 300 }, { x: 1100, y: 300 })).toBe(true);
   });
 
-  it("rejects pickup through an occluder without inventing a semantic world event", () => {
+  it("rejects an explicit occluded target causally without inventing a semantic world event", () => {
     const specimen = createP1Specimen();
     const player = specimen.entities.find((entity) => entity.id === "player.jozz");
     const hammer = specimen.entities.find((entity) => entity.id === "item.hammer");
@@ -92,23 +109,103 @@ describe("P1 World", () => {
     expect(world.hasLineOfSight(player.position, hammer.position)).toBe(false);
 
     const semanticEventsBefore = world.recentEvents(128);
-    world.step({ moveX: 0, moveY: 0, interactPressed: true });
+    const result = world.attemptAction({
+      action: "interact",
+      actorId: "player.jozz",
+      targetId: "item.hammer"
+    });
 
     expect(playerSnapshot(world).heldItemId).toBeNull();
     expect(world.recentEvents(128)).toEqual(semanticEventsBefore);
-    expect(world.lastActionResult()).toMatchObject({
+    expect(result).toMatchObject({
       action: "interact",
+      actorId: "player.jozz",
       status: "rejected",
-      code: "no_interactable"
+      code: "target_occluded",
+      targetId: "item.hammer"
     });
   });
 
-  it("does not let repeated empty interact presses pollute semantic world history", () => {
+  it("never falls back to another entity when an explicit target is out of range", () => {
+    const specimen = createP1Specimen();
+    const player = specimen.entities.find((entity) => entity.id === "player.jozz");
+    const mug = specimen.entities.find((entity) => entity.id === "item.mug");
+    if (!player || !mug) throw new Error("P1 specimen is missing player or mug.");
+
+    player.position = { x: 290, y: 610 };
+    mug.position = { x: 290, y: 650 };
+    const world = new World(specimen);
+
+    const explicit = world.attemptAction({
+      action: "interact",
+      actorId: "player.jozz",
+      targetId: "item.hammer"
+    });
+    expect(explicit).toMatchObject({
+      status: "rejected",
+      code: "target_out_of_range",
+      targetId: "item.hammer"
+    });
+    expect(playerSnapshot(world).heldItemId).toBeNull();
+
+    const contextual = world.attemptAction({ action: "interact", actorId: "player.jozz" });
+    expect(contextual).toMatchObject({ status: "succeeded", code: "picked_up_item", targetId: "item.mug" });
+  });
+
+  it("lets an NPC use the same explicit pickup action contract without an executor or LLM", () => {
+    const specimen = createP1Specimen();
+    const npc = specimen.entities.find((entity) => entity.id === "npc.001");
+    const lantern = specimen.entities.find((entity) => entity.id === "item.lantern");
+    if (!npc || npc.kind !== "npc" || !lantern || lantern.kind !== "item") {
+      throw new Error("P1 specimen is missing NPC-001 or lantern.");
+    }
+
+    npc.position = { x: 760, y: 390 };
+    lantern.position = { x: 790, y: 390 };
+    const world = new World(specimen);
+
+    const result = world.attemptAction({
+      action: "interact",
+      actorId: "npc.001",
+      targetId: "item.lantern"
+    });
+
+    expect(result).toMatchObject({
+      status: "succeeded",
+      code: "picked_up_item",
+      actorId: "npc.001",
+      targetId: "item.lantern"
+    });
+    expect(entitySnapshot(world, "npc.001")).toMatchObject({ kind: "npc", heldItemId: "item.lantern" });
+    expect(entitySnapshot(world, "item.lantern")).toMatchObject({ kind: "item", heldBy: "npc.001" });
+    expect(world.recentEvents(20).some((event) =>
+      event.type === "item.picked_up" && event.actorId === "npc.001" && event.entityId === "item.lantern"
+    )).toBe(true);
+  });
+
+  it("rejects an unknown actor or target without semantic world events", () => {
+    const world = new World(createP1Specimen());
+    const eventsBefore = world.recentEvents(128);
+
+    expect(world.attemptAction({ action: "interact", actorId: "missing.actor", targetId: "item.mug" })).toMatchObject({
+      status: "rejected",
+      code: "actor_not_found",
+      actorId: "missing.actor"
+    });
+    expect(world.attemptAction({ action: "interact", actorId: "player.jozz", targetId: "missing.target" })).toMatchObject({
+      status: "rejected",
+      code: "target_not_found",
+      targetId: "missing.target"
+    });
+    expect(world.recentEvents(128)).toEqual(eventsBefore);
+  });
+
+  it("does not let repeated empty contextual interactions pollute semantic world history", () => {
     const world = new World(createP1Specimen());
     const semanticEventsBefore = world.recentEvents(128);
 
     for (let index = 0; index < 20; index += 1) {
-      world.step({ moveX: 0, moveY: 0, interactPressed: true });
+      world.attemptAction({ action: "interact", actorId: "player.jozz" });
     }
 
     expect(world.recentEvents(128)).toEqual(semanticEventsBefore);
@@ -124,7 +221,7 @@ describe("P1 World", () => {
     const world = new World(createP1Specimen());
     const semanticEventsBefore = world.recentEvents(128);
 
-    world.step({ moveX: 0, moveY: 0, dropPressed: true });
+    world.attemptAction({ action: "drop", actorId: "player.jozz" });
 
     expect(world.recentEvents(128)).toEqual(semanticEventsBefore);
     expect(world.lastActionResult()).toMatchObject({

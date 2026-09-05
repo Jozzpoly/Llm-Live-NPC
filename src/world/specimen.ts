@@ -14,7 +14,8 @@ const entities: WorldEntity[] = [
     kind: "npc",
     label: "NPC-001",
     position: { x: 760, y: 390 },
-    radius: 16
+    radius: 16,
+    heldItemId: null
   },
   {
     id: "item.hammer",

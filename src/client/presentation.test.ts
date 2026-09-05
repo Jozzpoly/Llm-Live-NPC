@@ -21,7 +21,8 @@ const npc: WorldEntity = {
   kind: "npc",
   label: "NPC",
   position: { x: 30, y: 40 },
-  radius: 12
+  radius: 12,
+  heldItemId: null
 };
 
 const item: WorldEntity = {

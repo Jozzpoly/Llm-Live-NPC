@@ -152,12 +152,9 @@ export class WorldScene extends Phaser.Scene {
       const movement = combineControlMovement(keyboardMove, this.playerControls.movement());
 
       this.previousPresentationSnapshot = this.currentPresentationSnapshot;
-      this.world.step({
-        moveX: movement.x,
-        moveY: movement.y,
-        interactPressed: this.pendingInteract,
-        dropPressed: this.pendingDrop
-      });
+      this.world.step({ moveX: movement.x, moveY: movement.y });
+      if (this.pendingDrop) this.world.attemptAction({ action: "drop", actorId: "player.jozz" });
+      if (this.pendingInteract) this.world.attemptAction({ action: "interact", actorId: "player.jozz" });
       this.currentPresentationSnapshot = this.world.snapshot();
       this.pendingInteract = false;
       this.pendingDrop = false;
