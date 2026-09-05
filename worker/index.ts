@@ -1,4 +1,5 @@
 import { handleE1AgentDecision } from "./e1-agent";
+import { handleE1SchemaProbe } from "./e1-schema-probe";
 
 const GATEWAY_ID = "default";
 const PROBE_PROMPT = "Reply with exactly one short sentence confirming that LLM Live NPC cognition is online.";
@@ -168,6 +169,10 @@ export default {
 
     if (url.pathname === "/api/agent/e1/decide") {
       return handleE1AgentDecision(request, env);
+    }
+
+    if (url.pathname === "/api/agent/e1/schema-probe") {
+      return handleE1SchemaProbe(request, env);
     }
 
     if (url.pathname === "/api/ai/smoke") {
