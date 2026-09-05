@@ -11,5 +11,5 @@
     "skipLibCheck": true,
     "allowImportingTsExtensions": false
   },
-  "include": ["src/**/*.ts", "worker/**/*.ts", "vite.config.ts"]
+  "include": ["src/**/*.ts", "worker/**/*.ts", "vite.config.ts", "vitest.config.ts"]
 }
