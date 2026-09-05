@@ -81,6 +81,22 @@ describe("B2 deterministic executor", () => {
     expect(actor(world, "npc.001").heldItemId).toBeNull();
   });
 
+  it("fails invalid target geometry before producing movement or an atomic action", () => {
+    const specimen = createP1Specimen();
+    const lantern = specimen.entities.find((entity) => entity.id === "item.lantern");
+    if (!lantern) throw new Error("Missing lantern specimen");
+    lantern.position.x = Number.NaN;
+
+    const world = new World(specimen);
+    const executor = new DeterministicExecutor();
+    executor.start({ kind: "approach-and-interact", actorId: "npc.001", targetId: "item.lantern" });
+
+    expect(executor.next(world.snapshot())).toEqual({});
+    expect(executor.state()).toMatchObject({ status: "failed", failureCode: "invalid_target_geometry" });
+    expect(world.tick).toBe(0);
+    expect(world.lastActionResult()).toBeNull();
+  });
+
   it("keeps actor controls inside one canonical world tick and updates NPC facing through the same movement rule", () => {
     const world = new World(createP1Specimen());
     const before = actor(world, "npc.001").position;
@@ -95,5 +111,22 @@ describe("B2 deterministic executor", () => {
     expect(npc.position).not.toEqual(before);
     expect(npc.facing.x).toBeCloseTo(Math.SQRT1_2, 8);
     expect(npc.facing.y).toBeCloseTo(Math.SQRT1_2, 8);
+  });
+
+  it("rejects an invalid actor-control frame before mutating canonical world state", () => {
+    const world = new World(createP1Specimen());
+    const before = world.snapshot();
+
+    expect(() =>
+      world.stepWithActorControls(
+        { moveX: 1, moveY: 0 },
+        [
+          { actorId: "npc.001", moveX: 1, moveY: 0 },
+          { actorId: "npc.001", moveX: 0, moveY: 1 }
+        ]
+      )
+    ).toThrow(/Duplicate actor control/);
+
+    expect(world.snapshot()).toEqual(before);
   });
 });
