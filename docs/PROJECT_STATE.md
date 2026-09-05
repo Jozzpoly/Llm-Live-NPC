@@ -162,7 +162,7 @@ P1 is the first real client toolchain, so the earlier dependency reproducibility
 - Node remains pinned to major `22`;
 - top-level packages remain exact-version pinned;
 - GitHub Actions use current Node24-based `actions/checkout@v6` and `actions/setup-node@v6`;
-- repo now exposes self-contained `npm run deploy:preview`, defined as `vite build && wrangler versions upload`.
+- repo exposes self-contained `npm run deploy:preview`, defined as `vite build && wrangler versions upload`.
 
 ## Cloudflare preview deployment diagnosis
 
@@ -180,7 +180,7 @@ This does **not** mean `assets.directory` should be added to the input Wrangler 
 
 Cloudflare Workers Builds maintains separate production and preview triggers, each with its own build/deploy commands. The earlier Owner change to `Build command = npm run build --if-present` did not affect the preview trigger evidenced by the failing non-production build.
 
-To remove this ambiguity from the repo, P1 now defines a self-contained preview command:
+To remove this ambiguity from the repo, P1 defines a self-contained preview command:
 
 `npm run deploy:preview`
 
