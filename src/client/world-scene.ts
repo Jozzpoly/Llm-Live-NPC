@@ -1,7 +1,11 @@
 import * as Phaser from "phaser";
 import { createP1Specimen } from "../world/specimen";
 import { World } from "../world/world";
-import type { Aabb, WorldEntity, WorldEvent, WorldSnapshot } from "../world/types";
+import type { Aabb, Vec2, WorldEntity, WorldEvent, WorldSnapshot } from "../world/types";
+import {
+  interpolationAlpha,
+  resolveInterpolatedEntityPositions
+} from "./motion-interpolation";
 import {
   PRESENTATION_DEPTH,
   resolveBlockerVisual,
@@ -51,6 +55,8 @@ export class WorldScene extends Phaser.Scene {
   private readonly entityViews = new Map<string, Phaser.GameObjects.Container>();
   private readonly entityLabels = new Map<string, Phaser.GameObjects.Text>();
   private readonly locationLabels: Phaser.GameObjects.Text[] = [];
+  private previousPresentationSnapshot = this.world.snapshot();
+  private currentPresentationSnapshot = this.previousPresentationSnapshot;
   private groundGraphics!: Phaser.GameObjects.Graphics;
   private sceneryGraphics!: Phaser.GameObjects.Graphics;
   private debugGraphics!: Phaser.GameObjects.Graphics;
@@ -115,7 +121,7 @@ export class WorldScene extends Phaser.Scene {
       this.pointerTarget = null;
     });
 
-    this.syncPresentation(true);
+    this.syncPresentation(true, 1);
   }
 
   update(_time: number, delta: number): void {
@@ -145,12 +151,14 @@ export class WorldScene extends Phaser.Scene {
       };
       const movement = combineControlMovement(keyboardMove, this.playerControls.movement());
 
+      this.previousPresentationSnapshot = this.currentPresentationSnapshot;
       this.world.step({
         moveX: movement.x,
         moveY: movement.y,
         interactPressed: this.pendingInteract,
         dropPressed: this.pendingDrop
       });
+      this.currentPresentationSnapshot = this.world.snapshot();
       this.pendingInteract = false;
       this.pendingDrop = false;
       this.accumulatorMs -= FIXED_STEP_MS;
@@ -159,7 +167,7 @@ export class WorldScene extends Phaser.Scene {
     this.updatePointerTarget();
 
     const emitDebugState = this.debugAccumulatorMs >= DEBUG_STATE_INTERVAL_MS;
-    this.syncPresentation(emitDebugState);
+    this.syncPresentation(emitDebugState, interpolationAlpha(this.accumulatorMs, FIXED_STEP_MS));
     if (emitDebugState) this.debugAccumulatorMs %= DEBUG_STATE_INTERVAL_MS;
   }
 
@@ -369,21 +377,31 @@ export class WorldScene extends Phaser.Scene {
     return container;
   }
 
-  private syncPresentation(emitDebugState = false): void {
-    const snapshot = this.world.snapshot();
+  private syncPresentation(emitDebugState = false, alpha = 1): void {
+    const snapshot = this.currentPresentationSnapshot;
+    const renderedPositions = resolveInterpolatedEntityPositions(
+      this.previousPresentationSnapshot,
+      this.currentPresentationSnapshot,
+      alpha
+    );
     const player = snapshot.entities.find((entity) => entity.kind === "player");
+    const playerRenderedPosition = player ? renderedPositions.get(player.id) : undefined;
 
     for (const entity of snapshot.entities) {
+      const renderedPosition = renderedPositions.get(entity.id) ?? entity.position;
       const view = this.entityViews.get(entity.id);
-      if (view) view.setPosition(entity.position.x, entity.position.y);
+      if (view) view.setPosition(renderedPosition.x, renderedPosition.y);
 
       const label = this.entityLabels.get(entity.id);
       if (!label) continue;
-      label.setPosition(entity.position.x, entity.position.y - entity.radius - 18);
+      label.setPosition(renderedPosition.x, renderedPosition.y - entity.radius - 18);
 
       let visible = this.labelsVisible;
-      if (visible && entity.kind === "item" && player) {
-        const distance = Math.hypot(entity.position.x - player.position.x, entity.position.y - player.position.y);
+      if (visible && entity.kind === "item" && player && playerRenderedPosition) {
+        const distance = Math.hypot(
+          renderedPosition.x - playerRenderedPosition.x,
+          renderedPosition.y - playerRenderedPosition.y
+        );
         visible = entity.heldBy !== null || distance <= ITEM_LABEL_DISTANCE;
       }
       label.setVisible(visible);
@@ -391,11 +409,11 @@ export class WorldScene extends Phaser.Scene {
 
     for (const label of this.locationLabels) label.setVisible(this.labelsVisible);
 
-    this.drawDebug(snapshot);
+    this.drawDebug(snapshot, renderedPositions);
     if (emitDebugState) this.emitDebugState(snapshot);
   }
 
-  private drawDebug(snapshot: WorldSnapshot): void {
+  private drawDebug(snapshot: WorldSnapshot, renderedPositions: ReadonlyMap<string, Vec2>): void {
     this.debugGraphics.clear();
 
     if (this.pointerProbeVisible && this.pointerTarget) {
@@ -414,11 +432,13 @@ export class WorldScene extends Phaser.Scene {
     if (!player || !npc) return;
 
     const visible = this.world.hasLineOfSight(npc.position, player.position);
+    const playerRendered = renderedPositions.get(player.id) ?? player.position;
+    const npcRendered = renderedPositions.get(npc.id) ?? npc.position;
     this.debugGraphics.lineStyle(2, visible ? 0x65d38e : 0xe6a455, 0.72);
-    this.debugGraphics.lineBetween(npc.position.x, npc.position.y, player.position.x, player.position.y);
+    this.debugGraphics.lineBetween(npcRendered.x, npcRendered.y, playerRendered.x, playerRendered.y);
 
     this.debugGraphics.lineStyle(1, 0x9fb0be, 0.22);
-    this.debugGraphics.strokeCircle(npc.position.x, npc.position.y, 220);
+    this.debugGraphics.strokeCircle(npcRendered.x, npcRendered.y, 220);
   }
 
   private emitDebugState(snapshot: WorldSnapshot): void {
