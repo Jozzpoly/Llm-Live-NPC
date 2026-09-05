@@ -18,8 +18,8 @@ The world remains authoritative about what exists, what can be perceived, what m
 
 - branch: `p1/playable-world-slice`
 - integration PR: `#3 — P1 integration — refound world before cognition`
+- latest domain/behavior stage: **B1 minimal canonical actor facing**, PR #19 → `13c20f5e5f5d366a6c095af10582318e69532135`
 - latest closed interaction stage: **A2 explicit direct mouse/touch targeting**, PR #18 → `0c47f3779f832f4821b18938f8837c0ef6071545`
-- latest domain stage: **A1 explicit atomic action seam**, PR #17 → `bfee22c2bc35b6578cfedc46e15787c4cd639ef9`
 - latest Owner-qualified usability stages: **M1 mobile Owner controls** + **M2 presentation interpolation**
 - latest visual stage: **R4c richer visual evidence slice**
 - `main` remains the proven P0 cloud/AI baseline until P1 is cognition-ready.
@@ -36,7 +36,7 @@ Durable boundary:
 
 Phaser is not canonical world state.
 
-Current specimen: ~`1440 × 900`, Common Yard / Workshop / Cottage / Grove / North Path, Jozz, NPC-001, hammer/mug/lantern, authored blockers, contextual pickup/drop, explicit target interaction, locations, one placement site, placement target validation and a geometric LOS probe.
+Current specimen: ~`1440 × 900`, Common Yard / Workshop / Cottage / Grove / North Path, Jozz, NPC-001, hammer/mug/lantern, authored blockers, contextual pickup/drop, explicit target interaction, canonical actor facing, locations, one placement site, placement target validation and a geometric LOS probe.
 
 ## Owner judgement
 
@@ -65,12 +65,14 @@ Mobile decision:
 Material deficiencies:
 - automatic `Q` drop still gives too little spatial agency;
 - controlled placement execution and persistent item↔support relation do not exist;
-- actor orientation/facing does not yet exist;
 - deterministic non-LLM temporal actor execution does not exist;
 - current LOS is not NPC sight;
-- sight needs facing/FOV/range/occlusion/temporal state;
+- sight still needs FOV/range/occlusion/temporal state built on the now-canonical facing substrate;
 - chat must become grounded speech stimulus before LLM conversation;
 - hearing needs independent causal/debuggable propagation.
+
+Repo-hygiene debt already known for the later bounded cleanup campaign:
+- three accidental empty refs created during B1 tool use: `tmp-do-not-use`, `tmp-do-not-use-2`, `tmp-stop`. They contain no unique implementation and must be deleted during cleanup if the available tooling permits it.
 
 ## Closed refoundation / usability stages
 
@@ -87,6 +89,7 @@ Material deficiencies:
 - **M2 presentation interpolation** — PR #16 → `3a27365a7c2cd784b9cd1f1f135895fd4ffd65a1` after mobile A/B Owner qualification. `World` remains fixed 30 Hz; presentation interpolates previous/current authoritative snapshots.
 - **A1 explicit atomic action seam** — PR #17 → `bfee22c2bc35b6578cfedc46e15787c4cd639ef9`. `World.step(WorldInput)` carries continuous player control only; `World.attemptAction(WorldActionRequest)` owns atomic `interact/drop`. Explicit actor/target requests receive causal world-owned outcomes and never silently fall back to another target. Contextual E/mobile Interact remains an adapter into the same action seam. NPC-001 can use the same explicit pickup/drop substrate as the player, but still has no movement executor or autonomy.
 - **A2 explicit direct mouse/touch targeting** — PR #18 → `0c47f3779f832f4821b18938f8837c0ef6071545` after Owner REVISE→PASS. Presentation resolves the concrete rendered item/NPC the human intended; the resulting `targetId` is queued into the next fixed step and executed only through the A1 action seam. Touch hit ergonomics do not enlarge gameplay interaction range. Debug Workspace exposes Last Action Outcome separately from World Events. Owner also qualified corrected `tap ↔ joystick ↔ pinch` arbitration, touch-first mobile-mode detection and improved portrait viewport use.
+- **B1 minimal canonical actor facing** — PR #19 → `13c20f5e5f5d366a6c095af10582318e69532135`. Every player/NPC actor now carries required finite unit `facing` in canonical world state. Player facing follows normalized non-zero movement intent before collision resolution, so analog magnitude still controls speed while direction remains unit-length; zero input preserves the last facing and blocked movement does not erase orientation intent. NPC-001 has authored static facing until B2. Atomic interaction does not silently rotate actors. No sight/FOV or presentation rotation was introduced.
 
 ## Durable architecture
 
@@ -118,7 +121,7 @@ Current action seam:
 
 Missing `targetId` is retained only for contextual legacy E/Interact target selection. Explicit target requests do not fall back to a nearer entity when rejected.
 
-A2 now proves:
+A2 proves:
 
 `mouse/touch → screen→world + presentation hit resolution → intended targetId → SAME World.attemptAction(...) legality`
 
@@ -147,7 +150,19 @@ Keep distinct:
 4. semantic world events;
 5. self/action outcomes.
 
-A1 proves the atomic action substrate can be actor-agnostic enough for player and NPC item interaction. A2 proves a new human targeting adapter can use it without changing `World` legality. Neither proves actor movement/execution; `World.step()` still controls the player specimen only.
+A1 proves the atomic action substrate can be actor-agnostic enough for player and NPC item interaction. A2 proves a new human targeting adapter can use it without changing `World` legality.
+
+B1 adds canonical orientation without designing behavior policy:
+- every `ActorEntity` has finite unit `facing`;
+- authored facing is validated rather than silently repaired;
+- player facing follows normalized movement intent, not realized velocity;
+- analog input magnitude still controls movement speed independently;
+- collision may prevent displacement without changing the actor's intended facing;
+- zero movement preserves prior facing;
+- NPC facing remains authored/static until B2;
+- atomic interaction does not auto-face targets.
+
+B1 still does **not** prove actor movement/execution; `World.step()` controls the player specimen only.
 
 Future LLM cognition should mainly propose intents/tasks. A deterministic non-LLM executor should translate them into movement/control + validated atomic actions. Player/scripted/LLM provenance must not change legality.
 
@@ -155,7 +170,7 @@ Future LLM cognition should mainly propose intents/tasks. A deterministic non-LL
 
 Feature work is intentionally converging rather than expanding P1 indefinitely. Current dependency scaffold, re-evaluated after every gate:
 
-`A1 atomic action seam [CLOSED] → A2 direct human targeting [CLOSED] → B1 actor orientation/facing → B2 deterministic non-LLM executor → one bounded technical-debt campaign → final repo/docs/workflow cleanup + takeover rehearsal`
+`A1 atomic action seam [CLOSED] → A2 direct human targeting [CLOSED] → B1 actor facing [CLOSED] → B2 deterministic non-LLM executor → one bounded technical-debt campaign → final repo/docs/workflow cleanup + takeover rehearsal`
 
 After B2, feature work freezes unless a foundational blocker must be resolved. Sight, hearing, cognition, large placement UX, Tiled migration and additional art polish are deferred until after the fresh-conversation handoff.
 
@@ -171,13 +186,13 @@ Each stage gets a short branch/PR into P1. The next stage is re-evaluated from f
 
 ## Immediate frontier
 
-**A1 and A2 are closed. No B1 implementation has started.**
+**A1, A2 and B1 are closed. No B2 implementation has started.**
 
-The intended next gate is **B1 — actor orientation/facing**. Before implementation, re-ground live and verify the minimum canonical orientation state that is justified by current movement/action evidence and useful to B2, without prematurely designing sight/FOV.
+The intended next gate is **B2 — minimal deterministic non-LLM actor executor**. Before implementation, re-ground live and design the smallest temporal execution seam that can make NPC-001 approach a known target and attempt the same explicit validated interaction used by the player.
 
-B1 should establish real actor direction as world/domain state derived from embodied behavior, not a renderer-only heading or a fake parameter added later solely for perception. It must remain small enough that B2 can consume it without forcing a generalized behavior framework.
+B2 must not smuggle cognition, pathfinding infrastructure or a generalized behavior framework into P1. The current-best proof target is intentionally small: a known explicit target, deterministic movement/approach, stopping in legal interaction range and one atomic interaction attempt with inspectable outcome. Collision/world legality must remain authoritative.
 
-Do not implicitly start placement UX, additional mobile/art polish, large Tiled migration, sight/hearing or LLM cognition.
+Do not implicitly start sight/hearing, placement UX, additional mobile/art polish, large Tiled migration or LLM cognition.
 
 ## P1 / handoff closure principle
 
