@@ -9,6 +9,7 @@ import {
   resolveLocationVisual,
   type EntityVisualDescriptor
 } from "./presentation";
+import { combineControlMovement, PlayerControlBuffer } from "./player-control-buffer";
 import { resolvePointerTarget, type PointerTargetSample } from "./pointer-targeting";
 
 const FIXED_STEP_MS = 1000 / 30;
@@ -17,6 +18,8 @@ const MIN_ZOOM = 0.65;
 const MAX_ZOOM = 1.6;
 const ZOOM_STEP = 0.1;
 const ITEM_LABEL_DISTANCE = 150;
+
+type MovementKeys = Record<"W" | "A" | "S" | "D" | "E" | "Q" | "V" | "L", Phaser.Input.Keyboard.Key>;
 
 export interface WorldDebugState {
   tick: number;
@@ -44,14 +47,15 @@ function clamp(value: number, min: number, max: number): number {
 export class WorldScene extends Phaser.Scene {
   private readonly world = new World(createP1Specimen());
   private readonly debugSink: DebugSink;
+  private readonly playerControls: PlayerControlBuffer;
   private readonly entityViews = new Map<string, Phaser.GameObjects.Container>();
   private readonly entityLabels = new Map<string, Phaser.GameObjects.Text>();
   private readonly locationLabels: Phaser.GameObjects.Text[] = [];
   private groundGraphics!: Phaser.GameObjects.Graphics;
   private sceneryGraphics!: Phaser.GameObjects.Graphics;
   private debugGraphics!: Phaser.GameObjects.Graphics;
-  private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
-  private keys!: Record<"W" | "A" | "S" | "D" | "E" | "Q" | "V" | "L", Phaser.Input.Keyboard.Key>;
+  private cursors: Phaser.Types.Input.Keyboard.CursorKeys | null = null;
+  private keys: MovementKeys | null = null;
   private accumulatorMs = 0;
   private debugAccumulatorMs = 0;
   private pendingInteract = false;
@@ -62,16 +66,17 @@ export class WorldScene extends Phaser.Scene {
   private pointerInsideCanvas = false;
   private pointerTarget: PointerTargetSample | null = null;
 
-  constructor(debugSink: DebugSink) {
+  constructor(debugSink: DebugSink, playerControls: PlayerControlBuffer) {
     super({ key: "world" });
     this.debugSink = debugSink;
+    this.playerControls = playerControls;
   }
 
   create(): void {
-    if (!this.input.keyboard) throw new Error("Keyboard input is required for the P1 desktop/browser specimen.");
-
-    this.cursors = this.input.keyboard.createCursorKeys();
-    this.keys = this.input.keyboard.addKeys("W,A,S,D,E,Q,V,L") as typeof this.keys;
+    if (this.input.keyboard) {
+      this.cursors = this.input.keyboard.createCursorKeys();
+      this.keys = this.input.keyboard.addKeys("W,A,S,D,E,Q,V,L") as MovementKeys;
+    }
 
     this.groundGraphics = this.add.graphics().setDepth(PRESENTATION_DEPTH.ground);
     this.sceneryGraphics = this.add.graphics().setDepth(PRESENTATION_DEPTH.scenery);
@@ -95,8 +100,7 @@ export class WorldScene extends Phaser.Scene {
         deltaY: number
       ) => {
         const direction = deltaY < 0 ? 1 : -1;
-        const nextZoom = clamp(this.cameras.main.zoom + direction * ZOOM_STEP, MIN_ZOOM, MAX_ZOOM);
-        this.cameras.main.setZoom(Number(nextZoom.toFixed(2)));
+        this.setCameraZoom(this.cameras.main.zoom + direction * ZOOM_STEP);
       }
     );
 
@@ -115,29 +119,35 @@ export class WorldScene extends Phaser.Scene {
   }
 
   update(_time: number, delta: number): void {
-    const keyboard = this.input.keyboard;
-    if (!keyboard) return;
-
     const boundedDelta = Math.min(delta, 100);
     this.accumulatorMs += boundedDelta;
     this.debugAccumulatorMs += boundedDelta;
-    this.pendingInteract = this.pendingInteract || Phaser.Input.Keyboard.JustDown(this.keys.E);
-    this.pendingDrop = this.pendingDrop || Phaser.Input.Keyboard.JustDown(this.keys.Q);
 
-    if (Phaser.Input.Keyboard.JustDown(this.keys.V)) this.toggleDebugOverlay();
-    if (Phaser.Input.Keyboard.JustDown(this.keys.L)) this.toggleLabels();
+    if (this.keys) {
+      this.pendingInteract = this.pendingInteract || Phaser.Input.Keyboard.JustDown(this.keys.E);
+      this.pendingDrop = this.pendingDrop || Phaser.Input.Keyboard.JustDown(this.keys.Q);
+      if (Phaser.Input.Keyboard.JustDown(this.keys.V)) this.toggleDebugOverlay();
+      if (Phaser.Input.Keyboard.JustDown(this.keys.L)) this.toggleLabels();
+    }
+
+    const externalActions = this.playerControls.consumeActions();
+    this.pendingInteract = this.pendingInteract || externalActions.interactPressed;
+    this.pendingDrop = this.pendingDrop || externalActions.dropPressed;
 
     while (this.accumulatorMs >= FIXED_STEP_MS) {
-      const moveX =
-        (this.keys.D.isDown || this.cursors.right.isDown ? 1 : 0) -
-        (this.keys.A.isDown || this.cursors.left.isDown ? 1 : 0);
-      const moveY =
-        (this.keys.S.isDown || this.cursors.down.isDown ? 1 : 0) -
-        (this.keys.W.isDown || this.cursors.up.isDown ? 1 : 0);
+      const keyboardMove = {
+        x:
+          (this.keys?.D.isDown || this.cursors?.right.isDown ? 1 : 0) -
+          (this.keys?.A.isDown || this.cursors?.left.isDown ? 1 : 0),
+        y:
+          (this.keys?.S.isDown || this.cursors?.down.isDown ? 1 : 0) -
+          (this.keys?.W.isDown || this.cursors?.up.isDown ? 1 : 0)
+      };
+      const movement = combineControlMovement(keyboardMove, this.playerControls.movement());
 
       this.world.step({
-        moveX,
-        moveY,
+        moveX: movement.x,
+        moveY: movement.y,
         interactPressed: this.pendingInteract,
         dropPressed: this.pendingDrop
       });
@@ -163,6 +173,15 @@ export class WorldScene extends Phaser.Scene {
 
   togglePointerProbe(): void {
     this.pointerProbeVisible = !this.pointerProbeVisible;
+  }
+
+  zoomByScale(scale: number): void {
+    if (!Number.isFinite(scale) || scale <= 0) return;
+    this.setCameraZoom(this.cameras.main.zoom * scale);
+  }
+
+  private setCameraZoom(zoom: number): void {
+    this.cameras.main.setZoom(Number(clamp(zoom, MIN_ZOOM, MAX_ZOOM).toFixed(3)));
   }
 
   private updatePointerTarget(): void {

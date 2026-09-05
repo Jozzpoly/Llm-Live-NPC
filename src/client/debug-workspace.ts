@@ -180,6 +180,18 @@ export class DebugWorkspace {
     this.renderEvents(state.events);
   }
 
+  public setCollapsed(collapsed: boolean): void {
+    this.collapsed = collapsed;
+    this.root.classList.toggle("is-collapsed", collapsed);
+    this.appRoot.classList.toggle("debug-collapsed", collapsed);
+    this.collapseButton.textContent = collapsed ? "›" : "‹";
+    this.collapseButton.setAttribute(
+      "aria-label",
+      collapsed ? "Expand debug workspace" : "Collapse debug workspace"
+    );
+    this.collapseButton.setAttribute("aria-expanded", String(!collapsed));
+  }
+
   private section(title: string): HTMLElement {
     const section = element("section", "debug-section");
     section.append(element("h3", "debug-section-title", title));
@@ -200,18 +212,6 @@ export class DebugWorkspace {
   private setPressed(button: HTMLButtonElement, pressed: boolean): void {
     button.setAttribute("aria-pressed", String(pressed));
     button.classList.toggle("is-active", pressed);
-  }
-
-  private setCollapsed(collapsed: boolean): void {
-    this.collapsed = collapsed;
-    this.root.classList.toggle("is-collapsed", collapsed);
-    this.appRoot.classList.toggle("debug-collapsed", collapsed);
-    this.collapseButton.textContent = collapsed ? "›" : "‹";
-    this.collapseButton.setAttribute(
-      "aria-label",
-      collapsed ? "Expand debug workspace" : "Collapse debug workspace"
-    );
-    this.collapseButton.setAttribute("aria-expanded", String(!collapsed));
   }
 
   private renderEvents(events: WorldDebugState["events"]): void {
