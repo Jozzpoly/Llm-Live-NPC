@@ -39,7 +39,8 @@ function requestFixture(fetchableItemIds: string[] = ["item.mug"]): E1CycleReque
   };
 }
 
-function nestedToolCall(name: string, args: Record<string, unknown> = {}) {
+function nestedToolCall(name: string, args: Record<string, unknown> = {}, doubleEncoded = true) {
+  const encodedArguments = JSON.stringify(args);
   return {
     choices: [
       {
@@ -49,7 +50,7 @@ function nestedToolCall(name: string, args: Record<string, unknown> = {}) {
               type: "function",
               function: {
                 name,
-                arguments: JSON.stringify(args)
+                arguments: doubleEncoded ? JSON.stringify(encodedArguments) : encodedArguments
               }
             }
           ]
@@ -77,7 +78,7 @@ function makeEnv(result: unknown, captured: unknown[]): E1AgentEnv {
 }
 
 describe("E1 Worker cognition boundary", () => {
-  it("uses the live-proven function wrapper, accepts nested Granite tool output and forwards bounded temporal change", async () => {
+  it("uses the live-proven function wrapper, accepts Granite double-encoded nested tool arguments and forwards bounded temporal change", async () => {
     const captured: unknown[] = [];
     const env = makeEnv(
       {
@@ -136,6 +137,22 @@ describe("E1 Worker cognition boundary", () => {
     expect(userContent).toContain("player.jozz");
     expect(userContent).not.toContain("secretGlobalState");
     expect(userContent).not.toContain("hidden");
+  });
+
+  it("also accepts a standards-shaped single-encoded nested tool argument as a bounded compatibility case", async () => {
+    const captured: unknown[] = [];
+    const env = makeEnv(nestedToolCall("fetch", { targetId: "item.mug" }, false), captured);
+
+    const response = await handleE1AgentDecision(
+      new Request("https://example.test/api/agent/e1/decide", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(requestFixture())
+      }),
+      env
+    );
+
+    expect(response.status).toBe(200);
   });
 
   it("rejects a nested model tool call for a target outside the request allow-list", async () => {
@@ -208,11 +225,14 @@ describe("E1 Worker cognition boundary", () => {
               tool_calls: [
                 {
                   type: "function",
-                  function: { name: "fetch", arguments: JSON.stringify({ targetId: "item.mug" }) }
+                  function: {
+                    name: "fetch",
+                    arguments: JSON.stringify(JSON.stringify({ targetId: "item.mug" }))
+                  }
                 },
                 {
                   type: "function",
-                  function: { name: "wait", arguments: "{}" }
+                  function: { name: "wait", arguments: JSON.stringify("{}") }
                 }
               ]
             }
