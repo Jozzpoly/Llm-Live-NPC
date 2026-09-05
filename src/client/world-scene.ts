@@ -1,12 +1,13 @@
 import * as Phaser from "phaser";
 import { createP1Specimen } from "../world/specimen";
 import { World } from "../world/world";
-import type { WorldEvent, WorldSnapshot } from "../world/types";
+import type { Aabb, WorldEntity, WorldEvent, WorldSnapshot } from "../world/types";
 import {
   PRESENTATION_DEPTH,
   resolveBlockerVisual,
   resolveEntityVisual,
-  resolveLocationVisual
+  resolveLocationVisual,
+  type EntityVisualDescriptor
 } from "./presentation";
 import { resolvePointerTarget, type PointerTargetSample } from "./pointer-targeting";
 
@@ -43,7 +44,7 @@ function clamp(value: number, min: number, max: number): number {
 export class WorldScene extends Phaser.Scene {
   private readonly world = new World(createP1Specimen());
   private readonly debugSink: DebugSink;
-  private readonly entityViews = new Map<string, Phaser.GameObjects.Arc>();
+  private readonly entityViews = new Map<string, Phaser.GameObjects.Container>();
   private readonly entityLabels = new Map<string, Phaser.GameObjects.Text>();
   private readonly locationLabels: Phaser.GameObjects.Text[] = [];
   private groundGraphics!: Phaser.GameObjects.Graphics;
@@ -181,19 +182,24 @@ export class WorldScene extends Phaser.Scene {
   private drawStaticWorld(): void {
     const snapshot = this.world.snapshot();
 
-    this.groundGraphics.fillStyle(0x18231d, 1);
+    this.groundGraphics.fillStyle(0x1f2d24, 1);
     this.groundGraphics.fillRect(0, 0, snapshot.width, snapshot.height);
 
     for (const location of snapshot.locations) {
       const visual = resolveLocationVisual(location.id);
       this.groundGraphics.fillStyle(visual.fillColor, visual.fillAlpha);
       this.groundGraphics.fillRect(location.bounds.x, location.bounds.y, location.bounds.width, location.bounds.height);
+      this.groundGraphics.lineStyle(1, visual.strokeColor, visual.strokeAlpha);
+      this.groundGraphics.strokeRect(location.bounds.x, location.bounds.y, location.bounds.width, location.bounds.height);
+
+      if (visual.treatment === "yard") this.drawCommonYardDressing(location.bounds);
+
       const label = this.add
         .text(location.bounds.x + 10, location.bounds.y + 8, location.label, {
           fontFamily: "system-ui, sans-serif",
-          fontSize: "14px",
+          fontSize: "13px",
           color: "#d7e0e7",
-          backgroundColor: "#0d1216aa",
+          backgroundColor: "#0d12168f",
           padding: { x: 6, y: 3 }
         })
         .setDepth(PRESENTATION_DEPTH.scenery);
@@ -202,22 +208,79 @@ export class WorldScene extends Phaser.Scene {
 
     for (const blocker of snapshot.blockers) {
       const visual = resolveBlockerVisual(blocker);
+      if (visual.glyph === "table") {
+        this.drawTable(blocker.bounds, visual.fillColor, visual.secondaryColor, visual.strokeColor);
+        continue;
+      }
+
       this.sceneryGraphics.fillStyle(visual.fillColor, visual.fillAlpha);
       this.sceneryGraphics.fillRect(blocker.bounds.x, blocker.bounds.y, blocker.bounds.width, blocker.bounds.height);
       this.sceneryGraphics.lineStyle(1, visual.strokeColor, visual.strokeAlpha);
       this.sceneryGraphics.strokeRect(blocker.bounds.x, blocker.bounds.y, blocker.bounds.width, blocker.bounds.height);
     }
 
-    this.groundGraphics.lineStyle(4, 0x6a7884, 0.5);
+    this.groundGraphics.lineStyle(4, 0x6a7884, 0.35);
     this.groundGraphics.strokeRect(0, 0, snapshot.width, snapshot.height);
+  }
+
+  private drawCommonYardDressing(bounds: Aabb): void {
+    const pathWidth = 74;
+    const pathX = bounds.x + bounds.width * 0.47;
+    this.groundGraphics.fillStyle(0x9b8257, 0.12);
+    this.groundGraphics.fillRect(pathX, bounds.y, pathWidth, bounds.height);
+
+    const tufts: Array<[number, number]> = [
+      [0.08, 0.16],
+      [0.18, 0.72],
+      [0.29, 0.31],
+      [0.38, 0.82],
+      [0.61, 0.18],
+      [0.72, 0.67],
+      [0.84, 0.28],
+      [0.9, 0.82]
+    ];
+
+    this.groundGraphics.lineStyle(1, 0x8eb382, 0.32);
+    for (const [u, v] of tufts) {
+      const x = bounds.x + bounds.width * u;
+      const y = bounds.y + bounds.height * v;
+      this.groundGraphics.lineBetween(x - 4, y + 3, x, y - 4);
+      this.groundGraphics.lineBetween(x, y + 3, x + 4, y - 2);
+      this.groundGraphics.lineBetween(x, y + 3, x, y - 5);
+    }
+
+    const stones: Array<[number, number]> = [
+      [0.12, 0.46],
+      [0.53, 0.58],
+      [0.78, 0.45]
+    ];
+    this.groundGraphics.fillStyle(0x9ca38d, 0.16);
+    for (const [u, v] of stones) {
+      this.groundGraphics.fillCircle(bounds.x + bounds.width * u, bounds.y + bounds.height * v, 3);
+    }
+  }
+
+  private drawTable(bounds: Aabb, topColor: number, plankColor: number, strokeColor: number): void {
+    this.sceneryGraphics.fillStyle(0x000000, 0.22);
+    this.sceneryGraphics.fillRect(bounds.x + 5, bounds.y + 7, bounds.width, bounds.height);
+
+    this.sceneryGraphics.fillStyle(0x4d321f, 1);
+    this.sceneryGraphics.fillRect(bounds.x + 9, bounds.y + bounds.height - 3, 10, 13);
+    this.sceneryGraphics.fillRect(bounds.x + bounds.width - 19, bounds.y + bounds.height - 3, 10, 13);
+
+    this.sceneryGraphics.fillStyle(topColor, 1);
+    this.sceneryGraphics.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
+    this.sceneryGraphics.fillStyle(plankColor, 0.52);
+    this.sceneryGraphics.fillRect(bounds.x + 5, bounds.y + 5, bounds.width - 10, 8);
+    this.sceneryGraphics.fillRect(bounds.x + 5, bounds.y + 18, bounds.width - 10, 7);
+    this.sceneryGraphics.lineStyle(2, strokeColor, 0.75);
+    this.sceneryGraphics.strokeRect(bounds.x, bounds.y, bounds.width, bounds.height);
   }
 
   private createEntityViews(): void {
     for (const entity of this.world.snapshot().entities) {
       const visual = resolveEntityVisual(entity);
-      const view = this.add.circle(entity.position.x, entity.position.y, entity.radius, visual.fillColor, 1);
-      view.setStrokeStyle(2, visual.strokeColor, visual.strokeAlpha);
-      view.setDepth(visual.depth);
+      const view = this.createEntityGlyph(entity, visual);
       this.entityViews.set(entity.id, view);
 
       const label = this.add
@@ -225,13 +288,66 @@ export class WorldScene extends Phaser.Scene {
           fontFamily: "system-ui, sans-serif",
           fontSize: visual.labelFontSize,
           color: "#f0f4f7",
-          backgroundColor: "#0b0e12bb",
+          backgroundColor: "#0b0e1299",
           padding: { x: 4, y: 2 }
         })
         .setOrigin(0.5, 1)
         .setDepth(PRESENTATION_DEPTH.overhead);
       this.entityLabels.set(entity.id, label);
     }
+  }
+
+  private createEntityGlyph(entity: WorldEntity, visual: EntityVisualDescriptor): Phaser.GameObjects.Container {
+    const container = this.add.container(entity.position.x, entity.position.y).setDepth(visual.depth);
+    const shadow = this.add
+      .ellipse(0, entity.radius * 0.6, entity.radius * 1.8, entity.radius * 0.72, 0x000000, visual.shadowAlpha)
+      .setOrigin(0.5);
+    const glyph = this.add.graphics();
+
+    glyph.lineStyle(2, visual.strokeColor, visual.strokeAlpha);
+
+    if (visual.glyph === "player" || visual.glyph === "npc") {
+      glyph.fillStyle(visual.fillColor, 1);
+      glyph.fillCircle(0, 0, entity.radius);
+      glyph.strokeCircle(0, 0, entity.radius);
+      glyph.fillStyle(visual.secondaryColor, 0.92);
+      glyph.fillCircle(-entity.radius * 0.28, -entity.radius * 0.3, Math.max(3, entity.radius * 0.22));
+      glyph.lineStyle(2, visual.secondaryColor, 0.62);
+      glyph.lineBetween(-entity.radius * 0.45, entity.radius * 0.45, entity.radius * 0.45, entity.radius * 0.45);
+    } else if (visual.glyph === "mug") {
+      glyph.fillStyle(visual.fillColor, 1);
+      glyph.fillRect(-6, -7, 11, 14);
+      glyph.strokeRect(-6, -7, 11, 14);
+      glyph.lineStyle(2, visual.secondaryColor, 0.95);
+      glyph.strokeCircle(6, 0, 4);
+    } else if (visual.glyph === "hammer") {
+      glyph.lineStyle(4, visual.secondaryColor, 1);
+      glyph.lineBetween(-4, 7, 4, -5);
+      glyph.fillStyle(visual.fillColor, 1);
+      glyph.fillRect(-5, -9, 12, 6);
+      glyph.lineStyle(2, visual.strokeColor, visual.strokeAlpha);
+      glyph.strokeRect(-5, -9, 12, 6);
+    } else if (visual.glyph === "lantern") {
+      glyph.fillStyle(visual.secondaryColor, 0.16);
+      glyph.fillCircle(0, 0, 13);
+      glyph.fillStyle(visual.fillColor, 1);
+      glyph.fillRect(-6, -6, 12, 13);
+      glyph.lineStyle(2, visual.strokeColor, visual.strokeAlpha);
+      glyph.strokeRect(-6, -6, 12, 13);
+      glyph.lineStyle(2, visual.secondaryColor, 0.9);
+      glyph.lineBetween(-5, -7, -2, -11);
+      glyph.lineBetween(-2, -11, 2, -11);
+      glyph.lineBetween(2, -11, 5, -7);
+    } else {
+      glyph.fillStyle(visual.fillColor, 1);
+      glyph.fillCircle(0, 0, entity.radius * 0.72);
+      glyph.strokeCircle(0, 0, entity.radius * 0.72);
+      glyph.fillStyle(visual.secondaryColor, 0.72);
+      glyph.fillCircle(-2, -2, Math.max(2, entity.radius * 0.2));
+    }
+
+    container.add([shadow, glyph]);
+    return container;
   }
 
   private syncPresentation(emitDebugState = false): void {
