@@ -9,7 +9,8 @@
     "test": "vitest run",
     "check": "tsc -p tsconfig.json --noEmit && vitest run && vite build",
     "preview": "vite build && vite preview",
-    "deploy": "vite build && wrangler deploy"
+    "deploy": "vite build && wrangler deploy",
+    "deploy:preview": "vite build && wrangler versions upload"
   },
   "dependencies": {
     "phaser": "4.2.1"
