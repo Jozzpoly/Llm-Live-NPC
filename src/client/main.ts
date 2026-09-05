@@ -37,7 +37,14 @@ function renderDebug(state: WorldDebugState): void {
 
   debugPanel.innerHTML = `
     <h2>World Inspector</h2>
-    <p>P1 exposes domain truth directly. The LLM is not running.</p>
+    <p>P1.1 keeps domain truth unchanged while presentation/debug controls are being refined.</p>
+
+    <h3>View</h3>
+    <dl class="debug-grid">
+      <dt>camera zoom</dt><dd>${state.cameraZoom.toFixed(2)}×</dd>
+      <dt>visual overlay</dt><dd>${state.debugOverlayVisible ? "shown" : "hidden"}</dd>
+      <dt>labels</dt><dd>${state.labelsVisible ? "shown" : "hidden"}</dd>
+    </dl>
 
     <h3>Player</h3>
     <dl class="debug-grid">
@@ -47,13 +54,14 @@ function renderDebug(state: WorldDebugState): void {
       <dt>held item</dt><dd>${escapeHtml(state.heldItem)}</dd>
     </dl>
 
-    <h3>NPC-001 observation seam</h3>
+    <h3>NPC-001 LOS probe</h3>
     <dl class="debug-grid">
       <dt>line of sight</dt><dd class="${losClass}">${state.npcLineOfSight ? "VISIBLE" : "OCCLUDED"}</dd>
       <dt>distance</dt><dd>${state.npcDistance.toFixed(1)} px</dd>
       <dt>cognition</dt><dd>disabled</dd>
       <dt>entities</dt><dd>${state.entityCount}</dd>
     </dl>
+    <p class="debug-note">This remains a raw LOS probe, not the future NPC sight model.</p>
 
     <h3>Recent world events</h3>
     <ul class="event-list">${events}</ul>
