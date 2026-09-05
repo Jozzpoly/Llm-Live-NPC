@@ -11,6 +11,7 @@ const E1_MODEL = "@cf/ibm-granite/granite-4.0-h-micro";
 const GATEWAY_ID = "default";
 const MAX_COLLECTION_SIZE = 32;
 const MAX_TEXT_LENGTH = 256;
+const MAX_TOOL_ARGUMENTS_LENGTH = 4096;
 
 interface AiBinding {
   run(model: string, input: unknown, options?: unknown): Promise<unknown>;
@@ -262,14 +263,25 @@ function sanitizeE1CycleRequest(value: unknown): E1CycleRequest | null {
 }
 
 function parseArguments(value: unknown): Record<string, unknown> | null {
-  if (value && typeof value === "object") return value as Record<string, unknown>;
-  if (typeof value !== "string") return null;
-  try {
-    const parsed = JSON.parse(value);
-    return parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : null;
-  } catch {
-    return null;
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    return value as Record<string, unknown>;
   }
+
+  let current: unknown = value;
+  for (let decode = 0; decode < 2; decode += 1) {
+    if (typeof current !== "string" || current.length === 0 || current.length > MAX_TOOL_ARGUMENTS_LENGTH) {
+      return null;
+    }
+    try {
+      current = JSON.parse(current);
+    } catch {
+      return null;
+    }
+    if (current && typeof current === "object" && !Array.isArray(current)) {
+      return current as Record<string, unknown>;
+    }
+  }
+  return null;
 }
 
 function completionToolCalls(result: unknown): ToolCallShape[] | null {
