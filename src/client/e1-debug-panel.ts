@@ -32,6 +32,7 @@ export class E1DebugPanel {
   private readonly triggerValue: HTMLElement;
   private readonly perceptionValue: HTMLElement;
   private readonly fetchableValue: HTMLElement;
+  private readonly changesValue: HTMLElement;
   private readonly decisionValue: HTMLElement;
   private readonly validationValue: HTMLElement;
   private readonly providerValue: HTMLElement;
@@ -59,6 +60,7 @@ export class E1DebugPanel {
     const trigger = metricRow("trigger");
     const perception = metricRow("perceived IDs");
     const fetchable = metricRow("fetchable IDs");
+    const changes = metricRow("observed changes");
     const decision = metricRow("decision");
     const validation = metricRow("validation");
     const provider = metricRow("model / gateway");
@@ -69,6 +71,7 @@ export class E1DebugPanel {
     this.triggerValue = trigger.value;
     this.perceptionValue = perception.value;
     this.fetchableValue = fetchable.value;
+    this.changesValue = changes.value;
     this.decisionValue = decision.value;
     this.validationValue = validation.value;
     this.providerValue = provider.value;
@@ -80,6 +83,7 @@ export class E1DebugPanel {
       trigger.row,
       perception.row,
       fetchable.row,
+      changes.row,
       decision.row,
       validation.row,
       provider.row,
@@ -92,7 +96,7 @@ export class E1DebugPanel {
       element(
         "p",
         "debug-note",
-        "E1 gate: carry an item into the 220 px local neighborhood while still holding it, arm E1, then drop it. Perception is World-derived + geometric LOS; this is not a qualified sight model."
+        "E1 gate: carry an item into the 220 px local neighborhood while still holding it, arm E1, then drop it. Perception and temporal deltas are World-derived + geometric LOS; this is not a qualified sight or long-term-memory model."
       )
     );
     content.append(section);
@@ -123,6 +127,7 @@ export class E1DebugPanel {
     this.triggerValue.textContent = state.trigger ?? "—";
     this.perceptionValue.textContent = state.visibleEntityIds.join(", ") || "none";
     this.fetchableValue.textContent = state.fetchableItemIds.join(", ") || "none";
+    this.changesValue.textContent = state.observedChanges.join(" | ") || "none";
     this.decisionValue.textContent = state.decisionKind
       ? state.decisionTargetId
         ? `${state.decisionKind}(${state.decisionTargetId})`

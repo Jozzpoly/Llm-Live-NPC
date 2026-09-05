@@ -27,6 +27,14 @@ function requestFixture(fetchableItemIds: string[] = ["item.mug"]): E1CycleReque
       ],
       fetchableItemIds
     },
+    observedChanges: [
+      {
+        kind: "item_holder_changed",
+        itemId: "item.mug",
+        previousHolderId: "player.jozz",
+        holderId: null
+      }
+    ],
     previousExperience: null
   };
 }
@@ -49,7 +57,7 @@ function makeEnv(result: unknown, captured: unknown[]): E1AgentEnv {
 }
 
 describe("E1 Worker cognition boundary", () => {
-  it("offers only wait plus allow-listed fetch and returns the bounded decision", async () => {
+  it("offers only wait plus allow-listed fetch and forwards the bounded temporal change", async () => {
     const captured: unknown[] = [];
     const env = makeEnv(
       {
@@ -63,7 +71,7 @@ describe("E1 Worker cognition boundary", () => {
       new Request("https://example.test/api/agent/e1/decide", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify(requestFixture())
+        body: JSON.stringify({ ...requestFixture(), secretGlobalState: { item: "hidden" } })
       }),
       env
     );
@@ -77,12 +85,21 @@ describe("E1 Worker cognition boundary", () => {
       gatewayLogId: "test-gateway-log"
     });
 
-    const input = captured[0] as { tools?: Array<Record<string, unknown>> };
+    const input = captured[0] as {
+      messages?: Array<{ role?: string; content?: string }>;
+      tools?: Array<Record<string, unknown>>;
+    };
     expect(input.tools?.map((tool) => tool.name)).toEqual(["wait", "fetch"]);
     const fetchTool = input.tools?.find((tool) => tool.name === "fetch") as
       | { parameters?: { properties?: { targetId?: { enum?: string[] } } } }
       | undefined;
     expect(fetchTool?.parameters?.properties?.targetId?.enum).toEqual(["item.mug"]);
+
+    const userContent = input.messages?.find((message) => message.role === "user")?.content ?? "";
+    expect(userContent).toContain("item_holder_changed");
+    expect(userContent).toContain("player.jozz");
+    expect(userContent).not.toContain("secretGlobalState");
+    expect(userContent).not.toContain("hidden");
   });
 
   it("rejects a model tool call for a target outside the request allow-list", async () => {
@@ -104,18 +121,20 @@ describe("E1 Worker cognition boundary", () => {
     expect(response.status).toBe(502);
     const body = (await response.json()) as Record<string, unknown>;
     expect(body.ok).toBe(false);
-    expect(body.error).toBe("Model did not return one valid bounded intention tool call");
+    expect(body.error).toBe("Model did not return exactly one valid bounded intention tool call");
   });
 
   it("does not expose fetch at all when perception has no legal item target", async () => {
     const captured: unknown[] = [];
     const env = makeEnv({ tool_calls: [{ name: "wait", arguments: {} }] }, captured);
+    const request = requestFixture([]);
+    request.observedChanges = [];
 
     const response = await handleE1AgentDecision(
       new Request("https://example.test/api/agent/e1/decide", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify(requestFixture([]))
+        body: JSON.stringify(request)
       }),
       env
     );
@@ -123,5 +142,47 @@ describe("E1 Worker cognition boundary", () => {
     expect(response.status).toBe(200);
     const input = captured[0] as { tools?: Array<Record<string, unknown>> };
     expect(input.tools?.map((tool) => tool.name)).toEqual(["wait"]);
+  });
+
+  it("rejects a forged fetch allow-list that is not backed by a visible free item", async () => {
+    const captured: unknown[] = [];
+    const env = makeEnv({ tool_calls: [{ name: "wait", arguments: {} }] }, captured);
+    const forged = requestFixture(["item.hidden"]);
+
+    const response = await handleE1AgentDecision(
+      new Request("https://example.test/api/agent/e1/decide", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(forged)
+      }),
+      env
+    );
+
+    expect(response.status).toBe(400);
+    expect(captured).toHaveLength(0);
+  });
+
+  it("rejects multiple tool calls instead of silently taking the first", async () => {
+    const captured: unknown[] = [];
+    const env = makeEnv(
+      {
+        tool_calls: [
+          { name: "fetch", arguments: { targetId: "item.mug" } },
+          { name: "wait", arguments: {} }
+        ]
+      },
+      captured
+    );
+
+    const response = await handleE1AgentDecision(
+      new Request("https://example.test/api/agent/e1/decide", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(requestFixture())
+      }),
+      env
+    );
+
+    expect(response.status).toBe(502);
   });
 });

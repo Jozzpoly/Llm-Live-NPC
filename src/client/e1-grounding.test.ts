@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   E1CognitionGate,
+  deriveE1ObservedChanges,
   e1WakeFingerprint,
   projectE1Perception,
   validateE1Decision
@@ -78,7 +79,7 @@ describe("E1 bounded perception", () => {
     expect(perception.visibleEntities.some((entity) => entity.id === "item.hidden")).toBe(false);
   });
 
-  it("wakes on held-to-free item semantics but ignores pure actor distance drift", () => {
+  it("wakes on held-to-free item semantics, derives the observed holder transition and ignores pure actor drift", () => {
     const held = projectE1Perception(fixture(), "npc.001", () => true);
     const movedActor = structuredClone(held);
     const player = movedActor.visibleEntities.find((entity) => entity.id === "player.jozz");
@@ -98,6 +99,12 @@ describe("E1 bounded perception", () => {
     const dropped = projectE1Perception(droppedSnapshot, "npc.001", () => true);
 
     expect(e1WakeFingerprint(dropped)).not.toBe(e1WakeFingerprint(held));
+    expect(deriveE1ObservedChanges(held, dropped)).toContainEqual({
+      kind: "item_holder_changed",
+      itemId: "item.mug",
+      previousHolderId: "player.jozz",
+      holderId: null
+    });
     expect(dropped.fetchableItemIds).toEqual(["item.mug"]);
     expect(validateE1Decision({ kind: "fetch", targetId: "item.mug" }, dropped)).toEqual({
       status: "accepted",
@@ -112,7 +119,7 @@ describe("E1 bounded perception", () => {
 });
 
 describe("E1 cognition gate", () => {
-  it("arms as a baseline and allows one bounded request for a later semantic change", () => {
+  it("arms as a baseline and emits the bounded temporal delta on a later semantic change", () => {
     const held = projectE1Perception(fixture(), "npc.001", () => true);
     const droppedSnapshot = fixture();
     const mug = droppedSnapshot.entities.find((entity) => entity.id === "item.mug");
@@ -131,6 +138,12 @@ describe("E1 cognition gate", () => {
     const request = gate.consider(dropped, null, false, 100);
     expect(request?.cycleId).toBe(1);
     expect(request?.trigger).toBe("perception_changed");
+    expect(request?.observedChanges).toContainEqual({
+      kind: "item_holder_changed",
+      itemId: "item.mug",
+      previousHolderId: "player.jozz",
+      holderId: null
+    });
     expect(gate.consider(dropped, null, false, 1000)).toBeNull();
     expect(gate.finish(1)).toBe(true);
     expect(gate.state().cyclesUsed).toBe(1);

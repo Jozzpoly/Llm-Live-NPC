@@ -7,7 +7,7 @@ import { World } from "../world/world";
 import { E1AgentHarness } from "./e1-agent-harness";
 
 describe("E1 grounded agent harness", () => {
-  it("carries a player drop through cognition, the existing executor, World pickup and subsequent experience", async () => {
+  it("carries a player drop through temporal perception, cognition, existing executor, World pickup and subsequent experience", async () => {
     const specimen = createP1Specimen();
     const npc = specimen.entities.find((entity) => entity.id === "npc.001");
     const player = specimen.entities.find((entity) => entity.id === "player.jozz");
@@ -52,6 +52,13 @@ describe("E1 grounded agent harness", () => {
 
     expect(requests).toHaveLength(1);
     expect(requests[0]?.perception.fetchableItemIds).toEqual(["item.mug"]);
+    expect(requests[0]?.observedChanges).toContainEqual({
+      kind: "item_holder_changed",
+      itemId: "item.mug",
+      previousHolderId: "player.jozz",
+      holderId: null
+    });
+    expect(harness.state().observedChanges).toContain("item.mug: holder player.jozz → free");
     expect(executor.state().status).toBe("running");
     expect(executor.state().task?.targetId).toBe("item.mug");
 
@@ -80,6 +87,21 @@ describe("E1 grounded agent harness", () => {
       code: "picked_up_item",
       targetId: "item.mug"
     });
+    expect(requests[1]?.observedChanges).toEqual(
+      expect.arrayContaining([
+        {
+          kind: "observer_held_item_changed",
+          previousItemId: null,
+          itemId: "item.mug"
+        },
+        {
+          kind: "item_holder_changed",
+          itemId: "item.mug",
+          previousHolderId: null,
+          holderId: "npc.001"
+        }
+      ])
+    );
     expect(requests[1]?.perception.observer.heldItemId).toBe("item.mug");
     expect(requests[1]?.perception.fetchableItemIds).toEqual([]);
     expect(harness.state().requestStatus).toBe("accepted_wait");

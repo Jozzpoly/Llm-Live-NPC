@@ -28,6 +28,34 @@ export interface E1Perception {
   fetchableItemIds: EntityId[];
 }
 
+export type E1ObservedChange =
+  | {
+      kind: "item_entered_perception";
+      itemId: EntityId;
+      holderId: EntityId | null;
+    }
+  | {
+      kind: "item_left_perception";
+      itemId: EntityId;
+      previousHolderId: EntityId | null;
+    }
+  | {
+      kind: "item_holder_changed";
+      itemId: EntityId;
+      previousHolderId: EntityId | null;
+      holderId: EntityId | null;
+    }
+  | {
+      kind: "observer_held_item_changed";
+      previousItemId: EntityId | null;
+      itemId: EntityId | null;
+    }
+  | {
+      kind: "observer_location_changed";
+      previousLocationId: string | null;
+      locationId: string | null;
+    };
+
 export interface E1Experience {
   tick: number;
   status: "succeeded" | "failed";
@@ -46,6 +74,7 @@ export interface E1CycleRequest {
   cycleId: number;
   trigger: "perception_changed" | "experience_changed" | "perception_and_experience_changed";
   perception: E1Perception;
+  observedChanges: E1ObservedChange[];
   previousExperience: E1Experience | null;
 }
 
@@ -72,6 +101,14 @@ function containsPoint(
 function rounded(value: number, digits: number): number {
   const factor = 10 ** digits;
   return Math.round(value * factor) / factor;
+}
+
+function perceivedItems(perception: E1Perception): Map<EntityId, E1PerceivedEntity> {
+  return new Map(
+    perception.visibleEntities
+      .filter((entity) => entity.kind === "item")
+      .map((entity) => [entity.id, entity])
+  );
 }
 
 export function projectE1Perception(
@@ -150,6 +187,62 @@ export function e1WakeFingerprint(perception: E1Perception): string {
   });
 }
 
+export function deriveE1ObservedChanges(
+  previous: E1Perception,
+  current: E1Perception
+): E1ObservedChange[] {
+  const changes: E1ObservedChange[] = [];
+
+  if (previous.observer.locationId !== current.observer.locationId) {
+    changes.push({
+      kind: "observer_location_changed",
+      previousLocationId: previous.observer.locationId,
+      locationId: current.observer.locationId
+    });
+  }
+  if (previous.observer.heldItemId !== current.observer.heldItemId) {
+    changes.push({
+      kind: "observer_held_item_changed",
+      previousItemId: previous.observer.heldItemId,
+      itemId: current.observer.heldItemId
+    });
+  }
+
+  const previousItems = perceivedItems(previous);
+  const currentItems = perceivedItems(current);
+  const itemIds = new Set([...previousItems.keys(), ...currentItems.keys()]);
+  for (const itemId of [...itemIds].sort((a, b) => a.localeCompare(b))) {
+    const before = previousItems.get(itemId);
+    const after = currentItems.get(itemId);
+    if (!before && after) {
+      changes.push({
+        kind: "item_entered_perception",
+        itemId,
+        holderId: after.heldBy ?? null
+      });
+      continue;
+    }
+    if (before && !after) {
+      changes.push({
+        kind: "item_left_perception",
+        itemId,
+        previousHolderId: before.heldBy ?? null
+      });
+      continue;
+    }
+    if (before && after && (before.heldBy ?? null) !== (after.heldBy ?? null)) {
+      changes.push({
+        kind: "item_holder_changed",
+        itemId,
+        previousHolderId: before.heldBy ?? null,
+        holderId: after.heldBy ?? null
+      });
+    }
+  }
+
+  return changes;
+}
+
 export function e1ExperienceFingerprint(experience: E1Experience | null): string {
   if (!experience) return "none";
   return JSON.stringify({
@@ -181,6 +274,7 @@ export class E1CognitionGate {
   private pendingCycleIdValue: number | null = null;
   private lastWakeFingerprint = "";
   private lastExperienceFingerprint = "none";
+  private lastPerception: E1Perception | null = null;
   private lastRequestAt = Number.NEGATIVE_INFINITY;
 
   constructor(
@@ -203,6 +297,7 @@ export class E1CognitionGate {
     this.pendingCycleIdValue = null;
     this.lastWakeFingerprint = e1WakeFingerprint(perception);
     this.lastExperienceFingerprint = e1ExperienceFingerprint(experience);
+    this.lastPerception = structuredClone(perception);
     this.lastRequestAt = Number.NEGATIVE_INFINITY;
   }
 
@@ -238,12 +333,15 @@ export class E1CognitionGate {
     const experienceChanged = experienceFingerprint !== this.lastExperienceFingerprint;
     if (!perceptionChanged && !experienceChanged) return null;
 
+    const previousPerception = this.lastPerception ?? perception;
+    const observedChanges = deriveE1ObservedChanges(previousPerception, perception);
     const cycleId = this.nextCycleId++;
     this.inFlightValue = true;
     this.pendingCycleIdValue = cycleId;
     this.cyclesUsedValue += 1;
     this.lastWakeFingerprint = wakeFingerprint;
     this.lastExperienceFingerprint = experienceFingerprint;
+    this.lastPerception = structuredClone(perception);
     this.lastRequestAt = nowMs;
 
     const trigger =
@@ -257,6 +355,7 @@ export class E1CognitionGate {
       cycleId,
       trigger,
       perception: structuredClone(perception),
+      observedChanges,
       previousExperience: experience ? { ...experience } : null
     };
   }

@@ -5,6 +5,7 @@ import {
   validateE1Decision,
   type E1CycleRequest,
   type E1Experience,
+  type E1ObservedChange,
   type E1Perception
 } from "../agent/e1-grounding";
 import type { DeterministicExecutor } from "../execution/deterministic-executor";
@@ -36,6 +37,7 @@ export interface E1HarnessDebugState {
   perceptionTick: number | null;
   visibleEntityIds: string[];
   fetchableItemIds: string[];
+  observedChanges: string[];
   decisionKind: "wait" | "fetch" | null;
   decisionTargetId: string | null;
   decisionValidation: string | null;
@@ -45,6 +47,21 @@ export interface E1HarnessDebugState {
   experience: E1Experience | null;
 }
 
+function describeObservedChange(change: E1ObservedChange): string {
+  switch (change.kind) {
+    case "item_entered_perception":
+      return `${change.itemId}: entered · holder ${change.holderId ?? "free"}`;
+    case "item_left_perception":
+      return `${change.itemId}: left · previous ${change.previousHolderId ?? "free"}`;
+    case "item_holder_changed":
+      return `${change.itemId}: holder ${change.previousHolderId ?? "free"} → ${change.holderId ?? "free"}`;
+    case "observer_held_item_changed":
+      return `self held ${change.previousItemId ?? "none"} → ${change.itemId ?? "none"}`;
+    case "observer_location_changed":
+      return `self location ${change.previousLocationId ?? "open"} → ${change.locationId ?? "open"}`;
+  }
+}
+
 export class E1AgentHarness {
   private readonly gate = new E1CognitionGate();
   private perception: E1Perception | null = null;
@@ -52,6 +69,7 @@ export class E1AgentHarness {
   private requestStatus: E1HarnessRequestStatus = "disarmed";
   private trigger: E1CycleRequest["trigger"] | null = null;
   private cycleId: number | null = null;
+  private observedChanges: string[] = [];
   private decisionKind: "wait" | "fetch" | null = null;
   private decisionTargetId: string | null = null;
   private decisionValidation: string | null = null;
@@ -67,18 +85,28 @@ export class E1AgentHarness {
   ) {}
 
   toggle(): E1HarnessDebugState {
-    if (this.gate.state().armed) this.disarm();
-    else this.arm();
+    if (this.gate.state().armed) {
+      this.disarm();
+    } else if (this.executor.state().status === "running") {
+      this.requestStatus = "executor_busy";
+      this.decisionValidation = "cannot_arm_while_executor_running";
+    } else {
+      this.arm();
+    }
     return this.state();
   }
 
   arm(): void {
+    if (this.executor.state().status === "running") {
+      throw new Error("E1 cannot arm while the NPC executor is already running.");
+    }
     this.experience = null;
     this.perception = this.observe();
     this.gate.arm(this.perception, this.experience);
     this.requestStatus = "armed";
     this.trigger = null;
     this.cycleId = null;
+    this.observedChanges = [];
     this.decisionKind = null;
     this.decisionTargetId = null;
     this.decisionValidation = null;
@@ -91,7 +119,6 @@ export class E1AgentHarness {
   disarm(): void {
     this.gate.disarm();
     this.requestStatus = "disarmed";
-    this.activeTaskTargetId = null;
   }
 
   state(): E1HarnessDebugState {
@@ -107,6 +134,7 @@ export class E1AgentHarness {
       perceptionTick: this.perception?.tick ?? null,
       visibleEntityIds: this.perception?.visibleEntities.map((entity) => entity.id) ?? [],
       fetchableItemIds: [...(this.perception?.fetchableItemIds ?? [])],
+      observedChanges: [...this.observedChanges],
       decisionKind: this.decisionKind,
       decisionTargetId: this.decisionTargetId,
       decisionValidation: this.decisionValidation,
@@ -133,6 +161,7 @@ export class E1AgentHarness {
     this.requestStatus = "in_flight";
     this.trigger = cycle.trigger;
     this.cycleId = cycle.cycleId;
+    this.observedChanges = cycle.observedChanges.map(describeObservedChange);
     this.decisionKind = null;
     this.decisionTargetId = null;
     this.decisionValidation = null;
