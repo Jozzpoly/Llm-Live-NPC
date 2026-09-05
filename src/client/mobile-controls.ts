@@ -5,8 +5,24 @@ interface Point {
   y: number;
 }
 
+interface TapCandidate {
+  start: Point;
+  startedAt: number;
+  cancelled: boolean;
+}
+
+export interface MobileOwnerEnvironment {
+  maxTouchPoints: number;
+  coarsePointer: boolean;
+  hoverNone: boolean;
+}
+
+const TAP_MAX_TRAVEL_PX = 12;
+const TAP_MAX_DURATION_MS = 400;
+
 export interface MobileControlActions {
   zoomByScale(scale: number): void;
+  interactAtClientPoint(clientX: number, clientY: number): void;
 }
 
 export function joystickVector(dx: number, dy: number, radius: number, deadZone = 0.1): Point {
@@ -33,12 +49,44 @@ export function incrementalPinchScale(previousDistance: number, nextDistance: nu
   return Math.min(1.15, Math.max(0.85, nextDistance / previousDistance));
 }
 
+export function isTapGesture(
+  start: Point,
+  end: Point,
+  elapsedMs: number,
+  maxTravelPx = TAP_MAX_TRAVEL_PX,
+  maxDurationMs = TAP_MAX_DURATION_MS
+): boolean {
+  if (
+    ![start.x, start.y, end.x, end.y, elapsedMs, maxTravelPx, maxDurationMs].every(Number.isFinite) ||
+    elapsedMs < 0 ||
+    maxTravelPx < 0 ||
+    maxDurationMs < 0
+  ) {
+    return false;
+  }
+
+  return distance(start, end) <= maxTravelPx && elapsedMs <= maxDurationMs;
+}
+
+export function shouldEnableMobileOwnerMode(environment: MobileOwnerEnvironment): boolean {
+  return (
+    Number.isFinite(environment.maxTouchPoints) &&
+    environment.maxTouchPoints > 0 &&
+    environment.coarsePointer &&
+    environment.hoverNone
+  );
+}
+
 function distance(a: Point, b: Point): number {
   return Math.hypot(a.x - b.x, a.y - b.y);
 }
 
 export function isTouchOwnerDevice(): boolean {
-  return navigator.maxTouchPoints > 0 || window.matchMedia("(pointer: coarse)").matches;
+  return shouldEnableMobileOwnerMode({
+    maxTouchPoints: navigator.maxTouchPoints,
+    coarsePointer: window.matchMedia("(pointer: coarse)").matches,
+    hoverNone: window.matchMedia("(hover: none)").matches
+  });
 }
 
 function isActionControlTarget(target: EventTarget | null): boolean {
@@ -53,6 +101,7 @@ export class MobileOwnerControls {
   private readonly buffer: PlayerControlBuffer;
   private readonly actions: MobileControlActions;
   private readonly gesturePointers = new Map<number, Point>();
+  private readonly tapCandidates = new Map<number, TapCandidate>();
   private pinchDistance: number | null = null;
   private pinchActive = false;
   private joystickPointerId: number | null = null;
@@ -157,6 +206,8 @@ export class MobileOwnerControls {
     const radius = Math.max(1, Math.min(baseRect.width, baseRect.height) * 0.36);
     const vector = joystickVector(event.clientX - this.joystickOrigin.x, event.clientY - this.joystickOrigin.y, radius, 0.08);
 
+    // A small finger jitter may already leave the joystick dead zone while still being a valid tap.
+    // Tap eligibility is cancelled centrally only after TAP_MAX_TRAVEL_PX or by pinch.
     this.buffer.setMovement(vector.x, vector.y);
     knob.style.transform = `translate(${(vector.x * radius).toFixed(1)}px, ${(vector.y * radius).toFixed(1)}px)`;
   }
@@ -198,9 +249,17 @@ export class MobileOwnerControls {
       (event) => {
         if (event.pointerType !== "touch" || isActionControlTarget(event.target)) return;
 
-        this.gesturePointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+        const point = { x: event.clientX, y: event.clientY };
+        this.gesturePointers.set(event.pointerId, point);
+        this.tapCandidates.set(event.pointerId, {
+          start: point,
+          startedAt: event.timeStamp,
+          cancelled: false
+        });
+
         if (this.gesturePointers.size >= 2) {
           this.pinchActive = true;
+          for (const candidate of this.tapCandidates.values()) candidate.cancelled = true;
           this.resetJoystick(true);
         }
         this.refreshPinchBaseline();
@@ -211,8 +270,14 @@ export class MobileOwnerControls {
     window.addEventListener(
       "pointermove",
       (event) => {
-        if (!this.gesturePointers.has(event.pointerId)) return;
-        this.gesturePointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+        const previous = this.gesturePointers.get(event.pointerId);
+        if (!previous) return;
+
+        const next = { x: event.clientX, y: event.clientY };
+        this.gesturePointers.set(event.pointerId, next);
+        const candidate = this.tapCandidates.get(event.pointerId);
+        if (candidate && distance(candidate.start, next) > TAP_MAX_TRAVEL_PX) candidate.cancelled = true;
+
         if (this.gesturePointers.size < 2) return;
 
         event.preventDefault();
@@ -224,13 +289,28 @@ export class MobileOwnerControls {
       { capture: true, passive: false }
     );
 
-    const endPointer = (event: PointerEvent) => {
+    const endPointer = (event: PointerEvent, allowTap: boolean) => {
+      const candidate = this.tapCandidates.get(event.pointerId);
+      if (
+        allowTap &&
+        candidate &&
+        !candidate.cancelled &&
+        isTapGesture(
+          candidate.start,
+          { x: event.clientX, y: event.clientY },
+          event.timeStamp - candidate.startedAt
+        )
+      ) {
+        this.actions.interactAtClientPoint(event.clientX, event.clientY);
+      }
+      this.tapCandidates.delete(event.pointerId);
+
       if (!this.gesturePointers.delete(event.pointerId)) return;
       if (this.gesturePointers.size < 2) this.pinchActive = false;
       this.refreshPinchBaseline();
     };
-    window.addEventListener("pointerup", endPointer, { capture: true });
-    window.addEventListener("pointercancel", endPointer, { capture: true });
+    window.addEventListener("pointerup", (event) => endPointer(event, true), { capture: true });
+    window.addEventListener("pointercancel", (event) => endPointer(event, false), { capture: true });
   }
 
   private refreshPinchBaseline(): void {

@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { incrementalPinchScale, joystickVector } from "./mobile-controls";
+import {
+  incrementalPinchScale,
+  isTapGesture,
+  joystickVector,
+  shouldEnableMobileOwnerMode
+} from "./mobile-controls";
 import { combineControlMovement, PlayerControlBuffer } from "./player-control-buffer";
 
 describe("mobile Owner-test controls", () => {
@@ -43,5 +48,22 @@ describe("mobile Owner-test controls", () => {
     expect(incrementalPinchScale(100, 200)).toBe(1.15);
     expect(incrementalPinchScale(100, 20)).toBe(0.85);
     expect(incrementalPinchScale(0, 100)).toBe(1);
+  });
+
+  it("keeps a short stable touch tap-eligible after crossing the joystick dead zone", () => {
+    expect(joystickVector(6, 0, 40, 0.08).x).toBeGreaterThan(0);
+    expect(isTapGesture({ x: 100, y: 100 }, { x: 106, y: 100 }, 180)).toBe(true);
+  });
+
+  it("rejects drag-like or long touch sequences as taps", () => {
+    expect(isTapGesture({ x: 100, y: 100 }, { x: 120, y: 100 }, 180)).toBe(false);
+    expect(isTapGesture({ x: 100, y: 100 }, { x: 103, y: 102 }, 700)).toBe(false);
+  });
+
+  it("enables mobile Owner mode only for touch-first coarse no-hover contexts", () => {
+    expect(shouldEnableMobileOwnerMode({ maxTouchPoints: 5, coarsePointer: true, hoverNone: true })).toBe(true);
+    expect(shouldEnableMobileOwnerMode({ maxTouchPoints: 10, coarsePointer: false, hoverNone: false })).toBe(false);
+    expect(shouldEnableMobileOwnerMode({ maxTouchPoints: 0, coarsePointer: true, hoverNone: true })).toBe(false);
+    expect(shouldEnableMobileOwnerMode({ maxTouchPoints: 5, coarsePointer: true, hoverNone: false })).toBe(false);
   });
 });
