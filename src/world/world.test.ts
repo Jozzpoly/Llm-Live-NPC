@@ -142,7 +142,8 @@ describe("P1 World", () => {
         id: "yard.table.top",
         label: "Yard work table top",
         relation: "on",
-        bounds: { x: 690, y: 510, width: 120, height: 44 }
+        bounds: { x: 690, y: 510, width: 120, height: 44 },
+        supportBlockerId: "yard.table"
       }
     ]);
 
@@ -151,7 +152,8 @@ describe("P1 World", () => {
         id: "yard.table.top",
         label: "Yard work table top",
         relation: "on",
-        bounds: { x: 690, y: 510, width: 120, height: 44 }
+        bounds: { x: 690, y: 510, width: 120, height: 44 },
+        supportBlockerId: "yard.table"
       }
     ]);
     expect(world.placementSitesAt({ x: 650, y: 532 })).toEqual([]);
@@ -168,7 +170,8 @@ describe("P1 World", () => {
     expect(world.placementSitesAt({ x: 750, y: 532 })[0]).toMatchObject({
       id: "yard.table.top",
       label: "Yard work table top",
-      bounds: { x: 690, y: 510, width: 120, height: 44 }
+      bounds: { x: 690, y: 510, width: 120, height: 44 },
+      supportBlockerId: "yard.table"
     });
   });
 
@@ -186,5 +189,127 @@ describe("P1 World", () => {
       "aaa.experimental-overlap",
       "yard.table.top"
     ]);
+  });
+
+  it("accepts a fitting item on the authored table site while ignoring only its support blocker", () => {
+    const world = new World(createP1Specimen());
+
+    expect(world.validatePlacementTarget("item.mug", { x: 750, y: 532 })).toEqual({
+      status: "accepted",
+      itemId: "item.mug",
+      position: { x: 750, y: 532 },
+      support: { kind: "site", siteId: "yard.table.top", relation: "on" }
+    });
+  });
+
+  it("rejects a site target when the full item footprint would hang outside the authored surface", () => {
+    const world = new World(createP1Specimen());
+
+    expect(world.validatePlacementTarget("item.mug", { x: 695, y: 532 })).toEqual({
+      status: "rejected",
+      itemId: "item.mug",
+      position: { x: 695, y: 532 },
+      code: "item_does_not_fit_site",
+      candidateSiteIds: ["yard.table.top"]
+    });
+  });
+
+  it("does not let an authored site hide unrelated blocker collisions", () => {
+    const specimen = createP1Specimen();
+    specimen.blockers.push({
+      id: "experimental.table-obstacle",
+      label: "Experimental obstacle",
+      bounds: { x: 744, y: 526, width: 12, height: 12 },
+      occludesVision: false
+    });
+    const world = new World(specimen);
+
+    expect(world.validatePlacementTarget("item.mug", { x: 750, y: 532 })).toEqual({
+      status: "rejected",
+      itemId: "item.mug",
+      position: { x: 750, y: 532 },
+      code: "blocked",
+      candidateSiteIds: ["yard.table.top"],
+      blockingBlockerIds: ["experimental.table-obstacle"]
+    });
+  });
+
+  it("accepts ordinary clear ground and rejects blocked or out-of-world targets", () => {
+    const world = new World(createP1Specimen());
+
+    expect(world.validatePlacementTarget("item.mug", { x: 600, y: 700 })).toEqual({
+      status: "accepted",
+      itemId: "item.mug",
+      position: { x: 600, y: 700 },
+      support: { kind: "ground", relation: "on" }
+    });
+
+    expect(world.validatePlacementTarget("item.mug", { x: 1037, y: 617 })).toEqual({
+      status: "rejected",
+      itemId: "item.mug",
+      position: { x: 1037, y: 617 },
+      code: "blocked",
+      blockingBlockerIds: ["grove.tree.1"]
+    });
+
+    expect(world.validatePlacementTarget("item.mug", { x: 4, y: 200 })).toEqual({
+      status: "rejected",
+      itemId: "item.mug",
+      position: { x: 4, y: 200 },
+      code: "outside_world"
+    });
+  });
+
+  it("rejects ambiguous authored sites instead of hiding a priority rule", () => {
+    const specimen = createP1Specimen();
+    specimen.placementSites.push({
+      id: "aaa.experimental-overlap",
+      label: "Experimental overlap",
+      relation: "on",
+      bounds: { x: 700, y: 520, width: 100, height: 24 },
+      supportBlockerId: "yard.table"
+    });
+    const world = new World(specimen);
+
+    expect(world.validatePlacementTarget("item.mug", { x: 750, y: 532 })).toEqual({
+      status: "rejected",
+      itemId: "item.mug",
+      position: { x: 750, y: 532 },
+      code: "ambiguous_site",
+      candidateSiteIds: ["aaa.experimental-overlap", "yard.table.top"]
+    });
+  });
+
+  it("rejects invalid item/position inputs without mutating world state", () => {
+    const world = new World(createP1Specimen());
+    const snapshotBefore = world.snapshot();
+    const eventsBefore = world.recentEvents(128);
+    const actionBefore = world.lastActionResult();
+
+    expect(world.validatePlacementTarget("player.jozz", { x: 600, y: 700 })).toMatchObject({
+      status: "rejected",
+      code: "item_not_found"
+    });
+    expect(world.validatePlacementTarget("item.mug", { x: Number.NaN, y: 700 })).toMatchObject({
+      status: "rejected",
+      code: "invalid_position"
+    });
+    expect(world.validatePlacementTarget("item.mug", { x: 750, y: 532 })).toMatchObject({
+      status: "accepted",
+      support: { kind: "site", siteId: "yard.table.top", relation: "on" }
+    });
+
+    expect(world.snapshot()).toEqual(snapshotBefore);
+    expect(world.recentEvents(128)).toEqual(eventsBefore);
+    expect(world.lastActionResult()).toEqual(actionBefore);
+  });
+
+  it("fails fast when an authored placement site references missing support geometry", () => {
+    const specimen = createP1Specimen();
+    specimen.placementSites[0]!.supportBlockerId = "missing.blocker";
+
+    expect(() => new World(specimen)).toThrow(
+      "Placement site yard.table.top references missing support blocker: missing.blocker"
+    );
   });
 });

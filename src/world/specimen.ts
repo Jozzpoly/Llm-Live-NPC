@@ -74,7 +74,8 @@ const placementSites: PlacementSite[] = [
     id: "yard.table.top",
     label: "Yard work table top",
     relation: "on",
-    bounds: { x: 690, y: 510, width: 120, height: 44 }
+    bounds: { x: 690, y: 510, width: 120, height: 44 },
+    supportBlockerId: "yard.table"
   }
 ];
 

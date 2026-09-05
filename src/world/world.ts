@@ -4,6 +4,7 @@ import type {
   ItemEntity,
   LocationId,
   PlacementSite,
+  PlacementTargetValidation,
   PlayerEntity,
   Vec2,
   WorldActionResult,
@@ -34,6 +35,15 @@ function containsPoint(bounds: Aabb, point: Vec2): boolean {
     point.x <= bounds.x + bounds.width &&
     point.y >= bounds.y &&
     point.y <= bounds.y + bounds.height
+  );
+}
+
+function circleFitsWithinAabb(point: Vec2, radius: number, bounds: Aabb): boolean {
+  return (
+    point.x - radius >= bounds.x &&
+    point.x + radius <= bounds.x + bounds.width &&
+    point.y - radius >= bounds.y &&
+    point.y + radius <= bounds.y + bounds.height
   );
 }
 
@@ -101,6 +111,13 @@ export class World {
     this.blockers = structuredClone(specimen.blockers);
     this.locations = structuredClone(specimen.locations);
     this.placementSites = structuredClone(specimen.placementSites);
+
+    const blockerIds = new Set(this.blockers.map((blocker) => blocker.id));
+    for (const site of this.placementSites) {
+      if (site.supportBlockerId && !blockerIds.has(site.supportBlockerId)) {
+        throw new Error(`Placement site ${site.id} references missing support blocker: ${site.supportBlockerId}`);
+      }
+    }
 
     for (const entity of structuredClone(specimen.entities)) {
       if (this.entities.has(entity.id)) throw new Error(`Duplicate entity id: ${entity.id}`);
@@ -173,10 +190,100 @@ export class World {
       .sort((a, b) => a.id.localeCompare(b.id));
   }
 
+  validatePlacementTarget(itemId: EntityId, position: Vec2): PlacementTargetValidation {
+    const target = { x: position.x, y: position.y };
+    if (!Number.isFinite(target.x) || !Number.isFinite(target.y)) {
+      return { status: "rejected", itemId, position: target, code: "invalid_position" };
+    }
+
+    const entity = this.entities.get(itemId);
+    if (!entity || entity.kind !== "item") {
+      return { status: "rejected", itemId, position: target, code: "item_not_found" };
+    }
+
+    if (
+      target.x - entity.radius < 0 ||
+      target.x + entity.radius > this.width ||
+      target.y - entity.radius < 0 ||
+      target.y + entity.radius > this.height
+    ) {
+      return { status: "rejected", itemId, position: target, code: "outside_world" };
+    }
+
+    const candidateSites = this.placementSitesAt(target);
+    if (candidateSites.length > 1) {
+      return {
+        status: "rejected",
+        itemId,
+        position: target,
+        code: "ambiguous_site",
+        candidateSiteIds: candidateSites.map((site) => site.id)
+      };
+    }
+
+    const site = candidateSites[0];
+    if (site) {
+      if (!circleFitsWithinAabb(target, entity.radius, site.bounds)) {
+        return {
+          status: "rejected",
+          itemId,
+          position: target,
+          code: "item_does_not_fit_site",
+          candidateSiteIds: [site.id]
+        };
+      }
+
+      const blockingBlockerIds = this.blockingBlockerIds(target, entity.radius, site.supportBlockerId);
+      if (blockingBlockerIds.length > 0) {
+        return {
+          status: "rejected",
+          itemId,
+          position: target,
+          code: "blocked",
+          candidateSiteIds: [site.id],
+          blockingBlockerIds
+        };
+      }
+
+      return {
+        status: "accepted",
+        itemId,
+        position: target,
+        support: { kind: "site", siteId: site.id, relation: site.relation }
+      };
+    }
+
+    const blockingBlockerIds = this.blockingBlockerIds(target, entity.radius);
+    if (blockingBlockerIds.length > 0) {
+      return {
+        status: "rejected",
+        itemId,
+        position: target,
+        code: "blocked",
+        blockingBlockerIds
+      };
+    }
+
+    return {
+      status: "accepted",
+      itemId,
+      position: target,
+      support: { kind: "ground", relation: "on" }
+    };
+  }
+
   hasLineOfSight(start: Vec2, end: Vec2): boolean {
     return !this.blockers.some(
       (blocker) => blocker.occludesVision && segmentIntersectsAabb(start, end, blocker.bounds)
     );
+  }
+
+  private blockingBlockerIds(position: Vec2, radius: number, ignoredBlockerId?: string): string[] {
+    return this.blockers
+      .filter((blocker) => blocker.id !== ignoredBlockerId)
+      .filter((blocker) => pointHitsExpandedAabb(position, radius, blocker.bounds))
+      .map((blocker) => blocker.id)
+      .sort((a, b) => a.localeCompare(b));
   }
 
   private player(): PlayerEntity {
