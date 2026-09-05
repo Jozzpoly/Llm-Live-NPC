@@ -39,6 +39,26 @@ function requestFixture(fetchableItemIds: string[] = ["item.mug"]): E1CycleReque
   };
 }
 
+function nestedToolCall(name: string, args: Record<string, unknown> = {}) {
+  return {
+    choices: [
+      {
+        message: {
+          tool_calls: [
+            {
+              type: "function",
+              function: {
+                name,
+                arguments: JSON.stringify(args)
+              }
+            }
+          ]
+        }
+      }
+    ]
+  };
+}
+
 function makeEnv(result: unknown, captured: unknown[]): E1AgentEnv {
   return {
     AI: {
@@ -57,11 +77,11 @@ function makeEnv(result: unknown, captured: unknown[]): E1AgentEnv {
 }
 
 describe("E1 Worker cognition boundary", () => {
-  it("offers only wait plus allow-listed fetch and forwards the bounded temporal change", async () => {
+  it("uses the live-proven function wrapper, accepts nested Granite tool output and forwards bounded temporal change", async () => {
     const captured: unknown[] = [];
     const env = makeEnv(
       {
-        tool_calls: [{ name: "fetch", arguments: { targetId: "item.mug" } }],
+        ...nestedToolCall("fetch", { targetId: "item.mug" }),
         usage: { total_tokens: 12 }
       },
       captured
@@ -87,13 +107,29 @@ describe("E1 Worker cognition boundary", () => {
 
     const input = captured[0] as {
       messages?: Array<{ role?: string; content?: string }>;
-      tools?: Array<Record<string, unknown>>;
+      tools?: Array<{
+        type?: string;
+        function?: {
+          name?: string;
+          parameters?: {
+            type?: string;
+            properties?: { targetId?: { type?: string; description?: string } };
+            required?: string[];
+            additionalProperties?: unknown;
+          };
+        };
+      }>;
     };
-    expect(input.tools?.map((tool) => tool.name)).toEqual(["wait", "fetch"]);
-    const fetchTool = input.tools?.find((tool) => tool.name === "fetch") as
-      | { parameters?: { properties?: { targetId?: { enum?: string[] } } } }
-      | undefined;
-    expect(fetchTool?.parameters?.properties?.targetId?.enum).toEqual(["item.mug"]);
+    expect(input.tools?.map((tool) => tool.type)).toEqual(["function", "function"]);
+    expect(input.tools?.map((tool) => tool.function?.name)).toEqual(["wait", "fetch"]);
+    const fetchTool = input.tools?.find((tool) => tool.function?.name === "fetch");
+    expect(fetchTool?.function?.parameters).toMatchObject({
+      type: "object",
+      required: ["targetId"],
+      properties: { targetId: { type: "string" } }
+    });
+    expect(fetchTool?.function?.parameters?.properties?.targetId?.description).toContain("item.mug");
+    expect(fetchTool?.function?.parameters?.additionalProperties).toBeUndefined();
 
     const userContent = input.messages?.find((message) => message.role === "user")?.content ?? "";
     expect(userContent).toContain("item_holder_changed");
@@ -102,12 +138,9 @@ describe("E1 Worker cognition boundary", () => {
     expect(userContent).not.toContain("hidden");
   });
 
-  it("rejects a model tool call for a target outside the request allow-list", async () => {
+  it("rejects a nested model tool call for a target outside the request allow-list", async () => {
     const captured: unknown[] = [];
-    const env = makeEnv(
-      { tool_calls: [{ name: "fetch", arguments: { targetId: "item.hidden" } }] },
-      captured
-    );
+    const env = makeEnv(nestedToolCall("fetch", { targetId: "item.hidden" }), captured);
 
     const response = await handleE1AgentDecision(
       new Request("https://example.test/api/agent/e1/decide", {
@@ -126,7 +159,7 @@ describe("E1 Worker cognition boundary", () => {
 
   it("does not expose fetch at all when perception has no legal item target", async () => {
     const captured: unknown[] = [];
-    const env = makeEnv({ tool_calls: [{ name: "wait", arguments: {} }] }, captured);
+    const env = makeEnv(nestedToolCall("wait"), captured);
     const request = requestFixture([]);
     request.observedChanges = [];
 
@@ -140,13 +173,16 @@ describe("E1 Worker cognition boundary", () => {
     );
 
     expect(response.status).toBe(200);
-    const input = captured[0] as { tools?: Array<Record<string, unknown>> };
-    expect(input.tools?.map((tool) => tool.name)).toEqual(["wait"]);
+    const input = captured[0] as {
+      tools?: Array<{ type?: string; function?: { name?: string } }>;
+    };
+    expect(input.tools?.map((tool) => tool.type)).toEqual(["function"]);
+    expect(input.tools?.map((tool) => tool.function?.name)).toEqual(["wait"]);
   });
 
   it("rejects a forged fetch allow-list that is not backed by a visible free item", async () => {
     const captured: unknown[] = [];
-    const env = makeEnv({ tool_calls: [{ name: "wait", arguments: {} }] }, captured);
+    const env = makeEnv(nestedToolCall("wait"), captured);
     const forged = requestFixture(["item.hidden"]);
 
     const response = await handleE1AgentDecision(
@@ -162,13 +198,25 @@ describe("E1 Worker cognition boundary", () => {
     expect(captured).toHaveLength(0);
   });
 
-  it("rejects multiple tool calls instead of silently taking the first", async () => {
+  it("rejects multiple nested tool calls instead of silently taking the first", async () => {
     const captured: unknown[] = [];
     const env = makeEnv(
       {
-        tool_calls: [
-          { name: "fetch", arguments: { targetId: "item.mug" } },
-          { name: "wait", arguments: {} }
+        choices: [
+          {
+            message: {
+              tool_calls: [
+                {
+                  type: "function",
+                  function: { name: "fetch", arguments: JSON.stringify({ targetId: "item.mug" }) }
+                },
+                {
+                  type: "function",
+                  function: { name: "wait", arguments: "{}" }
+                }
+              ]
+            }
+          }
         ]
       },
       captured
@@ -184,5 +232,24 @@ describe("E1 Worker cognition boundary", () => {
     );
 
     expect(response.status).toBe(502);
+  });
+
+  it("keeps the legacy top-level result parser as a compatibility fallback", async () => {
+    const captured: unknown[] = [];
+    const env = makeEnv(
+      { tool_calls: [{ name: "fetch", arguments: { targetId: "item.mug" } }] },
+      captured
+    );
+
+    const response = await handleE1AgentDecision(
+      new Request("https://example.test/api/agent/e1/decide", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(requestFixture())
+      }),
+      env
+    );
+
+    expect(response.status).toBe(200);
   });
 });
