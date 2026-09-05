@@ -29,29 +29,18 @@ jobs:
       - name: Verify self-contained preview upload path
         run: npm run deploy:preview -- --dry-run
 
-      - name: Diagnose exact E1 cycle-one response
+      - name: Inspect raw Granite two-tool completion
         if: github.head_ref == 'evidence/e1-live-cognition-probe'
         env:
-          E1_PREVIEW_URL: https://3f3ad665-llm-live-npc.jozzpoly.workers.dev
+          E1_EVIDENCE_PREVIEW_URL: https://386a0678-llm-live-npc.jozzpoly.workers.dev
         shell: bash
         run: |
-          rm -f /tmp/e1-body.json
-          status="$(curl --silent --show-error \
-            -o /tmp/e1-body.json \
-            -w '%{http_code}' \
-            -X POST "$E1_PREVIEW_URL/api/agent/e1/decide" \
-            -H 'content-type: application/json' \
-            --data-raw '{"cycleId":1,"trigger":"perception_changed","perception":{"tick":100,"observer":{"id":"npc.001","label":"NPC-001","locationId":"yard","locationLabel":"Common Yard","heldItemId":null},"visibleEntities":[{"id":"player.jozz","kind":"player","label":"Jozz","distance":80,"direction":{"x":-1,"y":0},"heldItemId":null},{"id":"item.mug","kind":"item","label":"Red mug","distance":41,"direction":{"x":-1,"y":0},"heldBy":null}],"fetchableItemIds":["item.mug"]},"observedChanges":[{"kind":"item_holder_changed","itemId":"item.mug","previousHolderId":"player.jozz","holderId":null}],"previousExperience":null}')"
-          body="$(cat /tmp/e1-body.json)"
-          echo "E1 cycle 1 HTTP: $status"
-          echo "E1 cycle 1 response: $body"
-          STATUS="$status" BODY="$body" node - <<'NODE'
-          const status = Number(process.env.STATUS);
-          const body = JSON.parse(process.env.BODY);
-          if (status !== 200 || body.ok !== true) {
-            throw new Error(`Diagnostic cycle-one response HTTP ${status}: ${process.env.BODY}`);
-          }
-          if (body.decision?.kind !== "fetch" || body.decision?.targetId !== "item.mug") {
-            throw new Error(`Expected fetch(item.mug), received: ${process.env.BODY}`);
-          }
+          response="$(curl --fail-with-body --silent --show-error \
+            -X POST "$E1_EVIDENCE_PREVIEW_URL/api/agent/e1/schema-probe")"
+          echo "E1 raw two-tool response: $response"
+          RESPONSE="$response" node - <<'NODE'
+          const response = JSON.parse(process.env.RESPONSE);
+          if (response.ok !== true) throw new Error(`Two-tool diagnostic failed: ${process.env.RESPONSE}`);
+          if (!response.gatewayLogId) throw new Error(`Missing Gateway provenance: ${process.env.RESPONSE}`);
+          if (!response.result) throw new Error(`Missing raw Granite result: ${process.env.RESPONSE}`);
           NODE
