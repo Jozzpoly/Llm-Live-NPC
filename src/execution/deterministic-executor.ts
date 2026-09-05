@@ -69,13 +69,12 @@ export class DeterministicExecutor {
     const dx = target.position.x - actor.position.x;
     const dy = target.position.y - actor.position.y;
     const distance = Math.hypot(dx, dy);
+    if (!Number.isFinite(distance)) {
+      this.fail("invalid_target_geometry");
+      return {};
+    }
 
     if (distance > APPROACH_DISTANCE) {
-      if (!Number.isFinite(distance) || distance <= 0) {
-        this.fail("invalid_target_geometry");
-        return {};
-      }
-
       return {
         control: {
           actorId: actor.id,
