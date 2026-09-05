@@ -33,6 +33,7 @@ describe("P1 World", () => {
 
     expect(left.snapshot()).toEqual(right.snapshot());
     expect(left.recentEvents(128)).toEqual(right.recentEvents(128));
+    expect(left.lastActionResult()).toEqual(right.lastActionResult());
   });
 
   it("keeps the player outside authored blockers", () => {
@@ -44,7 +45,7 @@ describe("P1 World", () => {
     expect(player.position.y).toBeCloseTo(420, 5);
   });
 
-  it("supports pickup and drop as world-authoritative events", () => {
+  it("supports pickup and drop as world-authoritative events with separate action outcomes", () => {
     const world = new World(createP1Specimen());
 
     stepMany(world, 37, { moveX: 0, moveY: 1 });
@@ -53,10 +54,22 @@ describe("P1 World", () => {
 
     expect(playerSnapshot(world).heldItemId).toBe("item.mug");
     expect(world.recentEvents(20).some((event) => event.type === "item.picked_up" && event.entityId === "item.mug")).toBe(true);
+    expect(world.lastActionResult()).toMatchObject({
+      action: "interact",
+      status: "succeeded",
+      code: "picked_up_item",
+      targetId: "item.mug"
+    });
 
     world.step({ moveX: 0, moveY: 0, dropPressed: true });
     expect(playerSnapshot(world).heldItemId).toBeNull();
     expect(world.recentEvents(20).some((event) => event.type === "item.dropped" && event.entityId === "item.mug")).toBe(true);
+    expect(world.lastActionResult()).toMatchObject({
+      action: "drop",
+      status: "succeeded",
+      code: "dropped_item",
+      targetId: "item.mug"
+    });
   });
 
   it("derives line-of-sight from world occluders, including the workshop doorway", () => {
@@ -66,7 +79,7 @@ describe("P1 World", () => {
     expect(world.hasLineOfSight({ x: 900, y: 300 }, { x: 1100, y: 300 })).toBe(true);
   });
 
-  it("does not allow a direct pickup through an occluding wall", () => {
+  it("rejects pickup through an occluder without inventing a semantic world event", () => {
     const specimen = createP1Specimen();
     const player = specimen.entities.find((entity) => entity.id === "player.jozz");
     const hammer = specimen.entities.find((entity) => entity.id === "item.hammer");
@@ -78,9 +91,46 @@ describe("P1 World", () => {
     const world = new World(specimen);
     expect(world.hasLineOfSight(player.position, hammer.position)).toBe(false);
 
+    const semanticEventsBefore = world.recentEvents(128);
     world.step({ moveX: 0, moveY: 0, interactPressed: true });
 
     expect(playerSnapshot(world).heldItemId).toBeNull();
-    expect(world.recentEvents(10).at(-1)?.type).toBe("interaction.failed");
+    expect(world.recentEvents(128)).toEqual(semanticEventsBefore);
+    expect(world.lastActionResult()).toMatchObject({
+      action: "interact",
+      status: "rejected",
+      code: "no_interactable"
+    });
+  });
+
+  it("does not let repeated empty interact presses pollute semantic world history", () => {
+    const world = new World(createP1Specimen());
+    const semanticEventsBefore = world.recentEvents(128);
+
+    for (let index = 0; index < 20; index += 1) {
+      world.step({ moveX: 0, moveY: 0, interactPressed: true });
+    }
+
+    expect(world.recentEvents(128)).toEqual(semanticEventsBefore);
+    expect(world.lastActionResult()).toMatchObject({
+      seq: 20,
+      action: "interact",
+      status: "rejected",
+      code: "no_interactable"
+    });
+  });
+
+  it("rejects dropping while empty without adding a semantic world event", () => {
+    const world = new World(createP1Specimen());
+    const semanticEventsBefore = world.recentEvents(128);
+
+    world.step({ moveX: 0, moveY: 0, dropPressed: true });
+
+    expect(world.recentEvents(128)).toEqual(semanticEventsBefore);
+    expect(world.lastActionResult()).toMatchObject({
+      action: "drop",
+      status: "rejected",
+      code: "not_holding_item"
+    });
   });
 });
