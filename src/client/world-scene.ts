@@ -1,7 +1,15 @@
 import * as Phaser from "phaser";
 import { createP1Specimen } from "../world/specimen";
 import { World } from "../world/world";
-import type { Aabb, EntityId, Vec2, WorldEntity, WorldEvent, WorldSnapshot } from "../world/types";
+import type {
+  Aabb,
+  EntityId,
+  Vec2,
+  WorldActionResult,
+  WorldEntity,
+  WorldEvent,
+  WorldSnapshot
+} from "../world/types";
 import {
   interpolationAlpha,
   resolveInterpolatedEntityPositions
@@ -46,6 +54,7 @@ export interface WorldDebugState {
   pointerProbeVisible: boolean;
   pointerInsideCanvas: boolean;
   pointerTarget: PointerTargetSample | null;
+  lastActionResult: WorldActionResult | null;
   events: WorldEvent[];
 }
 
@@ -526,6 +535,7 @@ export class WorldScene extends Phaser.Scene {
       pointerProbeVisible: this.pointerProbeVisible,
       pointerInsideCanvas: this.pointerInsideCanvas,
       pointerTarget: this.pointerTarget,
+      lastActionResult: this.world.lastActionResult(),
       events: this.world.recentEvents(10).reverse()
     });
   }
