@@ -50,7 +50,7 @@ describe("mobile Owner-test controls", () => {
     expect(incrementalPinchScale(0, 100)).toBe(1);
   });
 
-  it("recognizes a short stable touch as a tap candidate even if joystick dead-zone was crossed", () => {
+  it("keeps a short stable touch tap-eligible even after crossing the joystick dead zone", () => {
     expect(joystickVector(6, 0, 40, 0.08).x).toBeGreaterThan(0);
     expect(isTapGesture({ x: 100, y: 100 }, { x: 106, y: 100 }, 180)).toBe(true);
   });
@@ -65,6 +65,7 @@ describe("mobile Owner-test controls", () => {
       shouldEnableMobileOwnerMode({ maxTouchPoints: 5, coarsePointer: true, hoverNone: true })
     ).toBe(true);
 
+    // Touch-capable desktop: touch hardware exists, but the primary pointer remains fine/hovering.
     expect(
       shouldEnableMobileOwnerMode({ maxTouchPoints: 10, coarsePointer: false, hoverNone: false })
     ).toBe(false);
