@@ -58,7 +58,7 @@ export default {
               },
               { role: "user", content: prompt }
             ],
-            max_tokens: 96,
+            max_completion_tokens: 96,
             temperature: 0.2
           },
           {
