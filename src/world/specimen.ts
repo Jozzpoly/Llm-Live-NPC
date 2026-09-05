@@ -1,4 +1,4 @@
-import type { Blocker, LocationZone, WorldEntity, WorldSpecimen } from "./types";
+import type { Blocker, LocationZone, PlacementSite, WorldEntity, WorldSpecimen } from "./types";
 
 const entities: WorldEntity[] = [
   {
@@ -69,6 +69,15 @@ const locations: LocationZone[] = [
   { id: "north-path", label: "North Path", bounds: { x: 490, y: 40, width: 380, height: 140 } }
 ];
 
+const placementSites: PlacementSite[] = [
+  {
+    id: "yard.table.top",
+    label: "Yard work table top",
+    relation: "on",
+    bounds: { x: 690, y: 510, width: 120, height: 44 }
+  }
+];
+
 export function createP1Specimen(): WorldSpecimen {
   return {
     width: 1440,
@@ -76,6 +85,7 @@ export function createP1Specimen(): WorldSpecimen {
     playerSpeed: 190,
     entities: structuredClone(entities),
     blockers: structuredClone(blockers),
-    locations: structuredClone(locations)
+    locations: structuredClone(locations),
+    placementSites: structuredClone(placementSites)
   };
 }
