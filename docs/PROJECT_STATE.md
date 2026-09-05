@@ -8,222 +8,245 @@ Can a lightweight LLM-driven NPC become a believable resident of a game world by
 
 Durable boundary:
 
-`WORLD → PERCEPTION → NPC COGNITION/MEMORY → INTENTION → VALIDATED EXECUTION → WORLD`
+`WORLD → PERCEPTION → COGNITION/MEMORY → INTENTION → VALIDATED EXECUTION → WORLD`
 
-The LLM may propose intent. The game world remains authoritative about what exists, what an NPC can perceive, whether an action is legal/possible, and what actually happened.
+The LLM may eventually propose intent. The world remains authoritative about what exists, what an actor can perceive, whether an action is legal/possible, and what actually happened.
 
 ## Current stage
 
-**P1 — domain-first playable world slice. Active, deployed to preview, not yet Owner-qualified.**
+**P1 refoundation — active integration line, deliberately before LLM cognition.**
 
-Active branch:
+Integration branch:
 
 `p1/playable-world-slice`
 
-Draft PR:
+Integration PR:
 
-`#3 — Build P1 domain-first playable world slice`
+`#3 — P1 integration — refound world before cognition`
 
-P1 exists to establish a small, inspectable world with its own truth before autonomous LLM cognition is added.
+`main` remains the proven P0 cloud/AI transport baseline. P1 is intentionally not merged to `main` yet.
 
-## P0 closure — PASS
+The project is no longer trying to rush from a minimal playable world directly into LLM behavior. Owner hands-on evidence showed that the world, interaction contracts, debug surface, representation, perception and non-LLM execution substrate need a substantial but staged refoundation first.
 
-Canonical P0 production main after model-transport qualification:
+## P0 — CLOSED / PASS
+
+Canonical P0 production main:
 
 `f207419ee87c03979544d2d579e624f043300bbc`
-
-Cloudflare production version:
-
-`2e71d9e8-67fc-4398-9e08-63c43083903e`
 
 P0 proved:
 
 - GitHub → Cloudflare deployment works;
 - Worker + Static Assets work;
-- `env.AI` reaches Workers AI through AI Gateway;
-- usage/neuron accounting is observable;
-- Gateway log IDs are exposed for correlation;
-- the transport seam can normalize at least two real Workers AI response shapes;
-- a model can be replaced without changing the project’s world/cognition contract.
+- Workers AI is reachable through AI Gateway;
+- Gateway log IDs and model usage/neuron accounting are observable;
+- at least two free Cloudflare-hosted models return usable completions through a replaceable transport seam;
+- different native response shapes can be normalized without changing world/cognition contracts.
 
-Important negative evidence retained:
+Important negative evidence retained: GLM-4.7-Flash exhausted both 96-token and 256-token bounded probes on reasoning without visible content. This falsified it as a sensible trivial transport probe, not as a model in general.
 
-- `@cf/zai-org/glm-4.7-flash` exhausted a 96-token completion budget on reasoning and returned no visible content;
-- a second Owner run with `reasoning_effort=low` and a 256-token completion budget again ended `finishReason=length`, with `content=null`, latency `2905 ms`, and `9.5769 neurons`;
-- this falsified GLM as a sensible trivial transport probe, not GLM as a model in general.
+Owner-qualified transport examples:
 
-P0 transport qualification then passed 2/2 candidates in one Owner run:
+- Granite 4.0 H Micro: 1637 ms, 0.17467461 neurons, usable completion PASS;
+- Llama 3.2 3B Instruct: 162 ms, 0.7781149744987488 neurons, usable completion PASS.
 
-### Granite 4.0 H Micro
+No final NPC model has been selected.
 
-- model: `@cf/ibm-granite/granite-4.0-h-micro`;
-- latency: `1637 ms`;
-- total tokens: `63`;
-- usage: `0.17467461 neurons`;
-- output shape: `openai-choices`;
-- Gateway log: `01M1RTZ2CGW4E9CRD1KXPTHT1G`;
-- usable completion: **PASS**.
+## P1 foundation that is worth keeping
 
-### Llama 3.2 3B Instruct
-
-- model: `@cf/meta/llama-3.2-3b-instruct`;
-- latency: `162 ms`;
-- total tokens: `90`;
-- usage: `0.7781149744987488 neurons`;
-- output shape: `workers-ai-response`;
-- Gateway log: `01M1RTZ3Y63M16N8C5M8Y5ZYGB`;
-- usable completion: **PASS**.
-
-These numbers are transport evidence only. They do not select the final NPC model.
-
-## P1 current implementation
-
-### Stack boundary
-
-Current bounded choice:
+Current bounded stack:
 
 - TypeScript;
-- Vite 8;
-- official Cloudflare Vite plugin;
-- Phaser 4.2.1 for rendering, camera and browser input;
-- independent project-owned `World` domain for canonical state;
-- Vitest for pure domain tests.
+- Vite 8 + official Cloudflare Vite plugin;
+- Phaser 4.2.1 for presentation, camera and browser input;
+- project-owned `World` domain as canonical state;
+- Vitest for pure domain tests;
+- Cloudflare non-production preview builds.
 
-No Phaser Arcade Physics and no Box2D are used in P1. Physics remains an open later qualification, to be added only if it buys meaningful player ↔ NPC ↔ world interaction.
+The durable client boundary is:
 
-Phaser is deliberately not canonical world state:
+`browser input → action/command seam → World → WorldSnapshot → Phaser presentation`
 
-`browser input → World.step() → WorldSnapshot → Phaser presentation`
+Phaser is not canonical world state. This remains one of the strongest P1 decisions and is intentionally preserved through the refoundation.
 
-The renderer never directly mutates entity truth.
+Current world specimen is approximately `1440 × 900` with Common Yard, Workshop, Cottage, Grove and North Path; player Jozz; one static NPC shell; a hammer, mug and lantern; blockers/doorways/table/trees; fixed-step 30 Hz simulation; world-owned movement/collision; pickup/drop; location events; and a deterministic geometric LOS probe.
 
-### World specimen
+No Box2D/Arcade Physics is currently required. Physics remains an open later qualification, to be introduced only if it buys meaningful player ↔ NPC ↔ world interaction.
 
-The current authored slice is approximately `1440 × 900` and contains:
+## Owner evidence from first P1 hands-on sessions
 
-- named locations: Common Yard, Workshop, Cottage, Grove, North Path;
-- player `Jozz`;
-- static `NPC-001` shell;
-- hammer, red mug and lantern;
-- authored walls, doorway gaps, a table and trees;
-- movement and collision owned by the World domain;
-- pickup/drop owned by the World domain;
-- semantic event history;
-- deterministic line-of-sight derived from authored occluders;
-- interaction range constrained by both distance and world LOS;
-- fixed-step world simulation at 30 Hz, decoupled from browser render cadence;
-- queued E/Q edge inputs so interaction events are not lost between render frames and fixed world steps.
+### What works well enough to preserve
 
-### World Inspector
+- the browser world runs reliably on a real Cloudflare preview;
+- world size is sufficient for the initial laboratory; future expansion can grow outward around the village rather than replacing it;
+- movement and authored collision behave consistently;
+- pickup/drop alter canonical world state and semantic event history;
+- geometry-derived LOS reacts to occluders/doorways;
+- World Inspector exposes useful live state;
+- presentation remains replaceable because it consumes snapshots;
+- mouse-wheel zoom and the ability to hide visual debug/labels improved usability.
 
-The P1 browser shell exposes:
+### What remains materially inadequate
 
-- world tick;
-- player position;
-- current named location;
-- held item;
-- NPC → player line-of-sight state;
-- NPC distance;
-- recent semantic world events;
-- visual NPC/player LOS line and debug radius.
+- the world still reads primarily as a technical diagram rather than a convincing place;
+- presentation/debug needs a large professional lifting before serious embodied-agent experimentation;
+- debug controls should live mainly in a compact in-app workspace/buttons/tabs, not rely on keyboard shortcuts;
+- automatic item drop gives the Owner almost no spatial agency and cannot intentionally place an object on the table;
+- there is not enough manipulable/world richness yet for meaningful free-play/destructive experimentation;
+- current NPC line/radius is only a 360-degree LOS probe and must not be treated as a sight system;
+- future sight requires deliberate research/design around facing, FOV, range, occlusion and temporal acquired/lost/last-seen state;
+- chat should become a grounded world speech stimulus with location and voice intensity/range before it becomes an LLM conversation system;
+- hearing needs its own causal/debuggable model rather than being inferred from chat proximity;
+- behavior between high-level LLM decisions needs a non-LLM execution substrate before autonomy is attempted.
 
-LLM cognition is explicitly disabled in P1.
+The project therefore remains intentionally **pre-cognition**.
 
-## P1 automated evidence
+## P1.1 representation/camera iteration — QUALITATIVE IMPROVEMENT, NOT CLOSURE
 
-The first P1 implementation exposed and corrected two apparatus/code issues before Owner testing:
+P1.1 added only presentation-side changes:
 
-1. strict TypeScript caught a nullable DOM-root closure;
-2. Vitest initially inherited the Cloudflare Vite plugin and tried to start a remote AI proxy in CI. A separate pure-node `vitest.config.ts` now keeps domain tests independent from Cloudflare credentials/runtime.
+- bounded mouse-wheel camera zoom;
+- separate visual debug and label visibility controls;
+- reduced always-on label clutter;
+- clearer naming of the existing system as an LOS probe rather than NPC sight.
 
-After correction, CI proved:
+Owner judgement: **better, but still far below the desired professional/experimental quality bar.** This iteration validated the direction of making debug optional and layered, but did not solve the wider representation problem.
 
-- locked dependency install with `npm ci` — **PASS**;
-- strict TypeScript — **PASS**;
-- domain determinism — **PASS**;
-- authored collision boundary — **PASS**;
-- pickup/drop authoritative events — **PASS**;
-- workshop doorway LOS — **PASS**;
-- no pickup through an occluding wall — **PASS**;
-- Vite Worker build — **PASS**;
-- Vite client build — **PASS**;
-- exact self-contained preview path `vite build → wrangler versions upload --dry-run` — **PASS**.
+## R1a action/event hygiene — CLOSED / PASS
 
-The preview dry-run confirms that Wrangler follows `.wrangler/deploy/config.json`, uses generated `dist/llm_live_npc/wrangler.json`, sees the `dist/client` assets, and preserves the AI plus rate-limit bindings.
+Micro-PR:
 
-Current client bundle observation: approximately `1.39 MB` minified / `362 kB gzip`, dominated by the full Phaser runtime. This is a non-blocking P1 optimization signal, not yet a reason to optimize or change renderer.
+`#4 — R1a — separate action outcomes from world events`
 
-## Toolchain hardening completed during P1
+Merged into P1 as:
 
-P1 is the first real client toolchain, so the earlier dependency reproducibility debt was resolved here:
+`882dd49713c024bd3e03853a95588c9a3b64eede`
 
-- `package-lock.json` is committed (npm lockfile v3);
-- CI uses `npm ci` rather than unconstrained `npm install`;
-- Node remains pinned to major `22`;
-- top-level packages remain exact-version pinned;
-- GitHub Actions use current Node24-based `actions/checkout@v6` and `actions/setup-node@v6`;
-- repo exposes self-contained `npm run deploy:preview`, defined as `vite build && wrangler versions upload`.
+R1a introduced a critical semantic boundary:
 
-## Cloudflare preview deployment — PASS
+- `WorldEvent` = a fact that actually happened in the simulated world;
+- `WorldActionResult` = the result of an attempted action, including rejection.
 
-Owner-provided build logs first resolved why non-production preview failed: Workers Builds executed its version command (`npx wrangler versions upload`) without first generating the Vite output config. Wrangler therefore read the input `wrangler.jsonc` and correctly rejected its Vite-managed `assets` object because the generated `directory` did not yet exist.
+Rejected/empty `E` and `Q` attempts no longer pollute semantic world history. Successful pickup/drop still emit semantic world events and also return action outcomes. NPC interaction request is currently an action result, not fabricated world history.
 
-The root config was intentionally **not** patched with a hard-coded `assets.directory`. Instead P1 now owns a self-contained preview contract:
+Automated evidence includes:
 
-`npm run deploy:preview`
+- empty `E` repeated 20× leaves semantic event history unchanged;
+- empty `Q` leaves semantic event history unchanged;
+- pickup through an occluder is rejected without inventing a world event;
+- successful pickup/drop still create correct world events + action outcomes;
+- determinism includes the action result channel.
 
-which executes:
+Owner runtime gate confirmed all intended R1a behavior. R1a is closed.
 
-`vite build && wrangler versions upload`
+This boundary is considered important for future LLM integration: a proposed/failed intent must never masquerade as something that actually happened.
 
-CI validates that exact path with `--dry-run` and passes.
+## Refoundation working method
 
-The Owner then set the Cloudflare Workers Builds **Version command** to:
+The previous tendency to combine camera, placement, sight, hearing, chat and debug into one large revision was explicitly rejected.
 
-`npm run deploy:preview`
+From now on:
 
-while keeping:
+1. `p1/playable-world-slice` is the P1 integration line;
+2. each bounded refoundation problem gets a short branch + PR targeting P1;
+3. every microstage starts with fresh design/research appropriate to that problem;
+4. implementation scope stays narrow;
+5. automated evidence is followed by a focused Owner/runtime gate when useful;
+6. only qualified work is integrated into P1;
+7. the next microstage is redesigned after reviewing the newest evidence rather than mechanically following an old plan.
 
-- Build command: `npm run build --if-present`;
-- production Deploy command: `npx wrangler deploy`;
-- production branch: `main`;
-- non-production branch builds: enabled;
-- root directory: `/`.
+The goal is not process for its own sake. The goal is to spend more reasoning on each foundational contract while keeping blast radius and Owner attention small.
 
-A fresh non-production build on branch head `ab17f430d96eb8ea7618617e1912edefd57ef54d` passed both GitHub CI and Cloudflare Workers Builds.
+## Current-best refoundation map — directional, not a frozen roadmap
 
-Cloudflare preview evidence:
+The following sequence expresses current dependencies and priorities. Later stages may split, move or disappear after new evidence.
 
-- Build ID: `f6c49160-90f5-4caf-958e-37f83b948e54`;
-- Version ID: `5706c9c9-670d-4f36-8586-3772d6e80e58`;
-- immutable preview: `https://5706c9c9-llm-live-npc.jozzpoly.workers.dev`;
-- branch alias: `https://p1-playable-world-slice-llm-live-npc.jozzpoly.workers.dev`;
-- Workers Build: **PASS**;
-- GitHub validation: **PASS**.
+### R1 — action / interaction foundation
 
-This closes the P1 deployment blocker. The next gate is now genuinely hands-on world evaluation, not infrastructure work.
+- **R1a — action outcomes vs world events: CLOSED / PASS.**
+- R1b candidate — explicit actor command/action envelope rather than letting raw key-edge booleans become the semantic action interface.
+- R1c candidate — affordance/context query: what can this actor meaningfully attempt here, and why?
 
-## P1 closure contract
+### R2 — debug workspace shell
 
-P1 is not closed and PR #3 must not merge until:
+Compact in-app debug controls/tabs/buttons; world remains primary visual surface; overlays independently controllable.
 
-1. locked CI + exact preview upload dry-run remain green — **PROVEN**;
-2. Cloudflare non-production preview serves the P1 Vite/Phaser deployment — **DEPLOYMENT PROVEN; browser rendering still needs Owner confirmation**;
-3. Owner can enter the preview and move around the authored world — **OPEN**;
-4. authored blockers visibly constrain movement — **OPEN Owner runtime evidence**;
-5. Owner can pick up/drop at least one object and see semantic events change — **OPEN**;
-6. NPC LOS visibly changes across an occluder/doorway and agrees with the inspector — **OPEN**;
-7. no runtime evidence contradicts the domain-world/presentation boundary — **OPEN**.
+### R3 — camera + pointer/world inspection contract
 
-Natural boundary after a P1 PASS: review Owner feedback before adding LLM cognition. Do not mechanically proceed to P2 if the world itself is too weak, awkward or poorly inspectable to support meaningful embodied-agent experiments.
+Refine zoom/focus and establish reliable screen↔world pointer conversion for later inspection and placement. Presentation/input only.
 
-## Remaining non-blocking foundation debt
+### R4 — presentation architecture / art-readiness qualification
+
+Research before implementation. Establish the smallest useful boundary for map authoring, tiles/sprites/animation/lighting and richer visual representation without contaminating world truth. Avoid a speculative graphics framework.
+
+### R5 — authored interaction semantics
+
+Explicit interactables/affordances/support surfaces and semantic geometry independent from appearance.
+
+### R6 — controlled object placement
+
+Targeted placement with visual preview, reach/occlusion/collision validation, and first real support surface such as the table.
+
+### R7/R8 — sight research/design then bounded implementation
+
+Facing/orientation, FOV, range, occlusion, temporal state and visual debugging. Current LOS probe is only donor evidence and must not automatically become the sight architecture.
+
+### R9/R10 — speech stimulus then hearing
+
+Text/voice-mode input becomes a grounded world event/stimulus with source position/intensity/range. Hearing remains independently testable and explainable.
+
+### R11 — unified perception inspector
+
+Expose what the NPC currently perceives, what was gained/lost, and why; define the exact observation seam cognition will consume.
+
+### R12 — non-LLM NPC execution substrate
+
+Exercise high-level intents deterministically/scripted before LLM autonomy: move, face, inspect, pick, place, wait, speak; action queues, interruption/completion and outcome feedback; behavior between sparse high-level decisions.
+
+### R13 — cognition-readiness gate
+
+Only then decide whether the project is mature enough for the first meaningful:
+
+`WORLD → PERCEPTION → LLM → INTENT → VALIDATED EXECUTION → WORLD`
+
+experiment.
+
+## Immediate frontier
+
+**Do not implement R1b yet.**
+
+The next work is a planning/design pass that must reconsider R1b and R1c in the context of the whole refoundation:
+
+- what is the smallest durable action contract shared by player input, scripted NPC execution and future LLM intents?
+- which layer owns action identity, actor, target/position, parameters and request correlation?
+- what belongs in an action request, validation result, execution state, semantic world event and transient UI feedback?
+- do we need an explicit command envelope now, or would that be premature abstraction before authored affordances/placement exist?
+- should R1b and R1c remain separate, merge, or be reordered with the debug/pointer work?
+- what minimum action/execution semantics are required to avoid redesign when non-LLM NPC control arrives later?
+
+The next implementation decision must come from this analysis, not from the current candidate labels.
+
+## P1 closure principle
+
+P1 is not a checklist of the original minimal prototype anymore. It closes only when the laboratory is a credible substrate for embodied-agent experiments:
+
+- world truth and action semantics are coherent;
+- interaction gives sufficient agency to create meaningful situations;
+- representation is readable enough that Owner judgement is not dominated by prototype crudity;
+- debug/perception apparatus is first-class and causally useful;
+- sight/hearing observation contracts are grounded and inspectable;
+- a non-LLM execution layer can carry high-level intents over time;
+- there is no obvious foundational reason to distrust the first cognition experiment.
+
+This does **not** require a finished game, production art, multiplayer, a large world, advanced physics or a final NPC model.
+
+## Non-blocking foundation debt
 
 - generated Wrangler binding/runtime types are not yet canonicalized;
-- the fixed public AI qualification endpoint still has only a lightweight Cloudflare rate limiter, not hard auth/global budget enforcement;
+- public AI qualification endpoint still has a lightweight rate limiter rather than hard auth/global budget enforcement;
 - Cloudflare Access state is not canonicalized;
-- the current Cloudflare build token is named after another project and should later be replaced with a dedicated `llm-live-npc` token if its scope/provenance warrants cleanup;
+- current Cloudflare build token is named after another project and should later become project-specific if scope/provenance warrants cleanup;
 - no persistence/database/multiplayer exists;
 - no final model selection exists.
 
-Do not let these expand P1 unless hands-on evidence makes one of them necessary.
+Do not allow these debts to expand the active microstage without direct evidence that they matter.
