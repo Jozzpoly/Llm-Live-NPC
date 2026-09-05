@@ -25,10 +25,17 @@ describe("mobile Owner-test controls", () => {
     expect(movement.y).toBeGreaterThan(0);
   });
 
-  it("maps joystick offsets with a dead zone and clamped radius", () => {
+  it("maps joystick offsets through a continuous dead zone and clamps full travel", () => {
     expect(joystickVector(3, 2, 40)).toEqual({ x: 0, y: 0 });
-    const full = joystickVector(80, 0, 40);
-    expect(full).toEqual({ x: 1, y: 0 });
+    expect(joystickVector(4, 0, 40)).toEqual({ x: 0, y: 0 });
+    expect(joystickVector(22, 0, 40).x).toBeCloseTo(0.5);
+    expect(joystickVector(80, 0, 40)).toEqual({ x: 1, y: 0 });
+  });
+
+  it("preserves joystick direction while remapping magnitude", () => {
+    const vector = joystickVector(30, 40, 50, 0.08);
+    expect(vector.x / vector.y).toBeCloseTo(0.75);
+    expect(Math.hypot(vector.x, vector.y)).toBeCloseTo(1);
   });
 
   it("turns pinch distance changes into bounded incremental zoom scale", () => {
