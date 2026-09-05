@@ -56,7 +56,43 @@ export interface PlacementSite {
   label: string;
   relation: PlacementRelation;
   bounds: Aabb;
+  supportBlockerId?: string;
 }
+
+export type PlacementSupport =
+  | {
+      kind: "ground";
+      relation: "on";
+    }
+  | {
+      kind: "site";
+      siteId: string;
+      relation: PlacementRelation;
+    };
+
+export type PlacementTargetRejectionCode =
+  | "invalid_position"
+  | "item_not_found"
+  | "outside_world"
+  | "ambiguous_site"
+  | "item_does_not_fit_site"
+  | "blocked";
+
+export type PlacementTargetValidation =
+  | {
+      status: "accepted";
+      itemId: EntityId;
+      position: Vec2;
+      support: PlacementSupport;
+    }
+  | {
+      status: "rejected";
+      itemId: EntityId;
+      position: Vec2;
+      code: PlacementTargetRejectionCode;
+      candidateSiteIds?: string[];
+      blockingBlockerIds?: string[];
+    };
 
 export interface WorldSpecimen {
   width: number;
