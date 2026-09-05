@@ -114,6 +114,10 @@ export interface WorldInput {
   moveY: number;
 }
 
+export interface ActorControlInput extends WorldInput {
+  actorId: EntityId;
+}
+
 export type WorldActionRequest =
   | {
       action: "interact";
