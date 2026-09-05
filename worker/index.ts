@@ -1,13 +1,19 @@
 const BOOTSTRAP_MODEL = "@cf/zai-org/glm-4.7-flash";
 const GATEWAY_ID = "default";
+const SMOKE_PROMPT = "Reply with exactly one short sentence confirming that LLM Live NPC cognition is online.";
 
 interface AiBinding {
   run(model: string, input: unknown, options?: unknown): Promise<unknown>;
   aiGatewayLogId?: string;
 }
 
+interface RateLimitBinding {
+  limit(options: { key: string }): Promise<{ success: boolean }>;
+}
+
 interface Env {
   AI: AiBinding;
+  AI_SMOKE_LIMITER: RateLimitBinding;
 }
 
 interface CompletionShape {
@@ -75,15 +81,17 @@ export default {
         return json({ error: "Method not allowed" }, { status: 405 });
       }
 
-      let prompt = "Reply with exactly one short sentence confirming that LLM Live NPC cognition is online.";
-
-      try {
-        const body = (await request.json()) as { prompt?: unknown };
-        if (typeof body?.prompt === "string" && body.prompt.trim()) {
-          prompt = body.prompt.trim().slice(0, 1000);
-        }
-      } catch {
-        // Empty/invalid JSON is fine for the bounded smoke probe.
+      const rateLimit = await env.AI_SMOKE_LIMITER.limit({ key: "p0-ai-smoke" });
+      if (!rateLimit.success) {
+        return json(
+          {
+            ok: false,
+            inferenceReached: false,
+            usableCompletion: false,
+            error: "P0 AI smoke rate limit exceeded."
+          },
+          { status: 429 }
+        );
       }
 
       try {
@@ -97,7 +105,7 @@ export default {
                 content:
                   "You are a bounded infrastructure smoke probe for an embodied-NPC research laboratory. Follow the requested output directly and concisely."
               },
-              { role: "user", content: prompt }
+              { role: "user", content: SMOKE_PROMPT }
             ],
             reasoning_effort: "low",
             max_completion_tokens: 256,
