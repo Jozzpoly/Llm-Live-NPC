@@ -1,5 +1,9 @@
 import * as Phaser from "phaser";
-import { DeterministicExecutor, type ExecutorStatus } from "../execution/deterministic-executor";
+import {
+  DeterministicExecutor,
+  type ExecutorState,
+  type ExecutorStatus
+} from "../execution/deterministic-executor";
 import { ExecutionDriver } from "../execution/execution-driver";
 import { createP1Specimen } from "../world/specimen";
 import { World } from "../world/world";
@@ -52,7 +56,10 @@ export interface WorldDebugState {
   npcDistance: number;
   entityCount: number;
   executorStatus: ExecutorStatus;
+  executorActorId: EntityId | null;
   executorTargetId: EntityId | null;
+  executorStepsUsed: number;
+  executorStepBudget: number;
   executorFailureCode: string | null;
   cameraZoom: number;
   debugOverlayVisible: boolean;
@@ -229,12 +236,15 @@ export class WorldScene extends Phaser.Scene {
     this.pointerProbeVisible = !this.pointerProbeVisible;
   }
 
-  startNpcFetchLanternTask(): void {
+  startNpcFetchLanternTask(): ExecutorState {
     this.npcExecutor.start({
       kind: "approach-and-interact",
       actorId: "npc.001",
       targetId: "item.lantern"
     });
+    const state = this.npcExecutor.state();
+    this.emitDebugState(this.currentPresentationSnapshot);
+    return state;
   }
 
   zoomByScale(scale: number): void {
@@ -554,7 +564,10 @@ export class WorldScene extends Phaser.Scene {
       npcDistance: Math.hypot(npc.position.x - player.position.x, npc.position.y - player.position.y),
       entityCount: snapshot.entities.length,
       executorStatus: executorState.status,
+      executorActorId: executorState.task?.actorId ?? null,
       executorTargetId: executorState.task?.targetId ?? null,
+      executorStepsUsed: executorState.stepsUsed,
+      executorStepBudget: executorState.stepBudget,
       executorFailureCode: executorState.failureCode,
       cameraZoom: this.cameras.main.zoom,
       debugOverlayVisible: this.debugOverlayVisible,

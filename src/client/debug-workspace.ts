@@ -1,10 +1,11 @@
+import type { ExecutorState } from "../execution/deterministic-executor";
 import type { WorldDebugState } from "./world-scene";
 
 export interface DebugWorkspaceActions {
   toggleLabels(): void;
   toggleLosProbe(): void;
   togglePointerProbe(): void;
-  startNpcFetchLantern(): void;
+  startNpcFetchLantern(): ExecutorState;
 }
 
 type ValueNode = HTMLElement;
@@ -50,10 +51,14 @@ export class DebugWorkspace {
   private readonly losValue: ValueNode;
   private readonly distanceValue: ValueNode;
   private readonly entitiesValue: ValueNode;
+  private readonly executorTriggerValue: ValueNode;
   private readonly executorStatusValue: ValueNode;
+  private readonly executorActorValue: ValueNode;
   private readonly executorTargetValue: ValueNode;
+  private readonly executorProgressValue: ValueNode;
   private readonly executorFailureValue: ValueNode;
   private readonly actionKindValue: ValueNode;
+  private readonly actionActorValue: ValueNode;
   private readonly actionTargetValue: ValueNode;
   private readonly actionOutcomeValue: ValueNode;
   private readonly eventsList: HTMLUListElement;
@@ -133,12 +138,14 @@ export class DebugWorkspace {
     const actionSection = this.section("Last action outcome");
     const actionMetrics = element("div", "debug-metrics");
     const actionKind = metricRow("action");
+    const actionActor = metricRow("actor");
     const actionTarget = metricRow("target");
     const actionOutcome = metricRow("outcome");
     this.actionKindValue = actionKind.value;
+    this.actionActorValue = actionActor.value;
     this.actionTargetValue = actionTarget.value;
     this.actionOutcomeValue = actionOutcome.value;
-    actionMetrics.append(actionKind.row, actionTarget.row, actionOutcome.row);
+    actionMetrics.append(actionKind.row, actionActor.row, actionTarget.row, actionOutcome.row);
     actionSection.append(
       actionMetrics,
       element("p", "debug-note", "Attempt outcome only — rejected actions are intentionally not semantic World Events.")
@@ -146,24 +153,33 @@ export class DebugWorkspace {
 
     const npcSection = this.section("NPC-001 executor");
     const npcControlRow = element("div", "debug-control-row");
-    this.npcTaskButton = this.toggleButton("Fetch lantern", null, () => this.actions.startNpcFetchLantern());
+    this.npcTaskButton = this.toggleButton("Fetch lantern", null, () => this.startNpcFetchLantern());
     npcControlRow.append(this.npcTaskButton);
     const npcMetrics = element("div", "debug-metrics");
+    const executorTrigger = metricRow("trigger ack");
     const executorStatus = metricRow("task status");
+    const executorActor = metricRow("task actor");
     const executorTarget = metricRow("task target");
+    const executorProgress = metricRow("progress");
     const executorFailure = metricRow("failure");
     const los = metricRow("raw LOS to player");
     const distance = metricRow("distance to player");
     const entities = metricRow("entities");
+    this.executorTriggerValue = executorTrigger.value;
     this.executorStatusValue = executorStatus.value;
+    this.executorActorValue = executorActor.value;
     this.executorTargetValue = executorTarget.value;
+    this.executorProgressValue = executorProgress.value;
     this.executorFailureValue = executorFailure.value;
     this.losValue = los.value;
     this.distanceValue = distance.value;
     this.entitiesValue = entities.value;
     npcMetrics.append(
+      executorTrigger.row,
       executorStatus.row,
+      executorActor.row,
       executorTarget.row,
+      executorProgress.row,
       executorFailure.row,
       los.row,
       distance.row,
@@ -172,7 +188,7 @@ export class DebugWorkspace {
     npcSection.append(
       npcControlRow,
       npcMetrics,
-      element("p", "debug-note", "B2 bounded apparatus: deterministic approach + explicit World interaction. No LLM, pathfinding or sight model.")
+      element("p", "debug-note", "B2 bounded apparatus: deterministic approach + explicit World interaction. Trigger acknowledgement comes from executor state, not button state. No LLM, pathfinding or sight model.")
     );
 
     const eventsSection = this.section("Recent world events");
@@ -209,13 +225,16 @@ export class DebugWorkspace {
 
     const action = state.lastActionResult;
     this.actionKindValue.textContent = action?.action ?? "none";
+    this.actionActorValue.textContent = action?.actorId ?? "—";
     this.actionTargetValue.textContent = action?.targetId ?? "—";
     this.actionOutcomeValue.textContent = action ? `${action.status} · ${action.code}` : "—";
     this.actionOutcomeValue.classList.toggle("pass", action?.status === "succeeded");
     this.actionOutcomeValue.classList.toggle("blocked", action?.status === "rejected");
 
     this.executorStatusValue.textContent = state.executorStatus;
+    this.executorActorValue.textContent = state.executorActorId ?? "—";
     this.executorTargetValue.textContent = state.executorTargetId ?? "—";
+    this.executorProgressValue.textContent = `${state.executorStepsUsed}/${state.executorStepBudget} steps`;
     this.executorFailureValue.textContent = state.executorFailureCode ?? "—";
     this.executorStatusValue.classList.toggle("pass", state.executorStatus === "succeeded");
     this.executorStatusValue.classList.toggle("blocked", state.executorStatus === "failed");
@@ -244,6 +263,16 @@ export class DebugWorkspace {
       collapsed ? "Expand debug workspace" : "Collapse debug workspace"
     );
     this.collapseButton.setAttribute("aria-expanded", String(!collapsed));
+  }
+
+  private startNpcFetchLantern(): void {
+    const state = this.actions.startNpcFetchLantern();
+    const task = state.task;
+    this.executorTriggerValue.textContent = task
+      ? `accepted · ${state.status} · ${task.actorId} → ${task.targetId}`
+      : `accepted · ${state.status}`;
+    this.executorTriggerValue.classList.toggle("pass", state.status === "running");
+    this.executorTriggerValue.classList.toggle("blocked", state.status === "failed");
   }
 
   private section(title: string): HTMLElement {
