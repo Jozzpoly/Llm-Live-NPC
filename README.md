@@ -8,39 +8,45 @@ Core research question:
 
 ## Current state
 
-P0 infrastructure is live on Cloudflare. The first production deployment and first real Workers AI call both succeeded at the infrastructure level. The initial 96-token model probe exhausted its completion budget on reasoning before producing visible content, so P0 is now being hardened rather than prematurely expanded into the game stack.
+**P0 is qualified.** GitHub → Cloudflare deployment, Workers AI through AI Gateway, usage/log correlation, and a replaceable two-shape model transport seam have all been proven with live Owner tests.
+
+Two early `@cf/zai-org/glm-4.7-flash` probes were deliberately retained as negative evidence: the model exhausted 96- and 256-token completion budgets on reasoning without visible content. A bounded follow-up qualification then produced usable completions from both `@cf/ibm-granite/granite-4.0-h-micro` and `@cf/meta/llama-3.2-3b-instruct` through the same transport seam.
+
+This **does not select the final NPC model**. The next stage is P1: establish a small playable top-down world with independent domain truth and an inspectable event stream before autonomous cognition is added.
 
 Canonical compact state and evidence: [`docs/PROJECT_STATE.md`](docs/PROJECT_STATE.md).
 
-## P0 infrastructure contract
+## Infrastructure contract
 
 - GitHub `main` is production source of truth.
 - Cloudflare Worker serves the laboratory and API.
 - Static assets are served by Workers Static Assets.
 - Workers AI is available through the `AI` binding.
 - AI requests are routed through Cloudflare AI Gateway using the `default` gateway for observability.
-- The AI endpoint is an infrastructure probe, not the NPC cognition architecture.
-- Game/render/physics architecture remains intentionally uncommitted until P0 closes.
+- AI probe endpoints are infrastructure evidence, not the NPC cognition architecture.
+- The model seam remains replaceable; Granite/Llama qualification is not a canonical model decision.
 
-## Endpoints
+## Current endpoints
 
-- `/` — bootstrap laboratory page
+- `/` — bootstrap / qualification laboratory page
 - `/api/health` — Worker/AI-binding readiness
-- `/api/ai/smoke` — bounded Workers AI smoke request
+- `/api/ai/qualify` — fixed-input two-model transport qualification
+- `/api/ai/smoke` — retired GLM smoke route (`410 Gone`)
 
 Production laboratory:
 
 `https://llm-live-npc.jozzpoly.workers.dev`
 
-## Current model probe
+## Qualified P0 transport candidates
 
-`@cf/zai-org/glm-4.7-flash`
+- `@cf/ibm-granite/granite-4.0-h-micro`
+- `@cf/meta/llama-3.2-3b-instruct`
 
-This is a replaceable bootstrap choice, not a canonical project model.
+Both returned usable completions through AI Gateway in the same bounded Owner qualification run. See `docs/PROJECT_STATE.md` for exact latency, token, neuron and Gateway-log evidence.
 
 ## Toolchain
 
-The hardening branch pins:
+Current top-level versions:
 
 - Node `22`;
 - Wrangler `4.129.0`;
@@ -63,4 +69,4 @@ For the current zero-build bootstrap:
 - Production branch: `main`
 - non-production branch builds: enabled
 
-Cloudflare Workers Builds uses the Wrangler version declared in `package.json` when present. A generated dependency lockfile remains desirable before the project grows beyond this bootstrap.
+A committed dependency lockfile and generated Wrangler runtime/binding types are known foundation debt and should be addressed just-in-time as P1 introduces the real client toolchain.
