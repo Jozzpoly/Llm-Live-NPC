@@ -7,7 +7,7 @@
 }
 
 .mobile-owner-mode .game-shell {
-  height: 74dvh;
+  height: calc(100dvh - 72px);
   min-height: 0;
   grid-template-rows: 46px minmax(0, 1fr);
   border-radius: 14px;
@@ -203,7 +203,7 @@
   }
 
   .mobile-owner-mode .game-shell {
-    height: 76dvh;
+    height: calc(100dvh - 68px);
   }
 
   .mobile-joystick {
