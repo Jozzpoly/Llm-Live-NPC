@@ -1,201 +1,267 @@
 # LLM Live NPC — Project State
 
-Updated: 2026-09-05
+Updated: 2026-09-06
 
 ## Core question
 
-Can an LLM-driven NPC become a believable resident of a game world by receiving bounded perception, maintaining its own experience, and acting only through validated world mechanics rather than mutating world truth directly?
+Can an LLM-driven NPC become a believable resident of a game world by receiving bounded perception, maintaining its own experience/beliefs, and acting only through validated world mechanics rather than directly mutating world truth?
 
 Target loop:
 
 `WORLD → PERCEPTION → COGNITION/MEMORY → INTENTION → NON-LLM EXECUTION → VALIDATED WORLD ACTIONS → WORLD`
 
-The world remains authoritative about what exists, what can be perceived, what may be attempted and what actually happened.
+The `World` remains authoritative about what exists, what can be attempted and what actually happened. Future perception must also be derived from world truth rather than letting the model read arbitrary canonical state.
 
 ## Current stage
 
-**P1 refoundation — closure campaign before fresh-conversation takeover, intentionally pre-cognition.**
+**P1 pre-cognition refoundation is closed as a substrate and prepared for fresh takeover.**
 
-- branch: `p1/playable-world-slice`
-- integration PR: `#3 — P1 integration — refound world before cognition`
-- latest domain/behavior stage: **B1 minimal canonical actor facing**, PR #19 → `13c20f5e5f5d366a6c095af10582318e69532135`
-- latest closed interaction stage: **A2 explicit direct mouse/touch targeting**, PR #18 → `0c47f3779f832f4821b18938f8837c0ef6071545`
-- latest Owner-qualified usability stages: **M1 mobile Owner controls** + **M2 presentation interpolation**
-- latest visual stage: **R4c richer visual evidence slice**
-- `main` remains the proven P0 cloud/AI baseline until P1 is cognition-ready.
+Canonical integration line:
 
-## Proven foundation
+- branch: `p1/playable-world-slice`;
+- integration PR: `#3 — P1 integration — refound world before cognition`;
+- `main` intentionally remains the proven P0 cloud/AI baseline;
+- PR #3 remains draft: P1 is a qualified pre-cognition substrate, but perception/cognition itself has not yet been qualified.
 
-P0 proved GitHub → Cloudflare deployment, Worker + Static Assets, Workers AI through AI Gateway, usage/neuron accounting, Gateway correlation and replaceable model transport. No final NPC model is selected.
+Stable implementation checkpoints before the final docs-only handoff cleanup:
 
-P1 stack: TypeScript, Vite 8 + Cloudflare Vite plugin, Phaser 4.2.1 as presentation/camera/input shell, project-owned `World` as canonical simulation, Vitest domain/presentation tests and Cloudflare branch previews.
+- **B2 deterministic non-LLM NPC executor** — PR #20, Owner-qualified and merged into P1 at `5985a4f4353528899801e198321cadf3daa400cd`;
+- **bounded post-B2 technical-debt campaign** — PR #21, automated PASS and merged into P1 at `f25c48e65135007c8c58af730d954ec8d740bce0`.
 
-Durable boundary:
+The final handoff cleanup is documentation/workflow/repository grounding only. Fresh takeover must verify the live P1 head rather than assuming these implementation checkpoints are the final branch SHA.
 
-`human/controller adapters → continuous control + atomic action requests → World authority → WorldSnapshot → presentation`
+## What is now proven
 
-Phaser is not canonical world state.
+### P0 — cloud/model transport
 
-Current specimen: ~`1440 × 900`, Common Yard / Workshop / Cottage / Grove / North Path, Jozz, NPC-001, hammer/mug/lantern, authored blockers, contextual pickup/drop, explicit target interaction, canonical actor facing, locations, one placement site, placement target validation and a geometric LOS probe.
+P0 proved:
 
-## Owner judgement
+- GitHub → Cloudflare deployment;
+- Worker + Static Assets;
+- Workers AI through AI Gateway;
+- usage/neuron accounting and Gateway correlation;
+- a replaceable model transport seam.
 
-Worth preserving:
-- runtime/preview workflow is reliable;
-- initial world size is sufficient;
-- movement/collision and pickup/drop are coherent enough as a substrate;
-- zoom, overlays, Pointer probe and persistent Debug Workspace improved usability;
-- pointer→world targeting is stable enough across camera follow/zoom;
-- placement semantics/legality are world-owned rather than renderer heuristics;
-- R4c materially improved readability without contaminating `World`;
-- **mobile Owner testing is genuinely useful**: floating movement control, action buttons, portrait/landscape play viewport and pinch zoom support regular project work from a phone;
-- **presentation interpolation is a major qualitative improvement**: the previous stepping/teleporting was materially caused by sample-and-hold display of 30 Hz world positions. Interpolated presentation is strongly preferred by the Owner without a meaningful feel penalty in the current specimen;
-- **explicit direct targeting is now Owner-qualified on both mobile and desktop**: the player can point at a concrete item/NPC while `World` still owns range/LOS/state legality. The Owner-confirmed mug regression in the joystick capture region was fixed by gesture arbitration rather than by enlarging gameplay range;
-- mobile/desktop shell selection now distinguishes touch-first devices from touch-capable desktops, and the portrait mobile viewport uses materially more of the available screen.
+Two early `@cf/zai-org/glm-4.7-flash` probes are retained as negative evidence: they exhausted bounded completion budgets on reasoning without visible content. `@cf/ibm-granite/granite-4.0-h-micro` and `@cf/meta/llama-3.2-3b-instruct` both produced usable bounded completions through the same transport seam.
 
-Current visual decision:
-- **R4c is enough cosmetic work for now.** Future major graphical change should enter through the proven presentation seam / later authored-map pipeline without contaminating `World`.
+**No final NPC model has been selected.**
 
-Mobile decision:
-- mobile is a supported **Owner-test/play surface**, not a separate game fork;
-- touch and keyboard are adapters into the same human-control/action path;
-- direct tap and floating joystick coexist through bounded gesture arbitration; pinch remains distinct;
-- future text/chat/LLM interaction should reuse this shell rather than require a separate mobile architecture, but no final conversation UI is designed yet.
+### P1 — world/presentation substrate
 
-Material deficiencies:
-- automatic `Q` drop still gives too little spatial agency;
-- controlled placement execution and persistent item↔support relation do not exist;
-- deterministic non-LLM temporal actor execution does not exist;
-- current LOS is not NPC sight;
-- sight still needs FOV/range/occlusion/temporal state built on the now-canonical facing substrate;
-- chat must become grounded speech stimulus before LLM conversation;
-- hearing needs independent causal/debuggable propagation.
+Current specimen: approximately `1440 × 900`, with Common Yard / Workshop / Cottage / Grove / North Path, Jozz, NPC-001, hammer/mug/lantern, authored blockers, locations, one semantic placement site and geometric LOS inspection.
 
-Repo-hygiene debt already known for the later bounded cleanup campaign:
-- three accidental empty refs created during B1 tool use: `tmp-do-not-use`, `tmp-do-not-use-2`, `tmp-stop`. They contain no unique implementation and must be deleted during cleanup if the available tooling permits it.
+P1 proves:
 
-## Closed refoundation / usability stages
+- project-owned TypeScript `World` as canonical simulation truth;
+- Phaser as presentation/camera/input shell rather than authority;
+- fixed 30 Hz world truth with presentation interpolation between authoritative snapshots;
+- deterministic blocker collision and canonical actor facing;
+- contextual and explicit item/NPC interaction with causal `WorldActionResult`;
+- semantic `WorldEvent` only when a world fact actually occurs;
+- direct mouse/touch target selection without presentation code bypassing world legality;
+- world-owned placement target validation as a non-mutating seam;
+- desktop and mobile Owner-test/play surfaces sharing the same world contracts;
+- persistent debug/inspection workspace with pointer, action, event and execution provenance.
 
-- **R1a action/event hygiene** — PR #4 → `882dd49713c024bd3e03853a95588c9a3b64eede`. `WorldEvent` = fact that happened; `WorldActionResult` = attempted-action outcome.
-- **R2a Debug Workspace** — PR #5 → `32b9dcbccaaf8d87d2ada02c9f85a48a51ff8376`.
-- **R4a presentation/art qualification** — PR #6 → `2b9ebae726eec7108b71115d62c2c74e950cee3e`. Tiled is current-best future authoring input, not runtime authority.
-- **R4b presentation seam** — PR #7 → `abef7653c128def3eddc507a1d89efcc49108708`. Pure visual resolvers + explicit visual strata.
-- **R3a pointer↔world targeting** — PR #8 → `c3ca2ae3cbfe23bd02299d4e4b3bb64770a35cdd` after Owner PASS.
-- **R5a placement-site semantics** — PR #9 → `2f286a6117742da7c1f532cfa48741c26f69059b`.
-- **R5b authored PlacementSite seam** — PR #10 → `51d19a191d89a81ed15e733bd60d1569a62caa13`.
-- **R6a non-mutating placement validation** — PR #11 → `6183d28410512634d822f73f44ef9d84d2dccfbd`.
-- **R4c richer visual evidence slice** — PR #12 → `a9d176b15d522c6a81dc370cab3d5ddd1c53b7e7` after automated + Owner runtime PASS.
-- **M1 mobile Owner-test controls** — PR #14 → `5e93d759769300afa63deac1323960ef313a5915` after iterative Owner REVISE→PASS. Touch viewport, floating joystick, Interact/Drop and pinch zoom remain human input adapters; zero `src/world` delta.
-- **M2 presentation interpolation** — PR #16 → `3a27365a7c2cd784b9cd1f1f135895fd4ffd65a1` after mobile A/B Owner qualification. `World` remains fixed 30 Hz; presentation interpolates previous/current authoritative snapshots.
-- **A1 explicit atomic action seam** — PR #17 → `bfee22c2bc35b6578cfedc46e15787c4cd639ef9`. `World.step(WorldInput)` carries continuous player control only; `World.attemptAction(WorldActionRequest)` owns atomic `interact/drop`. Explicit actor/target requests receive causal world-owned outcomes and never silently fall back to another target. Contextual E/mobile Interact remains an adapter into the same action seam. NPC-001 can use the same explicit pickup/drop substrate as the player, but still has no movement executor or autonomy.
-- **A2 explicit direct mouse/touch targeting** — PR #18 → `0c47f3779f832f4821b18938f8837c0ef6071545` after Owner REVISE→PASS. Presentation resolves the concrete rendered item/NPC the human intended; the resulting `targetId` is queued into the next fixed step and executed only through the A1 action seam. Touch hit ergonomics do not enlarge gameplay interaction range. Debug Workspace exposes Last Action Outcome separately from World Events. Owner also qualified corrected `tap ↔ joystick ↔ pinch` arbitration, touch-first mobile-mode detection and improved portrait viewport use.
-- **B1 minimal canonical actor facing** — PR #19 → `13c20f5e5f5d366a6c095af10582318e69532135`. Every player/NPC actor now carries required finite unit `facing` in canonical world state. Player facing follows normalized non-zero movement intent before collision resolution, so analog magnitude still controls speed while direction remains unit-length; zero input preserves the last facing and blocked movement does not erase orientation intent. NPC-001 has authored static facing until B2. Atomic interaction does not silently rotate actors. No sight/FOV or presentation rotation was introduced.
+### B2 — first embodied non-LLM actor task
+
+B2 proves the lower action/execution half of the intended agent loop:
+
+`explicit task → deterministic executor → actor control → World movement → validated atomic action → World outcome/event`
+
+The final fresh Owner gate on the deployed browser runtime demonstrated:
+
+1. executor started `idle`;
+2. Owner triggered `Fetch lantern` once;
+3. acknowledgement identified `npc.001 → item.lantern` and status became `running`;
+4. progress advanced while NPC-001 visibly moved in the browser world;
+5. NPC-001 reached interaction range and completed at `75/180` steps;
+6. Last Action Outcome identified `actor: npc.001`, `target: item.lantern`, `succeeded · picked_up_item`;
+7. the semantic event independently recorded `NPC-001 picked up Lantern`;
+8. the player did not create the apparent success.
+
+Important revision history: an earlier Owner recording was **rejected as invalid B2 evidence** because executor status remained `idle` and visible lantern manipulation belonged to `player.jozz`. That failure led to the shared `ExecutionDriver` and stronger provenance apparatus before the successful repeat gate.
+
+B2 implementation boundaries now include:
+
+- one canonical `ExecutionDriver` shared by browser runtime and headless evidence;
+- fixed-step execution only;
+- executor step budget in runtime state (`180` default);
+- causal failure codes rather than silent fallback;
+- player atomic actions occur before executor atomic action inside one driver frame;
+- continuous player/NPC controls are finite-validated before canonical world mutation;
+- `DeterministicExecutor` is explicitly an NPC executor and rejects non-NPC actors causally;
+- shared movement speed is named `actorSpeed`, reflecting the multi-actor substrate.
+
+## Owner judgement worth preserving
+
+- Runtime/preview workflow is reliable enough for frequent hands-on gates.
+- Initial world size is sufficient for the current research laboratory.
+- Movement/collision and pickup/drop are coherent enough as substrate, not final gameplay.
+- R4c visual treatment is enough cosmetic work for now; future art/map work should use the presentation/authoring seam rather than contaminate `World`.
+- Mobile Owner testing is genuinely useful: floating movement, action buttons, portrait/landscape viewport and pinch zoom support real project work from a phone.
+- Presentation interpolation was a material qualitative improvement over the earlier 30 Hz sample-and-hold stepping/teleporting.
+- Explicit direct targeting is Owner-qualified on desktop and mobile; touch ergonomics do not enlarge gameplay interaction range.
+- Debugging should keep answering **who did what, through which system, and why**, not merely expose raw numbers.
+- The B2 correction is an important methodological precedent: visible behavior alone is not enough when provenance can distinguish player/script/NPC execution.
+
+## Evidence boundaries / deliberately missing systems
+
+The following are **not proven and should not be inferred from B2**:
+
+- autonomous task selection;
+- LLM cognition or long-term memory;
+- NPC sight/FOV/range/temporal perception;
+- hearing or grounded speech propagation;
+- pathfinding/navmesh or generalized obstacle solving;
+- actor-actor collision;
+- generic behavior trees/task graphs;
+- controlled placement execution, persistent item↔support relation or full placement UX;
+- final conversation/chat UI;
+- final map authoring pipeline or large Tiled migration;
+- final NPC model choice.
+
+Current geometric `hasLineOfSight()` is a world geometry utility/inspection primitive, **not NPC sight**.
+
+The B2 approach behavior is intentionally naive direct movement. A blocker may cause it to stall until its explicit step budget fails. Do not describe this as pathfinding.
 
 ## Durable architecture
 
-### Presentation and motion
+### Authority and presentation
 
-Keep `World` independent from assets and authoring-tool specifics.
+`human/controller adapters → continuous control + atomic action requests → World authority → WorldSnapshot → presentation`
 
-Current-best future map direction:
+Phaser does not own canonical gameplay state.
 
-`Tiled authoring source → adapter/compiler → domain layout + presentation layout`
+Authoritative and visual cadence remain separate:
 
-Do not start a large Tiled migration or asset system until a concrete authored-map slice justifies its schema.
+`30 Hz World truth → previous/current authoritative snapshots → interpolated presentation`
 
-Authoritative simulation cadence and visual cadence are distinct concerns:
+Inspector/debug truth comes from canonical current state even when visuals are interpolated.
 
-`30 Hz World truth → previous/current snapshots → interpolated presentation`
+### Human input and interaction
 
-Inspector/debug truth remains sourced from canonical current state even when the rendered view is interpolated.
+Keyboard, mouse and touch are presentation-side adapters.
 
-### Human input and atomic interaction
+Continuous movement and atomic actions remain distinct contracts:
 
-Keyboard/touch/mouse are presentation-side human input adapters. Continuous movement and atomic world actions are separate contracts.
+`continuous player control → fixed-step ExecutionDriver / World`
 
-Current action seam:
+`atomic request { actorId, action, targetId? } → World.attemptAction(...) → causal WorldActionResult → WorldEvent only when a fact occurs`
 
-`continuous human control → World.step({ moveX, moveY })`
+Direct targeting proves:
 
-`atomic request { actorId, action, targetId? } → World.attemptAction(...) → causal WorldActionResult → WorldEvent only if a fact actually occurred`
+`mouse/touch → screen→world + presentation hit resolution → intended targetId → SAME World legality`
 
-Missing `targetId` is retained only for contextual legacy E/Interact target selection. Explicit target requests do not fall back to a nearer entity when rejected.
-
-A2 proves:
-
-`mouse/touch → screen→world + presentation hit resolution → intended targetId → SAME World.attemptAction(...) legality`
-
-Presentation determines what the human pointed at, using rendered/interpolated entity position and ergonomic screen-space hit radius. Canonical `World` determines whether that interaction is legal using canonical state, range and LOS.
-
-Touch gesture arbitration is deliberately separate from world semantics. Tiny touch jitter does not prematurely destroy a valid tap candidate; real drag beyond the tap threshold does, and pinch cancels tap candidates. Action buttons remain separate explicit controls.
+Presentation determines what the human pointed at. `World` determines whether the attempt is legal.
 
 ### Placement
 
 `Blocker` remains collision/vision geometry. `PlacementSite` is separate semantic placement geometry.
 
 Proven chain:
-1. reliable world target (R3a);
-2. authored semantic site/relation (R5a/R5b);
-3. world-owned non-mutating target legality (R6a);
-4. **not yet implemented:** execution, support persistence, event/outcome and player placement UI.
 
-Do not bypass R6a legality from UI or renderer code.
+1. reliable world target;
+2. authored semantic site/relation;
+3. world-owned non-mutating placement legality.
 
-### Behavior/execution
+Not yet implemented: controlled placement execution, persistent support relation, placement event/outcome and full player placement UX.
 
-Keep distinct:
+### Execution
+
+Keep these concepts distinct:
+
 1. continuous actor control;
 2. atomic validated world actions;
 3. durative actor tasks/execution;
 4. semantic world events;
-5. self/action outcomes.
+5. self/action outcomes;
+6. future perception/cognition/intention policy.
 
-A1 proves the atomic action substrate can be actor-agnostic enough for player and NPC item interaction. A2 proves a new human targeting adapter can use it without changing `World` legality.
+Current execution seam:
 
-B1 adds canonical orientation without designing behavior policy:
-- every `ActorEntity` has finite unit `facing`;
-- authored facing is validated rather than silently repaired;
-- player facing follows normalized movement intent, not realized velocity;
-- analog input magnitude still controls movement speed independently;
-- collision may prevent displacement without changing the actor's intended facing;
-- zero movement preserves prior facing;
-- NPC facing remains authored/static until B2;
-- atomic interaction does not auto-face targets.
+`task { actorId, targetId } → DeterministicExecutor → ExecutionDriver → World.stepWithActorControls(...) → World.attemptAction(...) → executor result`
 
-B1 still does **not** prove actor movement/execution; `World.step()` controls the player specimen only.
+Future LLM cognition should primarily propose bounded intentions/tasks. It should not directly mutate positions, inventory, events or other world truth.
 
-Future LLM cognition should mainly propose intents/tasks. A deterministic non-LLM executor should translate them into movement/control + validated atomic actions. Player/scripted/LLM provenance must not change legality.
+### Future map authoring
 
-## Closure campaign toward fresh takeover
+Current-best direction remains a hypothesis, not a committed runtime dependency:
 
-Feature work is intentionally converging rather than expanding P1 indefinitely. Current dependency scaffold, re-evaluated after every gate:
+`Tiled authoring source → adapter/compiler → domain layout + presentation layout`
 
-`A1 atomic action seam [CLOSED] → A2 direct human targeting [CLOSED] → B1 actor facing [CLOSED] → B2 deterministic non-LLM executor → one bounded technical-debt campaign → final repo/docs/workflow cleanup + takeover rehearsal`
+Do not start a large Tiled migration until a concrete authored-map experiment justifies the schema.
 
-After B2, feature work freezes unless a foundational blocker must be resolved. Sight, hearing, cognition, large placement UX, Tiled migration and additional art polish are deferred until after the fresh-conversation handoff.
+## Closed P1 stages
 
-The intended pre-cleanup milestone is not “finished NPC”. It is: **NPC-001 can perform a first deterministic embodied task such as approach a known item and attempt the same validated explicit interaction used by the player, without any LLM.**
+The following stages are closed evidence and should not be mechanically repeated during takeover:
+
+- **R1a action/event hygiene** — PR #4 → `882dd49713c024bd3e03853a95588c9a3b64eede`;
+- **R2a Debug Workspace** — PR #5 → `32b9dcbccaaf8d87d2ada02c9f85a48a51ff8376`;
+- **R4a presentation/art qualification** — PR #6 → `2b9ebae726eec7108b71115d62c2c74e950cee3e`;
+- **R4b presentation seam** — PR #7 → `abef7653c128def3eddc507a1d89efcc49108708`;
+- **R3a pointer↔world targeting** — PR #8 → `c3ca2ae3cbfe23bd02299d4e4b3bb64770a35cdd` after Owner PASS;
+- **R5a placement-site semantics** — PR #9 → `2f286a6117742da7c1f532cfa48741c26f69059b`;
+- **R5b authored PlacementSite seam** — PR #10 → `51d19a191d89a81ed15e733bd60d1569a62caa13`;
+- **R6a placement target validation** — PR #11 → `6183d28410512634d822f73f44ef9d84d2dccfbd`;
+- **R4c richer visual evidence slice** — PR #12 → `a9d176b15d522c6a81dc370cab3d5ddd1c53b7e7` after Owner PASS;
+- **M1 mobile Owner controls** — PR #14 → `5e93d759769300afa63deac1323960ef313a5915` after iterative Owner testing;
+- **M2 presentation interpolation** — PR #16 → `3a27365a7c2cd784b9cd1f1f135895fd4ffd65a1` after Owner A/B qualification;
+- **A1 explicit atomic action seam** — PR #17 → `bfee22c2bc35b6578cfedc46e15787c4cd639ef9`;
+- **A2 explicit direct mouse/touch targeting** — PR #18 → `0c47f3779f832f4821b18938f8837c0ef6071545` after Owner REVISE→PASS;
+- **B1 minimal canonical actor facing** — PR #19 → `13c20f5e5f5d366a6c095af10582318e69532135`;
+- **B2 deterministic non-LLM NPC executor** — PR #20 → merged P1 checkpoint `5985a4f4353528899801e198321cadf3daa400cd` after revision campaign + fresh deployed Owner PASS;
+- **bounded post-B2 technical-debt campaign** — PR #21 → merged P1 checkpoint `f25c48e65135007c8c58af730d954ec8d740bce0`, automated PASS.
+
+## Repo / workflow status
+
+Validation workflow remains intentionally simple:
+
+- Node 22;
+- `npm ci --ignore-scripts --no-audit --no-fund`;
+- `npm run check` = TypeScript + Vitest + Vite build;
+- `npm run deploy:preview -- --dry-run` verifies the self-contained preview path;
+- Cloudflare non-production branch builds provide deployed previews.
+
+The final workflow review found no reason to change this contract.
+
+Known low-risk repo-hygiene residue:
+
+- accidental branches `tmp-do-not-use`, `tmp-do-not-use-2`, `tmp-stop` still exist;
+- they contain no unique implementation and are not canonical;
+- the currently available GitHub write tooling can create/move branches but does not expose branch deletion, so cleanup must not pretend they were removed.
+
+Historical feature/evidence branches are not treated as debt merely because they still exist.
+
+## Immediate frontier after fresh takeover
+
+**Do not restart the closed P1 substrate campaign. Do not automatically begin implementation from the last chat recommendation.**
+
+The next conversation should first verify live P1/PR #3 and recover this canonical state. Then it should critically design the first small post-refoundation embodied-agent experiment.
+
+Current-best research direction is a **minimal vertical loop**, not a broad AI framework:
+
+`WORLD → bounded NPC PERCEPTION → small agent context/state → limited LLM INTENTION → existing NON-LLM EXECUTOR → VALIDATED WORLD RESULT → experience/context update`
+
+A likely first slice should use only a few inspectable entities/relations and a tiny intention vocabulary such as `wait`, `approach(entity)` or `fetch(item)`. This is a candidate, not a frozen design. The fresh agent should first decide what uncertainty the experiment must resolve and what evidence would falsify the idea.
+
+Do not jump directly to unconstrained chat/personality roleplay. Speech/hearing should eventually become grounded world stimuli, and perception should be an explicit bounded projection rather than raw access to all world state.
 
 ## Working method
 
-One bounded stage per work cycle/message:
+Use bounded research stages:
 
-`live regrounding → critical analysis/research → narrow design → implementation when justified → self-review → validation → focused Owner gate when useful → integration → grounding`
+`live regrounding → identify uncertainty → narrow design/experiment → implementation when justified → self-review → automated validation → focused Owner gate → integrate → update canonical state`
 
-Each stage gets a short branch/PR into P1. The next stage is re-evaluated from fresh evidence rather than mechanically executed.
+Owner hands-on judgement remains first-class evidence for feel, legibility, believability and whether an experiment is worth continuing. Automated tests establish narrower implementation/invariant claims.
 
-## Immediate frontier
+## Handoff rule
 
-**A1, A2 and B1 are closed. No B2 implementation has started.**
+A fresh conversation should be able to recover the project without this chat by reading, in order:
 
-The intended next gate is **B2 — minimal deterministic non-LLM actor executor**. Before implementation, re-ground live and design the smallest temporal execution seam that can make NPC-001 approach a known target and attempt the same explicit validated interaction used by the player.
+1. `README.md`;
+2. `docs/PROJECT_STATE.md`;
+3. `docs/FRESH_TAKEOVER.md`;
+4. live PR #3 plus any specific evidence PR linked by the takeover document.
 
-B2 must not smuggle cognition, pathfinding infrastructure or a generalized behavior framework into P1. The current-best proof target is intentionally small: a known explicit target, deterministic movement/approach, stopping in legal interaction range and one atomic interaction attempt with inspectable outcome. Collision/world legality must remain authoritative.
-
-Do not implicitly start sight/hearing, placement UX, additional mobile/art polish, large Tiled migration or LLM cognition.
-
-## P1 / handoff closure principle
-
-This conversation's closure target is narrower than full cognition-readiness: establish the final action/execution substrate through B2, then run one deliberate technical-debt campaign and one final repo/docs/workflow/handoff campaign.
-
-The fresh conversation should be able to recover current truth, evidence boundaries, Owner judgement, architecture and next frontier from the repository without depending on this chat. After takeover, the project can proceed toward grounded sight, speech/hearing, perception apparatus and first cognition experiments.
+If live repository state contradicts these docs, live branch/PR evidence wins and the contradiction must be resolved before new feature work.
