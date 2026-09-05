@@ -1,15 +1,24 @@
 {
   "name": "llm-live-npc",
-  "version": "0.0.0-p0",
+  "version": "0.1.0-p1",
   "private": true,
   "type": "module",
   "scripts": {
-    "check": "tsc -p tsconfig.json --noEmit && wrangler deploy --dry-run",
-    "deploy": "wrangler deploy",
-    "preview": "wrangler dev"
+    "dev": "vite",
+    "build": "vite build",
+    "test": "vitest run",
+    "check": "tsc -p tsconfig.json --noEmit && vitest run && vite build",
+    "preview": "vite build && vite preview",
+    "deploy": "vite build && wrangler deploy"
+  },
+  "dependencies": {
+    "phaser": "4.2.1"
   },
   "devDependencies": {
+    "@cloudflare/vite-plugin": "1.54.3",
     "typescript": "7.0.2",
+    "vite": "8.2.2",
+    "vitest": "5.0.0",
     "wrangler": "4.129.0"
   }
 }

@@ -1,0 +1,203 @@
+import * as Phaser from "phaser";
+import { createP1Specimen } from "../world/specimen";
+import { World } from "../world/world";
+import type { WorldEvent, WorldSnapshot } from "../world/types";
+
+const FIXED_STEP_MS = 1000 / 30;
+
+export interface WorldDebugState {
+  tick: number;
+  playerPosition: { x: number; y: number };
+  location: string;
+  heldItem: string;
+  npcLineOfSight: boolean;
+  npcDistance: number;
+  entityCount: number;
+  events: WorldEvent[];
+}
+
+type DebugSink = (state: WorldDebugState) => void;
+
+export class WorldScene extends Phaser.Scene {
+  private readonly world = new World(createP1Specimen());
+  private readonly debugSink: DebugSink;
+  private readonly entityViews = new Map<string, Phaser.GameObjects.Arc>();
+  private staticGraphics!: Phaser.GameObjects.Graphics;
+  private debugGraphics!: Phaser.GameObjects.Graphics;
+  private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
+  private keys!: Record<"W" | "A" | "S" | "D" | "E" | "Q", Phaser.Input.Keyboard.Key>;
+  private accumulatorMs = 0;
+
+  constructor(debugSink: DebugSink) {
+    super({ key: "world" });
+    this.debugSink = debugSink;
+  }
+
+  create(): void {
+    if (!this.input.keyboard) throw new Error("Keyboard input is required for the P1 desktop/browser specimen.");
+
+    this.cursors = this.input.keyboard.createCursorKeys();
+    this.keys = this.input.keyboard.addKeys("W,A,S,D,E,Q") as typeof this.keys;
+
+    this.staticGraphics = this.add.graphics();
+    this.debugGraphics = this.add.graphics();
+    this.drawStaticWorld();
+    this.createEntityViews();
+
+    const playerView = this.entityViews.get("player.jozz");
+    if (!playerView) throw new Error("Missing player render view.");
+
+    this.cameras.main.setBounds(0, 0, this.world.width, this.world.height);
+    this.cameras.main.startFollow(playerView, true, 0.14, 0.14);
+    this.cameras.main.setZoom(1.05);
+
+    this.syncPresentation();
+  }
+
+  update(_time: number, delta: number): void {
+    const keyboard = this.input.keyboard;
+    if (!keyboard) return;
+
+    this.accumulatorMs += Math.min(delta, 100);
+    let interactPressed = Phaser.Input.Keyboard.JustDown(this.keys.E);
+    let dropPressed = Phaser.Input.Keyboard.JustDown(this.keys.Q);
+
+    while (this.accumulatorMs >= FIXED_STEP_MS) {
+      const moveX =
+        (this.keys.D.isDown || this.cursors.right.isDown ? 1 : 0) -
+        (this.keys.A.isDown || this.cursors.left.isDown ? 1 : 0);
+      const moveY =
+        (this.keys.S.isDown || this.cursors.down.isDown ? 1 : 0) -
+        (this.keys.W.isDown || this.cursors.up.isDown ? 1 : 0);
+
+      this.world.step({ moveX, moveY, interactPressed, dropPressed });
+      interactPressed = false;
+      dropPressed = false;
+      this.accumulatorMs -= FIXED_STEP_MS;
+    }
+
+    this.syncPresentation();
+  }
+
+  private drawStaticWorld(): void {
+    const snapshot = this.world.snapshot();
+
+    this.staticGraphics.fillStyle(0x18231d, 1);
+    this.staticGraphics.fillRect(0, 0, snapshot.width, snapshot.height);
+
+    for (const location of snapshot.locations) {
+      const color = this.locationColor(location.id);
+      this.staticGraphics.fillStyle(color, 0.24);
+      this.staticGraphics.fillRect(location.bounds.x, location.bounds.y, location.bounds.width, location.bounds.height);
+      this.staticGraphics.lineStyle(2, color, 0.5);
+      this.staticGraphics.strokeRect(location.bounds.x, location.bounds.y, location.bounds.width, location.bounds.height);
+      this.add
+        .text(location.bounds.x + 10, location.bounds.y + 8, location.label, {
+          fontFamily: "system-ui, sans-serif",
+          fontSize: "15px",
+          color: "#d7e0e7",
+          backgroundColor: "#0d1216aa",
+          padding: { x: 6, y: 3 }
+        })
+        .setDepth(2);
+    }
+
+    for (const blocker of snapshot.blockers) {
+      this.staticGraphics.fillStyle(blocker.occludesVision ? 0x4d5963 : 0x66523d, 0.95);
+      this.staticGraphics.fillRect(blocker.bounds.x, blocker.bounds.y, blocker.bounds.width, blocker.bounds.height);
+      this.staticGraphics.lineStyle(1, 0xaab5bd, blocker.occludesVision ? 0.45 : 0.25);
+      this.staticGraphics.strokeRect(blocker.bounds.x, blocker.bounds.y, blocker.bounds.width, blocker.bounds.height);
+    }
+
+    this.staticGraphics.lineStyle(4, 0x6a7884, 0.6);
+    this.staticGraphics.strokeRect(0, 0, snapshot.width, snapshot.height);
+  }
+
+  private createEntityViews(): void {
+    for (const entity of this.world.snapshot().entities) {
+      const color = entity.kind === "player" ? 0x79d8ff : entity.kind === "npc" ? 0xffc46b : 0xece6cf;
+      const view = this.add.circle(entity.position.x, entity.position.y, entity.radius, color, 1);
+      view.setStrokeStyle(2, 0x0b0e12, 0.9);
+      view.setDepth(entity.kind === "item" ? 5 : 6);
+      this.entityViews.set(entity.id, view);
+
+      this.add
+        .text(entity.position.x, entity.position.y - entity.radius - 18, entity.label, {
+          fontFamily: "system-ui, sans-serif",
+          fontSize: entity.kind === "item" ? "11px" : "12px",
+          color: "#f0f4f7",
+          backgroundColor: "#0b0e12bb",
+          padding: { x: 4, y: 2 }
+        })
+        .setOrigin(0.5, 1)
+        .setName(`label:${entity.id}`)
+        .setDepth(7);
+    }
+  }
+
+  private syncPresentation(): void {
+    const snapshot = this.world.snapshot();
+
+    for (const entity of snapshot.entities) {
+      const view = this.entityViews.get(entity.id);
+      if (!view) continue;
+      view.setPosition(entity.position.x, entity.position.y);
+      const label = this.children.getByName(`label:${entity.id}`) as Phaser.GameObjects.Text | null;
+      label?.setPosition(entity.position.x, entity.position.y - entity.radius - 18);
+    }
+
+    this.drawDebug(snapshot);
+    this.emitDebugState(snapshot);
+  }
+
+  private drawDebug(snapshot: WorldSnapshot): void {
+    this.debugGraphics.clear();
+    const player = snapshot.entities.find((entity) => entity.kind === "player");
+    const npc = snapshot.entities.find((entity) => entity.kind === "npc");
+    if (!player || !npc) return;
+
+    const visible = this.world.hasLineOfSight(npc.position, player.position);
+    this.debugGraphics.lineStyle(2, visible ? 0x65d38e : 0xe6a455, 0.72);
+    this.debugGraphics.lineBetween(npc.position.x, npc.position.y, player.position.x, player.position.y);
+
+    this.debugGraphics.lineStyle(1, 0x9fb0be, 0.18);
+    this.debugGraphics.strokeCircle(npc.position.x, npc.position.y, 220);
+  }
+
+  private emitDebugState(snapshot: WorldSnapshot): void {
+    const player = snapshot.entities.find((entity) => entity.kind === "player");
+    const npc = snapshot.entities.find((entity) => entity.kind === "npc");
+    if (!player || player.kind !== "player" || !npc) return;
+
+    const location = snapshot.locations.find((entry) => entry.id === snapshot.playerLocationId)?.label ?? "Open ground";
+    const heldItem = player.heldItemId
+      ? snapshot.entities.find((entity) => entity.id === player.heldItemId)?.label ?? player.heldItemId
+      : "none";
+
+    this.debugSink({
+      tick: snapshot.tick,
+      playerPosition: { ...player.position },
+      location,
+      heldItem,
+      npcLineOfSight: this.world.hasLineOfSight(npc.position, player.position),
+      npcDistance: Math.hypot(npc.position.x - player.position.x, npc.position.y - player.position.y),
+      entityCount: snapshot.entities.length,
+      events: this.world.recentEvents(10).reverse()
+    });
+  }
+
+  private locationColor(id: string): number {
+    switch (id) {
+      case "workshop":
+        return 0x5e7080;
+      case "cottage":
+        return 0x826956;
+      case "grove":
+        return 0x456d50;
+      case "north-path":
+        return 0x70695a;
+      default:
+        return 0x536c61;
+    }
+  }
+}

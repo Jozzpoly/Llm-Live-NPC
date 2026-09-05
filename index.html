@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LLM Live NPC — P1 World Slice</title>
+  </head>
+  <body>
+    <main id="app">
+      <section class="game-shell">
+        <header>
+          <div>
+            <p class="eyebrow">P1 playable world slice</p>
+            <h1>LLM Live NPC</h1>
+          </div>
+          <div class="stage-chip">cognition disabled</div>
+        </header>
+        <div id="game" aria-label="Playable top-down world"></div>
+        <footer>
+          <span>Move: WASD / arrows</span>
+          <span>Interact / pick up: E</span>
+          <span>Drop held item: Q</span>
+        </footer>
+      </section>
+      <aside id="debug" class="debug-shell" aria-live="polite"></aside>
+    </main>
+    <script type="module" src="/src/client/main.ts"></script>
+  </body>
+</html>
