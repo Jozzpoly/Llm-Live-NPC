@@ -2,192 +2,205 @@
 
 Updated: 2026-09-05
 
-## Current question
+## Core research question
 
 Can a lightweight LLM-driven NPC become a believable resident of a game world by receiving bounded perception, maintaining its own experience/beliefs, and acting only through validated world affordances rather than directly mutating world truth?
 
-## Current stage
-
-**P0 — infrastructure + replaceable model transport qualified. Ready to close and move to P1.**
-
-Do not treat the current page, probe endpoint, or any probe model as the game architecture or NPC cognition architecture. P0 only establishes a small, observable, replaceable Cloudflare inference seam before the world stack is selected.
-
-## Verified evidence
-
-### P0-A1 — GitHub → Cloudflare deployment
-
-First production source:
-
-`b4e5879d89f810d91bd48b2eaf6491bb5ae2fac3`
-
-Cloudflare deployment completed successfully on 2026-09-05 and exposed:
-
-`https://llm-live-npc.jozzpoly.workers.dev`
-
-Deployment evidence showed:
-
-- static asset upload succeeded;
-- Worker upload succeeded;
-- Worker startup time reported as 4 ms;
-- `env.AI` binding was present;
-- Workers.dev route was active.
-
-### P0-A2 — first real Workers AI call
-
-Owner ran the first browser probe against production using `@cf/zai-org/glm-4.7-flash`.
-
-Observed response:
-
-- AI Gateway id: `default`;
-- latency: `1426 ms`;
-- prompt tokens: `40`;
-- completion tokens: `96`;
-- total tokens: `136`;
-- Workers AI usage: `3.7144 neurons`;
-- completion id: `chatcmpl-8433ddd841c1f754`;
-- `env.AI.run()` returned a real completion through the configured Gateway path.
-
-The model spent the entire 96-token completion budget on reasoning, returned no user-facing content, and ended with `finish_reason = length`.
-
-**Interpretation:** end-to-end infrastructure inference was proven. A usable completion was not.
-
-### P0-A3 — hardening deploy / CI
-
-PR #1 hardened the bootstrap and was merged to production `main` as:
-
-`33cc674776ba714605ac8bd6926ed0b6bbdc3599`
-
-Verified before/after merge:
-
-- Node 22 + pinned Wrangler `4.129.0` + TypeScript `7.0.2` installed successfully in GitHub Actions;
-- strict TypeScript compile passed;
-- `wrangler deploy --dry-run` passed;
-- dry-run saw both `env.AI` and the rate-limit binding;
-- Cloudflare non-production preview deploy passed;
-- Cloudflare production deploy passed;
-- production Cloudflare version: `fb603f00-b34c-4f0e-82e3-7468a7d01528`.
-
-The public probe was changed from arbitrary user input to fixed input and protected with a lightweight Cloudflare rate limiter.
-
-### P0-A4 — second GLM probe falsified the proposed budget fix
-
-Owner ran the hardened production probe with `reasoning_effort = low` and `max_completion_tokens = 256`.
-
-Observed:
-
-- model: `@cf/zai-org/glm-4.7-flash`;
-- Gateway log id: `01M1RTDY9FB4ZZV0K4WQ3X9PH8`;
-- latency: `2905 ms`;
-- prompt tokens: `47`;
-- completion tokens: `256`;
-- total tokens: `303`;
-- usage: `9.5769 neurons`;
-- reasoning characters observed: `1004`;
-- `content = null`;
-- `finishReason = length`.
-
-**Interpretation:** the hypothesis that low reasoning effort plus a 256-token budget would make GLM-4.7-Flash a suitable bounded completion probe is falsified. This does not establish that GLM is generally unusable; it establishes that continuing to tune this reasoning model for a trivial transport smoke is poor apparatus design.
-
-The second run also proved that the Worker can expose a non-null AI Gateway log id for correlation.
-
-### P0-B1 — two-model transport qualification PASS
-
-Branch:
-
-`experiment/p0-model-transport-qualification`
-
-Validated automatically before Owner test:
-
-- GitHub CI PASS on head `fa8673b389d736cd3f193c3117b87d0bd20c0007`;
-- strict TypeScript compile PASS;
-- Wrangler dry-run PASS;
-- Cloudflare non-production preview deployment PASS.
-
-Owner then ran exactly one bounded qualification action on the branch preview. Both free Cloudflare-hosted candidates produced usable completions through the same Worker + AI Gateway path and through two different response shapes.
-
-#### IBM Granite 4.0 H Micro
-
-- model: `@cf/ibm-granite/granite-4.0-h-micro`;
-- `inferenceReached = true`;
-- `usableCompletion = true`;
-- Gateway log id: `01M1RTZ2CGW4E9CRD1KXPTHT1G`;
-- latency: `1637 ms`;
-- output shape: `openai-choices`;
-- content: `LLM Live NPC cognition is online.`;
-- finish reason: `stop`;
-- prompt tokens: `54`;
-- completion tokens: `9`;
-- total tokens: `63`;
-- usage: `0.17467461 neurons`.
-
-#### Meta Llama 3.2 3B Instruct
-
-- model: `@cf/meta/llama-3.2-3b-instruct`;
-- `inferenceReached = true`;
-- `usableCompletion = true`;
-- Gateway log id: `01M1RTZ3Y63M16N8C5M8Y5ZYGB`;
-- latency: `162 ms`;
-- output shape: `workers-ai-response`;
-- content: `LLM Live NPC cognition is now online and ready for testing.`;
-- finish reason: `stop`;
-- prompt tokens: `76`;
-- completion tokens: `14`;
-- total tokens: `90`;
-- usage: `0.7781149744987488 neurons`.
-
-**Interpretation:** the replaceable inference seam is qualified. The normalizer handled both native Workers AI `{response}` and OpenAI-like `{choices}` output shapes. This is not a final NPC-model benchmark. Llama's much lower observed latency is a useful hypothesis-generating signal only; the workloads were trivial and not yet representative of NPC cognition.
-
-A short Owner screen recording additionally confirmed the expected branch-preview UI state, the single qualification action, and the resulting two-model PASS. The binary recording is not stored in the repository; the structured result and Gateway identifiers are the canonical evidence.
-
-## Critical review correction
-
-The previous work was directionally useful but contained two important process/architecture errors:
-
-1. PR #1 was merged after CI + preview validation but **before** the hardened runtime inference had been Owner-tested. That was premature relative to the stated P0 closure contract.
-2. The result normalizer was described as model/provider-neutral but actually only understood an OpenAI-like `choices[0].message.content` shape. Several native Workers AI models instead return `{ response, usage, tool_calls }`. Changing models without fixing this could have produced a false FAIL.
-
-Both issues are corrected by P0-B1: runtime Owner evidence precedes merge, and the transport normalizer now handles the two response shapes actually observed in qualification.
-
-## Remaining foundation debt
-
-- exact top-level tool versions are pinned, but there is not yet a committed dependency lockfile;
-- the public rate limiter is a lightweight abuse guard, not hard authentication or a strict global budget cap;
-- Cloudflare Access state is not canonicalized;
-- generated Wrangler binding/runtime types are not yet part of the TypeScript contract.
-
-These are real debts but **do not block P0 closure**. They should be addressed just-in-time as P1 introduces the real client toolchain and before any public general-purpose cognition endpoint exists.
-
-## P0 closure contract
-
-1. production Cloudflare deployment path is healthy — **PROVEN**;
-2. real Workers AI inference through AI Gateway is reachable — **PROVEN**;
-3. usage and Gateway correlation are observable — **PROVEN**;
-4. at least one free Cloudflare-hosted candidate returns a usable bounded completion through the normalized seam — **PROVEN, two candidates PASS**;
-5. the qualification branch passes CI + Cloudflare preview before promotion — **PROVEN**.
-
-**P0 closure decision: PASS.**
-
-Do not require GLM-4.7-Flash specifically to pass P0. Do not promote Granite or Llama to canonical NPC model based on this transport probe.
-
-## Next stage — P1 playable world slice
-
-Move immediately to a bounded first playable world slice. P1 must establish a small world with its own domain truth before adding autonomous cognition.
-
-P1 should preserve these boundaries:
-
-- renderer/input are presentation and control layers, not canonical world state;
-- world entities and events exist independently of the renderer;
-- the world can emit a small event stream that later becomes raw material for perception;
-- at least one player, one NPC shell, several world objects, obstacles/occlusion, and named locations exist;
-- the slice is large enough to create distance, visibility changes and object-history situations, but small enough for rapid Owner experimentation;
-- no vector memory, multiplayer, long-term database, final model selection, or large agent framework is added in P1.
-
-Natural P1 boundary: Owner can enter the web build, move through a small top-down place, interact with a few objects, and inspect a deterministic/debuggable world/event state even with LLM cognition disabled.
-
-## Durable working hypothesis
-
-Keep these boundaries explicit until evidence overturns them:
+Durable boundary:
 
 `WORLD → PERCEPTION → NPC COGNITION/MEMORY → INTENTION → VALIDATED EXECUTION → WORLD`
 
-The LLM may propose intent. The game world remains authoritative about what exists, what the NPC can perceive, whether an action is legal/possible, and what actually happened.
+The LLM may propose intent. The game world remains authoritative about what exists, what an NPC can perceive, whether an action is legal/possible, and what actually happened.
+
+## Current stage
+
+**P1 — domain-first playable world slice. Active, not yet Owner-qualified.**
+
+Active branch:
+
+`p1/playable-world-slice`
+
+Draft PR:
+
+`#3 — Build P1 domain-first playable world slice`
+
+P1 exists to establish a small, inspectable world with its own truth before autonomous LLM cognition is added.
+
+## P0 closure — PASS
+
+Canonical P0 production main after model-transport qualification:
+
+`f207419ee87c03979544d2d579e624f043300bbc`
+
+Cloudflare production version:
+
+`2e71d9e8-67fc-4398-9e08-63c43083903e`
+
+P0 proved:
+
+- GitHub → Cloudflare deployment works;
+- Worker + Static Assets work;
+- `env.AI` reaches Workers AI through AI Gateway;
+- usage/neuron accounting is observable;
+- Gateway log IDs are exposed for correlation;
+- the transport seam can normalize at least two real Workers AI response shapes;
+- a model can be replaced without changing the project’s world/cognition contract.
+
+Important negative evidence retained:
+
+- `@cf/zai-org/glm-4.7-flash` exhausted a 96-token completion budget on reasoning and returned no visible content;
+- a second Owner run with `reasoning_effort=low` and a 256-token completion budget again ended `finishReason=length`, with `content=null`, latency `2905 ms`, and `9.5769 neurons`;
+- this falsified GLM as a sensible trivial transport probe, not GLM as a model in general.
+
+P0 transport qualification then passed 2/2 candidates in one Owner run:
+
+### Granite 4.0 H Micro
+
+- model: `@cf/ibm-granite/granite-4.0-h-micro`;
+- latency: `1637 ms`;
+- total tokens: `63`;
+- usage: `0.17467461 neurons`;
+- output shape: `openai-choices`;
+- Gateway log: `01M1RTZ2CGW4E9CRD1KXPTHT1G`;
+- usable completion: **PASS**.
+
+### Llama 3.2 3B Instruct
+
+- model: `@cf/meta/llama-3.2-3b-instruct`;
+- latency: `162 ms`;
+- total tokens: `90`;
+- usage: `0.7781149744987488 neurons`;
+- output shape: `workers-ai-response`;
+- Gateway log: `01M1RTZ3Y63M16N8C5M8Y5ZYGB`;
+- usable completion: **PASS**.
+
+These numbers are transport evidence only. They do not select the final NPC model.
+
+## P1 current implementation
+
+### Stack boundary
+
+Current bounded choice:
+
+- TypeScript;
+- Vite 8;
+- official Cloudflare Vite plugin;
+- Phaser 4.2.1 for rendering, camera and browser input;
+- independent project-owned `World` domain for canonical state;
+- Vitest for pure domain tests.
+
+No Phaser Arcade Physics and no Box2D are used in P1. Physics remains an open later qualification, to be added only if it buys meaningful player ↔ NPC ↔ world interaction.
+
+Phaser is deliberately not canonical world state:
+
+`browser input → World.step() → WorldSnapshot → Phaser presentation`
+
+The renderer never directly mutates entity truth.
+
+### World specimen
+
+The current authored slice is approximately `1440 × 900` and contains:
+
+- named locations: Common Yard, Workshop, Cottage, Grove, North Path;
+- player `Jozz`;
+- static `NPC-001` shell;
+- hammer, red mug and lantern;
+- authored walls, doorway gaps, a table and trees;
+- movement and collision owned by the World domain;
+- pickup/drop owned by the World domain;
+- semantic event history;
+- deterministic line-of-sight derived from authored occluders;
+- interaction range constrained by both distance and world LOS;
+- fixed-step world simulation at 30 Hz, decoupled from browser render cadence;
+- queued E/Q edge inputs so interaction events are not lost between render frames and fixed world steps.
+
+### World Inspector
+
+The P1 browser shell exposes:
+
+- world tick;
+- player position;
+- current named location;
+- held item;
+- NPC → player line-of-sight state;
+- NPC distance;
+- recent semantic world events;
+- visual NPC/player LOS line and debug radius.
+
+LLM cognition is explicitly disabled in P1.
+
+## P1 automated evidence
+
+The first P1 implementation exposed and corrected two apparatus/code issues before Owner testing:
+
+1. strict TypeScript caught a nullable DOM-root closure;
+2. Vitest initially inherited the Cloudflare Vite plugin and tried to start a remote AI proxy in CI. A separate pure-node `vitest.config.ts` now keeps domain tests independent from Cloudflare credentials/runtime.
+
+After correction, CI proved:
+
+- locked dependency install with `npm ci` — **PASS**;
+- strict TypeScript — **PASS**;
+- domain determinism — **PASS**;
+- authored collision boundary — **PASS**;
+- pickup/drop authoritative events — **PASS**;
+- workshop doorway LOS — **PASS**;
+- no pickup through an occluding wall — **PASS**;
+- Vite Worker build — **PASS**;
+- Vite client build — **PASS**.
+
+Current client bundle observation: approximately `1.39 MB` minified / `362 kB gzip`, dominated by the full Phaser runtime. This is a non-blocking P1 optimization signal, not yet a reason to optimize or change renderer.
+
+## Toolchain hardening completed during P1
+
+P1 is the first real client toolchain, so the earlier dependency reproducibility debt was resolved here:
+
+- `package-lock.json` is committed (npm lockfile v3);
+- CI uses `npm ci` rather than unconstrained `npm install`;
+- Node remains pinned to major `22`;
+- top-level packages remain exact-version pinned;
+- GitHub Actions use current Node24-based `actions/checkout@v6` and `actions/setup-node@v6`.
+
+## Current deployment blocker — configuration, not application
+
+Cloudflare non-production preview currently fails before serving P1 because the Worker project still has the P0 Workers Builds configuration:
+
+- Build command: blank;
+- Deploy command: `npx wrangler deploy`.
+
+The Cloudflare Vite plugin requires `vite build` to run first so it can create the generated output `wrangler.json` that points at the client build artifacts.
+
+The intended migration is a dashboard-only build setting:
+
+`Build command = npm run build --if-present`
+
+Keep the existing Deploy command:
+
+`npx wrangler deploy`
+
+Why `--if-present`: it is backward-compatible with the already-deployed P0 main, which has no `build` script, while the P1 branch does have `build = vite build`.
+
+Do not add application-side build hacks to work around this Cloudflare setting.
+
+## P1 closure contract
+
+P1 is not closed and PR #3 must not merge until:
+
+1. locked CI remains green — **PROVEN**;
+2. Cloudflare non-production preview serves the actual Vite/Phaser P1 client — **OPEN, dashboard build command needed**;
+3. Owner can enter the preview and move around the authored world — **OPEN**;
+4. authored blockers visibly constrain movement — **OPEN Owner runtime evidence**;
+5. Owner can pick up/drop at least one object and see semantic events change — **OPEN**;
+6. NPC LOS visibly changes across an occluder/doorway and agrees with the inspector — **OPEN**;
+7. no runtime evidence contradicts the domain-world/presentation boundary — **OPEN**.
+
+Natural boundary after a P1 PASS: review Owner feedback before adding LLM cognition. Do not mechanically proceed to P2 if the world itself is too weak, awkward or poorly inspectable to support meaningful embodied-agent experiments.
+
+## Remaining non-blocking foundation debt
+
+- generated Wrangler binding/runtime types are not yet canonicalized;
+- the fixed public AI qualification endpoint still has only a lightweight Cloudflare rate limiter, not hard auth/global budget enforcement;
+- Cloudflare Access state is not canonicalized;
+- no persistence/database/multiplayer exists;
+- no final model selection exists.
+
+Do not let these expand P1 unless hands-on evidence makes one of them necessary.
