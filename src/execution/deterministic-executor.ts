@@ -7,6 +7,7 @@ import type {
 } from "../world/types";
 
 const APPROACH_DISTANCE = 48;
+const DEFAULT_STEP_BUDGET = 180;
 
 export type ExecutorStatus = "idle" | "running" | "succeeded" | "failed";
 
@@ -25,29 +26,46 @@ export interface ExecutorState {
   status: ExecutorStatus;
   task: ExecutorTask | null;
   failureCode: string | null;
+  stepsUsed: number;
+  stepBudget: number;
 }
 
 export class DeterministicExecutor {
   private taskValue: ExecutorTask | null = null;
   private statusValue: ExecutorStatus = "idle";
   private failureCodeValue: string | null = null;
+  private stepsUsedValue = 0;
+
+  constructor(private readonly stepBudgetValue = DEFAULT_STEP_BUDGET) {
+    if (!Number.isInteger(stepBudgetValue) || stepBudgetValue <= 0) {
+      throw new Error(`Executor step budget must be a positive integer: ${stepBudgetValue}`);
+    }
+  }
 
   start(task: ExecutorTask): void {
     this.taskValue = { ...task };
     this.statusValue = "running";
     this.failureCodeValue = null;
+    this.stepsUsedValue = 0;
   }
 
   state(): ExecutorState {
     return {
       status: this.statusValue,
       task: this.taskValue ? { ...this.taskValue } : null,
-      failureCode: this.failureCodeValue
+      failureCode: this.failureCodeValue,
+      stepsUsed: this.stepsUsedValue,
+      stepBudget: this.stepBudgetValue
     };
   }
 
   next(snapshot: WorldSnapshot): ExecutorCommand {
     if (this.statusValue !== "running" || !this.taskValue) return {};
+    if (this.stepsUsedValue >= this.stepBudgetValue) {
+      this.fail("step_budget_exhausted");
+      return {};
+    }
+    this.stepsUsedValue += 1;
 
     const actor = snapshot.entities.find((entity) => entity.id === this.taskValue?.actorId);
     if (!actor || (actor.kind !== "player" && actor.kind !== "npc")) {
