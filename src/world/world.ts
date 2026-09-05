@@ -175,11 +175,9 @@ export class World {
       throw new Error(`Invalid world step duration: ${seconds}`);
     }
 
-    this.tickValue += 1;
     const player = this.player();
-    this.moveActor(player, input, seconds);
-
     const seenActorIds = new Set<EntityId>();
+    const validatedControls: Array<{ actor: ActorEntity; control: ActorControlInput }> = [];
     for (const control of [...actorControls].sort((a, b) => a.actorId.localeCompare(b.actorId))) {
       if (control.actorId === player.id) {
         throw new Error(`Actor controls must not duplicate player control: ${control.actorId}`);
@@ -191,8 +189,12 @@ export class World {
 
       const actor = this.entities.get(control.actorId);
       if (!isActor(actor)) throw new Error(`Actor control target not found: ${control.actorId}`);
-      this.moveActor(actor, control, seconds);
+      validatedControls.push({ actor, control });
     }
+
+    this.tickValue += 1;
+    this.moveActor(player, input, seconds);
+    for (const { actor, control } of validatedControls) this.moveActor(actor, control, seconds);
 
     this.followHeldItems();
     this.updatePlayerLocation();
