@@ -38,7 +38,7 @@ export class WorldScene extends Phaser.Scene {
   private staticGraphics!: Phaser.GameObjects.Graphics;
   private debugGraphics!: Phaser.GameObjects.Graphics;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
-  private keys!: Record<"W" | "A" | "S" | "D" | "E" | "Q" | "L", Phaser.Input.Keyboard.Key>;
+  private keys!: Record<"W" | "A" | "S" | "D" | "E" | "Q" | "V" | "L", Phaser.Input.Keyboard.Key>;
   private accumulatorMs = 0;
   private pendingInteract = false;
   private pendingDrop = false;
@@ -54,7 +54,7 @@ export class WorldScene extends Phaser.Scene {
     if (!this.input.keyboard) throw new Error("Keyboard input is required for the P1 desktop/browser specimen.");
 
     this.cursors = this.input.keyboard.createCursorKeys();
-    this.keys = this.input.keyboard.addKeys("W,A,S,D,E,Q,L") as typeof this.keys;
+    this.keys = this.input.keyboard.addKeys("W,A,S,D,E,Q,V,L") as typeof this.keys;
 
     this.staticGraphics = this.add.graphics();
     this.debugGraphics = this.add.graphics().setDepth(20);
@@ -93,7 +93,7 @@ export class WorldScene extends Phaser.Scene {
     this.pendingInteract = this.pendingInteract || Phaser.Input.Keyboard.JustDown(this.keys.E);
     this.pendingDrop = this.pendingDrop || Phaser.Input.Keyboard.JustDown(this.keys.Q);
 
-    if (Phaser.Input.Keyboard.JustDown(this.keys.D)) {
+    if (Phaser.Input.Keyboard.JustDown(this.keys.V)) {
       this.debugOverlayVisible = !this.debugOverlayVisible;
     }
     if (Phaser.Input.Keyboard.JustDown(this.keys.L)) {
