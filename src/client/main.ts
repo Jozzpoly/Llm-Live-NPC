@@ -15,7 +15,8 @@ let scene: WorldScene;
 
 const workspace = new DebugWorkspace(debugRoot, appRoot, {
   toggleLabels: () => scene.toggleLabels(),
-  toggleLosProbe: () => scene.toggleDebugOverlay()
+  toggleLosProbe: () => scene.toggleDebugOverlay(),
+  togglePointerProbe: () => scene.togglePointerProbe()
 });
 
 scene = new WorldScene((state) => workspace.update(state));
