@@ -9,6 +9,9 @@ if (!debugRoot || !gameRoot) {
   throw new Error("P1 shell is missing #game or #debug root.");
 }
 
+const debugPanel: HTMLElement = debugRoot;
+const gameContainer: HTMLElement = gameRoot;
+
 function escapeHtml(value: string): string {
   return value
     .replaceAll("&", "&amp;")
@@ -32,7 +35,7 @@ function renderDebug(state: WorldDebugState): void {
         .join("")
     : "<li>No semantic events yet.</li>";
 
-  debugRoot.innerHTML = `
+  debugPanel.innerHTML = `
     <h2>World Inspector</h2>
     <p>P1 exposes domain truth directly. The LLM is not running.</p>
 
@@ -61,7 +64,7 @@ const scene = new WorldScene(renderDebug);
 
 new Phaser.Game({
   type: Phaser.AUTO,
-  parent: gameRoot,
+  parent: gameContainer,
   width: 960,
   height: 640,
   backgroundColor: "#151b20",
