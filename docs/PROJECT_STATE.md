@@ -8,9 +8,9 @@ Can a lightweight LLM-driven NPC become a believable resident of a game world by
 
 ## Current stage
 
-**P0 — infrastructure proven; model transport qualification active.**
+**P0 — infrastructure + replaceable model transport qualified. Ready to close and move to P1.**
 
-Do not treat the current page, probe endpoint, or any probe model as the game architecture or NPC cognition architecture. Their job is to establish a small, observable, replaceable Cloudflare inference seam before the world stack is selected.
+Do not treat the current page, probe endpoint, or any probe model as the game architecture or NPC cognition architecture. P0 only establishes a small, observable, replaceable Cloudflare inference seam before the world stack is selected.
 
 ## Verified evidence
 
@@ -88,7 +88,56 @@ Observed:
 
 **Interpretation:** the hypothesis that low reasoning effort plus a 256-token budget would make GLM-4.7-Flash a suitable bounded completion probe is falsified. This does not establish that GLM is generally unusable; it establishes that continuing to tune this reasoning model for a trivial transport smoke is poor apparatus design.
 
-The second run also proves that the Worker can expose a non-null AI Gateway log id for correlation.
+The second run also proved that the Worker can expose a non-null AI Gateway log id for correlation.
+
+### P0-B1 — two-model transport qualification PASS
+
+Branch:
+
+`experiment/p0-model-transport-qualification`
+
+Validated automatically before Owner test:
+
+- GitHub CI PASS on head `fa8673b389d736cd3f193c3117b87d0bd20c0007`;
+- strict TypeScript compile PASS;
+- Wrangler dry-run PASS;
+- Cloudflare non-production preview deployment PASS.
+
+Owner then ran exactly one bounded qualification action on the branch preview. Both free Cloudflare-hosted candidates produced usable completions through the same Worker + AI Gateway path and through two different response shapes.
+
+#### IBM Granite 4.0 H Micro
+
+- model: `@cf/ibm-granite/granite-4.0-h-micro`;
+- `inferenceReached = true`;
+- `usableCompletion = true`;
+- Gateway log id: `01M1RTZ2CGW4E9CRD1KXPTHT1G`;
+- latency: `1637 ms`;
+- output shape: `openai-choices`;
+- content: `LLM Live NPC cognition is online.`;
+- finish reason: `stop`;
+- prompt tokens: `54`;
+- completion tokens: `9`;
+- total tokens: `63`;
+- usage: `0.17467461 neurons`.
+
+#### Meta Llama 3.2 3B Instruct
+
+- model: `@cf/meta/llama-3.2-3b-instruct`;
+- `inferenceReached = true`;
+- `usableCompletion = true`;
+- Gateway log id: `01M1RTZ3Y63M16N8C5M8Y5ZYGB`;
+- latency: `162 ms`;
+- output shape: `workers-ai-response`;
+- content: `LLM Live NPC cognition is now online and ready for testing.`;
+- finish reason: `stop`;
+- prompt tokens: `76`;
+- completion tokens: `14`;
+- total tokens: `90`;
+- usage: `0.7781149744987488 neurons`.
+
+**Interpretation:** the replaceable inference seam is qualified. The normalizer handled both native Workers AI `{response}` and OpenAI-like `{choices}` output shapes. This is not a final NPC-model benchmark. Llama's much lower observed latency is a useful hypothesis-generating signal only; the workloads were trivial and not yet representative of NPC cognition.
+
+A short Owner screen recording additionally confirmed the expected branch-preview UI state, the single qualification action, and the resulting two-model PASS. The binary recording is not stored in the repository; the structured result and Gateway identifiers are the canonical evidence.
 
 ## Critical review correction
 
@@ -97,53 +146,43 @@ The previous work was directionally useful but contained two important process/a
 1. PR #1 was merged after CI + preview validation but **before** the hardened runtime inference had been Owner-tested. That was premature relative to the stated P0 closure contract.
 2. The result normalizer was described as model/provider-neutral but actually only understood an OpenAI-like `choices[0].message.content` shape. Several native Workers AI models instead return `{ response, usage, tool_calls }`. Changing models without fixing this could have produced a false FAIL.
 
-Additional remaining debt:
+Both issues are corrected by P0-B1: runtime Owner evidence precedes merge, and the transport normalizer now handles the two response shapes actually observed in qualification.
+
+## Remaining foundation debt
 
 - exact top-level tool versions are pinned, but there is not yet a committed dependency lockfile;
 - the public rate limiter is a lightweight abuse guard, not hard authentication or a strict global budget cap;
 - Cloudflare Access state is not canonicalized;
 - generated Wrangler binding/runtime types are not yet part of the TypeScript contract.
 
-These are foundation debts, but none should be allowed to turn P0 into a production-backend project.
-
-## Active experiment — P0-B model transport qualification
-
-Branch:
-
-`experiment/p0-model-transport-qualification`
-
-Goal: prove a usable fixed-input completion through the same Worker + Gateway path without tuning a reasoning-heavy model.
-
-Bounded candidates:
-
-- `@cf/ibm-granite/granite-4.0-h-micro` — non-reasoning, function calling, low unit cost;
-- `@cf/meta/llama-3.2-3b-instruct` — non-reasoning, small multilingual instruct model with structured-output support.
-
-The probe:
-
-- uses one fixed prompt;
-- runs both candidates sequentially in one Owner action;
-- normalizes both native Workers AI `{response}` and OpenAI-like `{choices}` output shapes;
-- captures latency, usage, output shape and Gateway log id per candidate;
-- does **not** select the final NPC model.
+These are real debts but **do not block P0 closure**. They should be addressed just-in-time as P1 introduces the real client toolchain and before any public general-purpose cognition endpoint exists.
 
 ## P0 closure contract
 
-P0 may close when all of the following are true:
-
 1. production Cloudflare deployment path is healthy — **PROVEN**;
 2. real Workers AI inference through AI Gateway is reachable — **PROVEN**;
-3. usage and Gateway correlation are observable — **PROVEN at response/log-id level**;
-4. at least one free Cloudflare-hosted candidate returns a usable bounded completion through the normalized seam — **OPEN**;
-5. the current qualification branch passes CI + Cloudflare preview before promotion — **OPEN**.
+3. usage and Gateway correlation are observable — **PROVEN**;
+4. at least one free Cloudflare-hosted candidate returns a usable bounded completion through the normalized seam — **PROVEN, two candidates PASS**;
+5. the qualification branch passes CI + Cloudflare preview before promotion — **PROVEN**.
 
-Do not require GLM-4.7-Flash specifically to pass P0.
+**P0 closure decision: PASS.**
 
-## After P0
+Do not require GLM-4.7-Flash specifically to pass P0. Do not promote Granite or Llama to canonical NPC model based on this transport probe.
 
-Move immediately to a bounded **P1 playable world slice**. Do not expand P0 into production auth, persistence, multiplayer, vector memory, or final model benchmarking.
+## Next stage — P1 playable world slice
 
-The next world slice should preserve a clean domain boundary so rendering is not the source of world truth.
+Move immediately to a bounded first playable world slice. P1 must establish a small world with its own domain truth before adding autonomous cognition.
+
+P1 should preserve these boundaries:
+
+- renderer/input are presentation and control layers, not canonical world state;
+- world entities and events exist independently of the renderer;
+- the world can emit a small event stream that later becomes raw material for perception;
+- at least one player, one NPC shell, several world objects, obstacles/occlusion, and named locations exist;
+- the slice is large enough to create distance, visibility changes and object-history situations, but small enough for rapid Owner experimentation;
+- no vector memory, multiplayer, long-term database, final model selection, or large agent framework is added in P1.
+
+Natural P1 boundary: Owner can enter the web build, move through a small top-down place, interact with a few objects, and inspect a deterministic/debuggable world/event state even with LLM cognition disabled.
 
 ## Durable working hypothesis
 
