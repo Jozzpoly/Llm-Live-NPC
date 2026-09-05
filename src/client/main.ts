@@ -1,6 +1,8 @@
 import * as Phaser from "phaser";
 import "./style.css";
 import { DebugWorkspace } from "./debug-workspace";
+import { MobileOwnerControls } from "./mobile-controls";
+import { PlayerControlBuffer } from "./player-control-buffer";
 import { WorldScene } from "./world-scene";
 
 const appRoot = document.querySelector<HTMLElement>("#app");
@@ -12,6 +14,7 @@ if (!appRoot || !debugRoot || !gameRoot) {
 }
 
 let scene: WorldScene;
+const playerControls = new PlayerControlBuffer();
 
 const workspace = new DebugWorkspace(debugRoot, appRoot, {
   toggleLabels: () => scene.toggleLabels(),
@@ -19,7 +22,7 @@ const workspace = new DebugWorkspace(debugRoot, appRoot, {
   togglePointerProbe: () => scene.togglePointerProbe()
 });
 
-scene = new WorldScene((state) => workspace.update(state));
+scene = new WorldScene((state) => workspace.update(state), playerControls);
 
 new Phaser.Game({
   type: Phaser.AUTO,
@@ -38,4 +41,8 @@ new Phaser.Game({
     width: 960,
     height: 640
   }
+});
+
+new MobileOwnerControls(gameRoot, playerControls, {
+  zoomByScale: (scale) => scene.zoomByScale(scale)
 });
