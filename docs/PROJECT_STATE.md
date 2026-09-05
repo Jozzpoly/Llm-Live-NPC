@@ -19,7 +19,7 @@ The world remains authoritative about what exists, what an actor can perceive, w
 - integration branch: `p1/playable-world-slice`
 - integration PR: `#3 — P1 integration — refound world before cognition`
 - latest integrated runtime stage: **R3a pointer/world targeting**, squash `c3ca2ae3cbfe23bd02299d4e4b3bb64770a35cdd`
-- current bounded qualification branch: `refoundation/r5a-placement-site-qualification`
+- latest integrated qualification: **R5a placement-site semantics**, squash `2f286a6117742da7c1f532cfa48741c26f69059b`
 - `main` remains the proven P0 cloud/AI baseline until P1 is genuinely cognition-ready.
 
 Owner testing shows that the current world is mechanically useful but still too diagram-like, interaction-poor and perception-naive to justify serious cognition work. Refoundation proceeds one bounded stage per work cycle.
@@ -122,28 +122,23 @@ PR #8 merged into P1 as `c3ca2ae3cbfe23bd02299d4e4b3bb64770a35cdd` after automat
 
 Established explicit active-camera `screen → world` conversion, pointer validity/outside-canvas invalidation, world-bounds classification and an optional Pointer probe. Owner recording materially supports stable target/crosshair behavior across camera follow and zoom. This is targeting infrastructure only; no click action, placement or world mutation was introduced.
 
-## R5a — placement-site semantics qualification — ACTIVE / DESIGN CANDIDATE
+### R5a — placement-site semantics qualification — CLOSED / PASS
 
-Purpose: determine what a placement target means before adding cursor-driven placement.
+PR #9 merged into P1 as `2f286a6117742da7c1f532cfa48741c26f69059b` after research/design review, CI and Cloudflare PASS. Runtime intentionally did not change.
 
-Current-best qualified shape:
+Durable qualified direction:
 
-1. **Do not turn `Blocker` into a generic interactable.** Collision/vision geometry and semantic interaction offers are separate concerns.
-2. Introduce a narrow authored concept tentatively called **`PlacementSite`**: a semantically named region that can support a placement relation, without containing execution logic.
-3. Preserve the spatial relation as world meaning. The first required relation is **`on`** (for the yard table). Do not add `in` until a real container exists, but keep the model extensible so `on table` and `in box` are not collapsed into coordinates alone.
-4. **Ground remains an implicit fallback** for ordinary floor placement rather than one giant authored site.
-5. A successful future placement must persist both spatial position and semantic support relation/site identity. Coordinates alone are insufficient for future perception, memory and language (`mug on table`).
-6. `PlacementSite` describes an offered spatial relation and validation context; it does **not** execute pickup/place behavior. Execution remains world/executor-owned.
-7. Do not introduce generic `Affordance[]`, capability-tag taxonomies, reservation/claim systems or a universal interaction API in R5a.
-8. The current table may temporarily have separate blocker and placement-site records. The future Tiled adapter may derive both from one authored object/class, avoiding long-term hand duplication.
-9. Do not design placement reach, occupancy, collision resolution, pointer preview or action codes in this qualification. Those belong to later bounded stages using concrete evidence.
+1. `Blocker` remains collision/vision geometry; do not turn geometry into a generic interactable.
+2. A later narrow authored **`PlacementSite`** should describe a semantically named region offering a placement relation, without execution logic.
+3. Preserve placement relation as world meaning. First concrete relation is **`on`** for the yard table; do not add `in` until a real container exists, but do not collapse future `on`/`in` into coordinates alone.
+4. Ordinary ground remains an implicit placement fallback rather than one giant authored site.
+5. Successful future placement must persist both position and semantic site/relation so perception/memory can represent facts such as `mug on table`.
+6. Placement-site data describes an offer/validation context; world/executor owns legality and execution.
+7. Do not introduce generic `Affordance[]`, capability-tag taxonomies, reservation/claim systems or a universal interaction API without concrete evidence.
+8. Temporary separate blocker/site records are acceptable; a future Tiled adapter may derive both from one authored source.
+9. Reach, occupancy, item filters/capacity, pointer preview, collision resolution and placement action codes remain deliberately deferred.
 
-Research precedent used only as guidance, not as a subsystem donor:
-
-- Unreal Smart Objects separate authored interaction/slot information from execution performed by the interactor;
-- AI2-THOR demonstrates the value of explicit pickupable/receptacle semantics and persistent object↔receptacle relations, but its broad receptacle abstraction should not force our future `on`/`in` semantics to collapse.
-
-R5a has **no runtime implementation delta** yet. The qualification must pass review/CI before integration; subsequent implementation of an authored-site seam is a separate stage.
+Research precedents were used only as design pressure: Unreal Smart Objects for separating authored interaction information from execution; AI2-THOR for explicit pickupable/receptacle semantics and persistent semantic object relations.
 
 ## Architecture conclusions currently considered durable
 
@@ -169,7 +164,7 @@ Do not collapse all behavior into one universal action system. Keep distinct:
 
 Future LLM cognition should operate mainly at the intent/task level. A deterministic non-LLM executor should translate tasks into continuous control and validated atomic actions. Player/scripted/LLM provenance must not change world legality.
 
-Affordances/interaction offers should describe what a place/object offers and under what conditions while execution remains separate. Do not generalize beyond concrete evidence. R5a specifically narrows placement to a semantic site/relation rather than a universal affordance framework.
+Interaction offers should describe what a place/object offers and under what conditions while execution remains separate. Do not generalize beyond concrete evidence. R5a specifically narrows placement to a semantic site/relation rather than a universal affordance framework.
 
 ## Working method
 
@@ -185,8 +180,8 @@ Directional only:
 
 - **R2b candidate:** world-event vs action-outcome observability, if this becomes the largest apparatus weakness;
 - **R4c+:** first materially better visual slice / first concrete authored-map or visual-descriptor evidence;
-- **R5a:** placement-site semantics qualification — active candidate on its own branch;
-- **R5b candidate:** smallest authored `PlacementSite` domain seam, only if R5a closes;
+- **R5a:** placement-site semantics qualification — CLOSED / PASS;
+- **R5b candidate:** smallest authored `PlacementSite` domain seam;
 - **R6:** controlled placement/validation, dependent on R3a targeting and concrete authored-site evidence;
 - **R7:** non-LLM actor orientation/execution/task lifecycle;
 - **R8:** sight research + implementation;
@@ -198,9 +193,15 @@ Memory/long-term beliefs remain intentionally undesigned until real cognition ev
 
 ## Immediate frontier
 
-**R5a qualification only. No placement implementation is authorized by this document.**
+**No next implementation stage is pre-authorized.**
 
-Gate R5a by checking that the proposed placement-site semantics are minimal, coherent with current `World`, preserve world authority and avoid premature generic interaction architecture. If accepted and integrated, return to fresh evidence before authorizing R5b or any other next stage.
+R5a established semantics only. At the next `kontynuuj`, reground and choose exactly one bounded problem from fresh evidence.
+
+Strong current candidates:
+
+- **R5b:** introduce the smallest authored `PlacementSite` domain seam and one table site, still without cursor placement;
+- a first small visual evidence slice using the R4 seam if diagram-like representation is now the dominant blocker;
+- R2b action-outcome observability if causal debug becomes limiting.
 
 Do not begin a large Tiled migration, asset system, map rewrite, cursor placement, perception or LLM work implicitly.
 
