@@ -2,6 +2,7 @@ import * as Phaser from "phaser";
 import "./style.css";
 import "./mobile-style.css";
 import { DebugWorkspace } from "./debug-workspace";
+import { E1DebugPanel } from "./e1-debug-panel";
 import { isTouchOwnerDevice, MobileOwnerControls } from "./mobile-controls";
 import { PlayerControlBuffer } from "./player-control-buffer";
 import { WorldScene } from "./world-scene";
@@ -18,6 +19,7 @@ const mobileOwnerMode = isTouchOwnerDevice();
 appRoot.classList.toggle("mobile-owner-mode", mobileOwnerMode);
 
 let scene: WorldScene;
+let e1Panel: E1DebugPanel | null = null;
 const playerControls = new PlayerControlBuffer();
 
 const workspace = new DebugWorkspace(debugRoot, appRoot, {
@@ -28,7 +30,15 @@ const workspace = new DebugWorkspace(debugRoot, appRoot, {
 });
 if (mobileOwnerMode) workspace.setCollapsed(true);
 
-scene = new WorldScene((state) => workspace.update(state), playerControls);
+scene = new WorldScene((state) => {
+  workspace.update(state);
+  e1Panel?.update(scene.e1AgentState());
+}, playerControls);
+
+e1Panel = new E1DebugPanel(debugRoot, {
+  toggle: () => scene.toggleE1Agent()
+});
+e1Panel.update(scene.e1AgentState());
 
 new Phaser.Game({
   type: Phaser.AUTO,
