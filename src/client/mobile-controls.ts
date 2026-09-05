@@ -11,6 +11,12 @@ interface TapCandidate {
   cancelled: boolean;
 }
 
+export interface MobileOwnerEnvironment {
+  maxTouchPoints: number;
+  coarsePointer: boolean;
+  hoverNone: boolean;
+}
+
 const TAP_MAX_TRAVEL_PX = 12;
 const TAP_MAX_DURATION_MS = 400;
 
@@ -62,12 +68,25 @@ export function isTapGesture(
   return distance(start, end) <= maxTravelPx && elapsedMs <= maxDurationMs;
 }
 
+export function shouldEnableMobileOwnerMode(environment: MobileOwnerEnvironment): boolean {
+  return (
+    Number.isFinite(environment.maxTouchPoints) &&
+    environment.maxTouchPoints > 0 &&
+    environment.coarsePointer &&
+    environment.hoverNone
+  );
+}
+
 function distance(a: Point, b: Point): number {
   return Math.hypot(a.x - b.x, a.y - b.y);
 }
 
 export function isTouchOwnerDevice(): boolean {
-  return navigator.maxTouchPoints > 0 || window.matchMedia("(pointer: coarse)").matches;
+  return shouldEnableMobileOwnerMode({
+    maxTouchPoints: navigator.maxTouchPoints,
+    coarsePointer: window.matchMedia("(pointer: coarse)").matches,
+    hoverNone: window.matchMedia("(hover: none)").matches
+  });
 }
 
 function isActionControlTarget(target: EventTarget | null): boolean {
@@ -187,7 +206,8 @@ export class MobileOwnerControls {
     const radius = Math.max(1, Math.min(baseRect.width, baseRect.height) * 0.36);
     const vector = joystickVector(event.clientX - this.joystickOrigin.x, event.clientY - this.joystickOrigin.y, radius, 0.08);
 
-    if (vector.x !== 0 || vector.y !== 0) this.cancelTapCandidate(event.pointerId);
+    // A small finger jitter may already leave the joystick dead zone while still being a valid tap.
+    // Tap eligibility is cancelled centrally only after TAP_MAX_TRAVEL_PX or by pinch.
     this.buffer.setMovement(vector.x, vector.y);
     knob.style.transform = `translate(${(vector.x * radius).toFixed(1)}px, ${(vector.y * radius).toFixed(1)}px)`;
   }
@@ -291,11 +311,6 @@ export class MobileOwnerControls {
     };
     window.addEventListener("pointerup", (event) => endPointer(event, true), { capture: true });
     window.addEventListener("pointercancel", (event) => endPointer(event, false), { capture: true });
-  }
-
-  private cancelTapCandidate(pointerId: number): void {
-    const candidate = this.tapCandidates.get(pointerId);
-    if (candidate) candidate.cancelled = true;
   }
 
   private refreshPinchBaseline(): void {
