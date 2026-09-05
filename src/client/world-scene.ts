@@ -2,6 +2,12 @@ import * as Phaser from "phaser";
 import { createP1Specimen } from "../world/specimen";
 import { World } from "../world/world";
 import type { WorldEvent, WorldSnapshot } from "../world/types";
+import {
+  PRESENTATION_DEPTH,
+  resolveBlockerVisual,
+  resolveEntityVisual,
+  resolveLocationVisual
+} from "./presentation";
 
 const FIXED_STEP_MS = 1000 / 30;
 const DEBUG_STATE_INTERVAL_MS = 100;
@@ -36,7 +42,8 @@ export class WorldScene extends Phaser.Scene {
   private readonly entityViews = new Map<string, Phaser.GameObjects.Arc>();
   private readonly entityLabels = new Map<string, Phaser.GameObjects.Text>();
   private readonly locationLabels: Phaser.GameObjects.Text[] = [];
-  private staticGraphics!: Phaser.GameObjects.Graphics;
+  private groundGraphics!: Phaser.GameObjects.Graphics;
+  private sceneryGraphics!: Phaser.GameObjects.Graphics;
   private debugGraphics!: Phaser.GameObjects.Graphics;
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private keys!: Record<"W" | "A" | "S" | "D" | "E" | "Q" | "V" | "L", Phaser.Input.Keyboard.Key>;
@@ -58,8 +65,9 @@ export class WorldScene extends Phaser.Scene {
     this.cursors = this.input.keyboard.createCursorKeys();
     this.keys = this.input.keyboard.addKeys("W,A,S,D,E,Q,V,L") as typeof this.keys;
 
-    this.staticGraphics = this.add.graphics();
-    this.debugGraphics = this.add.graphics().setDepth(20);
+    this.groundGraphics = this.add.graphics().setDepth(PRESENTATION_DEPTH.ground);
+    this.sceneryGraphics = this.add.graphics().setDepth(PRESENTATION_DEPTH.scenery);
+    this.debugGraphics = this.add.graphics().setDepth(PRESENTATION_DEPTH.debug);
     this.drawStaticWorld();
     this.createEntityViews();
 
@@ -135,13 +143,13 @@ export class WorldScene extends Phaser.Scene {
   private drawStaticWorld(): void {
     const snapshot = this.world.snapshot();
 
-    this.staticGraphics.fillStyle(0x18231d, 1);
-    this.staticGraphics.fillRect(0, 0, snapshot.width, snapshot.height);
+    this.groundGraphics.fillStyle(0x18231d, 1);
+    this.groundGraphics.fillRect(0, 0, snapshot.width, snapshot.height);
 
     for (const location of snapshot.locations) {
-      const color = this.locationColor(location.id);
-      this.staticGraphics.fillStyle(color, 0.16);
-      this.staticGraphics.fillRect(location.bounds.x, location.bounds.y, location.bounds.width, location.bounds.height);
+      const visual = resolveLocationVisual(location.id);
+      this.groundGraphics.fillStyle(visual.fillColor, visual.fillAlpha);
+      this.groundGraphics.fillRect(location.bounds.x, location.bounds.y, location.bounds.width, location.bounds.height);
       const label = this.add
         .text(location.bounds.x + 10, location.bounds.y + 8, location.label, {
           fontFamily: "system-ui, sans-serif",
@@ -150,39 +158,40 @@ export class WorldScene extends Phaser.Scene {
           backgroundColor: "#0d1216aa",
           padding: { x: 6, y: 3 }
         })
-        .setDepth(2);
+        .setDepth(PRESENTATION_DEPTH.scenery);
       this.locationLabels.push(label);
     }
 
     for (const blocker of snapshot.blockers) {
-      this.staticGraphics.fillStyle(blocker.occludesVision ? 0x4d5963 : 0x66523d, 0.95);
-      this.staticGraphics.fillRect(blocker.bounds.x, blocker.bounds.y, blocker.bounds.width, blocker.bounds.height);
-      this.staticGraphics.lineStyle(1, 0xaab5bd, blocker.occludesVision ? 0.35 : 0.2);
-      this.staticGraphics.strokeRect(blocker.bounds.x, blocker.bounds.y, blocker.bounds.width, blocker.bounds.height);
+      const visual = resolveBlockerVisual(blocker);
+      this.sceneryGraphics.fillStyle(visual.fillColor, visual.fillAlpha);
+      this.sceneryGraphics.fillRect(blocker.bounds.x, blocker.bounds.y, blocker.bounds.width, blocker.bounds.height);
+      this.sceneryGraphics.lineStyle(1, visual.strokeColor, visual.strokeAlpha);
+      this.sceneryGraphics.strokeRect(blocker.bounds.x, blocker.bounds.y, blocker.bounds.width, blocker.bounds.height);
     }
 
-    this.staticGraphics.lineStyle(4, 0x6a7884, 0.5);
-    this.staticGraphics.strokeRect(0, 0, snapshot.width, snapshot.height);
+    this.groundGraphics.lineStyle(4, 0x6a7884, 0.5);
+    this.groundGraphics.strokeRect(0, 0, snapshot.width, snapshot.height);
   }
 
   private createEntityViews(): void {
     for (const entity of this.world.snapshot().entities) {
-      const color = entity.kind === "player" ? 0x79d8ff : entity.kind === "npc" ? 0xffc46b : 0xece6cf;
-      const view = this.add.circle(entity.position.x, entity.position.y, entity.radius, color, 1);
-      view.setStrokeStyle(2, 0x0b0e12, 0.9);
-      view.setDepth(entity.kind === "item" ? 5 : 6);
+      const visual = resolveEntityVisual(entity);
+      const view = this.add.circle(entity.position.x, entity.position.y, entity.radius, visual.fillColor, 1);
+      view.setStrokeStyle(2, visual.strokeColor, visual.strokeAlpha);
+      view.setDepth(visual.depth);
       this.entityViews.set(entity.id, view);
 
       const label = this.add
         .text(entity.position.x, entity.position.y - entity.radius - 18, entity.label, {
           fontFamily: "system-ui, sans-serif",
-          fontSize: entity.kind === "item" ? "11px" : "12px",
+          fontSize: visual.labelFontSize,
           color: "#f0f4f7",
           backgroundColor: "#0b0e12bb",
           padding: { x: 4, y: 2 }
         })
         .setOrigin(0.5, 1)
-        .setDepth(7);
+        .setDepth(PRESENTATION_DEPTH.overhead);
       this.entityLabels.set(entity.id, label);
     }
   }
@@ -252,20 +261,5 @@ export class WorldScene extends Phaser.Scene {
       labelsVisible: this.labelsVisible,
       events: this.world.recentEvents(10).reverse()
     });
-  }
-
-  private locationColor(id: string): number {
-    switch (id) {
-      case "workshop":
-        return 0x5e7080;
-      case "cottage":
-        return 0x826956;
-      case "grove":
-        return 0x456d50;
-      case "north-path":
-        return 0x70695a;
-      default:
-        return 0x536c61;
-    }
   }
 }
