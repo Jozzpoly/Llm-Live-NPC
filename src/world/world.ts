@@ -517,24 +517,13 @@ export class World {
       });
     }
 
-    if (target.kind === "npc") {
-      return this.recordAction({
-        actorId: actor.id,
-        action: "interact",
-        status: "succeeded",
-        code: "npc_interaction_requested",
-        targetId: target.id,
-        message: `Interaction requested with ${target.label}; cognition is disabled in P1.`
-      });
-    }
-
     return this.recordAction({
       actorId: actor.id,
       action: "interact",
-      status: "rejected",
-      code: "target_not_interactable",
-      targetId,
-      message: `${target.label} is not interactable through this action.`
+      status: "succeeded",
+      code: "npc_interaction_requested",
+      targetId: target.id,
+      message: `Interaction requested with ${target.label}; cognition is disabled in P1.`
     });
   }
 
