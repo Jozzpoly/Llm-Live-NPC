@@ -146,7 +146,10 @@ After correction, CI proved:
 - workshop doorway LOS — **PASS**;
 - no pickup through an occluding wall — **PASS**;
 - Vite Worker build — **PASS**;
-- Vite client build — **PASS**.
+- Vite client build — **PASS**;
+- exact self-contained preview path `vite build → wrangler versions upload --dry-run` — **PASS**.
+
+The preview dry-run confirms that Wrangler follows `.wrangler/deploy/config.json`, uses generated `dist/llm_live_npc/wrangler.json`, sees the `dist/client` assets, and preserves the AI plus rate-limit bindings.
 
 Current client bundle observation: approximately `1.39 MB` minified / `362 kB gzip`, dominated by the full Phaser runtime. This is a non-blocking P1 optimization signal, not yet a reason to optimize or change renderer.
 
@@ -158,32 +161,47 @@ P1 is the first real client toolchain, so the earlier dependency reproducibility
 - CI uses `npm ci` rather than unconstrained `npm install`;
 - Node remains pinned to major `22`;
 - top-level packages remain exact-version pinned;
-- GitHub Actions use current Node24-based `actions/checkout@v6` and `actions/setup-node@v6`.
+- GitHub Actions use current Node24-based `actions/checkout@v6` and `actions/setup-node@v6`;
+- repo now exposes self-contained `npm run deploy:preview`, defined as `vite build && wrangler versions upload`.
 
-## Cloudflare build migration — Owner change applied, fresh preview pending
+## Cloudflare preview deployment diagnosis
 
-Earlier P1 preview attempts failed under the P0 Workers Builds configuration because Cloudflare ran `npx wrangler deploy` without first running the Vite build. Those failures predate the dashboard migration and are not evidence against the current application build.
+Fresh Owner-provided Cloudflare build logs resolved the earlier ambiguity.
 
-On 2026-09-05 the Owner changed the Cloudflare Workers Builds setting to:
+For non-production branches, Workers Builds used its preview trigger and executed:
 
-`Build command = npm run build --if-present`
+`npx wrangler versions upload`
 
-The existing Deploy command remains:
+without executing a Vite build first. Wrangler therefore read the input `wrangler.jsonc`, whose `assets` object intentionally has routing configuration but no `directory`, and failed with:
 
-`npx wrangler deploy`
+`The assets property in your configuration is missing the required directory property.`
 
-Non-production branch builds remain enabled.
+This does **not** mean `assets.directory` should be added to the input Wrangler config. With the official Cloudflare Vite plugin, the input config is allowed to omit that field; `vite build` generates the output Wrangler config and automatically fills `assets.directory` with the client build output.
 
-This is the intended migration seam: P1 runs `vite build` first, allowing the official Cloudflare Vite plugin to produce the generated output configuration/client assets before Wrangler deploys the preview. `--if-present` preserves compatibility with the already-deployed P0 main, which has no `build` script.
+Cloudflare Workers Builds maintains separate production and preview triggers, each with its own build/deploy commands. The earlier Owner change to `Build command = npm run build --if-present` did not affect the preview trigger evidenced by the failing non-production build.
 
-This state update intentionally triggers the first fresh P1 branch build under the migrated Cloudflare configuration. Do not interpret earlier Cloudflare FAILs as current until this post-migration build completes.
+To remove this ambiguity from the repo, P1 now defines a self-contained preview command:
+
+`npm run deploy:preview`
+
+which executes:
+
+`vite build && wrangler versions upload`
+
+CI validates the exact command with `--dry-run` and passes.
+
+Therefore the next Cloudflare dashboard change should be limited to the **non-production branch deploy command**:
+
+`npm run deploy:preview`
+
+Do not add `assets.directory` to the root config and do not add build work to `postinstall` or rely on cached `dist` output.
 
 ## P1 closure contract
 
 P1 is not closed and PR #3 must not merge until:
 
-1. locked CI remains green — **PROVEN**;
-2. Cloudflare non-production preview serves the actual Vite/Phaser P1 client — **OPEN, fresh post-migration preview pending**;
+1. locked CI + exact preview upload dry-run remain green — **PROVEN**;
+2. Cloudflare non-production preview trigger executes the self-contained preview command and serves the actual Vite/Phaser P1 client — **OPEN, dashboard preview deploy command change required**;
 3. Owner can enter the preview and move around the authored world — **OPEN**;
 4. authored blockers visibly constrain movement — **OPEN Owner runtime evidence**;
 5. Owner can pick up/drop at least one object and see semantic events change — **OPEN**;
