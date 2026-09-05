@@ -1,10 +1,17 @@
 import * as Phaser from "phaser";
+import {
+  DeterministicExecutor,
+  type ExecutorState,
+  type ExecutorStatus
+} from "../execution/deterministic-executor";
+import { ExecutionDriver } from "../execution/execution-driver";
 import { createP1Specimen } from "../world/specimen";
 import { World } from "../world/world";
 import type {
   Aabb,
   EntityId,
   Vec2,
+  WorldActionRequest,
   WorldActionResult,
   WorldEntity,
   WorldEvent,
@@ -48,6 +55,12 @@ export interface WorldDebugState {
   npcLineOfSight: boolean;
   npcDistance: number;
   entityCount: number;
+  executorStatus: ExecutorStatus;
+  executorActorId: EntityId | null;
+  executorTargetId: EntityId | null;
+  executorStepsUsed: number;
+  executorStepBudget: number;
+  executorFailureCode: string | null;
   cameraZoom: number;
   debugOverlayVisible: boolean;
   labelsVisible: boolean;
@@ -66,6 +79,8 @@ function clamp(value: number, min: number, max: number): number {
 
 export class WorldScene extends Phaser.Scene {
   private readonly world = new World(createP1Specimen());
+  private readonly npcExecutor = new DeterministicExecutor();
+  private readonly executionDriver = new ExecutionDriver(this.world, this.npcExecutor);
   private readonly debugSink: DebugSink;
   private readonly playerControls: PlayerControlBuffer;
   private readonly entityViews = new Map<string, Phaser.GameObjects.Container>();
@@ -175,19 +190,26 @@ export class WorldScene extends Phaser.Scene {
           (this.keys?.W.isDown || this.cursors?.up.isDown ? 1 : 0)
       };
       const movement = combineControlMovement(keyboardMove, this.playerControls.movement());
-
-      this.previousPresentationSnapshot = this.currentPresentationSnapshot;
-      this.world.step({ moveX: movement.x, moveY: movement.y });
-      if (this.pendingDrop) this.world.attemptAction({ action: "drop", actorId: "player.jozz" });
+      const playerActions: WorldActionRequest[] = [];
+      if (this.pendingDrop) {
+        playerActions.push({ action: "drop", actorId: "player.jozz" });
+      }
       if (this.pendingDirectInteractTargetId) {
-        this.world.attemptAction({
+        playerActions.push({
           action: "interact",
           actorId: "player.jozz",
           targetId: this.pendingDirectInteractTargetId
         });
       } else if (this.pendingInteract) {
-        this.world.attemptAction({ action: "interact", actorId: "player.jozz" });
+        playerActions.push({ action: "interact", actorId: "player.jozz" });
       }
+
+      this.previousPresentationSnapshot = this.currentPresentationSnapshot;
+      this.executionDriver.step({
+        playerControl: { moveX: movement.x, moveY: movement.y },
+        playerActions
+      });
+
       this.currentPresentationSnapshot = this.world.snapshot();
       this.pendingInteract = false;
       this.pendingDrop = false;
@@ -212,6 +234,17 @@ export class WorldScene extends Phaser.Scene {
 
   togglePointerProbe(): void {
     this.pointerProbeVisible = !this.pointerProbeVisible;
+  }
+
+  startNpcFetchLanternTask(): ExecutorState {
+    this.npcExecutor.start({
+      kind: "approach-and-interact",
+      actorId: "npc.001",
+      targetId: "item.lantern"
+    });
+    const state = this.npcExecutor.state();
+    this.emitDebugState(this.currentPresentationSnapshot);
+    return state;
   }
 
   zoomByScale(scale: number): void {
@@ -520,6 +553,7 @@ export class WorldScene extends Phaser.Scene {
     const heldItem = player.heldItemId
       ? snapshot.entities.find((entity) => entity.id === player.heldItemId)?.label ?? player.heldItemId
       : "none";
+    const executorState = this.npcExecutor.state();
 
     this.debugSink({
       tick: snapshot.tick,
@@ -529,6 +563,12 @@ export class WorldScene extends Phaser.Scene {
       npcLineOfSight: this.world.hasLineOfSight(npc.position, player.position),
       npcDistance: Math.hypot(npc.position.x - player.position.x, npc.position.y - player.position.y),
       entityCount: snapshot.entities.length,
+      executorStatus: executorState.status,
+      executorActorId: executorState.task?.actorId ?? null,
+      executorTargetId: executorState.task?.targetId ?? null,
+      executorStepsUsed: executorState.stepsUsed,
+      executorStepBudget: executorState.stepBudget,
+      executorFailureCode: executorState.failureCode,
       cameraZoom: this.cameras.main.zoom,
       debugOverlayVisible: this.debugOverlayVisible,
       labelsVisible: this.labelsVisible,

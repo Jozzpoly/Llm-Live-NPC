@@ -51,6 +51,52 @@ describe("P1 World", () => {
     expect(world.lastActionResult()).toBeNull();
   });
 
+  it("rejects non-finite player movement before any world mutation", () => {
+    const invalidInputs: WorldInput[] = [
+      { moveX: Number.NaN, moveY: 0 },
+      { moveX: Number.POSITIVE_INFINITY, moveY: 0 },
+      { moveX: 0, moveY: Number.NEGATIVE_INFINITY }
+    ];
+
+    for (const input of invalidInputs) {
+      const world = new World(createP1Specimen());
+      const snapshotBefore = world.snapshot();
+      const eventsBefore = world.recentEvents(128);
+      const actionBefore = world.lastActionResult();
+
+      expect(() =>
+        world.stepWithActorControls(input, [{ actorId: "npc.001", moveX: 1, moveY: 0 }])
+      ).toThrow("Player control requires a finite movement vector.");
+
+      expect(world.snapshot()).toEqual(snapshotBefore);
+      expect(world.recentEvents(128)).toEqual(eventsBefore);
+      expect(world.lastActionResult()).toEqual(actionBefore);
+    }
+  });
+
+  it("rejects non-finite NPC movement before valid player movement can mutate the world", () => {
+    const invalidControls = [
+      { actorId: "npc.001", moveX: Number.NaN, moveY: 0 },
+      { actorId: "npc.001", moveX: Number.POSITIVE_INFINITY, moveY: 0 },
+      { actorId: "npc.001", moveX: 0, moveY: Number.NEGATIVE_INFINITY }
+    ];
+
+    for (const control of invalidControls) {
+      const world = new World(createP1Specimen());
+      const snapshotBefore = world.snapshot();
+      const eventsBefore = world.recentEvents(128);
+      const actionBefore = world.lastActionResult();
+
+      expect(() => world.stepWithActorControls({ moveX: 1, moveY: 0 }, [control])).toThrow(
+        "Actor control npc.001 requires a finite movement vector."
+      );
+
+      expect(world.snapshot()).toEqual(snapshotBefore);
+      expect(world.recentEvents(128)).toEqual(eventsBefore);
+      expect(world.lastActionResult()).toEqual(actionBefore);
+    }
+  });
+
   it("keeps the player outside authored blockers", () => {
     const world = new World(createP1Specimen());
     stepMany(world, 100, { moveX: 1, moveY: 0 });

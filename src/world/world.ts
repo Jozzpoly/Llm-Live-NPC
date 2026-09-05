@@ -1,5 +1,6 @@
 import type {
   Aabb,
+  ActorControlInput,
   ActorEntity,
   EntityId,
   ItemEntity,
@@ -100,6 +101,12 @@ function hasUnitFacing(actor: ActorEntity): boolean {
   return Math.abs(Math.hypot(actor.facing.x, actor.facing.y) - 1) <= FACING_EPSILON;
 }
 
+function assertFiniteMovement(input: WorldInput, label: string): void {
+  if (!Number.isFinite(input.moveX) || !Number.isFinite(input.moveY)) {
+    throw new Error(`${label} requires a finite movement vector.`);
+  }
+}
+
 export class World {
   readonly width: number;
   readonly height: number;
@@ -162,12 +169,42 @@ export class World {
   }
 
   step(input: WorldInput, seconds = DEFAULT_STEP_SECONDS): void {
+    this.stepWithActorControls(input, [], seconds);
+  }
+
+  stepWithActorControls(
+    input: WorldInput,
+    actorControls: readonly ActorControlInput[],
+    seconds = DEFAULT_STEP_SECONDS
+  ): void {
     if (!Number.isFinite(seconds) || seconds <= 0 || seconds > 0.25) {
       throw new Error(`Invalid world step duration: ${seconds}`);
     }
 
+    const player = this.player();
+    assertFiniteMovement(input, "Player control");
+
+    const seenActorIds = new Set<EntityId>();
+    const validatedControls: Array<{ actor: ActorEntity; control: ActorControlInput }> = [];
+    for (const control of [...actorControls].sort((a, b) => a.actorId.localeCompare(b.actorId))) {
+      if (control.actorId === player.id) {
+        throw new Error(`Actor controls must not duplicate player control: ${control.actorId}`);
+      }
+      if (seenActorIds.has(control.actorId)) {
+        throw new Error(`Duplicate actor control: ${control.actorId}`);
+      }
+      seenActorIds.add(control.actorId);
+
+      const actor = this.entities.get(control.actorId);
+      if (!isActor(actor)) throw new Error(`Actor control target not found: ${control.actorId}`);
+      assertFiniteMovement(control, `Actor control ${control.actorId}`);
+      validatedControls.push({ actor, control });
+    }
+
     this.tickValue += 1;
-    this.movePlayer(input, seconds);
+    this.moveActor(player, input, seconds);
+    for (const { actor, control } of validatedControls) this.moveActor(actor, control, seconds);
+
     this.followHeldItems();
     this.updatePlayerLocation();
   }
@@ -320,12 +357,11 @@ export class World {
     return player;
   }
 
-  private movePlayer(input: WorldInput, seconds: number): void {
-    const player = this.player();
+  private moveActor(actor: ActorEntity, input: WorldInput, seconds: number): void {
     const magnitude = Math.hypot(input.moveX, input.moveY);
     if (magnitude <= 0) return;
 
-    player.facing = {
+    actor.facing = {
       x: input.moveX / magnitude,
       y: input.moveY / magnitude
     };
@@ -336,22 +372,22 @@ export class World {
     const dx = movementX * this.playerSpeed * seconds;
     const dy = movementY * this.playerSpeed * seconds;
 
-    let x = clamp(player.position.x + dx, player.radius, this.width - player.radius);
+    let x = clamp(actor.position.x + dx, actor.radius, this.width - actor.radius);
     for (const blocker of this.blockers) {
-      if (!pointHitsExpandedAabb({ x, y: player.position.y }, player.radius, blocker.bounds)) continue;
-      if (dx > 0) x = Math.min(x, blocker.bounds.x - player.radius);
-      if (dx < 0) x = Math.max(x, blocker.bounds.x + blocker.bounds.width + player.radius);
+      if (!pointHitsExpandedAabb({ x, y: actor.position.y }, actor.radius, blocker.bounds)) continue;
+      if (dx > 0) x = Math.min(x, blocker.bounds.x - actor.radius);
+      if (dx < 0) x = Math.max(x, blocker.bounds.x + blocker.bounds.width + actor.radius);
     }
 
-    let y = clamp(player.position.y + dy, player.radius, this.height - player.radius);
+    let y = clamp(actor.position.y + dy, actor.radius, this.height - actor.radius);
     for (const blocker of this.blockers) {
-      if (!pointHitsExpandedAabb({ x, y }, player.radius, blocker.bounds)) continue;
-      if (dy > 0) y = Math.min(y, blocker.bounds.y - player.radius);
-      if (dy < 0) y = Math.max(y, blocker.bounds.y + blocker.bounds.height + player.radius);
+      if (!pointHitsExpandedAabb({ x, y }, actor.radius, blocker.bounds)) continue;
+      if (dy > 0) y = Math.min(y, blocker.bounds.y - actor.radius);
+      if (dy < 0) y = Math.max(y, blocker.bounds.y + blocker.bounds.height + actor.radius);
     }
 
-    player.position.x = clamp(x, player.radius, this.width - player.radius);
-    player.position.y = clamp(y, player.radius, this.height - player.radius);
+    actor.position.x = clamp(x, actor.radius, this.width - actor.radius);
+    actor.position.y = clamp(y, actor.radius, this.height - actor.radius);
   }
 
   private followHeldItems(): void {
