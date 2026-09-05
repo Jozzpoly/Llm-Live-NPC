@@ -1,5 +1,6 @@
 import type {
   Aabb,
+  ActorEntity,
   EntityId,
   ItemEntity,
   LocationId,
@@ -7,6 +8,7 @@ import type {
   PlacementTargetValidation,
   PlayerEntity,
   Vec2,
+  WorldActionRequest,
   WorldActionResult,
   WorldEntity,
   WorldEvent,
@@ -88,6 +90,10 @@ function segmentIntersectsAabb(start: Vec2, end: Vec2, bounds: Aabb): boolean {
   return tMin <= tMax;
 }
 
+function isActor(entity: WorldEntity | undefined): entity is ActorEntity {
+  return entity?.kind === "player" || entity?.kind === "npc";
+}
+
 export class World {
   readonly width: number;
   readonly height: number;
@@ -153,11 +159,24 @@ export class World {
 
     this.tickValue += 1;
     this.movePlayer(input, seconds);
-    this.followHeldItem();
+    this.followHeldItems();
     this.updatePlayerLocation();
+  }
 
-    if (input.dropPressed) this.dropHeldItem();
-    if (input.interactPressed) this.interact();
+  attemptAction(request: WorldActionRequest): WorldActionResult {
+    const actor = this.entities.get(request.actorId);
+    if (!isActor(actor)) {
+      return this.recordAction({
+        actorId: request.actorId,
+        action: request.action,
+        status: "rejected",
+        code: "actor_not_found",
+        message: `Actor not found: ${request.actorId}.`
+      });
+    }
+
+    if (request.action === "drop") return this.dropHeldItem(actor);
+    return this.interact(actor, request.targetId);
   }
 
   snapshot(): WorldSnapshot {
@@ -320,13 +339,18 @@ export class World {
     player.position.y = clamp(y, player.radius, this.height - player.radius);
   }
 
-  private followHeldItem(): void {
-    const player = this.player();
-    if (!player.heldItemId) return;
-    const item = this.entities.get(player.heldItemId);
-    if (!item || item.kind !== "item") throw new Error(`Held item missing: ${player.heldItemId}`);
-    item.position.x = player.position.x;
-    item.position.y = player.position.y - player.radius - 10;
+  private followHeldItems(): void {
+    for (const entity of this.entities.values()) {
+      if (isActor(entity)) this.followHeldItem(entity);
+    }
+  }
+
+  private followHeldItem(actor: ActorEntity): void {
+    if (!actor.heldItemId) return;
+    const item = this.entities.get(actor.heldItemId);
+    if (!item || item.kind !== "item") throw new Error(`Held item missing: ${actor.heldItemId}`);
+    item.position.x = actor.position.x;
+    item.position.y = actor.position.y - actor.radius - 10;
   }
 
   private updatePlayerLocation(): void {
@@ -360,67 +384,14 @@ export class World {
     return this.locations.find((location) => containsPoint(location.bounds, position));
   }
 
-  private interact(): void {
-    const player = this.player();
-    const rangeSq = INTERACTION_RANGE * INTERACTION_RANGE;
+  private interact(actor: ActorEntity, explicitTargetId?: EntityId): WorldActionResult {
+    if (explicitTargetId !== undefined) return this.interactWithTarget(actor, explicitTargetId);
 
-    if (!player.heldItemId) {
-      const nearestItem = [...this.entities.values()]
-        .filter((entity): entity is ItemEntity => entity.kind === "item" && entity.heldBy === null)
-        .filter((item) => distanceSquared(player.position, item.position) <= rangeSq)
-        .filter((item) => this.hasLineOfSight(player.position, item.position))
-        .sort(
-          (a, b) =>
-            distanceSquared(player.position, a.position) - distanceSquared(player.position, b.position) ||
-            a.id.localeCompare(b.id)
-        )[0];
+    const targetId = this.resolveContextInteractionTarget(actor);
+    if (targetId) return this.interactWithTarget(actor, targetId);
 
-      if (nearestItem) {
-        player.heldItemId = nearestItem.id;
-        nearestItem.heldBy = player.id;
-        this.followHeldItem();
-        this.emit({
-          type: "item.picked_up",
-          actorId: player.id,
-          entityId: nearestItem.id,
-          message: `${player.label} picked up ${nearestItem.label}.`
-        });
-        this.recordAction({
-          actorId: player.id,
-          action: "interact",
-          status: "succeeded",
-          code: "picked_up_item",
-          targetId: nearestItem.id,
-          message: `Picked up ${nearestItem.label}.`
-        });
-        return;
-      }
-    }
-
-    const nearestNpc = [...this.entities.values()]
-      .filter((entity) => entity.kind === "npc")
-      .filter((npc) => distanceSquared(player.position, npc.position) <= rangeSq)
-      .filter((npc) => this.hasLineOfSight(player.position, npc.position))
-      .sort(
-        (a, b) =>
-          distanceSquared(player.position, a.position) - distanceSquared(player.position, b.position) ||
-          a.id.localeCompare(b.id)
-      )[0];
-
-    if (nearestNpc) {
-      this.recordAction({
-        actorId: player.id,
-        action: "interact",
-        status: "succeeded",
-        code: "npc_interaction_requested",
-        targetId: nearestNpc.id,
-        message: `Interaction requested with ${nearestNpc.label}; cognition is disabled in P1.`
-      });
-      return;
-    }
-
-    this.recordAction({
-      actorId: player.id,
+    return this.recordAction({
+      actorId: actor.id,
       action: "interact",
       status: "rejected",
       code: "no_interactable",
@@ -428,35 +399,172 @@ export class World {
     });
   }
 
-  private dropHeldItem(): void {
-    const player = this.player();
-    if (!player.heldItemId) {
-      this.recordAction({
-        actorId: player.id,
+  private resolveContextInteractionTarget(actor: ActorEntity): EntityId | null {
+    const rangeSq = INTERACTION_RANGE * INTERACTION_RANGE;
+
+    if (!actor.heldItemId) {
+      const nearestItem = [...this.entities.values()]
+        .filter((entity): entity is ItemEntity => entity.kind === "item" && entity.heldBy === null)
+        .filter((item) => distanceSquared(actor.position, item.position) <= rangeSq)
+        .filter((item) => this.hasLineOfSight(actor.position, item.position))
+        .sort(
+          (a, b) =>
+            distanceSquared(actor.position, a.position) - distanceSquared(actor.position, b.position) ||
+            a.id.localeCompare(b.id)
+        )[0];
+      if (nearestItem) return nearestItem.id;
+    }
+
+    const nearestNpc = [...this.entities.values()]
+      .filter((entity): entity is ActorEntity => entity.kind === "npc" && entity.id !== actor.id)
+      .filter((npc) => distanceSquared(actor.position, npc.position) <= rangeSq)
+      .filter((npc) => this.hasLineOfSight(actor.position, npc.position))
+      .sort(
+        (a, b) =>
+          distanceSquared(actor.position, a.position) - distanceSquared(actor.position, b.position) ||
+          a.id.localeCompare(b.id)
+      )[0];
+
+    return nearestNpc?.id ?? null;
+  }
+
+  private interactWithTarget(actor: ActorEntity, targetId: EntityId): WorldActionResult {
+    const target = this.entities.get(targetId);
+    if (!target) {
+      return this.recordAction({
+        actorId: actor.id,
+        action: "interact",
+        status: "rejected",
+        code: "target_not_found",
+        targetId,
+        message: `Interaction target not found: ${targetId}.`
+      });
+    }
+
+    if (target.id === actor.id || target.kind === "player") {
+      return this.recordAction({
+        actorId: actor.id,
+        action: "interact",
+        status: "rejected",
+        code: "target_not_interactable",
+        targetId,
+        message: `${target.label} is not interactable through this action.`
+      });
+    }
+
+    const rangeSq = INTERACTION_RANGE * INTERACTION_RANGE;
+    if (distanceSquared(actor.position, target.position) > rangeSq) {
+      return this.recordAction({
+        actorId: actor.id,
+        action: "interact",
+        status: "rejected",
+        code: "target_out_of_range",
+        targetId,
+        message: `${target.label} is outside interaction range.`
+      });
+    }
+
+    if (!this.hasLineOfSight(actor.position, target.position)) {
+      return this.recordAction({
+        actorId: actor.id,
+        action: "interact",
+        status: "rejected",
+        code: "target_occluded",
+        targetId,
+        message: `${target.label} is occluded from ${actor.label}.`
+      });
+    }
+
+    if (target.kind === "item") {
+      if (actor.heldItemId) {
+        return this.recordAction({
+          actorId: actor.id,
+          action: "interact",
+          status: "rejected",
+          code: "already_holding_item",
+          targetId,
+          message: `${actor.label} is already holding an item.`
+        });
+      }
+
+      if (target.heldBy !== null) {
+        return this.recordAction({
+          actorId: actor.id,
+          action: "interact",
+          status: "rejected",
+          code: "target_unavailable",
+          targetId,
+          message: `${target.label} is already held.`
+        });
+      }
+
+      actor.heldItemId = target.id;
+      target.heldBy = actor.id;
+      this.followHeldItem(actor);
+      this.emit({
+        type: "item.picked_up",
+        actorId: actor.id,
+        entityId: target.id,
+        message: `${actor.label} picked up ${target.label}.`
+      });
+      return this.recordAction({
+        actorId: actor.id,
+        action: "interact",
+        status: "succeeded",
+        code: "picked_up_item",
+        targetId: target.id,
+        message: `Picked up ${target.label}.`
+      });
+    }
+
+    if (target.kind === "npc") {
+      return this.recordAction({
+        actorId: actor.id,
+        action: "interact",
+        status: "succeeded",
+        code: "npc_interaction_requested",
+        targetId: target.id,
+        message: `Interaction requested with ${target.label}; cognition is disabled in P1.`
+      });
+    }
+
+    return this.recordAction({
+      actorId: actor.id,
+      action: "interact",
+      status: "rejected",
+      code: "target_not_interactable",
+      targetId,
+      message: `${target.label} is not interactable through this action.`
+    });
+  }
+
+  private dropHeldItem(actor: ActorEntity): WorldActionResult {
+    if (!actor.heldItemId) {
+      return this.recordAction({
+        actorId: actor.id,
         action: "drop",
         status: "rejected",
         code: "not_holding_item",
         message: "Cannot drop: holding nothing."
       });
-      return;
     }
 
-    const item = this.entities.get(player.heldItemId);
-    if (!item || item.kind !== "item") throw new Error(`Held item missing: ${player.heldItemId}`);
+    const item = this.entities.get(actor.heldItemId);
+    if (!item || item.kind !== "item") throw new Error(`Held item missing: ${actor.heldItemId}`);
 
-    const position = this.findDropPosition(player.position, player.radius + item.radius + 14, item.radius);
+    const position = this.findDropPosition(actor.position, actor.radius + item.radius + 14, item.radius);
     item.position = position;
     item.heldBy = null;
-    player.heldItemId = null;
+    actor.heldItemId = null;
 
     this.emit({
       type: "item.dropped",
-      actorId: player.id,
+      actorId: actor.id,
       entityId: item.id,
-      message: `${player.label} dropped ${item.label}.`
+      message: `${actor.label} dropped ${item.label}.`
     });
-    this.recordAction({
-      actorId: player.id,
+    return this.recordAction({
+      actorId: actor.id,
       action: "drop",
       status: "succeeded",
       code: "dropped_item",
@@ -492,12 +600,14 @@ export class World {
     if (this.eventLog.length > EVENT_LIMIT) this.eventLog.splice(0, this.eventLog.length - EVENT_LIMIT);
   }
 
-  private recordAction(result: Omit<WorldActionResult, "seq" | "tick">): void {
+  private recordAction(result: Omit<WorldActionResult, "seq" | "tick">): WorldActionResult {
     this.actionSequence += 1;
-    this.lastActionResultValue = {
+    const recorded = {
       seq: this.actionSequence,
       tick: this.tickValue,
       ...result
     };
+    this.lastActionResultValue = recorded;
+    return { ...recorded };
   }
 }
