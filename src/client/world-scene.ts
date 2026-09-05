@@ -8,6 +8,7 @@ import {
   resolveEntityVisual,
   resolveLocationVisual
 } from "./presentation";
+import { resolvePointerTarget, type PointerTargetSample } from "./pointer-targeting";
 
 const FIXED_STEP_MS = 1000 / 30;
 const DEBUG_STATE_INTERVAL_MS = 100;
@@ -27,6 +28,9 @@ export interface WorldDebugState {
   cameraZoom: number;
   debugOverlayVisible: boolean;
   labelsVisible: boolean;
+  pointerProbeVisible: boolean;
+  pointerInsideCanvas: boolean;
+  pointerTarget: PointerTargetSample | null;
   events: WorldEvent[];
 }
 
@@ -53,6 +57,9 @@ export class WorldScene extends Phaser.Scene {
   private pendingDrop = false;
   private debugOverlayVisible = false;
   private labelsVisible = true;
+  private pointerProbeVisible = false;
+  private pointerInsideCanvas = false;
+  private pointerTarget: PointerTargetSample | null = null;
 
   constructor(debugSink: DebugSink) {
     super({ key: "world" });
@@ -92,6 +99,17 @@ export class WorldScene extends Phaser.Scene {
       }
     );
 
+    const markPointerInside = () => {
+      this.pointerInsideCanvas = true;
+    };
+    this.input.on("pointermove", markPointerInside);
+    this.input.on("pointerdown", markPointerInside);
+    this.input.on("gameover", markPointerInside);
+    this.input.on("gameout", () => {
+      this.pointerInsideCanvas = false;
+      this.pointerTarget = null;
+    });
+
     this.syncPresentation(true);
   }
 
@@ -127,6 +145,8 @@ export class WorldScene extends Phaser.Scene {
       this.accumulatorMs -= FIXED_STEP_MS;
     }
 
+    this.updatePointerTarget();
+
     const emitDebugState = this.debugAccumulatorMs >= DEBUG_STATE_INTERVAL_MS;
     this.syncPresentation(emitDebugState);
     if (emitDebugState) this.debugAccumulatorMs %= DEBUG_STATE_INTERVAL_MS;
@@ -138,6 +158,24 @@ export class WorldScene extends Phaser.Scene {
 
   toggleLabels(): void {
     this.labelsVisible = !this.labelsVisible;
+  }
+
+  togglePointerProbe(): void {
+    this.pointerProbeVisible = !this.pointerProbeVisible;
+  }
+
+  private updatePointerTarget(): void {
+    if (!this.pointerInsideCanvas) {
+      this.pointerTarget = null;
+      return;
+    }
+
+    const pointer = this.input.activePointer;
+    this.pointerTarget = resolvePointerTarget(
+      (screenX, screenY) => this.cameras.main.getWorldPoint(screenX, screenY),
+      { x: pointer.x, y: pointer.y },
+      { width: this.world.width, height: this.world.height }
+    );
   }
 
   private drawStaticWorld(): void {
@@ -224,6 +262,16 @@ export class WorldScene extends Phaser.Scene {
 
   private drawDebug(snapshot: WorldSnapshot): void {
     this.debugGraphics.clear();
+
+    if (this.pointerProbeVisible && this.pointerTarget) {
+      const { x, y } = this.pointerTarget.world;
+      const color = this.pointerTarget.insideWorld ? 0x79d8ff : 0xe67575;
+      this.debugGraphics.lineStyle(2, color, 0.9);
+      this.debugGraphics.lineBetween(x - 9, y, x + 9, y);
+      this.debugGraphics.lineBetween(x, y - 9, x, y + 9);
+      this.debugGraphics.strokeCircle(x, y, 5);
+    }
+
     if (!this.debugOverlayVisible) return;
 
     const player = snapshot.entities.find((entity) => entity.kind === "player");
@@ -259,6 +307,9 @@ export class WorldScene extends Phaser.Scene {
       cameraZoom: this.cameras.main.zoom,
       debugOverlayVisible: this.debugOverlayVisible,
       labelsVisible: this.labelsVisible,
+      pointerProbeVisible: this.pointerProbeVisible,
+      pointerInsideCanvas: this.pointerInsideCanvas,
+      pointerTarget: this.pointerTarget,
       events: this.world.recentEvents(10).reverse()
     });
   }

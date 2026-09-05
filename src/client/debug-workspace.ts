@@ -3,6 +3,7 @@ import type { WorldDebugState } from "./world-scene";
 export interface DebugWorkspaceActions {
   toggleLabels(): void;
   toggleLosProbe(): void;
+  togglePointerProbe(): void;
 }
 
 type ValueNode = HTMLElement;
@@ -33,9 +34,13 @@ export class DebugWorkspace {
   private readonly collapseButton: HTMLButtonElement;
   private readonly labelsButton: HTMLButtonElement;
   private readonly losButton: HTMLButtonElement;
+  private readonly pointerButton: HTMLButtonElement;
   private readonly zoomValue: ValueNode;
   private readonly labelsValue: ValueNode;
   private readonly overlayValue: ValueNode;
+  private readonly pointerScreenValue: ValueNode;
+  private readonly pointerWorldValue: ValueNode;
+  private readonly pointerBoundsValue: ValueNode;
   private readonly tickValue: ValueNode;
   private readonly positionValue: ValueNode;
   private readonly locationValue: ValueNode;
@@ -76,7 +81,8 @@ export class DebugWorkspace {
     const controlRow = element("div", "debug-control-row");
     this.labelsButton = this.toggleButton("Labels", "L", () => this.actions.toggleLabels());
     this.losButton = this.toggleButton("LOS probe", "V", () => this.actions.toggleLosProbe());
-    controlRow.append(this.labelsButton, this.losButton);
+    this.pointerButton = this.toggleButton("Pointer probe", null, () => this.actions.togglePointerProbe());
+    controlRow.append(this.labelsButton, this.losButton, this.pointerButton);
     viewSection.append(controlRow);
 
     const viewMetrics = element("div", "debug-metrics");
@@ -88,6 +94,20 @@ export class DebugWorkspace {
     this.labelsValue = labels.value;
     viewMetrics.append(zoom.row, overlay.row, labels.row);
     viewSection.append(viewMetrics);
+
+    const pointerSection = this.section("Pointer target");
+    const pointerMetrics = element("div", "debug-metrics");
+    const pointerScreen = metricRow("screen");
+    const pointerWorld = metricRow("world");
+    const pointerBounds = metricRow("world bounds");
+    this.pointerScreenValue = pointerScreen.value;
+    this.pointerWorldValue = pointerWorld.value;
+    this.pointerBoundsValue = pointerBounds.value;
+    pointerMetrics.append(pointerScreen.row, pointerWorld.row, pointerBounds.row);
+    pointerSection.append(
+      pointerMetrics,
+      element("p", "debug-note", "Camera-derived probe only — no interaction or placement semantics yet.")
+    );
 
     const playerSection = this.section("Player");
     const playerMetrics = element("div", "debug-metrics");
@@ -120,7 +140,7 @@ export class DebugWorkspace {
     this.eventsList = element("ul", "event-list");
     eventsSection.append(this.eventsList);
 
-    content.append(viewSection, playerSection, npcSection, eventsSection);
+    content.append(viewSection, pointerSection, playerSection, npcSection, eventsSection);
     this.root.append(header, content);
     this.renderEvents([]);
   }
@@ -129,6 +149,19 @@ export class DebugWorkspace {
     this.zoomValue.textContent = `${state.cameraZoom.toFixed(2)}×`;
     this.overlayValue.textContent = state.debugOverlayVisible ? "shown" : "hidden";
     this.labelsValue.textContent = state.labelsVisible ? "shown" : "hidden";
+
+    if (state.pointerInsideCanvas && state.pointerTarget) {
+      this.pointerScreenValue.textContent = `${state.pointerTarget.screen.x.toFixed(1)}, ${state.pointerTarget.screen.y.toFixed(1)}`;
+      this.pointerWorldValue.textContent = `${state.pointerTarget.world.x.toFixed(1)}, ${state.pointerTarget.world.y.toFixed(1)}`;
+      this.pointerBoundsValue.textContent = state.pointerTarget.insideWorld ? "inside" : "outside";
+      this.pointerBoundsValue.classList.toggle("pass", state.pointerTarget.insideWorld);
+      this.pointerBoundsValue.classList.toggle("blocked", !state.pointerTarget.insideWorld);
+    } else {
+      this.pointerScreenValue.textContent = "outside canvas";
+      this.pointerWorldValue.textContent = "—";
+      this.pointerBoundsValue.textContent = "inactive";
+      this.pointerBoundsValue.classList.remove("pass", "blocked");
+    }
 
     this.tickValue.textContent = String(state.tick);
     this.positionValue.textContent = `${state.playerPosition.x.toFixed(1)}, ${state.playerPosition.y.toFixed(1)}`;
@@ -143,6 +176,7 @@ export class DebugWorkspace {
 
     this.setPressed(this.labelsButton, state.labelsVisible);
     this.setPressed(this.losButton, state.debugOverlayVisible);
+    this.setPressed(this.pointerButton, state.pointerProbeVisible);
     this.renderEvents(state.events);
   }
 
@@ -152,13 +186,13 @@ export class DebugWorkspace {
     return section;
   }
 
-  private toggleButton(label: string, shortcut: string, action: () => void): HTMLButtonElement {
+  private toggleButton(label: string, shortcut: string | null, action: () => void): HTMLButtonElement {
     const button = element("button", "debug-toggle");
     button.type = "button";
     button.setAttribute("aria-pressed", "false");
     const labelNode = element("span", "debug-toggle-label", label);
-    const shortcutNode = element("span", "debug-shortcut", shortcut);
-    button.append(labelNode, shortcutNode);
+    button.append(labelNode);
+    if (shortcut) button.append(element("span", "debug-shortcut", shortcut));
     button.addEventListener("click", action);
     return button;
   }
