@@ -1,7 +1,8 @@
 import * as Phaser from "phaser";
 import "./style.css";
+import "./mobile-style.css";
 import { DebugWorkspace } from "./debug-workspace";
-import { MobileOwnerControls } from "./mobile-controls";
+import { isTouchOwnerDevice, MobileOwnerControls } from "./mobile-controls";
 import { PlayerControlBuffer } from "./player-control-buffer";
 import { WorldScene } from "./world-scene";
 
@@ -13,6 +14,9 @@ if (!appRoot || !debugRoot || !gameRoot) {
   throw new Error("P1 shell is missing #app, #game or #debug root.");
 }
 
+const mobileOwnerMode = isTouchOwnerDevice();
+appRoot.classList.toggle("mobile-owner-mode", mobileOwnerMode);
+
 let scene: WorldScene;
 const playerControls = new PlayerControlBuffer();
 
@@ -21,6 +25,7 @@ const workspace = new DebugWorkspace(debugRoot, appRoot, {
   toggleLosProbe: () => scene.toggleDebugOverlay(),
   togglePointerProbe: () => scene.togglePointerProbe()
 });
+if (mobileOwnerMode) workspace.setCollapsed(true);
 
 scene = new WorldScene((state) => workspace.update(state), playerControls);
 
@@ -36,7 +41,7 @@ new Phaser.Game({
     pixelArt: false
   },
   scale: {
-    mode: Phaser.Scale.FIT,
+    mode: mobileOwnerMode ? Phaser.Scale.RESIZE : Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
     width: 960,
     height: 640
