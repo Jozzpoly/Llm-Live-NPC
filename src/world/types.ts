@@ -70,9 +70,7 @@ export type WorldEventType =
   | "location.entered"
   | "location.exited"
   | "item.picked_up"
-  | "item.dropped"
-  | "npc.interaction_requested"
-  | "interaction.failed";
+  | "item.dropped";
 
 export interface WorldEvent {
   seq: number;
@@ -81,6 +79,26 @@ export interface WorldEvent {
   actorId?: EntityId;
   entityId?: EntityId;
   locationId?: LocationId;
+  message: string;
+}
+
+export type WorldActionKind = "interact" | "drop";
+
+export type WorldActionResultCode =
+  | "picked_up_item"
+  | "npc_interaction_requested"
+  | "no_interactable"
+  | "dropped_item"
+  | "not_holding_item";
+
+export interface WorldActionResult {
+  seq: number;
+  tick: number;
+  actorId: EntityId;
+  action: WorldActionKind;
+  status: "succeeded" | "rejected";
+  code: WorldActionResultCode;
+  targetId?: EntityId;
   message: string;
 }
 

@@ -5,6 +5,7 @@ import type {
   LocationId,
   PlayerEntity,
   Vec2,
+  WorldActionResult,
   WorldEntity,
   WorldEvent,
   WorldInput,
@@ -87,6 +88,8 @@ export class World {
   private readonly eventLog: WorldEvent[] = [];
   private tickValue = 0;
   private eventSequence = 0;
+  private actionSequence = 0;
+  private lastActionResultValue: WorldActionResult | null = null;
   private playerLocationIdValue: LocationId | null = null;
 
   constructor(specimen: WorldSpecimen) {
@@ -153,6 +156,10 @@ export class World {
 
   recentEvents(limit = 12): WorldEvent[] {
     return this.eventLog.slice(-Math.max(0, limit)).map((event) => ({ ...event }));
+  }
+
+  lastActionResult(): WorldActionResult | null {
+    return this.lastActionResultValue ? { ...this.lastActionResultValue } : null;
   }
 
   hasLineOfSight(start: Vec2, end: Vec2): boolean {
@@ -260,6 +267,14 @@ export class World {
           entityId: nearestItem.id,
           message: `${player.label} picked up ${nearestItem.label}.`
         });
+        this.recordAction({
+          actorId: player.id,
+          action: "interact",
+          status: "succeeded",
+          code: "picked_up_item",
+          targetId: nearestItem.id,
+          message: `Picked up ${nearestItem.label}.`
+        });
         return;
       }
     }
@@ -275,29 +290,35 @@ export class World {
       )[0];
 
     if (nearestNpc) {
-      this.emit({
-        type: "npc.interaction_requested",
+      this.recordAction({
         actorId: player.id,
-        entityId: nearestNpc.id,
-        message: `${player.label} requested interaction with ${nearestNpc.label}; cognition is disabled in P1.`
+        action: "interact",
+        status: "succeeded",
+        code: "npc_interaction_requested",
+        targetId: nearestNpc.id,
+        message: `Interaction requested with ${nearestNpc.label}; cognition is disabled in P1.`
       });
       return;
     }
 
-    this.emit({
-      type: "interaction.failed",
+    this.recordAction({
       actorId: player.id,
-      message: `${player.label} found nothing interactable in range and line of sight.`
+      action: "interact",
+      status: "rejected",
+      code: "no_interactable",
+      message: "Nothing interactable is in range and line of sight."
     });
   }
 
   private dropHeldItem(): void {
     const player = this.player();
     if (!player.heldItemId) {
-      this.emit({
-        type: "interaction.failed",
+      this.recordAction({
         actorId: player.id,
-        message: `${player.label} tried to drop an item but is holding nothing.`
+        action: "drop",
+        status: "rejected",
+        code: "not_holding_item",
+        message: "Cannot drop: holding nothing."
       });
       return;
     }
@@ -315,6 +336,14 @@ export class World {
       actorId: player.id,
       entityId: item.id,
       message: `${player.label} dropped ${item.label}.`
+    });
+    this.recordAction({
+      actorId: player.id,
+      action: "drop",
+      status: "succeeded",
+      code: "dropped_item",
+      targetId: item.id,
+      message: `Dropped ${item.label}.`
     });
   }
 
@@ -343,5 +372,14 @@ export class World {
     this.eventSequence += 1;
     this.eventLog.push({ seq: this.eventSequence, tick: this.tickValue, ...event });
     if (this.eventLog.length > EVENT_LIMIT) this.eventLog.splice(0, this.eventLog.length - EVENT_LIMIT);
+  }
+
+  private recordAction(result: Omit<WorldActionResult, "seq" | "tick">): void {
+    this.actionSequence += 1;
+    this.lastActionResultValue = {
+      seq: this.actionSequence,
+      tick: this.tickValue,
+      ...result
+    };
   }
 }
