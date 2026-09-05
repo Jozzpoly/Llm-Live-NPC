@@ -1,11 +1,13 @@
 import * as Phaser from "phaser";
 import { DeterministicExecutor, type ExecutorStatus } from "../execution/deterministic-executor";
+import { ExecutionDriver } from "../execution/execution-driver";
 import { createP1Specimen } from "../world/specimen";
 import { World } from "../world/world";
 import type {
   Aabb,
   EntityId,
   Vec2,
+  WorldActionRequest,
   WorldActionResult,
   WorldEntity,
   WorldEvent,
@@ -71,6 +73,7 @@ function clamp(value: number, min: number, max: number): number {
 export class WorldScene extends Phaser.Scene {
   private readonly world = new World(createP1Specimen());
   private readonly npcExecutor = new DeterministicExecutor();
+  private readonly executionDriver = new ExecutionDriver(this.world, this.npcExecutor);
   private readonly debugSink: DebugSink;
   private readonly playerControls: PlayerControlBuffer;
   private readonly entityViews = new Map<string, Phaser.GameObjects.Container>();
@@ -180,28 +183,25 @@ export class WorldScene extends Phaser.Scene {
           (this.keys?.W.isDown || this.cursors?.up.isDown ? 1 : 0)
       };
       const movement = combineControlMovement(keyboardMove, this.playerControls.movement());
-      const executorCommand = this.npcExecutor.next(this.currentPresentationSnapshot);
-
-      this.previousPresentationSnapshot = this.currentPresentationSnapshot;
-      this.world.stepWithActorControls(
-        { moveX: movement.x, moveY: movement.y },
-        executorCommand.control ? [executorCommand.control] : []
-      );
-
-      if (this.pendingDrop) this.world.attemptAction({ action: "drop", actorId: "player.jozz" });
+      const playerActions: WorldActionRequest[] = [];
+      if (this.pendingDrop) {
+        playerActions.push({ action: "drop", actorId: "player.jozz" });
+      }
       if (this.pendingDirectInteractTargetId) {
-        this.world.attemptAction({
+        playerActions.push({
           action: "interact",
           actorId: "player.jozz",
           targetId: this.pendingDirectInteractTargetId
         });
       } else if (this.pendingInteract) {
-        this.world.attemptAction({ action: "interact", actorId: "player.jozz" });
+        playerActions.push({ action: "interact", actorId: "player.jozz" });
       }
 
-      if (executorCommand.action) {
-        this.npcExecutor.acceptActionResult(this.world.attemptAction(executorCommand.action));
-      }
+      this.previousPresentationSnapshot = this.currentPresentationSnapshot;
+      this.executionDriver.step({
+        playerControl: { moveX: movement.x, moveY: movement.y },
+        playerActions
+      });
 
       this.currentPresentationSnapshot = this.world.snapshot();
       this.pendingInteract = false;
