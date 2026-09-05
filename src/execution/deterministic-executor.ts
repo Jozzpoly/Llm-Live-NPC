@@ -72,6 +72,10 @@ export class DeterministicExecutor {
       this.fail("actor_not_found");
       return {};
     }
+    if (actor.kind !== "npc") {
+      this.fail("unsupported_actor_kind");
+      return {};
+    }
 
     const target = snapshot.entities.find((entity) => entity.id === this.taskValue?.targetId);
     if (!target) {

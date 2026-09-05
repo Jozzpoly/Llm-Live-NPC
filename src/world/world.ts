@@ -110,7 +110,7 @@ function assertFiniteMovement(input: WorldInput, label: string): void {
 export class World {
   readonly width: number;
   readonly height: number;
-  readonly playerSpeed: number;
+  readonly actorSpeed: number;
 
   private readonly entities = new Map<EntityId, WorldEntity>();
   private readonly blockers: WorldSpecimen["blockers"];
@@ -126,7 +126,7 @@ export class World {
   constructor(specimen: WorldSpecimen) {
     this.width = specimen.width;
     this.height = specimen.height;
-    this.playerSpeed = specimen.playerSpeed;
+    this.actorSpeed = specimen.actorSpeed;
     this.blockers = structuredClone(specimen.blockers);
     this.locations = structuredClone(specimen.locations);
     this.placementSites = structuredClone(specimen.placementSites);
@@ -369,8 +369,8 @@ export class World {
     const movementScale = Math.max(1, magnitude);
     const movementX = input.moveX / movementScale;
     const movementY = input.moveY / movementScale;
-    const dx = movementX * this.playerSpeed * seconds;
-    const dy = movementY * this.playerSpeed * seconds;
+    const dx = movementX * this.actorSpeed * seconds;
+    const dy = movementY * this.actorSpeed * seconds;
 
     let x = clamp(actor.position.x + dx, actor.radius, this.width - actor.radius);
     for (const blocker of this.blockers) {
