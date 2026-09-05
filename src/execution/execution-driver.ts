@@ -13,11 +13,18 @@ export interface ExecutionFrameResult {
   executorActionResult: WorldActionResult | null;
 }
 
+function assertFinitePlayerControl(input: WorldInput): void {
+  if (!Number.isFinite(input.moveX) || !Number.isFinite(input.moveY)) {
+    throw new Error("Player control requires a finite movement vector.");
+  }
+}
+
 /**
  * One canonical execution frame shared by the browser runtime and headless tests.
- * Ordering is intentional: executor reads the pre-step snapshot, movement resolves
- * for player + controlled actors, queued player atomic actions run, then the
- * executor's explicit atomic action runs and its result is fed back to it.
+ * Ordering is intentional: validate external player control, executor reads the
+ * pre-step snapshot, movement resolves for player + controlled actors, queued
+ * player atomic actions run, then the executor's explicit atomic action runs
+ * and its result is fed back to it.
  */
 export class ExecutionDriver {
   constructor(
@@ -26,6 +33,10 @@ export class ExecutionDriver {
   ) {}
 
   step(input: ExecutionFrameInput): ExecutionFrameResult {
+    // World remains authoritative for canonical movement validation. This early
+    // guard additionally keeps executor state transactional when external input
+    // is invalid: a rejected frame must not consume an executor step first.
+    assertFinitePlayerControl(input.playerControl);
     const executorCommand = this.executor.next(this.world.snapshot());
 
     this.world.stepWithActorControls(
