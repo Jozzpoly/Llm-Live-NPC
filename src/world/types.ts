@@ -102,7 +102,7 @@ export type PlacementTargetValidation =
 export interface WorldSpecimen {
   width: number;
   height: number;
-  playerSpeed: number;
+  actorSpeed: number;
   entities: WorldEntity[];
   blockers: Blocker[];
   locations: LocationZone[];
