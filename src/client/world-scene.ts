@@ -1,7 +1,7 @@
 import * as Phaser from "phaser";
 import { createP1Specimen } from "../world/specimen";
 import { World } from "../world/world";
-import type { Aabb, Vec2, WorldEntity, WorldEvent, WorldSnapshot } from "../world/types";
+import type { Aabb, EntityId, Vec2, WorldEntity, WorldEvent, WorldSnapshot } from "../world/types";
 import {
   interpolationAlpha,
   resolveInterpolatedEntityPositions
@@ -14,7 +14,12 @@ import {
   type EntityVisualDescriptor
 } from "./presentation";
 import { combineControlMovement, PlayerControlBuffer } from "./player-control-buffer";
-import { resolvePointerTarget, type PointerTargetSample } from "./pointer-targeting";
+import {
+  clientPointToScreen,
+  resolveDirectInteractionTarget,
+  resolvePointerTarget,
+  type PointerTargetSample
+} from "./pointer-targeting";
 
 const FIXED_STEP_MS = 1000 / 30;
 const DEBUG_STATE_INTERVAL_MS = 100;
@@ -22,6 +27,8 @@ const MIN_ZOOM = 0.65;
 const MAX_ZOOM = 1.6;
 const ZOOM_STEP = 0.1;
 const ITEM_LABEL_DISTANCE = 150;
+const MOUSE_TARGET_RADIUS_PX = 16;
+const TOUCH_TARGET_RADIUS_PX = 28;
 
 type MovementKeys = Record<"W" | "A" | "S" | "D" | "E" | "Q" | "V" | "L", Phaser.Input.Keyboard.Key>;
 
@@ -66,6 +73,7 @@ export class WorldScene extends Phaser.Scene {
   private debugAccumulatorMs = 0;
   private pendingInteract = false;
   private pendingDrop = false;
+  private pendingDirectInteractTargetId: EntityId | null = null;
   private debugOverlayVisible = false;
   private labelsVisible = true;
   private pointerProbeVisible = false;
@@ -96,6 +104,14 @@ export class WorldScene extends Phaser.Scene {
     this.cameras.main.setBounds(0, 0, this.world.width, this.world.height);
     this.cameras.main.startFollow(playerView, true, 0.14, 0.14);
     this.cameras.main.setZoom(1.05);
+
+    const canvas = this.game.canvas;
+    const handleCanvasPointerUp = (event: PointerEvent) => {
+      if (event.pointerType === "touch" || event.button !== 0) return;
+      this.queueDirectInteractionAtClientPoint(event.clientX, event.clientY, MOUSE_TARGET_RADIUS_PX);
+    };
+    canvas.addEventListener("pointerup", handleCanvasPointerUp);
+    this.events.once("shutdown", () => canvas.removeEventListener("pointerup", handleCanvasPointerUp));
 
     this.input.on(
       "wheel",
@@ -154,10 +170,19 @@ export class WorldScene extends Phaser.Scene {
       this.previousPresentationSnapshot = this.currentPresentationSnapshot;
       this.world.step({ moveX: movement.x, moveY: movement.y });
       if (this.pendingDrop) this.world.attemptAction({ action: "drop", actorId: "player.jozz" });
-      if (this.pendingInteract) this.world.attemptAction({ action: "interact", actorId: "player.jozz" });
+      if (this.pendingDirectInteractTargetId) {
+        this.world.attemptAction({
+          action: "interact",
+          actorId: "player.jozz",
+          targetId: this.pendingDirectInteractTargetId
+        });
+      } else if (this.pendingInteract) {
+        this.world.attemptAction({ action: "interact", actorId: "player.jozz" });
+      }
       this.currentPresentationSnapshot = this.world.snapshot();
       this.pendingInteract = false;
       this.pendingDrop = false;
+      this.pendingDirectInteractTargetId = null;
       this.accumulatorMs -= FIXED_STEP_MS;
     }
 
@@ -185,8 +210,47 @@ export class WorldScene extends Phaser.Scene {
     this.setCameraZoom(this.cameras.main.zoom * scale);
   }
 
+  queueTouchInteractionAtClientPoint(clientX: number, clientY: number): void {
+    this.queueDirectInteractionAtClientPoint(clientX, clientY, TOUCH_TARGET_RADIUS_PX);
+  }
+
   private setCameraZoom(zoom: number): void {
     this.cameras.main.setZoom(Number(clamp(zoom, MIN_ZOOM, MAX_ZOOM).toFixed(3)));
+  }
+
+  private queueDirectInteractionAtClientPoint(
+    clientX: number,
+    clientY: number,
+    minimumScreenRadiusPx: number
+  ): void {
+    const canvas = this.game.canvas;
+    const screen = clientPointToScreen(
+      { x: clientX, y: clientY },
+      canvas.getBoundingClientRect(),
+      { width: canvas.width, height: canvas.height }
+    );
+    if (!screen) return;
+
+    const pointerTarget = resolvePointerTarget(
+      (screenX, screenY) => this.cameras.main.getWorldPoint(screenX, screenY),
+      screen,
+      { width: this.world.width, height: this.world.height }
+    );
+    if (!pointerTarget.insideWorld) return;
+
+    const renderedPositions = resolveInterpolatedEntityPositions(
+      this.previousPresentationSnapshot,
+      this.currentPresentationSnapshot,
+      interpolationAlpha(this.accumulatorMs, FIXED_STEP_MS)
+    );
+    const targetId = resolveDirectInteractionTarget(
+      this.currentPresentationSnapshot.entities,
+      renderedPositions,
+      pointerTarget.world,
+      this.cameras.main.zoom,
+      minimumScreenRadiusPx
+    );
+    if (targetId) this.pendingDirectInteractTargetId = targetId;
   }
 
   private updatePointerTarget(): void {
