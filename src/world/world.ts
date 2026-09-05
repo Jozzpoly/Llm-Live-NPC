@@ -3,6 +3,7 @@ import type {
   EntityId,
   ItemEntity,
   LocationId,
+  PlacementSite,
   PlayerEntity,
   Vec2,
   WorldActionResult,
@@ -85,6 +86,7 @@ export class World {
   private readonly entities = new Map<EntityId, WorldEntity>();
   private readonly blockers: WorldSpecimen["blockers"];
   private readonly locations: WorldSpecimen["locations"];
+  private readonly placementSites: WorldSpecimen["placementSites"];
   private readonly eventLog: WorldEvent[] = [];
   private tickValue = 0;
   private eventSequence = 0;
@@ -98,6 +100,7 @@ export class World {
     this.playerSpeed = specimen.playerSpeed;
     this.blockers = structuredClone(specimen.blockers);
     this.locations = structuredClone(specimen.locations);
+    this.placementSites = structuredClone(specimen.placementSites);
 
     for (const entity of structuredClone(specimen.entities)) {
       if (this.entities.has(entity.id)) throw new Error(`Duplicate entity id: ${entity.id}`);
@@ -150,6 +153,7 @@ export class World {
         .sort((a, b) => a.id.localeCompare(b.id)),
       blockers: structuredClone(this.blockers),
       locations: structuredClone(this.locations),
+      placementSites: structuredClone(this.placementSites).sort((a, b) => a.id.localeCompare(b.id)),
       playerLocationId: this.playerLocationIdValue
     };
   }
@@ -160,6 +164,13 @@ export class World {
 
   lastActionResult(): WorldActionResult | null {
     return this.lastActionResultValue ? { ...this.lastActionResultValue } : null;
+  }
+
+  placementSitesAt(position: Vec2): PlacementSite[] {
+    return this.placementSites
+      .filter((site) => containsPoint(site.bounds, position))
+      .map((site) => structuredClone(site))
+      .sort((a, b) => a.id.localeCompare(b.id));
   }
 
   hasLineOfSight(start: Vec2, end: Vec2): boolean {
