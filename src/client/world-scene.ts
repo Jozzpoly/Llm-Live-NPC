@@ -4,6 +4,7 @@ import { World } from "../world/world";
 import type { WorldEvent, WorldSnapshot } from "../world/types";
 
 const FIXED_STEP_MS = 1000 / 30;
+const DEBUG_STATE_INTERVAL_MS = 100;
 const MIN_ZOOM = 0.65;
 const MAX_ZOOM = 1.6;
 const ZOOM_STEP = 0.1;
@@ -40,6 +41,7 @@ export class WorldScene extends Phaser.Scene {
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private keys!: Record<"W" | "A" | "S" | "D" | "E" | "Q" | "V" | "L", Phaser.Input.Keyboard.Key>;
   private accumulatorMs = 0;
+  private debugAccumulatorMs = 0;
   private pendingInteract = false;
   private pendingDrop = false;
   private debugOverlayVisible = false;
@@ -82,23 +84,21 @@ export class WorldScene extends Phaser.Scene {
       }
     );
 
-    this.syncPresentation();
+    this.syncPresentation(true);
   }
 
   update(_time: number, delta: number): void {
     const keyboard = this.input.keyboard;
     if (!keyboard) return;
 
-    this.accumulatorMs += Math.min(delta, 100);
+    const boundedDelta = Math.min(delta, 100);
+    this.accumulatorMs += boundedDelta;
+    this.debugAccumulatorMs += boundedDelta;
     this.pendingInteract = this.pendingInteract || Phaser.Input.Keyboard.JustDown(this.keys.E);
     this.pendingDrop = this.pendingDrop || Phaser.Input.Keyboard.JustDown(this.keys.Q);
 
-    if (Phaser.Input.Keyboard.JustDown(this.keys.V)) {
-      this.debugOverlayVisible = !this.debugOverlayVisible;
-    }
-    if (Phaser.Input.Keyboard.JustDown(this.keys.L)) {
-      this.labelsVisible = !this.labelsVisible;
-    }
+    if (Phaser.Input.Keyboard.JustDown(this.keys.V)) this.toggleDebugOverlay();
+    if (Phaser.Input.Keyboard.JustDown(this.keys.L)) this.toggleLabels();
 
     while (this.accumulatorMs >= FIXED_STEP_MS) {
       const moveX =
@@ -119,7 +119,17 @@ export class WorldScene extends Phaser.Scene {
       this.accumulatorMs -= FIXED_STEP_MS;
     }
 
-    this.syncPresentation();
+    const emitDebugState = this.debugAccumulatorMs >= DEBUG_STATE_INTERVAL_MS;
+    this.syncPresentation(emitDebugState);
+    if (emitDebugState) this.debugAccumulatorMs %= DEBUG_STATE_INTERVAL_MS;
+  }
+
+  toggleDebugOverlay(): void {
+    this.debugOverlayVisible = !this.debugOverlayVisible;
+  }
+
+  toggleLabels(): void {
+    this.labelsVisible = !this.labelsVisible;
   }
 
   private drawStaticWorld(): void {
@@ -177,7 +187,7 @@ export class WorldScene extends Phaser.Scene {
     }
   }
 
-  private syncPresentation(): void {
+  private syncPresentation(emitDebugState = false): void {
     const snapshot = this.world.snapshot();
     const player = snapshot.entities.find((entity) => entity.kind === "player");
 
@@ -200,7 +210,7 @@ export class WorldScene extends Phaser.Scene {
     for (const label of this.locationLabels) label.setVisible(this.labelsVisible);
 
     this.drawDebug(snapshot);
-    this.emitDebugState(snapshot);
+    if (emitDebugState) this.emitDebugState(snapshot);
   }
 
   private drawDebug(snapshot: WorldSnapshot): void {
