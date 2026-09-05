@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>LLM Live NPC — P1 Laboratory</title>
+  </head>
+  <body>
+    <main id="app">
+      <section class="game-shell">
+        <header>
+          <div>
+            <p class="eyebrow">P1 refoundation laboratory</p>
+            <h1>LLM Live NPC</h1>
+          </div>
+          <div class="stage-chip">cognition disabled</div>
+        </header>
+        <div id="game" aria-label="Playable top-down world"></div>
+        <footer>
+          <span>Move: WASD / arrows / touch joystick</span>
+          <span>Interact / pick up: E / Interact</span>
+          <span>Drop held item: Q / Drop</span>
+          <span>Zoom: mouse wheel / two-finger pinch</span>
+          <span>Debug controls: workspace / V / L</span>
+        </footer>
+      </section>
+      <aside id="debug" class="debug-shell" aria-label="Debug workspace"></aside>
+    </main>
+    <script type="module" src="/src/client/main.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,276 @@
+/* M1/A2 mobile Owner-test mode. Loaded after the desktop laboratory stylesheet. */
+
+#app.mobile-owner-mode {
+  display: block;
+  min-height: 100dvh;
+  padding: 8px;
+}
+
+.mobile-owner-mode .game-shell {
+  height: calc(100dvh - 72px);
+  min-height: 0;
+  grid-template-rows: 46px minmax(0, 1fr);
+  border-radius: 14px;
+}
+
+.mobile-owner-mode .game-shell header {
+  min-height: 46px;
+  padding: 7px 11px;
+}
+
+.mobile-owner-mode .game-shell footer,
+.mobile-owner-mode .eyebrow {
+  display: none;
+}
+
+.mobile-owner-mode h1 {
+  font-size: 17px;
+}
+
+.mobile-owner-mode .stage-chip {
+  padding: 4px 7px;
+  font-size: 10px;
+}
+
+.mobile-owner-mode #game {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  place-items: stretch;
+}
+
+.mobile-owner-mode #game canvas {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none;
+  max-height: none;
+}
+
+.mobile-owner-mode .debug-shell {
+  min-height: auto;
+  margin-top: 8px;
+  border-radius: 12px;
+}
+
+.mobile-owner-mode .debug-shell.is-collapsed {
+  min-height: 48px;
+}
+
+.mobile-owner-mode .debug-shell.is-collapsed .workspace-header {
+  min-height: 48px;
+  align-items: center;
+}
+
+#game.touch-controls-enabled {
+  touch-action: none;
+}
+
+.mobile-controls {
+  display: none;
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.touch-controls-enabled .mobile-controls {
+  display: block;
+}
+
+.mobile-joystick-capture {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 52%;
+  height: 64%;
+  z-index: 2;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.mobile-joystick {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 116px;
+  height: 116px;
+  margin: -58px 0 0 -58px;
+  border: 1px solid #9bc9da70;
+  border-radius: 50%;
+  background: #091118a8;
+  box-shadow: inset 0 0 0 17px #2038444a, 0 6px 22px #00000045;
+  opacity: 0;
+  transform: scale(.82);
+  transform-origin: 50% 50%;
+  transition: opacity 80ms ease, transform 80ms ease;
+  pointer-events: none;
+}
+
+.mobile-joystick::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  margin: -3px;
+  border-radius: 50%;
+  background: #9fc7d5a6;
+}
+
+.mobile-joystick.is-active {
+  opacity: .92;
+  transform: scale(1);
+}
+
+.mobile-joystick-knob {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 48px;
+  height: 48px;
+  margin: -24px;
+  border: 1px solid #b9e4f2db;
+  border-radius: 50%;
+  background: #31586ae8;
+  box-shadow: 0 4px 18px #00000059;
+  transition: none;
+  pointer-events: none;
+}
+
+.mobile-actions {
+  position: absolute;
+  right: max(14px, env(safe-area-inset-right));
+  bottom: max(14px, env(safe-area-inset-bottom));
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.mobile-action {
+  min-width: 72px;
+  min-height: 58px;
+  padding: 8px 12px;
+  display: grid;
+  place-items: center;
+  gap: 2px;
+  border: 1px solid #91bdcf87;
+  border-radius: 18px;
+  background: #0e1820e8;
+  color: #e8f2f6;
+  box-shadow: 0 5px 18px #00000047;
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.mobile-action[data-mobile-control="interact"] {
+  min-width: 88px;
+  min-height: 64px;
+  background: #17303be8;
+  border-color: #8fc9dc9e;
+}
+
+.mobile-action[data-mobile-control="drop"] {
+  min-width: 68px;
+  min-height: 56px;
+  opacity: .92;
+}
+
+.mobile-action strong {
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.mobile-action span {
+  font-size: 10px;
+  opacity: .7;
+}
+
+.mobile-action.is-pressed {
+  transform: translateY(1px) scale(.97);
+  background: #23404ddd;
+}
+
+@media (max-width: 430px) and (orientation: portrait) {
+  #app.mobile-owner-mode {
+    padding: 6px;
+  }
+
+  .mobile-owner-mode .game-shell {
+    height: calc(100dvh - 68px);
+  }
+
+  .mobile-joystick {
+    width: 108px;
+    height: 108px;
+    margin: -54px 0 0 -54px;
+  }
+
+  .mobile-joystick-knob {
+    width: 44px;
+    height: 44px;
+    margin: -22px;
+  }
+
+  .mobile-actions {
+    right: 10px;
+    bottom: 10px;
+    gap: 7px;
+  }
+
+  .mobile-action[data-mobile-control="interact"] {
+    min-width: 80px;
+    min-height: 58px;
+  }
+
+  .mobile-action[data-mobile-control="drop"] {
+    min-width: 62px;
+    min-height: 52px;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 600px) {
+  #app.mobile-owner-mode {
+    height: 100dvh;
+    min-height: 100dvh;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .mobile-owner-mode .game-shell {
+    width: 100%;
+    height: 100dvh;
+    min-height: 100dvh;
+    grid-template-rows: minmax(0, 1fr);
+    border: 0;
+    border-radius: 0;
+  }
+
+  .mobile-owner-mode .game-shell header,
+  .mobile-owner-mode .game-shell footer,
+  .mobile-owner-mode .debug-shell {
+    display: none;
+  }
+
+  .mobile-owner-mode #game {
+    width: 100vw;
+    height: 100dvh;
+  }
+
+  .mobile-joystick-capture {
+    width: 46%;
+    height: 78%;
+  }
+
+  .mobile-actions {
+    right: max(18px, env(safe-area-inset-right));
+    bottom: max(16px, env(safe-area-inset-bottom));
+    gap: 12px;
+  }
+}
