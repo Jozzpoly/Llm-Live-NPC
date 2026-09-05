@@ -49,6 +49,15 @@ export interface LocationZone {
   bounds: Aabb;
 }
 
+export type PlacementRelation = "on";
+
+export interface PlacementSite {
+  id: string;
+  label: string;
+  relation: PlacementRelation;
+  bounds: Aabb;
+}
+
 export interface WorldSpecimen {
   width: number;
   height: number;
@@ -56,6 +65,7 @@ export interface WorldSpecimen {
   entities: WorldEntity[];
   blockers: Blocker[];
   locations: LocationZone[];
+  placementSites: PlacementSite[];
 }
 
 export interface WorldInput {
@@ -109,5 +119,6 @@ export interface WorldSnapshot {
   entities: WorldEntity[];
   blockers: Blocker[];
   locations: LocationZone[];
+  placementSites: PlacementSite[];
   playerLocationId: LocationId | null;
 }
