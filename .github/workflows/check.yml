@@ -26,5 +26,5 @@ jobs:
       - name: Typecheck, domain tests, and Vite build
         run: npm run check
 
-      - name: Verify generated Wrangler deploy path
-        run: npx wrangler deploy --dry-run
+      - name: Verify self-contained preview upload path
+        run: npm run deploy:preview -- --dry-run
