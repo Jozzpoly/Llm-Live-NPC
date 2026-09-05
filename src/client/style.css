@@ -52,6 +52,89 @@ h1 { margin: 0; font-size: 22px; }
   background: #151b20;
 }
 #game canvas { display: block; max-width: 100%; max-height: 100%; }
+#game.touch-controls-enabled { touch-action: none; }
+
+.mobile-controls {
+  display: none;
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.touch-controls-enabled .mobile-controls { display: block; }
+
+.mobile-joystick {
+  position: absolute;
+  left: max(14px, env(safe-area-inset-left));
+  bottom: max(14px, env(safe-area-inset-bottom));
+  width: 112px;
+  height: 112px;
+  border: 1px solid #8ab3c66b;
+  border-radius: 50%;
+  background: #0a1015a8;
+  box-shadow: inset 0 0 0 16px #1a293247;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.mobile-joystick::before {
+  content: "";
+  position: absolute;
+  inset: 50% auto auto 50%;
+  width: 6px;
+  height: 6px;
+  margin: -3px;
+  border-radius: 50%;
+  background: #8fb8c6a8;
+}
+
+.mobile-joystick-knob {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 48px;
+  height: 48px;
+  margin: -24px;
+  border: 1px solid #a7d9e8c7;
+  border-radius: 50%;
+  background: #294655df;
+  box-shadow: 0 4px 18px #00000059;
+  transition: transform 35ms linear;
+  pointer-events: none;
+}
+
+.mobile-actions {
+  position: absolute;
+  right: max(14px, env(safe-area-inset-right));
+  bottom: max(14px, env(safe-area-inset-bottom));
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.mobile-action {
+  min-width: 74px;
+  min-height: 58px;
+  padding: 8px 12px;
+  display: grid;
+  place-items: center;
+  gap: 2px;
+  border: 1px solid #8ab3c679;
+  border-radius: 16px;
+  background: #101a22d9;
+  color: #e8f2f6;
+  box-shadow: 0 5px 18px #00000047;
+  pointer-events: auto;
+  touch-action: none;
+}
+
+.mobile-action strong { font-size: 13px; font-weight: 650; }
+.mobile-action span { color: #8fa5b1; font-size: 10px; }
+.mobile-action.is-pressed { transform: translateY(1px) scale(.97); background: #23404ddd; }
 
 .debug-shell {
   min-width: 0;
@@ -180,4 +263,15 @@ h1 { margin: 0; font-size: 22px; }
   .debug-shell { min-height: auto; }
   .debug-shell.is-collapsed { min-height: 50px; }
   .debug-shell.is-collapsed .workspace-header { min-height: 48px; align-items: center; }
+}
+
+@media (max-width: 700px) {
+  #app { padding: 10px; gap: 10px; }
+  .game-shell header, .game-shell footer { padding: 11px 13px; }
+  .game-shell footer { font-size: 11px; gap: 10px; }
+  .mobile-joystick { width: 94px; height: 94px; left: 10px; bottom: 10px; }
+  .mobile-joystick-knob { width: 42px; height: 42px; margin: -21px; }
+  .mobile-actions { right: 10px; bottom: 10px; gap: 7px; }
+  .mobile-action { min-width: 62px; min-height: 52px; padding: 7px 9px; border-radius: 14px; }
+  .mobile-action strong { font-size: 12px; }
 }
