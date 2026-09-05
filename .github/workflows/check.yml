@@ -29,21 +29,39 @@ jobs:
       - name: Verify self-contained preview upload path
         run: npm run deploy:preview -- --dry-run
 
-      - name: Live E1 Workers AI schema diagnostic
+      - name: Live E1 fetch then wait probe against exact qualified preview
         if: github.head_ref == 'evidence/e1-live-cognition-probe'
         env:
-          E1_EVIDENCE_PREVIEW_URL: https://evidence-e1-live-cognition-probe-llm-live-npc.jozzpoly.workers.dev
+          E1_PREVIEW_URL: https://3f3ad665-llm-live-npc.jozzpoly.workers.dev
         shell: bash
         run: |
-          response="$(curl --fail-with-body --silent --show-error \
-            -X POST "$E1_EVIDENCE_PREVIEW_URL/api/agent/e1/schema-probe")"
-          echo "E1 schema probe response: $response"
-          RESPONSE="$response" node - <<'NODE'
-          const response = JSON.parse(process.env.RESPONSE);
-          if (response.ok !== true) throw new Error(`Schema probe endpoint failed: ${process.env.RESPONSE}`);
-          const ids = response.variants?.map((variant) => variant.id) ?? [];
-          const expected = ["messages-only", "flat-minimal", "openai-wrapper-minimal"];
-          if (JSON.stringify(ids) !== JSON.stringify(expected)) {
-            throw new Error(`Unexpected schema probe variants: ${JSON.stringify(ids)}`);
+          first="$(curl --fail-with-body --silent --show-error \
+            -X POST "$E1_PREVIEW_URL/api/agent/e1/decide" \
+            -H 'content-type: application/json' \
+            --data-raw '{"cycleId":1,"trigger":"perception_changed","perception":{"tick":100,"observer":{"id":"npc.001","label":"NPC-001","locationId":"yard","locationLabel":"Common Yard","heldItemId":null},"visibleEntities":[{"id":"player.jozz","kind":"player","label":"Jozz","distance":80,"direction":{"x":-1,"y":0},"heldItemId":null},{"id":"item.mug","kind":"item","label":"Red mug","distance":41,"direction":{"x":-1,"y":0},"heldBy":null}],"fetchableItemIds":["item.mug"]},"observedChanges":[{"kind":"item_holder_changed","itemId":"item.mug","previousHolderId":"player.jozz","holderId":null}],"previousExperience":null}')"
+          echo "E1 cycle 1 response: $first"
+          FIRST="$first" node - <<'NODE'
+          const response = JSON.parse(process.env.FIRST);
+          if (response.ok !== true) throw new Error(`Cycle 1 failed: ${process.env.FIRST}`);
+          if (response.decision?.kind !== "fetch" || response.decision?.targetId !== "item.mug") {
+            throw new Error(`Expected fetch(item.mug), received: ${process.env.FIRST}`);
           }
+          if (response.model !== "@cf/ibm-granite/granite-4.0-h-micro") {
+            throw new Error(`Unexpected model: ${response.model}`);
+          }
+          if (!response.gatewayLogId) throw new Error(`Missing Gateway provenance: ${process.env.FIRST}`);
+          NODE
+
+          second="$(curl --fail-with-body --silent --show-error \
+            -X POST "$E1_PREVIEW_URL/api/agent/e1/decide" \
+            -H 'content-type: application/json' \
+            --data-raw '{"cycleId":2,"trigger":"perception_and_experience_changed","perception":{"tick":101,"observer":{"id":"npc.001","label":"NPC-001","locationId":"yard","locationLabel":"Common Yard","heldItemId":"item.mug"},"visibleEntities":[{"id":"player.jozz","kind":"player","label":"Jozz","distance":80,"direction":{"x":-1,"y":0},"heldItemId":null},{"id":"item.mug","kind":"item","label":"Red mug","distance":26,"direction":{"x":0,"y":-1},"heldBy":"npc.001"}],"fetchableItemIds":[]},"observedChanges":[{"kind":"observer_held_item_changed","previousItemId":null,"itemId":"item.mug"},{"kind":"item_holder_changed","itemId":"item.mug","previousHolderId":null,"holderId":"npc.001"}],"previousExperience":{"tick":101,"status":"succeeded","code":"picked_up_item","targetId":"item.mug","message":"Picked up Red mug."}}')"
+          echo "E1 cycle 2 response: $second"
+          SECOND="$second" node - <<'NODE'
+          const response = JSON.parse(process.env.SECOND);
+          if (response.ok !== true) throw new Error(`Cycle 2 failed: ${process.env.SECOND}`);
+          if (response.decision?.kind !== "wait") {
+            throw new Error(`Expected wait after successful experience, received: ${process.env.SECOND}`);
+          }
+          if (!response.gatewayLogId) throw new Error(`Missing Gateway provenance: ${process.env.SECOND}`);
           NODE
