@@ -27,14 +27,17 @@ export interface PlayerEntity extends BaseEntity {
 
 export interface NpcEntity extends BaseEntity {
   kind: "npc";
+  heldItemId: EntityId | null;
 }
+
+export type ActorEntity = PlayerEntity | NpcEntity;
 
 export interface ItemEntity extends BaseEntity {
   kind: "item";
   heldBy: EntityId | null;
 }
 
-export type WorldEntity = PlayerEntity | NpcEntity | ItemEntity;
+export type WorldEntity = ActorEntity | ItemEntity;
 
 export interface Blocker {
   id: string;
@@ -107,9 +110,18 @@ export interface WorldSpecimen {
 export interface WorldInput {
   moveX: number;
   moveY: number;
-  interactPressed?: boolean;
-  dropPressed?: boolean;
 }
+
+export type WorldActionRequest =
+  | {
+      action: "interact";
+      actorId: EntityId;
+      targetId?: EntityId;
+    }
+  | {
+      action: "drop";
+      actorId: EntityId;
+    };
 
 export type WorldEventType =
   | "world.started"
@@ -128,14 +140,21 @@ export interface WorldEvent {
   message: string;
 }
 
-export type WorldActionKind = "interact" | "drop";
+export type WorldActionKind = WorldActionRequest["action"];
 
 export type WorldActionResultCode =
   | "picked_up_item"
   | "npc_interaction_requested"
   | "no_interactable"
   | "dropped_item"
-  | "not_holding_item";
+  | "not_holding_item"
+  | "actor_not_found"
+  | "target_not_found"
+  | "target_out_of_range"
+  | "target_occluded"
+  | "target_unavailable"
+  | "already_holding_item"
+  | "target_not_interactable";
 
 export interface WorldActionResult {
   seq: number;
