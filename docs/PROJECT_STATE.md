@@ -18,7 +18,7 @@ The world remains authoritative about what exists, what an actor can perceive, w
 
 - integration branch: `p1/playable-world-slice`
 - integration PR: `#3 — P1 integration — refound world before cognition`
-- latest integrated runtime stage: **R3a pointer/world targeting**, squash `c3ca2ae3cbfe23bd02299d4e4b3bb64770a35cdd`
+- latest integrated runtime stage: **R5b authored PlacementSite domain seam**, squash `51d19a191d89a81ed15e733bd60d1569a62caa13`
 - latest integrated qualification: **R5a placement-site semantics**, squash `2f286a6117742da7c1f532cfa48741c26f69059b`
 - `main` remains the proven P0 cloud/AI baseline until P1 is genuinely cognition-ready.
 
@@ -54,7 +54,7 @@ Durable boundary:
 
 Phaser is not canonical world state.
 
-Current specimen is roughly `1440 × 900` with Common Yard, Workshop, Cottage, Grove and North Path; Jozz; one static NPC shell; hammer, mug and lantern; blockers/doorways/table/trees; 30 Hz fixed simulation; world-owned movement/collision; pickup/drop; location events; and a deterministic geometric LOS probe.
+Current specimen is roughly `1440 × 900` with Common Yard, Workshop, Cottage, Grove and North Path; Jozz; one static NPC shell; hammer, mug and lantern; blockers/doorways/table/trees; 30 Hz fixed simulation; world-owned movement/collision; pickup/drop; location events; one authored semantic table placement site; and a deterministic geometric LOS probe.
 
 No Box2D/Arcade Physics is currently justified. Physics remains a later qualification only if it buys meaningful player ↔ NPC ↔ world interaction.
 
@@ -68,13 +68,15 @@ Worth preserving:
 - geometric LOS reacts to blockers;
 - zoom, optional overlays and persistent Debug Workspace improved usability;
 - presentation is replaceable and has a minimal explicit seam;
-- pointer→world mapping survives camera follow/zoom well enough for future targeted interaction work.
+- pointer→world mapping survives camera follow/zoom well enough for future targeted interaction work;
+- world-domain now has a minimal semantic placement-site concept separate from collision geometry.
 
 Still inadequate:
 
 - the world reads mainly as a technical diagram;
 - visual representation needs a major professional lift;
 - automatic drop gives too little spatial agency and cannot intentionally place objects on surfaces;
+- placement legality, item support relation and controlled placement do not exist yet;
 - world richness is too low for meaningful free-play;
 - current LOS is only a geometric probe, not NPC sight;
 - sight needs real actor facing, FOV, range, occlusion and temporal perception state;
@@ -114,7 +116,7 @@ Qualified presentation as non-canonical, Tiled JSON as current-best future autho
 
 PR #7 merged into P1 as `abef7653c128def3eddc507a1d89efcc49108708` after automated validation + Cloudflare preview PASS.
 
-Established pure presentation resolvers for current entity/blocker/location fallback visuals, explicit depth strata, separate ground/scenery graphics and pure Node presentation-contract tests. No `src/world` changes, asset IDs, archetype schema, Tiled adapter or visual rewrite were introduced.
+Established pure presentation resolvers for current entity/blocker/location fallback visuals, explicit depth strata, separate ground/scenery graphics and pure Node presentation-contract tests. No asset IDs, archetype schema, Tiled adapter or visual rewrite were introduced.
 
 ### R3a — pointer ↔ world targeting contract — CLOSED / PASS
 
@@ -126,19 +128,29 @@ Established explicit active-camera `screen → world` conversion, pointer validi
 
 PR #9 merged into P1 as `2f286a6117742da7c1f532cfa48741c26f69059b` after research/design review, CI and Cloudflare PASS. Runtime intentionally did not change.
 
-Durable qualified direction:
+Durable direction:
 
 1. `Blocker` remains collision/vision geometry; do not turn geometry into a generic interactable.
-2. A later narrow authored **`PlacementSite`** should describe a semantically named region offering a placement relation, without execution logic.
-3. Preserve placement relation as world meaning. First concrete relation is **`on`** for the yard table; do not add `in` until a real container exists, but do not collapse future `on`/`in` into coordinates alone.
-4. Ordinary ground remains an implicit placement fallback rather than one giant authored site.
-5. Successful future placement must persist both position and semantic site/relation so perception/memory can represent facts such as `mug on table`.
-6. Placement-site data describes an offer/validation context; world/executor owns legality and execution.
-7. Do not introduce generic `Affordance[]`, capability-tag taxonomies, reservation/claim systems or a universal interaction API without concrete evidence.
-8. Temporary separate blocker/site records are acceptable; a future Tiled adapter may derive both from one authored source.
-9. Reach, occupancy, item filters/capacity, pointer preview, collision resolution and placement action codes remain deliberately deferred.
+2. Placement is modeled through a narrow authored semantic site/relation rather than coordinates alone.
+3. First relation is `on`; ordinary ground remains an implicit fallback.
+4. Execution/legality remains world/executor-owned.
+5. Do not add generic affordance taxonomies, reservations, capacity/tags or a universal interaction API without concrete evidence.
 
-Research precedents were used only as design pressure: Unreal Smart Objects for separating authored interaction information from execution; AI2-THOR for explicit pickupable/receptacle semantics and persistent semantic object relations.
+### R5b — authored PlacementSite domain seam — CLOSED / PASS
+
+PR #10 merged into P1 as `51d19a191d89a81ed15e733bd60d1569a62caa13` after automated validation + Cloudflare preview PASS. No Owner runtime gate was required because user-visible behavior intentionally did not change.
+
+Established:
+
+- `PlacementSite` as a world-domain type separate from `Blocker`;
+- current relation union contains only `on`;
+- P1 specimen authors exactly one site: `yard.table.top` over the existing yard work table footprint;
+- authored placement sites are included in `WorldSnapshot` as static canonical semantics;
+- `World.placementSitesAt(point)` returns all matching sites as isolated copies in deterministic id order;
+- overlap deliberately has no implicit winning-site policy yet;
+- tests cover inside/outside query behavior, caller isolation, overlap ordering and deterministic snapshot state.
+
+R5b **does not** implement placement legality, target selection policy, item↔site support state, cursor placement, new action/event semantics or any change to the existing automatic `Q` drop.
 
 ## Architecture conclusions currently considered durable
 
@@ -164,7 +176,7 @@ Do not collapse all behavior into one universal action system. Keep distinct:
 
 Future LLM cognition should operate mainly at the intent/task level. A deterministic non-LLM executor should translate tasks into continuous control and validated atomic actions. Player/scripted/LLM provenance must not change world legality.
 
-Interaction offers should describe what a place/object offers and under what conditions while execution remains separate. Do not generalize beyond concrete evidence. R5a specifically narrows placement to a semantic site/relation rather than a universal affordance framework.
+Interaction offers describe semantics/conditions while execution remains separate. Placement now has concrete authored-site evidence, but selection, legality and execution remain deliberately unresolved.
 
 ## Working method
 
@@ -180,9 +192,8 @@ Directional only:
 
 - **R2b candidate:** world-event vs action-outcome observability, if this becomes the largest apparatus weakness;
 - **R4c+:** first materially better visual slice / first concrete authored-map or visual-descriptor evidence;
-- **R5a:** placement-site semantics qualification — CLOSED / PASS;
-- **R5b candidate:** smallest authored `PlacementSite` domain seam;
-- **R6:** controlled placement/validation, dependent on R3a targeting and concrete authored-site evidence;
+- **R5a/R5b:** placement semantics + minimal authored site seam — CLOSED / PASS;
+- **R6 candidate:** placement validation/controlled placement, now able to depend on proven R3a targeting + R5b site semantics;
 - **R7:** non-LLM actor orientation/execution/task lifecycle;
 - **R8:** sight research + implementation;
 - **R9:** grounded speech stimulus + hearing;
@@ -195,12 +206,12 @@ Memory/long-term beliefs remain intentionally undesigned until real cognition ev
 
 **No next implementation stage is pre-authorized.**
 
-R5a established semantics only. At the next `kontynuuj`, reground and choose exactly one bounded problem from fresh evidence.
+R5b establishes that the world can name/query authored placement sites. It does not decide whether a particular item may be placed at a particular point, how a site is chosen, how item support state is represented, or how player input requests placement.
 
-Strong current candidates:
+At the next `kontynuuj`, reground and choose one bounded problem from fresh evidence. Strong candidates now include:
 
-- **R5b:** introduce the smallest authored `PlacementSite` domain seam and one table site, still without cursor placement;
-- a first small visual evidence slice using the R4 seam if diagram-like representation is now the dominant blocker;
+- a **placement-validation qualification/domain stage** that answers legality and semantic support without yet adding cursor UI;
+- a first small visual evidence slice using the R4 seam if diagram-like representation is the dominant blocker;
 - R2b action-outcome observability if causal debug becomes limiting.
 
 Do not begin a large Tiled migration, asset system, map rewrite, cursor placement, perception or LLM work implicitly.
