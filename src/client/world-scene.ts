@@ -1,4 +1,5 @@
 import * as Phaser from "phaser";
+import { DeterministicExecutor, type ExecutorStatus } from "../execution/deterministic-executor";
 import { createP1Specimen } from "../world/specimen";
 import { World } from "../world/world";
 import type {
@@ -48,6 +49,9 @@ export interface WorldDebugState {
   npcLineOfSight: boolean;
   npcDistance: number;
   entityCount: number;
+  executorStatus: ExecutorStatus;
+  executorTargetId: EntityId | null;
+  executorFailureCode: string | null;
   cameraZoom: number;
   debugOverlayVisible: boolean;
   labelsVisible: boolean;
@@ -66,6 +70,7 @@ function clamp(value: number, min: number, max: number): number {
 
 export class WorldScene extends Phaser.Scene {
   private readonly world = new World(createP1Specimen());
+  private readonly npcExecutor = new DeterministicExecutor();
   private readonly debugSink: DebugSink;
   private readonly playerControls: PlayerControlBuffer;
   private readonly entityViews = new Map<string, Phaser.GameObjects.Container>();
@@ -175,9 +180,14 @@ export class WorldScene extends Phaser.Scene {
           (this.keys?.W.isDown || this.cursors?.up.isDown ? 1 : 0)
       };
       const movement = combineControlMovement(keyboardMove, this.playerControls.movement());
+      const executorCommand = this.npcExecutor.next(this.currentPresentationSnapshot);
 
       this.previousPresentationSnapshot = this.currentPresentationSnapshot;
-      this.world.step({ moveX: movement.x, moveY: movement.y });
+      this.world.stepWithActorControls(
+        { moveX: movement.x, moveY: movement.y },
+        executorCommand.control ? [executorCommand.control] : []
+      );
+
       if (this.pendingDrop) this.world.attemptAction({ action: "drop", actorId: "player.jozz" });
       if (this.pendingDirectInteractTargetId) {
         this.world.attemptAction({
@@ -188,6 +198,11 @@ export class WorldScene extends Phaser.Scene {
       } else if (this.pendingInteract) {
         this.world.attemptAction({ action: "interact", actorId: "player.jozz" });
       }
+
+      if (executorCommand.action) {
+        this.npcExecutor.acceptActionResult(this.world.attemptAction(executorCommand.action));
+      }
+
       this.currentPresentationSnapshot = this.world.snapshot();
       this.pendingInteract = false;
       this.pendingDrop = false;
@@ -212,6 +227,14 @@ export class WorldScene extends Phaser.Scene {
 
   togglePointerProbe(): void {
     this.pointerProbeVisible = !this.pointerProbeVisible;
+  }
+
+  startNpcFetchLanternTask(): void {
+    this.npcExecutor.start({
+      kind: "approach-and-interact",
+      actorId: "npc.001",
+      targetId: "item.lantern"
+    });
   }
 
   zoomByScale(scale: number): void {
@@ -520,6 +543,7 @@ export class WorldScene extends Phaser.Scene {
     const heldItem = player.heldItemId
       ? snapshot.entities.find((entity) => entity.id === player.heldItemId)?.label ?? player.heldItemId
       : "none";
+    const executorState = this.npcExecutor.state();
 
     this.debugSink({
       tick: snapshot.tick,
@@ -529,6 +553,9 @@ export class WorldScene extends Phaser.Scene {
       npcLineOfSight: this.world.hasLineOfSight(npc.position, player.position),
       npcDistance: Math.hypot(npc.position.x - player.position.x, npc.position.y - player.position.y),
       entityCount: snapshot.entities.length,
+      executorStatus: executorState.status,
+      executorTargetId: executorState.task?.targetId ?? null,
+      executorFailureCode: executorState.failureCode,
       cameraZoom: this.cameras.main.zoom,
       debugOverlayVisible: this.debugOverlayVisible,
       labelsVisible: this.labelsVisible,
