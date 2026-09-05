@@ -14,7 +14,7 @@ The LLM may propose intent. The game world remains authoritative about what exis
 
 ## Current stage
 
-**P1 — domain-first playable world slice. Active, not yet Owner-qualified.**
+**P1 — domain-first playable world slice. Active, deployed to preview, not yet Owner-qualified.**
 
 Active branch:
 
@@ -164,23 +164,11 @@ P1 is the first real client toolchain, so the earlier dependency reproducibility
 - GitHub Actions use current Node24-based `actions/checkout@v6` and `actions/setup-node@v6`;
 - repo exposes self-contained `npm run deploy:preview`, defined as `vite build && wrangler versions upload`.
 
-## Cloudflare preview deployment diagnosis
+## Cloudflare preview deployment — PASS
 
-Fresh Owner-provided Cloudflare build logs resolved the earlier ambiguity.
+Owner-provided build logs first resolved why non-production preview failed: Workers Builds executed its version command (`npx wrangler versions upload`) without first generating the Vite output config. Wrangler therefore read the input `wrangler.jsonc` and correctly rejected its Vite-managed `assets` object because the generated `directory` did not yet exist.
 
-For non-production branches, Workers Builds used its preview trigger and executed:
-
-`npx wrangler versions upload`
-
-without executing a Vite build first. Wrangler therefore read the input `wrangler.jsonc`, whose `assets` object intentionally has routing configuration but no `directory`, and failed with:
-
-`The assets property in your configuration is missing the required directory property.`
-
-This does **not** mean `assets.directory` should be added to the input Wrangler config. With the official Cloudflare Vite plugin, the input config is allowed to omit that field; `vite build` generates the output Wrangler config and automatically fills `assets.directory` with the client build output.
-
-Cloudflare Workers Builds maintains separate production and preview triggers, each with its own build/deploy commands. The earlier Owner change to `Build command = npm run build --if-present` did not affect the preview trigger evidenced by the failing non-production build.
-
-To remove this ambiguity from the repo, P1 defines a self-contained preview command:
+The root config was intentionally **not** patched with a hard-coded `assets.directory`. Instead P1 now owns a self-contained preview contract:
 
 `npm run deploy:preview`
 
@@ -188,20 +176,39 @@ which executes:
 
 `vite build && wrangler versions upload`
 
-CI validates the exact command with `--dry-run` and passes.
+CI validates that exact path with `--dry-run` and passes.
 
-Therefore the next Cloudflare dashboard change should be limited to the **non-production branch deploy command**:
+The Owner then set the Cloudflare Workers Builds **Version command** to:
 
 `npm run deploy:preview`
 
-Do not add `assets.directory` to the root config and do not add build work to `postinstall` or rely on cached `dist` output.
+while keeping:
+
+- Build command: `npm run build --if-present`;
+- production Deploy command: `npx wrangler deploy`;
+- production branch: `main`;
+- non-production branch builds: enabled;
+- root directory: `/`.
+
+A fresh non-production build on branch head `ab17f430d96eb8ea7618617e1912edefd57ef54d` passed both GitHub CI and Cloudflare Workers Builds.
+
+Cloudflare preview evidence:
+
+- Build ID: `f6c49160-90f5-4caf-958e-37f83b948e54`;
+- Version ID: `5706c9c9-670d-4f36-8586-3772d6e80e58`;
+- immutable preview: `https://5706c9c9-llm-live-npc.jozzpoly.workers.dev`;
+- branch alias: `https://p1-playable-world-slice-llm-live-npc.jozzpoly.workers.dev`;
+- Workers Build: **PASS**;
+- GitHub validation: **PASS**.
+
+This closes the P1 deployment blocker. The next gate is now genuinely hands-on world evaluation, not infrastructure work.
 
 ## P1 closure contract
 
 P1 is not closed and PR #3 must not merge until:
 
 1. locked CI + exact preview upload dry-run remain green — **PROVEN**;
-2. Cloudflare non-production preview trigger executes the self-contained preview command and serves the actual Vite/Phaser P1 client — **OPEN, dashboard preview deploy command change required**;
+2. Cloudflare non-production preview serves the P1 Vite/Phaser deployment — **DEPLOYMENT PROVEN; browser rendering still needs Owner confirmation**;
 3. Owner can enter the preview and move around the authored world — **OPEN**;
 4. authored blockers visibly constrain movement — **OPEN Owner runtime evidence**;
 5. Owner can pick up/drop at least one object and see semantic events change — **OPEN**;
@@ -215,6 +222,7 @@ Natural boundary after a P1 PASS: review Owner feedback before adding LLM cognit
 - generated Wrangler binding/runtime types are not yet canonicalized;
 - the fixed public AI qualification endpoint still has only a lightweight Cloudflare rate limiter, not hard auth/global budget enforcement;
 - Cloudflare Access state is not canonicalized;
+- the current Cloudflare build token is named after another project and should later be replaced with a dedicated `llm-live-npc` token if its scope/provenance warrants cleanup;
 - no persistence/database/multiplayer exists;
 - no final model selection exists.
 
