@@ -7,7 +7,8 @@ const entities: WorldEntity[] = [
     label: "Jozz",
     position: { x: 610, y: 420 },
     radius: 16,
-    heldItemId: null
+    heldItemId: null,
+    facing: { x: 1, y: 0 }
   },
   {
     id: "npc.001",
@@ -15,7 +16,8 @@ const entities: WorldEntity[] = [
     label: "NPC-001",
     position: { x: 760, y: 390 },
     radius: 16,
-    heldItemId: null
+    heldItemId: null,
+    facing: { x: -1, y: 0 }
   },
   {
     id: "item.hammer",
