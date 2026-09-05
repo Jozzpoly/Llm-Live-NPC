@@ -49,5 +49,6 @@ new Phaser.Game({
 });
 
 new MobileOwnerControls(gameRoot, playerControls, {
-  zoomByScale: (scale) => scene.zoomByScale(scale)
+  zoomByScale: (scale) => scene.zoomByScale(scale),
+  interactAtClientPoint: (clientX, clientY) => scene.queueTouchInteractionAtClientPoint(clientX, clientY)
 });
