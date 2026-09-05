@@ -41,8 +41,11 @@ export function isTouchOwnerDevice(): boolean {
   return navigator.maxTouchPoints > 0 || window.matchMedia("(pointer: coarse)").matches;
 }
 
-function isControlTarget(target: EventTarget | null): boolean {
-  return target instanceof Element && target.closest("[data-mobile-control]") !== null;
+function isActionControlTarget(target: EventTarget | null): boolean {
+  return (
+    target instanceof Element &&
+    target.closest('[data-mobile-control="interact"], [data-mobile-control="drop"]') !== null
+  );
 }
 
 export class MobileOwnerControls {
@@ -51,6 +54,7 @@ export class MobileOwnerControls {
   private readonly actions: MobileControlActions;
   private readonly gesturePointers = new Map<number, Point>();
   private pinchDistance: number | null = null;
+  private pinchActive = false;
   private joystickPointerId: number | null = null;
   private joystickOrigin: Point | null = null;
   private joystickCapture: HTMLDivElement | null = null;
@@ -130,7 +134,7 @@ export class MobileOwnerControls {
   }
 
   private startJoystick(event: PointerEvent): void {
-    if (this.joystickPointerId !== null) return;
+    if (this.pinchActive || this.joystickPointerId !== null) return;
     event.preventDefault();
 
     this.joystickPointerId = event.pointerId;
@@ -142,7 +146,7 @@ export class MobileOwnerControls {
   }
 
   private moveJoystick(event: PointerEvent): void {
-    if (event.pointerId !== this.joystickPointerId || !this.joystickOrigin) return;
+    if (this.pinchActive || event.pointerId !== this.joystickPointerId || !this.joystickOrigin) return;
     event.preventDefault();
 
     const base = this.joystickBase;
@@ -171,20 +175,34 @@ export class MobileOwnerControls {
     base.style.top = `${(clientY - rootRect.top).toFixed(1)}px`;
   }
 
-  private resetJoystick(): void {
+  private resetJoystick(releaseCapture = false): void {
+    const pointerId = this.joystickPointerId;
     this.joystickPointerId = null;
     this.joystickOrigin = null;
     this.buffer.clearMovement();
     this.joystickBase?.classList.remove("is-active");
     if (this.joystickKnob) this.joystickKnob.style.transform = "translate(0px, 0px)";
+
+    if (
+      releaseCapture &&
+      pointerId !== null &&
+      this.joystickCapture?.hasPointerCapture(pointerId)
+    ) {
+      this.joystickCapture.releasePointerCapture(pointerId);
+    }
   }
 
   private bindPinchGesture(): void {
     this.root.addEventListener(
       "pointerdown",
       (event) => {
-        if (event.pointerType !== "touch" || isControlTarget(event.target)) return;
+        if (event.pointerType !== "touch" || isActionControlTarget(event.target)) return;
+
         this.gesturePointers.set(event.pointerId, { x: event.clientX, y: event.clientY });
+        if (this.gesturePointers.size >= 2) {
+          this.pinchActive = true;
+          this.resetJoystick(true);
+        }
         this.refreshPinchBaseline();
       },
       { capture: true }
@@ -208,6 +226,7 @@ export class MobileOwnerControls {
 
     const endPointer = (event: PointerEvent) => {
       if (!this.gesturePointers.delete(event.pointerId)) return;
+      if (this.gesturePointers.size < 2) this.pinchActive = false;
       this.refreshPinchBaseline();
     };
     window.addEventListener("pointerup", endPointer, { capture: true });
