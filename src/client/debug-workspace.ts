@@ -48,6 +48,9 @@ export class DebugWorkspace {
   private readonly losValue: ValueNode;
   private readonly distanceValue: ValueNode;
   private readonly entitiesValue: ValueNode;
+  private readonly actionKindValue: ValueNode;
+  private readonly actionTargetValue: ValueNode;
+  private readonly actionOutcomeValue: ValueNode;
   private readonly eventsList: HTMLUListElement;
   private collapsed = false;
   private lastEventSignature = "";
@@ -106,7 +109,7 @@ export class DebugWorkspace {
     pointerMetrics.append(pointerScreen.row, pointerWorld.row, pointerBounds.row);
     pointerSection.append(
       pointerMetrics,
-      element("p", "debug-note", "Camera-derived probe only — no interaction or placement semantics yet.")
+      element("p", "debug-note", "Camera-derived probe only — direct interaction resolves a rendered entity, then World validates legality.")
     );
 
     const playerSection = this.section("Player");
@@ -121,6 +124,20 @@ export class DebugWorkspace {
     this.heldItemValue = heldItem.value;
     playerMetrics.append(tick.row, position.row, location.row, heldItem.row);
     playerSection.append(playerMetrics);
+
+    const actionSection = this.section("Last action outcome");
+    const actionMetrics = element("div", "debug-metrics");
+    const actionKind = metricRow("action");
+    const actionTarget = metricRow("target");
+    const actionOutcome = metricRow("outcome");
+    this.actionKindValue = actionKind.value;
+    this.actionTargetValue = actionTarget.value;
+    this.actionOutcomeValue = actionOutcome.value;
+    actionMetrics.append(actionKind.row, actionTarget.row, actionOutcome.row);
+    actionSection.append(
+      actionMetrics,
+      element("p", "debug-note", "Attempt outcome only — rejected actions are intentionally not semantic World Events.")
+    );
 
     const npcSection = this.section("NPC-001 LOS probe");
     const npcMetrics = element("div", "debug-metrics");
@@ -140,7 +157,7 @@ export class DebugWorkspace {
     this.eventsList = element("ul", "event-list");
     eventsSection.append(this.eventsList);
 
-    content.append(viewSection, pointerSection, playerSection, npcSection, eventsSection);
+    content.append(viewSection, pointerSection, playerSection, actionSection, npcSection, eventsSection);
     this.root.append(header, content);
     this.renderEvents([]);
   }
@@ -167,6 +184,13 @@ export class DebugWorkspace {
     this.positionValue.textContent = `${state.playerPosition.x.toFixed(1)}, ${state.playerPosition.y.toFixed(1)}`;
     this.locationValue.textContent = state.location;
     this.heldItemValue.textContent = state.heldItem;
+
+    const action = state.lastActionResult;
+    this.actionKindValue.textContent = action?.action ?? "none";
+    this.actionTargetValue.textContent = action?.targetId ?? "—";
+    this.actionOutcomeValue.textContent = action ? `${action.status} · ${action.code}` : "—";
+    this.actionOutcomeValue.classList.toggle("pass", action?.status === "succeeded");
+    this.actionOutcomeValue.classList.toggle("blocked", action?.status === "rejected");
 
     this.losValue.textContent = state.npcLineOfSight ? "VISIBLE" : "OCCLUDED";
     this.losValue.classList.toggle("pass", state.npcLineOfSight);
