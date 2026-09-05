@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { createP1Specimen } from "../world/specimen";
 import { World } from "../world/world";
 import { DeterministicExecutor } from "./deterministic-executor";
+import { ExecutionDriver } from "./execution-driver";
 
 function actor(world: World, id: string) {
   const entity = world.snapshot().entities.find((entry) => entry.id === id);
@@ -9,18 +10,17 @@ function actor(world: World, id: string) {
   return entity;
 }
 
-function runFetchLantern(world: World, executor: DeterministicExecutor, maxTicks = 180): void {
+function runFetchLantern(world: World, executor: DeterministicExecutor): void {
+  const driver = new ExecutionDriver(world, executor);
   executor.start({ kind: "approach-and-interact", actorId: "npc.001", targetId: "item.lantern" });
 
-  for (let index = 0; index < maxTicks && executor.state().status === "running"; index += 1) {
-    const command = executor.next(world.snapshot());
-    world.stepWithActorControls({ moveX: 0, moveY: 0 }, command.control ? [command.control] : []);
-    if (command.action) executor.acceptActionResult(world.attemptAction(command.action));
+  while (executor.state().status === "running") {
+    driver.step({ playerControl: { moveX: 0, moveY: 0 } });
   }
 }
 
 describe("B2 deterministic executor", () => {
-  it("drives NPC-001 through the current specimen and picks up the existing lantern through World action legality", () => {
+  it("drives NPC-001 through the current specimen and picks up the existing lantern through the shared execution driver", () => {
     const world = new World(createP1Specimen());
     const executor = new DeterministicExecutor();
 
@@ -29,8 +29,10 @@ describe("B2 deterministic executor", () => {
     expect(executor.state()).toMatchObject({
       status: "succeeded",
       task: { kind: "approach-and-interact", actorId: "npc.001", targetId: "item.lantern" },
-      failureCode: null
+      failureCode: null,
+      stepBudget: 180
     });
+    expect(executor.state().stepsUsed).toBeLessThan(180);
     expect(actor(world, "npc.001").heldItemId).toBe("item.lantern");
     expect(world.snapshot().entities.find((entity) => entity.id === "item.lantern")).toMatchObject({
       kind: "item",
@@ -48,10 +50,9 @@ describe("B2 deterministic executor", () => {
         (event) => event.type === "item.picked_up" && event.actorId === "npc.001" && event.entityId === "item.lantern"
       )
     ).toBe(true);
-    expect(world.tick).toBeLessThan(180);
   });
 
-  it("is deterministic for the same task and world specimen", () => {
+  it("is deterministic for the same task and world specimen through the shared driver", () => {
     const leftWorld = new World(createP1Specimen());
     const rightWorld = new World(createP1Specimen());
     const leftExecutor = new DeterministicExecutor();
@@ -75,7 +76,9 @@ describe("B2 deterministic executor", () => {
     expect(executor.state()).toEqual({
       status: "failed",
       task: { kind: "approach-and-interact", actorId: "npc.001", targetId: "missing.target" },
-      failureCode: "target_not_found"
+      failureCode: "target_not_found",
+      stepsUsed: 1,
+      stepBudget: 180
     });
     expect(world.tick).toBe(0);
     expect(actor(world, "npc.001").heldItemId).toBeNull();
@@ -92,9 +95,60 @@ describe("B2 deterministic executor", () => {
     executor.start({ kind: "approach-and-interact", actorId: "npc.001", targetId: "item.lantern" });
 
     expect(executor.next(world.snapshot())).toEqual({});
-    expect(executor.state()).toMatchObject({ status: "failed", failureCode: "invalid_target_geometry" });
+    expect(executor.state()).toMatchObject({
+      status: "failed",
+      failureCode: "invalid_target_geometry",
+      stepsUsed: 1
+    });
     expect(world.tick).toBe(0);
     expect(world.lastActionResult()).toBeNull();
+  });
+
+  it("enforces the executor step budget in runtime state rather than only in a test harness", () => {
+    const world = new World(createP1Specimen());
+    const executor = new DeterministicExecutor(2);
+    const driver = new ExecutionDriver(world, executor);
+    executor.start({ kind: "approach-and-interact", actorId: "npc.001", targetId: "item.lantern" });
+
+    driver.step({ playerControl: { moveX: 0, moveY: 0 } });
+    driver.step({ playerControl: { moveX: 0, moveY: 0 } });
+    driver.step({ playerControl: { moveX: 0, moveY: 0 } });
+
+    expect(executor.state()).toMatchObject({
+      status: "failed",
+      failureCode: "step_budget_exhausted",
+      stepsUsed: 2,
+      stepBudget: 2
+    });
+    expect(world.tick).toBe(3);
+  });
+
+  it("preserves player-action-before-executor-action ordering inside the shared driver", () => {
+    const specimen = createP1Specimen();
+    const player = specimen.entities.find((entity) => entity.id === "player.jozz");
+    const npc = specimen.entities.find((entity) => entity.id === "npc.001");
+    const lantern = specimen.entities.find((entity) => entity.id === "item.lantern");
+    if (!player || player.kind !== "player" || !npc || npc.kind !== "npc" || !lantern || lantern.kind !== "item") {
+      throw new Error("Missing B2 ordering specimen entities");
+    }
+    player.position = { x: 1015, y: 670 };
+    npc.position = { x: 1105, y: 670 };
+
+    const world = new World(specimen);
+    const executor = new DeterministicExecutor();
+    const driver = new ExecutionDriver(world, executor);
+    executor.start({ kind: "approach-and-interact", actorId: "npc.001", targetId: "item.lantern" });
+
+    const result = driver.step({
+      playerControl: { moveX: 0, moveY: 0 },
+      playerActions: [{ action: "interact", actorId: "player.jozz", targetId: "item.lantern" }]
+    });
+
+    expect(result.playerActionResults[0]).toMatchObject({ status: "succeeded", code: "picked_up_item" });
+    expect(result.executorActionResult).toMatchObject({ status: "rejected", code: "target_unavailable" });
+    expect(executor.state()).toMatchObject({ status: "failed", failureCode: "target_unavailable" });
+    expect(actor(world, "player.jozz").heldItemId).toBe("item.lantern");
+    expect(actor(world, "npc.001").heldItemId).toBeNull();
   });
 
   it("keeps actor controls inside one canonical world tick and updates NPC facing through the same movement rule", () => {
