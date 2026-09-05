@@ -27,6 +27,8 @@ export class WorldScene extends Phaser.Scene {
   private cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   private keys!: Record<"W" | "A" | "S" | "D" | "E" | "Q", Phaser.Input.Keyboard.Key>;
   private accumulatorMs = 0;
+  private pendingInteract = false;
+  private pendingDrop = false;
 
   constructor(debugSink: DebugSink) {
     super({ key: "world" });
@@ -59,8 +61,8 @@ export class WorldScene extends Phaser.Scene {
     if (!keyboard) return;
 
     this.accumulatorMs += Math.min(delta, 100);
-    let interactPressed = Phaser.Input.Keyboard.JustDown(this.keys.E);
-    let dropPressed = Phaser.Input.Keyboard.JustDown(this.keys.Q);
+    this.pendingInteract = this.pendingInteract || Phaser.Input.Keyboard.JustDown(this.keys.E);
+    this.pendingDrop = this.pendingDrop || Phaser.Input.Keyboard.JustDown(this.keys.Q);
 
     while (this.accumulatorMs >= FIXED_STEP_MS) {
       const moveX =
@@ -70,9 +72,14 @@ export class WorldScene extends Phaser.Scene {
         (this.keys.S.isDown || this.cursors.down.isDown ? 1 : 0) -
         (this.keys.W.isDown || this.cursors.up.isDown ? 1 : 0);
 
-      this.world.step({ moveX, moveY, interactPressed, dropPressed });
-      interactPressed = false;
-      dropPressed = false;
+      this.world.step({
+        moveX,
+        moveY,
+        interactPressed: this.pendingInteract,
+        dropPressed: this.pendingDrop
+      });
+      this.pendingInteract = false;
+      this.pendingDrop = false;
       this.accumulatorMs -= FIXED_STEP_MS;
     }
 
