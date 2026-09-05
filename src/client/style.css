@@ -112,7 +112,12 @@ h1 { margin: 0; font-size: 22px; }
   text-transform: uppercase;
 }
 
-.debug-control-row { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-bottom: 11px; }
+.debug-control-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 7px;
+  margin-bottom: 11px;
+}
 .debug-toggle {
   min-width: 0;
   padding: 8px 9px;
