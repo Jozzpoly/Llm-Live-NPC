@@ -1,78 +1,28 @@
 import * as Phaser from "phaser";
 import "./style.css";
-import { WorldScene, type WorldDebugState } from "./world-scene";
+import { DebugWorkspace } from "./debug-workspace";
+import { WorldScene } from "./world-scene";
 
+const appRoot = document.querySelector<HTMLElement>("#app");
 const debugRoot = document.querySelector<HTMLElement>("#debug");
 const gameRoot = document.querySelector<HTMLElement>("#game");
 
-if (!debugRoot || !gameRoot) {
-  throw new Error("P1 shell is missing #game or #debug root.");
+if (!appRoot || !debugRoot || !gameRoot) {
+  throw new Error("P1 shell is missing #app, #game or #debug root.");
 }
 
-const debugPanel: HTMLElement = debugRoot;
-const gameContainer: HTMLElement = gameRoot;
+let scene: WorldScene;
 
-function escapeHtml(value: string): string {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
+const workspace = new DebugWorkspace(debugRoot, appRoot, {
+  toggleLabels: () => scene.toggleLabels(),
+  toggleLosProbe: () => scene.toggleDebugOverlay()
+});
 
-function renderDebug(state: WorldDebugState): void {
-  const losClass = state.npcLineOfSight ? "pass" : "blocked";
-  const events = state.events.length
-    ? state.events
-        .map(
-          (event) => `
-            <li>
-              <div>${escapeHtml(event.message)}</div>
-              <div class="event-meta">#${event.seq} · tick ${event.tick} · ${escapeHtml(event.type)}</div>
-            </li>`
-        )
-        .join("")
-    : "<li>No semantic events yet.</li>";
-
-  debugPanel.innerHTML = `
-    <h2>World Inspector</h2>
-    <p>P1.1 keeps domain truth unchanged while presentation/debug controls are being refined.</p>
-
-    <h3>View</h3>
-    <dl class="debug-grid">
-      <dt>camera zoom</dt><dd>${state.cameraZoom.toFixed(2)}×</dd>
-      <dt>visual overlay</dt><dd>${state.debugOverlayVisible ? "shown" : "hidden"}</dd>
-      <dt>labels</dt><dd>${state.labelsVisible ? "shown" : "hidden"}</dd>
-    </dl>
-
-    <h3>Player</h3>
-    <dl class="debug-grid">
-      <dt>tick</dt><dd>${state.tick}</dd>
-      <dt>position</dt><dd>${state.playerPosition.x.toFixed(1)}, ${state.playerPosition.y.toFixed(1)}</dd>
-      <dt>location</dt><dd>${escapeHtml(state.location)}</dd>
-      <dt>held item</dt><dd>${escapeHtml(state.heldItem)}</dd>
-    </dl>
-
-    <h3>NPC-001 LOS probe</h3>
-    <dl class="debug-grid">
-      <dt>line of sight</dt><dd class="${losClass}">${state.npcLineOfSight ? "VISIBLE" : "OCCLUDED"}</dd>
-      <dt>distance</dt><dd>${state.npcDistance.toFixed(1)} px</dd>
-      <dt>cognition</dt><dd>disabled</dd>
-      <dt>entities</dt><dd>${state.entityCount}</dd>
-    </dl>
-    <p class="debug-note">This remains a raw LOS probe, not the future NPC sight model.</p>
-
-    <h3>Recent world events</h3>
-    <ul class="event-list">${events}</ul>
-  `;
-}
-
-const scene = new WorldScene(renderDebug);
+scene = new WorldScene((state) => workspace.update(state));
 
 new Phaser.Game({
   type: Phaser.AUTO,
-  parent: gameContainer,
+  parent: gameRoot,
   width: 960,
   height: 640,
   backgroundColor: "#151b20",
