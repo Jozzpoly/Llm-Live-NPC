@@ -23,11 +23,13 @@ export interface BaseEntity {
 export interface PlayerEntity extends BaseEntity {
   kind: "player";
   heldItemId: EntityId | null;
+  facing: Vec2;
 }
 
 export interface NpcEntity extends BaseEntity {
   kind: "npc";
   heldItemId: EntityId | null;
+  facing: Vec2;
 }
 
 export type ActorEntity = PlayerEntity | NpcEntity;
