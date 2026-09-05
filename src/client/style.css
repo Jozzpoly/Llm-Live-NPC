@@ -37,8 +37,15 @@ button, input { font: inherit; }
 h1 { margin: 0; font-size: 22px; }
 .stage-chip { padding: 6px 9px; border-radius: 999px; background: #202832; color: #b8c4cf; font-size: 12px; }
 
-#game { min-height: 0; position: relative; background: #151b20; }
-#game canvas { display: block; width: 100% !important; height: 100% !important; }
+#game {
+  min-height: 0;
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: #151b20;
+}
+#game canvas { display: block; max-width: 100%; max-height: 100%; }
 
 .debug-shell { padding: 16px; min-height: calc(100vh - 32px); overflow: auto; }
 .debug-shell h2 { margin: 0 0 6px; font-size: 17px; }
