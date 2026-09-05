@@ -29,23 +29,21 @@ jobs:
       - name: Verify self-contained preview upload path
         run: npm run deploy:preview -- --dry-run
 
-      - name: Diagnose live E1 cognition response
+      - name: Live E1 Workers AI schema diagnostic
         if: github.head_ref == 'evidence/e1-live-cognition-probe'
         env:
-          E1_PREVIEW_URL: https://experiment-e1-grounded-notice-fetch-llm-live-npc.jozzpoly.workers.dev
+          E1_EVIDENCE_PREVIEW_URL: https://evidence-e1-live-cognition-probe-llm-live-npc.jozzpoly.workers.dev
         shell: bash
         run: |
-          first="$(curl --silent --show-error \
-            -X POST "$E1_PREVIEW_URL/api/agent/e1/decide" \
-            -H 'content-type: application/json' \
-            --data-raw '{"cycleId":1,"trigger":"perception_changed","perception":{"tick":100,"observer":{"id":"npc.001","label":"NPC-001","locationId":"yard","locationLabel":"Common Yard","heldItemId":null},"visibleEntities":[{"id":"player.jozz","kind":"player","label":"Jozz","distance":80,"direction":{"x":-1,"y":0},"heldItemId":null},{"id":"item.mug","kind":"item","label":"Red mug","distance":41,"direction":{"x":-1,"y":0},"heldBy":null}],"fetchableItemIds":["item.mug"]},"observedChanges":[{"kind":"item_holder_changed","itemId":"item.mug","previousHolderId":"player.jozz","holderId":null}],"previousExperience":null}')"
-          echo "E1 cycle 1 response: $first"
-          FIRST="$first" node - <<'NODE'
-          const response = JSON.parse(process.env.FIRST);
-          if (response.ok !== true) {
-            throw new Error(`Diagnostic response: ${process.env.FIRST}`);
-          }
-          if (response.decision?.kind !== "fetch" || response.decision?.targetId !== "item.mug") {
-            throw new Error(`Expected fetch(item.mug), received: ${process.env.FIRST}`);
+          response="$(curl --fail-with-body --silent --show-error \
+            -X POST "$E1_EVIDENCE_PREVIEW_URL/api/agent/e1/schema-probe")"
+          echo "E1 schema probe response: $response"
+          RESPONSE="$response" node - <<'NODE'
+          const response = JSON.parse(process.env.RESPONSE);
+          if (response.ok !== true) throw new Error(`Schema probe endpoint failed: ${process.env.RESPONSE}`);
+          const ids = response.variants?.map((variant) => variant.id) ?? [];
+          const expected = ["messages-only", "flat-minimal", "openai-wrapper-minimal"];
+          if (JSON.stringify(ids) !== JSON.stringify(expected)) {
+            throw new Error(`Unexpected schema probe variants: ${JSON.stringify(ids)}`);
           }
           NODE
