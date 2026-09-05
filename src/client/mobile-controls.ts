@@ -11,12 +11,19 @@ export interface MobileControlActions {
 
 export function joystickVector(dx: number, dy: number, radius: number, deadZone = 0.1): Point {
   if (![dx, dy, radius, deadZone].every(Number.isFinite) || radius <= 0) return { x: 0, y: 0 };
+
   const magnitude = Math.hypot(dx, dy);
-  if (magnitude <= radius * Math.max(0, deadZone)) return { x: 0, y: 0 };
+  const safeDeadZone = Math.min(0.95, Math.max(0, deadZone));
+  const deadRadius = radius * safeDeadZone;
+  if (magnitude <= deadRadius || magnitude === 0) return { x: 0, y: 0 };
 
   const clampedMagnitude = Math.min(magnitude, radius);
-  const scale = clampedMagnitude / magnitude / radius;
-  return { x: dx * scale, y: dy * scale };
+  const usableRadius = Math.max(0.0001, radius - deadRadius);
+  const normalizedMagnitude = (clampedMagnitude - deadRadius) / usableRadius;
+  return {
+    x: (dx / magnitude) * normalizedMagnitude,
+    y: (dy / magnitude) * normalizedMagnitude
+  };
 }
 
 export function incrementalPinchScale(previousDistance: number, nextDistance: number): number {
@@ -30,7 +37,7 @@ function distance(a: Point, b: Point): number {
   return Math.hypot(a.x - b.x, a.y - b.y);
 }
 
-function isTouchCapable(): boolean {
+export function isTouchOwnerDevice(): boolean {
   return navigator.maxTouchPoints > 0 || window.matchMedia("(pointer: coarse)").matches;
 }
 
@@ -45,7 +52,9 @@ export class MobileOwnerControls {
   private readonly gesturePointers = new Map<number, Point>();
   private pinchDistance: number | null = null;
   private joystickPointerId: number | null = null;
-  private joystickZone: HTMLDivElement | null = null;
+  private joystickOrigin: Point | null = null;
+  private joystickCapture: HTMLDivElement | null = null;
+  private joystickBase: HTMLDivElement | null = null;
   private joystickKnob: HTMLDivElement | null = null;
 
   constructor(root: HTMLElement, buffer: PlayerControlBuffer, actions: MobileControlActions) {
@@ -53,7 +62,7 @@ export class MobileOwnerControls {
     this.buffer = buffer;
     this.actions = actions;
 
-    if (!isTouchCapable()) return;
+    if (!isTouchOwnerDevice()) return;
 
     this.root.classList.add("touch-controls-enabled");
     this.mountControls();
@@ -65,10 +74,14 @@ export class MobileOwnerControls {
     overlay.className = "mobile-controls";
     overlay.setAttribute("aria-label", "Mobile play controls");
 
+    const joystickCapture = document.createElement("div");
+    joystickCapture.className = "mobile-joystick-capture";
+    joystickCapture.dataset.mobileControl = "joystick";
+    joystickCapture.setAttribute("aria-label", "Floating movement joystick zone");
+
     const joystick = document.createElement("div");
     joystick.className = "mobile-joystick";
-    joystick.dataset.mobileControl = "joystick";
-    joystick.setAttribute("aria-label", "Movement joystick");
+    joystick.setAttribute("aria-hidden", "true");
 
     const knob = document.createElement("div");
     knob.className = "mobile-joystick-knob";
@@ -81,17 +94,18 @@ export class MobileOwnerControls {
     const drop = this.createActionButton("Drop", "Q", () => this.buffer.queueDrop());
     actions.append(interact, drop);
 
-    overlay.append(joystick, actions);
+    overlay.append(joystickCapture, joystick, actions);
     this.root.append(overlay);
 
-    this.joystickZone = joystick;
+    this.joystickCapture = joystickCapture;
+    this.joystickBase = joystick;
     this.joystickKnob = knob;
 
-    joystick.addEventListener("pointerdown", (event) => this.startJoystick(event));
-    joystick.addEventListener("pointermove", (event) => this.moveJoystick(event));
-    joystick.addEventListener("pointerup", (event) => this.endJoystick(event));
-    joystick.addEventListener("pointercancel", (event) => this.endJoystick(event));
-    joystick.addEventListener("lostpointercapture", () => this.resetJoystick());
+    joystickCapture.addEventListener("pointerdown", (event) => this.startJoystick(event));
+    joystickCapture.addEventListener("pointermove", (event) => this.moveJoystick(event));
+    joystickCapture.addEventListener("pointerup", (event) => this.endJoystick(event));
+    joystickCapture.addEventListener("pointercancel", (event) => this.endJoystick(event));
+    joystickCapture.addEventListener("lostpointercapture", () => this.resetJoystick());
   }
 
   private createActionButton(label: string, shortcut: string, action: () => void): HTMLButtonElement {
@@ -118,15 +132,29 @@ export class MobileOwnerControls {
   private startJoystick(event: PointerEvent): void {
     if (this.joystickPointerId !== null) return;
     event.preventDefault();
+
     this.joystickPointerId = event.pointerId;
-    this.joystickZone?.setPointerCapture(event.pointerId);
-    this.updateJoystick(event);
+    this.joystickOrigin = { x: event.clientX, y: event.clientY };
+    this.joystickCapture?.setPointerCapture(event.pointerId);
+    this.positionJoystickBase(event.clientX, event.clientY);
+    this.joystickBase?.classList.add("is-active");
+    this.buffer.clearMovement();
   }
 
   private moveJoystick(event: PointerEvent): void {
-    if (event.pointerId !== this.joystickPointerId) return;
+    if (event.pointerId !== this.joystickPointerId || !this.joystickOrigin) return;
     event.preventDefault();
-    this.updateJoystick(event);
+
+    const base = this.joystickBase;
+    const knob = this.joystickKnob;
+    if (!base || !knob) return;
+
+    const baseRect = base.getBoundingClientRect();
+    const radius = Math.max(1, Math.min(baseRect.width, baseRect.height) * 0.36);
+    const vector = joystickVector(event.clientX - this.joystickOrigin.x, event.clientY - this.joystickOrigin.y, radius, 0.08);
+
+    this.buffer.setMovement(vector.x, vector.y);
+    knob.style.transform = `translate(${(vector.x * radius).toFixed(1)}px, ${(vector.y * radius).toFixed(1)}px)`;
   }
 
   private endJoystick(event: PointerEvent): void {
@@ -135,24 +163,19 @@ export class MobileOwnerControls {
     this.resetJoystick();
   }
 
-  private updateJoystick(event: PointerEvent): void {
-    const zone = this.joystickZone;
-    const knob = this.joystickKnob;
-    if (!zone || !knob) return;
-
-    const rect = zone.getBoundingClientRect();
-    const centerX = rect.left + rect.width / 2;
-    const centerY = rect.top + rect.height / 2;
-    const radius = Math.max(1, Math.min(rect.width, rect.height) * 0.34);
-    const vector = joystickVector(event.clientX - centerX, event.clientY - centerY, radius);
-
-    this.buffer.setMovement(vector.x, vector.y);
-    knob.style.transform = `translate(${(vector.x * radius).toFixed(1)}px, ${(vector.y * radius).toFixed(1)}px)`;
+  private positionJoystickBase(clientX: number, clientY: number): void {
+    const base = this.joystickBase;
+    if (!base) return;
+    const rootRect = this.root.getBoundingClientRect();
+    base.style.left = `${(clientX - rootRect.left).toFixed(1)}px`;
+    base.style.top = `${(clientY - rootRect.top).toFixed(1)}px`;
   }
 
   private resetJoystick(): void {
     this.joystickPointerId = null;
+    this.joystickOrigin = null;
     this.buffer.clearMovement();
+    this.joystickBase?.classList.remove("is-active");
     if (this.joystickKnob) this.joystickKnob.style.transform = "translate(0px, 0px)";
   }
 
