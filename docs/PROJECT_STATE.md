@@ -160,33 +160,30 @@ P1 is the first real client toolchain, so the earlier dependency reproducibility
 - top-level packages remain exact-version pinned;
 - GitHub Actions use current Node24-based `actions/checkout@v6` and `actions/setup-node@v6`.
 
-## Current deployment blocker — configuration, not application
+## Cloudflare build migration — Owner change applied, fresh preview pending
 
-Cloudflare non-production preview currently fails before serving P1 because the Worker project still has the P0 Workers Builds configuration:
+Earlier P1 preview attempts failed under the P0 Workers Builds configuration because Cloudflare ran `npx wrangler deploy` without first running the Vite build. Those failures predate the dashboard migration and are not evidence against the current application build.
 
-- Build command: blank;
-- Deploy command: `npx wrangler deploy`.
-
-The Cloudflare Vite plugin requires `vite build` to run first so it can create the generated output `wrangler.json` that points at the client build artifacts.
-
-The intended migration is a dashboard-only build setting:
+On 2026-09-05 the Owner changed the Cloudflare Workers Builds setting to:
 
 `Build command = npm run build --if-present`
 
-Keep the existing Deploy command:
+The existing Deploy command remains:
 
 `npx wrangler deploy`
 
-Why `--if-present`: it is backward-compatible with the already-deployed P0 main, which has no `build` script, while the P1 branch does have `build = vite build`.
+Non-production branch builds remain enabled.
 
-Do not add application-side build hacks to work around this Cloudflare setting.
+This is the intended migration seam: P1 runs `vite build` first, allowing the official Cloudflare Vite plugin to produce the generated output configuration/client assets before Wrangler deploys the preview. `--if-present` preserves compatibility with the already-deployed P0 main, which has no `build` script.
+
+This state update intentionally triggers the first fresh P1 branch build under the migrated Cloudflare configuration. Do not interpret earlier Cloudflare FAILs as current until this post-migration build completes.
 
 ## P1 closure contract
 
 P1 is not closed and PR #3 must not merge until:
 
 1. locked CI remains green — **PROVEN**;
-2. Cloudflare non-production preview serves the actual Vite/Phaser P1 client — **OPEN, dashboard build command needed**;
+2. Cloudflare non-production preview serves the actual Vite/Phaser P1 client — **OPEN, fresh post-migration preview pending**;
 3. Owner can enter the preview and move around the authored world — **OPEN**;
 4. authored blockers visibly constrain movement — **OPEN Owner runtime evidence**;
 5. Owner can pick up/drop at least one object and see semantic events change — **OPEN**;
