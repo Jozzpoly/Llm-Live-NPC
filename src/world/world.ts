@@ -20,6 +20,7 @@ import type {
 const DEFAULT_STEP_SECONDS = 1 / 30;
 const INTERACTION_RANGE = 54;
 const EVENT_LIMIT = 128;
+const FACING_EPSILON = 1e-6;
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
@@ -94,6 +95,11 @@ function isActor(entity: WorldEntity | undefined): entity is ActorEntity {
   return entity?.kind === "player" || entity?.kind === "npc";
 }
 
+function hasUnitFacing(actor: ActorEntity): boolean {
+  if (!Number.isFinite(actor.facing.x) || !Number.isFinite(actor.facing.y)) return false;
+  return Math.abs(Math.hypot(actor.facing.x, actor.facing.y) - 1) <= FACING_EPSILON;
+}
+
 export class World {
   readonly width: number;
   readonly height: number;
@@ -127,6 +133,9 @@ export class World {
 
     for (const entity of structuredClone(specimen.entities)) {
       if (this.entities.has(entity.id)) throw new Error(`Duplicate entity id: ${entity.id}`);
+      if (isActor(entity) && !hasUnitFacing(entity)) {
+        throw new Error(`Actor ${entity.id} requires a finite unit facing vector.`);
+      }
       this.entities.set(entity.id, entity);
     }
 
@@ -316,10 +325,16 @@ export class World {
     const magnitude = Math.hypot(input.moveX, input.moveY);
     if (magnitude <= 0) return;
 
-    const normalizedX = input.moveX / Math.max(1, magnitude);
-    const normalizedY = input.moveY / Math.max(1, magnitude);
-    const dx = normalizedX * this.playerSpeed * seconds;
-    const dy = normalizedY * this.playerSpeed * seconds;
+    player.facing = {
+      x: input.moveX / magnitude,
+      y: input.moveY / magnitude
+    };
+
+    const movementScale = Math.max(1, magnitude);
+    const movementX = input.moveX / movementScale;
+    const movementY = input.moveY / movementScale;
+    const dx = movementX * this.playerSpeed * seconds;
+    const dy = movementY * this.playerSpeed * seconds;
 
     let x = clamp(player.position.x + dx, player.radius, this.width - player.radius);
     for (const blocker of this.blockers) {

@@ -18,7 +18,8 @@ function snapshot(position: { x: number; y: number }, tick: number): WorldSnapsh
         label: "Player",
         position: { ...position },
         radius: 10,
-        heldItemId: null
+        heldItemId: null,
+        facing: { x: 1, y: 0 }
       }
     ],
     blockers: [],
