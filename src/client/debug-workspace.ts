@@ -4,6 +4,7 @@ export interface DebugWorkspaceActions {
   toggleLabels(): void;
   toggleLosProbe(): void;
   togglePointerProbe(): void;
+  startNpcFetchLantern(): void;
 }
 
 type ValueNode = HTMLElement;
@@ -35,6 +36,7 @@ export class DebugWorkspace {
   private readonly labelsButton: HTMLButtonElement;
   private readonly losButton: HTMLButtonElement;
   private readonly pointerButton: HTMLButtonElement;
+  private readonly npcTaskButton: HTMLButtonElement;
   private readonly zoomValue: ValueNode;
   private readonly labelsValue: ValueNode;
   private readonly overlayValue: ValueNode;
@@ -48,6 +50,9 @@ export class DebugWorkspace {
   private readonly losValue: ValueNode;
   private readonly distanceValue: ValueNode;
   private readonly entitiesValue: ValueNode;
+  private readonly executorStatusValue: ValueNode;
+  private readonly executorTargetValue: ValueNode;
+  private readonly executorFailureValue: ValueNode;
   private readonly actionKindValue: ValueNode;
   private readonly actionTargetValue: ValueNode;
   private readonly actionOutcomeValue: ValueNode;
@@ -139,18 +144,35 @@ export class DebugWorkspace {
       element("p", "debug-note", "Attempt outcome only — rejected actions are intentionally not semantic World Events.")
     );
 
-    const npcSection = this.section("NPC-001 LOS probe");
+    const npcSection = this.section("NPC-001 executor");
+    const npcControlRow = element("div", "debug-control-row");
+    this.npcTaskButton = this.toggleButton("Fetch lantern", null, () => this.actions.startNpcFetchLantern());
+    npcControlRow.append(this.npcTaskButton);
     const npcMetrics = element("div", "debug-metrics");
-    const los = metricRow("line of sight");
-    const distance = metricRow("distance");
+    const executorStatus = metricRow("task status");
+    const executorTarget = metricRow("task target");
+    const executorFailure = metricRow("failure");
+    const los = metricRow("raw LOS to player");
+    const distance = metricRow("distance to player");
     const entities = metricRow("entities");
+    this.executorStatusValue = executorStatus.value;
+    this.executorTargetValue = executorTarget.value;
+    this.executorFailureValue = executorFailure.value;
     this.losValue = los.value;
     this.distanceValue = distance.value;
     this.entitiesValue = entities.value;
-    npcMetrics.append(los.row, distance.row, entities.row);
+    npcMetrics.append(
+      executorStatus.row,
+      executorTarget.row,
+      executorFailure.row,
+      los.row,
+      distance.row,
+      entities.row
+    );
     npcSection.append(
+      npcControlRow,
       npcMetrics,
-      element("p", "debug-note", "Raw geometric LOS only — not the future NPC sight model.")
+      element("p", "debug-note", "B2 bounded apparatus: deterministic approach + explicit World interaction. No LLM, pathfinding or sight model.")
     );
 
     const eventsSection = this.section("Recent world events");
@@ -191,6 +213,14 @@ export class DebugWorkspace {
     this.actionOutcomeValue.textContent = action ? `${action.status} · ${action.code}` : "—";
     this.actionOutcomeValue.classList.toggle("pass", action?.status === "succeeded");
     this.actionOutcomeValue.classList.toggle("blocked", action?.status === "rejected");
+
+    this.executorStatusValue.textContent = state.executorStatus;
+    this.executorTargetValue.textContent = state.executorTargetId ?? "—";
+    this.executorFailureValue.textContent = state.executorFailureCode ?? "—";
+    this.executorStatusValue.classList.toggle("pass", state.executorStatus === "succeeded");
+    this.executorStatusValue.classList.toggle("blocked", state.executorStatus === "failed");
+    this.npcTaskButton.setAttribute("aria-pressed", String(state.executorStatus === "running"));
+    this.npcTaskButton.classList.toggle("is-active", state.executorStatus === "running");
 
     this.losValue.textContent = state.npcLineOfSight ? "VISIBLE" : "OCCLUDED";
     this.losValue.classList.toggle("pass", state.npcLineOfSight);
