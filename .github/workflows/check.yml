@@ -20,8 +20,16 @@ jobs:
           cache: npm
           cache-dependency-path: package.json
 
-      - name: Install pinned bootstrap dependencies
+      - name: Install P1 dependencies and generate lockfile
         run: npm install --ignore-scripts --no-audit --no-fund
 
-      - name: Typecheck and Wrangler dry run
+      - name: Typecheck, domain tests, and Vite build
         run: npm run check
+
+      - name: Export generated lockfile
+        uses: actions/upload-artifact@v4
+        with:
+          name: p1-package-lock
+          path: package-lock.json
+          if-no-files-found: error
+          retention-days: 1
