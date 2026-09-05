@@ -8,7 +8,7 @@ Core research question:
 
 ## Current state
 
-P0 infrastructure is live on Cloudflare. The first production deployment and first real Workers AI call both succeeded at the infrastructure level. The initial 96-token model probe exhausted its completion budget on reasoning before producing visible content, so P0 is now being hardened rather than prematurely expanded into the game stack.
+P0 Cloudflare infrastructure is proven live. Two bounded `@cf/zai-org/glm-4.7-flash` probes reached Workers AI through AI Gateway but exhausted their completion budgets on reasoning before producing visible content. The active work is now a small **model transport qualification**, not further GLM tuning and not game-stack implementation.
 
 Canonical compact state and evidence: [`docs/PROJECT_STATE.md`](docs/PROJECT_STATE.md).
 
@@ -19,28 +19,32 @@ Canonical compact state and evidence: [`docs/PROJECT_STATE.md`](docs/PROJECT_STA
 - Static assets are served by Workers Static Assets.
 - Workers AI is available through the `AI` binding.
 - AI requests are routed through Cloudflare AI Gateway using the `default` gateway for observability.
-- The AI endpoint is an infrastructure probe, not the NPC cognition architecture.
+- AI probe endpoints are infrastructure evidence, not the NPC cognition architecture.
 - Game/render/physics architecture remains intentionally uncommitted until P0 closes.
 
 ## Endpoints
 
-- `/` — bootstrap laboratory page
+- `/` — bootstrap / qualification laboratory page
 - `/api/health` — Worker/AI-binding readiness
-- `/api/ai/smoke` — bounded Workers AI smoke request
+- `/api/ai/qualify` — fixed-input two-model transport qualification
+- `/api/ai/smoke` — retired GLM smoke route (`410 Gone` on the qualification branch)
 
 Production laboratory:
 
 `https://llm-live-npc.jozzpoly.workers.dev`
 
-## Current model probe
+## Active P0 candidates
 
-`@cf/zai-org/glm-4.7-flash`
+The qualification branch compares:
 
-This is a replaceable bootstrap choice, not a canonical project model.
+- `@cf/ibm-granite/granite-4.0-h-micro`
+- `@cf/meta/llama-3.2-3b-instruct`
+
+These are **transport candidates**, not a final NPC-model selection.
 
 ## Toolchain
 
-The hardening branch pins:
+Current top-level versions:
 
 - Node `22`;
 - Wrangler `4.129.0`;
@@ -63,4 +67,4 @@ For the current zero-build bootstrap:
 - Production branch: `main`
 - non-production branch builds: enabled
 
-Cloudflare Workers Builds uses the Wrangler version declared in `package.json` when present. A generated dependency lockfile remains desirable before the project grows beyond this bootstrap.
+Cloudflare Workers Builds uses the Wrangler version declared in `package.json` when present. A committed dependency lockfile remains desirable before the project grows beyond this bootstrap.
