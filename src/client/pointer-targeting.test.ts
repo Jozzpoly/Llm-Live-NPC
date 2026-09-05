@@ -72,7 +72,8 @@ describe("resolveDirectInteractionTarget", () => {
       label: "Jozz",
       position: { x: 100, y: 100 },
       radius: 16,
-      heldItemId: null
+      heldItemId: null,
+      facing: { x: 1, y: 0 }
     },
     {
       id: "npc.001",
@@ -80,7 +81,8 @@ describe("resolveDirectInteractionTarget", () => {
       label: "NPC",
       position: { x: 200, y: 100 },
       radius: 16,
-      heldItemId: null
+      heldItemId: null,
+      facing: { x: -1, y: 0 }
     },
     {
       id: "item.mug",
