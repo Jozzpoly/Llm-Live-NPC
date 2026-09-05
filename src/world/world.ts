@@ -243,6 +243,7 @@ export class World {
       const nearestItem = [...this.entities.values()]
         .filter((entity): entity is ItemEntity => entity.kind === "item" && entity.heldBy === null)
         .filter((item) => distanceSquared(player.position, item.position) <= rangeSq)
+        .filter((item) => this.hasLineOfSight(player.position, item.position))
         .sort(
           (a, b) =>
             distanceSquared(player.position, a.position) - distanceSquared(player.position, b.position) ||
@@ -266,6 +267,7 @@ export class World {
     const nearestNpc = [...this.entities.values()]
       .filter((entity) => entity.kind === "npc")
       .filter((npc) => distanceSquared(player.position, npc.position) <= rangeSq)
+      .filter((npc) => this.hasLineOfSight(player.position, npc.position))
       .sort(
         (a, b) =>
           distanceSquared(player.position, a.position) - distanceSquared(player.position, b.position) ||
@@ -285,7 +287,7 @@ export class World {
     this.emit({
       type: "interaction.failed",
       actorId: player.id,
-      message: `${player.label} found nothing interactable in range.`
+      message: `${player.label} found nothing interactable in range and line of sight.`
     });
   }
 
