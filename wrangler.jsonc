@@ -3,9 +3,24 @@
   "name": "llm-live-npc",
   "main": "./worker/index.ts",
   "compatibility_date": "2026-09-05",
+  "workers_dev": true,
+  "preview_urls": true,
+  "observability": {
+    "enabled": true
+  },
   "ai": {
     "binding": "AI"
   },
+  "ratelimits": [
+    {
+      "name": "AI_SMOKE_LIMITER",
+      "namespace_id": "731947",
+      "simple": {
+        "limit": 6,
+        "period": 60
+      }
+    }
+  ],
   "assets": {
     "directory": "./public",
     "not_found_handling": "single-page-application",
