@@ -101,6 +101,12 @@ function hasUnitFacing(actor: ActorEntity): boolean {
   return Math.abs(Math.hypot(actor.facing.x, actor.facing.y) - 1) <= FACING_EPSILON;
 }
 
+function assertFiniteMovement(input: WorldInput, label: string): void {
+  if (!Number.isFinite(input.moveX) || !Number.isFinite(input.moveY)) {
+    throw new Error(`${label} requires a finite movement vector.`);
+  }
+}
+
 export class World {
   readonly width: number;
   readonly height: number;
@@ -176,6 +182,8 @@ export class World {
     }
 
     const player = this.player();
+    assertFiniteMovement(input, "Player control");
+
     const seenActorIds = new Set<EntityId>();
     const validatedControls: Array<{ actor: ActorEntity; control: ActorControlInput }> = [];
     for (const control of [...actorControls].sort((a, b) => a.actorId.localeCompare(b.actorId))) {
@@ -189,6 +197,7 @@ export class World {
 
       const actor = this.entities.get(control.actorId);
       if (!isActor(actor)) throw new Error(`Actor control target not found: ${control.actorId}`);
+      assertFiniteMovement(control, `Actor control ${control.actorId}`);
       validatedControls.push({ actor, control });
     }
 
