@@ -26,13 +26,25 @@ export interface E1AgentEnv {
   AI_PROBE_LIMITER: RateLimitBinding;
 }
 
-interface ToolCallShape {
+interface ToolFunctionShape {
   name?: unknown;
   arguments?: unknown;
 }
 
+interface ToolCallShape {
+  name?: unknown;
+  arguments?: unknown;
+  type?: unknown;
+  function?: ToolFunctionShape;
+}
+
 interface CompletionShape {
   tool_calls?: ToolCallShape[];
+  choices?: Array<{
+    message?: {
+      tool_calls?: ToolCallShape[];
+    };
+  }>;
   usage?: unknown;
 }
 
@@ -260,48 +272,73 @@ function parseArguments(value: unknown): Record<string, unknown> | null {
   }
 }
 
-function normalizeDecision(result: unknown, allowedFetchTargets: readonly string[]): E1Decision | null {
+function completionToolCalls(result: unknown): ToolCallShape[] | null {
   if (!result || typeof result !== "object") return null;
   const completion = result as CompletionShape;
-  if (!completion.tool_calls || completion.tool_calls.length !== 1) return null;
-  const toolCall = completion.tool_calls[0];
-  if (!toolCall || typeof toolCall.name !== "string") return null;
+  if (Array.isArray(completion.tool_calls)) return completion.tool_calls;
+  const nested = completion.choices?.[0]?.message?.tool_calls;
+  return Array.isArray(nested) ? nested : null;
+}
 
-  if (toolCall.name === "wait") return { kind: "wait" };
-  if (toolCall.name !== "fetch") return null;
+function toolIdentity(toolCall: ToolCallShape): { name: string; arguments: unknown } | null {
+  if (toolCall.function && typeof toolCall.function.name === "string") {
+    return { name: toolCall.function.name, arguments: toolCall.function.arguments };
+  }
+  if (typeof toolCall.name === "string") {
+    return { name: toolCall.name, arguments: toolCall.arguments };
+  }
+  return null;
+}
 
-  const args = parseArguments(toolCall.arguments);
+function normalizeDecision(result: unknown, allowedFetchTargets: readonly string[]): E1Decision | null {
+  const toolCalls = completionToolCalls(result);
+  if (!toolCalls || toolCalls.length !== 1) return null;
+  const identity = toolIdentity(toolCalls[0]);
+  if (!identity) return null;
+
+  if (identity.name === "wait") return { kind: "wait" };
+  if (identity.name !== "fetch") return null;
+
+  const args = parseArguments(identity.arguments);
   const targetId = args?.targetId;
   if (typeof targetId !== "string" || !allowedFetchTargets.includes(targetId)) return null;
   return { kind: "fetch", targetId };
 }
 
+function functionTool(name: string, description: string, properties: Record<string, unknown>, required: string[]) {
+  return {
+    type: "function",
+    function: {
+      name,
+      description,
+      parameters: {
+        type: "object",
+        properties,
+        required
+      }
+    }
+  };
+}
+
 function buildTools(fetchableItemIds: readonly string[]) {
   const tools: Array<Record<string, unknown>> = [
-    {
-      name: "wait",
-      description: "Choose no physical task for this cognition cycle.",
-      parameters: { type: "object", properties: {}, additionalProperties: false }
-    }
+    functionTool("wait", "Choose no physical task for this cognition cycle.", {}, [])
   ];
 
   if (fetchableItemIds.length > 0) {
-    tools.push({
-      name: "fetch",
-      description: "Fetch one currently visible, free item using the world's normal embodied executor.",
-      parameters: {
-        type: "object",
-        properties: {
+    tools.push(
+      functionTool(
+        "fetch",
+        "Fetch one currently visible, free item using the world's normal embodied executor.",
+        {
           targetId: {
             type: "string",
-            enum: [...fetchableItemIds],
-            description: "ID of a free item present in the current bounded perception."
+            description: `ID of a free item present in the current bounded perception. Legal IDs: ${fetchableItemIds.join(", ")}.`
           }
         },
-        required: ["targetId"],
-        additionalProperties: false
-      }
-    });
+        ["targetId"]
+      )
+    );
   }
 
   return tools;
