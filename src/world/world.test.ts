@@ -65,4 +65,22 @@ describe("P1 World", () => {
     expect(world.hasLineOfSight({ x: 900, y: 200 }, { x: 1100, y: 200 })).toBe(false);
     expect(world.hasLineOfSight({ x: 900, y: 300 }, { x: 1100, y: 300 })).toBe(true);
   });
+
+  it("does not allow a direct pickup through an occluding wall", () => {
+    const specimen = createP1Specimen();
+    const player = specimen.entities.find((entity) => entity.id === "player.jozz");
+    const hammer = specimen.entities.find((entity) => entity.id === "item.hammer");
+    if (!player || !hammer) throw new Error("P1 specimen is missing player or hammer.");
+
+    player.position = { x: 942, y: 200 };
+    hammer.position = { x: 990, y: 200 };
+
+    const world = new World(specimen);
+    expect(world.hasLineOfSight(player.position, hammer.position)).toBe(false);
+
+    world.step({ moveX: 0, moveY: 0, interactPressed: true });
+
+    expect(playerSnapshot(world).heldItemId).toBeNull();
+    expect(world.recentEvents(10).at(-1)?.type).toBe("interaction.failed");
+  });
 });
