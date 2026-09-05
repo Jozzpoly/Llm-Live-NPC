@@ -5,57 +5,23 @@ on:
   push:
     branches:
       - main
-      - "p1/**"
-
-permissions:
-  contents: write
 
 jobs:
   validate:
-    if: github.event_name == 'pull_request' || github.ref_name == 'main'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Use Node 22
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: package.json
+          cache-dependency-path: package-lock.json
 
-      - name: Install P1 dependencies and generate lockfile
-        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
 
       - name: Typecheck, domain tests, and Vite build
         run: npm run check
-
-  generate-lockfile:
-    if: github.event_name == 'push' && startsWith(github.ref_name, 'p1/')
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout branch
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.ref_name }}
-
-      - name: Use Node 22
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      - name: Generate npm lockfile
-        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
-
-      - name: Commit generated lockfile
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add package-lock.json
-          if git diff --cached --quiet; then
-            echo "Lockfile already up to date."
-            exit 0
-          fi
-          git commit -m "Lock P1 dependency graph"
-          git push origin HEAD:${GITHUB_REF_NAME}
