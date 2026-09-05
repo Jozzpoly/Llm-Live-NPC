@@ -23,7 +23,8 @@ const playerControls = new PlayerControlBuffer();
 const workspace = new DebugWorkspace(debugRoot, appRoot, {
   toggleLabels: () => scene.toggleLabels(),
   toggleLosProbe: () => scene.toggleDebugOverlay(),
-  togglePointerProbe: () => scene.togglePointerProbe()
+  togglePointerProbe: () => scene.togglePointerProbe(),
+  startNpcFetchLantern: () => scene.startNpcFetchLanternTask()
 });
 if (mobileOwnerMode) workspace.setCollapsed(true);
 
