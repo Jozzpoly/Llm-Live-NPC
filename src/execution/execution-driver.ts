@@ -5,7 +5,6 @@ import { DeterministicExecutor } from "./deterministic-executor";
 export interface ExecutionFrameInput {
   playerControl: WorldInput;
   playerActions?: readonly WorldActionRequest[];
-  seconds?: number;
 }
 
 export interface ExecutionFrameResult {
@@ -20,11 +19,11 @@ function assertFinitePlayerControl(input: WorldInput): void {
 }
 
 /**
- * One canonical execution frame shared by the browser runtime and headless tests.
- * Ordering is intentional: validate external player control, executor reads the
- * pre-step snapshot, movement resolves for player + controlled actors, queued
- * player atomic actions run, then the executor's explicit atomic action runs
- * and its result is fed back to it.
+ * One canonical fixed-step execution frame shared by the browser runtime and
+ * headless tests. Ordering is intentional: validate external player control,
+ * executor reads the pre-step snapshot, movement resolves for player +
+ * controlled actors, queued player atomic actions run, then the executor's
+ * explicit atomic action runs and its result is fed back to it.
  */
 export class ExecutionDriver {
   constructor(
@@ -41,8 +40,7 @@ export class ExecutionDriver {
 
     this.world.stepWithActorControls(
       input.playerControl,
-      executorCommand.control ? [executorCommand.control] : [],
-      input.seconds
+      executorCommand.control ? [executorCommand.control] : []
     );
 
     const playerActionResults = (input.playerActions ?? []).map((action) =>
