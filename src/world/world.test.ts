@@ -133,4 +133,58 @@ describe("P1 World", () => {
       code: "not_holding_item"
     });
   });
+
+  it("exposes the yard table as an authored semantic placement site", () => {
+    const world = new World(createP1Specimen());
+
+    expect(world.snapshot().placementSites).toEqual([
+      {
+        id: "yard.table.top",
+        label: "Yard work table top",
+        relation: "on",
+        bounds: { x: 690, y: 510, width: 120, height: 44 }
+      }
+    ]);
+
+    expect(world.placementSitesAt({ x: 750, y: 532 })).toEqual([
+      {
+        id: "yard.table.top",
+        label: "Yard work table top",
+        relation: "on",
+        bounds: { x: 690, y: 510, width: 120, height: 44 }
+      }
+    ]);
+    expect(world.placementSitesAt({ x: 650, y: 532 })).toEqual([]);
+  });
+
+  it("returns placement-site query results as isolated copies", () => {
+    const world = new World(createP1Specimen());
+    const first = world.placementSitesAt({ x: 750, y: 532 });
+    if (!first[0]) throw new Error("Expected authored table placement site.");
+
+    first[0].bounds.x = -999;
+    first[0].label = "mutated outside world";
+
+    expect(world.placementSitesAt({ x: 750, y: 532 })[0]).toMatchObject({
+      id: "yard.table.top",
+      label: "Yard work table top",
+      bounds: { x: 690, y: 510, width: 120, height: 44 }
+    });
+  });
+
+  it("returns overlapping authored placement sites deterministically without choosing a winner", () => {
+    const specimen = createP1Specimen();
+    specimen.placementSites.push({
+      id: "aaa.experimental-overlap",
+      label: "Experimental overlap",
+      relation: "on",
+      bounds: { x: 700, y: 520, width: 100, height: 24 }
+    });
+
+    const world = new World(specimen);
+    expect(world.placementSitesAt({ x: 750, y: 532 }).map((site) => site.id)).toEqual([
+      "aaa.experimental-overlap",
+      "yard.table.top"
+    ]);
+  });
 });
