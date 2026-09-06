@@ -42,11 +42,18 @@ export class DeterministicExecutor {
     }
   }
 
-  start(task: ExecutorTask): void {
+  /**
+   * Starts a new durative task only when no task is currently running.
+   * Returning false is a causal refusal: callers must not silently replace an
+   * in-flight task, because doing so would destroy execution provenance.
+   */
+  start(task: ExecutorTask): boolean {
+    if (this.statusValue === "running") return false;
     this.taskValue = { ...task };
     this.statusValue = "running";
     this.failureCodeValue = null;
     this.stepsUsedValue = 0;
+    return true;
   }
 
   state(): ExecutorState {
