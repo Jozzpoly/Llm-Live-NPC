@@ -5,6 +5,7 @@ export const E1_OBSERVER_ID = "npc.001";
 export const E1_PERCEPTION_RANGE = 220;
 export const E1_DECISION_BUDGET = 3;
 export const E1_DECISION_COOLDOWN_MS = 750;
+export const E1_OBSERVED_CHANGE_LIMIT = 32;
 
 export interface E1PerceivedEntity {
   id: EntityId;
@@ -77,6 +78,8 @@ export interface E1CycleRequest {
   trigger: "perception_changed" | "experience_changed" | "perception_and_experience_changed";
   perception: E1Perception;
   observedChanges: E1ObservedChange[];
+  /** Number of older bounded temporal changes omitted before this request. */
+  observedChangesDropped: number;
   previousExperience: E1Experience | null;
 }
 
@@ -100,6 +103,10 @@ function perceivedItems(perception: E1Perception): Map<EntityId, E1PerceivedEnti
       .filter((entity) => entity.kind === "item")
       .map((entity) => [entity.id, entity])
   );
+}
+
+function observedChangeSignature(change: E1ObservedChange): string {
+  return JSON.stringify(change);
 }
 
 export function projectE1Perception(
@@ -167,10 +174,10 @@ export function projectE1Perception(
 }
 
 /**
- * E1 wakes only when the tiny legal-intention surface can materially change:
- * observer state or the visible free-item allow-list. Held-item visibility churn
- * is still tracked in the silent perception baseline so a later drop can retain
- * the real holder transition without spending a cognition cycle.
+ * E1's sampled wake surface remains intentionally narrow: observer state plus
+ * visible free-item IDs. R6b supplements this fingerprint with explicit local
+ * semantic occurrences at the gate boundary rather than adding all direction
+ * or motion churn to this fingerprint.
  */
 export function e1WakeFingerprint(perception: E1Perception): string {
   return JSON.stringify({
@@ -316,13 +323,20 @@ export class E1CognitionGate {
     perception: E1Perception,
     experience: E1Experience | null,
     executorRunning: boolean,
-    nowMs: number
+    nowMs: number,
+    supplementalObservedChanges: readonly E1ObservedChange[] = [],
+    supplementalDroppedCount = 0
   ): E1CycleRequest | null {
     if (!this.armedValue) return null;
+    if (!Number.isInteger(supplementalDroppedCount) || supplementalDroppedCount < 0) {
+      throw new Error(`E1 dropped observed-change count must be a non-negative integer: ${supplementalDroppedCount}`);
+    }
 
     const wakeFingerprint = e1WakeFingerprint(perception);
     const experienceFingerprint = e1ExperienceFingerprint(experience);
-    const perceptionChanged = wakeFingerprint !== this.lastWakeFingerprint;
+    const sampledPerceptionChanged = wakeFingerprint !== this.lastWakeFingerprint;
+    const semanticPerceptionChanged = supplementalObservedChanges.length > 0 || supplementalDroppedCount > 0;
+    const perceptionChanged = sampledPerceptionChanged || semanticPerceptionChanged;
     const experienceChanged = experienceFingerprint !== this.lastExperienceFingerprint;
 
     if (!perceptionChanged && !experienceChanged) {
@@ -335,7 +349,16 @@ export class E1CognitionGate {
     if (!Number.isFinite(nowMs) || nowMs - this.lastRequestAt < this.cooldownMs) return null;
 
     const previousPerception = this.lastPerception ?? perception;
-    const observedChanges = deriveE1ObservedChanges(previousPerception, perception);
+    const sampledChanges = deriveE1ObservedChanges(previousPerception, perception);
+    const supplementalSignatures = new Set(supplementalObservedChanges.map(observedChangeSignature));
+    const combinedChanges = [
+      ...sampledChanges.filter((change) => !supplementalSignatures.has(observedChangeSignature(change))),
+      ...supplementalObservedChanges.map((change) => structuredClone(change))
+    ];
+    const overflow = Math.max(0, combinedChanges.length - E1_OBSERVED_CHANGE_LIMIT);
+    const observedChanges = combinedChanges.slice(overflow);
+    const observedChangesDropped = supplementalDroppedCount + overflow;
+
     const cycleId = this.nextCycleId++;
     this.inFlightValue = true;
     this.pendingCycleIdValue = cycleId;
@@ -357,6 +380,7 @@ export class E1CognitionGate {
       trigger,
       perception: structuredClone(perception),
       observedChanges,
+      observedChangesDropped,
       previousExperience: experience ? { ...experience } : null
     };
   }
