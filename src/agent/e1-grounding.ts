@@ -1,3 +1,4 @@
+import { resolveLocationZone } from "../world/location-membership";
 import type { EntityId, Vec2, WorldEntity, WorldSnapshot } from "../world/types";
 
 export const E1_OBSERVER_ID = "npc.001";
@@ -86,18 +87,6 @@ export interface E1GateState {
   pendingCycleId: number | null;
 }
 
-function containsPoint(
-  bounds: { x: number; y: number; width: number; height: number },
-  point: Vec2
-): boolean {
-  return (
-    point.x >= bounds.x &&
-    point.x <= bounds.x + bounds.width &&
-    point.y >= bounds.y &&
-    point.y <= bounds.y + bounds.height
-  );
-}
-
 function rounded(value: number, digits: number): number {
   const factor = 10 ** digits;
   return Math.round(value * factor) / factor;
@@ -125,7 +114,7 @@ export function projectE1Perception(
     throw new Error(`E1 perception range must be positive and finite: ${range}`);
   }
 
-  const location = snapshot.locations.find((entry) => containsPoint(entry.bounds, observer.position));
+  const location = resolveLocationZone(snapshot.locations, observer.position);
   const visibleEntities = snapshot.entities
     .filter((entity) => entity.id !== observer.id)
     .map((entity) => {
