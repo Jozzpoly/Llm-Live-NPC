@@ -1,8 +1,14 @@
 import * as Phaser from "phaser";
 import "./style.css";
 import "./mobile-style.css";
+import "./build-fingerprint.css";
 import { recentRuntimeActionAttempts } from "../execution/action-attempt-history";
 import { ActionAttemptDebugPanel } from "./action-attempt-debug-panel";
+import {
+  formatBuildFingerprint,
+  formatBuildFingerprintTitle,
+  requestRuntimeBuildFingerprint
+} from "./build-fingerprint";
 import { DebugWorkspace } from "./debug-workspace";
 import { E1DebugPanel } from "./e1-debug-panel";
 import type { E1HarnessDebugState } from "./e1-agent-harness";
@@ -41,6 +47,28 @@ const workspace = new DebugWorkspace(debugRoot, appRoot, {
   startNpcFetchLantern: () => scene.startNpcFetchLanternTask()
 });
 if (mobileOwnerMode) workspace.setCollapsed(true);
+
+const workspaceTitleBlock = debugRoot.querySelector<HTMLElement>(".workspace-title-block");
+if (!workspaceTitleBlock) throw new Error("Debug workspace is missing its title block.");
+const buildFingerprintNode = document.createElement("div");
+buildFingerprintNode.className = "workspace-build-fingerprint";
+buildFingerprintNode.textContent = "build resolving…";
+buildFingerprintNode.title = "Runtime build provenance is resolving from /api/health.";
+workspaceTitleBlock.append(buildFingerprintNode);
+void requestRuntimeBuildFingerprint()
+  .then((fingerprint) => {
+    if (!fingerprint) {
+      buildFingerprintNode.textContent = "build unavailable";
+      buildFingerprintNode.title = "Runtime build provenance unavailable from /api/health.";
+      return;
+    }
+    buildFingerprintNode.textContent = formatBuildFingerprint(fingerprint);
+    buildFingerprintNode.title = formatBuildFingerprintTitle(fingerprint);
+  })
+  .catch(() => {
+    buildFingerprintNode.textContent = "build unavailable";
+    buildFingerprintNode.title = "Runtime build provenance request failed.";
+  });
 
 scene = new WorldScene((state) => {
   workspace.update(state);

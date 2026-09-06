@@ -1,3 +1,4 @@
+import { BUILD_PROVENANCE } from "../src/build-provenance";
 import { handleE1AgentDecision } from "./e1-agent";
 
 const GATEWAY_ID = "default";
@@ -24,9 +25,16 @@ interface RateLimitBinding {
   limit(options: { key: string }): Promise<{ success: boolean }>;
 }
 
+interface WorkerVersionMetadataBinding {
+  id: string;
+  tag?: string;
+  timestamp: string;
+}
+
 interface Env {
   AI: AiBinding;
   AI_PROBE_LIMITER: RateLimitBinding;
+  CF_VERSION_METADATA?: WorkerVersionMetadataBinding;
 }
 
 interface UsageShape {
@@ -163,6 +171,13 @@ export default {
         aiBinding: Boolean(env.AI),
         gateway: GATEWAY_ID,
         stage: LIVE_STAGE,
+        build: {
+          commitSha: BUILD_PROVENANCE.commitSha,
+          branch: BUILD_PROVENANCE.branch,
+          workerVersionId: env.CF_VERSION_METADATA?.id ?? null,
+          workerVersionTag: env.CF_VERSION_METADATA?.tag ?? null,
+          workerVersionTimestamp: env.CF_VERSION_METADATA?.timestamp ?? null
+        },
         cognitionEndpoint: "/api/agent/e1/decide",
         transportQualificationEndpoint: "/api/ai/qualify",
         probeCandidates: PROBE_CANDIDATES
