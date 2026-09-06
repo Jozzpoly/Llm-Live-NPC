@@ -8,16 +8,28 @@
 
 * { box-sizing: border-box; }
 
-html, body { margin: 0; min-width: 320px; min-height: 100%; background: #0b0e12; }
-body { min-height: 100vh; }
+html, body {
+  margin: 0;
+  min-width: 320px;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  background: #0b0e12;
+  overflow: hidden;
+}
+body { height: 100dvh; }
 button, input { font: inherit; }
 
 #app {
-  min-height: 100vh;
+  width: 100%;
+  height: 100dvh;
+  min-height: 0;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 340px;
+  grid-template-rows: minmax(0, 1fr);
   gap: 16px;
   padding: 16px;
+  overflow: hidden;
   transition: grid-template-columns 140ms ease, gap 140ms ease;
 }
 
@@ -28,13 +40,19 @@ button, input { font: inherit; }
 
 .game-shell,
 .debug-shell {
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
   border: 1px solid #29313a;
   border-radius: 16px;
   background: #11161c;
   overflow: hidden;
 }
 
-.game-shell { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; min-height: calc(100vh - 32px); }
+.game-shell {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
 .game-shell header, .game-shell footer { padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .game-shell header { border-bottom: 1px solid #29313a; }
 .game-shell footer { border-top: 1px solid #29313a; color: #9ba8b4; font-size: 13px; flex-wrap: wrap; }
@@ -42,6 +60,7 @@ button, input { font: inherit; }
 .eyebrow { margin: 0 0 2px; color: #8e9ba8; font-size: 12px; text-transform: uppercase; letter-spacing: .08em; }
 h1 { margin: 0; font-size: 22px; }
 .stage-chip { padding: 6px 9px; border-radius: 999px; background: #202832; color: #b8c4cf; font-size: 12px; }
+.stage-chip.is-active { background: #173129; color: #a8e2ba; }
 
 #game {
   min-height: 0;
@@ -54,15 +73,13 @@ h1 { margin: 0; font-size: 22px; }
 #game canvas { display: block; max-width: 100%; max-height: 100%; }
 
 .debug-shell {
-  min-width: 0;
-  min-height: calc(100vh - 32px);
   display: flex;
   flex-direction: column;
-  overflow: hidden;
 }
 
 .workspace-header {
   min-height: 58px;
+  flex: 0 0 auto;
   padding: 10px 10px 10px 14px;
   display: flex;
   align-items: center;
@@ -92,8 +109,11 @@ h1 { margin: 0; font-size: 22px; }
 
 .debug-content {
   min-height: 0;
+  flex: 1 1 auto;
   padding: 12px 14px 18px;
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   scrollbar-gutter: stable;
 }
 
@@ -138,6 +158,14 @@ h1 { margin: 0; font-size: 22px; }
   background: #172a31;
   color: #d8eff7;
 }
+.debug-toggle:disabled,
+.debug-toggle:disabled:hover {
+  border-color: #29313a;
+  background: #0e1318;
+  color: #66727c;
+  cursor: not-allowed;
+  opacity: .72;
+}
 .debug-toggle-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .debug-shortcut {
   min-width: 20px;
@@ -174,10 +202,16 @@ h1 { margin: 0; font-size: 22px; }
 }
 
 @media (max-width: 980px) {
-  #app,
-  #app.debug-collapsed { grid-template-columns: 1fr; }
-  .game-shell { min-height: 70vh; }
-  .debug-shell { min-height: auto; }
+  #app {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(0, 2fr) minmax(0, 1fr);
+  }
+  #app.debug-collapsed {
+    grid-template-columns: 1fr;
+    grid-template-rows: minmax(0, 1fr) 50px;
+  }
+  .game-shell,
+  .debug-shell { height: 100%; min-height: 0; }
   .debug-shell.is-collapsed { min-height: 50px; }
   .debug-shell.is-collapsed .workspace-header { min-height: 48px; align-items: center; }
 }

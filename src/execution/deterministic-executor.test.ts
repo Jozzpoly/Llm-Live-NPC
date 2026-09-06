@@ -10,6 +10,13 @@ function actor(world: World, id: string) {
   return entity;
 }
 
+function nextExecutor(world: World, executor: DeterministicExecutor) {
+  return executor.next(
+    world.snapshot(),
+    (actorId, targetId) => world.validateInteraction(actorId, targetId)
+  );
+}
+
 function runFetchLantern(world: World, executor: DeterministicExecutor): void {
   const driver = new ExecutionDriver(world, executor);
   executor.start({ kind: "approach-and-interact", actorId: "npc.001", targetId: "item.lantern" });
@@ -93,7 +100,7 @@ describe("B2 deterministic executor", () => {
     const executor = new DeterministicExecutor();
     executor.start({ kind: "approach-and-interact", actorId: "npc.001", targetId: "missing.target" });
 
-    expect(executor.next(world.snapshot())).toEqual({});
+    expect(nextExecutor(world, executor)).toEqual({});
     expect(executor.state()).toEqual({
       status: "failed",
       task: { kind: "approach-and-interact", actorId: "npc.001", targetId: "missing.target" },
@@ -106,16 +113,18 @@ describe("B2 deterministic executor", () => {
   });
 
   it("fails invalid target geometry before producing movement or an atomic action", () => {
-    const specimen = createP1Specimen();
-    const lantern = specimen.entities.find((entity) => entity.id === "item.lantern");
-    if (!lantern) throw new Error("Missing lantern specimen");
+    const world = new World(createP1Specimen());
+    const snapshot = world.snapshot();
+    const lantern = snapshot.entities.find((entity) => entity.id === "item.lantern");
+    if (!lantern) throw new Error("Missing lantern snapshot");
     lantern.position.x = Number.NaN;
 
-    const world = new World(specimen);
     const executor = new DeterministicExecutor();
     executor.start({ kind: "approach-and-interact", actorId: "npc.001", targetId: "item.lantern" });
 
-    expect(executor.next(world.snapshot())).toEqual({});
+    expect(
+      executor.next(snapshot, (actorId, targetId) => world.validateInteraction(actorId, targetId))
+    ).toEqual({});
     expect(executor.state()).toMatchObject({
       status: "failed",
       failureCode: "invalid_target_geometry",
@@ -170,6 +179,42 @@ describe("B2 deterministic executor", () => {
     expect(executor.state()).toMatchObject({ status: "failed", failureCode: "target_unavailable" });
     expect(actor(world, "player.jozz").heldItemId).toBe("item.lantern");
     expect(actor(world, "npc.001").heldItemId).toBeNull();
+  });
+
+  it("stops pursuing a target as soon as another actor makes it semantically unavailable", () => {
+    const specimen = createP1Specimen();
+    const player = specimen.entities.find((entity) => entity.id === "player.jozz");
+    const npc = specimen.entities.find((entity) => entity.id === "npc.001");
+    const lantern = specimen.entities.find((entity) => entity.id === "item.lantern");
+    if (!player || player.kind !== "player" || !npc || npc.kind !== "npc" || !lantern || lantern.kind !== "item") {
+      throw new Error("Missing B2 dynamic-validity specimen entities");
+    }
+
+    player.position = { x: 1015, y: 670 };
+    npc.position = { x: 1120, y: 670 };
+    lantern.position = { x: 1060, y: 670 };
+
+    const world = new World(specimen);
+    const executor = new DeterministicExecutor();
+    const driver = new ExecutionDriver(world, executor);
+    executor.start({ kind: "approach-and-interact", actorId: npc.id, targetId: lantern.id });
+
+    const contestedFrame = driver.step({
+      playerControl: { moveX: 0, moveY: 0 },
+      playerActions: [{ action: "interact", actorId: player.id, targetId: lantern.id }]
+    });
+
+    expect(contestedFrame.playerActionResults[0]).toMatchObject({ status: "succeeded", code: "picked_up_item" });
+    expect(contestedFrame.executorActionResult).toBeNull();
+    expect(executor.state().status).toBe("running");
+
+    const positionAfterContestedFrame = actor(world, npc.id).position;
+    const nextFrame = driver.step({ playerControl: { moveX: 0, moveY: 0 } });
+
+    expect(nextFrame.executorActionResult).toBeNull();
+    expect(executor.state()).toMatchObject({ status: "failed", failureCode: "target_unavailable" });
+    expect(actor(world, npc.id).position).toEqual(positionAfterContestedFrame);
+    expect(actor(world, player.id).heldItemId).toBe(lantern.id);
   });
 
   it("keeps actor controls inside one canonical world tick and updates NPC facing through the same movement rule", () => {

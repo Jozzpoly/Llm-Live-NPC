@@ -51,6 +51,7 @@ export interface Blocker {
 export interface LocationZone {
   id: LocationId;
   label: string;
+  priority: number;
   bounds: Aabb;
 }
 
@@ -161,6 +162,32 @@ export type WorldActionResultCode =
   | "target_unavailable"
   | "already_holding_item"
   | "target_not_interactable";
+
+export type InteractionRejectionCode = Extract<
+  WorldActionResultCode,
+  | "actor_not_found"
+  | "target_not_found"
+  | "target_not_interactable"
+  | "already_holding_item"
+  | "target_unavailable"
+  | "target_out_of_range"
+  | "target_occluded"
+>;
+
+export type InteractionValidation =
+  | {
+      status: "accepted";
+      actorId: EntityId;
+      targetId: EntityId;
+      targetKind: "item" | "npc";
+    }
+  | {
+      status: "rejected";
+      actorId: EntityId;
+      targetId: EntityId;
+      code: InteractionRejectionCode;
+      message: string;
+    };
 
 export interface WorldActionResult {
   seq: number;

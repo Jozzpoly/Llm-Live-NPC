@@ -1,7 +1,6 @@
 import * as Phaser from "phaser";
 import {
   DeterministicExecutor,
-  type ExecutorState,
   type ExecutorStatus
 } from "../execution/deterministic-executor";
 import { ExecutionDriver } from "../execution/execution-driver";
@@ -17,10 +16,15 @@ import type {
   WorldEvent,
   WorldSnapshot
 } from "../world/types";
+import { E1AgentHarness, type E1HarnessDebugState } from "./e1-agent-harness";
 import {
   interpolationAlpha,
   resolveInterpolatedEntityPositions
 } from "./motion-interpolation";
+import {
+  startManualExecutorTask,
+  type ManualExecutorStartResult
+} from "./manual-executor-trigger";
 import {
   PRESENTATION_DEPTH,
   resolveBlockerVisual,
@@ -81,6 +85,7 @@ export class WorldScene extends Phaser.Scene {
   private readonly world = new World(createP1Specimen());
   private readonly npcExecutor = new DeterministicExecutor();
   private readonly executionDriver = new ExecutionDriver(this.world, this.npcExecutor);
+  private readonly e1Agent = new E1AgentHarness(this.world, this.npcExecutor);
   private readonly debugSink: DebugSink;
   private readonly playerControls: PlayerControlBuffer;
   private readonly entityViews = new Map<string, Phaser.GameObjects.Container>();
@@ -164,7 +169,7 @@ export class WorldScene extends Phaser.Scene {
     this.syncPresentation(true, 1);
   }
 
-  update(_time: number, delta: number): void {
+  update(time: number, delta: number): void {
     const boundedDelta = Math.min(delta, 100);
     this.accumulatorMs += boundedDelta;
     this.debugAccumulatorMs += boundedDelta;
@@ -205,10 +210,11 @@ export class WorldScene extends Phaser.Scene {
       }
 
       this.previousPresentationSnapshot = this.currentPresentationSnapshot;
-      this.executionDriver.step({
+      const frameResult = this.executionDriver.step({
         playerControl: { moveX: movement.x, moveY: movement.y },
         playerActions
       });
+      void this.e1Agent.afterExecutionStep(frameResult, time);
 
       this.currentPresentationSnapshot = this.world.snapshot();
       this.pendingInteract = false;
@@ -236,15 +242,28 @@ export class WorldScene extends Phaser.Scene {
     this.pointerProbeVisible = !this.pointerProbeVisible;
   }
 
-  startNpcFetchLanternTask(): ExecutorState {
-    this.npcExecutor.start({
-      kind: "approach-and-interact",
-      actorId: "npc.001",
-      targetId: "item.lantern"
-    });
-    const state = this.npcExecutor.state();
+  toggleE1Agent(): E1HarnessDebugState {
+    const state = this.e1Agent.toggle();
     this.emitDebugState(this.currentPresentationSnapshot);
     return state;
+  }
+
+  e1AgentState(): E1HarnessDebugState {
+    return this.e1Agent.state();
+  }
+
+  startNpcFetchLanternTask(): ManualExecutorStartResult {
+    const result = startManualExecutorTask(
+      this.npcExecutor,
+      {
+        kind: "approach-and-interact",
+        actorId: "npc.001",
+        targetId: "item.lantern"
+      },
+      () => this.e1Agent.disarm()
+    );
+    this.emitDebugState(this.currentPresentationSnapshot);
+    return result;
   }
 
   zoomByScale(scale: number): void {

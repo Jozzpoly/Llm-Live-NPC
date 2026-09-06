@@ -3,6 +3,7 @@ import type {
   ActorControlInput,
   ActorEntity,
   EntityId,
+  InteractionValidation,
   ItemEntity,
   LocationId,
   PlacementSite,
@@ -17,11 +18,12 @@ import type {
   WorldSnapshot,
   WorldSpecimen
 } from "./types";
+import { resolveLocationZone } from "./location-membership";
+import { heldItemAttachmentPosition, validateWorldSpecimen } from "./specimen-validation";
 
 const DEFAULT_STEP_SECONDS = 1 / 30;
 const INTERACTION_RANGE = 54;
 const EVENT_LIMIT = 128;
-const FACING_EPSILON = 1e-6;
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
@@ -60,6 +62,57 @@ function pointHitsExpandedAabb(point: Vec2, radius: number, bounds: Aabb): boole
   );
 }
 
+function sweepHorizontalMovement(
+  start: Vec2,
+  targetX: number,
+  radius: number,
+  blockers: WorldSpecimen["blockers"]
+): number {
+  if (targetX === start.x) return targetX;
+
+  let resolvedX = targetX;
+  for (const blocker of blockers) {
+    const minY = blocker.bounds.y - radius;
+    const maxY = blocker.bounds.y + blocker.bounds.height + radius;
+    if (start.y <= minY || start.y >= maxY) continue;
+
+    const minX = blocker.bounds.x - radius;
+    const maxX = blocker.bounds.x + blocker.bounds.width + radius;
+    if (targetX > start.x) {
+      if (start.x <= minX && resolvedX > minX) resolvedX = Math.min(resolvedX, minX);
+    } else if (start.x >= maxX && resolvedX < maxX) {
+      resolvedX = Math.max(resolvedX, maxX);
+    }
+  }
+  return resolvedX;
+}
+
+function sweepVerticalMovement(
+  startY: number,
+  targetY: number,
+  resolvedX: number,
+  radius: number,
+  blockers: WorldSpecimen["blockers"]
+): number {
+  if (targetY === startY) return targetY;
+
+  let resolvedY = targetY;
+  for (const blocker of blockers) {
+    const minX = blocker.bounds.x - radius;
+    const maxX = blocker.bounds.x + blocker.bounds.width + radius;
+    if (resolvedX <= minX || resolvedX >= maxX) continue;
+
+    const minY = blocker.bounds.y - radius;
+    const maxY = blocker.bounds.y + blocker.bounds.height + radius;
+    if (targetY > startY) {
+      if (startY <= minY && resolvedY > minY) resolvedY = Math.min(resolvedY, minY);
+    } else if (startY >= maxY && resolvedY < maxY) {
+      resolvedY = Math.max(resolvedY, maxY);
+    }
+  }
+  return resolvedY;
+}
+
 function segmentIntersectsAabb(start: Vec2, end: Vec2, bounds: Aabb): boolean {
   const dx = end.x - start.x;
   const dy = end.y - start.y;
@@ -96,11 +149,6 @@ function isActor(entity: WorldEntity | undefined): entity is ActorEntity {
   return entity?.kind === "player" || entity?.kind === "npc";
 }
 
-function hasUnitFacing(actor: ActorEntity): boolean {
-  if (!Number.isFinite(actor.facing.x) || !Number.isFinite(actor.facing.y)) return false;
-  return Math.abs(Math.hypot(actor.facing.x, actor.facing.y) - 1) <= FACING_EPSILON;
-}
-
 function assertFiniteMovement(input: WorldInput, label: string): void {
   if (!Number.isFinite(input.moveX) || !Number.isFinite(input.moveY)) {
     throw new Error(`${label} requires a finite movement vector.`);
@@ -124,6 +172,8 @@ export class World {
   private playerLocationIdValue: LocationId | null = null;
 
   constructor(specimen: WorldSpecimen) {
+    validateWorldSpecimen(specimen);
+
     this.width = specimen.width;
     this.height = specimen.height;
     this.actorSpeed = specimen.actorSpeed;
@@ -131,21 +181,9 @@ export class World {
     this.locations = structuredClone(specimen.locations);
     this.placementSites = structuredClone(specimen.placementSites);
 
-    const blockerIds = new Set(this.blockers.map((blocker) => blocker.id));
-    for (const site of this.placementSites) {
-      if (site.supportBlockerId && !blockerIds.has(site.supportBlockerId)) {
-        throw new Error(`Placement site ${site.id} references missing support blocker: ${site.supportBlockerId}`);
-      }
-    }
+    for (const entity of structuredClone(specimen.entities)) this.entities.set(entity.id, entity);
 
-    for (const entity of structuredClone(specimen.entities)) {
-      if (this.entities.has(entity.id)) throw new Error(`Duplicate entity id: ${entity.id}`);
-      if (isActor(entity) && !hasUnitFacing(entity)) {
-        throw new Error(`Actor ${entity.id} requires a finite unit facing vector.`);
-      }
-      this.entities.set(entity.id, entity);
-    }
-
+    this.followHeldItems();
     this.player();
     this.emit({ type: "world.started", message: "P1 world specimen initialized." });
     const initialLocation = this.resolveLocation(this.player().position);
@@ -166,6 +204,10 @@ export class World {
 
   get playerLocationId(): LocationId | null {
     return this.playerLocationIdValue;
+  }
+
+  get playerId(): EntityId {
+    return this.player().id;
   }
 
   step(input: WorldInput, seconds = DEFAULT_STEP_SECONDS): void {
@@ -246,6 +288,84 @@ export class World {
 
   lastActionResult(): WorldActionResult | null {
     return this.lastActionResultValue ? { ...this.lastActionResultValue } : null;
+  }
+
+  validateInteraction(actorId: EntityId, targetId: EntityId): InteractionValidation {
+    const actor = this.entities.get(actorId);
+    if (!isActor(actor)) {
+      return {
+        status: "rejected",
+        actorId,
+        targetId,
+        code: "actor_not_found",
+        message: `Actor not found: ${actorId}.`
+      };
+    }
+
+    const target = this.entities.get(targetId);
+    if (!target) {
+      return {
+        status: "rejected",
+        actorId,
+        targetId,
+        code: "target_not_found",
+        message: `Interaction target not found: ${targetId}.`
+      };
+    }
+
+    if (target.id === actor.id || target.kind === "player") {
+      return {
+        status: "rejected",
+        actorId,
+        targetId,
+        code: "target_not_interactable",
+        message: `${target.label} is not interactable through this action.`
+      };
+    }
+
+    if (target.kind === "item") {
+      if (actor.heldItemId) {
+        return {
+          status: "rejected",
+          actorId,
+          targetId,
+          code: "already_holding_item",
+          message: `${actor.label} is already holding an item.`
+        };
+      }
+      if (target.heldBy !== null) {
+        return {
+          status: "rejected",
+          actorId,
+          targetId,
+          code: "target_unavailable",
+          message: `${target.label} is already held.`
+        };
+      }
+    }
+
+    const rangeSq = INTERACTION_RANGE * INTERACTION_RANGE;
+    if (distanceSquared(actor.position, target.position) > rangeSq) {
+      return {
+        status: "rejected",
+        actorId,
+        targetId,
+        code: "target_out_of_range",
+        message: `${target.label} is outside interaction range.`
+      };
+    }
+
+    if (!this.hasLineOfSight(actor.position, target.position)) {
+      return {
+        status: "rejected",
+        actorId,
+        targetId,
+        code: "target_occluded",
+        message: `${target.label} is occluded from ${actor.label}.`
+      };
+    }
+
+    return { status: "accepted", actorId, targetId, targetKind: target.kind };
   }
 
   placementSitesAt(position: Vec2): PlacementSite[] {
@@ -361,10 +481,7 @@ export class World {
     const magnitude = Math.hypot(input.moveX, input.moveY);
     if (magnitude <= 0) return;
 
-    actor.facing = {
-      x: input.moveX / magnitude,
-      y: input.moveY / magnitude
-    };
+    actor.facing = { x: input.moveX / magnitude, y: input.moveY / magnitude };
 
     const movementScale = Math.max(1, magnitude);
     const movementX = input.moveX / movementScale;
@@ -372,22 +489,13 @@ export class World {
     const dx = movementX * this.actorSpeed * seconds;
     const dy = movementY * this.actorSpeed * seconds;
 
-    let x = clamp(actor.position.x + dx, actor.radius, this.width - actor.radius);
-    for (const blocker of this.blockers) {
-      if (!pointHitsExpandedAabb({ x, y: actor.position.y }, actor.radius, blocker.bounds)) continue;
-      if (dx > 0) x = Math.min(x, blocker.bounds.x - actor.radius);
-      if (dx < 0) x = Math.max(x, blocker.bounds.x + blocker.bounds.width + actor.radius);
-    }
+    const targetX = clamp(actor.position.x + dx, actor.radius, this.width - actor.radius);
+    const x = sweepHorizontalMovement(actor.position, targetX, actor.radius, this.blockers);
+    const targetY = clamp(actor.position.y + dy, actor.radius, this.height - actor.radius);
+    const y = sweepVerticalMovement(actor.position.y, targetY, x, actor.radius, this.blockers);
 
-    let y = clamp(actor.position.y + dy, actor.radius, this.height - actor.radius);
-    for (const blocker of this.blockers) {
-      if (!pointHitsExpandedAabb({ x, y }, actor.radius, blocker.bounds)) continue;
-      if (dy > 0) y = Math.min(y, blocker.bounds.y - actor.radius);
-      if (dy < 0) y = Math.max(y, blocker.bounds.y + blocker.bounds.height + actor.radius);
-    }
-
-    actor.position.x = clamp(x, actor.radius, this.width - actor.radius);
-    actor.position.y = clamp(y, actor.radius, this.height - actor.radius);
+    actor.position.x = x;
+    actor.position.y = y;
   }
 
   private followHeldItems(): void {
@@ -400,8 +508,7 @@ export class World {
     if (!actor.heldItemId) return;
     const item = this.entities.get(actor.heldItemId);
     if (!item || item.kind !== "item") throw new Error(`Held item missing: ${actor.heldItemId}`);
-    item.position.x = actor.position.x;
-    item.position.y = actor.position.y - actor.radius - 10;
+    item.position = heldItemAttachmentPosition(actor);
   }
 
   private updatePlayerLocation(): void {
@@ -432,7 +539,7 @@ export class World {
   }
 
   private resolveLocation(position: Vec2) {
-    return this.locations.find((location) => containsPoint(location.bounds, position));
+    return resolveLocationZone(this.locations, position);
   }
 
   private interact(actor: ActorEntity, explicitTargetId?: EntityId): WorldActionResult {
@@ -480,75 +587,24 @@ export class World {
   }
 
   private interactWithTarget(actor: ActorEntity, targetId: EntityId): WorldActionResult {
+    const validation = this.validateInteraction(actor.id, targetId);
+    if (validation.status === "rejected") {
+      return this.recordAction({
+        actorId: actor.id,
+        action: "interact",
+        status: "rejected",
+        code: validation.code,
+        targetId,
+        message: validation.message
+      });
+    }
+
     const target = this.entities.get(targetId);
-    if (!target) {
-      return this.recordAction({
-        actorId: actor.id,
-        action: "interact",
-        status: "rejected",
-        code: "target_not_found",
-        targetId,
-        message: `Interaction target not found: ${targetId}.`
-      });
-    }
-
-    if (target.id === actor.id || target.kind === "player") {
-      return this.recordAction({
-        actorId: actor.id,
-        action: "interact",
-        status: "rejected",
-        code: "target_not_interactable",
-        targetId,
-        message: `${target.label} is not interactable through this action.`
-      });
-    }
-
-    const rangeSq = INTERACTION_RANGE * INTERACTION_RANGE;
-    if (distanceSquared(actor.position, target.position) > rangeSq) {
-      return this.recordAction({
-        actorId: actor.id,
-        action: "interact",
-        status: "rejected",
-        code: "target_out_of_range",
-        targetId,
-        message: `${target.label} is outside interaction range.`
-      });
-    }
-
-    if (!this.hasLineOfSight(actor.position, target.position)) {
-      return this.recordAction({
-        actorId: actor.id,
-        action: "interact",
-        status: "rejected",
-        code: "target_occluded",
-        targetId,
-        message: `${target.label} is occluded from ${actor.label}.`
-      });
+    if (!target || (target.kind !== "item" && target.kind !== "npc")) {
+      throw new Error(`Accepted interaction target became invalid: ${targetId}`);
     }
 
     if (target.kind === "item") {
-      if (actor.heldItemId) {
-        return this.recordAction({
-          actorId: actor.id,
-          action: "interact",
-          status: "rejected",
-          code: "already_holding_item",
-          targetId,
-          message: `${actor.label} is already holding an item.`
-        });
-      }
-
-      if (target.heldBy !== null) {
-        return this.recordAction({
-          actorId: actor.id,
-          action: "interact",
-          status: "rejected",
-          code: "target_unavailable",
-          targetId,
-          message: `${target.label} is already held.`
-        });
-      }
-
       actor.heldItemId = target.id;
       target.heldBy = actor.id;
       this.followHeldItem(actor);
@@ -642,11 +698,7 @@ export class World {
 
   private recordAction(result: Omit<WorldActionResult, "seq" | "tick">): WorldActionResult {
     this.actionSequence += 1;
-    const recorded = {
-      seq: this.actionSequence,
-      tick: this.tickValue,
-      ...result
-    };
+    const recorded = { seq: this.actionSequence, tick: this.tickValue, ...result };
     this.lastActionResultValue = recorded;
     return { ...recorded };
   }

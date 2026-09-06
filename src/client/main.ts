@@ -1,7 +1,17 @@
 import * as Phaser from "phaser";
 import "./style.css";
 import "./mobile-style.css";
+import "./build-fingerprint.css";
+import { recentRuntimeActionAttempts } from "../execution/action-attempt-history";
+import { ActionAttemptDebugPanel } from "./action-attempt-debug-panel";
+import {
+  formatBuildFingerprint,
+  formatBuildFingerprintTitle,
+  requestRuntimeBuildFingerprint
+} from "./build-fingerprint";
 import { DebugWorkspace } from "./debug-workspace";
+import { E1DebugPanel } from "./e1-debug-panel";
+import type { E1HarnessDebugState } from "./e1-agent-harness";
 import { isTouchOwnerDevice, MobileOwnerControls } from "./mobile-controls";
 import { PlayerControlBuffer } from "./player-control-buffer";
 import { WorldScene } from "./world-scene";
@@ -9,16 +19,26 @@ import { WorldScene } from "./world-scene";
 const appRoot = document.querySelector<HTMLElement>("#app");
 const debugRoot = document.querySelector<HTMLElement>("#debug");
 const gameRoot = document.querySelector<HTMLElement>("#game");
+const stageChip = document.querySelector<HTMLElement>("#e1-stage-chip");
 
-if (!appRoot || !debugRoot || !gameRoot) {
-  throw new Error("P1 shell is missing #app, #game or #debug root.");
+if (!appRoot || !debugRoot || !gameRoot || !stageChip) {
+  throw new Error("E1 shell is missing #app, #game, #debug or #e1-stage-chip root.");
 }
 
+const stageChipNode: HTMLElement = stageChip;
 const mobileOwnerMode = isTouchOwnerDevice();
 appRoot.classList.toggle("mobile-owner-mode", mobileOwnerMode);
 
 let scene: WorldScene;
+let e1Panel: E1DebugPanel | null = null;
+let actionAttemptPanel: ActionAttemptDebugPanel | null = null;
 const playerControls = new PlayerControlBuffer();
+
+function updateE1Ui(state: E1HarnessDebugState): void {
+  e1Panel?.update(state);
+  stageChipNode.textContent = state.armed ? "E1 cognition armed" : "E1 cognition disarmed";
+  stageChipNode.classList.toggle("is-active", state.armed);
+}
 
 const workspace = new DebugWorkspace(debugRoot, appRoot, {
   toggleLabels: () => scene.toggleLabels(),
@@ -28,7 +48,40 @@ const workspace = new DebugWorkspace(debugRoot, appRoot, {
 });
 if (mobileOwnerMode) workspace.setCollapsed(true);
 
-scene = new WorldScene((state) => workspace.update(state), playerControls);
+const workspaceTitleBlock = debugRoot.querySelector<HTMLElement>(".workspace-title-block");
+if (!workspaceTitleBlock) throw new Error("Debug workspace is missing its title block.");
+const buildFingerprintNode = document.createElement("div");
+buildFingerprintNode.className = "workspace-build-fingerprint";
+buildFingerprintNode.textContent = "build resolving…";
+buildFingerprintNode.title = "Runtime build provenance is resolving from /api/health.";
+workspaceTitleBlock.append(buildFingerprintNode);
+void requestRuntimeBuildFingerprint()
+  .then((fingerprint) => {
+    if (!fingerprint) {
+      buildFingerprintNode.textContent = "build unavailable";
+      buildFingerprintNode.title = "Runtime build provenance unavailable from /api/health.";
+      return;
+    }
+    buildFingerprintNode.textContent = formatBuildFingerprint(fingerprint);
+    buildFingerprintNode.title = formatBuildFingerprintTitle(fingerprint);
+  })
+  .catch(() => {
+    buildFingerprintNode.textContent = "build unavailable";
+    buildFingerprintNode.title = "Runtime build provenance request failed.";
+  });
+
+scene = new WorldScene((state) => {
+  workspace.update(state);
+  actionAttemptPanel?.update(recentRuntimeActionAttempts());
+  updateE1Ui(scene.e1AgentState());
+}, playerControls);
+
+e1Panel = new E1DebugPanel(debugRoot, {
+  toggle: () => scene.toggleE1Agent()
+});
+actionAttemptPanel = new ActionAttemptDebugPanel(debugRoot);
+updateE1Ui(scene.e1AgentState());
+actionAttemptPanel.update(recentRuntimeActionAttempts());
 
 new Phaser.Game({
   type: Phaser.AUTO,

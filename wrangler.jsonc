@@ -8,6 +8,9 @@
   "observability": {
     "enabled": true
   },
+  "version_metadata": {
+    "binding": "CF_VERSION_METADATA"
+  },
   "ai": {
     "binding": "AI"
   },
@@ -16,7 +19,7 @@
       "name": "AI_PROBE_LIMITER",
       "namespace_id": "731947",
       "simple": {
-        "limit": 3,
+        "limit": 6,
         "period": 60
       }
     }

@@ -1,12 +1,12 @@
 import type {
   ActorControlInput,
   EntityId,
+  InteractionValidation,
   WorldActionRequest,
   WorldActionResult,
   WorldSnapshot
 } from "../world/types";
 
-const APPROACH_DISTANCE = 48;
 const DEFAULT_STEP_BUDGET = 180;
 
 export type ExecutorStatus = "idle" | "running" | "succeeded" | "failed";
@@ -30,6 +30,8 @@ export interface ExecutorState {
   stepBudget: number;
 }
 
+export type InteractionValidator = (actorId: EntityId, targetId: EntityId) => InteractionValidation;
+
 export class DeterministicExecutor {
   private taskValue: ExecutorTask | null = null;
   private statusValue: ExecutorStatus = "idle";
@@ -42,11 +44,18 @@ export class DeterministicExecutor {
     }
   }
 
-  start(task: ExecutorTask): void {
+  /**
+   * Starts a new durative task only when no task is currently running.
+   * Returning false is a causal refusal: callers must not silently replace an
+   * in-flight task, because doing so would destroy execution provenance.
+   */
+  start(task: ExecutorTask): boolean {
+    if (this.statusValue === "running") return false;
     this.taskValue = { ...task };
     this.statusValue = "running";
     this.failureCodeValue = null;
     this.stepsUsedValue = 0;
+    return true;
   }
 
   state(): ExecutorState {
@@ -59,7 +68,7 @@ export class DeterministicExecutor {
     };
   }
 
-  next(snapshot: WorldSnapshot): ExecutorCommand {
+  next(snapshot: WorldSnapshot, validateInteraction: InteractionValidator): ExecutorCommand {
     if (this.statusValue !== "running" || !this.taskValue) return {};
     if (this.stepsUsedValue >= this.stepBudgetValue) {
       this.fail("step_budget_exhausted");
@@ -96,7 +105,18 @@ export class DeterministicExecutor {
       return {};
     }
 
-    if (distance > APPROACH_DISTANCE) {
+    const validation = validateInteraction(actor.id, target.id);
+    if (validation.status === "accepted") {
+      return {
+        action: {
+          action: "interact",
+          actorId: actor.id,
+          targetId: target.id
+        }
+      };
+    }
+
+    if (validation.code === "target_out_of_range") {
       return {
         control: {
           actorId: actor.id,
@@ -106,13 +126,18 @@ export class DeterministicExecutor {
       };
     }
 
-    return {
-      action: {
-        action: "interact",
-        actorId: actor.id,
-        targetId: target.id
-      }
-    };
+    if (validation.code === "target_occluded") {
+      return {
+        action: {
+          action: "interact",
+          actorId: actor.id,
+          targetId: target.id
+        }
+      };
+    }
+
+    this.fail(validation.code);
+    return {};
   }
 
   acceptActionResult(result: WorldActionResult): void {

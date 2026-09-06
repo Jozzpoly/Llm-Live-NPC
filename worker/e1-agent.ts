@@ -1,0 +1,465 @@
+import {
+  E1_OBSERVED_CHANGE_LIMIT,
+  type E1CycleRequest,
+  type E1Decision,
+  type E1Experience,
+  type E1ObservedChange,
+  type E1PerceivedEntity,
+  type E1Perception
+} from "../src/agent/e1-grounding";
+
+const E1_MODEL = "@cf/ibm-granite/granite-4.0-h-micro";
+const GATEWAY_ID = "default";
+const MAX_COLLECTION_SIZE = 32;
+const MAX_TEXT_LENGTH = 256;
+const MAX_TOOL_ARGUMENTS_LENGTH = 4096;
+
+interface AiBinding {
+  run(model: string, input: unknown, options?: unknown): Promise<unknown>;
+  aiGatewayLogId?: string;
+}
+
+interface RateLimitBinding {
+  limit(options: { key: string }): Promise<{ success: boolean }>;
+}
+
+export interface E1AgentEnv {
+  AI: AiBinding;
+  AI_PROBE_LIMITER: RateLimitBinding;
+}
+
+interface ToolFunctionShape {
+  name?: unknown;
+  arguments?: unknown;
+}
+
+interface ToolCallShape {
+  name?: unknown;
+  arguments?: unknown;
+  type?: unknown;
+  function?: ToolFunctionShape;
+}
+
+interface CompletionShape {
+  tool_calls?: ToolCallShape[];
+  choices?: Array<{
+    message?: {
+      tool_calls?: ToolCallShape[];
+    };
+  }>;
+  usage?: unknown;
+}
+
+function json(data: unknown, init: ResponseInit = {}): Response {
+  const headers = new Headers(init.headers);
+  headers.set("content-type", "application/json; charset=utf-8");
+  headers.set("cache-control", "no-store");
+  return new Response(JSON.stringify(data), { ...init, headers });
+}
+
+function boundedString(value: unknown): string | null {
+  return typeof value === "string" && value.length > 0 && value.length <= MAX_TEXT_LENGTH ? value : null;
+}
+
+function nullableString(value: unknown): string | null | undefined {
+  if (value === null) return null;
+  const parsed = boundedString(value);
+  return parsed ?? undefined;
+}
+
+function finiteNumber(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+function sanitizeVisibleEntity(value: unknown): E1PerceivedEntity | null {
+  if (!value || typeof value !== "object") return null;
+  const entity = value as Record<string, unknown>;
+  const id = boundedString(entity.id);
+  const label = boundedString(entity.label);
+  const distance = finiteNumber(entity.distance);
+  const directionValue = entity.direction;
+  if (!id || !label || distance === null || distance < 0 || !directionValue || typeof directionValue !== "object") {
+    return null;
+  }
+  const direction = directionValue as Record<string, unknown>;
+  const directionX = finiteNumber(direction.x);
+  const directionY = finiteNumber(direction.y);
+  if (directionX === null || directionY === null) return null;
+  if (entity.kind !== "player" && entity.kind !== "npc" && entity.kind !== "item") return null;
+
+  const sanitized: E1PerceivedEntity = {
+    id,
+    kind: entity.kind,
+    label,
+    distance,
+    direction: { x: directionX, y: directionY }
+  };
+
+  if (entity.kind === "item") {
+    const heldBy = nullableString(entity.heldBy);
+    if (heldBy === undefined) return null;
+    sanitized.heldBy = heldBy;
+  } else {
+    const heldItemId = nullableString(entity.heldItemId);
+    if (heldItemId === undefined) return null;
+    sanitized.heldItemId = heldItemId;
+  }
+  return sanitized;
+}
+
+function sanitizeObservedChange(value: unknown): E1ObservedChange | null {
+  if (!value || typeof value !== "object") return null;
+  const change = value as Record<string, unknown>;
+
+  if (change.kind === "item_entered_perception") {
+    const itemId = boundedString(change.itemId);
+    const holderId = nullableString(change.holderId);
+    return itemId && holderId !== undefined ? { kind: change.kind, itemId, holderId } : null;
+  }
+  if (change.kind === "item_left_perception") {
+    const itemId = boundedString(change.itemId);
+    const previousHolderId = nullableString(change.previousHolderId);
+    return itemId && previousHolderId !== undefined
+      ? { kind: change.kind, itemId, previousHolderId }
+      : null;
+  }
+  if (change.kind === "item_holder_changed") {
+    const itemId = boundedString(change.itemId);
+    const previousHolderId = nullableString(change.previousHolderId);
+    const holderId = nullableString(change.holderId);
+    return itemId && previousHolderId !== undefined && holderId !== undefined
+      ? { kind: change.kind, itemId, previousHolderId, holderId }
+      : null;
+  }
+  if (change.kind === "observer_held_item_changed") {
+    const previousItemId = nullableString(change.previousItemId);
+    const itemId = nullableString(change.itemId);
+    return previousItemId !== undefined && itemId !== undefined
+      ? { kind: change.kind, previousItemId, itemId }
+      : null;
+  }
+  if (change.kind === "observer_location_changed") {
+    const previousLocationId = nullableString(change.previousLocationId);
+    const locationId = nullableString(change.locationId);
+    return previousLocationId !== undefined && locationId !== undefined
+      ? { kind: change.kind, previousLocationId, locationId }
+      : null;
+  }
+  return null;
+}
+
+function sanitizeExperience(value: unknown): E1Experience | null | undefined {
+  if (value === null) return null;
+  if (!value || typeof value !== "object") return undefined;
+  const experience = value as Record<string, unknown>;
+  const tick = finiteNumber(experience.tick);
+  const code = boundedString(experience.code);
+  const message = boundedString(experience.message);
+  const targetId = nullableString(experience.targetId);
+  if (
+    tick === null ||
+    !Number.isInteger(tick) ||
+    tick < 0 ||
+    !code ||
+    !message ||
+    targetId === undefined ||
+    (experience.status !== "succeeded" && experience.status !== "failed")
+  ) {
+    return undefined;
+  }
+  return { tick, status: experience.status, code, targetId, message };
+}
+
+function sanitizeE1CycleRequest(value: unknown): E1CycleRequest | null {
+  if (!value || typeof value !== "object") return null;
+  const request = value as Record<string, unknown>;
+  const cycleId = finiteNumber(request.cycleId);
+  if (cycleId === null || !Number.isInteger(cycleId) || cycleId <= 0) return null;
+  if (
+    request.trigger !== "perception_changed" &&
+    request.trigger !== "experience_changed" &&
+    request.trigger !== "perception_and_experience_changed"
+  ) {
+    return null;
+  }
+  if (!request.perception || typeof request.perception !== "object") return null;
+  const rawPerception = request.perception as Record<string, unknown>;
+  const tick = finiteNumber(rawPerception.tick);
+  if (tick === null || !Number.isInteger(tick) || tick < 0) return null;
+  if (!rawPerception.observer || typeof rawPerception.observer !== "object") return null;
+  const rawObserver = rawPerception.observer as Record<string, unknown>;
+  const observerLabel = boundedString(rawObserver.label);
+  const locationId = nullableString(rawObserver.locationId);
+  const locationLabel = nullableString(rawObserver.locationLabel);
+  const heldItemId = nullableString(rawObserver.heldItemId);
+  if (
+    rawObserver.id !== "npc.001" ||
+    !observerLabel ||
+    locationId === undefined ||
+    locationLabel === undefined ||
+    heldItemId === undefined
+  ) {
+    return null;
+  }
+
+  if (!Array.isArray(rawPerception.visibleEntities) || rawPerception.visibleEntities.length > MAX_COLLECTION_SIZE) {
+    return null;
+  }
+  const visibleEntities: E1PerceivedEntity[] = [];
+  for (const rawEntity of rawPerception.visibleEntities) {
+    const entity = sanitizeVisibleEntity(rawEntity);
+    if (!entity) return null;
+    visibleEntities.push(entity);
+  }
+
+  if (!Array.isArray(rawPerception.fetchableItemIds) || rawPerception.fetchableItemIds.length > MAX_COLLECTION_SIZE) {
+    return null;
+  }
+  const fetchableItemIds: string[] = [];
+  for (const value of rawPerception.fetchableItemIds) {
+    const id = boundedString(value);
+    if (!id || fetchableItemIds.includes(id)) return null;
+    fetchableItemIds.push(id);
+  }
+
+  const visibleFreeItems = new Set(
+    visibleEntities
+      .filter((entity) => entity.kind === "item" && entity.heldBy === null)
+      .map((entity) => entity.id)
+  );
+  if (heldItemId !== null && fetchableItemIds.length > 0) return null;
+  if (fetchableItemIds.some((id) => !visibleFreeItems.has(id))) return null;
+
+  if (!Array.isArray(request.observedChanges) || request.observedChanges.length > E1_OBSERVED_CHANGE_LIMIT) return null;
+  const observedChanges: E1ObservedChange[] = [];
+  for (const rawChange of request.observedChanges) {
+    const change = sanitizeObservedChange(rawChange);
+    if (!change) return null;
+    observedChanges.push(change);
+  }
+  const observedChangesDropped = finiteNumber(request.observedChangesDropped);
+  if (
+    observedChangesDropped === null ||
+    !Number.isSafeInteger(observedChangesDropped) ||
+    observedChangesDropped < 0
+  ) {
+    return null;
+  }
+
+  const previousExperience = sanitizeExperience(request.previousExperience);
+  if (previousExperience === undefined) return null;
+
+  const perception: E1Perception = {
+    tick,
+    observer: {
+      id: "npc.001",
+      label: observerLabel,
+      locationId,
+      locationLabel,
+      heldItemId
+    },
+    visibleEntities,
+    fetchableItemIds
+  };
+
+  return {
+    cycleId,
+    trigger: request.trigger,
+    perception,
+    observedChanges,
+    observedChangesDropped,
+    previousExperience
+  };
+}
+
+function parseArguments(value: unknown): Record<string, unknown> | null {
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    return value as Record<string, unknown>;
+  }
+
+  let current: unknown = value;
+  for (let decode = 0; decode < 2; decode += 1) {
+    if (typeof current !== "string" || current.length === 0 || current.length > MAX_TOOL_ARGUMENTS_LENGTH) {
+      return null;
+    }
+    try {
+      current = JSON.parse(current);
+    } catch {
+      return null;
+    }
+    if (current && typeof current === "object" && !Array.isArray(current)) {
+      return current as Record<string, unknown>;
+    }
+  }
+  return null;
+}
+
+function completionToolCalls(result: unknown): ToolCallShape[] | null {
+  if (!result || typeof result !== "object") return null;
+  const completion = result as CompletionShape;
+  if (Array.isArray(completion.tool_calls)) return completion.tool_calls;
+  const nested = completion.choices?.[0]?.message?.tool_calls;
+  return Array.isArray(nested) ? nested : null;
+}
+
+function toolIdentity(toolCall: ToolCallShape): { name: string; arguments: unknown } | null {
+  if (toolCall.function && typeof toolCall.function.name === "string") {
+    return { name: toolCall.function.name, arguments: toolCall.function.arguments };
+  }
+  if (typeof toolCall.name === "string") {
+    return { name: toolCall.name, arguments: toolCall.arguments };
+  }
+  return null;
+}
+
+function normalizeDecision(result: unknown, allowedFetchTargets: readonly string[]): E1Decision | null {
+  const toolCalls = completionToolCalls(result);
+  if (!toolCalls || toolCalls.length !== 1) return null;
+  const identity = toolIdentity(toolCalls[0]);
+  if (!identity) return null;
+
+  if (identity.name === "wait") return { kind: "wait" };
+  if (identity.name !== "fetch") return null;
+
+  const args = parseArguments(identity.arguments);
+  const targetId = args?.targetId;
+  if (typeof targetId !== "string" || !allowedFetchTargets.includes(targetId)) return null;
+  return { kind: "fetch", targetId };
+}
+
+function functionTool(name: string, description: string, properties: Record<string, unknown>, required: string[]) {
+  return {
+    type: "function",
+    function: {
+      name,
+      description,
+      parameters: {
+        type: "object",
+        properties,
+        required
+      }
+    }
+  };
+}
+
+function buildTools(fetchableItemIds: readonly string[]) {
+  const tools: Array<Record<string, unknown>> = [
+    functionTool("wait", "Choose no physical task for this cognition cycle.", {}, [])
+  ];
+
+  if (fetchableItemIds.length > 0) {
+    tools.push(
+      functionTool(
+        "fetch",
+        "Fetch one currently visible, free item using the world's normal embodied executor.",
+        {
+          targetId: {
+            type: "string",
+            description: `ID of a free item present in the current bounded perception. Legal IDs: ${fetchableItemIds.join(", ")}.`
+          }
+        },
+        ["targetId"]
+      )
+    );
+  }
+
+  return tools;
+}
+
+export async function handleE1AgentDecision(request: Request, env: E1AgentEnv): Promise<Response> {
+  if (request.method !== "POST") {
+    return json({ ok: false, error: "Method not allowed" }, { status: 405 });
+  }
+
+  let rawBody: unknown;
+  try {
+    rawBody = await request.json();
+  } catch {
+    return json({ ok: false, error: "Invalid JSON body" }, { status: 400 });
+  }
+  const body = sanitizeE1CycleRequest(rawBody);
+  if (!body) {
+    return json({ ok: false, error: "Invalid E1 cognition request" }, { status: 400 });
+  }
+
+  const rateLimit = await env.AI_PROBE_LIMITER.limit({ key: "e1-grounded-notice-fetch" });
+  if (!rateLimit.success) {
+    return json({ ok: false, error: "E1 cognition rate limit exceeded" }, { status: 429 });
+  }
+
+  const startedAt = Date.now();
+  try {
+    const result = await env.AI.run(
+      E1_MODEL,
+      {
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are the bounded intention policy for NPC-001 in an embodied game-world experiment. You know only the supplied current perception, observed temporal changes and prior self experience. Choose exactly one provided tool. Never infer or name unseen world entities. Treat observedChanges as the only evidence about what just changed. If observedChangesDropped is greater than zero, older bounded temporal changes were omitted; do not infer their contents or reconstruct missing events. If an item_holder_changed event shows a currently fetchable item becoming free and NPC-001 holds nothing, choose fetch for that item. Otherwise choose wait. After a successful fetch experience, choose wait. The tool call is only a proposed intention; world mechanics execute and validate it separately."
+          },
+          {
+            role: "user",
+            content: JSON.stringify(body)
+          }
+        ],
+        tools: buildTools(body.perception.fetchableItemIds),
+        max_tokens: 96,
+        temperature: 0
+      },
+      {
+        gateway: {
+          id: GATEWAY_ID,
+          skipCache: true,
+          collectLog: true,
+          metadata: {
+            project: "llm-live-npc",
+            stage: "e1-grounded-notice-fetch",
+            cycle: String(body.cycleId),
+            model: E1_MODEL
+          }
+        }
+      }
+    );
+
+    const decision = normalizeDecision(result, body.perception.fetchableItemIds);
+    const completion = result && typeof result === "object" ? (result as CompletionShape) : null;
+    const gatewayLogId = env.AI.aiGatewayLogId ?? null;
+    if (!decision) {
+      return json(
+        {
+          ok: false,
+          cycleId: body.cycleId,
+          error: "Model did not return exactly one valid bounded intention tool call",
+          model: E1_MODEL,
+          gatewayLogId,
+          latencyMs: Date.now() - startedAt,
+          usage: completion?.usage ?? null
+        },
+        { status: 502 }
+      );
+    }
+
+    return json({
+      ok: true,
+      cycleId: body.cycleId,
+      decision,
+      model: E1_MODEL,
+      gatewayLogId,
+      latencyMs: Date.now() - startedAt,
+      usage: completion?.usage ?? null
+    });
+  } catch (error) {
+    return json(
+      {
+        ok: false,
+        cycleId: body.cycleId,
+        error: error instanceof Error ? error.message : String(error),
+        model: E1_MODEL,
+        gatewayLogId: env.AI.aiGatewayLogId ?? null,
+        latencyMs: Date.now() - startedAt
+      },
+      { status: 502 }
+    );
+  }
+}

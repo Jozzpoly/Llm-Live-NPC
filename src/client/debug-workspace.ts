@@ -1,11 +1,11 @@
-import type { ExecutorState } from "../execution/deterministic-executor";
+import type { ManualExecutorStartResult } from "./manual-executor-trigger";
 import type { WorldDebugState } from "./world-scene";
 
 export interface DebugWorkspaceActions {
   toggleLabels(): void;
   toggleLosProbe(): void;
   togglePointerProbe(): void;
-  startNpcFetchLantern(): ExecutorState;
+  startNpcFetchLantern(): ManualExecutorStartResult;
 }
 
 type ValueNode = HTMLElement;
@@ -63,6 +63,7 @@ export class DebugWorkspace {
   private readonly actionOutcomeValue: ValueNode;
   private readonly eventsList: HTMLUListElement;
   private collapsed = false;
+  private executorRunning = false;
   private lastEventSignature = "";
 
   constructor(root: HTMLElement, appRoot: HTMLElement, actions: DebugWorkspaceActions) {
@@ -156,7 +157,7 @@ export class DebugWorkspace {
     this.npcTaskButton = this.toggleButton("Fetch lantern", null, () => this.startNpcFetchLantern());
     npcControlRow.append(this.npcTaskButton);
     const npcMetrics = element("div", "debug-metrics");
-    const executorTrigger = metricRow("trigger ack");
+    const executorTrigger = metricRow("trigger state");
     const executorStatus = metricRow("task status");
     const executorActor = metricRow("task actor");
     const executorTarget = metricRow("task target");
@@ -188,7 +189,7 @@ export class DebugWorkspace {
     npcSection.append(
       npcControlRow,
       npcMetrics,
-      element("p", "debug-note", "B2 bounded apparatus: deterministic approach + explicit World interaction. Trigger acknowledgement comes from executor state, not button state. No LLM, pathfinding or sight model.")
+      element("p", "debug-note", "B2 bounded apparatus: deterministic approach + explicit World interaction. The manual trigger is disabled while the executor is running; displayed trigger state is executor state, not proof inferred from a button click. No LLM, pathfinding or sight model.")
     );
 
     const eventsSection = this.section("Recent world events");
@@ -238,8 +239,10 @@ export class DebugWorkspace {
     this.executorFailureValue.textContent = state.executorFailureCode ?? "—";
     this.executorStatusValue.classList.toggle("pass", state.executorStatus === "succeeded");
     this.executorStatusValue.classList.toggle("blocked", state.executorStatus === "failed");
-    this.npcTaskButton.setAttribute("aria-pressed", String(state.executorStatus === "running"));
-    this.npcTaskButton.classList.toggle("is-active", state.executorStatus === "running");
+    this.executorRunning = state.executorStatus === "running";
+    this.npcTaskButton.disabled = this.executorRunning;
+    this.npcTaskButton.setAttribute("aria-pressed", String(this.executorRunning));
+    this.npcTaskButton.classList.toggle("is-active", this.executorRunning);
 
     this.losValue.textContent = state.npcLineOfSight ? "VISIBLE" : "OCCLUDED";
     this.losValue.classList.toggle("pass", state.npcLineOfSight);
@@ -266,12 +269,27 @@ export class DebugWorkspace {
   }
 
   private startNpcFetchLantern(): void {
-    const state = this.actions.startNpcFetchLantern();
+    if (this.executorRunning) {
+      this.executorTriggerValue.textContent = "blocked · executor already running";
+      this.executorTriggerValue.classList.remove("pass");
+      this.executorTriggerValue.classList.add("blocked");
+      return;
+    }
+
+    const result = this.actions.startNpcFetchLantern();
+    if (!result.started) {
+      this.executorTriggerValue.textContent = "blocked · executor already running";
+      this.executorTriggerValue.classList.remove("pass");
+      this.executorTriggerValue.classList.add("blocked");
+      return;
+    }
+
+    const state = result.state;
     const task = state.task;
     this.executorTriggerValue.textContent = task
-      ? `accepted · ${state.status} · ${task.actorId} → ${task.targetId}`
-      : `accepted · ${state.status}`;
-    this.executorTriggerValue.classList.toggle("pass", state.status === "running");
+      ? `${state.status} · ${task.actorId} → ${task.targetId}`
+      : state.status;
+    this.executorTriggerValue.classList.toggle("pass", state.status === "running" || state.status === "succeeded");
     this.executorTriggerValue.classList.toggle("blocked", state.status === "failed");
   }
 
