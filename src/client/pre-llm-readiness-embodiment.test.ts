@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { projectE1Perception } from "../agent/e1-grounding";
+import { deriveE1ObservedChanges, projectE1Perception } from "../agent/e1-grounding";
 import { DeterministicExecutor } from "../execution/deterministic-executor";
 import { createP1Specimen } from "../world/specimen";
 import { World } from "../world/world";
@@ -162,5 +162,61 @@ describe("pre-LLM embodied substrate characterization", () => {
     expect(heldLantern.position.y).toBeGreaterThan(wall.bounds.y);
     expect(heldLantern.position.y).toBeLessThan(wall.bounds.y + wall.bounds.height);
     expect(world.hasLineOfSight(movedPlayer.position, heldLantern.position)).toBe(false);
+  });
+
+  it("shows that legal wall-adjacent carrying can turn a real holder->free drop into item-entered perception", () => {
+    const specimen = createP1Specimen();
+    const player = specimen.entities.find((entity) => entity.id === "player.jozz");
+    const npc = specimen.entities.find((entity) => entity.id === "npc.001");
+    const lantern = specimen.entities.find((entity) => entity.id === "item.lantern");
+    const wall = specimen.blockers.find((blocker) => blocker.id === "workshop.bottom");
+    if (!player || player.kind !== "player" || !npc || npc.kind !== "npc" || !lantern || lantern.kind !== "item" || !wall) {
+      throw new Error("Missing wall-adjacent temporal-perception fixture.");
+    }
+
+    player.position = { x: 1100, y: 500 };
+    npc.position = { x: 938, y: 476 };
+    lantern.position = { x: 1100, y: 480 };
+    const world = new World(specimen);
+
+    expect(world.attemptAction({ action: "interact", actorId: player.id, targetId: lantern.id })).toMatchObject({
+      status: "succeeded",
+      code: "picked_up_item"
+    });
+
+    for (let step = 0; step < 10; step += 1) world.step({ moveX: 0, moveY: -1 });
+
+    const before = projectE1Perception(
+      world.snapshot(),
+      npc.id,
+      (start, end) => world.hasLineOfSight(start, end)
+    );
+    expect(before.visibleEntities.some((entity) => entity.id === player.id)).toBe(true);
+    expect(before.visibleEntities.some((entity) => entity.id === lantern.id)).toBe(false);
+    expect(before.fetchableItemIds).not.toContain(lantern.id);
+
+    expect(world.attemptAction({ action: "drop", actorId: player.id })).toMatchObject({
+      status: "succeeded",
+      code: "dropped_item",
+      targetId: lantern.id
+    });
+
+    const after = projectE1Perception(
+      world.snapshot(),
+      npc.id,
+      (start, end) => world.hasLineOfSight(start, end)
+    );
+    expect(after.visibleEntities.find((entity) => entity.id === lantern.id)).toMatchObject({ heldBy: null });
+    expect(after.fetchableItemIds).toContain(lantern.id);
+
+    const changes = deriveE1ObservedChanges(before, after);
+    expect(changes).toContainEqual({
+      kind: "item_entered_perception",
+      itemId: lantern.id,
+      holderId: null
+    });
+    expect(changes).not.toContainEqual(
+      expect.objectContaining({ kind: "item_holder_changed", itemId: lantern.id })
+    );
   });
 });

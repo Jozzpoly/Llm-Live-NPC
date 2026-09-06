@@ -250,4 +250,34 @@ describe("pre-LLM E1 request and semantic boundary characterization", () => {
     expect(userContent).toContain('"heldBy":null');
     expect(userContent).toContain('"holderId":"player.jozz"');
   });
+
+  it("shows that the Worker consumes/parses request JSON before invoking the E1 rate limiter", async () => {
+    const callOrder: string[] = [];
+    const request = {
+      method: "POST",
+      async json() {
+        callOrder.push("json");
+        return rawCycleRequest();
+      }
+    } as unknown as Request;
+
+    const env: E1AgentEnv = {
+      AI: {
+        aiGatewayLogId: null,
+        async run() {
+          throw new Error("AI must not run after a rejected limiter probe.");
+        }
+      },
+      AI_PROBE_LIMITER: {
+        async limit() {
+          callOrder.push("limit");
+          return { success: false };
+        }
+      }
+    };
+
+    const response = await handleE1AgentDecision(request, env);
+    expect(response.status).toBe(429);
+    expect(callOrder).toEqual(["json", "limit"]);
+  });
 });
