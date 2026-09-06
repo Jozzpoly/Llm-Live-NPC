@@ -56,7 +56,7 @@ export class E1DebugPanel {
     const metrics = element("div", "debug-metrics");
     const armed = metricRow("armed");
     const request = metricRow("request");
-    const cycle = metricRow("cycle");
+    const cycle = metricRow("session / request / cycle");
     const trigger = metricRow("trigger");
     const perception = metricRow("perceived IDs");
     const fetchable = metricRow("fetchable IDs");
@@ -121,9 +121,9 @@ export class E1DebugPanel {
       state.requestStatus === "accepted_fetch" || state.requestStatus === "accepted_wait"
     );
 
-    this.cycleValue.textContent = state.cycleId
-      ? `#${state.cycleId} · ${state.cyclesUsed}/${state.cycleBudget}`
-      : `${state.cyclesUsed}/${state.cycleBudget}`;
+    this.cycleValue.textContent = state.sessionId
+      ? `s${state.sessionId} · r${state.requestId ?? "—"} · c${state.cycleId ?? "—"} · ${state.cyclesUsed}/${state.cycleBudget}`
+      : `— · ${state.cyclesUsed}/${state.cycleBudget}`;
     this.triggerValue.textContent = state.trigger ?? "—";
     this.perceptionValue.textContent = state.visibleEntityIds.join(", ") || "none";
     this.fetchableValue.textContent = state.fetchableItemIds.join(", ") || "none";
@@ -135,9 +135,11 @@ export class E1DebugPanel {
       : "—";
     this.validationValue.textContent = state.decisionValidation ?? "—";
 
-    const providerParts = [state.model, state.gatewayLogId ? `log ${state.gatewayLogId}` : null, state.latencyMs !== null ? `${state.latencyMs} ms` : null].filter(
-      (part): part is string => Boolean(part)
-    );
+    const providerParts = [
+      state.model,
+      state.gatewayLogId ? `log ${state.gatewayLogId}` : null,
+      state.latencyMs !== null ? `${state.latencyMs} ms` : null
+    ].filter((part): part is string => Boolean(part));
     this.providerValue.textContent = providerParts.join(" · ") || "—";
 
     this.experienceValue.textContent = state.experience
