@@ -1,5 +1,11 @@
 import { recordRuntimeExecutionFrame } from "./action-attempt-history";
-import type { EntityId, WorldActionRequest, WorldActionResult, WorldInput } from "../world/types";
+import type {
+  EntityId,
+  WorldActionRequest,
+  WorldActionResult,
+  WorldInput,
+  WorldSnapshot
+} from "../world/types";
 import { World } from "../world/world";
 import { DeterministicExecutor } from "./deterministic-executor";
 
@@ -8,9 +14,24 @@ export interface ExecutionFrameInput {
   playerActions?: readonly WorldActionRequest[];
 }
 
+export type ExecutionActionSource = "player" | "executor";
+
+/**
+ * Frame-local event-time read model for atomic outcomes that also correspond to
+ * semantic World events in the current substrate. It is not retained history:
+ * the snapshot exists only so perception can evaluate locality at the exact
+ * post-action state before later actions in the same fixed step overwrite it.
+ */
+export interface ExecutionSemanticActionOccurrence {
+  source: ExecutionActionSource;
+  result: WorldActionResult;
+  snapshot: WorldSnapshot;
+}
+
 export interface ExecutionFrameResult {
   playerActionResults: WorldActionResult[];
   executorActionResult: WorldActionResult | null;
+  semanticActionOccurrences: ExecutionSemanticActionOccurrence[];
 }
 
 function assertFinitePlayerControl(input: WorldInput): void {
@@ -25,6 +46,13 @@ function assertPlayerActionActors(actions: readonly WorldActionRequest[], player
       throw new Error(`Player action channel requires canonical player actor ${playerId}: ${action.actorId}`);
     }
   }
+}
+
+function isSemanticActionResult(result: WorldActionResult): boolean {
+  return (
+    result.status === "succeeded" &&
+    (result.code === "picked_up_item" || result.code === "dropped_item")
+  );
 }
 
 /**
@@ -56,15 +84,34 @@ export class ExecutionDriver {
       executorCommand.control ? [executorCommand.control] : []
     );
 
-    const playerActionResults = playerActions.map((action) => this.world.attemptAction(action));
+    const playerActionResults: WorldActionResult[] = [];
+    const semanticActionOccurrences: ExecutionSemanticActionOccurrence[] = [];
+    for (const action of playerActions) {
+      const result = this.world.attemptAction(action);
+      playerActionResults.push(result);
+      if (isSemanticActionResult(result)) {
+        semanticActionOccurrences.push({
+          source: "player",
+          result: { ...result },
+          snapshot: this.world.snapshot()
+        });
+      }
+    }
 
     let executorActionResult: WorldActionResult | null = null;
     if (executorCommand.action) {
       executorActionResult = this.world.attemptAction(executorCommand.action);
+      if (isSemanticActionResult(executorActionResult)) {
+        semanticActionOccurrences.push({
+          source: "executor",
+          result: { ...executorActionResult },
+          snapshot: this.world.snapshot()
+        });
+      }
       this.executor.acceptActionResult(executorActionResult);
     }
 
-    const frame = { playerActionResults, executorActionResult };
+    const frame = { playerActionResults, executorActionResult, semanticActionOccurrences };
     recordRuntimeExecutionFrame(frame);
     return frame;
   }
