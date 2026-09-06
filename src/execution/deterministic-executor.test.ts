@@ -113,16 +113,18 @@ describe("B2 deterministic executor", () => {
   });
 
   it("fails invalid target geometry before producing movement or an atomic action", () => {
-    const specimen = createP1Specimen();
-    const lantern = specimen.entities.find((entity) => entity.id === "item.lantern");
-    if (!lantern) throw new Error("Missing lantern specimen");
+    const world = new World(createP1Specimen());
+    const snapshot = world.snapshot();
+    const lantern = snapshot.entities.find((entity) => entity.id === "item.lantern");
+    if (!lantern) throw new Error("Missing lantern snapshot");
     lantern.position.x = Number.NaN;
 
-    const world = new World(specimen);
     const executor = new DeterministicExecutor();
     executor.start({ kind: "approach-and-interact", actorId: "npc.001", targetId: "item.lantern" });
 
-    expect(nextExecutor(world, executor)).toEqual({});
+    expect(
+      executor.next(snapshot, (actorId, targetId) => world.validateInteraction(actorId, targetId))
+    ).toEqual({});
     expect(executor.state()).toMatchObject({
       status: "failed",
       failureCode: "invalid_target_geometry",
