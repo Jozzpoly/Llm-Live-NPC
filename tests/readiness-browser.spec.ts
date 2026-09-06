@@ -124,3 +124,35 @@ test("mobile landscape fills the viewport and currently hides the debug workspac
 
   await context.close();
 });
+
+test("mobile runtime survives portrait to landscape to portrait without reload", async ({ browser }) => {
+  const { context, page } = await openLab(browser, {
+    viewport: { width: 390, height: 844 },
+    isMobile: true,
+    hasTouch: true
+  });
+
+  await expect(page.locator("#app")).toHaveClass(/mobile-owner-mode/);
+  await expect(page.locator("#debug")).toBeVisible();
+  await expect(page.locator("#game canvas")).toBeVisible();
+
+  await page.setViewportSize({ width: 844, height: 390 });
+  await expect(page.locator("#debug")).toBeHidden();
+  await expect(page.locator("#game canvas")).toBeVisible();
+  await expect.poll(async () => (await page.locator(".game-shell").boundingBox())?.width ?? 0).toBeGreaterThanOrEqual(840);
+  const landscapeMetrics = await documentMetrics(page);
+  expect(landscapeMetrics.scrollY).toBe(0);
+  expect(landscapeMetrics.docWidth).toBeLessThanOrEqual(landscapeMetrics.innerWidth + 1);
+  expect(landscapeMetrics.docHeight).toBeLessThanOrEqual(landscapeMetrics.innerHeight + 1);
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.locator("#debug")).toBeVisible();
+  await expect(page.locator("#debug")).toHaveClass(/is-collapsed/);
+  await expect(page.locator("#game canvas")).toBeVisible();
+  await expect.poll(async () => (await page.locator(".game-shell").boundingBox())?.width ?? 0).toBeGreaterThanOrEqual(386);
+  const portraitMetrics = await documentMetrics(page);
+  expect(portraitMetrics.scrollY).toBe(0);
+  expect(portraitMetrics.docWidth).toBeLessThanOrEqual(portraitMetrics.innerWidth + 1);
+
+  await context.close();
+});

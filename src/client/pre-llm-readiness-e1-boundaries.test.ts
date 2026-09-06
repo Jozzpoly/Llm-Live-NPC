@@ -279,4 +279,20 @@ describe("pre-LLM E1 request and semantic boundary characterization", () => {
     expect(response.status).toBe(429);
     expect(callOrder).toEqual(["json", "limit"]);
   });
+
+  it("shows that the E1 Worker accepts valid JSON served as text/plain instead of requiring application/json", async () => {
+    const captured: unknown[] = [];
+    const response = await handleE1AgentDecision(
+      new Request("https://example.test/api/agent/e1/decide", {
+        method: "POST",
+        headers: { "content-type": "text/plain" },
+        body: JSON.stringify(rawCycleRequest())
+      }),
+      acceptingEnv(nestedToolCall("wait"), captured)
+    );
+
+    expect(response.status).toBe(200);
+    expect(captured).toHaveLength(1);
+    expect(await response.json()).toMatchObject({ ok: true, decision: { kind: "wait" } });
+  });
 });
