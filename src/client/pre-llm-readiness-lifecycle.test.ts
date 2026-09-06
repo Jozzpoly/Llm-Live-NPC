@@ -62,6 +62,56 @@ describe("pre-LLM lifecycle and semantic characterization", () => {
     });
   });
 
+  it("shows that a transport failure consumes the triggering perception change instead of retrying it", async () => {
+    const specimen = createP1Specimen();
+    const npc = specimen.entities.find((entity) => entity.id === "npc.001");
+    const player = specimen.entities.find((entity) => entity.id === "player.jozz");
+    const mug = specimen.entities.find((entity) => entity.id === "item.mug");
+    if (!npc || npc.kind !== "npc" || !player || player.kind !== "player" || !mug || mug.kind !== "item") {
+      throw new Error("Missing transport-failure stimulus fixture.");
+    }
+
+    npc.position = { x: 760, y: 390 };
+    player.position = { x: 680, y: 390 };
+    player.heldItemId = mug.id;
+    mug.heldBy = player.id;
+    mug.position = { x: 680, y: 364 };
+
+    const world = new World(specimen);
+    const executor = new DeterministicExecutor();
+    const driver = new ExecutionDriver(world, executor);
+    let providerCalls = 0;
+    const harness = new E1AgentHarness(world, executor, async () => {
+      providerCalls += 1;
+      throw new Error("synthetic-transport-failure");
+    });
+
+    harness.arm();
+    const dropFrame = driver.step({
+      playerControl: { moveX: 0, moveY: 0 },
+      playerActions: [{ action: "drop", actorId: player.id }]
+    });
+    const failedRun = harness.afterExecutionStep(dropFrame, 1000);
+    expect(failedRun).not.toBeNull();
+    await failedRun!;
+
+    expect(providerCalls).toBe(1);
+    expect(harness.state()).toMatchObject({
+      requestStatus: "request_error",
+      cyclesUsed: 1,
+      inFlight: false,
+      decisionValidation: "synthetic-transport-failure"
+    });
+
+    // The world remains in the same dropped-item state. The gate already moved
+    // its wake fingerprint to that state before the provider failed, so later
+    // frames do not re-emit the lost stimulus or retry cognition.
+    const laterFrame = driver.step({ playerControl: { moveX: 0, moveY: 0 } });
+    expect(harness.afterExecutionStep(laterFrame, 5000)).toBeNull();
+    expect(providerCalls).toBe(1);
+    expect(harness.state()).toMatchObject({ requestStatus: "request_error", cyclesUsed: 1 });
+  });
+
   it("shows that current singular location identity depends on authored array order when zones overlap", () => {
     const first = createP1Specimen();
     const player = first.entities.find((entity) => entity.id === "player.jozz");
