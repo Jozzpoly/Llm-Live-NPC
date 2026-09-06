@@ -1,0 +1,24 @@
+name: Readiness Worker Boundary Evidence
+
+on:
+  pull_request:
+
+jobs:
+  worker-boundary-characterization:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Use Node 22
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Run bounded worker boundary characterization
+        run: npx vitest run src/client/pre-llm-readiness-e1-boundaries.test.ts src/client/pre-llm-readiness-cross-origin.test.ts src/client/pre-llm-readiness-response-contract.test.ts

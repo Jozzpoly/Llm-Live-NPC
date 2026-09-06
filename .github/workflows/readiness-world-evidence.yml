@@ -1,0 +1,24 @@
+name: Readiness World Evidence
+
+on:
+  pull_request:
+
+jobs:
+  world-characterization:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Use Node 22
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Run bounded world characterization
+        run: npx vitest run src/client/pre-llm-readiness-step-collision.test.ts src/client/pre-llm-readiness-topology.test.ts src/client/pre-llm-readiness-spawn-integrity.test.ts src/client/pre-llm-readiness-frame-observability.test.ts src/client/pre-llm-readiness-authored-specimen.test.ts
