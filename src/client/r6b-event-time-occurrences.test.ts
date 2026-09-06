@@ -5,7 +5,7 @@ import { createP1Specimen } from "../world/specimen";
 import { World } from "../world/world";
 import { deriveE1SemanticActionObservedChanges } from "./e1-sensory-events";
 
-function heldMugFixture() {
+function heldMugFixture(npcPosition = { x: 760, y: 390 }) {
   const specimen = createP1Specimen();
   const npc = specimen.entities.find((entity) => entity.id === "npc.001");
   const player = specimen.entities.find((entity) => entity.id === "player.jozz");
@@ -14,7 +14,7 @@ function heldMugFixture() {
     throw new Error("Missing R6b event-time fixture.");
   }
 
-  npc.position = { x: 760, y: 390 };
+  npc.position = { ...npcPosition };
   player.position = { x: 680, y: 390 };
   player.heldItemId = mug.id;
   mug.heldBy = player.id;
@@ -105,19 +105,8 @@ describe("R6b1 frame-local event-time semantic occurrences", () => {
   });
 
   it("does not expose an event-time actor relation when the actor and item fail local visibility", () => {
-    const { world, driver, npc, player } = heldMugFixture();
-    npc.position = { x: 300, y: 390 };
-    const relocated = new World({
-      ...createP1Specimen(),
-      entities: world.snapshot().entities.map((entity) =>
-        entity.id === npc.id && entity.kind === "npc"
-          ? { ...entity, position: { x: 300, y: 390 } }
-          : entity
-      )
-    });
-    const relocatedDriver = new ExecutionDriver(relocated, new DeterministicExecutor());
-
-    const frame = relocatedDriver.step({
+    const { world, driver, npc, player } = heldMugFixture({ x: 300, y: 390 });
+    const frame = driver.step({
       playerControl: { moveX: 0, moveY: 0 },
       playerActions: [{ action: "drop", actorId: player.id }]
     });
@@ -126,7 +115,65 @@ describe("R6b1 frame-local event-time semantic occurrences", () => {
       deriveE1SemanticActionObservedChanges(
         frame.semanticActionOccurrences,
         npc.id,
-        (start, end) => relocated.hasLineOfSight(start, end)
+        (start, end) => world.hasLineOfSight(start, end)
+      )
+    ).toEqual([]);
+  });
+
+  it("does not create a semantic occurrence for a rejected atomic attempt", () => {
+    const world = new World(createP1Specimen());
+    const driver = new ExecutionDriver(world, new DeterministicExecutor());
+
+    const frame = driver.step({
+      playerControl: { moveX: 0, moveY: 0 },
+      playerActions: [{ action: "drop", actorId: world.playerId }]
+    });
+
+    expect(frame.playerActionResults[0]).toMatchObject({
+      status: "rejected",
+      code: "not_holding_item"
+    });
+    expect(frame.semanticActionOccurrences).toEqual([]);
+  });
+
+  it("records executor semantic source but does not convert the observer's own pickup into external sensory history", () => {
+    const specimen = createP1Specimen();
+    const npc = specimen.entities.find((entity) => entity.id === "npc.001");
+    const lantern = specimen.entities.find((entity) => entity.id === "item.lantern");
+    if (!npc || npc.kind !== "npc" || !lantern || lantern.kind !== "item") {
+      throw new Error("Missing R6b executor occurrence fixture.");
+    }
+    npc.position = { x: 760, y: 390 };
+    lantern.position = { x: 790, y: 390 };
+
+    const world = new World(specimen);
+    const executor = new DeterministicExecutor();
+    expect(
+      executor.start({
+        kind: "approach-and-interact",
+        actorId: npc.id,
+        targetId: lantern.id
+      })
+    ).toBe(true);
+    const driver = new ExecutionDriver(world, executor);
+
+    const frame = driver.step({ playerControl: { moveX: 0, moveY: 0 } });
+    expect(frame.executorActionResult).toMatchObject({
+      status: "succeeded",
+      code: "picked_up_item",
+      actorId: npc.id,
+      targetId: lantern.id
+    });
+    expect(frame.semanticActionOccurrences).toHaveLength(1);
+    expect(frame.semanticActionOccurrences[0]).toMatchObject({
+      source: "executor",
+      result: { code: "picked_up_item", actorId: npc.id, targetId: lantern.id }
+    });
+    expect(
+      deriveE1SemanticActionObservedChanges(
+        frame.semanticActionOccurrences,
+        npc.id,
+        (start, end) => world.hasLineOfSight(start, end)
       )
     ).toEqual([]);
   });
