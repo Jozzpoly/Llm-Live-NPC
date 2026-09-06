@@ -34,4 +34,23 @@ describe("pre-LLM specimen semantic topology characterization", () => {
 
     expect(distantSupport.bounds.y + distantSupport.bounds.height).toBeLessThan(360);
   });
+
+  it("shows that an actor can start outside world bounds and remain there across an idle canonical step", () => {
+    const specimen = createP1Specimen();
+    const player = specimen.entities.find((entity) => entity.id === "player.jozz");
+    if (!player || player.kind !== "player") throw new Error("Missing player topology fixture.");
+
+    player.position = { x: -100, y: -100 };
+    const world = new World(specimen);
+
+    expect(world.snapshot().entities.find((entity) => entity.id === player.id)).toMatchObject({
+      position: { x: -100, y: -100 }
+    });
+
+    world.step({ moveX: 0, moveY: 0 });
+
+    expect(world.snapshot().entities.find((entity) => entity.id === player.id)).toMatchObject({
+      position: { x: -100, y: -100 }
+    });
+  });
 });
