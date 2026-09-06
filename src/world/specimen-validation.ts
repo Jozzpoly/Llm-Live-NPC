@@ -1,7 +1,6 @@
 import type { Aabb, ActorEntity, ItemEntity, Vec2, WorldEntity, WorldSpecimen } from "./types";
 
 const FACING_EPSILON = 1e-6;
-const HELD_ITEM_OFFSET = 10;
 
 function assertFinitePositive(value: number, label: string): void {
   if (!Number.isFinite(value) || value <= 0) {
@@ -62,11 +61,13 @@ function aabbContainsAabb(outer: Aabb, inner: Aabb): boolean {
   );
 }
 
+/**
+ * A held item has no independent collision placement while carried. Its
+ * canonical World locality is the holder's locality. Any visual carry offset is
+ * presentation-derived and must not change World/perception geometry.
+ */
 export function heldItemAttachmentPosition(actor: ActorEntity): Vec2 {
-  return {
-    x: actor.position.x,
-    y: actor.position.y - actor.radius - HELD_ITEM_OFFSET
-  };
+  return { ...actor.position };
 }
 
 function assertLegalSpawn(
@@ -159,14 +160,7 @@ export function validateWorldSpecimen(specimen: WorldSpecimen): void {
   }
 
   for (const actor of actors) assertLegalSpawn(actor, actor.position, specimen, `Actor ${actor.id}`);
-
   for (const item of items) {
-    if (!item.heldBy) {
-      assertLegalSpawn(item, item.position, specimen, `Free item ${item.id}`);
-      continue;
-    }
-    const holder = entities.get(item.heldBy);
-    if (!isActor(holder)) throw new Error(`Item ${item.id} has invalid holder after ownership validation.`);
-    assertLegalSpawn(item, heldItemAttachmentPosition(holder), specimen, `Held item ${item.id}`);
+    if (!item.heldBy) assertLegalSpawn(item, item.position, specimen, `Free item ${item.id}`);
   }
 }
