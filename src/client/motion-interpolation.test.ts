@@ -29,6 +29,41 @@ function snapshot(position: { x: number; y: number }, tick: number): WorldSnapsh
   };
 }
 
+function snapshotWithItem(
+  tick: number,
+  item: { position: { x: number; y: number }; held: boolean }
+): WorldSnapshot {
+  const playerPosition = { x: 50, y: 60 };
+  return {
+    tick,
+    width: 100,
+    height: 100,
+    entities: [
+      {
+        id: "player.test",
+        kind: "player",
+        label: "Player",
+        position: playerPosition,
+        radius: 10,
+        heldItemId: item.held ? "item.test" : null,
+        facing: { x: 1, y: 0 }
+      },
+      {
+        id: "item.test",
+        kind: "item",
+        label: "Item",
+        position: { ...item.position },
+        radius: 5,
+        heldBy: item.held ? "player.test" : null
+      }
+    ],
+    blockers: [],
+    locations: [],
+    placementSites: [],
+    playerLocationId: null
+  };
+}
+
 describe("presentation motion interpolation", () => {
   it("derives bounded interpolation alpha from fixed-step remainder", () => {
     expect(interpolationAlpha(0, 1000 / 30)).toBe(0);
@@ -64,5 +99,31 @@ describe("presentation motion interpolation", () => {
     });
 
     expect(resolveInterpolatedEntityPositions(previous, current, 0.1).get("item.new")).toEqual({ x: 42, y: 33 });
+  });
+
+  it("derives the old carry offset only for held-item presentation", () => {
+    const held = snapshotWithItem(1, { position: { x: 50, y: 60 }, held: true });
+    const rendered = resolveInterpolatedEntityPositions(held, held, 1);
+
+    expect(rendered.get("player.test")).toEqual({ x: 50, y: 60 });
+    expect(rendered.get("item.test")).toEqual({ x: 50, y: 40 });
+    expect(held.entities.find((entity) => entity.id === "item.test")?.position).toEqual({ x: 50, y: 60 });
+  });
+
+  it("interpolates pickup from the free-item position to the derived held presentation offset", () => {
+    const previous = snapshotWithItem(1, { position: { x: 30, y: 70 }, held: false });
+    const current = snapshotWithItem(2, { position: { x: 50, y: 60 }, held: true });
+
+    expect(resolveInterpolatedEntityPositions(previous, current, 0).get("item.test")).toEqual({ x: 30, y: 70 });
+    expect(resolveInterpolatedEntityPositions(previous, current, 0.5).get("item.test")).toEqual({ x: 40, y: 55 });
+    expect(resolveInterpolatedEntityPositions(previous, current, 1).get("item.test")).toEqual({ x: 50, y: 40 });
+  });
+
+  it("interpolates drop from the derived held presentation offset to the new free-item position", () => {
+    const previous = snapshotWithItem(1, { position: { x: 50, y: 60 }, held: true });
+    const current = snapshotWithItem(2, { position: { x: 80, y: 60 }, held: false });
+
+    expect(resolveInterpolatedEntityPositions(previous, current, 0).get("item.test")).toEqual({ x: 50, y: 40 });
+    expect(resolveInterpolatedEntityPositions(previous, current, 1).get("item.test")).toEqual({ x: 80, y: 60 });
   });
 });
