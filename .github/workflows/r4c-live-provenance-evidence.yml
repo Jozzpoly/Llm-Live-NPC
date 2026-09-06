@@ -29,6 +29,14 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install locked project dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Install temporary browser evidence dependency
+        run: npm install --no-save --package-lock=false --ignore-scripts --no-audit --no-fund @playwright/test@1.55.0
 
       - name: Wait for exact Cloudflare branch preview
         shell: bash
@@ -46,7 +54,7 @@ jobs:
           exit 1
 
       - name: Install Chromium evidence runner
-        run: npx --yes @playwright/test@1.55.0 install --with-deps chromium
+        run: npx playwright install --with-deps chromium
 
       - name: Prove exact health and rendered fingerprint
-        run: npx --yes @playwright/test@1.55.0 test tests/r4c-live-provenance.spec.ts --reporter=line
+        run: npx playwright test tests/r4c-live-provenance.spec.ts --reporter=line
