@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { ActionAttemptHistory, executionFrameAttempts } from "./action-attempt-history";
-import type { ExecutionFrameResult } from "./execution-driver";
+import { createP1Specimen } from "../world/specimen";
+import { World } from "../world/world";
+import {
+  ActionAttemptHistory,
+  executionFrameAttempts,
+  recentRuntimeActionAttempts
+} from "./action-attempt-history";
+import { DeterministicExecutor } from "./deterministic-executor";
+import { ExecutionDriver, type ExecutionFrameResult } from "./execution-driver";
 
 function result(
   seq: number,
@@ -79,5 +86,27 @@ describe("execution-frame action attempt history", () => {
     const external = history.recent();
     external[0]!.message = "mutated outside history";
     expect(history.recent()[0]!.message).toBe("dropped_item");
+  });
+
+  it("records a real ExecutionDriver atomic attempt into the runtime diagnostic history", () => {
+    const world = new World(createP1Specimen());
+    const driver = new ExecutionDriver(world, new DeterministicExecutor());
+
+    const frame = driver.step({
+      playerControl: { moveX: 0, moveY: 0 },
+      playerActions: [{ action: "drop", actorId: world.playerId }]
+    });
+    expect(frame.playerActionResults[0]).toMatchObject({
+      status: "rejected",
+      code: "not_holding_item"
+    });
+
+    expect(recentRuntimeActionAttempts().at(-1)).toMatchObject({
+      source: "player",
+      actorId: world.playerId,
+      action: "drop",
+      status: "rejected",
+      code: "not_holding_item"
+    });
   });
 });
