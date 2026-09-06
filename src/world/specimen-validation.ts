@@ -115,8 +115,8 @@ export function validateWorldSpecimen(specimen: WorldSpecimen): void {
   for (const blocker of specimen.blockers) assertFiniteAabb(blocker.bounds, `Blocker ${blocker.id}`);
   for (const location of specimen.locations) {
     assertFiniteAabb(location.bounds, `Location ${location.id}`);
-    if (!Number.isInteger(location.priority)) {
-      throw new Error(`Location ${location.id} priority must be a finite integer.`);
+    if (!Number.isFinite(location.priority)) {
+      throw new Error(`Location ${location.id} priority must be finite.`);
     }
   }
   for (const site of specimen.placementSites) assertFiniteAabb(site.bounds, `Placement site ${site.id}`);
