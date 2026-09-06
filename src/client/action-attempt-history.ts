@@ -38,3 +38,16 @@ export class ActionAttemptHistory {
     return this.entries.map((entry) => ({ ...entry }));
   }
 }
+
+// Page-lifetime diagnostic side channel only. Gameplay, World authority and E1
+// cognition never read this history. ExecutionDriver is the layer that knows
+// whether an atomic attempt came through the player channel or executor channel.
+const runtimeActionAttemptHistory = new ActionAttemptHistory(12);
+
+export function recordRuntimeExecutionFrame(frame: ExecutionFrameResult): void {
+  runtimeActionAttemptHistory.record(frame);
+}
+
+export function recentRuntimeActionAttempts(): ActionAttemptRecord[] {
+  return runtimeActionAttemptHistory.recent();
+}
