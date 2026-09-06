@@ -11,6 +11,7 @@ export interface E1PerceivedEntity {
   kind: WorldEntity["kind"];
   label: string;
   distance: number;
+  /** Observer-body direction: x = forward/back, y = right/left. */
   direction: Vec2;
   heldBy?: EntityId | null;
   heldItemId?: EntityId | null;
@@ -125,7 +126,12 @@ export function projectE1Perception(
     .filter(({ distance }) => distance <= range)
     .filter(({ entity }) => hasLineOfSight(observer.position, entity.position))
     .map(({ entity, dx, dy, distance }): E1PerceivedEntity => {
-      const direction = distance > 0 ? { x: dx / distance, y: dy / distance } : { x: 0, y: 0 };
+      const worldDirection = distance > 0 ? { x: dx / distance, y: dy / distance } : { x: 0, y: 0 };
+      const right = { x: -observer.facing.y, y: observer.facing.x };
+      const direction = {
+        x: worldDirection.x * observer.facing.x + worldDirection.y * observer.facing.y,
+        y: worldDirection.x * right.x + worldDirection.y * right.y
+      };
       const perceived: E1PerceivedEntity = {
         id: entity.id,
         kind: entity.kind,
