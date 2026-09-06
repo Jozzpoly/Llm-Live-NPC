@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import worker from "../../worker/index";
 import { handleE1AgentDecision, type E1AgentEnv } from "../../worker/e1-agent";
 
 function validCycleRequest() {
@@ -56,7 +57,7 @@ function waitToolCall() {
 }
 
 describe("pre-LLM cross-origin inference boundary characterization", () => {
-  it("shows that a foreign-origin text/plain POST reaches the model even though the response is not CORS-readable", async () => {
+  it("shows that a foreign-origin text/plain POST reaches the E1 model even though the response is not CORS-readable", async () => {
     let modelCalls = 0;
     const env: E1AgentEnv = {
       AI: {
@@ -89,5 +90,36 @@ describe("pre-LLM cross-origin inference boundary characterization", () => {
     expect(modelCalls).toBe(1);
     expect(response.headers.get("access-control-allow-origin")).toBeNull();
     expect(await response.json()).toMatchObject({ ok: true, decision: { kind: "wait" } });
+  });
+
+  it("shows that a foreign-origin simple POST can run both legacy qualification candidates without any request body", async () => {
+    let modelCalls = 0;
+    const env = {
+      AI: {
+        aiGatewayLogId: "legacy-cross-origin-probe-log",
+        async run() {
+          modelCalls += 1;
+          return "transport online";
+        }
+      },
+      AI_PROBE_LIMITER: {
+        async limit() {
+          return { success: true };
+        }
+      }
+    };
+
+    const response = await worker.fetch(
+      new Request("https://llm-live-npc.example/api/ai/qualify", {
+        method: "POST",
+        headers: { origin: "https://attacker.example" }
+      }),
+      env
+    );
+
+    expect(response.status).toBe(200);
+    expect(modelCalls).toBe(2);
+    expect(response.headers.get("access-control-allow-origin")).toBeNull();
+    expect(await response.json()).toMatchObject({ ok: true, candidateCount: 2, passCount: 2 });
   });
 });
