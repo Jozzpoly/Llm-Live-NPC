@@ -8,28 +8,70 @@ Core research question:
 
 ## Current state
 
-**P0 is qualified.** GitHub → Cloudflare deployment, Workers AI through AI Gateway, usage/log correlation and a replaceable model transport seam have been proven with live Owner tests.
+Three evidence layers now exist and must not be conflated.
 
-`@cf/ibm-granite/granite-4.0-h-micro` and `@cf/meta/llama-3.2-3b-instruct` both produced usable bounded completions through the same transport seam. Earlier `@cf/zai-org/glm-4.7-flash` probes are retained as negative evidence. **No final NPC model is selected.**
+### P0 — model transport: qualified
 
-**P1 pre-cognition refoundation is now closed as a qualified substrate.** The P1 integration line contains:
+GitHub → Cloudflare deployment, Workers AI through AI Gateway, usage/log correlation and a replaceable model transport seam were proven with live tests.
+
+`@cf/ibm-granite/granite-4.0-h-micro` and `@cf/meta/llama-3.2-3b-instruct` both produced usable bounded completions through the same transport seam. Earlier `@cf/zai-org/glm-4.7-flash` probes remain negative evidence. **No final NPC model is selected.**
+
+`main` intentionally remains this proven P0 baseline until later integration is deliberate.
+
+### P1 — pre-cognition world/execution substrate: qualified
+
+Canonical line: `p1/playable-world-slice` at `e453f5862286328df92db91ba2f9adabc1e7899e`.
+
+P1 contains:
 
 - project-owned TypeScript `World` truth;
 - a small top-down settlement specimen with collision, locations, items and semantic events;
 - fixed-step movement with interpolated Phaser presentation;
 - desktop/mobile human control and direct target interaction;
-- canonical actor facing;
-- world-owned placement target validation;
-- a deterministic non-LLM NPC executor shared by browser runtime and headless evidence;
-- an Owner-qualified embodied task in which NPC-001 approaches and picks up the lantern through the same validated World action substrate used by the player;
+- canonical actor facing and world-owned placement validation;
+- deterministic non-LLM NPC execution shared by browser runtime and headless evidence;
+- Owner-qualified embodied pickup through the same validated World action substrate used by the player;
 - explicit execution/debug provenance and bounded runtime failure state.
 
-P1 still has **no autonomous cognition, NPC sight/hearing, pathfinding or final conversation system**. Integration PR #3 therefore remains draft and `main` intentionally remains the proven P0 baseline while the next phase is designed from the P1 branch.
+P1 itself does **not** qualify autonomous cognition, NPC sight/hearing, pathfinding or conversation.
 
-Canonical project spine:
+### E1 — Grounded Notice → Fetch: qualified at its bounded stop boundary
 
-1. [`docs/PROJECT_STATE.md`](docs/PROJECT_STATE.md) — current truth, evidence boundaries, architecture and frontier;
-2. [`docs/FRESH_TAKEOVER.md`](docs/FRESH_TAKEOVER.md) — startup mandate for a new conversation.
+Active integration/closure branch: `experiment/e1-grounded-notice-fetch`, draft PR #23 against P1.
+
+E1 is the first real vertical cognition experiment:
+
+`World change → bounded local perception → explicit temporal perceptual delta → real Granite wait|fetch intention → validated existing executor → World outcome → next cognition cycle with real prior experience`
+
+The final Owner re-gate passed the intended two-cycle Lantern scenario:
+
+1. player-held Lantern becomes free inside NPC-local perception;
+2. E1 derives `holder player.jozz → free`;
+3. Granite proposes `fetch(item.lantern)`;
+4. NPC-001 picks it up through the existing executor/World path;
+5. the next cycle receives `picked_up_item`, NPC-held state and `holder free → npc.001`;
+6. Granite settles to `wait`.
+
+This qualifies only that narrow loop. It does **not** qualify semantic sight, long-term memory, general planning, autonomous goals, pathfinding, speech/hearing, multiple NPCs or a final agent architecture.
+
+See [`docs/E1_GROUNDED_NOTICE_FETCH_DESIGN.md`](docs/E1_GROUNDED_NOTICE_FETCH_DESIGN.md) for the exact contract, recovered Workers AI/Granite quirks, falsification history and evidence boundary.
+
+## Technical-debt closure before the next research stage
+
+After the E1 Owner re-gate, the project was deliberately held for a bounded debt campaign instead of immediately adding features. Owner testing exposed quality gaps that domain tests had not caught, especially in shell/UI and provenance.
+
+Repairs on the E1 branch include:
+
+- fixed viewport shell: no giant blank game region or document/debug scroll coupling on desktop;
+- independent Debug Workspace scroll and explicit narrow/mobile layout contracts;
+- live `E1 cognition armed/disarmed` shell status instead of stale `cognition disabled` text;
+- `/api/health` stage provenance aligned with the E1 preview runtime;
+- executor refuses silent replacement of a running task;
+- E1 checks executor start acceptance before claiming an accepted fetch;
+- manual B2 debug trigger is disabled while the executor is running and reports actual executor state rather than an inferred button acknowledgement;
+- regression coverage for held-item wake cadence and executor task replacement.
+
+The next research stage must not begin until the current debt/continuity campaign is closed and the final preview has passed its focused smoke.
 
 ## Architectural boundary
 
@@ -37,39 +79,51 @@ Target loop:
 
 `WORLD → PERCEPTION → COGNITION/MEMORY → INTENTION → NON-LLM EXECUTION → VALIDATED WORLD ACTIONS → WORLD`
 
-Current proven lower substrate:
+Current strongest proven vertical slice:
 
-`human/scripted task → ExecutionDriver → World movement + World.attemptAction(...) → World outcome/event → presentation/debug evidence`
+`player-caused World change → E1 bounded perception + delta → Granite intention → DeterministicExecutor → ExecutionDriver → World.attemptAction(...) → World outcome/event → E1 prior experience → next Granite intention`
 
-Phaser is presentation/input infrastructure, not canonical world truth. Future cognition should propose bounded intentions/tasks rather than mutate positions, inventory or events directly.
+Phaser is presentation/input infrastructure, not canonical world truth. Cognition proposes bounded intentions; it does not mutate positions, inventory or events directly.
+
+## Canonical project spine
+
+1. [`docs/PROJECT_STATE.md`](docs/PROJECT_STATE.md) — current live truth, evidence boundaries, architecture and frontier;
+2. [`docs/E1_GROUNDED_NOTICE_FETCH_DESIGN.md`](docs/E1_GROUNDED_NOTICE_FETCH_DESIGN.md) — qualified E1 experiment/evidence;
+3. [`docs/FRESH_TAKEOVER.md`](docs/FRESH_TAKEOVER.md) — startup mandate for a new conversation.
 
 ## Infrastructure contract
 
-- GitHub `main` remains the production P0 source of truth until P1 is intentionally integrated.
-- `p1/playable-world-slice` is the canonical pre-cognition refoundation/integration line.
-- Cloudflare Worker serves the laboratory and API.
-- Workers AI is available through the `AI` binding and routed through AI Gateway for observability.
-- AI probe endpoints are transport evidence, not the NPC cognition architecture.
-- P1 uses Vite 8 + the official Cloudflare Vite plugin.
+- `main` remains the production P0 source of truth until integration is intentional.
+- `p1/playable-world-slice` is the qualified P1 substrate line.
+- `experiment/e1-grounded-notice-fetch` / PR #23 carries the qualified E1 vertical slice and current debt closure.
+- Cloudflare Worker serves laboratory previews and APIs.
+- Workers AI is routed through AI Gateway for observability.
+- `/api/ai/qualify` remains historical P0 transport evidence; it is not the NPC cognition architecture.
+- E1 cognition uses same-origin `POST /api/agent/e1/decide` on E1 builds.
+- Vite 8 + official Cloudflare Vite plugin drive builds.
 - `package-lock.json` is committed and CI uses locked installation.
-- Non-production branches receive Cloudflare preview builds for Owner testing.
+- non-production branches receive exact Cloudflare preview builds for Owner testing.
 
-## Current endpoints
+## Current production vs preview endpoints
 
-Production remains the P0 qualification laboratory until P1 is deliberately integrated:
+Production `main` remains P0:
 
 - `/` — production P0 laboratory;
-- `/api/health` — Worker/AI-binding readiness;
-- `/api/ai/qualify` — fixed-input two-model transport qualification;
+- `/api/health` — Worker/AI-binding readiness for that deployed branch;
+- `/api/ai/qualify` — fixed-input transport qualification;
 - `/api/ai/smoke` — retired GLM smoke route (`410 Gone`).
+
+E1 preview additionally exposes:
+
+- `/api/agent/e1/decide` — sanitized bounded E1 cognition endpoint.
 
 Production laboratory:
 
 `https://llm-live-npc.jozzpoly.workers.dev`
 
-P1 and experiment URLs should be taken from the exact current Cloudflare branch/commit build rather than copied from an old handoff.
+P1/E1 URLs must be taken from the exact current Cloudflare commit build rather than copied from an old handoff.
 
-## P1 toolchain
+## Toolchain
 
 Current bounded versions:
 
@@ -90,25 +144,16 @@ npm run deploy
 npm run deploy:preview
 ```
 
-`deploy:preview` is intentionally self-contained: it performs the Vite build before `wrangler versions upload`, so non-production Workers Builds cannot accidentally upload the input Wrangler config before Vite has generated deployment assets/configuration.
-
-## Cloudflare Git build settings
-
-Current intended settings:
-
-- Production branch: `main`;
-- Build command: `npm run build --if-present`;
-- Production deploy command: `npx wrangler deploy`;
-- Version command (non-production): `npm run deploy:preview`;
-- non-production branch builds: enabled;
-- Root directory: `/`.
-
-The root `wrangler.jsonc` intentionally leaves `assets.directory` to the official Vite plugin output configuration. Do not add a hard-coded build directory merely to make a pre-build `wrangler versions upload` accept the input config.
+`deploy:preview` is self-contained: it builds before `wrangler versions upload`, preventing non-production Workers Builds from uploading an input config before Vite has generated deployment assets/configuration.
 
 ## Next work
 
-Do not restart closed P1 substrate stages. A fresh takeover should verify live P1 + PR #3, read the canonical spine, and then design the smallest useful experiment toward a grounded loop such as:
+Do **not** restart P1 or E1.
 
-`WORLD → bounded NPC perception → limited LLM intention → existing deterministic executor → validated WORLD result`
+Immediate frontier is closure quality, not another feature:
 
-The exact first perception/cognition slice is intentionally **not frozen** in this README; it should be selected from fresh evidence and the Owner's research goal.
+1. finish the bounded technical-debt/continuity campaign on PR #23;
+2. run final automated + exact-deployment validation;
+3. perform only the focused Owner smoke needed to validate repaired shell/provenance behavior;
+4. then make an explicit integration/closure decision for E1;
+5. only after that, critically choose the next research question from the new evidence rather than automatically expanding E1 into a generic agent framework.
