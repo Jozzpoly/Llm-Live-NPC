@@ -1,6 +1,7 @@
 import * as Phaser from "phaser";
 import "./style.css";
 import "./mobile-style.css";
+import "./build-fingerprint.css";
 import { recentRuntimeActionAttempts } from "../execution/action-attempt-history";
 import { ActionAttemptDebugPanel } from "./action-attempt-debug-panel";
 import {
