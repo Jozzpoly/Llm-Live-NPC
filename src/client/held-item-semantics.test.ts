@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { deriveE1ObservedChanges, projectE1Perception } from "../agent/e1-grounding";
 import { createP1Specimen } from "../world/specimen";
 import { World } from "../world/world";
+import { resolveInterpolatedEntityPositions } from "./motion-interpolation";
+import { resolveDirectInteractionTarget } from "./pointer-targeting";
 
 describe("held-item canonical locality", () => {
   it("keeps a wall-adjacent held item perceptible with its holder and preserves the real holder-to-free transition", () => {
@@ -95,5 +97,30 @@ describe("held-item canonical locality", () => {
       heldBy: player.id,
       position: { x: 600, y: player.radius }
     });
+  });
+
+  it("uses the derived visual attachment position for direct held-item hit testing", () => {
+    const specimen = createP1Specimen();
+    const player = specimen.entities.find((entity) => entity.id === "player.jozz");
+    const mug = specimen.entities.find((entity) => entity.id === "item.mug");
+    if (!player || player.kind !== "player" || !mug || mug.kind !== "item") {
+      throw new Error("Missing held-item targeting fixtures.");
+    }
+
+    player.position = { x: 600, y: 420 };
+    player.heldItemId = mug.id;
+    mug.heldBy = player.id;
+    mug.position = { x: 600, y: 420 };
+
+    const world = new World(specimen);
+    const snapshot = world.snapshot();
+    const renderedPositions = resolveInterpolatedEntityPositions(snapshot, snapshot, 1);
+    const visualItemPosition = renderedPositions.get(mug.id);
+    if (!visualItemPosition) throw new Error("Missing held-item rendered position.");
+
+    expect(snapshot.entities.find((entity) => entity.id === mug.id)?.position).toEqual({ x: 600, y: 420 });
+    expect(visualItemPosition).toEqual({ x: 600, y: 394 });
+    expect(resolveDirectInteractionTarget(snapshot.entities, renderedPositions, visualItemPosition, 1, 0)).toBe(mug.id);
+    expect(resolveDirectInteractionTarget(snapshot.entities, renderedPositions, { x: 600, y: 420 }, 1, 0)).toBeNull();
   });
 });
