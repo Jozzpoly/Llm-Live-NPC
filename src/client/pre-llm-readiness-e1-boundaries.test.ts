@@ -263,7 +263,6 @@ describe("pre-LLM E1 request and semantic boundary characterization", () => {
 
     const env: E1AgentEnv = {
       AI: {
-        aiGatewayLogId: null,
         async run() {
           throw new Error("AI must not run after a rejected limiter probe.");
         }
