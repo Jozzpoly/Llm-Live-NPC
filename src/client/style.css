@@ -158,6 +158,14 @@ h1 { margin: 0; font-size: 22px; }
   background: #172a31;
   color: #d8eff7;
 }
+.debug-toggle:disabled,
+.debug-toggle:disabled:hover {
+  border-color: #29313a;
+  background: #0e1318;
+  color: #66727c;
+  cursor: not-allowed;
+  opacity: .72;
+}
 .debug-toggle-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .debug-shortcut {
   min-width: 20px;
