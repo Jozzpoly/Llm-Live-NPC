@@ -109,6 +109,42 @@ function observedChangeSignature(change: E1ObservedChange): string {
   return JSON.stringify(change);
 }
 
+function mergeBoundedObservedChanges(
+  sampledChanges: readonly E1ObservedChange[],
+  supplementalObservedChanges: readonly E1ObservedChange[],
+  supplementalDroppedCount: number
+): { observedChanges: E1ObservedChange[]; observedChangesDropped: number } {
+  const supplementalSignatures = new Set(supplementalObservedChanges.map(observedChangeSignature));
+  const uniqueSampled = sampledChanges.filter(
+    (change) => !supplementalSignatures.has(observedChangeSignature(change))
+  );
+
+  // Buffered semantic occurrences are historical event-time facts. Sampled
+  // changes are the current reconciliation against the last cognition sample.
+  // Reserve space for current sampled facts first; if the request overflows,
+  // omit the oldest buffered event history rather than silently losing a fresh
+  // sampled state change. Relative ordering inside the retained event batch is
+  // preserved, but the combined array is not claimed to be a total chronology
+  // across event-time and sampled modalities.
+  const sampledOverflow = Math.max(0, uniqueSampled.length - E1_OBSERVED_CHANGE_LIMIT);
+  const retainedSampled = uniqueSampled.slice(sampledOverflow);
+  const supplementalCapacity = E1_OBSERVED_CHANGE_LIMIT - retainedSampled.length;
+  const supplementalOverflow = Math.max(0, supplementalObservedChanges.length - supplementalCapacity);
+  const retainedSupplemental = supplementalObservedChanges.slice(supplementalOverflow);
+  const observedChangesDropped = supplementalDroppedCount + supplementalOverflow + sampledOverflow;
+  if (!Number.isSafeInteger(observedChangesDropped)) {
+    throw new Error(`E1 dropped observed-change count exceeded safe integer range: ${observedChangesDropped}`);
+  }
+
+  return {
+    observedChanges: [
+      ...retainedSupplemental.map((change) => structuredClone(change)),
+      ...retainedSampled.map((change) => structuredClone(change))
+    ],
+    observedChangesDropped
+  };
+}
+
 export function projectE1Perception(
   snapshot: WorldSnapshot,
   observerId: EntityId,
@@ -328,8 +364,8 @@ export class E1CognitionGate {
     supplementalDroppedCount = 0
   ): E1CycleRequest | null {
     if (!this.armedValue) return null;
-    if (!Number.isInteger(supplementalDroppedCount) || supplementalDroppedCount < 0) {
-      throw new Error(`E1 dropped observed-change count must be a non-negative integer: ${supplementalDroppedCount}`);
+    if (!Number.isSafeInteger(supplementalDroppedCount) || supplementalDroppedCount < 0) {
+      throw new Error(`E1 dropped observed-change count must be a non-negative safe integer: ${supplementalDroppedCount}`);
     }
 
     const wakeFingerprint = e1WakeFingerprint(perception);
@@ -350,14 +386,11 @@ export class E1CognitionGate {
 
     const previousPerception = this.lastPerception ?? perception;
     const sampledChanges = deriveE1ObservedChanges(previousPerception, perception);
-    const supplementalSignatures = new Set(supplementalObservedChanges.map(observedChangeSignature));
-    const combinedChanges = [
-      ...sampledChanges.filter((change) => !supplementalSignatures.has(observedChangeSignature(change))),
-      ...supplementalObservedChanges.map((change) => structuredClone(change))
-    ];
-    const overflow = Math.max(0, combinedChanges.length - E1_OBSERVED_CHANGE_LIMIT);
-    const observedChanges = combinedChanges.slice(overflow);
-    const observedChangesDropped = supplementalDroppedCount + overflow;
+    const { observedChanges, observedChangesDropped } = mergeBoundedObservedChanges(
+      sampledChanges,
+      supplementalObservedChanges,
+      supplementalDroppedCount
+    );
 
     const cycleId = this.nextCycleId++;
     this.inFlightValue = true;
