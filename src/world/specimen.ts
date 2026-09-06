@@ -64,12 +64,15 @@ const blockers: Blocker[] = [
   { id: "grove.tree.3", label: "Old tree", bounds: { x: 1260, y: 570, width: 48, height: 48 }, occludesVision: true }
 ];
 
+// Priority is explicit semantic specificity for the current singular-location
+// substrate. Interior/specific zones outrank broad outdoor regions; authoring
+// array order has no semantic meaning.
 const locations: LocationZone[] = [
-  { id: "workshop", label: "Workshop", bounds: { x: 980, y: 160, width: 320, height: 280 } },
-  { id: "cottage", label: "Cottage", bounds: { x: 140, y: 540, width: 320, height: 230 } },
-  { id: "grove", label: "Grove", bounds: { x: 930, y: 530, width: 400, height: 290 } },
-  { id: "yard", label: "Common Yard", bounds: { x: 420, y: 190, width: 510, height: 440 } },
-  { id: "north-path", label: "North Path", bounds: { x: 490, y: 40, width: 380, height: 140 } }
+  { id: "workshop", label: "Workshop", priority: 20, bounds: { x: 980, y: 160, width: 320, height: 280 } },
+  { id: "cottage", label: "Cottage", priority: 20, bounds: { x: 140, y: 540, width: 320, height: 230 } },
+  { id: "grove", label: "Grove", priority: 10, bounds: { x: 930, y: 530, width: 400, height: 290 } },
+  { id: "yard", label: "Common Yard", priority: 0, bounds: { x: 420, y: 190, width: 510, height: 440 } },
+  { id: "north-path", label: "North Path", priority: 10, bounds: { x: 490, y: 40, width: 380, height: 140 } }
 ];
 
 const placementSites: PlacementSite[] = [
