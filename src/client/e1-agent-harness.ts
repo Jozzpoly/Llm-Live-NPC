@@ -256,11 +256,17 @@ export class E1AgentHarness {
         return;
       }
 
-      this.executor.start({
+      const started = this.executor.start({
         kind: "approach-and-interact",
         actorId: E1_OBSERVER_ID,
         targetId: currentValidation.decision.targetId
       });
+      if (!started) {
+        this.requestStatus = "executor_busy";
+        this.decisionValidation = "executor_start_refused";
+        return;
+      }
+
       this.activeTaskTargetId = currentValidation.decision.targetId;
       this.requestStatus = "accepted_fetch";
       this.decisionValidation = "accepted_and_started";
