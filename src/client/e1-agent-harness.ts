@@ -315,14 +315,18 @@ export class E1AgentHarness {
     let timedOut = false;
     let timeoutHandle: ReturnType<typeof setTimeout> | null = null;
 
-    const providerPromise = Promise.resolve().then(() =>
-      this.provider(cycle, {
+    let providerPromise: Promise<E1DecisionEnvelope>;
+    try {
+      providerPromise = this.provider(cycle, {
         signal: controller.signal,
         sessionId: identity.sessionId,
         requestId: identity.requestId,
         attempt
-      })
-    );
+      });
+    } catch (error) {
+      providerPromise = Promise.reject(error);
+    }
+
     const timeoutPromise = new Promise<never>((_resolve, reject) => {
       timeoutHandle = setTimeout(() => {
         timedOut = true;
