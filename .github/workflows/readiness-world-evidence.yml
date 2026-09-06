@@ -21,4 +21,4 @@ jobs:
         run: npm ci --ignore-scripts --no-audit --no-fund
 
       - name: Run bounded world characterization
-        run: npx vitest run src/client/pre-llm-readiness-step-collision.test.ts src/client/pre-llm-readiness-topology.test.ts src/client/pre-llm-readiness-spawn-integrity.test.ts src/client/pre-llm-readiness-frame-observability.test.ts
+        run: npx vitest run src/client/pre-llm-readiness-step-collision.test.ts src/client/pre-llm-readiness-topology.test.ts src/client/pre-llm-readiness-spawn-integrity.test.ts src/client/pre-llm-readiness-frame-observability.test.ts src/client/pre-llm-readiness-authored-specimen.test.ts
