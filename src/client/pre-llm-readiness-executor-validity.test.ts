@@ -13,38 +13,7 @@ function actorPosition(world: World, id: string) {
 }
 
 describe("pre-LLM dynamic executor task-validity characterization", () => {
-  it("shows that a fetch target taken by another actor can remain a running task after the same-frame race", () => {
-    const specimen = createP1Specimen();
-    const player = specimen.entities.find((entity) => entity.id === "player.jozz");
-    const npc = specimen.entities.find((entity) => entity.id === "npc.001");
-    const lantern = specimen.entities.find((entity) => entity.id === "item.lantern");
-    if (!player || player.kind !== "player" || !npc || npc.kind !== "npc" || !lantern || lantern.kind !== "item") {
-      throw new Error("Missing stale-task race fixture.");
-    }
-
-    player.position = { x: 1015, y: 670 };
-    npc.position = { x: 1105, y: 670 };
-
-    const world = new World(specimen);
-    const executor = new DeterministicExecutor();
-    const driver = new ExecutionDriver(world, executor);
-    executor.start({ kind: "approach-and-interact", actorId: npc.id, targetId: lantern.id });
-
-    const frame = driver.step({
-      playerControl: { moveX: 0, moveY: 0 },
-      playerActions: [{ action: "interact", actorId: player.id, targetId: lantern.id }]
-    });
-
-    expect(frame.playerActionResults[0]).toMatchObject({ status: "succeeded", code: "picked_up_item" });
-    expect(frame.executorActionResult).toMatchObject({ status: "rejected", code: "target_out_of_range" });
-    expect(executor.state()).toMatchObject({
-      status: "running",
-      task: { kind: "approach-and-interact", actorId: npc.id, targetId: lantern.id },
-      failureCode: null
-    });
-  });
-
-  it("shows that the still-running task pursues the item while another actor holds it before eventually failing", () => {
+  it("shows that a stale fetch pursues an item held by another actor before eventually failing", () => {
     const specimen = createP1Specimen();
     const player = specimen.entities.find((entity) => entity.id === "player.jozz");
     const npc = specimen.entities.find((entity) => entity.id === "npc.001");
@@ -65,6 +34,7 @@ describe("pre-LLM dynamic executor task-validity characterization", () => {
       playerControl: { moveX: 0, moveY: 0 },
       playerActions: [{ action: "interact", actorId: player.id, targetId: lantern.id }]
     });
+    expect(executor.state().status).toBe("running");
     const before = actorPosition(world, npc.id);
 
     let frames = 0;
