@@ -35,7 +35,8 @@ describe("execution-frame action attempt history", () => {
         result(1, "player.jozz", "dropped_item", "succeeded", "item.mug"),
         result(2, "player.jozz", "picked_up_item", "succeeded", "item.mug")
       ],
-      executorActionResult: result(3, "npc.001", "target_unavailable", "rejected", "item.lantern")
+      executorActionResult: result(3, "npc.001", "target_unavailable", "rejected", "item.lantern"),
+      semanticActionOccurrences: []
     };
 
     expect(executionFrameAttempts(frame)).toEqual([
@@ -49,10 +50,11 @@ describe("execution-frame action attempt history", () => {
     const history = new ActionAttemptHistory(4);
     history.record({
       playerActionResults: [result(1, "player.jozz", "dropped_item", "succeeded", "item.mug")],
-      executorActionResult: null
+      executorActionResult: null,
+      semanticActionOccurrences: []
     });
-    history.record({ playerActionResults: [], executorActionResult: null });
-    history.record({ playerActionResults: [], executorActionResult: null });
+    history.record({ playerActionResults: [], executorActionResult: null, semanticActionOccurrences: [] });
+    history.record({ playerActionResults: [], executorActionResult: null, semanticActionOccurrences: [] });
 
     expect(history.recent()).toEqual([
       expect.objectContaining({ seq: 1, source: "player", code: "dropped_item" })
@@ -66,11 +68,13 @@ describe("execution-frame action attempt history", () => {
         result(1, "player.jozz", "dropped_item", "succeeded", "item.mug"),
         result(2, "player.jozz", "picked_up_item", "succeeded", "item.mug")
       ],
-      executorActionResult: result(3, "npc.001", "target_unavailable", "rejected", "item.lantern")
+      executorActionResult: result(3, "npc.001", "target_unavailable", "rejected", "item.lantern"),
+      semanticActionOccurrences: []
     });
     history.record({
       playerActionResults: [result(4, "player.jozz", "dropped_item", "succeeded", "item.mug")],
-      executorActionResult: null
+      executorActionResult: null,
+      semanticActionOccurrences: []
     });
 
     expect(history.recent().map((attempt) => attempt.seq)).toEqual([2, 3, 4]);
@@ -80,7 +84,8 @@ describe("execution-frame action attempt history", () => {
     const history = new ActionAttemptHistory();
     history.record({
       playerActionResults: [result(1, "player.jozz", "dropped_item", "succeeded", "item.mug")],
-      executorActionResult: null
+      executorActionResult: null,
+      semanticActionOccurrences: []
     });
 
     const external = history.recent();
