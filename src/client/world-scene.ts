@@ -1,7 +1,6 @@
 import * as Phaser from "phaser";
 import {
   DeterministicExecutor,
-  type ExecutorState,
   type ExecutorStatus
 } from "../execution/deterministic-executor";
 import { ExecutionDriver } from "../execution/execution-driver";
@@ -22,6 +21,10 @@ import {
   interpolationAlpha,
   resolveInterpolatedEntityPositions
 } from "./motion-interpolation";
+import {
+  startManualExecutorTask,
+  type ManualExecutorStartResult
+} from "./manual-executor-trigger";
 import {
   PRESENTATION_DEPTH,
   resolveBlockerVisual,
@@ -249,16 +252,18 @@ export class WorldScene extends Phaser.Scene {
     return this.e1Agent.state();
   }
 
-  startNpcFetchLanternTask(): ExecutorState {
-    this.e1Agent.disarm();
-    this.npcExecutor.start({
-      kind: "approach-and-interact",
-      actorId: "npc.001",
-      targetId: "item.lantern"
-    });
-    const state = this.npcExecutor.state();
+  startNpcFetchLanternTask(): ManualExecutorStartResult {
+    const result = startManualExecutorTask(
+      this.npcExecutor,
+      {
+        kind: "approach-and-interact",
+        actorId: "npc.001",
+        targetId: "item.lantern"
+      },
+      () => this.e1Agent.disarm()
+    );
     this.emitDebugState(this.currentPresentationSnapshot);
-    return state;
+    return result;
   }
 
   zoomByScale(scale: number): void {
