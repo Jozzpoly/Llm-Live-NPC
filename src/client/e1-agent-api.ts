@@ -8,20 +8,48 @@ export interface E1DecisionEnvelope {
   latencyMs: number | null;
 }
 
-export async function requestE1Decision(request: E1CycleRequest): Promise<E1DecisionEnvelope> {
-  const response = await fetch("/api/agent/e1/decide", {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(request)
-  });
+export interface E1DecisionRequestContext {
+  signal?: AbortSignal;
+}
+
+export class E1DecisionRequestError extends Error {
+  constructor(
+    message: string,
+    readonly retryable: boolean,
+    readonly status: number | null = null
+  ) {
+    super(message);
+    this.name = "E1DecisionRequestError";
+  }
+}
+
+export async function requestE1Decision(
+  request: E1CycleRequest,
+  context: E1DecisionRequestContext = {}
+): Promise<E1DecisionEnvelope> {
+  let response: Response;
+  try {
+    response = await fetch("/api/agent/e1/decide", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(request),
+      signal: context.signal
+    });
+  } catch (error) {
+    if (context.signal?.aborted) throw error;
+    throw new E1DecisionRequestError(
+      error instanceof Error ? error.message : String(error),
+      true
+    );
+  }
 
   const payload = (await response.json()) as Record<string, unknown>;
   if (!response.ok || payload.ok !== true) {
-    throw new Error(
+    const message =
       typeof payload.error === "string"
         ? payload.error
-        : `E1 cognition request failed: ${response.status}`
-    );
+        : `E1 cognition request failed: ${response.status}`;
+    throw new E1DecisionRequestError(message, response.status >= 500, response.status);
   }
 
   return {
