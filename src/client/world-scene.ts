@@ -268,7 +268,7 @@ export class WorldScene extends Phaser.Scene {
 
   zoomByScale(scale: number): void {
     if (!Number.isFinite(scale) || scale <= 0) return;
-    this.setCameraZoom(Number(clamp(zoom, MIN_ZOOM, MAX_ZOOM).toFixed(3)));
+    this.setCameraZoom(this.cameras.main.zoom * scale);
   }
 
   queueTouchInteractionAtClientPoint(clientX: number, clientY: number): void {
