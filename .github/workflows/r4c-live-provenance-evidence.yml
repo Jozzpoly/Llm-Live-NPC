@@ -1,0 +1,52 @@
+name: R4c Live Provenance Evidence
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/r4c-live-provenance-evidence.yml"
+      - "tests/r4c-live-provenance.spec.ts"
+      - "src/build-provenance.ts"
+      - "src/client/build-fingerprint.ts"
+      - "src/client/build-fingerprint.css"
+      - "src/client/main.ts"
+      - "vite.config.ts"
+      - "worker/index.ts"
+      - "wrangler.jsonc"
+
+jobs:
+  live-provenance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      BASE_URL: https://repair-pre-llm-readiness-r4c-build-provenance-llm-live-npc.jozzpoly.workers.dev
+      EXPECTED_SHA: ${{ github.event.pull_request.head.sha }}
+      EXPECTED_BRANCH: repair/pre-llm-readiness-r4c-build-provenance
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Use Node 22
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Wait for exact Cloudflare branch preview
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 60); do
+            ACTUAL_SHA="$(curl --fail --silent --show-error --max-time 10 "$BASE_URL/api/health" | node -e 'let body=""; process.stdin.on("data", c => body += c); process.stdin.on("end", () => { try { const value = JSON.parse(body); process.stdout.write(value?.build?.commitSha ?? ""); } catch { process.stdout.write(""); } });')" || true
+            echo "attempt $attempt: ${ACTUAL_SHA:-unavailable}"
+            if [ "$ACTUAL_SHA" = "$EXPECTED_SHA" ]; then
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "Cloudflare branch preview did not reach expected head $EXPECTED_SHA" >&2
+          exit 1
+
+      - name: Install Chromium evidence runner
+        run: npx --yes @playwright/test@1.55.0 install --with-deps chromium
+
+      - name: Prove exact health and rendered fingerprint
+        run: npx --yes @playwright/test@1.55.0 test tests/r4c-live-provenance.spec.ts --reporter=line
