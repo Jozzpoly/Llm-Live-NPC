@@ -1,9 +1,52 @@
 import {
+  E1_OBSERVED_CHANGE_LIMIT,
   projectE1Perception,
   type E1ObservedChange
 } from "../agent/e1-grounding";
 import type { ExecutionSemanticActionOccurrence } from "../execution/execution-driver";
 import type { EntityId, Vec2 } from "../world/types";
+
+export interface E1PendingSensoryChanges {
+  changes: E1ObservedChange[];
+  droppedCount: number;
+}
+
+/**
+ * Session-local bounded queue for already-localized sensory changes. Raw World
+ * snapshots and global events are never retained here. Overflow keeps the most
+ * recent changes and carries an explicit omission count into the next request.
+ */
+export class E1SensoryChangeBuffer {
+  private readonly changes: E1ObservedChange[] = [];
+  private droppedCountValue = 0;
+
+  constructor(private readonly limit = E1_OBSERVED_CHANGE_LIMIT) {
+    if (!Number.isInteger(limit) || limit <= 0) {
+      throw new Error(`E1 sensory change buffer limit must be a positive integer: ${limit}`);
+    }
+  }
+
+  append(changes: readonly E1ObservedChange[]): void {
+    this.changes.push(...changes.map((change) => structuredClone(change)));
+    const overflow = Math.max(0, this.changes.length - this.limit);
+    if (overflow > 0) {
+      this.changes.splice(0, overflow);
+      this.droppedCountValue += overflow;
+    }
+  }
+
+  pending(): E1PendingSensoryChanges {
+    return {
+      changes: this.changes.map((change) => structuredClone(change)),
+      droppedCount: this.droppedCountValue
+    };
+  }
+
+  clear(): void {
+    this.changes.length = 0;
+    this.droppedCountValue = 0;
+  }
+}
 
 /**
  * Convert frame-local semantic action occurrences into cognition-visible item

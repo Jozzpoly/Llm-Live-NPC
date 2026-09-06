@@ -1,10 +1,11 @@
-import type {
-  E1CycleRequest,
-  E1Decision,
-  E1Experience,
-  E1ObservedChange,
-  E1PerceivedEntity,
-  E1Perception
+import {
+  E1_OBSERVED_CHANGE_LIMIT,
+  type E1CycleRequest,
+  type E1Decision,
+  type E1Experience,
+  type E1ObservedChange,
+  type E1PerceivedEntity,
+  type E1Perception
 } from "../src/agent/e1-grounding";
 
 const E1_MODEL = "@cf/ibm-granite/granite-4.0-h-micro";
@@ -229,12 +230,20 @@ function sanitizeE1CycleRequest(value: unknown): E1CycleRequest | null {
   if (heldItemId !== null && fetchableItemIds.length > 0) return null;
   if (fetchableItemIds.some((id) => !visibleFreeItems.has(id))) return null;
 
-  if (!Array.isArray(request.observedChanges) || request.observedChanges.length > MAX_COLLECTION_SIZE) return null;
+  if (!Array.isArray(request.observedChanges) || request.observedChanges.length > E1_OBSERVED_CHANGE_LIMIT) return null;
   const observedChanges: E1ObservedChange[] = [];
   for (const rawChange of request.observedChanges) {
     const change = sanitizeObservedChange(rawChange);
     if (!change) return null;
     observedChanges.push(change);
+  }
+  const observedChangesDropped = finiteNumber(request.observedChangesDropped);
+  if (
+    observedChangesDropped === null ||
+    !Number.isSafeInteger(observedChangesDropped) ||
+    observedChangesDropped < 0
+  ) {
+    return null;
   }
 
   const previousExperience = sanitizeExperience(request.previousExperience);
@@ -258,6 +267,7 @@ function sanitizeE1CycleRequest(value: unknown): E1CycleRequest | null {
     trigger: request.trigger,
     perception,
     observedChanges,
+    observedChangesDropped,
     previousExperience
   };
 }
@@ -386,7 +396,7 @@ export async function handleE1AgentDecision(request: Request, env: E1AgentEnv): 
           {
             role: "system",
             content:
-              "You are the bounded intention policy for NPC-001 in an embodied game-world experiment. You know only the supplied current perception, observed temporal changes and prior self experience. Choose exactly one provided tool. Never infer or name unseen world entities. Treat observedChanges as the only evidence about what just changed. If an item_holder_changed event shows a currently fetchable item becoming free and NPC-001 holds nothing, choose fetch for that item. Otherwise choose wait. After a successful fetch experience, choose wait. The tool call is only a proposed intention; world mechanics execute and validate it separately."
+              "You are the bounded intention policy for NPC-001 in an embodied game-world experiment. You know only the supplied current perception, observed temporal changes and prior self experience. Choose exactly one provided tool. Never infer or name unseen world entities. Treat observedChanges as the only evidence about what just changed. If observedChangesDropped is greater than zero, older bounded temporal changes were omitted; do not infer their contents or reconstruct missing events. If an item_holder_changed event shows a currently fetchable item becoming free and NPC-001 holds nothing, choose fetch for that item. Otherwise choose wait. After a successful fetch experience, choose wait. The tool call is only a proposed intention; world mechanics execute and validate it separately."
           },
           {
             role: "user",

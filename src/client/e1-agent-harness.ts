@@ -17,6 +17,10 @@ import {
   type E1DecisionEnvelope,
   type E1DecisionRequestContext
 } from "./e1-agent-api";
+import {
+  E1SensoryChangeBuffer,
+  deriveE1SemanticActionObservedChanges
+} from "./e1-sensory-events";
 
 export const E1_REQUEST_TIMEOUT_MS = 12_000;
 export const E1_REQUEST_MAX_ATTEMPTS = 2;
@@ -54,6 +58,9 @@ export interface E1HarnessDebugState {
   visibleEntityIds: string[];
   fetchableItemIds: string[];
   observedChanges: string[];
+  observedChangesDropped: number;
+  pendingSensoryChanges: number;
+  pendingSensoryChangesDropped: number;
   decisionKind: "wait" | "fetch" | null;
   decisionTargetId: string | null;
   decisionValidation: string | null;
@@ -101,6 +108,7 @@ function retryableProviderError(error: unknown): boolean {
 
 export class E1AgentHarness {
   private readonly gate = new E1CognitionGate();
+  private readonly sensoryChanges = new E1SensoryChangeBuffer();
   private readonly requestTimeoutMs: number;
   private readonly maxRequestAttempts: number;
   private perception: E1Perception | null = null;
@@ -116,6 +124,7 @@ export class E1AgentHarness {
   private trigger: E1CycleRequest["trigger"] | null = null;
   private cycleId: number | null = null;
   private observedChanges: string[] = [];
+  private observedChangesDropped = 0;
   private decisionKind: "wait" | "fetch" | null = null;
   private decisionTargetId: string | null = null;
   private decisionValidation: string | null = null;
@@ -157,6 +166,7 @@ export class E1AgentHarness {
       throw new Error("E1 cannot arm while the NPC executor is already running.");
     }
     this.cancelActiveProviderAttempt();
+    this.sensoryChanges.clear();
     this.sessionId = this.nextSessionId++;
     this.requestId = null;
     this.activeRequestId = null;
@@ -168,6 +178,7 @@ export class E1AgentHarness {
     this.trigger = null;
     this.cycleId = null;
     this.observedChanges = [];
+    this.observedChangesDropped = 0;
     this.decisionKind = null;
     this.decisionTargetId = null;
     this.decisionValidation = null;
@@ -179,6 +190,7 @@ export class E1AgentHarness {
 
   disarm(): void {
     this.cancelActiveProviderAttempt();
+    this.sensoryChanges.clear();
     this.gate.disarm();
     this.activeRequestId = null;
     this.requestStatus = "disarmed";
@@ -186,6 +198,7 @@ export class E1AgentHarness {
 
   state(): E1HarnessDebugState {
     const gate = this.gate.state();
+    const pendingSensory = this.sensoryChanges.pending();
     return {
       armed: gate.armed,
       inFlight: gate.inFlight,
@@ -202,6 +215,9 @@ export class E1AgentHarness {
       visibleEntityIds: this.perception?.visibleEntities.map((entity) => entity.id) ?? [],
       fetchableItemIds: [...(this.perception?.fetchableItemIds ?? [])],
       observedChanges: [...this.observedChanges],
+      observedChangesDropped: this.observedChangesDropped,
+      pendingSensoryChanges: pendingSensory.changes.length,
+      pendingSensoryChangesDropped: pendingSensory.droppedCount,
       decisionKind: this.decisionKind,
       decisionTargetId: this.decisionTargetId,
       decisionValidation: this.decisionValidation,
@@ -214,17 +230,34 @@ export class E1AgentHarness {
 
   afterExecutionStep(frame: ExecutionFrameResult, nowMs: number): Promise<void> | null {
     this.captureExperience(frame);
+    if (this.gate.state().armed) {
+      this.sensoryChanges.append(
+        deriveE1SemanticActionObservedChanges(
+          frame.semanticActionOccurrences,
+          E1_OBSERVER_ID,
+          (start, end) => this.world.hasLineOfSight(start, end)
+        )
+      );
+    }
     this.perception = this.observe();
 
     const executorState = this.executor.state();
+    const pendingSensory = this.sensoryChanges.pending();
     const cycle = this.gate.consider(
       this.perception,
       this.experience,
       executorState.status === "running",
-      nowMs
+      nowMs,
+      pendingSensory.changes,
+      pendingSensory.droppedCount
     );
     if (!cycle) return null;
     if (this.sessionId === null) throw new Error("E1 cognition cycle requires an active arm-session identity.");
+
+    // A bounded sensory batch belongs to exactly one cognition cycle. Provider
+    // retries reuse this same immutable cycle payload; later World changes start
+    // accumulating in a fresh session-local buffer while the request is in flight.
+    this.sensoryChanges.clear();
 
     const identity: E1LocalRequestIdentity = {
       sessionId: this.sessionId,
@@ -237,6 +270,7 @@ export class E1AgentHarness {
     this.trigger = cycle.trigger;
     this.cycleId = cycle.cycleId;
     this.observedChanges = cycle.observedChanges.map(describeObservedChange);
+    this.observedChangesDropped = cycle.observedChangesDropped;
     this.decisionKind = null;
     this.decisionTargetId = null;
     this.decisionValidation = null;
