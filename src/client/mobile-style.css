@@ -2,8 +2,12 @@
 
 #app.mobile-owner-mode {
   display: block;
-  min-height: 100dvh;
+  height: 100dvh;
+  min-height: 0;
   padding: 8px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .mobile-owner-mode .game-shell {
@@ -47,12 +51,14 @@
 }
 
 .mobile-owner-mode .debug-shell {
-  min-height: auto;
+  height: min(62dvh, 620px);
+  min-height: 0;
   margin-top: 8px;
   border-radius: 12px;
 }
 
 .mobile-owner-mode .debug-shell.is-collapsed {
+  height: 48px;
   min-height: 48px;
 }
 
