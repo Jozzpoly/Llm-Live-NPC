@@ -18,11 +18,11 @@ import type {
   WorldSnapshot,
   WorldSpecimen
 } from "./types";
+import { heldItemAttachmentPosition, validateWorldSpecimen } from "./specimen-validation";
 
 const DEFAULT_STEP_SECONDS = 1 / 30;
 const INTERACTION_RANGE = 54;
 const EVENT_LIMIT = 128;
-const FACING_EPSILON = 1e-6;
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
@@ -97,11 +97,6 @@ function isActor(entity: WorldEntity | undefined): entity is ActorEntity {
   return entity?.kind === "player" || entity?.kind === "npc";
 }
 
-function hasUnitFacing(actor: ActorEntity): boolean {
-  if (!Number.isFinite(actor.facing.x) || !Number.isFinite(actor.facing.y)) return false;
-  return Math.abs(Math.hypot(actor.facing.x, actor.facing.y) - 1) <= FACING_EPSILON;
-}
-
 function assertFiniteMovement(input: WorldInput, label: string): void {
   if (!Number.isFinite(input.moveX) || !Number.isFinite(input.moveY)) {
     throw new Error(`${label} requires a finite movement vector.`);
@@ -125,6 +120,8 @@ export class World {
   private playerLocationIdValue: LocationId | null = null;
 
   constructor(specimen: WorldSpecimen) {
+    validateWorldSpecimen(specimen);
+
     this.width = specimen.width;
     this.height = specimen.height;
     this.actorSpeed = specimen.actorSpeed;
@@ -132,21 +129,9 @@ export class World {
     this.locations = structuredClone(specimen.locations);
     this.placementSites = structuredClone(specimen.placementSites);
 
-    const blockerIds = new Set(this.blockers.map((blocker) => blocker.id));
-    for (const site of this.placementSites) {
-      if (site.supportBlockerId && !blockerIds.has(site.supportBlockerId)) {
-        throw new Error(`Placement site ${site.id} references missing support blocker: ${site.supportBlockerId}`);
-      }
-    }
+    for (const entity of structuredClone(specimen.entities)) this.entities.set(entity.id, entity);
 
-    for (const entity of structuredClone(specimen.entities)) {
-      if (this.entities.has(entity.id)) throw new Error(`Duplicate entity id: ${entity.id}`);
-      if (isActor(entity) && !hasUnitFacing(entity)) {
-        throw new Error(`Actor ${entity.id} requires a finite unit facing vector.`);
-      }
-      this.entities.set(entity.id, entity);
-    }
-
+    this.followHeldItems();
     this.player();
     this.emit({ type: "world.started", message: "P1 world specimen initialized." });
     const initialLocation = this.resolveLocation(this.player().position);
@@ -328,12 +313,7 @@ export class World {
       };
     }
 
-    return {
-      status: "accepted",
-      actorId,
-      targetId,
-      targetKind: target.kind
-    };
+    return { status: "accepted", actorId, targetId, targetKind: target.kind };
   }
 
   placementSitesAt(position: Vec2): PlacementSite[] {
@@ -449,10 +429,7 @@ export class World {
     const magnitude = Math.hypot(input.moveX, input.moveY);
     if (magnitude <= 0) return;
 
-    actor.facing = {
-      x: input.moveX / magnitude,
-      y: input.moveY / magnitude
-    };
+    actor.facing = { x: input.moveX / magnitude, y: input.moveY / magnitude };
 
     const movementScale = Math.max(1, magnitude);
     const movementX = input.moveX / movementScale;
@@ -488,8 +465,7 @@ export class World {
     if (!actor.heldItemId) return;
     const item = this.entities.get(actor.heldItemId);
     if (!item || item.kind !== "item") throw new Error(`Held item missing: ${actor.heldItemId}`);
-    item.position.x = actor.position.x;
-    item.position.y = actor.position.y - actor.radius - 10;
+    item.position = heldItemAttachmentPosition(actor);
   }
 
   private updatePlayerLocation(): void {
@@ -679,11 +655,7 @@ export class World {
 
   private recordAction(result: Omit<WorldActionResult, "seq" | "tick">): WorldActionResult {
     this.actionSequence += 1;
-    const recorded = {
-      seq: this.actionSequence,
-      tick: this.tickValue,
-      ...result
-    };
+    const recorded = { seq: this.actionSequence, tick: this.tickValue, ...result };
     this.lastActionResultValue = recorded;
     return { ...recorded };
   }
