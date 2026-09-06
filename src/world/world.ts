@@ -18,6 +18,7 @@ import type {
   WorldSnapshot,
   WorldSpecimen
 } from "./types";
+import { resolveLocationZone } from "./location-membership";
 import { heldItemAttachmentPosition, validateWorldSpecimen } from "./specimen-validation";
 
 const DEFAULT_STEP_SECONDS = 1 / 30;
@@ -538,7 +539,7 @@ export class World {
   }
 
   private resolveLocation(position: Vec2) {
-    return this.locations.find((location) => containsPoint(location.bounds, position));
+    return resolveLocationZone(this.locations, position);
   }
 
   private interact(actor: ActorEntity, explicitTargetId?: EntityId): WorldActionResult {
