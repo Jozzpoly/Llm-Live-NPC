@@ -2,7 +2,41 @@ import { describe, expect, it } from "vitest";
 import { createP1Specimen } from "../world/specimen";
 import { World } from "../world/world";
 
+function aabbOverlapArea(
+  a: { x: number; y: number; width: number; height: number },
+  b: { x: number; y: number; width: number; height: number }
+): number {
+  const width = Math.max(0, Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x));
+  const height = Math.max(0, Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y));
+  return width * height;
+}
+
 describe("pre-LLM specimen semantic topology characterization", () => {
+  it("shows that the current authored support site is spatially coherent with its referenced blocker", () => {
+    const specimen = createP1Specimen();
+    const supportedSites = specimen.placementSites.filter((site) => site.supportBlockerId);
+
+    expect(supportedSites.length).toBeGreaterThan(0);
+    for (const site of supportedSites) {
+      const blocker = specimen.blockers.find((candidate) => candidate.id === site.supportBlockerId);
+      expect(blocker).toBeDefined();
+      expect(aabbOverlapArea(site.bounds, blocker!.bounds)).toBeGreaterThan(0);
+    }
+  });
+
+  it("shows that current authored actors start with their full body footprints inside world bounds", () => {
+    const specimen = createP1Specimen();
+    const actors = specimen.entities.filter((entity) => entity.kind === "player" || entity.kind === "npc");
+
+    expect(actors.length).toBeGreaterThan(0);
+    for (const actor of actors) {
+      expect(actor.position.x - actor.radius).toBeGreaterThanOrEqual(0);
+      expect(actor.position.y - actor.radius).toBeGreaterThanOrEqual(0);
+      expect(actor.position.x + actor.radius).toBeLessThanOrEqual(specimen.width);
+      expect(actor.position.y + actor.radius).toBeLessThanOrEqual(specimen.height);
+    }
+  });
+
   it("shows that a placement site can claim support from an existing but spatially unrelated blocker", () => {
     const specimen = createP1Specimen();
     const distantSupport = specimen.blockers.find((blocker) => blocker.id === "workshop.top");
