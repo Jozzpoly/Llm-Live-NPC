@@ -79,6 +79,29 @@ describe("pre-LLM World boundary characterization", () => {
     });
   });
 
+  it("shows that a missing held-item reference can throw only after the frame already mutated canonical state", () => {
+    const specimen = createP1Specimen();
+    const player = specimen.entities.find((entity) => entity.id === "player.jozz");
+    if (!player || player.kind !== "player") throw new Error("Missing invalid ownership-reference fixture.");
+
+    player.heldItemId = "missing.item";
+    const world = new World(specimen);
+    const before = world.snapshot();
+    const beforePlayer = before.entities.find((entity) => entity.id === player.id);
+    if (!beforePlayer || beforePlayer.kind !== "player") throw new Error("Missing player snapshot fixture.");
+
+    expect(() => world.step({ moveX: 1, moveY: 0 })).toThrow("Held item missing: missing.item");
+
+    const after = world.snapshot();
+    const afterPlayer = after.entities.find((entity) => entity.id === player.id);
+    if (!afterPlayer || afterPlayer.kind !== "player") throw new Error("Missing player snapshot after failed frame.");
+
+    expect(before.tick).toBe(0);
+    expect(after.tick).toBe(1);
+    expect(afterPlayer.position.x).toBeGreaterThan(beforePlayer.position.x);
+    expect(afterPlayer.heldItemId).toBe("missing.item");
+  });
+
   it("proves that World snapshots are isolated read models rather than mutable aliases", () => {
     const world = new World(createP1Specimen());
     const baseline = world.snapshot();
