@@ -1,6 +1,7 @@
 import { handleE1AgentDecision } from "./e1-agent";
 
 const GATEWAY_ID = "default";
+const LIVE_STAGE = "e1-grounded-notice-fetch";
 const PROBE_PROMPT = "Reply with exactly one short sentence confirming that LLM Live NPC cognition is online.";
 
 const PROBE_CANDIDATES = [
@@ -161,7 +162,9 @@ export default {
         service: "llm-live-npc",
         aiBinding: Boolean(env.AI),
         gateway: GATEWAY_ID,
-        stage: "p0-model-transport-qualification",
+        stage: LIVE_STAGE,
+        cognitionEndpoint: "/api/agent/e1/decide",
+        transportQualificationEndpoint: "/api/ai/qualify",
         probeCandidates: PROBE_CANDIDATES
       });
     }
