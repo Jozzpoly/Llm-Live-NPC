@@ -70,7 +70,7 @@ describe("WorldSpecimen construction integrity", () => {
     expect(() => new World(oneWayItem)).toThrow(/Held ownership mismatch/);
   });
 
-  it("canonicalizes logically valid held-item start geometry before the first snapshot", () => {
+  it("canonicalizes logically valid held-item start locality to the holder before the first snapshot", () => {
     const specimen = createP1Specimen();
     const player = specimen.entities.find((entity) => entity.id === "player.jozz");
     const mug = specimen.entities.find((entity) => entity.id === "item.mug");
@@ -86,7 +86,7 @@ describe("WorldSpecimen construction integrity", () => {
     expect(world.snapshot().entities.find((entity) => entity.id === mug.id)).toMatchObject({
       kind: "item",
       heldBy: player.id,
-      position: { x: 500, y: 474 }
+      position: { x: 500, y: 500 }
     });
   });
 
@@ -110,7 +110,7 @@ describe("WorldSpecimen construction integrity", () => {
     expect(() => new World(itemOutside)).toThrow(/Free item item\.mug footprint must start inside world bounds/);
   });
 
-  it("rejects a held start whose canonical attachment would begin in illegal geometry", () => {
+  it("allows a held item at a legal holder locality even when the old visual carry offset would leave world bounds", () => {
     const specimen = createP1Specimen();
     const player = specimen.entities.find((entity) => entity.id === "player.jozz");
     const mug = specimen.entities.find((entity) => entity.id === "item.mug");
@@ -119,8 +119,14 @@ describe("WorldSpecimen construction integrity", () => {
     player.position = { x: 500, y: player.radius };
     player.heldItemId = mug.id;
     mug.heldBy = player.id;
+    mug.position = { x: 500, y: 500 };
 
-    expect(() => new World(specimen)).toThrow(/Held item item\.mug footprint must start inside world bounds/);
+    const world = new World(specimen);
+    expect(world.snapshot().entities.find((entity) => entity.id === mug.id)).toMatchObject({
+      kind: "item",
+      heldBy: player.id,
+      position: { x: 500, y: player.radius }
+    });
   });
 
   it("requires a placement site's declared support blocker to spatially contain the site", () => {
