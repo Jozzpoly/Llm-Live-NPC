@@ -67,4 +67,20 @@ describe("pre-LLM World step/collision characterization", () => {
     const after = world.snapshot().entities.find((entity) => entity.id === player.id);
     expect(after).toMatchObject({ position: { x: 504, y: 400 } });
   });
+
+  it("shows that step-duration restriction alone cannot protect collision if a finite specimen speed is raised", () => {
+    const specimen = createP1Specimen();
+    const player = requirePlayer(specimen);
+    player.position = { x: 1280, y: 300 };
+    specimen.actorSpeed = 2000;
+
+    const world = new World(specimen);
+    world.step({ moveX: 1, moveY: 0 });
+
+    const after = world.snapshot().entities.find((entity) => entity.id === player.id);
+    if (!after || after.kind !== "player") throw new Error("Missing player after high-speed step.");
+
+    expect(after.position.x).toBeCloseTo(1346.6666666667, 8);
+    expect(after.position.x - after.radius).toBeGreaterThan(1320);
+  });
 });
