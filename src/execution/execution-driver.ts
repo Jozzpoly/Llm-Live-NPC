@@ -1,3 +1,4 @@
+import { recordRuntimeExecutionFrame } from "./action-attempt-history";
 import type { EntityId, WorldActionRequest, WorldActionResult, WorldInput } from "../world/types";
 import { World } from "../world/world";
 import { DeterministicExecutor } from "./deterministic-executor";
@@ -63,6 +64,8 @@ export class ExecutionDriver {
       this.executor.acceptActionResult(executorActionResult);
     }
 
-    return { playerActionResults, executorActionResult };
+    const frame = { playerActionResults, executorActionResult };
+    recordRuntimeExecutionFrame(frame);
+    return frame;
   }
 }
