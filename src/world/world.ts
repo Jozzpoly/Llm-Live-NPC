@@ -61,6 +61,57 @@ function pointHitsExpandedAabb(point: Vec2, radius: number, bounds: Aabb): boole
   );
 }
 
+function sweepHorizontalMovement(
+  start: Vec2,
+  targetX: number,
+  radius: number,
+  blockers: WorldSpecimen["blockers"]
+): number {
+  if (targetX === start.x) return targetX;
+
+  let resolvedX = targetX;
+  for (const blocker of blockers) {
+    const minY = blocker.bounds.y - radius;
+    const maxY = blocker.bounds.y + blocker.bounds.height + radius;
+    if (start.y <= minY || start.y >= maxY) continue;
+
+    const minX = blocker.bounds.x - radius;
+    const maxX = blocker.bounds.x + blocker.bounds.width + radius;
+    if (targetX > start.x) {
+      if (start.x <= minX && resolvedX > minX) resolvedX = Math.min(resolvedX, minX);
+    } else if (start.x >= maxX && resolvedX < maxX) {
+      resolvedX = Math.max(resolvedX, maxX);
+    }
+  }
+  return resolvedX;
+}
+
+function sweepVerticalMovement(
+  startY: number,
+  targetY: number,
+  resolvedX: number,
+  radius: number,
+  blockers: WorldSpecimen["blockers"]
+): number {
+  if (targetY === startY) return targetY;
+
+  let resolvedY = targetY;
+  for (const blocker of blockers) {
+    const minX = blocker.bounds.x - radius;
+    const maxX = blocker.bounds.x + blocker.bounds.width + radius;
+    if (resolvedX <= minX || resolvedX >= maxX) continue;
+
+    const minY = blocker.bounds.y - radius;
+    const maxY = blocker.bounds.y + blocker.bounds.height + radius;
+    if (targetY > startY) {
+      if (startY <= minY && resolvedY > minY) resolvedY = Math.min(resolvedY, minY);
+    } else if (startY >= maxY && resolvedY < maxY) {
+      resolvedY = Math.max(resolvedY, maxY);
+    }
+  }
+  return resolvedY;
+}
+
 function segmentIntersectsAabb(start: Vec2, end: Vec2, bounds: Aabb): boolean {
   const dx = end.x - start.x;
   const dy = end.y - start.y;
@@ -437,22 +488,13 @@ export class World {
     const dx = movementX * this.actorSpeed * seconds;
     const dy = movementY * this.actorSpeed * seconds;
 
-    let x = clamp(actor.position.x + dx, actor.radius, this.width - actor.radius);
-    for (const blocker of this.blockers) {
-      if (!pointHitsExpandedAabb({ x, y: actor.position.y }, actor.radius, blocker.bounds)) continue;
-      if (dx > 0) x = Math.min(x, blocker.bounds.x - actor.radius);
-      if (dx < 0) x = Math.max(x, blocker.bounds.x + blocker.bounds.width + actor.radius);
-    }
+    const targetX = clamp(actor.position.x + dx, actor.radius, this.width - actor.radius);
+    const x = sweepHorizontalMovement(actor.position, targetX, actor.radius, this.blockers);
+    const targetY = clamp(actor.position.y + dy, actor.radius, this.height - actor.radius);
+    const y = sweepVerticalMovement(actor.position.y, targetY, x, actor.radius, this.blockers);
 
-    let y = clamp(actor.position.y + dy, actor.radius, this.height - actor.radius);
-    for (const blocker of this.blockers) {
-      if (!pointHitsExpandedAabb({ x, y }, actor.radius, blocker.bounds)) continue;
-      if (dy > 0) y = Math.min(y, blocker.bounds.y - actor.radius);
-      if (dy < 0) y = Math.max(y, blocker.bounds.y + blocker.bounds.height + actor.radius);
-    }
-
-    actor.position.x = clamp(x, actor.radius, this.width - actor.radius);
-    actor.position.y = clamp(y, actor.radius, this.height - actor.radius);
+    actor.position.x = x;
+    actor.position.y = y;
   }
 
   private followHeldItems(): void {
