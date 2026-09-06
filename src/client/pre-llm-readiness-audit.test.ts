@@ -127,4 +127,36 @@ describe("pre-LLM readiness characterization", () => {
     });
     expect(world.recentEvents(128)).toEqual(eventsBefore);
   });
+
+  it("shows that the same interaction contract is asymmetric: NPC-001 cannot interact with the player", () => {
+    const specimen = createP1Specimen();
+    const player = specimen.entities.find((entity) => entity.id === "player.jozz");
+    const npc = specimen.entities.find((entity) => entity.id === "npc.001");
+    if (!player || player.kind !== "player" || !npc || npc.kind !== "npc") {
+      throw new Error("Missing readiness-audit actor interaction fixture.");
+    }
+
+    player.position = { x: 730, y: 390 };
+    npc.position = { x: 760, y: 390 };
+    const world = new World(specimen);
+
+    expect(
+      world.attemptAction({ action: "interact", actorId: npc.id, targetId: player.id })
+    ).toMatchObject({
+      status: "rejected",
+      code: "target_not_interactable",
+      actorId: npc.id,
+      targetId: player.id
+    });
+  });
+
+  it("shows that malformed specimen numbers can poison canonical World state despite valid controls", () => {
+    const specimen = createP1Specimen();
+    specimen.actorSpeed = Number.NaN;
+    const world = new World(specimen);
+
+    world.step({ moveX: 1, moveY: 0 });
+    const player = world.snapshot().entities.find((entity) => entity.id === "player.jozz");
+    expect(player?.position.x).toBeNaN();
+  });
 });
