@@ -88,7 +88,7 @@ describe("pre-LLM input/action-batch characterization", () => {
     });
 
     expect(left.playerActionResults.map((result) => result.code)).toEqual(["dropped_item", "picked_up_item"]);
-    expect(right.playerActionResults.map((result) => result.code)).toEqual(["npc_interaction_requested", "dropped_item"]);
+    expect(right.playerActionResults.map((result) => result.code)).toEqual(["no_interactable", "dropped_item"]);
     expect(dropThenInteract.world.snapshot()).not.toEqual(interactThenDrop.world.snapshot());
   });
 });
