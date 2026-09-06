@@ -1,3 +1,4 @@
+import { equalPriorityLocationAmbiguities } from "./location-membership";
 import type { Aabb, ActorEntity, ItemEntity, Vec2, WorldEntity, WorldSpecimen } from "./types";
 
 const FACING_EPSILON = 1e-6;
@@ -112,8 +113,21 @@ export function validateWorldSpecimen(specimen: WorldSpecimen): void {
   }
 
   for (const blocker of specimen.blockers) assertFiniteAabb(blocker.bounds, `Blocker ${blocker.id}`);
-  for (const location of specimen.locations) assertFiniteAabb(location.bounds, `Location ${location.id}`);
+  for (const location of specimen.locations) {
+    assertFiniteAabb(location.bounds, `Location ${location.id}`);
+    if (!Number.isFinite(location.priority)) {
+      throw new Error(`Location ${location.id} priority must be finite.`);
+    }
+  }
   for (const site of specimen.placementSites) assertFiniteAabb(site.bounds, `Placement site ${site.id}`);
+
+  const ambiguousLocations = equalPriorityLocationAmbiguities(specimen.locations);
+  if (ambiguousLocations.length > 0) {
+    const [left, right] = ambiguousLocations[0]!;
+    throw new Error(
+      `Location zones ${left.id} and ${right.id} overlap at equal priority ${left.priority}.`
+    );
+  }
 
   const entities = new Map(specimen.entities.map((entity) => [entity.id, entity] as const));
   const actors = specimen.entities.filter(isActor);
