@@ -13,7 +13,7 @@ function actorPosition(world: World, id: string) {
 }
 
 describe("pre-LLM dynamic executor task-validity characterization", () => {
-  it("shows that a stale fetch pursues an item held by another actor before eventually failing", () => {
+  it("shows that a stale fetch can pursue another actor's held item and terminate for incidental geometry rather than ownership invalidation", () => {
     const specimen = createP1Specimen();
     const player = specimen.entities.find((entity) => entity.id === "player.jozz");
     const npc = specimen.entities.find((entity) => entity.id === "npc.001");
@@ -46,7 +46,7 @@ describe("pre-LLM dynamic executor task-validity characterization", () => {
     const after = actorPosition(world, npc.id);
     expect(after.x).toBeLessThan(before.x);
     expect(frames).toBeGreaterThan(0);
-    expect(executor.state()).toMatchObject({ status: "failed", failureCode: "target_unavailable" });
+    expect(executor.state()).toMatchObject({ status: "failed", failureCode: "target_occluded" });
     expect(world.snapshot().entities.find((entity) => entity.id === lantern.id)).toMatchObject({ heldBy: player.id });
   });
 });
