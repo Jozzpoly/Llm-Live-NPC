@@ -35,6 +35,7 @@ function requestFixture(fetchableItemIds: string[] = ["item.mug"]): E1CycleReque
         holderId: null
       }
     ],
+    observedChangesDropped: 0,
     previousExperience: null
   };
 }
@@ -135,8 +136,50 @@ describe("E1 Worker cognition boundary", () => {
     const userContent = input.messages?.find((message) => message.role === "user")?.content ?? "";
     expect(userContent).toContain("item_holder_changed");
     expect(userContent).toContain("player.jozz");
+    expect(userContent).toContain('"observedChangesDropped":0');
     expect(userContent).not.toContain("secretGlobalState");
     expect(userContent).not.toContain("hidden");
+  });
+
+  it("preserves an explicit bounded omission count and tells the model not to invent omitted temporal history", async () => {
+    const captured: unknown[] = [];
+    const request = requestFixture();
+    request.observedChangesDropped = 4;
+    const env = makeEnv(nestedToolCall("fetch", { targetId: "item.mug" }), captured);
+
+    const response = await handleE1AgentDecision(
+      new Request("https://example.test/api/agent/e1/decide", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(request)
+      }),
+      env
+    );
+
+    expect(response.status).toBe(200);
+    const input = captured[0] as { messages?: Array<{ role?: string; content?: string }> };
+    const systemContent = input.messages?.find((message) => message.role === "system")?.content ?? "";
+    const userContent = input.messages?.find((message) => message.role === "user")?.content ?? "";
+    expect(userContent).toContain('"observedChangesDropped":4');
+    expect(systemContent).toContain("do not infer their contents");
+  });
+
+  it("rejects malformed omission counts at the Worker boundary", async () => {
+    for (const invalid of [-1, 1.5, Number.POSITIVE_INFINITY]) {
+      const captured: unknown[] = [];
+      const request = requestFixture() as unknown as Record<string, unknown>;
+      request.observedChangesDropped = invalid;
+      const response = await handleE1AgentDecision(
+        new Request("https://example.test/api/agent/e1/decide", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(request)
+        }),
+        makeEnv(nestedToolCall("wait"), captured)
+      );
+      expect(response.status).toBe(400);
+      expect(captured).toHaveLength(0);
+    }
   });
 
   it("also accepts a standards-shaped single-encoded nested tool argument as a bounded compatibility case", async () => {
