@@ -135,6 +135,8 @@ test("mobile runtime survives portrait to landscape to portrait without reload",
   await expect(page.locator("#app")).toHaveClass(/mobile-owner-mode/);
   await expect(page.locator("#debug")).toBeVisible();
   await expect(page.locator("#game canvas")).toBeVisible();
+  const initialGame = await page.locator(".game-shell").boundingBox();
+  expect(initialGame).not.toBeNull();
 
   await page.setViewportSize({ width: 844, height: 390 });
   await expect(page.locator("#debug")).toBeHidden();
@@ -149,7 +151,9 @@ test("mobile runtime survives portrait to landscape to portrait without reload",
   await expect(page.locator("#debug")).toBeVisible();
   await expect(page.locator("#debug")).toHaveClass(/is-collapsed/);
   await expect(page.locator("#game canvas")).toBeVisible();
-  await expect.poll(async () => (await page.locator(".game-shell").boundingBox())?.width ?? 0).toBeGreaterThanOrEqual(386);
+  await expect
+    .poll(async () => Math.abs(((await page.locator(".game-shell").boundingBox())?.width ?? 0) - initialGame!.width))
+    .toBeLessThanOrEqual(1);
   const portraitMetrics = await documentMetrics(page);
   expect(portraitMetrics.scrollY).toBe(0);
   expect(portraitMetrics.docWidth).toBeLessThanOrEqual(portraitMetrics.innerWidth + 1);
