@@ -30,6 +30,8 @@ export interface E1HarnessDebugState {
   armed: boolean;
   inFlight: boolean;
   requestStatus: E1HarnessRequestStatus;
+  sessionId: number | null;
+  requestId: number | null;
   cycleId: number | null;
   cyclesUsed: number;
   cycleBudget: number;
@@ -45,6 +47,11 @@ export interface E1HarnessDebugState {
   gatewayLogId: string | null;
   latencyMs: number | null;
   experience: E1Experience | null;
+}
+
+interface E1LocalRequestIdentity {
+  sessionId: number;
+  requestId: number;
 }
 
 function describeObservedChange(change: E1ObservedChange): string {
@@ -67,6 +74,11 @@ export class E1AgentHarness {
   private perception: E1Perception | null = null;
   private experience: E1Experience | null = null;
   private requestStatus: E1HarnessRequestStatus = "disarmed";
+  private nextSessionId = 1;
+  private sessionId: number | null = null;
+  private nextRequestId = 1;
+  private requestId: number | null = null;
+  private activeRequestId: number | null = null;
   private trigger: E1CycleRequest["trigger"] | null = null;
   private cycleId: number | null = null;
   private observedChanges: string[] = [];
@@ -100,6 +112,9 @@ export class E1AgentHarness {
     if (this.executor.state().status === "running") {
       throw new Error("E1 cannot arm while the NPC executor is already running.");
     }
+    this.sessionId = this.nextSessionId++;
+    this.requestId = null;
+    this.activeRequestId = null;
     this.experience = null;
     this.perception = this.observe();
     this.gate.arm(this.perception, this.experience);
@@ -118,6 +133,7 @@ export class E1AgentHarness {
 
   disarm(): void {
     this.gate.disarm();
+    this.activeRequestId = null;
     this.requestStatus = "disarmed";
   }
 
@@ -127,6 +143,8 @@ export class E1AgentHarness {
       armed: gate.armed,
       inFlight: gate.inFlight,
       requestStatus: this.requestStatus,
+      sessionId: this.sessionId,
+      requestId: this.requestId,
       cycleId: this.cycleId,
       cyclesUsed: gate.cyclesUsed,
       cycleBudget: gate.cycleBudget,
@@ -157,7 +175,14 @@ export class E1AgentHarness {
       nowMs
     );
     if (!cycle) return null;
+    if (this.sessionId === null) throw new Error("E1 cognition cycle requires an active arm-session identity.");
 
+    const identity: E1LocalRequestIdentity = {
+      sessionId: this.sessionId,
+      requestId: this.nextRequestId++
+    };
+    this.requestId = identity.requestId;
+    this.activeRequestId = identity.requestId;
     this.requestStatus = "in_flight";
     this.trigger = cycle.trigger;
     this.cycleId = cycle.cycleId;
@@ -165,7 +190,7 @@ export class E1AgentHarness {
     this.decisionKind = null;
     this.decisionTargetId = null;
     this.decisionValidation = null;
-    return this.runCycle(cycle);
+    return this.runCycle(cycle, identity);
   }
 
   private observe(): E1Perception {
@@ -209,71 +234,91 @@ export class E1AgentHarness {
     this.activeTaskTargetId = null;
   }
 
-  private async runCycle(cycle: E1CycleRequest): Promise<void> {
+  private isCurrentRequest(identity: E1LocalRequestIdentity): boolean {
+    return (
+      this.gate.state().armed &&
+      this.sessionId === identity.sessionId &&
+      this.activeRequestId === identity.requestId
+    );
+  }
+
+  private finishCurrentRequest(cycle: E1CycleRequest, identity: E1LocalRequestIdentity): boolean {
+    if (!this.isCurrentRequest(identity)) return false;
+    if (!this.gate.finish(cycle.cycleId)) return false;
+    this.activeRequestId = null;
+    return true;
+  }
+
+  private async runCycle(cycle: E1CycleRequest, identity: E1LocalRequestIdentity): Promise<void> {
+    let response: E1DecisionEnvelope;
     try {
-      const response = await this.provider(cycle);
-      if (!this.gate.finish(cycle.cycleId)) return;
-      if (response.cycleId !== cycle.cycleId) {
-        throw new Error(`E1 cycle mismatch: expected ${cycle.cycleId}, received ${response.cycleId}.`);
-      }
-
-      this.model = response.model;
-      this.gatewayLogId = response.gatewayLogId;
-      this.latencyMs = response.latencyMs;
-
-      const validation = validateE1Decision(response.decision, cycle.perception);
-      if (validation.status === "rejected") {
-        this.requestStatus = "decision_rejected";
-        this.decisionValidation = validation.code;
-        return;
-      }
-
-      this.decisionKind = validation.decision.kind;
-      this.decisionTargetId = validation.decision.kind === "fetch" ? validation.decision.targetId : null;
-      this.decisionValidation = "accepted_at_request_perception";
-
-      if (validation.decision.kind === "wait") {
-        this.requestStatus = "accepted_wait";
-        return;
-      }
-
-      const currentPerception = this.observe();
-      this.perception = currentPerception;
-      const currentValidation = validateE1Decision(validation.decision, currentPerception);
-      if (currentValidation.status === "rejected") {
-        this.requestStatus = "stale_decision";
-        this.decisionValidation = currentValidation.code;
-        return;
-      }
-      if (this.executor.state().status === "running") {
-        this.requestStatus = "executor_busy";
-        this.decisionValidation = "executor_running";
-        return;
-      }
-      if (currentValidation.decision.kind !== "fetch") {
-        this.requestStatus = "stale_decision";
-        this.decisionValidation = "unexpected_wait_revalidation";
-        return;
-      }
-
-      const started = this.executor.start({
-        kind: "approach-and-interact",
-        actorId: E1_OBSERVER_ID,
-        targetId: currentValidation.decision.targetId
-      });
-      if (!started) {
-        this.requestStatus = "executor_busy";
-        this.decisionValidation = "executor_start_refused";
-        return;
-      }
-
-      this.activeTaskTargetId = currentValidation.decision.targetId;
-      this.requestStatus = "accepted_fetch";
-      this.decisionValidation = "accepted_and_started";
+      response = await this.provider(cycle);
     } catch (error) {
-      if (!this.gate.finish(cycle.cycleId) && !this.gate.state().armed) return;
+      if (!this.finishCurrentRequest(cycle, identity)) return;
       this.requestStatus = "request_error";
       this.decisionValidation = error instanceof Error ? error.message : String(error);
+      return;
     }
+
+    if (!this.finishCurrentRequest(cycle, identity)) return;
+    if (response.cycleId !== cycle.cycleId) {
+      this.requestStatus = "request_error";
+      this.decisionValidation = `E1 cycle mismatch: expected ${cycle.cycleId}, received ${response.cycleId}.`;
+      return;
+    }
+
+    this.model = response.model;
+    this.gatewayLogId = response.gatewayLogId;
+    this.latencyMs = response.latencyMs;
+
+    const validation = validateE1Decision(response.decision, cycle.perception);
+    if (validation.status === "rejected") {
+      this.requestStatus = "decision_rejected";
+      this.decisionValidation = validation.code;
+      return;
+    }
+
+    this.decisionKind = validation.decision.kind;
+    this.decisionTargetId = validation.decision.kind === "fetch" ? validation.decision.targetId : null;
+    this.decisionValidation = "accepted_at_request_perception";
+
+    if (validation.decision.kind === "wait") {
+      this.requestStatus = "accepted_wait";
+      return;
+    }
+
+    const currentPerception = this.observe();
+    this.perception = currentPerception;
+    const currentValidation = validateE1Decision(validation.decision, currentPerception);
+    if (currentValidation.status === "rejected") {
+      this.requestStatus = "stale_decision";
+      this.decisionValidation = currentValidation.code;
+      return;
+    }
+    if (this.executor.state().status === "running") {
+      this.requestStatus = "executor_busy";
+      this.decisionValidation = "executor_running";
+      return;
+    }
+    if (currentValidation.decision.kind !== "fetch") {
+      this.requestStatus = "stale_decision";
+      this.decisionValidation = "unexpected_wait_revalidation";
+      return;
+    }
+
+    const started = this.executor.start({
+      kind: "approach-and-interact",
+      actorId: E1_OBSERVER_ID,
+      targetId: currentValidation.decision.targetId
+    });
+    if (!started) {
+      this.requestStatus = "executor_busy";
+      this.decisionValidation = "executor_start_refused";
+      return;
+    }
+
+    this.activeTaskTargetId = currentValidation.decision.targetId;
+    this.requestStatus = "accepted_fetch";
+    this.decisionValidation = "accepted_and_started";
   }
 }
