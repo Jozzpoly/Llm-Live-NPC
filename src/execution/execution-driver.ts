@@ -1,4 +1,4 @@
-import { recordRuntimeExecutionFrame } from "../client/action-attempt-history";
+import { recordRuntimeExecutionFrame } from "./action-attempt-history";
 import type { EntityId, WorldActionRequest, WorldActionResult, WorldInput } from "../world/types";
 import { World } from "../world/world";
 import { DeterministicExecutor } from "./deterministic-executor";
