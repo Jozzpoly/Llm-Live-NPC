@@ -56,6 +56,18 @@ function fixture(): WorldSnapshot {
   };
 }
 
+function droppedPerception(): ReturnType<typeof projectE1Perception> {
+  const droppedSnapshot = fixture();
+  const mug = droppedSnapshot.entities.find((entity) => entity.id === "item.mug");
+  const player = droppedSnapshot.entities.find((entity) => entity.id === "player.jozz");
+  if (!mug || mug.kind !== "item" || !player || player.kind !== "player") {
+    throw new Error("Invalid drop fixture.");
+  }
+  mug.heldBy = null;
+  player.heldItemId = null;
+  return projectE1Perception(droppedSnapshot, "npc.001", () => true);
+}
+
 describe("E1 bounded perception", () => {
   it("projects only local observable relations and never raw absolute positions", () => {
     const perception = projectE1Perception(fixture(), "npc.001", () => true);
@@ -88,15 +100,11 @@ describe("E1 bounded perception", () => {
     player.direction = { x: -1, y: 0 };
     expect(e1WakeFingerprint(movedActor)).toBe(e1WakeFingerprint(held));
 
-    const droppedSnapshot = fixture();
-    const mug = droppedSnapshot.entities.find((entity) => entity.id === "item.mug");
-    const playerEntity = droppedSnapshot.entities.find((entity) => entity.id === "player.jozz");
-    if (!mug || mug.kind !== "item" || !playerEntity || playerEntity.kind !== "player") {
-      throw new Error("Invalid drop fixture.");
-    }
-    mug.heldBy = null;
-    playerEntity.heldItemId = null;
-    const dropped = projectE1Perception(droppedSnapshot, "npc.001", () => true);
+    const heldOutside = structuredClone(held);
+    heldOutside.visibleEntities = heldOutside.visibleEntities.filter((entity) => entity.id !== "item.mug");
+    expect(e1WakeFingerprint(heldOutside)).toBe(e1WakeFingerprint(held));
+
+    const dropped = droppedPerception();
 
     expect(e1WakeFingerprint(dropped)).not.toBe(e1WakeFingerprint(held));
     expect(deriveE1ObservedChanges(held, dropped)).toContainEqual({
@@ -119,17 +127,39 @@ describe("E1 bounded perception", () => {
 });
 
 describe("E1 cognition gate", () => {
+  it("silently tracks a held item entering perception, then emits the real holder transition when it becomes fetchable", () => {
+    const held = projectE1Perception(fixture(), "npc.001", () => true);
+    const heldOutside = structuredClone(held);
+    heldOutside.visibleEntities = heldOutside.visibleEntities.filter((entity) => entity.id !== "item.mug");
+    const dropped = droppedPerception();
+
+    const gate = new E1CognitionGate(3, 750);
+    gate.arm(heldOutside, null);
+
+    expect(gate.consider(held, null, false, 0)).toBeNull();
+    expect(gate.state().cyclesUsed).toBe(0);
+
+    const request = gate.consider(dropped, null, false, 100);
+    expect(request?.cycleId).toBe(1);
+    expect(request?.trigger).toBe("perception_changed");
+    expect(request?.observedChanges).toContainEqual({
+      kind: "item_holder_changed",
+      itemId: "item.mug",
+      previousHolderId: "player.jozz",
+      holderId: null
+    });
+    expect(request?.observedChanges).not.toContainEqual({
+      kind: "item_entered_perception",
+      itemId: "item.mug",
+      holderId: null
+    });
+    expect(gate.finish(1)).toBe(true);
+    expect(gate.state().cyclesUsed).toBe(1);
+  });
+
   it("arms as a baseline and emits the bounded temporal delta on a later semantic change", () => {
     const held = projectE1Perception(fixture(), "npc.001", () => true);
-    const droppedSnapshot = fixture();
-    const mug = droppedSnapshot.entities.find((entity) => entity.id === "item.mug");
-    const player = droppedSnapshot.entities.find((entity) => entity.id === "player.jozz");
-    if (!mug || mug.kind !== "item" || !player || player.kind !== "player") {
-      throw new Error("Invalid gate fixture.");
-    }
-    mug.heldBy = null;
-    player.heldItemId = null;
-    const dropped = projectE1Perception(droppedSnapshot, "npc.001", () => true);
+    const dropped = droppedPerception();
 
     const gate = new E1CognitionGate(3, 750);
     gate.arm(held, null);

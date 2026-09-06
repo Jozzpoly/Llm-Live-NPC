@@ -16,7 +16,7 @@
       "name": "AI_PROBE_LIMITER",
       "namespace_id": "731947",
       "simple": {
-        "limit": 3,
+        "limit": 6,
         "period": 60
       }
     }

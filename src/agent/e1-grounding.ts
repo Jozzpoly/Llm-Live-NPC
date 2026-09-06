@@ -171,9 +171,10 @@ export function projectE1Perception(
 }
 
 /**
- * E1 wake semantics are intentionally narrower than the full perception payload.
- * Pure actor motion does not wake cognition. Item visibility/ownership, observer
- * location/held state and explicit execution experience do.
+ * E1 wakes only when the tiny legal-intention surface can materially change:
+ * observer state or the visible free-item allow-list. Held-item visibility churn
+ * is still tracked in the silent perception baseline so a later drop can retain
+ * the real holder transition without spending a cognition cycle.
  */
 export function e1WakeFingerprint(perception: E1Perception): string {
   return JSON.stringify({
@@ -181,9 +182,7 @@ export function e1WakeFingerprint(perception: E1Perception): string {
       locationId: perception.observer.locationId,
       heldItemId: perception.observer.heldItemId
     },
-    items: perception.visibleEntities
-      .filter((entity) => entity.kind === "item")
-      .map((entity) => ({ id: entity.id, heldBy: entity.heldBy ?? null }))
+    fetchableItemIds: [...perception.fetchableItemIds].sort((a, b) => a.localeCompare(b))
   });
 }
 
@@ -323,15 +322,21 @@ export class E1CognitionGate {
     executorRunning: boolean,
     nowMs: number
   ): E1CycleRequest | null {
-    if (!this.armedValue || this.inFlightValue || executorRunning) return null;
-    if (this.cyclesUsedValue >= this.cycleBudget) return null;
-    if (!Number.isFinite(nowMs) || nowMs - this.lastRequestAt < this.cooldownMs) return null;
+    if (!this.armedValue) return null;
 
     const wakeFingerprint = e1WakeFingerprint(perception);
     const experienceFingerprint = e1ExperienceFingerprint(experience);
     const perceptionChanged = wakeFingerprint !== this.lastWakeFingerprint;
     const experienceChanged = experienceFingerprint !== this.lastExperienceFingerprint;
-    if (!perceptionChanged && !experienceChanged) return null;
+
+    if (!perceptionChanged && !experienceChanged) {
+      this.lastPerception = structuredClone(perception);
+      return null;
+    }
+
+    if (this.inFlightValue || executorRunning) return null;
+    if (this.cyclesUsedValue >= this.cycleBudget) return null;
+    if (!Number.isFinite(nowMs) || nowMs - this.lastRequestAt < this.cooldownMs) return null;
 
     const previousPerception = this.lastPerception ?? perception;
     const observedChanges = deriveE1ObservedChanges(previousPerception, perception);
