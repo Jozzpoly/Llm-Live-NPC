@@ -52,6 +52,33 @@ describe("pre-LLM World boundary characterization", () => {
     expect(snapshot.placementSites.filter((entry) => entry.id === site.id)).toHaveLength(2);
   });
 
+  it("shows that logically consistent held-item ownership can begin with physically inconsistent geometry", () => {
+    const specimen = createP1Specimen();
+    const player = specimen.entities.find((entity) => entity.id === "player.jozz");
+    const mug = specimen.entities.find((entity) => entity.id === "item.mug");
+    if (!player || player.kind !== "player" || !mug || mug.kind !== "item") {
+      throw new Error("Missing held-item start geometry fixture.");
+    }
+
+    player.position = { x: 500, y: 500 };
+    player.heldItemId = mug.id;
+    mug.heldBy = player.id;
+    mug.position = { x: 1200, y: 120 };
+
+    const world = new World(specimen);
+    expect(world.snapshot().entities.find((entity) => entity.id === player.id)).toMatchObject({ heldItemId: mug.id });
+    expect(world.snapshot().entities.find((entity) => entity.id === mug.id)).toMatchObject({
+      heldBy: player.id,
+      position: { x: 1200, y: 120 }
+    });
+
+    world.step({ moveX: 0, moveY: 0 });
+    expect(world.snapshot().entities.find((entity) => entity.id === mug.id)).toMatchObject({
+      heldBy: player.id,
+      position: { x: 500, y: 474 }
+    });
+  });
+
   it("proves that World snapshots are isolated read models rather than mutable aliases", () => {
     const world = new World(createP1Specimen());
     const baseline = world.snapshot();
