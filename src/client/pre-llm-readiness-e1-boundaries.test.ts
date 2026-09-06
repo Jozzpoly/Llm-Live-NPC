@@ -218,4 +218,36 @@ describe("pre-LLM E1 request and semantic boundary characterization", () => {
       decision: { kind: "fetch", targetId: "item.mug" }
     });
   });
+
+  it("shows that Worker accepts an observed holder transition that contradicts the current perceived item state", async () => {
+    const captured: unknown[] = [];
+    const request = rawCycleRequest();
+
+    // Current perception says the mug is free and fetchable, but the temporal
+    // claim says the same mug just changed from free to held by the player.
+    request.observedChanges = [
+      {
+        kind: "item_holder_changed",
+        itemId: "item.mug",
+        previousHolderId: null,
+        holderId: "player.jozz"
+      }
+    ];
+
+    const response = await handleE1AgentDecision(
+      new Request("https://example.test/api/agent/e1/decide", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(request)
+      }),
+      acceptingEnv(nestedToolCall("fetch", { targetId: "item.mug" }), captured)
+    );
+
+    expect(response.status).toBe(200);
+    expect(captured).toHaveLength(1);
+    const input = captured[0] as { messages?: Array<{ role?: string; content?: string }> };
+    const userContent = input.messages?.find((message) => message.role === "user")?.content ?? "";
+    expect(userContent).toContain('"heldBy":null');
+    expect(userContent).toContain('"holderId":"player.jozz"');
+  });
 });
