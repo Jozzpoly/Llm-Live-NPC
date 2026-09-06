@@ -1,0 +1,16 @@
+.workspace-build-fingerprint {
+  max-width: 250px;
+  margin-top: 2px;
+  overflow: hidden;
+  color: #788894;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 9px;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mobile-owner-mode .workspace-build-fingerprint {
+  max-width: min(58vw, 220px);
+  font-size: 8px;
+}
