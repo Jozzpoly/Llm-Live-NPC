@@ -10,6 +10,9 @@ export interface E1DecisionEnvelope {
 
 export interface E1DecisionRequestContext {
   signal?: AbortSignal;
+  sessionId?: number;
+  requestId?: number;
+  attempt?: number;
 }
 
 export class E1DecisionRequestError extends Error {
