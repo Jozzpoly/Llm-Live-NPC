@@ -90,7 +90,8 @@ export interface E1GateState {
 
 function rounded(value: number, digits: number): number {
   const factor = 10 ** digits;
-  return Math.round(value * factor) / factor;
+  const result = Math.round(value * factor) / factor;
+  return Object.is(result, -0) ? 0 : result;
 }
 
 function perceivedItems(perception: E1Perception): Map<EntityId, E1PerceivedEntity> {
