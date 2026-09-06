@@ -50,14 +50,18 @@ describe("explicit singular location membership", () => {
     expect(() => new World(specimen)).toThrow(/overlap at equal priority 10/);
   });
 
-  it("requires authored priority to be a finite integer", () => {
-    const specimen = createP1Specimen();
-    specimen.locations[0]!.priority = 1.5;
-    expect(() => new World(specimen)).toThrow(/priority must be a finite integer/);
+  it("accepts finite fractional priority and rejects non-finite priority", () => {
+    const fractional = createP1Specimen();
+    fractional.locations[0]!.priority = 20.5;
+    expect(() => new World(fractional)).not.toThrow();
 
-    const nonFinite = createP1Specimen();
-    nonFinite.locations[0]!.priority = Number.NaN;
-    expect(() => new World(nonFinite)).toThrow(/priority must be a finite integer/);
+    const nanPriority = createP1Specimen();
+    nanPriority.locations[0]!.priority = Number.NaN;
+    expect(() => new World(nanPriority)).toThrow(/priority must be finite/);
+
+    const infinitePriority = createP1Specimen();
+    infinitePriority.locations[0]!.priority = Number.POSITIVE_INFINITY;
+    expect(() => new World(infinitePriority)).toThrow(/priority must be finite/);
   });
 
   it("emits singular lifecycle when movement enters a higher-priority overlap", () => {
