@@ -1,188 +1,181 @@
 # E1 — Grounded Notice → Fetch
 
-Status: active bounded experiment design
+Status: **bounded experiment qualified by automated, live-model and Owner evidence**
 
 Base: `p1/playable-world-slice` at `e453f5862286328df92db91ba2f9adabc1e7899e`
+
+Runtime-clean checkpoint before documentation-only closure work: `15ed5e3146df07cb2624c7bd77dd5f2e9a4a5105`
 
 ## Research question
 
 Can NPC-001 react to a player-caused world change only after that change enters a bounded local perception, receive an explicit temporal perceptual delta describing what it actually observed changing, choose a tiny LLM intention, execute it through the existing deterministic executor and validated World actions, and then carry the real execution outcome into a subsequent cognition cycle?
 
-The focused Owner scenario is deliberately small:
+For E1 the answer is **yes, within the exact bounded scenario below**. This does not qualify a general sight system, memory architecture, navigation system, conversation system or open-ended autonomy.
 
-`player carries item into NPC-local range while it is held → arm E1 to capture that state as baseline → player drops item → bounded perception derives holder player→free → LLM proposes fetch(item) → existing executor approaches/interacts → World records pickup → next cognition cycle receives the real outcome + new self state`
+## Qualified scenario
 
-This is not a sight-system qualification, memory architecture, navigation experiment or conversation system.
+`player carries item into NPC-local range while held → arm E1 to establish temporal baseline → player drops item → bounded perception derives holder player→free → Granite proposes fetch(item) → existing executor approaches/interacts → World records pickup → next cognition cycle receives real picked_up_item experience + NPC-held state → Granite proposes wait`
 
-## Experiment boundary
+The deployed Owner re-gate reproduced this chain successfully with the Lantern.
 
-One NPC: `npc.001`.
+## Perception boundary
 
-One perception modality: local 360° geometric neighborhood with:
+One observer: `npc.001`.
+
+One local geometric modality:
 
 - range: `220 px`;
-- canonical entity positions from `WorldSnapshot`;
-- existing `World.hasLineOfSight(...)` used only as an occlusion primitive;
-- no raw blocker list, complete entity list, absolute map state or global event log exposed to cognition.
+- canonical entity positions originate from `WorldSnapshot`;
+- existing `World.hasLineOfSight(...)` is used only as an occlusion primitive;
+- no raw blocker list, complete entity list, absolute map state or global event log is exposed to cognition;
+- cognition receives relative distance/direction plus directly perceived ownership relations;
+- `fetchableItemIds` contains only visible free items while NPC-001 is empty-handed.
 
-One intention vocabulary:
+Geometric LOS in E1 is **not** a qualified sight model.
 
-- `wait`;
-- `fetch(targetId)` where `targetId` must be one of the currently perceived free item IDs.
+## Temporal perceptual continuity
 
-`fetch` maps directly to the already-qualified executor task:
-
-`approach-and-interact(npc.001, targetId)`.
-
-No new approach task, generic planner or behavior tree is introduced.
-
-## Perception + temporal experience payload
-
-The cognition input may contain only:
-
-- observer identity, label, current location and held item;
-- entities within range and geometric LOS;
-- relative distance/direction, not absolute world position;
-- actor/item ownership relations that are directly represented by perceived entities;
-- an explicit `fetchableItemIds` allow-list of currently visible free items;
-- bounded `observedChanges` derived from the previous bounded perception and current bounded perception;
-- NPC-001's own most recent E1 execution experience, if one exists.
-
-`observedChanges` is deliberately small and inspectable. E1 may represent:
+`observedChanges` is derived from consecutive bounded perceptions and can represent:
 
 - item entered local perception;
 - item left local perception;
-- visible item holder changed, including the primary `player.jozz → free` case;
-- observer held-item changed;
+- visible item holder changed;
+- observer held item changed;
 - observer location changed.
 
-This is not long-term memory. It is the minimum temporal perceptual continuity needed for the model to know **what actually changed**, rather than merely being called after an opaque trigger.
+The important Owner stimulus is the explicit relation:
 
-The full bounded perception may contain a visible actor, but the **wake fingerprint is intentionally narrower**. It ignores tick and continuous actor distance/direction changes and reacts to:
+`item.lantern: holder player.jozz → free`
 
-- NPC-001 location/held-item state;
-- locally perceived item entry/exit;
-- locally perceived item `heldBy` changes;
+This is not long-term memory. It is only enough temporal continuity for the model to know what bounded perceptual fact changed.
+
+### Wake semantics after Owner repair
+
+The original implementation woke cognition on visible item entry/exit and `heldBy` churn. Owner testing falsified that cadence because a still-held item moving around the `220 px` boundary could waste `wait` cycles before the intended drop.
+
+The qualified wake surface is therefore narrower:
+
+- observer location;
+- observer held-item state;
+- **visible fetchable item IDs**;
 - new E1 executor experience.
 
-This is an experiment-specific anti-burst policy, not a final attention architecture.
+Pure actor motion and non-fetchable held-item boundary churn do **not** call the model. They still refresh the silent local perception baseline, so a later drop preserves the true `holder player → free` delta instead of fabricating `item entered perception`.
 
-## Trigger / cadence contract
+Cooldown remains `750 ms`; hard budget remains `3` cognition cycles per arm session; only one request may be in flight; cognition never interrupts a running executor task.
 
-E1 is manually armed from the laboratory debug workspace.
+## Intention and authority contract
 
-Arming captures the current bounded perception as temporal baseline and does not immediately call the model. This makes the primary Owner gate causal: carry the item into local range while it is still held, arm, then drop it.
+The only model intentions are:
 
-While armed:
+- `wait`;
+- `fetch(targetId)` where `targetId` must be in the current request's fetchable allow-list.
 
-- perception may be recomputed cheaply after fixed World steps;
-- at most one model request may be in flight;
-- cognition does not interrupt a running executor task;
-- a call is eligible when semantic perception changes or new E1 executor experience appears;
-- cooldown: `750 ms`;
-- hard decision budget: `3` model cycles per arm session;
-- the existing Worker rate limiter independently bounds server-side requests.
+`fetch` maps to the already-qualified non-LLM executor task:
 
-This intentionally avoids periodic free-running "thinking".
-
-## Cognition contract
-
-The browser sends only the bounded perception, bounded temporal delta and previous E1 self experience to the same-origin Worker endpoint:
-
-`POST /api/agent/e1/decide`
-
-The Worker **reconstructs a sanitized request from the allowed fields** before any model call. Unknown extra fields are discarded. `fetchableItemIds` must also be backed by currently visible free item records, so a forged allow-list cannot create a model capability.
-
-E1 pins `@cf/ibm-granite/granite-4.0-h-micro` only as an experimental constant. It is not a final NPC model decision.
-
-The Worker uses **traditional Workers AI function calling**, not an agent framework and not direct game tools. The available tool set is generated from the sanitized request:
-
-- `wait` is always available;
-- `fetch` is exposed only when `fetchableItemIds` is non-empty;
-- `fetch.targetId` is constrained to the exact request allow-list;
-- exactly one valid tool call is required.
-
-For this bounded experiment the policy is intentionally legible: a visible `item_holder_changed` that makes a currently fetchable item free is a reason to fetch it; otherwise the model should wait. The experiment is testing the grounded vertical loop and temporal experience boundary, not open-ended autonomy.
-
-Accepted client-side decision shape remains:
-
-```text
-{ kind: "wait" }
-{ kind: "fetch", targetId: <currently fetchable item id> }
-```
-
-The browser validates the response twice:
-
-1. against the exact perception that caused the model request;
-2. again against fresh current perception immediately before executor start.
-
-A hallucinated, non-visible, no-longer-free or otherwise stale target cannot reach the executor.
-
-## Authority / provenance
+`approach-and-interact(npc.001, targetId)`.
 
 Required causal chain:
 
-`World truth → bounded perception → bounded temporal delta → cognition request → model tool decision → decision validation → existing DeterministicExecutor → ExecutionDriver → World.attemptAction → WorldActionResult / WorldEvent → E1 experience → subsequent cognition`
+`World truth → bounded perception → temporal delta → cognition request → model tool decision → validation → DeterministicExecutor → ExecutionDriver → World.attemptAction → WorldActionResult / WorldEvent → E1 experience → subsequent cognition`
 
-The model cannot directly mutate position, inventory, events or executor internals.
+The model cannot mutate position, inventory, events or executor internals.
 
-The debug workspace must expose enough state to distinguish:
+The browser validates a fetch decision first against the request perception and again against fresh current perception immediately before executor start. The executor itself now refuses silent replacement of a running task; E1 also checks that `start(...)` was accepted before claiming `accepted_fetch`.
 
-- E1 armed/disarmed;
-- cognition request/cycle status and trigger;
-- perceived/fetchable entity IDs;
-- exact bounded observed-change summary;
-- accepted/rejected/stale decision;
-- selected model, Gateway log ID and latency when available;
-- executor target/progress through the existing B2 apparatus;
-- resulting World action outcome;
-- last E1 experience carried forward.
+## Worker / Granite contract recovered live
 
-## Evidence plan
+Endpoint:
 
-Automated evidence should establish:
+`POST /api/agent/e1/decide`
 
-1. out-of-range entities are absent from perception;
-2. LOS-occluded entities are absent;
-3. perception contains no blocker/global snapshot or absolute-position leakage;
-4. the wake fingerprint ignores pure actor distance drift but changes on item visibility/ownership and self-state changes;
-5. held→free derives an explicit bounded `item_holder_changed` delta with the previous holder;
-6. `fetch` is accepted only for a currently perceived free item;
-7. invalid/hallucinated/stale targets are rejected before executor start;
-8. the Worker strips unknown fields, rejects forged fetch allow-lists, exposes `fetch` only for legal IDs and requires exactly one valid tool call;
-9. a deterministic fake cognition provider can drive the full perception→decision→existing-executor→World pickup path;
-10. an executor task that succeeds on its very first step still produces E1 experience;
-11. the real executor outcome becomes the next cognition cycle's previous experience and changed self state.
+The Worker reconstructs a sanitized payload from allowed fields and discards unknown extras. A forged fetch allow-list must be backed by visible free item records.
 
-Focused deployed Owner gate:
+Pinned experimental model:
 
-- carry one item into NPC-local perception while still holding it;
-- arm E1 and confirm the item is perceived but not fetchable and no immediate model call occurs;
-- drop it;
-- observe `item_holder_changed: player.jozz → free`, cognition provenance and selected target;
-- confirm NPC approaches/picks it up through the existing executor/World path;
-- confirm the subsequent cognition state contains `picked_up_item`, NPC-held item state and no repeated legal fetch.
+`@cf/ibm-granite/granite-4.0-h-micro`
 
-Negative control: keep an item out of range or geometrically occluded and verify it never becomes a legal cognition target.
+Live probes established two integration facts that were not safe to infer from older examples:
 
-## Falsification / revision criteria
+1. Workers AI accepted the OpenAI-style function wrapper (`type: "function"` with nested `function`) while the legacy flat tool shape failed with `8001: Invalid input`;
+2. observed Granite completions placed tool calls under `choices[0].message.tool_calls[*].function` and, in the qualified run, double-encoded `function.arguments` as JSON.
 
-Revise or fail E1 if any of these occur:
+The parser therefore permits at most two bounded JSON decodes and still validates the resulting object against the exact allow-list. A standards-shaped single-encoded result remains accepted as a bounded compatibility case.
 
-- cognition receives hidden/global world truth or arbitrary extra request fields;
-- the model is awakened by a change but cannot know what bounded perceptual fact changed;
-- model output can bypass intention validation, executor or World legality;
-- provenance cannot distinguish the LLM-triggered action from player/script behavior;
-- the model regularly fails the tiny structured tool contract;
-- request cadence can burst from ordinary actor movement;
-- the post-action cognition cycle does not receive the real prior outcome;
-- stale target state can start an executor task;
-- the technically correct loop provides no materially different Owner experience from a scripted trigger.
+## Evidence
 
-The last case is valid research-negative evidence, not an implementation failure.
+### Automated
 
-## Natural stop boundary
+Before the Owner re-gate, the repaired E1 branch passed the full repository validation suite. The subsequent technical-debt campaign added regression coverage for executor start refusal while keeping the same E1 authority boundary.
 
-Stop E1 after one NPC, one local perception projection, one bounded temporal delta, `wait|fetch`, one player-caused observable held→free change, one real LLM decision, one existing executor task, one validated World outcome and one subsequent cognition cycle containing that experience.
+Covered E1 properties include:
 
-Explicitly defer pathfinding, speech/hearing, personality, long-term memory, multiple NPCs, generic tasks, map migration and additional visual polish.
+- out-of-range and occluded entities excluded;
+- no absolute-position/blocker/global-snapshot leakage;
+- held→free temporal delta;
+- non-fetchable held-item boundary churn does not wake cognition but updates baseline;
+- forged or stale targets rejected;
+- Worker payload sanitization and tool allow-list enforcement;
+- live-proven Granite nested/double-encoded tool response handling;
+- fake cognition provider driving perception → executor → real World pickup → next-cycle experience;
+- first-executor-step completion;
+- executor refuses replacement of an in-flight task.
+
+### Real model seam
+
+A real two-cycle Granite probe passed before Owner testing:
+
+- cycle 1: `item.mug holder player.jozz → free` → `fetch(item.mug)`; Gateway log `01M1SZ3H6M4MSYEG3X2GFFFWDP`;
+- cycle 2: prior `picked_up_item` + NPC holding mug → `wait`; Gateway log `01M1SZ3KB5VXG5K5W2T9SWZXBC`.
+
+### Owner evidence
+
+The first Owner recording was a **partial pass** and exposed two apparatus defects:
+
+- held-item boundary churn consumed unnecessary cognition cycles;
+- the original `3 requests / 60 s` Worker limiter could block the required post-pickup cycle during repeated hands-on attempts.
+
+Repairs narrowed wake semantics and raised the development limiter to `6 requests / 60 s`.
+
+The Owner re-gate then passed the complete embodied loop. Final debug provenance showed:
+
+- drop-derived holder change and legal fetch;
+- NPC-001 picking up Lantern through the existing executor/World path;
+- cycle `#2 · 2/3` triggered by `perception_and_experience_changed`;
+- `self held none → item.lantern`;
+- `item.lantern: holder free → npc.001`;
+- prior experience `succeeded · picked_up_item`;
+- real Granite/Gateway provenance;
+- final decision `wait`.
+
+This closes E1 at its intended natural boundary.
+
+## Post-Owner technical-debt closure
+
+Owner review of the deployed laboratory exposed unrelated shell/provenance debt that automated domain tests had not caught. Before moving to another research stage the branch was deliberately held for cleanup:
+
+- desktop page/debug scroll coupling and an oversized blank game region were removed by constraining the shell to the viewport and making Debug Workspace its own scroll container;
+- narrow/collapsed and mobile portrait scroll contracts were made explicit;
+- stale `cognition disabled` UI provenance was replaced by live `E1 cognition armed/disarmed` state;
+- `/api/health` now reports the E1 live stage rather than stale P0 stage provenance;
+- `DeterministicExecutor.start()` refuses silent running-task replacement;
+- manual B2 trigger UI is disabled while the executor is running and reports executor state rather than inventing an `accepted` acknowledgement.
+
+These are quality repairs, not extensions of E1's research claim.
+
+## Evidence boundary / non-claims
+
+E1 qualifies only:
+
+- one NPC;
+- one bounded local geometric perception projection;
+- one small temporal delta mechanism;
+- `wait | fetch` intentions;
+- one player-caused held→free stimulus;
+- one real LLM intention decision;
+- action through the existing deterministic executor and World legality;
+- one subsequent cognition cycle carrying the real execution experience.
+
+It does **not** qualify pathfinding, speech/hearing, personality, long-term memory, multi-NPC coordination, generic planning, semantic vision, autonomous goals, map migration or a final NPC architecture.
+
+A future stage should begin from the evidence and limitations above rather than repeating E1.
