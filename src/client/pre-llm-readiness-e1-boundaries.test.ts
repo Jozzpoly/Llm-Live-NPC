@@ -8,6 +8,39 @@ import type { E1DecisionEnvelope } from "./e1-agent-api";
 import { E1AgentHarness } from "./e1-agent-harness";
 import { handleE1AgentDecision, type E1AgentEnv } from "../../worker/e1-agent";
 
+interface RawVisibleItem {
+  id: string;
+  kind: "item";
+  label: string;
+  distance: number;
+  direction: { x: number; y: number };
+  heldBy: string | null;
+}
+
+interface RawCycleFixture {
+  cycleId: number;
+  trigger: "perception_changed";
+  perception: {
+    tick: number;
+    observer: {
+      id: string;
+      label: string;
+      locationId: string | null;
+      locationLabel: string | null;
+      heldItemId: string | null;
+    };
+    visibleEntities: RawVisibleItem[];
+    fetchableItemIds: string[];
+  };
+  observedChanges: Array<{
+    kind: "item_holder_changed";
+    itemId: string;
+    previousHolderId: string | null;
+    holderId: string | null;
+  }>;
+  previousExperience: null;
+}
+
 function liveE1Fixture() {
   const specimen = createP1Specimen();
   const npc = specimen.entities.find((entity) => entity.id === "npc.001");
@@ -62,7 +95,7 @@ function acceptingEnv(result: unknown, captured: unknown[]): E1AgentEnv {
   };
 }
 
-function rawCycleRequest() {
+function rawCycleRequest(): RawCycleFixture {
   return {
     cycleId: 1,
     trigger: "perception_changed",
