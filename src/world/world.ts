@@ -3,6 +3,7 @@ import type {
   ActorControlInput,
   ActorEntity,
   EntityId,
+  InteractionValidation,
   ItemEntity,
   LocationId,
   PlacementSite,
@@ -168,6 +169,10 @@ export class World {
     return this.playerLocationIdValue;
   }
 
+  get playerId(): EntityId {
+    return this.player().id;
+  }
+
   step(input: WorldInput, seconds = DEFAULT_STEP_SECONDS): void {
     this.stepWithActorControls(input, [], seconds);
   }
@@ -246,6 +251,89 @@ export class World {
 
   lastActionResult(): WorldActionResult | null {
     return this.lastActionResultValue ? { ...this.lastActionResultValue } : null;
+  }
+
+  validateInteraction(actorId: EntityId, targetId: EntityId): InteractionValidation {
+    const actor = this.entities.get(actorId);
+    if (!isActor(actor)) {
+      return {
+        status: "rejected",
+        actorId,
+        targetId,
+        code: "actor_not_found",
+        message: `Actor not found: ${actorId}.`
+      };
+    }
+
+    const target = this.entities.get(targetId);
+    if (!target) {
+      return {
+        status: "rejected",
+        actorId,
+        targetId,
+        code: "target_not_found",
+        message: `Interaction target not found: ${targetId}.`
+      };
+    }
+
+    if (target.id === actor.id || target.kind === "player") {
+      return {
+        status: "rejected",
+        actorId,
+        targetId,
+        code: "target_not_interactable",
+        message: `${target.label} is not interactable through this action.`
+      };
+    }
+
+    if (target.kind === "item") {
+      if (actor.heldItemId) {
+        return {
+          status: "rejected",
+          actorId,
+          targetId,
+          code: "already_holding_item",
+          message: `${actor.label} is already holding an item.`
+        };
+      }
+      if (target.heldBy !== null) {
+        return {
+          status: "rejected",
+          actorId,
+          targetId,
+          code: "target_unavailable",
+          message: `${target.label} is already held.`
+        };
+      }
+    }
+
+    const rangeSq = INTERACTION_RANGE * INTERACTION_RANGE;
+    if (distanceSquared(actor.position, target.position) > rangeSq) {
+      return {
+        status: "rejected",
+        actorId,
+        targetId,
+        code: "target_out_of_range",
+        message: `${target.label} is outside interaction range.`
+      };
+    }
+
+    if (!this.hasLineOfSight(actor.position, target.position)) {
+      return {
+        status: "rejected",
+        actorId,
+        targetId,
+        code: "target_occluded",
+        message: `${target.label} is occluded from ${actor.label}.`
+      };
+    }
+
+    return {
+      status: "accepted",
+      actorId,
+      targetId,
+      targetKind: target.kind
+    };
   }
 
   placementSitesAt(position: Vec2): PlacementSite[] {
@@ -480,75 +568,24 @@ export class World {
   }
 
   private interactWithTarget(actor: ActorEntity, targetId: EntityId): WorldActionResult {
+    const validation = this.validateInteraction(actor.id, targetId);
+    if (validation.status === "rejected") {
+      return this.recordAction({
+        actorId: actor.id,
+        action: "interact",
+        status: "rejected",
+        code: validation.code,
+        targetId,
+        message: validation.message
+      });
+    }
+
     const target = this.entities.get(targetId);
-    if (!target) {
-      return this.recordAction({
-        actorId: actor.id,
-        action: "interact",
-        status: "rejected",
-        code: "target_not_found",
-        targetId,
-        message: `Interaction target not found: ${targetId}.`
-      });
-    }
-
-    if (target.id === actor.id || target.kind === "player") {
-      return this.recordAction({
-        actorId: actor.id,
-        action: "interact",
-        status: "rejected",
-        code: "target_not_interactable",
-        targetId,
-        message: `${target.label} is not interactable through this action.`
-      });
-    }
-
-    const rangeSq = INTERACTION_RANGE * INTERACTION_RANGE;
-    if (distanceSquared(actor.position, target.position) > rangeSq) {
-      return this.recordAction({
-        actorId: actor.id,
-        action: "interact",
-        status: "rejected",
-        code: "target_out_of_range",
-        targetId,
-        message: `${target.label} is outside interaction range.`
-      });
-    }
-
-    if (!this.hasLineOfSight(actor.position, target.position)) {
-      return this.recordAction({
-        actorId: actor.id,
-        action: "interact",
-        status: "rejected",
-        code: "target_occluded",
-        targetId,
-        message: `${target.label} is occluded from ${actor.label}.`
-      });
+    if (!target || (target.kind !== "item" && target.kind !== "npc")) {
+      throw new Error(`Accepted interaction target became invalid: ${targetId}`);
     }
 
     if (target.kind === "item") {
-      if (actor.heldItemId) {
-        return this.recordAction({
-          actorId: actor.id,
-          action: "interact",
-          status: "rejected",
-          code: "already_holding_item",
-          targetId,
-          message: `${actor.label} is already holding an item.`
-        });
-      }
-
-      if (target.heldBy !== null) {
-        return this.recordAction({
-          actorId: actor.id,
-          action: "interact",
-          status: "rejected",
-          code: "target_unavailable",
-          targetId,
-          message: `${target.label} is already held.`
-        });
-      }
-
       actor.heldItemId = target.id;
       target.heldBy = actor.id;
       this.followHeldItem(actor);

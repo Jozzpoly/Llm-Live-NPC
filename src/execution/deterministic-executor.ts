@@ -1,12 +1,12 @@
 import type {
   ActorControlInput,
   EntityId,
+  InteractionValidation,
   WorldActionRequest,
   WorldActionResult,
   WorldSnapshot
 } from "../world/types";
 
-const APPROACH_DISTANCE = 48;
 const DEFAULT_STEP_BUDGET = 180;
 
 export type ExecutorStatus = "idle" | "running" | "succeeded" | "failed";
@@ -29,6 +29,8 @@ export interface ExecutorState {
   stepsUsed: number;
   stepBudget: number;
 }
+
+export type InteractionValidator = (actorId: EntityId, targetId: EntityId) => InteractionValidation;
 
 export class DeterministicExecutor {
   private taskValue: ExecutorTask | null = null;
@@ -66,7 +68,7 @@ export class DeterministicExecutor {
     };
   }
 
-  next(snapshot: WorldSnapshot): ExecutorCommand {
+  next(snapshot: WorldSnapshot, validateInteraction: InteractionValidator): ExecutorCommand {
     if (this.statusValue !== "running" || !this.taskValue) return {};
     if (this.stepsUsedValue >= this.stepBudgetValue) {
       this.fail("step_budget_exhausted");
@@ -103,7 +105,18 @@ export class DeterministicExecutor {
       return {};
     }
 
-    if (distance > APPROACH_DISTANCE) {
+    const validation = validateInteraction(actor.id, target.id);
+    if (validation.status === "accepted") {
+      return {
+        action: {
+          action: "interact",
+          actorId: actor.id,
+          targetId: target.id
+        }
+      };
+    }
+
+    if (validation.code === "target_out_of_range") {
       return {
         control: {
           actorId: actor.id,
@@ -113,13 +126,18 @@ export class DeterministicExecutor {
       };
     }
 
-    return {
-      action: {
-        action: "interact",
-        actorId: actor.id,
-        targetId: target.id
-      }
-    };
+    if (validation.code === "target_occluded") {
+      return {
+        action: {
+          action: "interact",
+          actorId: actor.id,
+          targetId: target.id
+        }
+      };
+    }
+
+    this.fail(validation.code);
+    return {};
   }
 
   acceptActionResult(result: WorldActionResult): void {
