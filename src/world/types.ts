@@ -51,6 +51,7 @@ export interface Blocker {
 export interface LocationZone {
   id: LocationId;
   label: string;
+  priority: number;
   bounds: Aabb;
 }
 
