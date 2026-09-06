@@ -17,6 +17,7 @@ if (!appRoot || !debugRoot || !gameRoot || !stageChip) {
   throw new Error("E1 shell is missing #app, #game, #debug or #e1-stage-chip root.");
 }
 
+const stageChipNode: HTMLElement = stageChip;
 const mobileOwnerMode = isTouchOwnerDevice();
 appRoot.classList.toggle("mobile-owner-mode", mobileOwnerMode);
 
@@ -26,8 +27,8 @@ const playerControls = new PlayerControlBuffer();
 
 function updateE1Ui(state: E1HarnessDebugState): void {
   e1Panel?.update(state);
-  stageChip.textContent = state.armed ? "E1 cognition armed" : "E1 cognition disarmed";
-  stageChip.classList.toggle("is-active", state.armed);
+  stageChipNode.textContent = state.armed ? "E1 cognition armed" : "E1 cognition disarmed";
+  stageChipNode.classList.toggle("is-active", state.armed);
 }
 
 const workspace = new DebugWorkspace(debugRoot, appRoot, {
