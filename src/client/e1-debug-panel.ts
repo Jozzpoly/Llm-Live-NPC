@@ -56,7 +56,7 @@ export class E1DebugPanel {
     const metrics = element("div", "debug-metrics");
     const armed = metricRow("armed");
     const request = metricRow("request");
-    const cycle = metricRow("session / request / cycle");
+    const cycle = metricRow("session / request / attempt / cycle");
     const trigger = metricRow("trigger");
     const perception = metricRow("perceived IDs");
     const fetchable = metricRow("fetchable IDs");
@@ -113,6 +113,7 @@ export class E1DebugPanel {
       "blocked",
       state.requestStatus === "decision_rejected" ||
         state.requestStatus === "request_error" ||
+        state.requestStatus === "request_timeout" ||
         state.requestStatus === "stale_decision" ||
         state.requestStatus === "executor_busy"
     );
@@ -122,8 +123,8 @@ export class E1DebugPanel {
     );
 
     this.cycleValue.textContent = state.sessionId
-      ? `s${state.sessionId} · r${state.requestId ?? "—"} · c${state.cycleId ?? "—"} · ${state.cyclesUsed}/${state.cycleBudget}`
-      : `— · ${state.cyclesUsed}/${state.cycleBudget}`;
+      ? `s${state.sessionId} · r${state.requestId ?? "—"} · a${state.attempt ?? "—"}/${state.attemptLimit} · c${state.cycleId ?? "—"} · ${state.cyclesUsed}/${state.cycleBudget}`
+      : `— · a—/${state.attemptLimit} · ${state.cyclesUsed}/${state.cycleBudget}`;
     this.triggerValue.textContent = state.trigger ?? "—";
     this.perceptionValue.textContent = state.visibleEntityIds.join(", ") || "none";
     this.fetchableValue.textContent = state.fetchableItemIds.join(", ") || "none";

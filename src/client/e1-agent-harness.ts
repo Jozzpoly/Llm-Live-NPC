@@ -11,9 +11,20 @@ import {
 import type { DeterministicExecutor } from "../execution/deterministic-executor";
 import type { ExecutionFrameResult } from "../execution/execution-driver";
 import type { World } from "../world/world";
-import { requestE1Decision, type E1DecisionEnvelope } from "./e1-agent-api";
+import {
+  E1DecisionRequestError,
+  requestE1Decision,
+  type E1DecisionEnvelope,
+  type E1DecisionRequestContext
+} from "./e1-agent-api";
 
-export type E1DecisionProvider = (request: E1CycleRequest) => Promise<E1DecisionEnvelope>;
+export const E1_REQUEST_TIMEOUT_MS = 12_000;
+export const E1_REQUEST_MAX_ATTEMPTS = 2;
+
+export type E1DecisionProvider = (
+  request: E1CycleRequest,
+  context: E1DecisionRequestContext
+) => Promise<E1DecisionEnvelope>;
 
 export type E1HarnessRequestStatus =
   | "disarmed"
@@ -23,6 +34,7 @@ export type E1HarnessRequestStatus =
   | "accepted_fetch"
   | "decision_rejected"
   | "request_error"
+  | "request_timeout"
   | "stale_decision"
   | "executor_busy";
 
@@ -32,6 +44,8 @@ export interface E1HarnessDebugState {
   requestStatus: E1HarnessRequestStatus;
   sessionId: number | null;
   requestId: number | null;
+  attempt: number | null;
+  attemptLimit: number;
   cycleId: number | null;
   cyclesUsed: number;
   cycleBudget: number;
@@ -49,9 +63,21 @@ export interface E1HarnessDebugState {
   experience: E1Experience | null;
 }
 
+export interface E1HarnessOptions {
+  requestTimeoutMs?: number;
+  maxRequestAttempts?: number;
+}
+
 interface E1LocalRequestIdentity {
   sessionId: number;
   requestId: number;
+}
+
+class E1RequestTimeoutError extends Error {
+  constructor(readonly timeoutMs: number) {
+    super(`E1 cognition request timed out after ${timeoutMs} ms.`);
+    this.name = "E1RequestTimeoutError";
+  }
 }
 
 function describeObservedChange(change: E1ObservedChange): string {
@@ -69,8 +95,14 @@ function describeObservedChange(change: E1ObservedChange): string {
   }
 }
 
+function retryableProviderError(error: unknown): boolean {
+  return error instanceof E1DecisionRequestError ? error.retryable : true;
+}
+
 export class E1AgentHarness {
   private readonly gate = new E1CognitionGate();
+  private readonly requestTimeoutMs: number;
+  private readonly maxRequestAttempts: number;
   private perception: E1Perception | null = null;
   private experience: E1Experience | null = null;
   private requestStatus: E1HarnessRequestStatus = "disarmed";
@@ -79,6 +111,8 @@ export class E1AgentHarness {
   private nextRequestId = 1;
   private requestId: number | null = null;
   private activeRequestId: number | null = null;
+  private attempt: number | null = null;
+  private activeAbortController: AbortController | null = null;
   private trigger: E1CycleRequest["trigger"] | null = null;
   private cycleId: number | null = null;
   private observedChanges: string[] = [];
@@ -93,8 +127,18 @@ export class E1AgentHarness {
   constructor(
     private readonly world: World,
     private readonly executor: DeterministicExecutor,
-    private readonly provider: E1DecisionProvider = requestE1Decision
-  ) {}
+    private readonly provider: E1DecisionProvider = requestE1Decision,
+    options: E1HarnessOptions = {}
+  ) {
+    this.requestTimeoutMs = options.requestTimeoutMs ?? E1_REQUEST_TIMEOUT_MS;
+    this.maxRequestAttempts = options.maxRequestAttempts ?? E1_REQUEST_MAX_ATTEMPTS;
+    if (!Number.isFinite(this.requestTimeoutMs) || this.requestTimeoutMs <= 0) {
+      throw new Error(`E1 request timeout must be positive and finite: ${this.requestTimeoutMs}`);
+    }
+    if (!Number.isInteger(this.maxRequestAttempts) || this.maxRequestAttempts <= 0) {
+      throw new Error(`E1 request attempt limit must be a positive integer: ${this.maxRequestAttempts}`);
+    }
+  }
 
   toggle(): E1HarnessDebugState {
     if (this.gate.state().armed) {
@@ -112,9 +156,11 @@ export class E1AgentHarness {
     if (this.executor.state().status === "running") {
       throw new Error("E1 cannot arm while the NPC executor is already running.");
     }
+    this.cancelActiveProviderAttempt();
     this.sessionId = this.nextSessionId++;
     this.requestId = null;
     this.activeRequestId = null;
+    this.attempt = null;
     this.experience = null;
     this.perception = this.observe();
     this.gate.arm(this.perception, this.experience);
@@ -132,6 +178,7 @@ export class E1AgentHarness {
   }
 
   disarm(): void {
+    this.cancelActiveProviderAttempt();
     this.gate.disarm();
     this.activeRequestId = null;
     this.requestStatus = "disarmed";
@@ -145,6 +192,8 @@ export class E1AgentHarness {
       requestStatus: this.requestStatus,
       sessionId: this.sessionId,
       requestId: this.requestId,
+      attempt: this.attempt,
+      attemptLimit: this.maxRequestAttempts,
       cycleId: this.cycleId,
       cyclesUsed: gate.cyclesUsed,
       cycleBudget: gate.cycleBudget,
@@ -183,6 +232,7 @@ export class E1AgentHarness {
     };
     this.requestId = identity.requestId;
     this.activeRequestId = identity.requestId;
+    this.attempt = null;
     this.requestStatus = "in_flight";
     this.trigger = cycle.trigger;
     this.cycleId = cycle.cycleId;
@@ -249,18 +299,88 @@ export class E1AgentHarness {
     return true;
   }
 
-  private async runCycle(cycle: E1CycleRequest, identity: E1LocalRequestIdentity): Promise<void> {
-    let response: E1DecisionEnvelope;
+  private cancelActiveProviderAttempt(): void {
+    const controller = this.activeAbortController;
+    this.activeAbortController = null;
+    controller?.abort();
+  }
+
+  private async runProviderAttempt(
+    cycle: E1CycleRequest,
+    identity: E1LocalRequestIdentity,
+    attempt: number
+  ): Promise<E1DecisionEnvelope> {
+    const controller = new AbortController();
+    this.activeAbortController = controller;
+    let timedOut = false;
+    let timeoutHandle: ReturnType<typeof setTimeout> | null = null;
+
+    let providerPromise: Promise<E1DecisionEnvelope>;
     try {
-      response = await this.provider(cycle);
+      providerPromise = this.provider(cycle, {
+        signal: controller.signal,
+        sessionId: identity.sessionId,
+        requestId: identity.requestId,
+        attempt
+      });
     } catch (error) {
-      if (!this.finishCurrentRequest(cycle, identity)) return;
-      this.requestStatus = "request_error";
-      this.decisionValidation = error instanceof Error ? error.message : String(error);
-      return;
+      providerPromise = Promise.reject(error);
     }
 
-    if (!this.finishCurrentRequest(cycle, identity)) return;
+    const timeoutPromise = new Promise<never>((_resolve, reject) => {
+      timeoutHandle = setTimeout(() => {
+        timedOut = true;
+        controller.abort();
+        reject(new E1RequestTimeoutError(this.requestTimeoutMs));
+      }, this.requestTimeoutMs);
+    });
+
+    try {
+      return await Promise.race([providerPromise, timeoutPromise]);
+    } catch (error) {
+      if (timedOut && !(error instanceof E1RequestTimeoutError)) {
+        throw new E1RequestTimeoutError(this.requestTimeoutMs);
+      }
+      throw error;
+    } finally {
+      if (timeoutHandle !== null) clearTimeout(timeoutHandle);
+      if (this.activeAbortController === controller) this.activeAbortController = null;
+    }
+  }
+
+  private async runCycle(cycle: E1CycleRequest, identity: E1LocalRequestIdentity): Promise<void> {
+    let response: E1DecisionEnvelope | null = null;
+
+    for (let attempt = 1; attempt <= this.maxRequestAttempts; attempt += 1) {
+      if (!this.isCurrentRequest(identity)) return;
+      this.attempt = attempt;
+
+      try {
+        response = await this.runProviderAttempt(cycle, identity, attempt);
+        break;
+      } catch (error) {
+        if (!this.isCurrentRequest(identity)) return;
+        const timedOut = error instanceof E1RequestTimeoutError;
+        const retryable = timedOut || retryableProviderError(error);
+
+        if (retryable && attempt < this.maxRequestAttempts) {
+          this.requestStatus = "in_flight";
+          this.decisionValidation = timedOut ? "retrying_after_timeout" : "retrying_after_request_error";
+          continue;
+        }
+
+        if (!this.finishCurrentRequest(cycle, identity)) return;
+        this.requestStatus = timedOut ? "request_timeout" : "request_error";
+        this.decisionValidation = timedOut
+          ? `request_timeout_after_${attempt}_attempts`
+          : error instanceof Error
+            ? error.message
+            : String(error);
+        return;
+      }
+    }
+
+    if (!response || !this.finishCurrentRequest(cycle, identity)) return;
     if (response.cycleId !== cycle.cycleId) {
       this.requestStatus = "request_error";
       this.decisionValidation = `E1 cycle mismatch: expected ${cycle.cycleId}, received ${response.cycleId}.`;
