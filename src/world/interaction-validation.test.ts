@@ -12,11 +12,11 @@ describe("World interaction legality", () => {
       throw new Error("Missing interaction-legality fixtures.");
     }
 
-    player.position = { x: 1015, y: 670 };
+    player.position = { x: 600, y: 420 };
     player.heldItemId = lantern.id;
     lantern.heldBy = player.id;
-    lantern.position = { x: 1015, y: 644 };
-    npc.position = { x: 1105, y: 670 };
+    lantern.position = { x: 600, y: 394 };
+    npc.position = { x: 760, y: 390 };
 
     const world = new World(specimen);
     const before = world.snapshot();
