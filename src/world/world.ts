@@ -17,6 +17,7 @@ import type {
   WorldSnapshot,
   WorldSpecimen
 } from "./types";
+import { validateWorldSpecimenStructure } from "./specimen-structural-validation";
 
 const DEFAULT_STEP_SECONDS = 1 / 30;
 const INTERACTION_RANGE = 54;
@@ -124,6 +125,8 @@ export class World {
   private playerLocationIdValue: LocationId | null = null;
 
   constructor(specimen: WorldSpecimen) {
+    validateWorldSpecimenStructure(specimen);
+
     this.width = specimen.width;
     this.height = specimen.height;
     this.actorSpeed = specimen.actorSpeed;
