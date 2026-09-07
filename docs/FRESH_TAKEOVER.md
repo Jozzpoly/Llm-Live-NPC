@@ -1,6 +1,6 @@
 # LLM Live NPC — Fresh Takeover
 
-Use this document to start a new Browser ChatGPT conversation after the P1 pre-cognition refoundation closure.
+Use this document to start a fresh Browser ChatGPT conversation after the 2026-09-07 selective recovery and Pass 0 evidence reconciliation.
 
 ## 1. First action: verify live truth
 
@@ -8,170 +8,222 @@ Repository:
 
 `Jozzpoly/Llm-Live-NPC`
 
-Canonical working/integration line:
+Current recovered/refoundation line at this handoff:
 
-`p1/playable-world-slice`
+`recovery/owner-fail-2026-09-07`
 
-Integration PR:
+Recovered runtime checkpoint immediately before the final docs-only reconciliation:
 
-`#3 — P1 integration — refound world before cognition`
+`b31a851c3f708077fbf9e6fb8206fa392f8def13`
 
-Do **not** trust a copied SHA without checking live state. The stable implementation checkpoint immediately before the final docs-only handoff cleanup is:
+Do **not** trust that SHA merely because it is written here. Verify the live branch first.
 
-`f25c48e65135007c8c58af730d954ec8d740bce0`
+Expected relationship at takeover:
 
-The live P1 head should be newer because the final handoff cleanup updates documentation only. If it differs for any other reason, inspect all changes from that checkpoint before continuing.
+- the live branch may be newer only because of the final canonical-spine docs closure;
+- if runtime/product files changed after `b31a851c...`, inspect and classify those changes before continuing;
+- do not assume a newer docs head changes the qualified runtime claim.
 
-`main` intentionally remains the proven P0 production/cloud baseline. PR #3 is expected to remain draft until a later explicit integration decision; do not merge it merely because takeover succeeded.
+`main` is **not** the current research frontier. It intentionally remains the historical P0 checkpoint:
+
+`f207419ee87c03979544d2d579e624f043300bbc`
+
+The old P1 integration PR #3 and the failed-readiness evidence PR #47 are closed without merge. There should be no open PRs at this handoff unless newer work has started.
 
 ## 2. Read in this order
 
 1. `README.md`
 2. `docs/PROJECT_STATE.md`
 3. this file
-4. live PR #3
 
-Then inspect these only when exact evidence is needed:
+Only then inspect exact historical/evidence surfaces if needed:
 
-- PR #20 — B2 deterministic non-LLM NPC executor;
-- PR #21 — bounded post-B2 technical-debt campaign;
-- earlier stage PRs linked from `PROJECT_STATE.md`.
+- PR #47 — decisive Owner/browser FAIL of the old readiness line;
+- PRs #70–#74 — final bounded selective recovery repairs;
+- PR #75 — evidence-only combined R8 re-attack;
+- PR #3 — historical P1 donor/integration line;
+- `docs/E1_GROUNDED_NOTICE_FETCH_DESIGN.md` — historical E1 design context.
 
-The compact canonical spine is intentionally small. Do not reconstruct the project by reading every historical branch first.
+The canonical startup spine is intentionally small. Do not reconstruct the project by reading every historical branch or readiness PR first.
 
-## 3. What is closed evidence
+## 3. The critical historical distinction
 
-Do not mechanically repeat or polish these stages during takeover:
+Do not collapse these two lines into one story.
 
-- P0 cloud/model transport qualification;
-- P1 world/presentation refoundation stages R1a/R2a/R3a/R4a-c/R5a-b/R6a;
-- M1 mobile Owner controls;
-- M2 presentation interpolation;
-- A1 atomic action seam;
-- A2 direct mouse/touch targeting;
-- B1 canonical actor facing;
-- B2 deterministic non-LLM NPC execution;
-- the one bounded post-B2 technical-debt campaign.
+### Failed old readiness line
 
-B2 received a fresh deployed Owner PASS after an earlier invalid Owner recording was explicitly rejected. The qualified claim is narrow but important: NPC-001 can receive one explicit durative task, move through canonical World stepping and pick up the known lantern through the same validated atomic interaction substrate used by the player.
+`experiment/e1-grounded-notice-fetch` continued beyond the last good pre-readiness runtime. Automated evidence became strong, but the final 2026-09-07 Owner/browser gate found the playable lab materially worse than the earlier good surface.
 
-## 4. Do not overread B2
+That Owner FAIL remains valid negative evidence.
 
-B2 does **not** establish:
+### Selective recovery line
 
-- LLM cognition or autonomy;
-- NPC perception/sight/hearing;
-- memory architecture;
-- pathfinding/navmesh/general obstacle solving;
-- actor-actor collision;
-- generic behavior trees/task graphs;
-- final placement execution/UX;
-- final chat/speech system;
-- final map pipeline;
-- final model choice.
+Recovery deliberately restarted from:
 
-Current direct approach behavior may stall on geometry and exhaust its explicit step budget. That is bounded failure evidence, not pathfinding.
+`15ed5e3146df07cb2624c7bd77dd5f2e9a4a5105`
 
-Current geometric LOS is not NPC sight.
+It did **not** forward-merge the failed readiness line. Useful changes were independently re-earned when justified.
 
-## 5. Architecture to preserve
+Current recovered runtime checkpoint:
 
-Target research loop:
+`b31a851c3f708077fbf9e6fb8206fa392f8def13`
 
-`WORLD → PERCEPTION → COGNITION/MEMORY → INTENTION → NON-LLM EXECUTION → VALIDATED WORLD ACTIONS → WORLD`
+Never describe the failed old line as having been “fixed forward” into recovery.
 
-Preserve the authority boundary:
+## 4. What the recovered checkpoint currently proves
 
-- `World` owns canonical entities, movement legality, action legality and semantic outcomes;
-- presentation/input code may resolve human intent but must not bypass World legality;
-- future perception should be a bounded projection derived from World truth, not arbitrary raw-state access;
-- future LLM cognition should propose intentions/tasks, not directly mutate canonical state;
-- deterministic execution translates accepted intentions into continuous actor control + validated atomic actions;
-- provenance must remain inspectable: player/script/LLM source must not alter gameplay legality.
+The recovered runtime is bounded evidence for a causally coherent old substrate:
 
-Browser and headless B2 evidence use the same `ExecutionDriver` fixed-step contract.
+`World truth → bounded E1 evidence → wait|fetch cognition → revalidation → deterministic executor → World attempt/outcome → subsequent experience`
 
-## 6. Owner judgement to carry forward
+It also preserves:
 
-Treat these as current Owner judgement, not universal truths:
+- P1 World/action/execution substrate;
+- player/manual/cognition provenance distinctions;
+- arm/session stale-response protection;
+- concrete cognition→executor diagnostic correlation;
+- truthful unsupported generic actor interaction rather than event-less pseudo-success;
+- same-frame ordering and ownership behavior challenged by the final R8.
 
-- the world is large/readable enough for the current research laboratory;
-- mobile is a useful real Owner-test surface, not a separate game fork;
-- interpolation materially improved feel and removed visible fixed-step sample-and-hold artifacts;
-- current visual polish is enough for now;
-- explicit direct targeting is useful and qualified on desktop/mobile;
-- debugging should reveal causal/provenance structure, not just raw telemetry;
-- the project should increasingly maximize real player ↔ NPC ↔ world interaction rather than roleplay entirely inside prompts;
-- small functioning experiments are preferred before large formal architectures.
+Canonical recovered runtime qualification at `b31a851c...`:
 
-## 7. Immediate post-takeover job
+- 145/145 tests across 26 files;
+- strict TypeScript/build/preview PASS;
+- Cloudflare PASS;
+- post-merge Cloudflare Version ID `0e1a7e36-edba-4660-8fa2-f2b38172d760`.
 
-Do **not** automatically implement sight or plug in an LLM on the first turn.
+Final combined R8 evidence-only PR #75:
 
-First perform live regrounding and ask: **what is the smallest experiment that can materially test whether an NPC starts to feel present in the world?**
+- evidence head `72ea11abd7a0b56230ced6019e7c550b5109b476`;
+- exactly one added test file, no runtime product changes;
+- 149/149 tests across 27 files;
+- R8 4/4 PASS;
+- strict TypeScript/build/preview PASS;
+- Cloudflare PASS;
+- Version ID `ff9be74c-754a-46b0-851f-36ffb8a9233b`;
+- closed without merge.
 
-Current-best candidate direction:
+This is sufficient to treat the old substrate as a bounded donor. It is **not** a production-readiness claim.
 
-`WORLD → bounded NPC perception → small inspectable agent context/state → limited LLM intention → existing deterministic executor → validated World result → context/experience update`
+## 5. Owner-quality boundary
 
-A tiny intention vocabulary such as `wait`, `approach(entity)` and `fetch(item)` may be enough for the first experiment, but this is not canonical design yet.
+Do not make this mistake during takeover:
 
-Before implementation, decide:
+> automated/R8-qualified ≠ freshly Owner-qualified.
 
-- the research question/unknown;
-- what exact world information NPC-001 may perceive;
-- update cadence and cost budget;
-- what the model is allowed to output;
-- how intention reaches the existing executor;
-- how outcomes become subsequent experience/context;
-- what debug evidence distinguishes real grounding from prompt roleplay;
-- failure/falsification criteria and natural stop boundary.
+The old readiness line failed its final Owner/browser gate. The recovered checkpoint has not yet received a new final qualitative Owner/browser re-gate after selective recovery.
 
-Research current model/API options if model choice materially affects the experiment. P0's Granite/Llama successes are transport candidates, not a final cognition choice.
+A new Owner gate is **not required merely to begin conceptual Refoundation Pass 1**. It becomes required when a claim or decision depends on the recovered runtime's current feel, usability or browser quality.
 
-## 8. Things intentionally deferred
+## 6. Do not mechanically recover historical readiness work
 
-Do not smuggle these into the first post-handoff slice without new evidence:
+The selective recovery intentionally left some later historical work unported, including:
 
-- broad behavior framework;
-- generalized navigation/pathfinding;
-- large Tiled/map migration;
-- additional cosmetic campaign;
-- full placement system;
-- sophisticated long-term memory;
-- full speech/hearing architecture;
-- multi-NPC society simulation.
+- R5b timeout/retry/cancellation policy;
+- later R6 sensory/event-buffer refinements;
+- later R7 ingress/provider-observability hardening.
 
-They remain legitimate future directions, but the next experiment should earn them.
+Do not treat this list as an automatic repair queue.
 
-## 9. Repo hygiene note
+First ask whether the new Live NPC architecture still needs the same contract in the same place. Reuse donor ideas when justified; do not preserve obsolete apparatus for checklist completeness.
 
-Three accidental branches still exist:
+## 7. Product direction to carry into Pass 1
 
-- `tmp-do-not-use`
-- `tmp-do-not-use-2`
-- `tmp-stop`
+The Owner's current direction has changed the level of the project.
 
-They contain no unique implementation and are non-canonical. The GitHub connector available during closure did not expose branch deletion, so they were deliberately documented rather than falsely reported as removed.
+The question is no longer merely “can the LLM notice a dropped item and fetch it?” The intended subject is a **persistent embodied resident**.
 
-Historical stage/evidence branches are not automatically debt.
+Carry these as hypotheses to challenge, not as already-final architecture:
 
-## 10. Takeover rehearsal checklist
+- one NPC = one persistent cognitive identity;
+- ordinary shared world chat is the preferred initial communication surface;
+- dedicated/focused conversation UI may exist later as QoL but should not create a private alternate reality;
+- speech should be a world communication occurrence;
+- hearing ≠ addressedness;
+- an utterance ≠ canonical world fact;
+- the NPC should remain alive between LLM calls through cheap local runtime state/behavior;
+- LLM calls should be event/need-driven and semantically meaningful, not per-frame heartbeat;
+- LLM should have real authority over meaning, language, interpretation, social judgement, intentions and deliberation;
+- World/deterministic systems remain authoritative about execution and factual outcomes;
+- one shared NPC must remain coherent with multiple players/participants;
+- debug should reveal causal state and provenance, not hidden chain-of-thought.
 
-Before declaring yourself grounded, you should be able to answer from live repo evidence:
+Do not turn these bullets directly into classes/tables/managers yet.
 
-1. Why does `main` still serve P0 while P1 exists on a draft integration line?
-2. What does B2 actually prove, and what did the rejected first Owner recording fail to prove?
-3. Where does canonical world truth live, and what is Phaser allowed to own?
-4. How do continuous controls differ from atomic actions and durative tasks?
-5. Why is geometric LOS not NPC perception?
-6. What is the exact evidence boundary around navigation/autonomy/cognition?
-7. What is the next research uncertainty rather than merely the next implementation task?
+## 8. Immediate task after takeover
 
-If any answer is unclear or live state contradicts the docs, resolve that before new feature work.
+The next stage is:
 
-## 11. Expected takeover behavior
+**Live NPC Refoundation Study — Pass 1: Owner vision reconstruction, invariants and anti-goals.**
 
-Act as the Owner's browser-based second brain / technical co-worker. Recover intent from the repository and current conversation, independently challenge stale recommendations, perform research/implementation/validation where justified, and keep evidence claims narrower than the evidence.
+Do **not** start by implementing chat, speech, memory, a Mind Runtime, planner, utility AI or another E1 feature.
 
-The goal after takeover is not to preserve this handoff forever. Once the new phase establishes better live truth, update the canonical spine and let obsolete closure details recede.
+Pass 1 should critically reconstruct:
+
+- what “real/alive/present NPC” means in this project;
+- which player↔NPC↔world experiences matter most;
+- which failures would immediately make the NPC feel fake;
+- what must persist when no LLM request exists;
+- where procedural/local intelligence should end and semantic LLM cognition should begin;
+- how much weight conversation, autonomy, world competence, relations and memory should receive;
+- what complexity is explicitly unwanted in early experiments;
+- what success would look like from the Owner's hands-on perspective.
+
+The output should be a **north star + invariants + anti-goals**, not an implementation roadmap.
+
+Only after this should the project proceed into donor audit, architecture research, competing hypotheses, recursive falsification and an experiment program.
+
+## 9. Architecture boundaries worth preserving during study
+
+Unless evidence overturns them:
+
+- `World` owns canonical truth and legality;
+- perception derives from bounded world evidence rather than arbitrary full-state access;
+- LLM output is a proposal/decision, not self-certified success;
+- execution returns actual outcomes as later experience;
+- continuous controls, atomic actions, durative tasks, semantic events and cognition remain conceptually distinct;
+- player/manual/cognition provenance is diagnostic and must not alter legality;
+- visible behavior alone is insufficient evidence when provenance can distinguish its cause.
+
+E1-specific names/constants (`npc.001`, 220 range, 3 cycles, 750 ms, `wait|fetch`) are **not** durable architecture.
+
+## 10. Things intentionally open
+
+Do not pretend takeover must resolve these immediately:
+
+- exact Live Mind implementation form;
+- attention/addressedness algorithm;
+- belief representation;
+- memory storage/consolidation/forgetting;
+- planner vs utility/BT/FSM/hybrid;
+- proactive cognition cadence;
+- multiplayer turn-taking;
+- offscreen simulation/time model;
+- long-horizon planning;
+- final speech/hearing range/modality;
+- final model/API allocation.
+
+These are study targets, not missing boilerplate.
+
+## 11. Takeover self-check
+
+Before proceeding, you should be able to explain:
+
+1. why `main` is historical P0 but not the current frontier;
+2. why P1 remains valid donor evidence even though PR #3 is closed;
+3. why the failed old E1/readiness line must remain separate from selective recovery;
+4. what `b31a851c...` is actually qualified to claim;
+5. why the current recovery is not yet freshly Owner-qualified;
+6. which historical R5b/R6/R7 areas are intentionally not re-earned;
+7. which E1 details are apparatus rather than future architecture;
+8. why the next task is vision/invariants work rather than feature implementation.
+
+If live state contradicts this document, resolve the contradiction first. Live repository evidence wins.
+
+## 12. Expected working behavior
+
+Act as the Owner's browser-based second brain / technical co-worker.
+
+Recover state independently, challenge stale recommendations, preserve exact evidence boundaries, and conduct long research/audit stages when they still add material value. Do not force the Owner to defensively restate context that the repository and current project state can provide.
+
+The goal of this handoff is not to preserve today's wording forever. Once the Refoundation Study establishes better live truth, update the small canonical spine and let obsolete recovery detail recede.
