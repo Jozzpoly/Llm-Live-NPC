@@ -2,6 +2,8 @@ import type { WorldActionRequest, WorldActionResult, WorldInput, WorldSnapshot }
 import { World } from "../world/world";
 import { DeterministicExecutor } from "./deterministic-executor";
 
+const ACTION_ATTEMPT_HISTORY_LIMIT = 12;
+
 export interface ExecutionFrameInput {
   playerControl: WorldInput;
   playerActions?: readonly WorldActionRequest[];
@@ -10,6 +12,12 @@ export interface ExecutionFrameInput {
 export interface ExecutionFrameResult {
   playerActionResults: WorldActionResult[];
   executorActionResult: WorldActionResult | null;
+}
+
+export type ActionAttemptSource = "player" | "executor";
+
+export interface ActionAttemptRecord extends WorldActionResult {
+  source: ActionAttemptSource;
 }
 
 function assertFinitePlayerControl(input: WorldInput): void {
@@ -38,8 +46,15 @@ function assertPlayerActionActors(actions: readonly WorldActionRequest[], player
  * executor reads the same pre-step snapshot, movement resolves for player +
  * controlled actors, queued player atomic actions run, then the executor's
  * explicit atomic action runs and its result is fed back to it.
+ *
+ * Each driver instance also retains a tiny bounded diagnostic history of the
+ * atomic attempts that crossed this execution boundary. World/gameplay/cognition
+ * never read that history; it exists only so debug surfaces do not collapse a
+ * multi-attempt frame into World.lastActionResult().
  */
 export class ExecutionDriver {
+  private readonly actionAttemptHistory: ActionAttemptRecord[] = [];
+
   constructor(
     private readonly world: World,
     private readonly executor: DeterministicExecutor
@@ -70,6 +85,27 @@ export class ExecutionDriver {
       this.executor.acceptActionResult(executorActionResult);
     }
 
-    return { playerActionResults, executorActionResult };
+    const frame = { playerActionResults, executorActionResult };
+    this.recordActionAttempts(frame);
+    return frame;
+  }
+
+  recentActionAttempts(): ActionAttemptRecord[] {
+    return this.actionAttemptHistory.map((attempt) => ({ ...attempt }));
+  }
+
+  private recordActionAttempts(frame: ExecutionFrameResult): void {
+    for (const result of frame.playerActionResults) {
+      this.actionAttemptHistory.push({ ...result, source: "player" });
+    }
+    if (frame.executorActionResult) {
+      this.actionAttemptHistory.push({ ...frame.executorActionResult, source: "executor" });
+    }
+    if (this.actionAttemptHistory.length > ACTION_ATTEMPT_HISTORY_LIMIT) {
+      this.actionAttemptHistory.splice(
+        0,
+        this.actionAttemptHistory.length - ACTION_ATTEMPT_HISTORY_LIMIT
+      );
+    }
   }
 }

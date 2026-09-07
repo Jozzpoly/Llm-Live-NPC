@@ -4,7 +4,7 @@ import {
   type ExecutorState,
   type ExecutorStatus
 } from "../execution/deterministic-executor";
-import { ExecutionDriver } from "../execution/execution-driver";
+import { ExecutionDriver, type ActionAttemptRecord } from "../execution/execution-driver";
 import { createP1Specimen } from "../world/specimen";
 import { World } from "../world/world";
 import type {
@@ -247,6 +247,10 @@ export class WorldScene extends Phaser.Scene {
 
   e1AgentState(): E1HarnessDebugState {
     return this.e1Agent.state();
+  }
+
+  recentActionAttempts(): ActionAttemptRecord[] {
+    return this.executionDriver.recentActionAttempts();
   }
 
   startNpcFetchLanternTask(): ExecutorState {
