@@ -3,16 +3,17 @@ import { createP1Specimen } from "./specimen";
 import { World } from "./world";
 
 describe("recovery R2 structural integrity", () => {
-  it("rejects non-finite or non-positive structural scalars and authored geometry primitives", () => {
+  it("rejects non-finite or invalid-negative structural scalars and authored geometry primitives", () => {
     const invalidCases: Array<[string, (specimen: ReturnType<typeof createP1Specimen>) => void, RegExp]> = [
       ["world width", (specimen) => { specimen.width = Number.NaN; }, /World width must be finite and positive/],
       ["world height", (specimen) => { specimen.height = 0; }, /World height must be finite and positive/],
-      ["actor speed", (specimen) => { specimen.actorSpeed = Number.POSITIVE_INFINITY; }, /World actorSpeed must be finite and positive/],
+      ["actor speed finite", (specimen) => { specimen.actorSpeed = Number.POSITIVE_INFINITY; }, /World actorSpeed must be finite and non-negative/],
+      ["actor speed negative", (specimen) => { specimen.actorSpeed = -1; }, /World actorSpeed must be finite and non-negative/],
       ["entity position", (specimen) => { specimen.entities[0]!.position.x = Number.NaN; }, /position must be finite/],
-      ["entity radius", (specimen) => { specimen.entities[0]!.radius = 0; }, /radius must be finite and positive/],
-      ["blocker bounds", (specimen) => { specimen.blockers[0]!.bounds.width = 0; }, /Blocker .* width must be finite and positive/],
+      ["entity radius", (specimen) => { specimen.entities[0]!.radius = -1; }, /radius must be finite and non-negative/],
+      ["blocker bounds", (specimen) => { specimen.blockers[0]!.bounds.width = -1; }, /Blocker .* width must be finite and non-negative/],
       ["location bounds", (specimen) => { specimen.locations[0]!.bounds.x = Number.NaN; }, /Location .* origin must be finite/],
-      ["site bounds", (specimen) => { specimen.placementSites[0]!.bounds.height = Number.NaN; }, /Placement site .* height must be finite and positive/]
+      ["site bounds", (specimen) => { specimen.placementSites[0]!.bounds.height = -1; }, /Placement site .* height must be finite and non-negative/]
     ];
 
     for (const [label, mutate, message] of invalidCases) {
@@ -20,6 +21,24 @@ describe("recovery R2 structural integrity", () => {
       mutate(specimen);
       expect(() => new World(specimen), label).toThrow(message);
     }
+  });
+
+  it("admits coherent zero-valued speed, radii and AABB extents", () => {
+    const specimen = createP1Specimen();
+    specimen.actorSpeed = 0;
+
+    const player = specimen.entities.find((entity) => entity.id === "player.jozz");
+    const mug = specimen.entities.find((entity) => entity.id === "item.mug");
+    if (!player || player.kind !== "player" || !mug || mug.kind !== "item") {
+      throw new Error("Missing zero-valued fixtures.");
+    }
+    player.radius = 0;
+    mug.radius = 0;
+    specimen.blockers[0]!.bounds.width = 0;
+    specimen.locations[0]!.bounds.width = 0;
+    specimen.placementSites[0]!.bounds.width = 0;
+
+    expect(() => new World(specimen)).not.toThrow();
   });
 
   it("requires unique IDs within every current semantic namespace", () => {
