@@ -113,6 +113,14 @@ export class DeterministicExecutor {
       };
     }
 
+    // A held item can be temporarily unavailable for atomic pickup while still
+    // remaining a meaningful moving target for this durative task. Stay near it
+    // without emitting a doomed interaction; if the holder moves away, a later
+    // frame resumes pursuit, and if it is dropped the same task can complete.
+    if (target.kind === "item" && target.heldBy !== null && target.heldBy !== actor.id) {
+      return {};
+    }
+
     return {
       action: {
         action: "interact",
@@ -131,7 +139,11 @@ export class DeterministicExecutor {
       return;
     }
 
-    if (result.code === "target_out_of_range") return;
+    // These are transient for a durative pursuit. `target_unavailable` can be
+    // produced by the same-frame race where a player picks up the target after
+    // the executor already decided to interact. Neither condition invalidates
+    // the task itself.
+    if (result.code === "target_out_of_range" || result.code === "target_unavailable") return;
     this.fail(result.code);
   }
 
