@@ -267,6 +267,9 @@ export class E1AgentHarness {
     if (!cycle) return null;
     if (this.sessionId === null) throw new Error("E1 cognition cycle requires an active arm-session identity.");
 
+    // A bounded sensory batch belongs to exactly one cognition cycle. Provider
+    // retries reuse this same immutable cycle payload; later World changes start
+    // accumulating in a fresh session-local buffer while the request is in flight.
     this.sensoryChanges.clear();
 
     const identity: E1LocalRequestIdentity = {
