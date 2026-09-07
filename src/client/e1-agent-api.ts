@@ -1,4 +1,5 @@
 import type { E1CycleRequest } from "../agent/e1-grounding";
+import { normalizeE1ModelUsage, type E1ModelUsage } from "../agent/e1-provider-usage";
 
 export interface E1DecisionEnvelope {
   cycleId: number;
@@ -6,6 +7,7 @@ export interface E1DecisionEnvelope {
   model: string | null;
   gatewayLogId: string | null;
   latencyMs: number | null;
+  usage?: E1ModelUsage | null;
 }
 
 export interface E1DecisionRequestContext {
@@ -19,7 +21,12 @@ export class E1DecisionRequestError extends Error {
   constructor(
     message: string,
     readonly retryable: boolean,
-    readonly status: number | null = null
+    readonly status: number | null = null,
+    readonly errorCode: string | null = null,
+    readonly usage: E1ModelUsage | null = null,
+    readonly model: string | null = null,
+    readonly gatewayLogId: string | null = null,
+    readonly latencyMs: number | null = null
   ) {
     super(message);
     this.name = "E1DecisionRequestError";
@@ -47,19 +54,36 @@ export async function requestE1Decision(
   }
 
   const payload = (await response.json()) as Record<string, unknown>;
+  const usage = normalizeE1ModelUsage(payload.usage);
+  const model = typeof payload.model === "string" ? payload.model : null;
+  const gatewayLogId = typeof payload.gatewayLogId === "string" ? payload.gatewayLogId : null;
+  const latencyMs = typeof payload.latencyMs === "number" && Number.isFinite(payload.latencyMs)
+    ? payload.latencyMs
+    : null;
+
   if (!response.ok || payload.ok !== true) {
     const message =
       typeof payload.error === "string"
         ? payload.error
         : `E1 cognition request failed: ${response.status}`;
-    throw new E1DecisionRequestError(message, response.status >= 500, response.status);
+    throw new E1DecisionRequestError(
+      message,
+      response.status >= 500,
+      response.status,
+      typeof payload.errorCode === "string" ? payload.errorCode : null,
+      usage,
+      model,
+      gatewayLogId,
+      latencyMs
+    );
   }
 
   return {
     cycleId: typeof payload.cycleId === "number" ? payload.cycleId : -1,
     decision: payload.decision,
-    model: typeof payload.model === "string" ? payload.model : null,
-    gatewayLogId: typeof payload.gatewayLogId === "string" ? payload.gatewayLogId : null,
-    latencyMs: typeof payload.latencyMs === "number" ? payload.latencyMs : null
+    model,
+    gatewayLogId,
+    latencyMs,
+    usage
   };
 }
