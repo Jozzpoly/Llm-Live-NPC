@@ -11,17 +11,23 @@ function boundedUsageNumber(value: unknown): number | null {
     : null;
 }
 
+function firstDefined(record: Record<string, unknown>, canonical: string, provider: string): unknown {
+  return record[canonical] !== undefined ? record[canonical] : record[provider];
+}
+
 /**
  * Retains only the small provider usage surface needed for laboratory cost
- * provenance. Unknown provider metadata is deliberately discarded.
+ * provenance. Accepts either raw Workers AI snake_case or the already-normalized
+ * browser wire shape; output is always the same canonical camelCase object.
+ * Unknown provider metadata is deliberately discarded.
  */
 export function normalizeE1ModelUsage(value: unknown): E1ModelUsage | null {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
   const usage = value as Record<string, unknown>;
   const normalized: E1ModelUsage = {
-    promptTokens: boundedUsageNumber(usage.prompt_tokens),
-    completionTokens: boundedUsageNumber(usage.completion_tokens),
-    totalTokens: boundedUsageNumber(usage.total_tokens),
+    promptTokens: boundedUsageNumber(firstDefined(usage, "promptTokens", "prompt_tokens")),
+    completionTokens: boundedUsageNumber(firstDefined(usage, "completionTokens", "completion_tokens")),
+    totalTokens: boundedUsageNumber(firstDefined(usage, "totalTokens", "total_tokens")),
     neurons: boundedUsageNumber(usage.neurons)
   };
 
