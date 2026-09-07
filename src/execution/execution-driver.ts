@@ -18,9 +18,17 @@ function assertFinitePlayerControl(input: WorldInput): void {
   }
 }
 
+function assertPlayerActionActors(actions: readonly WorldActionRequest[], playerId: string): void {
+  for (const action of actions) {
+    if (action.actorId !== playerId) {
+      throw new Error(`Player action channel requires canonical player actor ${playerId}: ${action.actorId}`);
+    }
+  }
+}
+
 /**
  * One canonical fixed-step execution frame shared by the browser runtime and
- * headless tests. Ordering is intentional: validate external player control,
+ * headless tests. Ordering is intentional: validate external player input,
  * executor reads the pre-step snapshot, movement resolves for player +
  * controlled actors, queued player atomic actions run, then the executor's
  * explicit atomic action runs and its result is fed back to it.
@@ -32,10 +40,12 @@ export class ExecutionDriver {
   ) {}
 
   step(input: ExecutionFrameInput): ExecutionFrameResult {
-    // World remains authoritative for canonical movement validation. This early
-    // guard additionally keeps executor state transactional when external input
-    // is invalid: a rejected frame must not consume an executor step first.
+    // Reject the whole externally-owned player frame before executor or World
+    // state can advance. This channel is not a generic actor-action injection
+    // seam; non-player actors act through their own execution path.
     assertFinitePlayerControl(input.playerControl);
+    assertPlayerActionActors(input.playerActions ?? [], this.world.playerId);
+
     const executorCommand = this.executor.next(this.world.snapshot());
 
     this.world.stepWithActorControls(
