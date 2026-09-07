@@ -1,6 +1,7 @@
 import * as Phaser from "phaser";
 import "./style.css";
 import "./mobile-style.css";
+import { ActionAttemptDebugPanel } from "./action-attempt-debug-panel";
 import { DebugWorkspace } from "./debug-workspace";
 import { E1DebugPanel } from "./e1-debug-panel";
 import type { E1HarnessDebugState } from "./e1-agent-harness";
@@ -23,6 +24,7 @@ appRoot.classList.toggle("mobile-owner-mode", mobileOwnerMode);
 
 let scene: WorldScene;
 let e1Panel: E1DebugPanel | null = null;
+let actionAttemptPanel: ActionAttemptDebugPanel | null = null;
 const playerControls = new PlayerControlBuffer();
 
 function updateE1Ui(state: E1HarnessDebugState): void {
@@ -41,13 +43,16 @@ if (mobileOwnerMode) workspace.setCollapsed(true);
 
 scene = new WorldScene((state) => {
   workspace.update(state);
+  actionAttemptPanel?.update(scene.recentActionAttempts());
   updateE1Ui(scene.e1AgentState());
 }, playerControls);
 
 e1Panel = new E1DebugPanel(debugRoot, {
   toggle: () => scene.toggleE1Agent()
 });
+actionAttemptPanel = new ActionAttemptDebugPanel(debugRoot);
 updateE1Ui(scene.e1AgentState());
+actionAttemptPanel.update(scene.recentActionAttempts());
 
 new Phaser.Game({
   type: Phaser.AUTO,
