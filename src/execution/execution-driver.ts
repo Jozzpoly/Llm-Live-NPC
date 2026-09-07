@@ -70,6 +70,41 @@ function cloneExecutorRun(run: ExecutorRunProvenance): ExecutorRunProvenance {
   };
 }
 
+function latestWorldEventSeq(world: World): number {
+  return world.recentEvents(1).at(-1)?.seq ?? 0;
+}
+
+/**
+ * A semantic atomic action is expected to synchronously emit exactly one
+ * corresponding World event. Correlate it at the execution boundary while the
+ * before/after event window is still causally unambiguous; later consumers must
+ * not reconstruct this relation from target/tick coincidence.
+ */
+function attachSemanticEventCorrelation(
+  world: World,
+  result: WorldActionResult,
+  previousEventSeq: number
+): void {
+  if (!isSemanticActionResult(result)) return;
+
+  const expectedType = result.code === "picked_up_item" ? "item.picked_up" : "item.dropped";
+  const newEvents = world.recentEvents(128).filter((event) => event.seq > previousEventSeq);
+  const matches = newEvents.filter(
+    (event) =>
+      event.type === expectedType &&
+      event.actorId === result.actorId &&
+      event.entityId === result.targetId
+  );
+
+  if (newEvents.length !== 1 || matches.length !== 1) {
+    throw new Error(
+      `Semantic action/event correlation failed for action #${result.seq}: expected one ${expectedType} event, observed ${newEvents.length} new event(s) and ${matches.length} match(es).`
+    );
+  }
+
+  result.eventSeq = matches[0]!.seq;
+}
+
 /**
  * One canonical fixed-step execution frame shared by the browser runtime and
  * headless tests. Ordering is intentional: validate external player control
@@ -102,7 +137,9 @@ export class ExecutionDriver {
     const playerActionResults: WorldActionResult[] = [];
     const semanticActionOccurrences: ExecutionSemanticActionOccurrence[] = [];
     for (const action of playerActions) {
+      const previousEventSeq = latestWorldEventSeq(this.world);
       const result = this.world.attemptAction(action);
+      attachSemanticEventCorrelation(this.world, result, previousEventSeq);
       playerActionResults.push(result);
       if (isSemanticActionResult(result)) {
         semanticActionOccurrences.push({
@@ -120,7 +157,9 @@ export class ExecutionDriver {
         throw new Error("Executor atomic action requires run provenance.");
       }
       executorActionRun = cloneExecutorRun(executorCommand.run);
+      const previousEventSeq = latestWorldEventSeq(this.world);
       executorActionResult = this.world.attemptAction(executorCommand.action);
+      attachSemanticEventCorrelation(this.world, executorActionResult, previousEventSeq);
       if (isSemanticActionResult(executorActionResult)) {
         semanticActionOccurrences.push({
           source: "executor",
