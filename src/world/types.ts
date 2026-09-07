@@ -196,6 +196,8 @@ export interface WorldActionResult {
   status: "succeeded" | "rejected";
   code: WorldActionResultCode;
   targetId?: EntityId;
+  /** Exact semantic WorldEvent sequence caused by this atomic action, when one exists. */
+  eventSeq?: number;
   message: string;
 }
 
