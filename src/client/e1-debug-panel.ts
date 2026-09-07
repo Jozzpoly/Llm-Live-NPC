@@ -1,4 +1,5 @@
-import type { E1HarnessDebugState } from "./e1-agent-harness";
+import type { E1ModelUsage } from "../agent/e1-provider-usage";
+import type { E1HarnessDebugState, E1UsageAttempt } from "./e1-agent-harness";
 
 function element<K extends keyof HTMLElementTagNameMap>(
   tag: K,
@@ -19,6 +20,20 @@ function metricRow(label: string): { row: HTMLDivElement; value: HTMLElement } {
   return { row, value };
 }
 
+function usageParts(usage: E1ModelUsage): string[] {
+  return [
+    usage.promptTokens !== null ? `prompt ${usage.promptTokens}` : null,
+    usage.completionTokens !== null ? `completion ${usage.completionTokens}` : null,
+    usage.totalTokens !== null ? `total ${usage.totalTokens}` : null,
+    usage.neurons !== null ? `neurons ${usage.neurons}` : null
+  ].filter((part): part is string => part !== null);
+}
+
+function usageAttemptText(entry: E1UsageAttempt): string {
+  const parts = usageParts(entry.usage);
+  return `a${entry.attempt}: ${parts.join(" · ") || "usage unavailable"}`;
+}
+
 export interface E1DebugPanelActions {
   toggle(): E1HarnessDebugState;
 }
@@ -36,6 +51,7 @@ export class E1DebugPanel {
   private readonly decisionValue: HTMLElement;
   private readonly validationValue: HTMLElement;
   private readonly providerValue: HTMLElement;
+  private readonly usageValue: HTMLElement;
   private readonly experienceValue: HTMLElement;
 
   constructor(debugRoot: HTMLElement, private readonly actions: E1DebugPanelActions) {
@@ -64,6 +80,7 @@ export class E1DebugPanel {
     const decision = metricRow("decision");
     const validation = metricRow("validation");
     const provider = metricRow("model / gateway");
+    const usage = metricRow("model usage");
     const experience = metricRow("last E1 experience");
     this.armedValue = armed.value;
     this.requestValue = request.value;
@@ -75,6 +92,7 @@ export class E1DebugPanel {
     this.decisionValue = decision.value;
     this.validationValue = validation.value;
     this.providerValue = provider.value;
+    this.usageValue = usage.value;
     this.experienceValue = experience.value;
     metrics.append(
       armed.row,
@@ -87,6 +105,7 @@ export class E1DebugPanel {
       decision.row,
       validation.row,
       provider.row,
+      usage.row,
       experience.row
     );
 
@@ -142,6 +161,7 @@ export class E1DebugPanel {
       state.latencyMs !== null ? `${state.latencyMs} ms` : null
     ].filter((part): part is string => Boolean(part));
     this.providerValue.textContent = providerParts.join(" · ") || "—";
+    this.usageValue.textContent = state.usageAttempts.map(usageAttemptText).join(" | ") || "—";
 
     this.experienceValue.textContent = state.experience
       ? `${state.experience.status} · ${state.experience.code} · ${state.experience.targetId ?? "—"} @ tick ${state.experience.tick}`
