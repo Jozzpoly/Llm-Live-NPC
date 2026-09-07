@@ -64,12 +64,14 @@ const blockers: Blocker[] = [
   { id: "grove.tree.3", label: "Old tree", bounds: { x: 1260, y: 570, width: 48, height: 48 }, occludesVision: true }
 ];
 
+// primaryPriority only selects the current singular primary-location projection.
+// It does not make authored membership exclusive: overlaps remain legal substrate data.
 const locations: LocationZone[] = [
-  { id: "workshop", label: "Workshop", bounds: { x: 980, y: 160, width: 320, height: 280 } },
-  { id: "cottage", label: "Cottage", bounds: { x: 140, y: 540, width: 320, height: 230 } },
-  { id: "grove", label: "Grove", bounds: { x: 930, y: 530, width: 400, height: 290 } },
-  { id: "yard", label: "Common Yard", bounds: { x: 420, y: 190, width: 510, height: 440 } },
-  { id: "north-path", label: "North Path", bounds: { x: 490, y: 40, width: 380, height: 140 } }
+  { id: "workshop", label: "Workshop", primaryPriority: 20, bounds: { x: 980, y: 160, width: 320, height: 280 } },
+  { id: "cottage", label: "Cottage", primaryPriority: 20, bounds: { x: 140, y: 540, width: 320, height: 230 } },
+  { id: "grove", label: "Grove", primaryPriority: 10, bounds: { x: 930, y: 530, width: 400, height: 290 } },
+  { id: "yard", label: "Common Yard", primaryPriority: 0, bounds: { x: 420, y: 190, width: 510, height: 440 } },
+  { id: "north-path", label: "North Path", primaryPriority: 10, bounds: { x: 490, y: 40, width: 380, height: 140 } }
 ];
 
 const placementSites: PlacementSite[] = [
