@@ -1,114 +1,106 @@
 # LLM Live NPC
 
-Experimental web laboratory for embodied LLM-driven NPCs.
+Experimental web laboratory for **persistent embodied NPCs whose cognition may use LLMs without letting the model become the world, the physics engine or the per-frame controller**.
 
-Core research question:
+## Current project question
 
-> Can a lightweight LLM-driven NPC become a believable resident of a game world by receiving bounded perception, maintaining its own experience/beliefs, and acting only through validated world affordances rather than directly mutating world truth?
+The project has moved beyond the original narrow question of whether an LLM can choose one grounded action.
 
-## Current state
+The current research direction is:
 
-**P0 is qualified.** GitHub → Cloudflare deployment, Workers AI through AI Gateway, usage/log correlation and a replaceable model transport seam have been proven with live Owner tests.
+> How do we build a believable resident of a simulated world that exists continuously between model calls, perceives only bounded evidence, communicates through the same world as players, develops continuity of intentions/beliefs/memory, and uses an LLM as a higher semantic cognitive mechanism while deterministic/local systems preserve world truth, execution and responsiveness?
 
-`@cf/ibm-granite/granite-4.0-h-micro` and `@cf/meta/llama-3.2-3b-instruct` both produced usable bounded completions through the same transport seam. Earlier `@cf/zai-org/glm-4.7-flash` probes are retained as negative evidence. **No final NPC model is selected.**
+This is a **research direction**, not a frozen final architecture.
 
-**P1 pre-cognition refoundation is now closed as a qualified substrate.** The P1 integration line contains:
+## Live state — 2026-09-07
 
-- project-owned TypeScript `World` truth;
-- a small top-down settlement specimen with collision, locations, items and semantic events;
-- fixed-step movement with interpolated Phaser presentation;
-- desktop/mobile human control and direct target interaction;
-- canonical actor facing;
-- world-owned placement target validation;
-- a deterministic non-LLM NPC executor shared by browser runtime and headless evidence;
-- an Owner-qualified embodied task in which NPC-001 approaches and picks up the lantern through the same validated World action substrate used by the player;
-- explicit execution/debug provenance and bounded runtime failure state.
+The active recovered/refoundation line is:
 
-P1 still has **no autonomous cognition, NPC sight/hearing, pathfinding or final conversation system**. Integration PR #3 therefore remains draft and `main` intentionally remains the proven P0 baseline while the next phase is designed from the P1 branch.
+`recovery/owner-fail-2026-09-07`
 
-Canonical project spine:
+Recovered runtime checkpoint before the canonical docs reconciliation:
 
-1. [`docs/PROJECT_STATE.md`](docs/PROJECT_STATE.md) — current truth, evidence boundaries, architecture and frontier;
-2. [`docs/FRESH_TAKEOVER.md`](docs/FRESH_TAKEOVER.md) — startup mandate for a new conversation.
+`b31a851c3f708077fbf9e6fb8206fa392f8def13`
 
-## Architectural boundary
+That checkpoint is **automated/R8-qualified donor evidence**, not a fresh final qualitative Owner/browser PASS.
 
-Target loop:
+`main` intentionally still points to the historical P0 transport checkpoint:
 
-`WORLD → PERCEPTION → COGNITION/MEMORY → INTENTION → NON-LLM EXECUTION → VALIDATED WORLD ACTIONS → WORLD`
+`f207419ee87c03979544d2d579e624f043300bbc`
 
-Current proven lower substrate:
+The old P1 integration PR #3 is closed without merge as a historical donor line. The current recovery branch is a full descendant of P1, so no unique P1 runtime was discarded.
 
-`human/scripted task → ExecutionDriver → World movement + World.attemptAction(...) → World outcome/event → presentation/debug evidence`
+The old post-readiness `experiment/e1-grounded-notice-fetch` line is **not canonical**. A 2026-09-07 Owner/browser gate found that line materially worse than the previous good playable surface. Recovery deliberately restarted from the last good pre-readiness checkpoint instead of forward-merging the failed line.
 
-Phaser is presentation/input infrastructure, not canonical world truth. Future cognition should propose bounded intentions/tasks rather than mutate positions, inventory or events directly.
+## What is proven enough to preserve as donor substrate
 
-## Infrastructure contract
+The current ancestry/evidence supports a bounded stack containing:
 
-- GitHub `main` remains the production P0 source of truth until P1 is intentionally integrated.
-- `p1/playable-world-slice` is the canonical pre-cognition refoundation/integration line.
-- Cloudflare Worker serves the laboratory and API.
-- Workers AI is available through the `AI` binding and routed through AI Gateway for observability.
-- AI probe endpoints are transport evidence, not the NPC cognition architecture.
-- P1 uses Vite 8 + the official Cloudflare Vite plugin.
-- `package-lock.json` is committed and CI uses locked installation.
-- Non-production branches receive Cloudflare preview builds for Owner testing.
+- project-owned TypeScript `World` authority;
+- fixed-step simulation with Phaser as presentation/input rather than truth;
+- desktop/mobile player control and direct target interaction;
+- explicit atomic World actions and causal action results;
+- deterministic non-LLM NPC execution through the same World legality as player actions;
+- bounded E1 perception/temporal evidence;
+- a tiny LLM intention surface (`wait | fetch`);
+- client-side revalidation before execution;
+- async arm/session safety against stale model responses;
+- cognition→executor diagnostic correlation;
+- real World outcomes returning as later NPC experience;
+- causal debug/provenance strong enough to distinguish player/manual/cognition execution in the recovered scope.
 
-## Current endpoints
+Final evidence-only combined R8 re-attack: PR #75, closed without merge, **149/149 tests across 27 files; R8 4/4; strict TypeScript/build/preview PASS; Cloudflare PASS**.
 
-Production remains the P0 qualification laboratory until P1 is deliberately integrated:
+Canonical recovered runtime itself remains smaller: **145/145 tests across 26 files** at `b31a851c...`.
 
-- `/` — production P0 laboratory;
-- `/api/health` — Worker/AI-binding readiness;
-- `/api/ai/qualify` — fixed-input two-model transport qualification;
-- `/api/ai/smoke` — retired GLM smoke route (`410 Gone`).
+## Explicit non-claims
 
-Production laboratory:
+Do not infer that the project has already solved or re-qualified:
 
-`https://llm-live-npc.jozzpoly.workers.dev`
+- final Live Mind architecture;
+- generic speech/hearing/shared-chat semantics;
+- attention or addressedness;
+- beliefs or long-term memory;
+- planning/routines/proactive autonomy;
+- pathfinding/navmesh;
+- multiplayer cognitive concurrency;
+- persistence/offscreen simulation/production scaling;
+- final model selection;
+- historical R5b timeout/retry/cancellation policy;
+- later historical R6 sensory-buffer refinements;
+- later historical R7 Worker ingress/provider-observability hardening.
 
-P1 and experiment URLs should be taken from the exact current Cloudflare branch/commit build rather than copied from an old handoff.
+Those historical R5b/R6/R7 areas were deliberately **not mechanically ported** during selective recovery. Their absence is not automatically a current blocker; they may be reused later only when the new architecture gives them a concrete role.
 
-## P1 toolchain
+Generic player↔NPC `interact` is currently unsupported rather than pretending that an event-less interaction succeeded. Future conversation should be designed as a truthful communication contract in the world, not resurrect that placeholder.
 
-Current bounded versions:
+## Current Owner direction entering refoundation
 
-- Node `22`;
-- Phaser `4.2.1`;
-- Vite `8.2.2`;
-- Cloudflare Vite plugin `1.54.3`;
-- Wrangler `4.129.0`;
-- TypeScript `7.0.2`;
-- Vitest `5.0.0`.
+The strongest current product direction is:
 
-Useful commands after dependencies are installed:
+- one NPC should be one persistent cognitive identity, not a private chatbot clone per player;
+- initial conversation should happen through ordinary shared world chat, with dedicated/focused UI only as optional QoL later;
+- speech should become a world communication occurrence, not direct prompt plumbing;
+- hearing a message and being addressed by it are different problems;
+- an utterance is evidence that someone said something, not automatic canonical world truth;
+- the NPC needs a cheap continuously alive runtime between sparse LLM cognitive acts;
+- LLM authority should be strongest around language, interpretation, intentions, social judgement and deliberation, while World/local execution remains authoritative about what actually happened;
+- debug should expose causal state and provenance, not hidden chain-of-thought.
 
-```bash
-npm run check
-npm run preview
-npm run deploy
-npm run deploy:preview
-```
+These are the starting hypotheses/invariants for the next study pass and should still be challenged before architecture is frozen.
 
-`deploy:preview` is intentionally self-contained: it performs the Vite build before `wrangler versions upload`, so non-production Workers Builds cannot accidentally upload the input Wrangler config before Vite has generated deployment assets/configuration.
+## Current frontier
 
-## Cloudflare Git build settings
+**Do not implement chat, memory, Live Mind, planning or another E1 feature yet.**
 
-Current intended settings:
+**Pass 0 technical/evidence reconciliation is closed at this canonical-spine state.** The next real work is the **Live NPC Refoundation Study — Pass 1: vision, invariants and anti-goals**.
 
-- Production branch: `main`;
-- Build command: `npm run build --if-present`;
-- Production deploy command: `npx wrangler deploy`;
-- Version command (non-production): `npm run deploy:preview`;
-- non-production branch builds: enabled;
-- Root directory: `/`.
+The purpose of Pass 1 is to reconstruct and challenge what “a real resident” means for this project before architecture research begins shaping the solution.
 
-The root `wrangler.jsonc` intentionally leaves `assets.directory` to the official Vite plugin output configuration. Do not add a hard-coded build directory merely to make a pre-build `wrangler versions upload` accept the input config.
+Canonical spine:
 
-## Next work
+1. `README.md` — fast orientation;
+2. `docs/PROJECT_STATE.md` — current evidence boundary, topology, donor architecture and frontier;
+3. `docs/FRESH_TAKEOVER.md` — startup mandate for a new conversation.
 
-Do not restart closed P1 substrate stages. A fresh takeover should verify live P1 + PR #3, read the canonical spine, and then design the smallest useful experiment toward a grounded loop such as:
-
-`WORLD → bounded NPC perception → limited LLM intention → existing deterministic executor → validated WORLD result`
-
-The exact first perception/cognition slice is intentionally **not frozen** in this README; it should be selected from fresh evidence and the Owner's research goal.
+Historical design/evidence documents and closed PRs remain available when exact provenance is needed, but they are not the primary startup path.
