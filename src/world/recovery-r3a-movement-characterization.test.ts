@@ -14,6 +14,12 @@ function playerPosition(world: World) {
   return player.position;
 }
 
+function npcPosition(world: World) {
+  const npc = world.snapshot().entities.find((entity) => entity.id === "npc.001");
+  if (!npc || npc.kind !== "npc") throw new Error("Missing NPC snapshot.");
+  return npc.position;
+}
+
 function verticalWallSpecimen(width = 1) {
   const specimen = createP1Specimen();
   specimen.blockers = [
@@ -186,5 +192,92 @@ describe("recovery R3a movement/collision characterization", () => {
 
     expect(playerPosition(canonicalOrder)).toEqual({ x: 504, y: 400 });
     expect(playerPosition(reversedOrder)).toEqual({ x: 504, y: 400 });
+  });
+
+  it("remains stable under repeated pressure into the same contact", () => {
+    const specimen = verticalWallSpecimen(1);
+    requirePlayer(specimen).position = { x: 500, y: 400 };
+    const world = new World(specimen);
+
+    for (let step = 0; step < 21; step += 1) {
+      world.step({ moveX: 1, moveY: 0 }, 0.25);
+      expect(playerPosition(world)).toEqual({ x: 504, y: 400 });
+    }
+
+    expect(world.tick).toBe(21);
+  });
+
+  it("applies anti-tunneling to NPC actor controls through the same canonical movement rule", () => {
+    const specimen = createP1Specimen();
+    requirePlayer(specimen).position = { x: 300, y: 400 };
+    const npc = specimen.entities.find((entity) => entity.id === "npc.001");
+    if (!npc || npc.kind !== "npc") throw new Error("Missing NPC fixture.");
+    npc.position = { x: 760, y: 400 };
+    specimen.actorSpeed = 2000;
+    specimen.blockers = [
+      {
+        id: "probe.npc-wall",
+        label: "NPC wall",
+        bounds: { x: 800, y: 300, width: 1, height: 200 },
+        occludesVision: true
+      }
+    ];
+    specimen.placementSites = [];
+    const world = new World(specimen);
+
+    world.stepWithActorControls(
+      { moveX: 0, moveY: 0 },
+      [{ actorId: "npc.001", moveX: 1, moveY: 0 }],
+      1 / 30
+    );
+
+    expect(npcPosition(world)).toEqual({ x: 784, y: 400 });
+    expect(playerPosition(world)).toEqual({ x: 300, y: 400 });
+  });
+
+  it("allows escape from authored overlap while still respecting the next crossed blocker independent of order", () => {
+    const makeWorld = (reverse: boolean) => {
+      const specimen = createP1Specimen();
+      requirePlayer(specimen).position = { x: 520, y: 400 };
+      const blockers = [
+        {
+          id: "probe.start-overlap",
+          label: "Start overlap",
+          bounds: { x: 520, y: 300, width: 1, height: 200 },
+          occludesVision: true
+        },
+        {
+          id: "probe.escape-wall",
+          label: "Escape wall",
+          bounds: { x: 560, y: 300, width: 1, height: 200 },
+          occludesVision: true
+        }
+      ];
+      specimen.blockers = reverse ? blockers.reverse() : blockers;
+      specimen.placementSites = [];
+      return new World(specimen);
+    };
+
+    const canonicalOrder = makeWorld(false);
+    const reversedOrder = makeWorld(true);
+    canonicalOrder.step({ moveX: 1, moveY: 0 }, 0.25);
+    reversedOrder.step({ moveX: 1, moveY: 0 }, 0.25);
+
+    expect(playerPosition(canonicalOrder)).toEqual({ x: 544, y: 400 });
+    expect(playerPosition(reversedOrder)).toEqual({ x: 544, y: 400 });
+  });
+
+  it("keeps zero-radius actors coherent against ordinary positive-width blockers", () => {
+    const specimen = verticalWallSpecimen(10);
+    const currentPlayer = requirePlayer(specimen);
+    currentPlayer.radius = 0;
+    currentPlayer.position = { x: 500, y: 400 };
+    const world = new World(specimen);
+
+    world.step({ moveX: 1, moveY: 0 }, 0.25);
+    expect(playerPosition(world)).toEqual({ x: 520, y: 400 });
+
+    world.step({ moveX: -1, moveY: 0 }, 0.25);
+    expect(playerPosition(world)).toEqual({ x: 472.5, y: 400 });
   });
 });
