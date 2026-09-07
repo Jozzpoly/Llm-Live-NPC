@@ -50,7 +50,9 @@ function fixture(): WorldSnapshot {
       }
     ],
     blockers: [],
-    locations: [{ id: "yard", label: "Yard", bounds: { x: 0, y: 0, width: 300, height: 300 } }],
+    locations: [
+      { id: "yard", label: "Yard", primaryPriority: 0, bounds: { x: 0, y: 0, width: 300, height: 300 } }
+    ],
     placementSites: [],
     playerLocationId: "yard"
   };
