@@ -168,4 +168,109 @@ describe("recovery R3b held-item semantics characterization", () => {
 
     expect(resolveInterpolatedEntityPositions(previous, current, 0.5).get("item.test")).toEqual({ x: 50, y: 60 });
   });
+
+  it("applies the same canonical locality and presentation attachment to NPC-held items through actor-control movement", () => {
+    const specimen = createP1Specimen();
+    const npc = requireNpc(specimen);
+    const mug = requireItem(specimen, "item.mug");
+
+    specimen.blockers = [];
+    specimen.placementSites = [];
+    npc.position = { x: 500, y: 400 };
+    npc.heldItemId = mug.id;
+    mug.heldBy = npc.id;
+    mug.position = { x: 12, y: 34 };
+
+    const world = new World(specimen);
+    const controls = [
+      { moveX: 1, moveY: 0 },
+      { moveX: 0, moveY: 1 },
+      { moveX: -1, moveY: 0 },
+      { moveX: 1, moveY: -1 }
+    ];
+
+    for (const control of controls) {
+      world.stepWithActorControls(
+        { moveX: 0, moveY: 0 },
+        [{ actorId: npc.id, ...control }],
+        0.1
+      );
+
+      const snapshot = world.snapshot();
+      const canonicalNpc = snapshot.entities.find((entity) => entity.id === npc.id);
+      const canonicalMug = snapshot.entities.find((entity) => entity.id === mug.id);
+      if (!canonicalNpc || canonicalNpc.kind !== "npc" || !canonicalMug || canonicalMug.kind !== "item") {
+        throw new Error("Missing canonical NPC holder snapshot.");
+      }
+
+      expect(canonicalMug.position).toEqual(canonicalNpc.position);
+      expect(resolveInterpolatedEntityPositions(snapshot, snapshot, 1).get(mug.id)).toEqual({
+        x: canonicalNpc.position.x,
+        y: canonicalNpc.position.y - canonicalNpc.radius - 10
+      });
+    }
+  });
+
+  it("preserves rendered hit-testing through a complete pickup-to-drop presentation transition lifecycle", () => {
+    const specimen = createP1Specimen();
+    const player = requirePlayer(specimen);
+    const mug = requireItem(specimen, "item.mug");
+
+    specimen.blockers = [];
+    specimen.placementSites = [];
+    player.position = { x: 100, y: 100 };
+    player.heldItemId = null;
+    mug.position = { x: 120, y: 100 };
+    mug.heldBy = null;
+
+    const world = new World(specimen);
+    const beforePickup = world.snapshot();
+    const freeBeforePickup = beforePickup.entities.find((entity) => entity.id === mug.id);
+    if (!freeBeforePickup || freeBeforePickup.kind !== "item") throw new Error("Missing pre-pickup item snapshot.");
+
+    expect(world.attemptAction({ action: "interact", actorId: player.id, targetId: mug.id })).toMatchObject({
+      status: "succeeded",
+      code: "picked_up_item",
+      targetId: mug.id
+    });
+
+    const held = world.snapshot();
+    const heldPlayer = held.entities.find((entity) => entity.id === player.id);
+    const heldMug = held.entities.find((entity) => entity.id === mug.id);
+    if (!heldPlayer || heldPlayer.kind !== "player" || !heldMug || heldMug.kind !== "item") {
+      throw new Error("Missing held transition snapshot.");
+    }
+    expect(heldMug).toMatchObject({ heldBy: player.id, position: heldPlayer.position });
+
+    const heldAttachment = {
+      x: heldPlayer.position.x,
+      y: heldPlayer.position.y - heldPlayer.radius - 10
+    };
+    const pickupMidpoint = {
+      x: (freeBeforePickup.position.x + heldAttachment.x) / 2,
+      y: (freeBeforePickup.position.y + heldAttachment.y) / 2
+    };
+    const pickupRendered = resolveInterpolatedEntityPositions(beforePickup, held, 0.5);
+    expect(pickupRendered.get(mug.id)).toEqual(pickupMidpoint);
+    expect(resolveDirectInteractionTarget(held.entities, pickupRendered, pickupMidpoint, 1, 0)).toBe(mug.id);
+
+    expect(world.attemptAction({ action: "drop", actorId: player.id })).toMatchObject({
+      status: "succeeded",
+      code: "dropped_item",
+      targetId: mug.id
+    });
+
+    const dropped = world.snapshot();
+    const droppedMug = dropped.entities.find((entity) => entity.id === mug.id);
+    if (!droppedMug || droppedMug.kind !== "item") throw new Error("Missing dropped transition snapshot.");
+    expect(droppedMug.heldBy).toBeNull();
+
+    const dropMidpoint = {
+      x: (heldAttachment.x + droppedMug.position.x) / 2,
+      y: (heldAttachment.y + droppedMug.position.y) / 2
+    };
+    const dropRendered = resolveInterpolatedEntityPositions(held, dropped, 0.5);
+    expect(dropRendered.get(mug.id)).toEqual(dropMidpoint);
+    expect(resolveDirectInteractionTarget(dropped.entities, dropRendered, dropMidpoint, 1, 0)).toBe(mug.id);
+  });
 });
