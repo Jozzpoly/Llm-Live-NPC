@@ -1,6 +1,6 @@
 # Pass 0 R8 — independent repaired-substrate re-attack
 
-Status: **AUTOMATED R8 PASS; OWNER / INTERACTIVE PUBLIC-RUNTIME GATE STILL OPEN**
+Status: **AUTOMATED + PUBLIC-RUNTIME R8 PASS; FOCUSED OWNER / INTERACTIVE BROWSER GATE STILL OPEN**
 
 This document belongs to the evidence-only branch `evidence/live-mind-pass0-r8-reattack`. The branch and PR #47 must not be merged wholesale into the canonical E1 runtime line.
 
@@ -23,9 +23,10 @@ Post-merge Cloudflare evidence for the exact canonical repaired head:
 
 - Workers Build: PASS;
 - Build ID: `9a881ed1-3733-405a-bc69-13896d65010a`;
-- Version ID: `c13d0442-104c-42ec-b148-a6d9374f98d0`.
+- Version ID: `c13d0442-104c-42ec-b148-a6d9374f98d0`;
+- exact canonical Version URL used later by the public-runtime probe: `https://c13d0442-llm-live-npc.jozzpoly.workers.dev`.
 
-## 2. Independent falsification head
+## 2. Independent repaired-substrate falsification
 
 Initial tests-only R8 head:
 
@@ -73,7 +74,7 @@ All four independent attacks passed on their first automated execution.
 
 No production change and no oracle migration was required.
 
-## 3. Durable validation result
+## 3. Durable automated validation
 
 On tests-only head `63ec5cec51e907c306c48970d2f1024ce7eb8481`:
 
@@ -89,7 +90,66 @@ On tests-only head `63ec5cec51e907c306c48970d2f1024ce7eb8481`:
 
 The historical large-client-chunk warning remains present and unchanged. It is not classified as a new R8 failure.
 
-## 4. Selected old characterization re-run on the repaired substrate
+## 4. Independent public-runtime / real-model probe — DEFENDED
+
+The browser assistant environment could not resolve the `workers.dev` host directly. That was classified as an apparatus/network limitation, not project evidence. Instead, GitHub Actions was used as an independent external network observer.
+
+Public-probe evidence head:
+
+`0248f28829024e9dbdd07cc134d9345cacc14f9a`
+
+The only new file for this gate was:
+
+`src/client/r8-public-runtime.test.ts`
+
+No production source was changed.
+
+The probe intentionally targeted the already-qualified exact canonical runtime Version URL, not the evidence branch deployment.
+
+### Probe sequence
+
+1. GET `/api/health` from canonical Version ID `c13d0442-104c-42ec-b148-a6d9374f98d0`.
+2. Require:
+   - HTTP 200;
+   - `ok: true`;
+   - service `llm-live-npc`;
+   - AI binding present;
+   - stage `e1-grounded-notice-fetch`;
+   - cognition endpoint `/api/agent/e1/decide`;
+   - exact build commit `caeb15cb875a83ffbab684f8e55880a87d723d15`;
+   - exact Worker Version ID `c13d0442-104c-42ec-b148-a6d9374f98d0`.
+3. POST one valid bounded cognition request to `/api/agent/e1/decide` with no fetchable targets.
+4. Require one successful real Granite response with:
+   - HTTP 200;
+   - exact cycle ID;
+   - bounded decision `wait`;
+   - model `@cf/ibm-granite/granite-4.0-h-micro`;
+   - valid latency/gateway/usage response shape.
+
+The request intentionally supplied no fetchable target, so the live model probe could not start a World task or mutate gameplay state.
+
+### Public-probe result
+
+PASS on first execution.
+
+GitHub Actions log explicitly records:
+
+- `src/client/r8-public-runtime.test.ts` — **1/1 PASS**;
+- exact test: `proves exact deployed build provenance and one bounded live Granite wait decision` — PASS;
+- live public test duration: ~2.65 s.
+
+Full repository gate on this evidence head:
+
+- **33/33 test files, 178/178 tests PASS**;
+- TypeScript PASS;
+- Vite Worker build PASS;
+- Vite client build PASS;
+- preview upload dry-run PASS;
+- evidence-branch Cloudflare build also PASS, Build ID `194cb82f-3b28-4f61-82bd-8a5b19f9a002`, Version ID `b9b41a82-4434-445a-b655-80743977d9ac`.
+
+The evidence-branch Cloudflare version is not used as a substitute for the canonical runtime probe; the external test explicitly targets canonical `c13d0442...` and checks its embedded `caeb15cb...` provenance.
+
+## 5. Selected old characterization re-run on the repaired substrate
 
 The full suite passing is necessary but not sufficient evidence. The following older contracts are selected explicitly because they defend the substrate that Repairs A/B could plausibly have disturbed.
 
@@ -130,22 +190,21 @@ The executor remains deterministic and World-authority-driven. Provenance is obs
 
 Repair A removed the false World actor-interaction success without removing the useful mouse/touch ability to identify NPC presentation targets.
 
-### F. R7 Worker boundary semantics — DEFENDED in automated characterization
+### F. R7 Worker boundary semantics — DEFENDED
 
 - `src/client/r7a-worker-ingress.test.ts` — PASS;
 - `src/client/r7b-error-usage-provenance.test.ts` — PASS;
 - `src/client/e1-worker.test.ts` — PASS;
-- preview upload dry-run — PASS.
+- preview upload dry-run — PASS;
+- independent canonical public `/api/health` + real Granite `/api/agent/e1/decide` probe — PASS.
 
-Repairs A/B did not alter Worker prompt/tool vocabulary, ingress limits, provider-error semantics or usage provenance.
-
-This automated defense is not being misrepresented as a new live public POST probe; see the open gate below.
+Repairs A/B did not alter Worker prompt/tool vocabulary, ingress limits, provider-error semantics or usage provenance, and the combined repaired canonical runtime still serves the exact expected build and one successful bounded real-model decision.
 
 ### G. World/presentation foundational regressions — DEFENDED by durable suite
 
 The repaired substrate also retains green collision, held-item, location, facing, presentation, specimen-validation, interaction-validation and build-provenance tests. These are treated as broad regression coverage rather than independent new R8 claims.
 
-## 5. What automated R8 now supports
+## 6. What R8 now supports
 
 The current evidence supports all of the following bounded claims:
 
@@ -157,29 +216,38 @@ The current evidence supports all of the following bounded claims:
 - model-facing semantic experience remains separate from diagnostic lineage;
 - direct NPC targeting remains available despite removal of the false actor-interaction success;
 - old E1/R6/R7 and execution contracts continue to pass after both repairs;
-- exact build/deploy provenance exists for both repaired canonical head and tests-only R8 head.
+- exact build/deploy provenance exists for the repaired canonical head;
+- an independent external runner reached that exact canonical runtime and completed one successful bounded live Granite decision through the public endpoint.
 
-## 6. Open evidence boundary before Pass 0 closure
+## 7. Remaining evidence boundary before Pass 0 closure
 
-Automated R8 is **PASS**, but Pass 0 is not yet declared closed.
+Automated and public-runtime R8 are **PASS**, but Pass 0 is not yet declared closed.
 
-Two related hands-on/public-runtime questions remain:
+One focused hands-on question remains:
 
-1. **Changed debug surface / browser truth**
-   - Recent action attempts now visibly expose executor run number, manual/cognition cause and action→event sequence;
-   - this environment has not yet supplied interactive browser/computer-use evidence that the rendered debug surface is legible and faithful in the real app.
+### Changed debug surface / rendered browser truth
 
-2. **Live public Worker / real-model path after the combined repair**
-   - R7 ingress/error/usage tests, build, dry-run and Cloudflare deploy are green;
-   - no new real public POST/model request has yet been performed as part of this R8 phase;
-   - a focused Owner E1 run on the deployed preview can potentially satisfy both this public path and the changed-debug-surface gate in one low-cost hands-on check.
+`Recent action attempts` now claims to visibly expose:
 
-No claim is made that these two gates have passed yet.
+- player vs executor source;
+- executor run number;
+- manual vs cognition cause;
+- cognition correlation ID;
+- action sequence;
+- semantic World event sequence when one exists.
 
-## 7. Current R8 verdict
+Static code inspection confirms that this panel is mounted into the real Debug Workspace and is fed by runtime action-attempt history. However, this environment cannot provide interactive browser/computer-use evidence that the rendered surface is legible, faithful and useful during a real Owner run on desktop/mobile.
+
+A single focused Owner interaction on the exact canonical Version URL can close this remaining gate. It should verify both a rejected direct NPC click/tap and one real E1 drop→fetch cycle while observing `Recent action attempts`.
+
+No claim is made that this hands-on gate has passed yet.
+
+## 8. Current R8 verdict
 
 **AUTOMATED / HEADLESS R8: PASS**
 
-**PASS 0 CLOSURE: PENDING FOCUSED OWNER / INTERACTIVE PUBLIC-RUNTIME GATE**
+**PUBLIC CANONICAL WORKER + REAL MODEL R8: PASS**
+
+**PASS 0 CLOSURE: PENDING ONE FOCUSED OWNER / INTERACTIVE BROWSER GATE**
 
 If the remaining hands-on gate passes, the evidence PR should be closed without merge and the canonical README / `docs/PROJECT_STATE.md` / `docs/FRESH_TAKEOVER.md` should be refreshed on a docs-only branch. If it fails, the failure becomes new evidence and must be classified before any closure declaration.
