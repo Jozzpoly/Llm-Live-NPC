@@ -49,7 +49,8 @@ function isActor(entity: WorldEntity | undefined): entity is ActorEntity {
  * Deliberately NOT handled here:
  * - whether authored actor/free-item positions are inside legal collision space;
  * - placement-site spatial containment policy;
- * - held-item visual/canonical attachment geometry.
+ * - held-item visual/canonical attachment geometry;
+ * - whether location zones overlap or how many memberships a point may have.
  *
  * Zero-valued speed, radius and AABB extents are admitted deliberately. Recovery
  * evidence showed that the current runtime can represent them coherently; being
@@ -96,7 +97,12 @@ export function validateWorldSpecimenStructure(specimen: WorldSpecimen): void {
   }
 
   for (const blocker of specimen.blockers) assertFiniteAabb(blocker.bounds, `Blocker ${blocker.id}`);
-  for (const location of specimen.locations) assertFiniteAabb(location.bounds, `Location ${location.id}`);
+  for (const location of specimen.locations) {
+    assertFiniteAabb(location.bounds, `Location ${location.id}`);
+    if (!Number.isFinite(location.primaryPriority)) {
+      throw new Error(`Location ${location.id} primaryPriority must be finite.`);
+    }
+  }
   for (const site of specimen.placementSites) assertFiniteAabb(site.bounds, `Placement site ${site.id}`);
 
   const entities = new Map(specimen.entities.map((entity) => [entity.id, entity] as const));
