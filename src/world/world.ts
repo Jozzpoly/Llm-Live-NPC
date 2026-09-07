@@ -1,3 +1,4 @@
+import { resolvePrimaryLocation } from "./location-membership";
 import type {
   Aabb,
   ActorControlInput,
@@ -490,7 +491,7 @@ export class World {
   }
 
   private resolveLocation(position: Vec2) {
-    return this.locations.find((location) => containsPoint(location.bounds, position));
+    return resolvePrimaryLocation(this.locations, position);
   }
 
   private interact(actor: ActorEntity, explicitTargetId?: EntityId): WorldActionResult {
