@@ -11,6 +11,13 @@ function element<K extends keyof HTMLElementTagNameMap>(
   return node;
 }
 
+function sourceText(attempt: ActionAttemptRecord): string {
+  if (attempt.source === "player") return "player channel";
+  return attempt.executorRun
+    ? `executor #${attempt.executorRun.runId} · ${attempt.executorRun.cause.kind}`
+    : "executor · provenance missing";
+}
+
 export class ActionAttemptDebugPanel {
   private readonly list: HTMLUListElement;
   private lastSignature = "";
@@ -22,7 +29,7 @@ export class ActionAttemptDebugPanel {
       element(
         "p",
         "debug-note",
-        "Execution-driver truth: every recent player-channel and executor atomic attempt, including rejected attempts. Diagnostic only — not semantic World event history."
+        "Execution-driver truth: every recent player-channel and executor atomic attempt, including rejected attempts. Executor attempts retain accepted run/cause provenance. Diagnostic only — not semantic World event history."
       )
     );
     this.list = element("ul", "event-list");
@@ -33,7 +40,10 @@ export class ActionAttemptDebugPanel {
 
   update(attempts: readonly ActionAttemptRecord[]): void {
     const signature = attempts
-      .map((attempt) => `${attempt.seq}:${attempt.source}:${attempt.status}:${attempt.code}`)
+      .map((attempt) => {
+        const run = attempt.executorRun;
+        return `${attempt.seq}:${attempt.source}:${run?.runId ?? "-"}:${run?.cause.kind ?? "-"}:${attempt.status}:${attempt.code}`;
+      })
       .join("|");
     if (signature === this.lastSignature && this.list.childElementCount > 0) return;
     this.lastSignature = signature;
@@ -46,12 +56,11 @@ export class ActionAttemptDebugPanel {
 
     for (const attempt of [...attempts].reverse()) {
       const item = element("li");
-      const source = attempt.source === "player" ? "player channel" : "executor";
       item.append(
         element(
           "div",
           "event-message",
-          `${source} · ${attempt.actorId} · ${attempt.action}${attempt.targetId ? ` → ${attempt.targetId}` : ""}`
+          `${sourceText(attempt)} · ${attempt.actorId} · ${attempt.action}${attempt.targetId ? ` → ${attempt.targetId}` : ""}`
         ),
         element(
           "div",

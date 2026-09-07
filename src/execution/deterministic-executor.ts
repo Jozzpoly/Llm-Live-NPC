@@ -17,6 +17,16 @@ export interface ExecutorTask {
   targetId: EntityId;
 }
 
+export type ExecutorRunCause =
+  | { kind: "manual" }
+  | { kind: "cognition" }
+  | { kind: "unattributed" };
+
+export interface ExecutorRunProvenance {
+  runId: number;
+  cause: ExecutorRunCause;
+}
+
 export interface ExecutorCommand {
   control?: ActorControlInput;
   action?: WorldActionRequest;
@@ -28,6 +38,22 @@ export interface ExecutorState {
   failureCode: string | null;
   stepsUsed: number;
   stepBudget: number;
+  run: ExecutorRunProvenance | null;
+}
+
+function cloneCause(cause: ExecutorRunCause): ExecutorRunCause {
+  switch (cause.kind) {
+    case "manual":
+      return { kind: "manual" };
+    case "cognition":
+      return { kind: "cognition" };
+    case "unattributed":
+      return { kind: "unattributed" };
+  }
+}
+
+function cloneRun(run: ExecutorRunProvenance | null): ExecutorRunProvenance | null {
+  return run ? { runId: run.runId, cause: cloneCause(run.cause) } : null;
 }
 
 export class DeterministicExecutor {
@@ -35,6 +61,8 @@ export class DeterministicExecutor {
   private statusValue: ExecutorStatus = "idle";
   private failureCodeValue: string | null = null;
   private stepsUsedValue = 0;
+  private nextRunId = 1;
+  private runValue: ExecutorRunProvenance | null = null;
 
   constructor(private readonly stepBudgetValue = DEFAULT_STEP_BUDGET) {
     if (!Number.isInteger(stepBudgetValue) || stepBudgetValue <= 0) {
@@ -46,13 +74,21 @@ export class DeterministicExecutor {
    * Starts a new durative task only when no task is currently running.
    * Returning false is a causal refusal: callers must not silently replace an
    * in-flight task, because doing so would destroy execution provenance.
+   *
+   * `unattributed` is a migration/default for isolated callers. Real browser
+   * manual and E1 cognition paths provide an explicit cause.
    */
-  start(task: ExecutorTask): boolean {
+  start(task: ExecutorTask, cause: ExecutorRunCause = { kind: "unattributed" }): boolean {
     if (this.statusValue === "running") return false;
     this.taskValue = { ...task };
     this.statusValue = "running";
     this.failureCodeValue = null;
     this.stepsUsedValue = 0;
+    this.runValue = {
+      runId: this.nextRunId,
+      cause: cloneCause(cause)
+    };
+    this.nextRunId += 1;
     return true;
   }
 
@@ -62,7 +98,8 @@ export class DeterministicExecutor {
       task: this.taskValue ? { ...this.taskValue } : null,
       failureCode: this.failureCodeValue,
       stepsUsed: this.stepsUsedValue,
-      stepBudget: this.stepBudgetValue
+      stepBudget: this.stepBudgetValue,
+      run: cloneRun(this.runValue)
     };
   }
 

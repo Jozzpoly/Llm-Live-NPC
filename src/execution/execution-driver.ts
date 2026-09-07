@@ -1,6 +1,9 @@
 import type { WorldActionRequest, WorldActionResult, WorldInput, WorldSnapshot } from "../world/types";
 import { World } from "../world/world";
-import { DeterministicExecutor } from "./deterministic-executor";
+import {
+  DeterministicExecutor,
+  type ExecutorRunProvenance
+} from "./deterministic-executor";
 
 const ACTION_ATTEMPT_HISTORY_LIMIT = 12;
 
@@ -12,12 +15,28 @@ export interface ExecutionFrameInput {
 export interface ExecutionFrameResult {
   playerActionResults: WorldActionResult[];
   executorActionResult: WorldActionResult | null;
+  executorActionRun: ExecutorRunProvenance | null;
 }
 
 export type ActionAttemptSource = "player" | "executor";
 
 export interface ActionAttemptRecord extends WorldActionResult {
   source: ActionAttemptSource;
+  executorRun?: ExecutorRunProvenance;
+}
+
+function cloneExecutorRun(run: ExecutorRunProvenance): ExecutorRunProvenance {
+  return {
+    runId: run.runId,
+    cause: { kind: run.cause.kind }
+  } as ExecutorRunProvenance;
+}
+
+function cloneActionAttempt(attempt: ActionAttemptRecord): ActionAttemptRecord {
+  return {
+    ...attempt,
+    executorRun: attempt.executorRun ? cloneExecutorRun(attempt.executorRun) : undefined
+  };
 }
 
 function assertFinitePlayerControl(input: WorldInput): void {
@@ -50,7 +69,8 @@ function assertPlayerActionActors(actions: readonly WorldActionRequest[], player
  * Each driver instance also retains a tiny bounded diagnostic history of the
  * atomic attempts that crossed this execution boundary. World/gameplay/cognition
  * never read that history; it exists only so debug surfaces do not collapse a
- * multi-attempt frame into World.lastActionResult().
+ * multi-attempt frame into World.lastActionResult(). Executor attempts retain
+ * the accepted executor run/cause that owned the action.
  */
 export class ExecutionDriver {
   private readonly actionAttemptHistory: ActionAttemptRecord[] = [];
@@ -68,6 +88,11 @@ export class ExecutionDriver {
     const preStepSnapshot = this.world.snapshot();
     assertPlayerActionActors(input.playerActions ?? [], currentPlayerId(preStepSnapshot));
 
+    // A run can only be replaced by an explicit accepted start(), never by
+    // next(). Capturing it before command derivation therefore gives the exact
+    // causal owner of any executor atomic action produced by this frame without
+    // widening the movement-command API just for diagnostics.
+    const executorRunBeforeCommand = this.executor.state().run;
     const executorCommand = this.executor.next(preStepSnapshot);
 
     this.world.stepWithActorControls(
@@ -80,18 +105,23 @@ export class ExecutionDriver {
     );
 
     let executorActionResult: WorldActionResult | null = null;
+    let executorActionRun: ExecutorRunProvenance | null = null;
     if (executorCommand.action) {
+      if (!executorRunBeforeCommand) {
+        throw new Error("Executor atomic action requires accepted-run provenance.");
+      }
+      executorActionRun = cloneExecutorRun(executorRunBeforeCommand);
       executorActionResult = this.world.attemptAction(executorCommand.action);
       this.executor.acceptActionResult(executorActionResult);
     }
 
-    const frame = { playerActionResults, executorActionResult };
+    const frame = { playerActionResults, executorActionResult, executorActionRun };
     this.recordActionAttempts(frame);
     return frame;
   }
 
   recentActionAttempts(): ActionAttemptRecord[] {
-    return this.actionAttemptHistory.map((attempt) => ({ ...attempt }));
+    return this.actionAttemptHistory.map(cloneActionAttempt);
   }
 
   private recordActionAttempts(frame: ExecutionFrameResult): void {
@@ -99,7 +129,14 @@ export class ExecutionDriver {
       this.actionAttemptHistory.push({ ...result, source: "player" });
     }
     if (frame.executorActionResult) {
-      this.actionAttemptHistory.push({ ...frame.executorActionResult, source: "executor" });
+      if (!frame.executorActionRun) {
+        throw new Error("Executor action result requires accepted-run provenance.");
+      }
+      this.actionAttemptHistory.push({
+        ...frame.executorActionResult,
+        source: "executor",
+        executorRun: cloneExecutorRun(frame.executorActionRun)
+      });
     }
     if (this.actionAttemptHistory.length > ACTION_ATTEMPT_HISTORY_LIMIT) {
       this.actionAttemptHistory.splice(
