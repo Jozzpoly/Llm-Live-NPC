@@ -8,6 +8,12 @@ function assertFinitePositive(value: number, label: string): void {
   }
 }
 
+function assertFiniteNonNegative(value: number, label: string): void {
+  if (!Number.isFinite(value) || value < 0) {
+    throw new Error(`${label} must be finite and non-negative.`);
+  }
+}
+
 function assertFinitePoint(point: Vec2, label: string): void {
   if (!Number.isFinite(point.x) || !Number.isFinite(point.y)) {
     throw new Error(`${label} must be finite.`);
@@ -18,8 +24,8 @@ function assertFiniteAabb(bounds: Aabb, label: string): void {
   if (!Number.isFinite(bounds.x) || !Number.isFinite(bounds.y)) {
     throw new Error(`${label} origin must be finite.`);
   }
-  assertFinitePositive(bounds.width, `${label} width`);
-  assertFinitePositive(bounds.height, `${label} height`);
+  assertFiniteNonNegative(bounds.width, `${label} width`);
+  assertFiniteNonNegative(bounds.height, `${label} height`);
 }
 
 function assertUniqueIds(entries: readonly { id: string }[], label: string): void {
@@ -42,6 +48,10 @@ function isActor(entity: WorldEntity | undefined): entity is ActorEntity {
  * - placement-site spatial containment policy;
  * - held-item visual/canonical attachment geometry.
  *
+ * Zero-valued speed, radius and AABB extents are admitted deliberately. Recovery
+ * evidence showed that the current runtime can represent them coherently; being
+ * degenerate or unusual does not by itself make a specimen structurally corrupt.
+ *
  * The current one-player cardinality is a v0 execution-mode constraint because
  * World exposes one singular player-control path. It is not a claim that the
  * future shared-world ontology can contain only one player.
@@ -49,7 +59,7 @@ function isActor(entity: WorldEntity | undefined): entity is ActorEntity {
 export function validateWorldSpecimenStructure(specimen: WorldSpecimen): void {
   assertFinitePositive(specimen.width, "World width");
   assertFinitePositive(specimen.height, "World height");
-  assertFinitePositive(specimen.actorSpeed, "World actorSpeed");
+  assertFiniteNonNegative(specimen.actorSpeed, "World actorSpeed");
 
   assertUniqueIds(specimen.entities, "entity");
   assertUniqueIds(specimen.blockers, "blocker");
@@ -63,7 +73,7 @@ export function validateWorldSpecimenStructure(specimen: WorldSpecimen): void {
 
   for (const entity of specimen.entities) {
     assertFinitePoint(entity.position, `Entity ${entity.id} position`);
-    assertFinitePositive(entity.radius, `Entity ${entity.id} radius`);
+    assertFiniteNonNegative(entity.radius, `Entity ${entity.id} radius`);
     if (isActor(entity)) {
       assertFinitePoint(entity.facing, `Actor ${entity.id} facing`);
       if (Math.abs(Math.hypot(entity.facing.x, entity.facing.y) - 1) > FACING_EPSILON) {
