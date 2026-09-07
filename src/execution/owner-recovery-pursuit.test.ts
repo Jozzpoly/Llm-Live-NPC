@@ -10,20 +10,24 @@ function entityPosition(world: World, id: string) {
   return entity.position;
 }
 
+function heldTargetWorld() {
+  const specimen = createP1Specimen();
+  const player = specimen.entities.find((entry) => entry.id === "player.jozz");
+  const npc = specimen.entities.find((entry) => entry.id === "npc.001");
+  const lantern = specimen.entities.find((entry) => entry.id === "item.lantern");
+  if (!player || player.kind !== "player" || !npc || npc.kind !== "npc" || !lantern || lantern.kind !== "item") {
+    throw new Error("Missing recovery fixture entities");
+  }
+  player.heldItemId = lantern.id;
+  lantern.heldBy = player.id;
+  return { specimen, player, npc, lantern };
+}
+
 describe("Owner recovery — moving held target pursuit", () => {
   it("keeps a fetch task alive and follows a player carrying the target while the target remains spatially out of interaction range", () => {
-    const specimen = createP1Specimen();
-    const player = specimen.entities.find((entry) => entry.id === "player.jozz");
-    const npc = specimen.entities.find((entry) => entry.id === "npc.001");
-    const lantern = specimen.entities.find((entry) => entry.id === "item.lantern");
-    if (!player || player.kind !== "player" || !npc || npc.kind !== "npc" || !lantern || lantern.kind !== "item") {
-      throw new Error("Missing recovery fixture entities");
-    }
-
+    const { specimen, player, npc, lantern } = heldTargetWorld();
     player.position = { x: 760, y: 390 };
     npc.position = { x: 420, y: 390 };
-    player.heldItemId = lantern.id;
-    lantern.heldBy = player.id;
     lantern.position = { ...player.position };
 
     const world = new World(specimen);
@@ -57,6 +61,74 @@ describe("Owner recovery — moving held target pursuit", () => {
         targetId: lantern.id
       },
       failureCode: null
+    });
+  });
+
+  it("does not kill the durative task merely because a held target is temporarily unavailable at close range", () => {
+    const { specimen, player, npc, lantern } = heldTargetWorld();
+    player.position = { x: 520, y: 390 };
+    npc.position = { x: 485, y: 390 };
+    lantern.position = { ...player.position };
+
+    const world = new World(specimen);
+    const executor = new DeterministicExecutor();
+    const driver = new ExecutionDriver(world, executor);
+
+    expect(executor.start({
+      kind: "approach-and-interact",
+      actorId: npc.id,
+      targetId: lantern.id
+    })).toBe(true);
+
+    driver.step({ playerControl: { moveX: 0, moveY: 0 } });
+
+    expect(executor.state()).toMatchObject({
+      status: "running",
+      failureCode: null,
+      task: { actorId: npc.id, targetId: lantern.id }
+    });
+    expect(world.lastActionResult()).toBeNull();
+  });
+
+  it("waits near a held target, resumes pursuit when the holder moves, then completes after the item is dropped", () => {
+    const { specimen, player, npc, lantern } = heldTargetWorld();
+    player.position = { x: 520, y: 390 };
+    npc.position = { x: 485, y: 390 };
+    lantern.position = { ...player.position };
+
+    const world = new World(specimen);
+    const executor = new DeterministicExecutor();
+    const driver = new ExecutionDriver(world, executor);
+    expect(executor.start({
+      kind: "approach-and-interact",
+      actorId: npc.id,
+      targetId: lantern.id
+    })).toBe(true);
+
+    driver.step({ playerControl: { moveX: 0, moveY: 0 } });
+    const npcBeforePursuit = entityPosition(world, npc.id).x;
+
+    for (let frame = 0; frame < 12; frame += 1) {
+      driver.step({ playerControl: { moveX: 1, moveY: 0 } });
+      expect(executor.state().status).toBe("running");
+    }
+
+    expect(entityPosition(world, npc.id).x).toBeGreaterThan(npcBeforePursuit);
+
+    driver.step({
+      playerControl: { moveX: 0, moveY: 0 },
+      playerActions: [{ action: "drop", actorId: player.id }]
+    });
+    expect(executor.state().status).toBe("running");
+
+    for (let frame = 0; frame < 90 && executor.state().status === "running"; frame += 1) {
+      driver.step({ playerControl: { moveX: 0, moveY: 0 } });
+    }
+
+    expect(executor.state()).toMatchObject({ status: "succeeded", failureCode: null });
+    expect(world.snapshot().entities.find((entry) => entry.id === lantern.id)).toMatchObject({
+      kind: "item",
+      heldBy: npc.id
     });
   });
 });

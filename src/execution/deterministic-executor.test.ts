@@ -144,7 +144,7 @@ describe("B2 deterministic executor", () => {
     expect(world.tick).toBe(3);
   });
 
-  it("preserves player-action-before-executor-action ordering inside the shared driver", () => {
+  it("preserves player-action-before-executor-action ordering without killing a still-meaningful pursuit task", () => {
     const specimen = createP1Specimen();
     const player = specimen.entities.find((entity) => entity.id === "player.jozz");
     const npc = specimen.entities.find((entity) => entity.id === "npc.001");
@@ -166,10 +166,15 @@ describe("B2 deterministic executor", () => {
     });
 
     expect(result.playerActionResults[0]).toMatchObject({ status: "succeeded", code: "picked_up_item" });
-    expect(result.executorActionResult).toMatchObject({ status: "rejected", code: "target_unavailable" });
-    expect(executor.state()).toMatchObject({ status: "failed", failureCode: "target_unavailable" });
+    expect(result.executorActionResult).toMatchObject({ status: "rejected", code: "target_out_of_range" });
+    expect(executor.state()).toMatchObject({ status: "running", failureCode: null });
     expect(actor(world, "player.jozz").heldItemId).toBe("item.lantern");
     expect(actor(world, "npc.001").heldItemId).toBeNull();
+
+    const npcBefore = actor(world, "npc.001").position.x;
+    driver.step({ playerControl: { moveX: -1, moveY: 0 } });
+    expect(executor.state().status).toBe("running");
+    expect(actor(world, "npc.001").position.x).toBeLessThan(npcBefore);
   });
 
   it("keeps actor controls inside one canonical world tick and updates NPC facing through the same movement rule", () => {
