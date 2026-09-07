@@ -39,7 +39,7 @@ export class ActionAttemptDebugPanel {
       element(
         "p",
         "debug-note",
-        "Execution-frame truth: every player-channel and executor atomic attempt, including rejected attempts. Executor attempts retain run/cause provenance. This is bounded debug history, not semantic World event history."
+        "Execution-frame truth: every player-channel and executor atomic attempt, including rejected attempts. Executor attempts retain run/cause provenance; semantic successes also expose their exact World event sequence. This is bounded debug history, not semantic World event history."
       )
     );
     this.list = element("ul", "event-list");
@@ -50,7 +50,10 @@ export class ActionAttemptDebugPanel {
 
   update(attempts: readonly ActionAttemptRecord[]): void {
     const signature = attempts
-      .map((attempt) => `${attempt.seq}:${sourceSignature(attempt)}:${attempt.status}:${attempt.code}`)
+      .map(
+        (attempt) =>
+          `${attempt.seq}:${sourceSignature(attempt)}:${attempt.status}:${attempt.code}:${attempt.eventSeq ?? "-"}`
+      )
       .join("|");
     if (signature === this.lastSignature && this.list.childElementCount > 0) return;
     this.lastSignature = signature;
@@ -63,6 +66,7 @@ export class ActionAttemptDebugPanel {
 
     for (const attempt of [...attempts].reverse()) {
       const item = element("li");
+      const eventJoin = attempt.eventSeq === undefined ? "" : ` · event #${attempt.eventSeq}`;
       item.append(
         element(
           "div",
@@ -72,7 +76,7 @@ export class ActionAttemptDebugPanel {
         element(
           "div",
           "event-meta",
-          `#${attempt.seq} · tick ${attempt.tick} · ${attempt.status} · ${attempt.code}`
+          `action #${attempt.seq}${eventJoin} · tick ${attempt.tick} · ${attempt.status} · ${attempt.code}`
         )
       );
       this.list.append(item);
