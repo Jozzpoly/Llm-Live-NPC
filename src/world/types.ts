@@ -151,7 +151,6 @@ export type WorldActionKind = WorldActionRequest["action"];
 
 export type WorldActionResultCode =
   | "picked_up_item"
-  | "npc_interaction_requested"
   | "no_interactable"
   | "dropped_item"
   | "not_holding_item"
@@ -179,7 +178,7 @@ export type InteractionValidation =
       status: "accepted";
       actorId: EntityId;
       targetId: EntityId;
-      targetKind: "item" | "npc";
+      targetKind: "item";
     }
   | {
       status: "rejected";
