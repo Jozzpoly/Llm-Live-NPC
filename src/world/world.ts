@@ -313,7 +313,7 @@ export class World {
       };
     }
 
-    if (target.id === actor.id || target.kind === "player") {
+    if (target.id === actor.id || target.kind !== "item") {
       return {
         status: "rejected",
         actorId,
@@ -323,25 +323,23 @@ export class World {
       };
     }
 
-    if (target.kind === "item") {
-      if (actor.heldItemId) {
-        return {
-          status: "rejected",
-          actorId,
-          targetId,
-          code: "already_holding_item",
-          message: `${actor.label} is already holding an item.`
-        };
-      }
-      if (target.heldBy !== null) {
-        return {
-          status: "rejected",
-          actorId,
-          targetId,
-          code: "target_unavailable",
-          message: `${target.label} is already held.`
-        };
-      }
+    if (actor.heldItemId) {
+      return {
+        status: "rejected",
+        actorId,
+        targetId,
+        code: "already_holding_item",
+        message: `${actor.label} is already holding an item.`
+      };
+    }
+    if (target.heldBy !== null) {
+      return {
+        status: "rejected",
+        actorId,
+        targetId,
+        code: "target_unavailable",
+        message: `${target.label} is already held.`
+      };
     }
 
     const rangeSq = INTERACTION_RANGE * INTERACTION_RANGE;
@@ -365,7 +363,7 @@ export class World {
       };
     }
 
-    return { status: "accepted", actorId, targetId, targetKind: target.kind };
+    return { status: "accepted", actorId, targetId, targetKind: "item" };
   }
 
   placementSitesAt(position: Vec2): PlacementSite[] {
@@ -573,17 +571,7 @@ export class World {
       if (nearestItem) return nearestItem.id;
     }
 
-    const nearestNpc = [...this.entities.values()]
-      .filter((entity): entity is ActorEntity => entity.kind === "npc" && entity.id !== actor.id)
-      .filter((npc) => distanceSquared(actor.position, npc.position) <= rangeSq)
-      .filter((npc) => this.hasLineOfSight(actor.position, npc.position))
-      .sort(
-        (a, b) =>
-          distanceSquared(actor.position, a.position) - distanceSquared(actor.position, b.position) ||
-          a.id.localeCompare(b.id)
-      )[0];
-
-    return nearestNpc?.id ?? null;
+    return null;
   }
 
   private interactWithTarget(actor: ActorEntity, targetId: EntityId): WorldActionResult {
@@ -600,37 +588,26 @@ export class World {
     }
 
     const target = this.entities.get(targetId);
-    if (!target || (target.kind !== "item" && target.kind !== "npc")) {
+    if (!target || target.kind !== "item") {
       throw new Error(`Accepted interaction target became invalid: ${targetId}`);
     }
 
-    if (target.kind === "item") {
-      actor.heldItemId = target.id;
-      target.heldBy = actor.id;
-      this.followHeldItem(actor);
-      this.emit({
-        type: "item.picked_up",
-        actorId: actor.id,
-        entityId: target.id,
-        message: `${actor.label} picked up ${target.label}.`
-      });
-      return this.recordAction({
-        actorId: actor.id,
-        action: "interact",
-        status: "succeeded",
-        code: "picked_up_item",
-        targetId: target.id,
-        message: `Picked up ${target.label}.`
-      });
-    }
-
+    actor.heldItemId = target.id;
+    target.heldBy = actor.id;
+    this.followHeldItem(actor);
+    this.emit({
+      type: "item.picked_up",
+      actorId: actor.id,
+      entityId: target.id,
+      message: `${actor.label} picked up ${target.label}.`
+    });
     return this.recordAction({
       actorId: actor.id,
       action: "interact",
       status: "succeeded",
-      code: "npc_interaction_requested",
+      code: "picked_up_item",
       targetId: target.id,
-      message: `Interaction requested with ${target.label}; cognition is disabled in P1.`
+      message: `Picked up ${target.label}.`
     });
   }
 
