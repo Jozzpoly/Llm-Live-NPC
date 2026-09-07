@@ -7,6 +7,12 @@ import {
   type E1PerceivedEntity,
   type E1Perception
 } from "../src/agent/e1-grounding";
+import {
+  declaredE1BodyTooLarge,
+  e1RequestMediaType,
+  isExplicitCrossSiteRequest,
+  readBoundedE1Json
+} from "./e1-ingress";
 
 const E1_MODEL = "@cf/ibm-granite/granite-4.0-h-micro";
 const GATEWAY_ID = "default";
@@ -370,21 +376,28 @@ export async function handleE1AgentDecision(request: Request, env: E1AgentEnv): 
   if (request.method !== "POST") {
     return json({ ok: false, error: "Method not allowed" }, { status: 405 });
   }
-
-  let rawBody: unknown;
-  try {
-    rawBody = await request.json();
-  } catch {
-    return json({ ok: false, error: "Invalid JSON body" }, { status: 400 });
+  if (isExplicitCrossSiteRequest(request)) {
+    return json({ ok: false, error: "Cross-site cognition requests are not allowed" }, { status: 403 });
   }
-  const body = sanitizeE1CycleRequest(rawBody);
-  if (!body) {
-    return json({ ok: false, error: "Invalid E1 cognition request" }, { status: 400 });
+  if (e1RequestMediaType(request) !== "application/json") {
+    return json({ ok: false, error: "Content-Type must be application/json" }, { status: 415 });
+  }
+  if (declaredE1BodyTooLarge(request)) {
+    return json({ ok: false, error: "E1 cognition request body too large" }, { status: 413 });
   }
 
   const rateLimit = await env.AI_PROBE_LIMITER.limit({ key: "e1-grounded-notice-fetch" });
   if (!rateLimit.success) {
     return json({ ok: false, error: "E1 cognition rate limit exceeded" }, { status: 429 });
+  }
+
+  const rawBody = await readBoundedE1Json(request);
+  if (!rawBody.ok) {
+    return json({ ok: false, error: rawBody.error }, { status: rawBody.status });
+  }
+  const body = sanitizeE1CycleRequest(rawBody.value);
+  if (!body) {
+    return json({ ok: false, error: "Invalid E1 cognition request" }, { status: 400 });
   }
 
   const startedAt = Date.now();
