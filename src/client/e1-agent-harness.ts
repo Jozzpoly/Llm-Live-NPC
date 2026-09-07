@@ -47,6 +47,11 @@ export interface E1HarnessDebugState {
   experience: E1Experience | null;
 }
 
+interface E1ActiveExecutorTask {
+  targetId: string;
+  runId: number;
+}
+
 function describeObservedChange(change: E1ObservedChange): string {
   switch (change.kind) {
     case "item_entered_perception":
@@ -76,7 +81,7 @@ export class E1AgentHarness {
   private model: string | null = null;
   private gatewayLogId: string | null = null;
   private latencyMs: number | null = null;
-  private activeTaskTargetId: string | null = null;
+  private activeTask: E1ActiveExecutorTask | null = null;
 
   constructor(
     private readonly world: World,
@@ -113,7 +118,7 @@ export class E1AgentHarness {
     this.model = null;
     this.gatewayLogId = null;
     this.latencyMs = null;
-    this.activeTaskTargetId = null;
+    this.activeTask = null;
   }
 
   disarm(): void {
@@ -177,13 +182,17 @@ export class E1AgentHarness {
   }
 
   private captureExperience(frame: ExecutionFrameResult): void {
+    const activeTask = this.activeTask;
+    if (!activeTask) return;
+
     const executorState = this.executor.state();
-    if (!this.activeTaskTargetId) return;
     if (executorState.status !== "succeeded" && executorState.status !== "failed") return;
+    if (!executorState.run || executorState.run.runId !== activeTask.runId) return;
 
     const action =
+      frame.executorActionRun?.runId === activeTask.runId &&
       frame.executorActionResult?.actorId === E1_OBSERVER_ID &&
-      frame.executorActionResult.targetId === this.activeTaskTargetId
+      frame.executorActionResult.targetId === activeTask.targetId
         ? frame.executorActionResult
         : null;
     const tick = action?.tick ?? this.world.snapshot().tick;
@@ -193,7 +202,7 @@ export class E1AgentHarness {
         tick,
         status: "succeeded",
         code: action?.code ?? "executor_succeeded",
-        targetId: this.activeTaskTargetId,
+        targetId: activeTask.targetId,
         message: action?.message ?? "E1 executor task succeeded."
       };
     } else {
@@ -201,12 +210,12 @@ export class E1AgentHarness {
         tick,
         status: "failed",
         code: executorState.failureCode ?? action?.code ?? "executor_failed",
-        targetId: this.activeTaskTargetId,
+        targetId: activeTask.targetId,
         message: action?.message ?? "E1 executor task failed."
       };
     }
 
-    this.activeTaskTargetId = null;
+    this.activeTask = null;
   }
 
   private async runCycle(cycle: E1CycleRequest): Promise<void> {
@@ -256,18 +265,29 @@ export class E1AgentHarness {
         return;
       }
 
-      const started = this.executor.start({
-        kind: "approach-and-interact",
-        actorId: E1_OBSERVER_ID,
-        targetId: currentValidation.decision.targetId
-      });
+      const started = this.executor.start(
+        {
+          kind: "approach-and-interact",
+          actorId: E1_OBSERVER_ID,
+          targetId: currentValidation.decision.targetId
+        },
+        { kind: "cognition" }
+      );
       if (!started) {
         this.requestStatus = "executor_busy";
         this.decisionValidation = "executor_start_refused";
         return;
       }
 
-      this.activeTaskTargetId = currentValidation.decision.targetId;
+      const executorState = this.executor.state();
+      if (!executorState.run || executorState.run.cause.kind !== "cognition") {
+        throw new Error("Accepted E1 fetch did not retain cognition executor causation.");
+      }
+
+      this.activeTask = {
+        targetId: currentValidation.decision.targetId,
+        runId: executorState.run.runId
+      };
       this.requestStatus = "accepted_fetch";
       this.decisionValidation = "accepted_and_started";
     } catch (error) {

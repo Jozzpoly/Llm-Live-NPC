@@ -59,12 +59,16 @@ describe("E1 grounded agent harness", () => {
       holderId: null
     });
     expect(harness.state().observedChanges).toContain("item.mug: holder player.jozz → free");
-    expect(executor.state().status).toBe("running");
-    expect(executor.state().task?.targetId).toBe("item.mug");
+    expect(executor.state()).toMatchObject({
+      status: "running",
+      task: { targetId: "item.mug" },
+      run: { runId: 1, cause: { kind: "cognition" } }
+    });
 
     // The dropped mug is only 41 px from NPC-001, so this deliberately covers
     // the edge case where the E1 task can succeed on its first executor step.
     const pickupFrame = driver.step({ playerControl: { moveX: 0, moveY: 0 } });
+    expect(pickupFrame.executorActionRun).toEqual({ runId: 1, cause: { kind: "cognition" } });
     expect(pickupFrame.executorActionResult?.code).toBe("picked_up_item");
     expect(executor.state().status).toBe("succeeded");
     expect(harness.afterExecutionStep(pickupFrame, 1034)).toBeNull();
@@ -87,6 +91,7 @@ describe("E1 grounded agent harness", () => {
       code: "picked_up_item",
       targetId: "item.mug"
     });
+    expect(Object.keys(requests[1]?.previousExperience ?? {})).not.toContain("runId");
     expect(requests[1]?.observedChanges).toEqual(
       expect.arrayContaining([
         {

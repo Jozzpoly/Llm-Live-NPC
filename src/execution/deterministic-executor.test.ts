@@ -99,7 +99,8 @@ describe("B2 deterministic executor", () => {
       task: { kind: "approach-and-interact", actorId: "npc.001", targetId: "missing.target" },
       failureCode: "target_not_found",
       stepsUsed: 1,
-      stepBudget: 180
+      stepBudget: 180,
+      run: { runId: 1, cause: { kind: "unattributed" } }
     });
     expect(world.tick).toBe(0);
     expect(actor(world, "npc.001").heldItemId).toBeNull();
