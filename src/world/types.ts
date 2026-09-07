@@ -196,7 +196,7 @@ export interface WorldActionResult {
   status: "succeeded" | "rejected";
   code: WorldActionResultCode;
   targetId?: EntityId;
-  /** Exact semantic WorldEvent sequence caused by this atomic action, when one exists. */
+  /** ExecutionDriver may attach the exact caused WorldEvent sequence; raw World results do not require it. */
   eventSeq?: number;
   message: string;
 }
