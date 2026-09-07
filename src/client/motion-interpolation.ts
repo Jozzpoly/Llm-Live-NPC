@@ -1,8 +1,30 @@
-import type { Vec2, WorldSnapshot } from "../world/types";
+import type { ActorEntity, Vec2, WorldEntity, WorldSnapshot } from "../world/types";
+
+const HELD_ITEM_PRESENTATION_OFFSET = 10;
 
 function clamp01(value: number): number {
   if (!Number.isFinite(value)) return 0;
   return Math.min(1, Math.max(0, value));
+}
+
+function isActor(entity: WorldEntity | undefined): entity is ActorEntity {
+  return entity?.kind === "player" || entity?.kind === "npc";
+}
+
+function presentationPosition(snapshot: WorldSnapshot, entity: WorldEntity): Vec2 {
+  if (entity.kind !== "item" || entity.heldBy === null) return { ...entity.position };
+
+  const holder = snapshot.entities.find((candidate) => candidate.id === entity.heldBy);
+  if (!isActor(holder)) return { ...entity.position };
+
+  return {
+    x: holder.position.x,
+    y: holder.position.y - holder.radius - HELD_ITEM_PRESENTATION_OFFSET
+  };
+}
+
+function presentationPositions(snapshot: WorldSnapshot): Map<string, Vec2> {
+  return new Map(snapshot.entities.map((entity) => [entity.id, presentationPosition(snapshot, entity)]));
 }
 
 export function interpolationAlpha(accumulatorMs: number, fixedStepMs: number): number {
@@ -23,14 +45,16 @@ export function resolveInterpolatedEntityPositions(
   current: WorldSnapshot,
   alpha: number
 ): Map<string, Vec2> {
-  const previousById = new Map(previous.entities.map((entity) => [entity.id, entity.position]));
+  const previousById = presentationPositions(previous);
+  const currentById = presentationPositions(current);
   const positions = new Map<string, Vec2>();
 
   for (const entity of current.entities) {
+    const currentPosition = currentById.get(entity.id) ?? entity.position;
     const previousPosition = previousById.get(entity.id);
     positions.set(
       entity.id,
-      previousPosition ? interpolatePosition(previousPosition, entity.position, alpha) : { ...entity.position }
+      previousPosition ? interpolatePosition(previousPosition, currentPosition, alpha) : { ...currentPosition }
     );
   }
 

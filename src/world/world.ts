@@ -209,6 +209,7 @@ export class World {
       this.entities.set(entity.id, entity);
     }
 
+    this.followHeldItems();
     this.player();
     this.emit({ type: "world.started", message: "P1 world specimen initialized." });
     const initialLocation = this.resolveLocation(this.player().position);
@@ -458,7 +459,7 @@ export class World {
     const item = this.entities.get(actor.heldItemId);
     if (!item || item.kind !== "item") throw new Error(`Held item missing: ${actor.heldItemId}`);
     item.position.x = actor.position.x;
-    item.position.y = actor.position.y - actor.radius - 10;
+    item.position.y = actor.position.y;
   }
 
   private updatePlayerLocation(): void {
