@@ -5,12 +5,12 @@ import { validateWorldSpecimenStructure } from "./specimen-structural-validation
 import type { LocationZone } from "./types";
 import { World } from "./world";
 
-function zone(id: string, primaryPriority: number): LocationZone {
+function zone(id: string, primaryPriority: number, x = 0): LocationZone {
   return {
     id,
     label: id,
     primaryPriority,
-    bounds: { x: 0, y: 0, width: 200, height: 200 }
+    bounds: { x, y: 0, width: 200, height: 200 }
   };
 }
 
@@ -49,6 +49,43 @@ describe("recovery R3c explicit primary-location semantics", () => {
       const specimen = createP1Specimen();
       specimen.locations[0]!.primaryPriority = invalid;
       expect(() => validateWorldSpecimenStructure(specimen)).toThrow(/primaryPriority must be finite/);
+    }
+  });
+
+  it("emits the same low-to-high primary-location lifecycle independent of authored array order", () => {
+    const makeWorld = (reverse: boolean) => {
+      const specimen = createP1Specimen();
+      const player = specimen.entities.find((entity) => entity.id === "player.jozz");
+      if (!player || player.kind !== "player") throw new Error("Missing player fixture.");
+
+      specimen.blockers = [];
+      specimen.placementSites = [];
+      specimen.locations = [
+        { ...zone("probe.low", 0, 100), bounds: { x: 100, y: 300, width: 200, height: 200 } },
+        { ...zone("probe.high", 10, 200), bounds: { x: 200, y: 300, width: 200, height: 200 } }
+      ];
+      if (reverse) specimen.locations.reverse();
+      player.position = { x: 160, y: 400 };
+      return new World(specimen);
+    };
+
+    for (const reverse of [false, true]) {
+      const world = makeWorld(reverse);
+      expect(world.playerLocationId).toBe("probe.low");
+
+      world.step({ moveX: 1, moveY: 0 }, 0.25);
+      expect(world.playerLocationId).toBe("probe.high");
+
+      const lifecycle = world
+        .recentEvents(32)
+        .filter((event) => event.type === "location.entered" || event.type === "location.exited")
+        .map((event) => [event.type, event.locationId, event.tick]);
+
+      expect(lifecycle).toEqual([
+        ["location.entered", "probe.low", 0],
+        ["location.exited", "probe.low", 1],
+        ["location.entered", "probe.high", 1]
+      ]);
     }
   });
 });
