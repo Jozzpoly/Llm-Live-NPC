@@ -167,6 +167,7 @@ describe("recovery R3b post-green re-attack", () => {
     }
 
     specimen.blockers = [];
+    specimen.placementSites = [];
     player.position = { x: 620, y: 420 };
     player.heldItemId = lantern.id;
     lantern.heldBy = player.id;
