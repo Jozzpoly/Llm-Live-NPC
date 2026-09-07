@@ -28,6 +28,20 @@ function verticalWallSpecimen(width = 1) {
   return specimen;
 }
 
+function horizontalWallSpecimen(height = 1) {
+  const specimen = createP1Specimen();
+  specimen.blockers = [
+    {
+      id: "probe.horizontal-wall",
+      label: "Probe horizontal wall",
+      bounds: { x: 500, y: 420, width: 200, height },
+      occludesVision: true
+    }
+  ];
+  specimen.placementSites = [];
+  return specimen;
+}
+
 describe("recovery R3a movement/collision characterization", () => {
   it("cannot tunnel through a thin blocker during one legal maximum-duration step", () => {
     const specimen = verticalWallSpecimen(1);
@@ -47,6 +61,26 @@ describe("recovery R3a movement/collision characterization", () => {
     world.step({ moveX: 1, moveY: 0 }, 0.25);
 
     expect(playerPosition(world)).toEqual({ x: 504, y: 400 });
+  });
+
+  it("cannot tunnel through a thin horizontal blocker on the Y axis", () => {
+    const specimen = horizontalWallSpecimen(1);
+    requirePlayer(specimen).position = { x: 600, y: 400 };
+
+    const world = new World(specimen);
+    world.step({ moveX: 0, moveY: 1 }, 0.25);
+
+    expect(playerPosition(world)).toEqual({ x: 600, y: 404 });
+  });
+
+  it("cannot tunnel through a zero-height blocker admitted by the recovered R2 contract", () => {
+    const specimen = horizontalWallSpecimen(0);
+    requirePlayer(specimen).position = { x: 600, y: 400 };
+
+    const world = new World(specimen);
+    world.step({ moveX: 0, moveY: 1 }, 0.25);
+
+    expect(playerPosition(world)).toEqual({ x: 600, y: 404 });
   });
 
   it("cannot tunnel through the authored workshop wall at much higher finite actor speed", () => {
@@ -122,28 +156,35 @@ describe("recovery R3a movement/collision characterization", () => {
     expect(position.y).toBeCloseTo(433.587572106361, 10);
   });
 
-  it("stops at the nearest crossed blocker rather than the first endpoint-overlapping blocker", () => {
-    const specimen = createP1Specimen();
-    requirePlayer(specimen).position = { x: 500, y: 400 };
-    specimen.blockers = [
-      {
-        id: "probe.near-wall",
-        label: "Near wall",
-        bounds: { x: 520, y: 300, width: 1, height: 200 },
-        occludesVision: true
-      },
-      {
-        id: "probe.far-wall",
-        label: "Far wall",
-        bounds: { x: 560, y: 300, width: 1, height: 200 },
-        occludesVision: true
-      }
-    ];
-    specimen.placementSites = [];
+  it("stops at the nearest crossed blocker independently of blocker authoring order", () => {
+    const makeWorld = (reverse: boolean) => {
+      const specimen = createP1Specimen();
+      requirePlayer(specimen).position = { x: 500, y: 400 };
+      const blockers = [
+        {
+          id: "probe.near-wall",
+          label: "Near wall",
+          bounds: { x: 520, y: 300, width: 1, height: 200 },
+          occludesVision: true
+        },
+        {
+          id: "probe.far-wall",
+          label: "Far wall",
+          bounds: { x: 560, y: 300, width: 1, height: 200 },
+          occludesVision: true
+        }
+      ];
+      specimen.blockers = reverse ? blockers.reverse() : blockers;
+      specimen.placementSites = [];
+      return new World(specimen);
+    };
 
-    const world = new World(specimen);
-    world.step({ moveX: 1, moveY: 0 }, 0.25);
+    const canonicalOrder = makeWorld(false);
+    const reversedOrder = makeWorld(true);
+    canonicalOrder.step({ moveX: 1, moveY: 0 }, 0.25);
+    reversedOrder.step({ moveX: 1, moveY: 0 }, 0.25);
 
-    expect(playerPosition(world)).toEqual({ x: 504, y: 400 });
+    expect(playerPosition(canonicalOrder)).toEqual({ x: 504, y: 400 });
+    expect(playerPosition(reversedOrder)).toEqual({ x: 504, y: 400 });
   });
 });
