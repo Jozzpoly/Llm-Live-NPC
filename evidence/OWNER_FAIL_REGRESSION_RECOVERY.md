@@ -8,7 +8,7 @@ Final Owner/browser gate on current E1 runtime `caeb15cb875a83ffbab684f8e55880a8
 
 The failure invalidates the previous readiness-closure direction. Green CI/public Worker/model transport/provenance are retained only as bounded technical evidence; they do not qualify the playable laboratory.
 
-## Two confirmed regressions
+## Three confirmed material failures
 
 ### 1. Debug Workspace starvation / disappearance
 
@@ -33,6 +33,25 @@ This conflated two different questions:
 
 Classification: MATERIAL BEHAVIOR/PLAYABILITY REGRESSION; wrong task-semantics model embedded into tests.
 
+### 3. Valid E1 fetch stimulus produced `wait` in the real Owner run
+
+The Owner recording captures a fully inspectable current-runtime cognition cycle:
+
+- E1 is ARMED;
+- trigger: `perception_changed`;
+- perceived IDs include `item.lantern` and `player.jozz`;
+- fetchable IDs: `item.lantern`;
+- observed change: `item.lantern: holder player.jozz -> free`;
+- request status: `accepted_wait`;
+- decision: `wait`;
+- real Granite/Gateway provenance is present.
+
+The current Worker system instruction explicitly says that when `item_holder_changed` shows a currently fetchable item becoming free and NPC-001 holds nothing, the model should choose `fetch`. The real Owner run nevertheless returned the still-allowed but experiment-wrong `wait` intention.
+
+This is not automatically attributed to one repair PR: the prompt still contains the intended rule. It proves that the prior tiny live qualification did not establish robust runtime policy reliability. A transport/model call being valid is not equivalent to the embodied experiment behavior being reliable enough for Owner use.
+
+Classification: MATERIAL QUALIFICATION FAILURE / MODEL-POLICY RELIABILITY GAP. Future qualification must use repeated scenario-level live behavior, not one or two successful calls.
+
 ## Recovery baseline
 
 Use exact pre-readiness runtime-clean checkpoint as the first forensic baseline, not as an automatically re-qualified product:
@@ -45,6 +64,12 @@ Historical Worker Version ID:
 
 This checkpoint is a donor/baseline candidate only until differential review and later Owner qualification. Do not ask Owner to test it yet merely because it is older.
 
+A separate recovery branch now starts from this exact runtime:
+
+`recovery/owner-fail-2026-09-07`
+
+The branch has already restored full `src/**/*.test.ts` discovery independently and added an explicit regression contract protecting the historical held-target pursuit behavior.
+
 ## Recovery rules
 
 1. Stop feature work and Live Mind implementation.
@@ -55,7 +80,8 @@ This checkpoint is a donor/baseline candidate only until differential review and
 6. Owner-facing playability/feel and usable apparatus are first-class gates, not postscript gates.
 7. Long-lived UI tests must attack accumulated history/state, not only initial visibility.
 8. Durative task validity must not be equated with instantaneous atomic-action legality.
-9. Do not request another Owner test until automated/differential review has reached a genuinely bounded uncertainty that cannot be resolved headlessly.
+9. Real-model qualification must attack repeated scenario-level policy reliability, not only transport/schema success.
+10. Do not request another Owner test until automated/differential review has reached a genuinely bounded uncertainty that cannot be resolved headlessly.
 
 ## Initial campaign classification
 
@@ -76,4 +102,4 @@ This checkpoint is a donor/baseline candidate only until differential review and
 
 ## Current stop boundary
 
-No closure declaration. No canonical docs rewrite as if readiness succeeded. No new Owner gate until recovery produces a candidate whose important historical behaviors and apparatus usability are independently defended.
+No closure declaration. No canonical docs rewrite as if readiness succeeded. No new Owner gate until recovery produces a candidate whose important historical behaviors, repeated real-model behavior and apparatus usability are independently defended.
