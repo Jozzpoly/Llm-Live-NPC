@@ -2,6 +2,7 @@ import type { WorldActionRequest, WorldActionResult, WorldInput, WorldSnapshot }
 import { World } from "../world/world";
 import {
   DeterministicExecutor,
+  type ExecutorRunCause,
   type ExecutorRunProvenance
 } from "./deterministic-executor";
 
@@ -26,10 +27,19 @@ export interface ActionAttemptRecord extends WorldActionResult {
 }
 
 function cloneExecutorRun(run: ExecutorRunProvenance): ExecutorRunProvenance {
-  return {
-    runId: run.runId,
-    cause: { kind: run.cause.kind }
-  } as ExecutorRunProvenance;
+  let cause: ExecutorRunCause;
+  switch (run.cause.kind) {
+    case "manual":
+      cause = { kind: "manual" };
+      break;
+    case "cognition":
+      cause = { kind: "cognition" };
+      break;
+    case "unattributed":
+      cause = { kind: "unattributed" };
+      break;
+  }
+  return { runId: run.runId, cause };
 }
 
 function cloneActionAttempt(attempt: ActionAttemptRecord): ActionAttemptRecord {
