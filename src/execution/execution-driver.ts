@@ -33,7 +33,14 @@ function cloneExecutorRun(run: ExecutorRunProvenance): ExecutorRunProvenance {
       cause = { kind: "manual" };
       break;
     case "cognition":
-      cause = { kind: "cognition" };
+      cause =
+        run.cause.sessionId === undefined
+          ? { kind: "cognition" }
+          : {
+              kind: "cognition",
+              sessionId: run.cause.sessionId,
+              cycleId: run.cause.cycleId
+            };
       break;
     case "unattributed":
       cause = { kind: "unattributed" };

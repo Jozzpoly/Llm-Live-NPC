@@ -289,7 +289,7 @@ export class E1AgentHarness {
           actorId: E1_OBSERVER_ID,
           targetId: currentValidation.decision.targetId
         },
-        { kind: "cognition" }
+        { kind: "cognition", sessionId, cycleId: cycle.cycleId }
       );
       if (!started) {
         this.requestStatus = "executor_busy";
@@ -298,8 +298,13 @@ export class E1AgentHarness {
       }
 
       const executorState = this.executor.state();
-      if (!executorState.run || executorState.run.cause.kind !== "cognition") {
-        throw new Error("Accepted E1 fetch did not retain cognition executor causation.");
+      if (
+        !executorState.run ||
+        executorState.run.cause.kind !== "cognition" ||
+        executorState.run.cause.sessionId !== sessionId ||
+        executorState.run.cause.cycleId !== cycle.cycleId
+      ) {
+        throw new Error("Accepted E1 fetch did not retain cognition session/cycle executor causation.");
       }
 
       this.activeTask = {
