@@ -31,6 +31,9 @@ function assertFiniteAabb(bounds: Aabb, label: string): void {
 function assertUniqueIds(entries: readonly { id: string }[], label: string): void {
   const seen = new Set<string>();
   for (const entry of entries) {
+    if (entry.id.length === 0) {
+      throw new Error(`${label[0]!.toUpperCase()}${label.slice(1)} id must not be empty.`);
+    }
     if (seen.has(entry.id)) throw new Error(`Duplicate ${label} id: ${entry.id}`);
     seen.add(entry.id);
   }
@@ -52,6 +55,10 @@ function isActor(entity: WorldEntity | undefined): entity is ActorEntity {
  * evidence showed that the current runtime can represent them coherently; being
  * degenerate or unusual does not by itself make a specimen structurally corrupt.
  *
+ * Empty-string IDs/references are rejected because the current runtime uses
+ * null/undefined as absence sentinels and also contains truthiness-based guards.
+ * Allowing "" would make one value mean both an identifier and "no reference".
+ *
  * The current one-player cardinality is a v0 execution-mode constraint because
  * World exposes one singular player-control path. It is not a claim that the
  * future shared-world ontology can contain only one player.
@@ -65,6 +72,12 @@ export function validateWorldSpecimenStructure(specimen: WorldSpecimen): void {
   assertUniqueIds(specimen.blockers, "blocker");
   assertUniqueIds(specimen.locations, "location");
   assertUniqueIds(specimen.placementSites, "placement site");
+
+  for (const site of specimen.placementSites) {
+    if (site.supportBlockerId !== undefined && site.supportBlockerId.length === 0) {
+      throw new Error(`Placement site ${site.id} supportBlockerId must not be empty.`);
+    }
+  }
 
   const players = specimen.entities.filter((entity) => entity.kind === "player");
   if (players.length !== 1) {
@@ -92,7 +105,7 @@ export function validateWorldSpecimenStructure(specimen: WorldSpecimen): void {
   const claimedItemIds = new Set<string>();
 
   for (const actor of actors) {
-    if (!actor.heldItemId) continue;
+    if (actor.heldItemId === null) continue;
 
     if (claimedItemIds.has(actor.heldItemId)) {
       throw new Error(`Held item is referenced by more than one actor: ${actor.heldItemId}`);
@@ -109,7 +122,7 @@ export function validateWorldSpecimenStructure(specimen: WorldSpecimen): void {
   }
 
   for (const item of items) {
-    if (!item.heldBy) continue;
+    if (item.heldBy === null) continue;
     const holder = entities.get(item.heldBy);
     if (!isActor(holder)) {
       throw new Error(`Item ${item.id} references missing or non-actor holder: ${item.heldBy}`);
