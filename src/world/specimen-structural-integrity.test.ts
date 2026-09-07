@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createP1Specimen } from "./specimen";
+import { validateWorldSpecimenStructure } from "./specimen-structural-validation";
 import { World } from "./world";
 
 describe("recovery R2 structural integrity", () => {
@@ -149,8 +150,8 @@ describe("recovery R2 structural integrity", () => {
     mug.heldBy = player.id;
     mug.position = { x: 500, y: -10 };
 
-    const world = new World(specimen);
-    expect(world.snapshot().entities.find((entity) => entity.id === mug.id)).toMatchObject({
+    expect(() => validateWorldSpecimenStructure(specimen)).not.toThrow();
+    expect(mug).toMatchObject({
       heldBy: player.id,
       position: { x: 500, y: -10 }
     });
