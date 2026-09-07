@@ -155,7 +155,6 @@ export type WorldActionKind = WorldActionRequest["action"];
 
 export type WorldActionResultCode =
   | "picked_up_item"
-  | "npc_interaction_requested"
   | "no_interactable"
   | "dropped_item"
   | "not_holding_item"

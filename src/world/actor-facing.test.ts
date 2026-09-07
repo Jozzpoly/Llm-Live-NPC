@@ -72,8 +72,8 @@ describe("B1 canonical actor facing", () => {
     const world = new World(specimen);
 
     expect(world.attemptAction({ action: "interact", actorId: "player.jozz", targetId: "npc.001" })).toMatchObject({
-      status: "succeeded",
-      code: "npc_interaction_requested"
+      status: "rejected",
+      code: "target_not_interactable"
     });
     expect(actorSnapshot(world, "player.jozz").facing).toEqual({ x: 0, y: 1 });
   });
