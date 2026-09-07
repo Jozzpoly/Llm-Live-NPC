@@ -51,6 +51,11 @@ export interface Blocker {
 export interface LocationZone {
   id: LocationId;
   label: string;
+  /**
+   * Chooses the current singular primary-location projection when zones overlap.
+   * This does not make membership exclusive and is not a general world hierarchy.
+   */
+  primaryPriority: number;
   bounds: Aabb;
 }
 
