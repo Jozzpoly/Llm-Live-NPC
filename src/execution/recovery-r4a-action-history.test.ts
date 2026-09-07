@@ -40,8 +40,14 @@ function threeAttemptFixture() {
   return { world, driver, playerId: player.id, mugId: mug.id, lanternId: lantern.id };
 }
 
-function emptyDriver() {
-  return new ExecutionDriver(new World(createP1Specimen()), new DeterministicExecutor());
+function emptyDriverFixture() {
+  const world = new World(createP1Specimen());
+  const playerId = world.snapshot().entities.find((entity) => entity.kind === "player")?.id;
+  if (!playerId) throw new Error("Missing player fixture.");
+  return {
+    driver: new ExecutionDriver(world, new DeterministicExecutor()),
+    playerId
+  };
 }
 
 describe("recovery R4a driver-scoped action-attempt history", () => {
@@ -98,10 +104,7 @@ describe("recovery R4a driver-scoped action-attempt history", () => {
   });
 
   it("retains only the newest 12 attempts and returns isolated copies", () => {
-    const world = new World(createP1Specimen());
-    const driver = new ExecutionDriver(world, new DeterministicExecutor());
-    const playerId = world.snapshot().entities.find((entity) => entity.kind === "player")?.id;
-    if (!playerId) throw new Error("Missing player fixture.");
+    const { driver, playerId } = emptyDriverFixture();
 
     for (let attempt = 0; attempt < 14; attempt += 1) {
       driver.step({
@@ -119,17 +122,15 @@ describe("recovery R4a driver-scoped action-attempt history", () => {
   });
 
   it("keeps histories isolated between ExecutionDriver instances", () => {
-    const first = emptyDriver();
-    const second = emptyDriver();
-    const firstPlayerId = first["world"].snapshot().entities.find((entity) => entity.kind === "player")?.id;
-    if (!firstPlayerId) throw new Error("Missing player fixture.");
+    const first = emptyDriverFixture();
+    const second = emptyDriverFixture();
 
-    first.step({
+    first.driver.step({
       playerControl: { moveX: 0, moveY: 0 },
-      playerActions: [{ action: "drop", actorId: firstPlayerId }]
+      playerActions: [{ action: "drop", actorId: first.playerId }]
     });
 
-    expect(first.recentActionAttempts()).toHaveLength(1);
-    expect(second.recentActionAttempts()).toEqual([]);
+    expect(first.driver.recentActionAttempts()).toHaveLength(1);
+    expect(second.driver.recentActionAttempts()).toEqual([]);
   });
 });
