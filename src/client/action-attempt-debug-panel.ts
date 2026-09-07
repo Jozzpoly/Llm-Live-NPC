@@ -11,11 +11,19 @@ function element<K extends keyof HTMLElementTagNameMap>(
   return node;
 }
 
+function cognitionCorrelationText(attempt: ActionAttemptRecord): string | null {
+  const cause = attempt.executorRun?.cause;
+  if (!cause || cause.kind !== "cognition" || cause.sessionId === undefined) return null;
+  return `s${cause.sessionId}/c${cause.cycleId}`;
+}
+
 function sourceText(attempt: ActionAttemptRecord): string {
   if (attempt.source === "player") return "player channel";
-  return attempt.executorRun
-    ? `executor #${attempt.executorRun.runId} · ${attempt.executorRun.cause.kind}`
-    : "executor · provenance missing";
+  if (!attempt.executorRun) return "executor · provenance missing";
+  const correlation = cognitionCorrelationText(attempt);
+  return correlation
+    ? `executor #${attempt.executorRun.runId} · cognition ${correlation}`
+    : `executor #${attempt.executorRun.runId} · ${attempt.executorRun.cause.kind}`;
 }
 
 export class ActionAttemptDebugPanel {
@@ -42,7 +50,7 @@ export class ActionAttemptDebugPanel {
     const signature = attempts
       .map((attempt) => {
         const run = attempt.executorRun;
-        return `${attempt.seq}:${attempt.source}:${run?.runId ?? "-"}:${run?.cause.kind ?? "-"}:${attempt.status}:${attempt.code}`;
+        return `${attempt.seq}:${attempt.source}:${run?.runId ?? "-"}:${run?.cause.kind ?? "-"}:${cognitionCorrelationText(attempt) ?? "-"}:${attempt.status}:${attempt.code}`;
       })
       .join("|");
     if (signature === this.lastSignature && this.list.childElementCount > 0) return;

@@ -19,7 +19,8 @@ export interface ExecutorTask {
 
 export type ExecutorRunCause =
   | { kind: "manual" }
-  | { kind: "cognition" }
+  | { kind: "cognition"; sessionId: number; cycleId: number }
+  | { kind: "cognition"; sessionId?: never; cycleId?: never }
   | { kind: "unattributed" };
 
 export interface ExecutorRunProvenance {
@@ -46,7 +47,9 @@ function cloneCause(cause: ExecutorRunCause): ExecutorRunCause {
     case "manual":
       return { kind: "manual" };
     case "cognition":
-      return { kind: "cognition" };
+      return cause.sessionId === undefined
+        ? { kind: "cognition" }
+        : { kind: "cognition", sessionId: cause.sessionId, cycleId: cause.cycleId };
     case "unattributed":
       return { kind: "unattributed" };
   }
