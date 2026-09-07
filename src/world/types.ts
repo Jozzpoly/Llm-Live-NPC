@@ -196,6 +196,8 @@ export interface WorldActionResult {
   status: "succeeded" | "rejected";
   code: WorldActionResultCode;
   targetId?: EntityId;
+  /** ExecutionDriver may attach the exact caused WorldEvent sequence; raw World results do not require it. */
+  eventSeq?: number;
   message: string;
 }
 

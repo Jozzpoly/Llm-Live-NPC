@@ -46,6 +46,18 @@ describe("E1 grounded agent harness", () => {
       playerControl: { moveX: 0, moveY: 0 },
       playerActions: [{ action: "drop", actorId: "player.jozz" }]
     });
+    expect(dropFrame.playerActionResults[0]).toMatchObject({
+      status: "succeeded",
+      code: "dropped_item",
+      eventSeq: expect.any(Number)
+    });
+    const dropEventSeq = dropFrame.playerActionResults[0]?.eventSeq;
+    expect(world.recentEvents(128).find((event) => event.seq === dropEventSeq)).toMatchObject({
+      type: "item.dropped",
+      actorId: "player.jozz",
+      entityId: "item.mug"
+    });
+
     const firstCycle = harness.afterExecutionStep(dropFrame, 1000);
     expect(firstCycle).not.toBeNull();
     await firstCycle;
@@ -59,21 +71,49 @@ describe("E1 grounded agent harness", () => {
       holderId: null
     });
     expect(harness.state().observedChanges).toContain("item.mug: holder player.jozz → free");
-    expect(executor.state().status).toBe("running");
-    expect(executor.state().task?.targetId).toBe("item.mug");
+    expect(executor.state()).toMatchObject({
+      status: "running",
+      task: { targetId: "item.mug" },
+      run: {
+        runId: 1,
+        cause: { kind: "cognition", correlationId: "e1:s1:r1:c1" }
+      }
+    });
 
     // The dropped mug is only 41 px from NPC-001, so this deliberately covers
     // the edge case where the E1 task can succeed on its first executor step.
     const pickupFrame = driver.step({ playerControl: { moveX: 0, moveY: 0 } });
-    expect(pickupFrame.executorActionResult?.code).toBe("picked_up_item");
+    expect(pickupFrame.executorActionRun).toEqual({
+      runId: 1,
+      cause: { kind: "cognition", correlationId: "e1:s1:r1:c1" }
+    });
+    expect(pickupFrame.executorActionResult).toMatchObject({
+      code: "picked_up_item",
+      eventSeq: expect.any(Number)
+    });
     expect(executor.state().status).toBe("succeeded");
     expect(harness.afterExecutionStep(pickupFrame, 1034)).toBeNull();
+
+    const pickupAction = pickupFrame.executorActionResult;
+    if (!pickupAction?.eventSeq) throw new Error("E1 pickup must retain an exact semantic event correlation.");
+    expect(world.recentEvents(128).find((event) => event.seq === pickupAction.eventSeq)).toMatchObject({
+      type: "item.picked_up",
+      actorId: "npc.001",
+      entityId: "item.mug"
+    });
 
     const afterPickup = harness.state();
     expect(afterPickup.experience).toMatchObject({
       status: "succeeded",
       code: "picked_up_item",
       targetId: "item.mug"
+    });
+    expect(afterPickup.experienceLineage).toEqual({
+      executorRunId: 1,
+      cause: "cognition",
+      correlationId: "e1:s1:r1:c1",
+      actionSeq: pickupAction.seq,
+      eventSeq: pickupAction.eventSeq
     });
 
     const postOutcomeFrame = driver.step({ playerControl: { moveX: 0, moveY: 0 } });
@@ -87,6 +127,8 @@ describe("E1 grounded agent harness", () => {
       code: "picked_up_item",
       targetId: "item.mug"
     });
+    expect(Object.keys(requests[1]?.previousExperience ?? {})).not.toContain("executorRunId");
+    expect(Object.keys(requests[1]?.previousExperience ?? {})).not.toContain("correlationId");
     expect(requests[1]?.observedChanges).toEqual(
       expect.arrayContaining([
         {

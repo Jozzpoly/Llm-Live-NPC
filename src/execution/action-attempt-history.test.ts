@@ -28,21 +28,29 @@ function result(
   };
 }
 
+const manualRun = { runId: 9, cause: { kind: "manual" as const } };
+
 describe("execution-frame action attempt history", () => {
-  it("preserves every player attempt and the executor attempt with explicit frame-channel source", () => {
+  it("preserves every player attempt and the executor attempt with explicit frame-channel source and run cause", () => {
     const frame: ExecutionFrameResult = {
       playerActionResults: [
         result(1, "player.jozz", "dropped_item", "succeeded", "item.mug"),
         result(2, "player.jozz", "picked_up_item", "succeeded", "item.mug")
       ],
       executorActionResult: result(3, "npc.001", "target_unavailable", "rejected", "item.lantern"),
+      executorActionRun: manualRun,
       semanticActionOccurrences: []
     };
 
     expect(executionFrameAttempts(frame)).toEqual([
       expect.objectContaining({ seq: 1, source: "player", code: "dropped_item" }),
       expect.objectContaining({ seq: 2, source: "player", code: "picked_up_item" }),
-      expect.objectContaining({ seq: 3, source: "executor", code: "target_unavailable" })
+      expect.objectContaining({
+        seq: 3,
+        source: "executor",
+        code: "target_unavailable",
+        executorRun: manualRun
+      })
     ]);
   });
 
@@ -51,10 +59,21 @@ describe("execution-frame action attempt history", () => {
     history.record({
       playerActionResults: [result(1, "player.jozz", "dropped_item", "succeeded", "item.mug")],
       executorActionResult: null,
+      executorActionRun: null,
       semanticActionOccurrences: []
     });
-    history.record({ playerActionResults: [], executorActionResult: null, semanticActionOccurrences: [] });
-    history.record({ playerActionResults: [], executorActionResult: null, semanticActionOccurrences: [] });
+    history.record({
+      playerActionResults: [],
+      executorActionResult: null,
+      executorActionRun: null,
+      semanticActionOccurrences: []
+    });
+    history.record({
+      playerActionResults: [],
+      executorActionResult: null,
+      executorActionRun: null,
+      semanticActionOccurrences: []
+    });
 
     expect(history.recent()).toEqual([
       expect.objectContaining({ seq: 1, source: "player", code: "dropped_item" })
@@ -69,28 +88,36 @@ describe("execution-frame action attempt history", () => {
         result(2, "player.jozz", "picked_up_item", "succeeded", "item.mug")
       ],
       executorActionResult: result(3, "npc.001", "target_unavailable", "rejected", "item.lantern"),
+      executorActionRun: manualRun,
       semanticActionOccurrences: []
     });
     history.record({
       playerActionResults: [result(4, "player.jozz", "dropped_item", "succeeded", "item.mug")],
       executorActionResult: null,
+      executorActionRun: null,
       semanticActionOccurrences: []
     });
 
     expect(history.recent().map((attempt) => attempt.seq)).toEqual([2, 3, 4]);
   });
 
-  it("returns isolated read records", () => {
+  it("returns isolated read records including nested executor provenance", () => {
     const history = new ActionAttemptHistory();
     history.record({
-      playerActionResults: [result(1, "player.jozz", "dropped_item", "succeeded", "item.mug")],
-      executorActionResult: null,
+      playerActionResults: [],
+      executorActionResult: result(1, "npc.001", "target_unavailable", "rejected", "item.lantern"),
+      executorActionRun: manualRun,
       semanticActionOccurrences: []
     });
 
     const external = history.recent();
     external[0]!.message = "mutated outside history";
-    expect(history.recent()[0]!.message).toBe("dropped_item");
+    if (external[0]!.executorRun) external[0]!.executorRun.runId = 999;
+
+    expect(history.recent()[0]).toMatchObject({
+      message: "target_unavailable",
+      executorRun: manualRun
+    });
   });
 
   it("records a real ExecutionDriver atomic attempt into the runtime diagnostic history", () => {

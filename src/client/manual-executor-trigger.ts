@@ -20,7 +20,7 @@ export function startManualExecutorTask(
   task: ExecutorTask,
   onStarted: () => void
 ): ManualExecutorStartResult {
-  const started = executor.start(task);
+  const started = executor.start(task, { kind: "manual" });
   if (started) onStarted();
   return { started, state: executor.state() };
 }

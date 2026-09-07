@@ -11,6 +11,23 @@ function element<K extends keyof HTMLElementTagNameMap>(
   return node;
 }
 
+function sourceText(attempt: ActionAttemptRecord): string {
+  if (attempt.source === "player") return "player channel";
+  const run = attempt.executorRun;
+  if (!run) return "executor · provenance missing";
+  if (run.cause.kind === "cognition") {
+    return `executor #${run.runId} · cognition · ${run.cause.correlationId}`;
+  }
+  return `executor #${run.runId} · ${run.cause.kind}`;
+}
+
+function sourceSignature(attempt: ActionAttemptRecord): string {
+  const run = attempt.executorRun;
+  if (!run) return attempt.source;
+  const correlation = run.cause.kind === "cognition" ? run.cause.correlationId : "";
+  return `${attempt.source}:${run.runId}:${run.cause.kind}:${correlation}`;
+}
+
 export class ActionAttemptDebugPanel {
   private readonly list: HTMLUListElement;
   private lastSignature = "";
@@ -22,7 +39,7 @@ export class ActionAttemptDebugPanel {
       element(
         "p",
         "debug-note",
-        "Execution-frame truth: every player-channel and executor atomic attempt, including rejected attempts. This is bounded debug history, not semantic World event history."
+        "Execution-frame truth: every player-channel and executor atomic attempt, including rejected attempts. Executor attempts retain run/cause provenance; semantic successes also expose their exact World event sequence. This is bounded debug history, not semantic World event history."
       )
     );
     this.list = element("ul", "event-list");
@@ -33,7 +50,10 @@ export class ActionAttemptDebugPanel {
 
   update(attempts: readonly ActionAttemptRecord[]): void {
     const signature = attempts
-      .map((attempt) => `${attempt.seq}:${attempt.source}:${attempt.status}:${attempt.code}`)
+      .map(
+        (attempt) =>
+          `${attempt.seq}:${sourceSignature(attempt)}:${attempt.status}:${attempt.code}:${attempt.eventSeq ?? "-"}`
+      )
       .join("|");
     if (signature === this.lastSignature && this.list.childElementCount > 0) return;
     this.lastSignature = signature;
@@ -46,17 +66,17 @@ export class ActionAttemptDebugPanel {
 
     for (const attempt of [...attempts].reverse()) {
       const item = element("li");
-      const source = attempt.source === "player" ? "player channel" : "executor";
+      const eventJoin = attempt.eventSeq === undefined ? "" : ` · event #${attempt.eventSeq}`;
       item.append(
         element(
           "div",
           "event-message",
-          `${source} · ${attempt.actorId} · ${attempt.action}${attempt.targetId ? ` → ${attempt.targetId}` : ""}`
+          `${sourceText(attempt)} · ${attempt.actorId} · ${attempt.action}${attempt.targetId ? ` → ${attempt.targetId}` : ""}`
         ),
         element(
           "div",
           "event-meta",
-          `#${attempt.seq} · tick ${attempt.tick} · ${attempt.status} · ${attempt.code}`
+          `action #${attempt.seq}${eventJoin} · tick ${attempt.tick} · ${attempt.status} · ${attempt.code}`
         )
       );
       this.list.append(item);
