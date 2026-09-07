@@ -48,6 +48,14 @@ export interface E1UsageAttempt {
   usage: E1ModelUsage;
 }
 
+export interface E1ExperienceLineage {
+  executorRunId: number;
+  cause: "cognition";
+  correlationId: string;
+  actionSeq: number | null;
+  eventSeq: number | null;
+}
+
 export interface E1HarnessDebugState {
   armed: boolean;
   inFlight: boolean;
@@ -75,6 +83,7 @@ export interface E1HarnessDebugState {
   latencyMs: number | null;
   usageAttempts: E1UsageAttempt[];
   experience: E1Experience | null;
+  experienceLineage: E1ExperienceLineage | null;
 }
 
 export interface E1HarnessOptions {
@@ -85,6 +94,12 @@ export interface E1HarnessOptions {
 interface E1LocalRequestIdentity {
   sessionId: number;
   requestId: number;
+}
+
+interface E1ActiveExecutorTask {
+  targetId: string;
+  runId: number;
+  correlationId: string;
 }
 
 class E1RequestTimeoutError extends Error {
@@ -113,6 +128,10 @@ function retryableProviderError(error: unknown): boolean {
   return error instanceof E1DecisionRequestError ? error.retryable : true;
 }
 
+function cognitionCorrelation(identity: E1LocalRequestIdentity, cycleId: number): string {
+  return `e1:s${identity.sessionId}:r${identity.requestId}:c${cycleId}`;
+}
+
 export class E1AgentHarness {
   private readonly gate = new E1CognitionGate();
   private readonly sensoryChanges = new E1SensoryChangeBuffer();
@@ -120,6 +139,7 @@ export class E1AgentHarness {
   private readonly maxRequestAttempts: number;
   private perception: E1Perception | null = null;
   private experience: E1Experience | null = null;
+  private experienceLineage: E1ExperienceLineage | null = null;
   private requestStatus: E1HarnessRequestStatus = "disarmed";
   private nextSessionId = 1;
   private sessionId: number | null = null;
@@ -139,7 +159,7 @@ export class E1AgentHarness {
   private gatewayLogId: string | null = null;
   private latencyMs: number | null = null;
   private usageAttempts: E1UsageAttempt[] = [];
-  private activeTaskTargetId: string | null = null;
+  private activeTask: E1ActiveExecutorTask | null = null;
 
   constructor(
     private readonly world: World,
@@ -180,6 +200,7 @@ export class E1AgentHarness {
     this.activeRequestId = null;
     this.attempt = null;
     this.experience = null;
+    this.experienceLineage = null;
     this.perception = this.observe();
     this.gate.arm(this.perception, this.experience);
     this.requestStatus = "armed";
@@ -194,7 +215,7 @@ export class E1AgentHarness {
     this.gatewayLogId = null;
     this.latencyMs = null;
     this.usageAttempts = [];
-    this.activeTaskTargetId = null;
+    this.activeTask = null;
   }
 
   disarm(): void {
@@ -237,7 +258,8 @@ export class E1AgentHarness {
         attempt: entry.attempt,
         usage: { ...entry.usage }
       })),
-      experience: this.experience ? { ...this.experience } : null
+      experience: this.experience ? { ...this.experience } : null,
+      experienceLineage: this.experienceLineage ? { ...this.experienceLineage } : null
     };
   }
 
@@ -300,13 +322,17 @@ export class E1AgentHarness {
   }
 
   private captureExperience(frame: ExecutionFrameResult): void {
+    const activeTask = this.activeTask;
+    if (!activeTask) return;
+
     const executorState = this.executor.state();
-    if (!this.activeTaskTargetId) return;
     if (executorState.status !== "succeeded" && executorState.status !== "failed") return;
+    if (!executorState.run || executorState.run.runId !== activeTask.runId) return;
 
     const action =
+      frame.executorActionRun?.runId === activeTask.runId &&
       frame.executorActionResult?.actorId === E1_OBSERVER_ID &&
-      frame.executorActionResult.targetId === this.activeTaskTargetId
+      frame.executorActionResult.targetId === activeTask.targetId
         ? frame.executorActionResult
         : null;
     const tick = action?.tick ?? this.world.snapshot().tick;
@@ -316,7 +342,7 @@ export class E1AgentHarness {
         tick,
         status: "succeeded",
         code: action?.code ?? "executor_succeeded",
-        targetId: this.activeTaskTargetId,
+        targetId: activeTask.targetId,
         message: action?.message ?? "E1 executor task succeeded."
       };
     } else {
@@ -324,12 +350,19 @@ export class E1AgentHarness {
         tick,
         status: "failed",
         code: executorState.failureCode ?? action?.code ?? "executor_failed",
-        targetId: this.activeTaskTargetId,
+        targetId: activeTask.targetId,
         message: action?.message ?? "E1 executor task failed."
       };
     }
 
-    this.activeTaskTargetId = null;
+    this.experienceLineage = {
+      executorRunId: activeTask.runId,
+      cause: "cognition",
+      correlationId: activeTask.correlationId,
+      actionSeq: action?.seq ?? null,
+      eventSeq: action?.eventSeq ?? null
+    };
+    this.activeTask = null;
   }
 
   private isCurrentRequest(identity: E1LocalRequestIdentity): boolean {
@@ -481,18 +514,35 @@ export class E1AgentHarness {
       return;
     }
 
-    const started = this.executor.start({
-      kind: "approach-and-interact",
-      actorId: E1_OBSERVER_ID,
-      targetId: currentValidation.decision.targetId
-    });
+    const correlationId = cognitionCorrelation(identity, cycle.cycleId);
+    const started = this.executor.start(
+      {
+        kind: "approach-and-interact",
+        actorId: E1_OBSERVER_ID,
+        targetId: currentValidation.decision.targetId
+      },
+      { kind: "cognition", correlationId }
+    );
     if (!started) {
       this.requestStatus = "executor_busy";
       this.decisionValidation = "executor_start_refused";
       return;
     }
 
-    this.activeTaskTargetId = currentValidation.decision.targetId;
+    const executorState = this.executor.state();
+    if (
+      !executorState.run ||
+      executorState.run.cause.kind !== "cognition" ||
+      executorState.run.cause.correlationId !== correlationId
+    ) {
+      throw new Error("Accepted E1 fetch did not retain cognition executor causation.");
+    }
+
+    this.activeTask = {
+      targetId: currentValidation.decision.targetId,
+      runId: executorState.run.runId,
+      correlationId
+    };
     this.requestStatus = "accepted_fetch";
     this.decisionValidation = "accepted_and_started";
   }
