@@ -26,6 +26,53 @@ function requestFixture(): E1CycleRequest {
   };
 }
 
+function maxText(prefix: string, index = 0): string {
+  const start = `${prefix}.${index}.`;
+  return (start + "x".repeat(256)).slice(0, 256);
+}
+
+function maximalLegalRequestFixture(): E1CycleRequest {
+  const visibleEntities = Array.from({ length: 32 }, (_, index) => ({
+    id: maxText("item", index),
+    kind: "item" as const,
+    label: maxText("label", index),
+    distance: Number.MAX_VALUE,
+    direction: { x: Number.MAX_VALUE, y: -Number.MAX_VALUE },
+    heldBy: null
+  }));
+
+  return {
+    cycleId: Number.MAX_SAFE_INTEGER,
+    trigger: "perception_and_experience_changed",
+    perception: {
+      tick: Number.MAX_SAFE_INTEGER,
+      observer: {
+        id: "npc.001",
+        label: maxText("observer"),
+        locationId: maxText("location"),
+        locationLabel: maxText("location-label"),
+        heldItemId: null
+      },
+      visibleEntities,
+      fetchableItemIds: visibleEntities.map((entity) => entity.id)
+    },
+    observedChanges: Array.from({ length: 32 }, (_, index) => ({
+      kind: "item_holder_changed" as const,
+      itemId: visibleEntities[index]!.id,
+      previousHolderId: maxText("holder", index),
+      holderId: null
+    })),
+    observedChangesDropped: Number.MAX_SAFE_INTEGER,
+    previousExperience: {
+      tick: Number.MAX_SAFE_INTEGER,
+      status: "succeeded",
+      code: maxText("experience-code"),
+      targetId: maxText("experience-target"),
+      message: maxText("experience-message")
+    }
+  };
+}
+
 function waitToolResult() {
   return {
     choices: [
@@ -120,6 +167,30 @@ describe("R7a bounded Worker inference ingress", () => {
         method: "POST",
         headers: { "content-type": "application/json; charset=utf-8" },
         body: JSON.stringify(requestFixture())
+      }),
+      envWithCalls(calls)
+    );
+
+    expect(response.status).toBe(200);
+    expect(calls).toEqual(["limit", "ai"]);
+  });
+
+  it("keeps the raw-body limit above a maximally populated legal current E1 request", async () => {
+    const calls: string[] = [];
+    const body = JSON.stringify(maximalLegalRequestFixture());
+    const bodyBytes = new TextEncoder().encode(body).byteLength;
+
+    expect(bodyBytes).toBeGreaterThan(40 * 1024);
+    expect(bodyBytes).toBeLessThan(E1_MAX_REQUEST_BODY_BYTES);
+
+    const response = await handleE1AgentDecision(
+      new Request("https://lab.example/api/agent/e1/decide", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json; charset=utf-8",
+          "content-length": String(bodyBytes)
+        },
+        body
       }),
       envWithCalls(calls)
     );
