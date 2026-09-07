@@ -30,6 +30,7 @@ export interface E1HarnessDebugState {
   armed: boolean;
   inFlight: boolean;
   requestStatus: E1HarnessRequestStatus;
+  sessionId: number | null;
   cycleId: number | null;
   cyclesUsed: number;
   cycleBudget: number;
@@ -72,6 +73,8 @@ export class E1AgentHarness {
   private perception: E1Perception | null = null;
   private experience: E1Experience | null = null;
   private requestStatus: E1HarnessRequestStatus = "disarmed";
+  private nextSessionId = 1;
+  private sessionId: number | null = null;
   private trigger: E1CycleRequest["trigger"] | null = null;
   private cycleId: number | null = null;
   private observedChanges: string[] = [];
@@ -105,6 +108,7 @@ export class E1AgentHarness {
     if (this.executor.state().status === "running") {
       throw new Error("E1 cannot arm while the NPC executor is already running.");
     }
+    this.sessionId = this.nextSessionId++;
     this.experience = null;
     this.perception = this.observe();
     this.gate.arm(this.perception, this.experience);
@@ -132,6 +136,7 @@ export class E1AgentHarness {
       armed: gate.armed,
       inFlight: gate.inFlight,
       requestStatus: this.requestStatus,
+      sessionId: this.sessionId,
       cycleId: this.cycleId,
       cyclesUsed: gate.cyclesUsed,
       cycleBudget: gate.cycleBudget,
@@ -162,7 +167,9 @@ export class E1AgentHarness {
       nowMs
     );
     if (!cycle) return null;
+    if (this.sessionId === null) throw new Error("E1 cognition cycle requires an active arm-session identity.");
 
+    const sessionId = this.sessionId;
     this.requestStatus = "in_flight";
     this.trigger = cycle.trigger;
     this.cycleId = cycle.cycleId;
@@ -170,7 +177,7 @@ export class E1AgentHarness {
     this.decisionKind = null;
     this.decisionTargetId = null;
     this.decisionValidation = null;
-    return this.runCycle(cycle);
+    return this.runCycle(cycle, sessionId);
   }
 
   private observe(): E1Perception {
@@ -218,10 +225,21 @@ export class E1AgentHarness {
     this.activeTask = null;
   }
 
-  private async runCycle(cycle: E1CycleRequest): Promise<void> {
+  private isCurrentSession(sessionId: number): boolean {
+    return this.gate.state().armed && this.sessionId === sessionId;
+  }
+
+  private finishCurrentCycle(sessionId: number, cycleId: number): boolean {
+    if (!this.isCurrentSession(sessionId)) return false;
+    return this.gate.finish(cycleId);
+  }
+
+  private async runCycle(cycle: E1CycleRequest, sessionId: number): Promise<void> {
+    let gateFinished = false;
     try {
       const response = await this.provider(cycle);
-      if (!this.gate.finish(cycle.cycleId)) return;
+      if (!this.finishCurrentCycle(sessionId, cycle.cycleId)) return;
+      gateFinished = true;
       if (response.cycleId !== cycle.cycleId) {
         throw new Error(`E1 cycle mismatch: expected ${cycle.cycleId}, received ${response.cycleId}.`);
       }
@@ -291,7 +309,8 @@ export class E1AgentHarness {
       this.requestStatus = "accepted_fetch";
       this.decisionValidation = "accepted_and_started";
     } catch (error) {
-      if (!this.gate.finish(cycle.cycleId) && !this.gate.state().armed) return;
+      if (!this.isCurrentSession(sessionId)) return;
+      if (!gateFinished && !this.finishCurrentCycle(sessionId, cycle.cycleId)) return;
       this.requestStatus = "request_error";
       this.decisionValidation = error instanceof Error ? error.message : String(error);
     }
