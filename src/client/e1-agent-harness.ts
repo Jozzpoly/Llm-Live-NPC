@@ -8,6 +8,7 @@ import {
   type E1ObservedChange,
   type E1Perception
 } from "../agent/e1-grounding";
+import type { E1ModelUsage } from "../agent/e1-provider-usage";
 import type { DeterministicExecutor } from "../execution/deterministic-executor";
 import type { ExecutionFrameResult } from "../execution/execution-driver";
 import type { World } from "../world/world";
@@ -42,6 +43,11 @@ export type E1HarnessRequestStatus =
   | "stale_decision"
   | "executor_busy";
 
+export interface E1UsageAttempt {
+  attempt: number;
+  usage: E1ModelUsage;
+}
+
 export interface E1HarnessDebugState {
   armed: boolean;
   inFlight: boolean;
@@ -67,6 +73,7 @@ export interface E1HarnessDebugState {
   model: string | null;
   gatewayLogId: string | null;
   latencyMs: number | null;
+  usageAttempts: E1UsageAttempt[];
   experience: E1Experience | null;
 }
 
@@ -131,6 +138,7 @@ export class E1AgentHarness {
   private model: string | null = null;
   private gatewayLogId: string | null = null;
   private latencyMs: number | null = null;
+  private usageAttempts: E1UsageAttempt[] = [];
   private activeTaskTargetId: string | null = null;
 
   constructor(
@@ -185,6 +193,7 @@ export class E1AgentHarness {
     this.model = null;
     this.gatewayLogId = null;
     this.latencyMs = null;
+    this.usageAttempts = [];
     this.activeTaskTargetId = null;
   }
 
@@ -224,6 +233,10 @@ export class E1AgentHarness {
       model: this.model,
       gatewayLogId: this.gatewayLogId,
       latencyMs: this.latencyMs,
+      usageAttempts: this.usageAttempts.map((entry) => ({
+        attempt: entry.attempt,
+        usage: { ...entry.usage }
+      })),
       experience: this.experience ? { ...this.experience } : null
     };
   }
@@ -274,6 +287,7 @@ export class E1AgentHarness {
     this.decisionKind = null;
     this.decisionTargetId = null;
     this.decisionValidation = null;
+    this.usageAttempts = [];
     return this.runCycle(cycle, identity);
   }
 
@@ -339,6 +353,11 @@ export class E1AgentHarness {
     controller?.abort();
   }
 
+  private recordUsage(attempt: number, usage: E1ModelUsage | null | undefined): void {
+    if (!usage) return;
+    this.usageAttempts.push({ attempt, usage: { ...usage } });
+  }
+
   private async runProviderAttempt(
     cycle: E1CycleRequest,
     identity: E1LocalRequestIdentity,
@@ -391,9 +410,11 @@ export class E1AgentHarness {
 
       try {
         response = await this.runProviderAttempt(cycle, identity, attempt);
+        this.recordUsage(attempt, response.usage);
         break;
       } catch (error) {
         if (!this.isCurrentRequest(identity)) return;
+        if (error instanceof E1DecisionRequestError) this.recordUsage(attempt, error.usage);
         const timedOut = error instanceof E1RequestTimeoutError;
         const retryable = timedOut || retryableProviderError(error);
 

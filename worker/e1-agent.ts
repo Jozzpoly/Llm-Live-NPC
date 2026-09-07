@@ -7,6 +7,7 @@ import {
   type E1PerceivedEntity,
   type E1Perception
 } from "../src/agent/e1-grounding";
+import { normalizeE1ModelUsage } from "../src/agent/e1-provider-usage";
 import {
   declaredE1BodyTooLarge,
   e1RequestMediaType,
@@ -438,16 +439,18 @@ export async function handleE1AgentDecision(request: Request, env: E1AgentEnv): 
     const decision = normalizeDecision(result, body.perception.fetchableItemIds);
     const completion = result && typeof result === "object" ? (result as CompletionShape) : null;
     const gatewayLogId = env.AI.aiGatewayLogId ?? null;
+    const usage = normalizeE1ModelUsage(completion?.usage);
     if (!decision) {
       return json(
         {
           ok: false,
           cycleId: body.cycleId,
           error: "Model did not return exactly one valid bounded intention tool call",
+          errorCode: "invalid_model_intention",
           model: E1_MODEL,
           gatewayLogId,
           latencyMs: Date.now() - startedAt,
-          usage: completion?.usage ?? null
+          usage
         },
         { status: 502 }
       );
@@ -460,17 +463,29 @@ export async function handleE1AgentDecision(request: Request, env: E1AgentEnv): 
       model: E1_MODEL,
       gatewayLogId,
       latencyMs: Date.now() - startedAt,
-      usage: completion?.usage ?? null
+      usage
     });
   } catch (error) {
+    const gatewayLogId = env.AI.aiGatewayLogId ?? null;
+    console.error("E1 cognition provider request failed", {
+      cycleId: body.cycleId,
+      model: E1_MODEL,
+      gatewayLogId,
+      error:
+        error instanceof Error
+          ? { name: error.name, message: error.message, stack: error.stack ?? null }
+          : String(error)
+    });
     return json(
       {
         ok: false,
         cycleId: body.cycleId,
-        error: error instanceof Error ? error.message : String(error),
+        error: "E1 cognition provider request failed",
+        errorCode: "provider_error",
         model: E1_MODEL,
-        gatewayLogId: env.AI.aiGatewayLogId ?? null,
-        latencyMs: Date.now() - startedAt
+        gatewayLogId,
+        latencyMs: Date.now() - startedAt,
+        usage: null
       },
       { status: 502 }
     );
