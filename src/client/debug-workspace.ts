@@ -1,11 +1,11 @@
-import type { ExecutorState } from "../execution/deterministic-executor";
+import type { ManualExecutorStartResult } from "./manual-executor-trigger";
 import type { WorldDebugState } from "./world-scene";
 
 export interface DebugWorkspaceActions {
   toggleLabels(): void;
   toggleLosProbe(): void;
   togglePointerProbe(): void;
-  startNpcFetchLantern(): ExecutorState;
+  startNpcFetchLantern(): ManualExecutorStartResult;
 }
 
 type ValueNode = HTMLElement;
@@ -276,7 +276,15 @@ export class DebugWorkspace {
       return;
     }
 
-    const state = this.actions.startNpcFetchLantern();
+    const result = this.actions.startNpcFetchLantern();
+    if (!result.started) {
+      this.executorTriggerValue.textContent = "blocked · executor already running";
+      this.executorTriggerValue.classList.remove("pass");
+      this.executorTriggerValue.classList.add("blocked");
+      return;
+    }
+
+    const state = result.state;
     const task = state.task;
     this.executorTriggerValue.textContent = task
       ? `${state.status} · ${task.actorId} → ${task.targetId}`
