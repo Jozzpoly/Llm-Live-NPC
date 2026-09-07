@@ -20,6 +20,23 @@ describe("recovery R2 zero-valued geometry characterization", () => {
     expect(Number.isFinite(after.position.y)).toBe(true);
   });
 
+  it("admits a zero-radius actor without poisoning canonical movement", () => {
+    const specimen = createP1Specimen();
+    const player = specimen.entities.find((entity) => entity.id === "player.jozz");
+    if (!player || player.kind !== "player") throw new Error("Missing zero-radius actor fixture.");
+    player.radius = 0;
+
+    const world = new World(specimen);
+    world.step({ moveX: 1, moveY: 0 });
+
+    const after = world.snapshot().entities.find((entity) => entity.id === player.id);
+    if (!after || after.kind !== "player") throw new Error("Missing zero-radius actor after step.");
+    expect(after.radius).toBe(0);
+    expect(after.position.x).toBeGreaterThan(610);
+    expect(Number.isFinite(after.position.x)).toBe(true);
+    expect(Number.isFinite(after.position.y)).toBe(true);
+  });
+
   it("admits a zero-radius item without poisoning pickup/drop state", () => {
     const specimen = createP1Specimen();
     const player = specimen.entities.find((entity) => entity.id === "player.jozz");
