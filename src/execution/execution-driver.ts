@@ -1,4 +1,4 @@
-import type { WorldActionRequest, WorldActionResult, WorldInput } from "../world/types";
+import type { WorldActionRequest, WorldActionResult, WorldInput, WorldSnapshot } from "../world/types";
 import { World } from "../world/world";
 import { DeterministicExecutor } from "./deterministic-executor";
 
@@ -18,10 +18,24 @@ function assertFinitePlayerControl(input: WorldInput): void {
   }
 }
 
+function currentPlayerId(snapshot: WorldSnapshot): string {
+  const player = snapshot.entities.find((entity) => entity.kind === "player");
+  if (!player) throw new Error("Execution frame requires a canonical player actor.");
+  return player.id;
+}
+
+function assertPlayerActionActors(actions: readonly WorldActionRequest[], playerId: string): void {
+  for (const action of actions) {
+    if (action.actorId !== playerId) {
+      throw new Error(`Player action channel requires canonical player actor ${playerId}: ${action.actorId}`);
+    }
+  }
+}
+
 /**
  * One canonical fixed-step execution frame shared by the browser runtime and
- * headless tests. Ordering is intentional: validate external player control,
- * executor reads the pre-step snapshot, movement resolves for player +
+ * headless tests. Ordering is intentional: validate external player input,
+ * executor reads the same pre-step snapshot, movement resolves for player +
  * controlled actors, queued player atomic actions run, then the executor's
  * explicit atomic action runs and its result is fed back to it.
  */
@@ -32,11 +46,14 @@ export class ExecutionDriver {
   ) {}
 
   step(input: ExecutionFrameInput): ExecutionFrameResult {
-    // World remains authoritative for canonical movement validation. This early
-    // guard additionally keeps executor state transactional when external input
-    // is invalid: a rejected frame must not consume an executor step first.
+    // Reject the whole externally-owned player frame before executor or World
+    // state can advance. This channel is not a generic actor-action injection
+    // seam; non-player actors act through their own execution path.
     assertFinitePlayerControl(input.playerControl);
-    const executorCommand = this.executor.next(this.world.snapshot());
+    const preStepSnapshot = this.world.snapshot();
+    assertPlayerActionActors(input.playerActions ?? [], currentPlayerId(preStepSnapshot));
+
+    const executorCommand = this.executor.next(preStepSnapshot);
 
     this.world.stepWithActorControls(
       input.playerControl,
