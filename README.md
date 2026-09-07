@@ -2,105 +2,126 @@
 
 Experimental web laboratory for **persistent embodied NPCs whose cognition may use LLMs without letting the model become the world, the physics engine or the per-frame controller**.
 
-## Current project question
+## North star
 
-The project has moved beyond the original narrow question of whether an LLM can choose one grounded action.
+The project is trying to create **one persistent resident of a shared simulated world**, not a chatbot attached to a sprite.
 
-The current research direction is:
+A successful resident should remain one coherent participant across time and across players; experience only evidence that could legitimately reach it; allow novel language and situations to change its intentions; retain meaningful unresolved consequences of earlier decisions; remain legitimately uncertain when evidence is insufficient; and act or communicate through world mechanisms whose real outcomes — not model declarations — determine what actually happened.
 
-> How do we build a believable resident of a simulated world that exists continuously between model calls, perceives only bounded evidence, communicates through the same world as players, develops continuity of intentions/beliefs/memory, and uses an LLM as a higher semantic cognitive mechanism while deterministic/local systems preserve world truth, execution and responsiveness?
+Shorthand:
 
-This is a **research direction**, not a frozen final architecture.
+> **meaning may be generative; reality must remain grounded.**
 
-## Live state — 2026-09-07
+## Current phase
 
-The active recovered/refoundation line is:
+**Live NPC Refoundation Pass 1 — presence / invariants / anti-goals — is closed as a problem-definition pass.**
+
+Next stage:
+
+**Pass 2 — architecture / donor / research campaign.**
+
+Do **not** begin Pass 2 by implementing chat, memory, a planner or a `Mind Runtime`. The next job is to compare competing architecture hypotheses against the Presence Contract and select the smallest architecture capable of supporting a genuinely informative first Life Test.
+
+Canonical Pass 1 contract:
+
+[`docs/LIVE_NPC_PASS1_PRESENCE_CONTRACT.md`](docs/LIVE_NPC_PASS1_PRESENCE_CONTRACT.md)
+
+## Live repository state
+
+Current research/refoundation line:
 
 `recovery/owner-fail-2026-09-07`
 
-Recovered runtime checkpoint before the canonical docs reconciliation:
+Recovered runtime checkpoint preserved as bounded donor evidence:
 
 `b31a851c3f708077fbf9e6fb8206fa392f8def13`
 
-That checkpoint is **automated/R8-qualified donor evidence**, not a fresh final qualitative Owner/browser PASS.
+That runtime is **automated/R8-qualified donor evidence, not a fresh final qualitative Owner/browser PASS**.
 
-`main` intentionally still points to the historical P0 transport checkpoint:
+Canonical runtime qualification:
+
+- 145/145 tests across 26 files;
+- strict TypeScript/build/preview PASS;
+- Cloudflare PASS;
+- Worker Version ID `0e1a7e36-edba-4660-8fa2-f2b38172d760`.
+
+Final evidence-only combined R8 PR #75, closed without merge:
+
+- 149/149 tests across 27 files;
+- combined R8 4/4 PASS;
+- no runtime product changes;
+- Cloudflare Version ID `ff9be74c-754a-46b0-851f-36ffb8a9233b`.
+
+`main` intentionally remains the historical P0 transport checkpoint:
 
 `f207419ee87c03979544d2d579e624f043300bbc`
 
-The old P1 integration PR #3 is closed without merge as a historical donor line. The current recovery branch is a full descendant of P1, so no unique P1 runtime was discarded.
+The former P1 integration PR #3 is closed as historical donor evidence. The old post-readiness `experiment/e1-grounded-notice-fetch` line is non-canonical after a decisive Owner/browser FAIL; recovery deliberately restarted from the last good pre-readiness checkpoint rather than forward-merging that failed line.
 
-The old post-readiness `experiment/e1-grounded-notice-fetch` line is **not canonical**. A 2026-09-07 Owner/browser gate found that line materially worse than the previous good playable surface. Recovery deliberately restarted from the last good pre-readiness checkpoint instead of forward-merging the failed line.
+## Durable donor substrate
 
-## What is proven enough to preserve as donor substrate
-
-The current ancestry/evidence supports a bounded stack containing:
+The recovered ancestry supports a bounded donor stack containing:
 
 - project-owned TypeScript `World` authority;
 - fixed-step simulation with Phaser as presentation/input rather than truth;
 - desktop/mobile player control and direct target interaction;
-- explicit atomic World actions and causal action results;
-- deterministic non-LLM NPC execution through the same World legality as player actions;
+- explicit atomic World actions and factual outcomes;
+- deterministic non-LLM NPC execution through World legality;
 - bounded E1 perception/temporal evidence;
-- a tiny LLM intention surface (`wait | fetch`);
+- a tiny historical `wait | fetch` LLM intention experiment;
 - client-side revalidation before execution;
-- async arm/session safety against stale model responses;
+- arm/session stale-response protection;
 - cognition→executor diagnostic correlation;
 - real World outcomes returning as later NPC experience;
-- causal debug/provenance strong enough to distinguish player/manual/cognition execution in the recovered scope.
+- causal debug/provenance distinguishing player/manual/cognition execution in the recovered scope.
 
-Final evidence-only combined R8 re-attack: PR #75, closed without merge, **149/149 tests across 27 files; R8 4/4; strict TypeScript/build/preview PASS; Cloudflare PASS**.
+E1 constants and names (`npc.001`, range, cooldown, `wait|fetch`) are experiment apparatus, not future architecture.
 
-Canonical recovered runtime itself remains smaller: **145/145 tests across 26 files** at `b31a851c...`.
+## Pass 1 product truths
+
+The strongest current invariants are:
+
+- one NPC remains one resident in one shared present;
+- experience is situated and epistemically sourced;
+- an utterance is evidence that someone said something, not automatic World truth;
+- continuity and unresolved consequence persist beyond individual model calls;
+- uncertainty is a legitimate state;
+- novel language can materially change semantic intention;
+- intention/attempt/success remain distinct;
+- canonical physical/communication outcomes remain World-grounded;
+- meaningful elapsed time cannot disappear from NPC continuity.
+
+Several attractive ideas remain **hypotheses**, not requirements: an explicit `Active Life State`, cognitive-pressure scheduling, a semantic-transition validator, skills/competences, a persistent `Live Mind Runtime`, planner families, long-term memory design and exact communication mechanics.
 
 ## Explicit non-claims
 
-Do not infer that the project has already solved or re-qualified:
+The project has not yet solved or selected:
 
 - final Live Mind architecture;
-- generic speech/hearing/shared-chat semantics;
-- attention or addressedness;
-- beliefs or long-term memory;
-- planning/routines/proactive autonomy;
+- generic speech/hearing/shared-chat mechanics;
+- attention/addressedness;
+- belief representation;
+- long-term memory/consolidation/forgetting;
+- task/skill/planner architecture;
+- routines/proactive autonomy/long-horizon goals;
 - pathfinding/navmesh;
 - multiplayer cognitive concurrency;
-- persistence/offscreen simulation/production scaling;
-- final model selection;
-- historical R5b timeout/retry/cancellation policy;
-- later historical R6 sensory-buffer refinements;
-- later historical R7 Worker ingress/provider-observability hardening.
+- persistence/offscreen simulation/time scaling;
+- production scaling/cost architecture;
+- final model/provider;
+- final conversation UI.
 
-Those historical R5b/R6/R7 areas were deliberately **not mechanically ported** during selective recovery. Their absence is not automatically a current blocker; they may be reused later only when the new architecture gives them a concrete role.
+Historical R5b timeout/retry, later R6 sensory-buffer work and R7 ingress/provider hardening remain donors, not an automatic repair queue.
 
-Generic player↔NPC `interact` is currently unsupported rather than pretending that an event-less interaction succeeded. Future conversation should be designed as a truthful communication contract in the world, not resurrect that placeholder.
+Generic player↔NPC `interact` is currently unsupported rather than pretending that an event-less interaction succeeded. Future conversation should become a truthful world communication contract.
 
-## Current Owner direction entering refoundation
+## Canonical spine
 
-The strongest current product direction is:
-
-- one NPC should be one persistent cognitive identity, not a private chatbot clone per player;
-- initial conversation should happen through ordinary shared world chat, with dedicated/focused UI only as optional QoL later;
-- speech should become a world communication occurrence, not direct prompt plumbing;
-- hearing a message and being addressed by it are different problems;
-- an utterance is evidence that someone said something, not automatic canonical world truth;
-- the NPC needs a cheap continuously alive runtime between sparse LLM cognitive acts;
-- LLM authority should be strongest around language, interpretation, intentions, social judgement and deliberation, while World/local execution remains authoritative about what actually happened;
-- debug should expose causal state and provenance, not hidden chain-of-thought.
-
-These are the starting hypotheses/invariants for the next study pass and should still be challenged before architecture is frozen.
-
-## Current frontier
-
-**Do not implement chat, memory, Live Mind, planning or another E1 feature yet.**
-
-**Pass 0 technical/evidence reconciliation is closed at this canonical-spine state.** The next real work is the **Live NPC Refoundation Study — Pass 1: vision, invariants and anti-goals**.
-
-The purpose of Pass 1 is to reconstruct and challenge what “a real resident” means for this project before architecture research begins shaping the solution.
-
-Canonical spine:
+A fresh takeover should read:
 
 1. `README.md` — fast orientation;
-2. `docs/PROJECT_STATE.md` — current evidence boundary, topology, donor architecture and frontier;
-3. `docs/FRESH_TAKEOVER.md` — startup mandate for a new conversation.
+2. `docs/PROJECT_STATE.md` — live evidence/topology/frontier;
+3. `docs/LIVE_NPC_PASS1_PRESENCE_CONTRACT.md` — problem definition and qualification target;
+4. `docs/FRESH_TAKEOVER.md` — startup mandate for the next conversation.
 
 Historical design/evidence documents and closed PRs remain available when exact provenance is needed, but they are not the primary startup path.
