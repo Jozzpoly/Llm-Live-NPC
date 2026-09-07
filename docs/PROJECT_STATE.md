@@ -1,170 +1,165 @@
 # LLM Live NPC — Project State
 
-Updated: 2026-09-06
+Updated: 2026-09-07
 
 ## Core question
 
-Can an LLM-driven NPC become a believable resident of a game world by receiving bounded perception, maintaining its own experience/beliefs, and acting only through validated world mechanics rather than directly mutating world truth?
+Can an LLM-driven NPC become a believable resident of a game world by receiving bounded local evidence, preserving causal continuity, and acting only through validated world mechanics rather than directly mutating world truth?
 
 Target loop:
 
 `WORLD → PERCEPTION → COGNITION/MEMORY → INTENTION → NON-LLM EXECUTION → VALIDATED WORLD ACTIONS → WORLD`
 
-`World` is authoritative about what exists, what can be attempted and what actually happened. Perception is derived from world truth. Cognition may propose bounded intentions; it does not directly mutate positions, inventory, events or executor internals.
+`World` remains authoritative about what exists, what can be attempted and what actually happened. Perception is derived from World truth. Cognition proposes bounded intentions; it does not directly mutate positions, inventory, semantic events or executor internals.
 
 ## Live stage topology
 
-### P0 — production baseline
+### P0 — historical model-transport baseline
 
-`main` intentionally remains the proven cloud/model-transport baseline.
+`main` intentionally remains the proven P0 cloud/model-transport line.
 
-P0 proved:
+P0 proved GitHub → Cloudflare deployment, Worker/static assets, Workers AI through AI Gateway, usage/log correlation and replaceable model transport. Granite 4.0 H Micro and Llama 3.2 3B Instruct both produced usable bounded completions. Earlier GLM probes remain negative evidence. **No final NPC model is selected.**
 
-- GitHub → Cloudflare deployment;
-- Worker + static assets;
-- Workers AI through AI Gateway;
-- usage/log correlation;
-- replaceable model transport.
+### P1 — historical qualified pre-cognition substrate
 
-Granite 4.0 H Micro and Llama 3.2 3B Instruct both produced usable bounded completions. Earlier GLM probes remain negative evidence. **No final NPC model is selected.**
+Branch:
 
-### P1 — qualified pre-cognition substrate
+`p1/playable-world-slice`
 
-Canonical branch: `p1/playable-world-slice`
+Qualified head:
 
-Canonical head: `e453f5862286328df92db91ba2f9adabc1e7899e`
+`e453f5862286328df92db91ba2f9adabc1e7899e`
 
-Integration PR: #3, still draft.
+P1 PR #3 remains the historical integration record.
 
-P1 proves:
+P1 qualified project-owned World truth, fixed-step movement, interpolated Phaser presentation, desktop/mobile controls, direct targeting, actor facing, placement validation, semantic actions/events and the deterministic non-LLM executor through a shared `ExecutionDriver`.
 
-- project-owned TypeScript `World` truth;
-- top-down settlement specimen with blockers, locations, items and semantic events;
-- fixed 30 Hz authoritative stepping with interpolated Phaser presentation;
-- desktop/mobile human controls and direct target interaction;
-- canonical actor facing;
-- world-owned placement target validation;
-- deterministic non-LLM NPC executor + shared `ExecutionDriver`;
-- Owner-qualified embodied pickup through the same validated World action substrate as the player;
-- explicit action/event/executor/debug provenance;
-- bounded causal failure state.
+P1 does not qualify autonomous cognition, long-term memory, sight/hearing, pathfinding or conversation.
 
-P1 does **not** qualify autonomous cognition, NPC perception semantics, long-term memory, pathfinding, hearing/speech or conversation.
+### E1 — qualified + readiness-repaired embodied cognition slice
 
-### E1 — Grounded Notice → Fetch: qualified bounded vertical slice
+Branch:
 
-Branch: `experiment/e1-grounded-notice-fetch`
+`experiment/e1-grounded-notice-fetch`
 
-PR: #23 against P1, still draft while final debt/continuity closure is completed.
+Final repaired runtime checkpoint before documentation-only closure:
 
-Runtime-clean checkpoint before documentation-only closure commits:
+`7cc7bbde976963372ac590a8ad91518493ac76c1`
 
-`15ed5e3146df07cb2624c7bd77dd5f2e9a4a5105`
+Historical E1 PR #23 is **closed without merge**. This is the explicit topology decision: P1 remains preserved as the pre-cognition stage; E1 remains the qualified/repaired cognition experiment line and current best substrate for a later deliberately chosen phase.
 
-E1 qualifies this exact loop:
+E1 originally qualified this exact real-model causal loop:
 
-`player-caused held→free World change → 220 px bounded local perception → explicit temporal delta → real Granite wait|fetch intention → client revalidation → existing deterministic executor → validated World pickup → E1 self experience → subsequent Granite cycle`
+`player-caused held→free World change → bounded local perception + temporal evidence → Granite wait|fetch intention → client validation/revalidation → deterministic executor → validated World pickup → short real execution experience → subsequent Granite cycle`
 
-The final Owner re-gate passed with Lantern:
+The final Owner re-gate with Lantern completed `drop → fetch → NPC pickup → experience-bearing next cycle → wait` with independent World/executor/model/Gateway provenance.
 
-1. player carried Lantern into NPC-local range while held;
-2. E1 was armed as a no-call baseline;
-3. drop produced `item.lantern: holder player.jozz → free` and Lantern became fetchable;
-4. Granite selected `fetch(item.lantern)`;
-5. NPC-001 approached and picked up Lantern through the existing executor/World path;
-6. World/event provenance independently recorded the pickup;
-7. the next cognition cycle received `succeeded · picked_up_item`, `self held none → item.lantern`, and `holder free → npc.001`;
-8. Granite selected `wait`.
+This is a real embodied vertical-loop PASS, not a claim of general intelligence or final agent architecture.
 
-This is a real embodied vertical-loop PASS, not a claim of general intelligence or a final agent architecture.
+Historical experiment evidence remains in [`E1_GROUNDED_NOTICE_FETCH_DESIGN.md`](E1_GROUNDED_NOTICE_FETCH_DESIGN.md). The live post-readiness runtime is broader and must be understood from this document + live code/tests.
 
-Full E1 contract/evidence: [`E1_GROUNDED_NOTICE_FETCH_DESIGN.md`](E1_GROUNDED_NOTICE_FETCH_DESIGN.md).
+## Expanded pre-LLM readiness campaign — CLOSED
 
-## E1 falsification/recovery history worth preserving
+After E1 qualified, Owner explicitly froze feature expansion and requested a much wider falsification/readiness audit before heavier agent logic. Temporary PR #25 characterized gaps and was never merged. The audit reached saturation; material findings were then repaired in dependency order through independent PRs.
 
-E1 only became qualified after several failures were treated as evidence rather than papered over.
+### R0/R1 — validation truth + causal interaction/executor legality — PR #26
 
-### Workers AI / Granite seam
+- Vitest discovery now includes all `src/**/*.test.ts` rather than omitting execution tests.
+- explicit non-mutating `World.validateInteraction()` is the shared interaction legality contract;
+- semantic target invalidity is resolved before incidental geometry;
+- executor consumes World interaction legality instead of owning a separate approach-range contract;
+- contested target ownership fails causally rather than continuing pursuit;
+- `ExecutionDriver.playerActions` enforces canonical player identity.
 
-Live diagnostics established:
+### R2 — WorldSpecimen ingress integrity — PR #27
 
-- messages-only Granite call worked;
-- legacy flat tool schema failed with Workers AI `8001: Invalid input`;
-- OpenAI-style function wrapper succeeded;
-- tool calls arrived under `choices[0].message.tool_calls[*].function`;
-- observed Granite `function.arguments` was double-encoded JSON.
+Construction rejects invalid scalar/geometry/reference/identity/ownership/topology states before canonical runtime mutation. Current specimen assumptions are therefore checked rather than discovered after stepping.
 
-The Worker now uses the live-proven wrapper and permits at most two bounded JSON decodes before normal allow-list validation.
+### R3 — spatial/embodiment semantics — PRs #28–#30
 
-A real pre-Owner two-cycle probe passed:
+- movement uses deterministic swept static-blocker collision under the public step-duration contract, closing thin-wall/high-speed tunnelling;
+- held-item canonical locality is co-located with the holder while decorative carry offset is presentation-derived;
+- E1/World therefore no longer lose ownership history because visual carry geometry enters a wall/outside bounds;
+- singular location identity uses explicit finite authored `priority`, independent of array order; ambiguous equal-priority overlaps are rejected.
 
-- holder `player.jozz → free` → `fetch(item.mug)`, Gateway `01M1SZ3H6M4MSYEG3X2GFFFWDP`;
-- prior `picked_up_item` + NPC holding mug → `wait`, Gateway `01M1SZ3KB5VXG5K5W2T9SWZXBC`.
+### R4 — provenance / debug truth — PRs #31–#33
 
-### First Owner gate: partial pass
+- browser debug retains a bounded ordered history of all execution-frame atomic attempts with `player | executor` source rather than collapsing truth to `World.lastActionResult()`;
+- manual `Fetch lantern` starts before lifecycle side effects and cannot disarm E1 when executor start is refused;
+- runtime exposes exact repository build commit/branch and native Worker Version ID in `/api/health` and the Debug Workspace fingerprint.
 
-The first hands-on recording proved the central pickup path but exposed apparatus debt:
+### R5 — cognition async lifecycle — PRs #34–#35
 
-- non-fetchable held-item boundary churn could wake cognition and waste `wait` cycles;
-- `3 requests / 60 s` was too small for repeated hands-on attempts plus the required post-pickup cycle.
+- each arm session and logical request has separate monotonic page-lifetime identity;
+- stale completion/rejection cannot mutate a later re-arm session even when `cycleId` restarts at 1;
+- provider attempts have a default 12 s timeout and cancellation seam;
+- one logical cognition request has at most two provider attempts;
+- retry does not consume another cognition-cycle budget slot;
+- disarm/re-arm aborts the active attempt and invalidates its ownership;
+- explicit non-retryable responses such as 429 stop immediately.
 
-Repairs:
+### R6 — sensory foundation — PRs #37–#39
 
-- wake fingerprint narrowed to observer state + **fetchable item IDs** + own new execution experience;
-- silent perception baseline still updates during ignored held-item churn, preserving a later true holder delta;
-- development limiter raised to `6 requests / 60 s`.
+- perceived `direction` is observer-body-relative rather than world-space; range/LOS remain unchanged;
+- geometric LOS is still only an occlusion primitive, not qualified sight/FOV;
+- successful frame-local semantic item actions preserve exact post-action occurrence snapshots before later actions overwrite state;
+- same-frame `drop → pickup` can therefore produce two cognition-visible holder transitions even when final sampled state returns to baseline;
+- only already-localized semantic changes enter the session-local sensory buffer; raw global events/snapshots are not journaled for cognition;
+- pending local sensory evidence survives `inFlight`, cooldown and executor-busy periods;
+- request delivery is bounded to 32 observed changes and reports explicit `observedChangesDropped` overflow;
+- current sampled reconciliation facts receive capacity before older buffered event history;
+- disarm/re-arm clears session-local sensory history.
 
-The repaired Owner re-gate then passed completely.
+This is bounded sensory continuity, not event sourcing or long-term memory.
 
-## Post-E1 technical-debt campaign
+### R7 — Worker/public laboratory boundary — PRs #41–#42
 
-Owner review after the successful E1 gate exposed several quality debts that domain tests had not caught. Feature work was intentionally stopped until they were addressed.
+R7a:
 
-### Repaired runtime/UI/provenance debt
+- E1 accepts only POST + `application/json`;
+- explicit browser `Sec-Fetch-Site: cross-site` requests are rejected before limiter/body access;
+- raw request body is bounded to 96 KiB;
+- declared oversize fails before limiter/body consumption;
+- otherwise the rate limiter runs before actual stream consumption/parsing;
+- unknown-length streams are incrementally bounded;
+- a maximally populated legal current E1 request fits under the 96 KiB bound;
+- historical `/api/ai/qualify` is retired on E1 as `410 Gone` and `/api/health` no longer advertises it.
 
-- desktop shell is constrained to the viewport;
-- the giant blank scrollable game region is gone;
-- Debug Workspace owns its vertical scroll instead of scrolling the entire game/document;
-- narrow-window collapsed debug uses a fixed compact row instead of wasting one-third of the viewport;
-- mobile portrait has an explicit controlled app/debug scroll contract;
-- shell stage label reflects real `E1 cognition armed/disarmed` state rather than stale `cognition disabled` text;
-- E1 preview `/api/health` reports the E1 stage rather than stale P0 stage provenance;
-- `DeterministicExecutor.start()` refuses silent replacement of a running task;
-- regression test verifies refused replacement leaves task/progress provenance unchanged;
-- E1 checks the boolean executor-start result before claiming `accepted_fetch`;
-- manual B2 `Fetch lantern` control is disabled while executor state is `running` and its debug field reports actual executor state rather than inventing an `accepted` acknowledgement.
+This is browser/cost abuse damping, **not authentication**. Direct non-browser clients can still construct requests; the Cloudflare rate limiter remains abuse damping rather than globally exact accounting.
 
-These are debt repairs, not extensions of the E1 research claim.
+R7b:
 
-### Current closure boundary
+- raw provider exceptions remain internal to Worker observability and public responses use stable external error codes/messages;
+- provider usage is reduced to bounded known fields: prompt/completion/total tokens + neurons;
+- browser errors/successes retain model/Gateway/latency/usage provenance when available;
+- usage is retained per provider attempt so a failed attempt is not hidden by a later retry success;
+- Debug Workspace exposes compact per-attempt model usage.
 
-Before a new research stage:
+## Final readiness validation
 
-1. finish documentation/handoff alignment;
-2. perform a second repo/diff audit for remaining **known material** debt in current P1/E1 scope;
-3. run final full CI + exact Cloudflare deployment;
-4. perform only a focused Owner smoke for repaired shell/provenance behavior if needed;
-5. make an explicit E1 integration/closure decision.
+Final repaired runtime checkpoint:
 
-Do not use “remove all technical debt” to justify speculative framework work. Deliberately absent future systems are not debt merely because they do not exist.
+`7cc7bbde976963372ac590a8ad91518493ac76c1`
 
-## Proven architecture and contracts
+Evidence:
 
-### Authority and presentation
+- strict TypeScript: PASS;
+- final repair-head Vitest: **167 / 167 PASS across 29 files**;
+- Vite production build: PASS;
+- self-contained preview dry-run: PASS;
+- final E1 merge-head GitHub validation: PASS;
+- final E1 merge-head Cloudflare Workers Build: PASS;
+- final E1 Worker Version ID: `1cd90a41-a1ea-4677-8cff-4162bf97f84d`.
 
-`human/controller adapters → continuous control + atomic action requests → World authority → WorldSnapshot → presentation`
+Temporary audit PR #25, R6 characterization PR #36 and R7 characterization PR #40 are closed without merge. E1 PR #23 is also closed without merge after the explicit topology decision above.
 
-Phaser is presentation/camera/input infrastructure, not canonical gameplay authority.
+## Architecture/contracts to preserve
 
-`30 Hz World truth → previous/current authoritative snapshots → interpolated presentation`
+### Authority
 
-Debug truth comes from canonical current state even when presentation is interpolated.
+`human/controller adapters → continuous control + atomic requests → World authority → snapshots/events/outcomes → presentation/perception`
 
-### Human interaction
-
-`mouse/touch → screen→world + rendered-target resolution → intended targetId → SAME World legality`
-
-Presentation determines what the human pointed at. `World` determines whether the attempt is legal.
+Phaser is presentation/camera/input infrastructure. `World` owns canonical truth.
 
 ### Execution
 
@@ -173,106 +168,107 @@ Keep separate:
 1. continuous actor control;
 2. atomic validated World actions;
 3. durative task execution;
-4. semantic World events;
+4. semantic World events / frame-local semantic occurrences;
 5. self/action outcomes;
-6. perception/cognition/intention policy.
+6. bounded perception evidence;
+7. cognition/intention policy.
 
-Current execution seam:
+Current executor is still direct approach-and-interact. Obstacle geometry may make a task fail; that is bounded failure behavior, not pathfinding.
 
-`task { actorId, targetId } → DeterministicExecutor → ExecutionDriver → World.stepWithActorControls(...) → World.attemptAction(...) → causal result`
+### Cognition
 
-The executor now has an explicit no-replacement invariant while a task is `running`.
+`World truth → bounded local projection / bounded temporal evidence → sanitized Worker request → Granite bounded intention → client revalidation → deterministic executor → World outcome → subsequent experience`
 
-### E1 perception/cognition
+The model does not receive raw global snapshots/blocker lists/global event logs and cannot directly mutate canonical gameplay state.
 
-`WorldSnapshot → bounded projection → observedChanges + own previous experience → sanitized Worker request → Granite tool intention → client validation → executor`
+## Deliberately missing / not debt by absence alone
 
-The raw snapshot, blocker list, absolute map state and global event log do not go to the model.
+Do not infer or automatically implement:
 
-Current geometric `hasLineOfSight()` is only a geometry/occlusion primitive. It is **not qualified NPC sight**.
-
-## Deliberately missing / not proven
-
-Do not infer any of these from E1:
-
-- semantic vision, FOV or attention architecture;
-- hearing or grounded speech propagation;
+- semantic visual recognition, FOV or final attention architecture;
+- hearing/speech propagation;
 - long-term/episodic memory or belief revision;
-- pathfinding/navmesh/general obstacle solving;
-- actor-actor collision;
-- generic behavior trees, task graphs or planner framework;
-- autonomous goals or open-ended task selection;
+- generalized pathfinding/navmesh;
+- full actor-actor collision gameplay semantics;
+- generic behavior trees/GOAP/planning framework;
+- open-ended goals/autonomy;
 - multi-NPC coordination;
+- persistence/save format;
 - final conversation UI;
-- controlled placement execution/persistent support relation/full placement UX;
-- final map authoring pipeline or large Tiled migration;
-- final model choice.
+- final placement UX/system;
+- final map authoring pipeline;
+- final model choice;
+- large-scale spatial indexing;
+- generic observability platform;
+- full account/auth/product infrastructure for the current private laboratory.
 
-The current executor's approach behavior is naive direct movement. A blocker can make it stall until the explicit step budget fails. That is not pathfinding.
+A later bounded experiment may establish one of these as a prerequisite. Absence alone is not present technical debt.
+
+## Residual bounded observations / decisions — do not silently call them repaired
+
+The readiness campaign repaired the selected material runtime/foundation clusters, but several lower-priority or policy-level observations remain deliberately outside those repairs:
+
+- `main`/stage branches have historically lacked strong branch-protection/required-check governance; deployment success is not itself qualification evidence. Treat repository governance as an explicit release/integration decision if/when the project topology changes.
+- actor-body separation/collision semantics remain intentionally unqualified.
+- a future soft reset/remount contract is not selected; page-lifetime singleton listeners are acceptable only under the current page-lifetime runtime assumption.
+- Node is pinned to major `22`, not an exact patch; this is a bounded reproducibility choice, not a demonstrated runtime defect.
+- disarmed E1 still performs some tiny current-specimen projection/read work; no evidence justifies a large optimization or spatial-indexing campaign.
+
+Do not let these notes become an excuse for open-ended cleanup. Reproduce a material failure or establish a concrete next-stage prerequisite first.
 
 ## Owner judgement worth preserving
 
-- Runtime/preview workflow is useful enough for frequent hands-on gates.
-- Initial world size is sufficient for the current research laboratory.
-- Movement/collision and pickup/drop are substrate, not final gameplay.
-- Presentation interpolation materially improved the earlier 30 Hz sample-and-hold feel.
-- Direct targeting is Owner-qualified on desktop and mobile.
-- Mobile Owner testing is genuinely useful and should remain viable.
-- Debugging must answer **who did what, through which system, and why** rather than just expose numbers.
-- The B2 invalid-recording correction remains an important precedent: visible behavior alone is not enough when provenance can distinguish player/script/NPC action.
-- The E1 UI incident adds another precedent: green domain CI does not prove rendered shell quality. Owner-visible layout/scroll/status contracts need explicit smoke coverage or focused hands-on validation.
+- real player ↔ NPC ↔ world interaction is more valuable than prompt-only roleplay;
+- small functioning experiments should precede broad architectures;
+- current world size/readability is sufficient for the research laboratory;
+- mobile remains a useful real Owner-test surface;
+- direct mouse/touch targeting is useful and qualified;
+- interpolation materially improved movement feel;
+- debugging should answer who acted, through which system, with what causal result and provenance;
+- apparently small rendered-runtime/UI defects matter because they affect the Owner evidence loop;
+- negative evidence and apparatus-invalid failures should be preserved rather than papered over.
 
-## Repository / workflow status
+## Repository / workflow state
 
 Validation contract:
 
 - Node 22;
 - locked `npm ci --ignore-scripts --no-audit --no-fund`;
-- `npm run check` = TypeScript + Vitest + Vite build;
-- `npm run deploy:preview -- --dry-run` verifies self-contained preview path;
-- Cloudflare non-production branch builds provide exact deployed previews.
+- `npm run check` = TypeScript + full Vitest discovery + Vite build;
+- `npm run deploy:preview -- --dry-run` verifies the self-contained preview path;
+- Cloudflare branch builds provide exact preview deployments and native Worker Version Metadata.
 
-Known low-risk repository-hygiene residue:
+Historical/temporary branches may remain. They are not canonical merely because they exist.
 
-- accidental branches `tmp-do-not-use`, `tmp-do-not-use-2`, `tmp-stop` still exist;
-- they contain no unique implementation and are not canonical;
-- current GitHub write tooling does not expose branch deletion, so cleanup must not claim they were removed.
+## Closed evidence — do not repeat mechanically
 
-Historical feature/evidence branches are not debt merely because they still exist.
+Closed:
 
-## Closed evidence that must not be repeated mechanically
+- P0 transport qualification;
+- P1 refoundation/Owner B2 qualification;
+- E1 Grounded Notice → Fetch research result;
+- E1 first Owner partial-pass recovery and final Owner re-gate;
+- expanded pre-LLM readiness characterization;
+- R0–R7 bounded repair campaign.
 
-P1's R/A/B/M stages through B2 and its post-B2 debt campaign are closed evidence on `p1/playable-world-slice`.
+Reopen a closed cluster only if new live evidence reproduces a material failure under the current runtime.
 
-E1 Grounded Notice → Fetch is also closed **as a research experiment** after the successful Owner re-gate. The current remaining work is debt/continuity/integration closure, not another E1 research run.
+## Immediate frontier for the next conversation
 
-## Immediate frontier
+There is **no preselected next implementation stage** in this closure.
 
-**No new feature or research stage yet.**
+A fresh conversation should:
 
-Immediate work is:
+1. verify live `experiment/e1-grounded-notice-fetch` and ensure changes after runtime checkpoint `7cc7bbde...` are documentation-only;
+2. read the canonical spine;
+3. confirm there are no unexpectedly open repair/evidence PRs or failing final checks;
+4. recover Owner intent and critically choose the next bounded embodied-agent research uncertainty from the repaired substrate;
+5. define its falsification criterion before implementation.
 
-`finish debt audit → final automated/deployment validation → focused quality smoke → explicit E1 closure/integration decision`
-
-After that, critically choose the next bounded uncertainty from E1 evidence. Do not automatically expand E1 into a generic agent framework and do not restart P1/E1.
-
-A future experiment may investigate a richer aspect of embodied presence, but its scope must be selected from a concrete uncertainty and falsification criterion first.
+Do not restart the readiness campaign merely because old evidence branches exist, and do not automatically jump to a generic LLM-agent framework.
 
 ## Working method
 
-`live regrounding → identify uncertainty → bounded experiment → implementation only when justified → self-review → automated validation → focused Owner gate → integrate/close → update canonical state`
+`live regrounding → identify uncertainty → bounded experiment → implement only what evidence justifies → self-review → automated/runtime validation → focused Owner gate → integrate/close → refresh canonical state`
 
-Owner hands-on judgement remains first-class evidence for feel, legibility, believability and rendered-runtime quality. Automated tests establish narrower implementation/invariant claims.
-
-## Fresh takeover order
-
-A new conversation should recover the project by reading, in order:
-
-1. `README.md`;
-2. `docs/PROJECT_STATE.md`;
-3. `docs/E1_GROUNDED_NOTICE_FETCH_DESIGN.md`;
-4. `docs/FRESH_TAKEOVER.md`;
-5. live PR #23 and its current checks/deployment;
-6. P1 PR #3 only as substrate/integration background when needed.
-
-If live repository state contradicts these documents, live branch/PR evidence wins and the contradiction must be resolved before new work.
+Owner hands-on judgement remains first-class evidence for feel, readability, believability and rendered-runtime quality. Automated tests establish narrower implementation/invariant claims.

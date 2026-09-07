@@ -1,233 +1,242 @@
-# LLM Live NPC — Fresh Takeover
+# LLM Live NPC — Fresh Takeover after pre-LLM readiness closure
 
-Use this document to start a new Browser ChatGPT conversation after the qualified E1 vertical slice and during/after its bounded technical-debt closure.
+Use this document to start a new Browser ChatGPT conversation after the qualified E1 experiment and the completed R0–R7 pre-LLM readiness repair campaign.
 
-## 1. First action: verify live truth
+The previous conversation intentionally stopped before choosing a new research stage. Do **not** infer that the next task is pathfinding, memory, conversation, FOV, a generic planner or another LLM feature simply because those systems are absent.
+
+## 1. First action — verify live truth
 
 Repository:
 
 `Jozzpoly/Llm-Live-NPC`
 
-Current E1 closure line:
+Current best repaired embodied-agent line:
 
 `experiment/e1-grounded-notice-fetch`
 
-Current PR:
+Last exact **runtime** checkpoint before documentation-only closure/handoff commits:
 
-`#23 — E1 experiment — grounded notice to fetch`
+`7cc7bbde976963372ac590a8ad91518493ac76c1`
 
-Qualified P1 base:
+At that runtime checkpoint:
 
-`p1/playable-world-slice` at `e453f5862286328df92db91ba2f9adabc1e7899e`
+- GitHub validation: PASS;
+- final repair-head Vitest: **167 / 167 PASS across 29 files**;
+- Vite production build: PASS;
+- preview dry-run: PASS;
+- Cloudflare Workers Build on the E1 merge head: PASS;
+- Worker Version ID: `1cd90a41-a1ea-4677-8cff-4162bf97f84d`.
 
-`main` intentionally remains the proven P0 production/model-transport baseline.
+A live E1 head newer than `7cc7bbde...` is expected after this handoff because the intended remaining commits are documentation-only. **Do not trust that assumption blindly.** Compare live head to `7cc7bbde...`; if `src/`, `worker/`, config, dependencies or runtime tests changed, inspect and revalidate before continuing.
 
-Do **not** trust a copied E1 SHA without live verification. The runtime-clean checkpoint immediately before the final documentation-only closure commits is:
+Historical stage topology:
 
-`15ed5e3146df07cb2624c7bd77dd5f2e9a4a5105`
+- `main` — P0 model-transport baseline;
+- `p1/playable-world-slice` at `e453f5862286328df92db91ba2f9adabc1e7899e` — preserved qualified P1 pre-cognition substrate;
+- `experiment/e1-grounded-notice-fetch` — qualified + readiness-repaired E1 research line.
 
-A live PR #23 head newer than that is expected if changes are documentation/closure only. If runtime code changed after that checkpoint, inspect the diff and revalidate before continuing.
+Historical E1 PR #23 is **CLOSED / NOT MERGED** by explicit topology decision. P1 remains a historical pre-cognition stage; E1 remains available as the repaired research substrate rather than rewriting P1.
 
-Do not merge PR #23 merely because takeover succeeded. Integration remains an explicit Owner/project decision after final debt/quality closure.
+Temporary readiness evidence PR #25 is also **CLOSED / NOT MERGED**. It is historical characterization evidence, not live architecture.
 
 ## 2. Read in this order
 
 1. `README.md`
 2. `docs/PROJECT_STATE.md`
-3. `docs/E1_GROUNDED_NOTICE_FETCH_DESIGN.md`
-4. this file
-5. live PR #23 and its current checks/deployment
-6. P1 PR #3 only when substrate/integration background is needed
+3. this file
+4. `docs/E1_GROUNDED_NOTICE_FETCH_DESIGN.md` only as historical E1 qualification evidence
+5. live E1 branch/commit checks and Cloudflare build
+6. closed PR #23 if exact E1 research/closure history is needed
+7. closed PR #25 only if old readiness characterization evidence is needed
+8. P1 PR #3 only for historical substrate/integration background
 
-The canonical spine is intentionally compact. Do not reconstruct the project by reading every historical branch or PR first.
+Do not reconstruct the project by reading every old branch/PR first.
 
 ## 3. What is closed evidence
 
-Do not mechanically repeat or repolish:
+Do not mechanically repeat:
 
 - P0 cloud/model transport qualification;
-- P1 world/presentation refoundation stages through B2;
-- P1 mobile controls, interpolation, direct targeting, actor facing and post-B2 debt campaign;
-- **E1 Grounded Notice → Fetch research experiment**, including its real-model probe and final Owner re-gate.
+- P1 world/presentation/input/executor refoundation through B2;
+- E1 Grounded Notice → Fetch real-model experiment;
+- the first E1 Owner partial-pass diagnosis and final Owner re-gate;
+- the expanded pre-LLM readiness audit;
+- R0–R7 repair campaign.
 
-E1 is closed as a **bounded research result**. The remaining E1-line work is quality/debt/continuity/integration closure, not another attempt to prove the same experiment.
+Closed does not mean “mathematically perfect forever.” It means the current evidence supports those bounded results and a new conversation needs **new live evidence** before reopening them.
 
-## 4. What E1 actually proves
+## 4. What E1 actually proved
 
-Qualified causal chain:
+The original qualified loop was:
 
-`player-caused held→free World change → bounded 220 px local projection → explicit temporal perceptual delta → real Granite wait|fetch intention → client revalidation → existing deterministic executor → validated World pickup → real E1 experience → subsequent Granite cycle`
+`player-caused held→free World change → bounded 220 px local evidence → temporal change → real Granite wait|fetch intention → client validation/revalidation → deterministic executor → validated World pickup → real short execution experience → next Granite cycle`
 
-The final Owner re-gate with Lantern showed:
+Final Owner Lantern evidence showed:
 
-- `holder player.jozz → free`;
-- legal `fetch(item.lantern)`;
-- NPC-001 pickup through existing executor/World legality;
-- semantic World pickup provenance;
-- next cycle with `succeeded · picked_up_item`, `self held none → item.lantern`, and `holder free → npc.001`;
-- final real Granite decision `wait`.
+- player-caused `holder player.jozz → free`;
+- legal real-model `fetch(item.lantern)`;
+- NPC-001 pickup through the existing executor/World path;
+- independent World semantic provenance;
+- next cognition cycle containing real `picked_up_item`, NPC-held state and holder transition;
+- final real Granite `wait`.
 
-This is a meaningful vertical-loop PASS and still a deliberately tiny claim.
+Do not expand that claim into general intelligence, sight, memory or autonomy.
 
-## 5. Do not overread E1
+## 5. What the readiness campaign changed after E1 qualification
 
-E1 does **not** establish:
+### R0/R1 — validation + causal legality
 
-- semantic sight, FOV or a final attention architecture;
-- hearing or grounded speech propagation;
-- long-term/episodic memory or belief revision;
-- pathfinding/navmesh/general obstacle solving;
-- actor-actor collision;
-- generic behavior trees/task graphs/planner framework;
-- open-ended goals or autonomous task selection;
-- multi-NPC coordination;
-- final conversation UI;
-- final placement system;
-- final map authoring pipeline;
-- final model choice.
+- all `src/**/*.test.ts` are in normal Vitest discovery;
+- explicit interaction legality is shared between World and executor;
+- dynamic target invalidation fails for the causal semantic reason;
+- player-action channel enforces player identity.
 
-Current geometric LOS is an occlusion/geometry primitive, not qualified NPC sight.
+### R2 — specimen integrity
 
-Current direct approach execution may stall on geometry and exhaust its explicit step budget. That is bounded failure behavior, not pathfinding.
+Invalid scalar, geometry, identity, reference, ownership and initial topology states are rejected at World construction rather than poisoning runtime state later.
+
+### R3 — spatial/embodiment semantics
+
+- actor movement uses deterministic swept static-blocker collision;
+- held items are canonically co-located with holder; decorative carry offset is presentation-only;
+- location identity is explicit priority-based and independent of authoring array order.
+
+### R4 — provenance/debug truth
+
+- bounded debug history preserves all atomic attempts + player/executor source;
+- manual executor trigger has causal acceptance semantics;
+- exact repository commit/branch + native Worker Version ID are exposed in runtime provenance.
+
+### R5 — async cognition lifecycle
+
+- monotonic page-lifetime arm-session + request identities;
+- stale async completion/rejection cannot mutate a later re-arm;
+- 12 s provider-attempt timeout/cancellation;
+- maximum two provider attempts per logical cognition request;
+- no extra cognition-budget slot for a retry;
+- disarm aborts current attempt.
+
+### R6 — sensory foundation
+
+- entity direction is observer-body-relative;
+- geometric LOS is still only occlusion, not qualified sight/FOV;
+- successful semantic item actions preserve frame-local event-time post-action truth;
+- same-frame `drop → pickup` survives final-state reversal as two ordered ownership occurrences;
+- only already-localized semantic changes enter a bounded session-local sensory buffer;
+- pending evidence survives request in-flight/cooldown/executor-busy periods;
+- request observed-change limit is 32 with explicit omission count;
+- no global event ring/raw snapshot becomes cognition memory.
+
+### R7 — Worker/public laboratory boundary
+
+- E1 requires POST + JSON;
+- explicit cross-site browser requests are rejected;
+- raw request body is bounded to 96 KiB;
+- limiter precedes normal body consumption/parsing after cheap ingress checks;
+- historical `/api/ai/qualify` is retired on E1;
+- provider exceptions use stable public errors while detailed failure remains internal observability;
+- bounded model usage is retained per provider attempt into browser/debug provenance.
+
+R7 is browser/cost hardening, **not authentication or exact global quota accounting**.
 
 ## 6. Architecture to preserve
 
-Target research loop:
+Target loop:
 
 `WORLD → PERCEPTION → COGNITION/MEMORY → INTENTION → NON-LLM EXECUTION → VALIDATED WORLD ACTIONS → WORLD`
 
-Preserve these boundaries:
+Preserve:
 
-- `World` owns canonical entities, movement legality, action legality and semantic outcomes;
-- Phaser owns presentation/camera/input, not world truth;
-- perception is a bounded projection derived from `World`, not arbitrary raw-state access;
-- LLM cognition proposes bounded intentions, never direct canonical mutation;
-- deterministic execution translates accepted intentions into actor control + validated atomic actions;
-- player/script/LLM provenance must remain inspectable without changing gameplay legality;
-- a running executor task must not be silently replaced.
+- `World` as canonical gameplay authority;
+- Phaser as presentation/camera/input only;
+- bounded World-derived evidence rather than raw global-state prompt access;
+- LLM intentions separated from canonical mutation;
+- deterministic executor translating accepted intentions into normal actor controls/actions;
+- causal player/executor/request/build provenance;
+- semantic state/event evidence separated from debug history and future durable memory concepts.
 
-E1 additionally established a useful temporal rule: a model call should carry an inspectable bounded delta telling the model what it actually observed changing, rather than waking after an opaque hidden trigger.
+## 7. Important methodology lessons
 
-## 7. Important falsification/recovery history
+### Visible behavior is not enough
 
-Carry these methodological lessons forward:
+An early B2 Owner recording looked successful but provenance proved the player, not NPC execution, caused the visible outcome. Evidence must answer who acted and through which system.
 
-### B2 provenance lesson
+### Green domain tests are not rendered-runtime qualification
 
-An early Owner recording that visually looked successful was rejected because provenance showed the player, not NPC execution, created the apparent success. The later B2 apparatus added a shared `ExecutionDriver` and stronger causal evidence before qualification.
+Owner testing exposed a badly broken debug/game shell despite green domain CI. Browser/runtime evidence matters when the claim is visual/lifecycle/interaction quality.
 
-### E1 transport lesson
+### Tests can be wrong too
 
-Do not assume example/API shapes without live evidence. E1 discovered:
+The readiness campaign included apparatus-invalid failures and fixture migrations. Fix the oracle/apparatus when it is wrong; do not reinterpret every red result as runtime debt.
 
-- legacy flat Workers AI tools failed with `8001: Invalid input`;
-- OpenAI-style wrapped functions succeeded;
-- Granite tool calls arrived in nested OpenAI-style choices;
-- observed `function.arguments` was double-encoded JSON.
+### Self-review after green CI matters
 
-### E1 cadence lesson
+R6b2 self-review found an overflow-order semantic defect after the first fully green run. R7b review found that a snake_case-only usage normalizer would have discarded the new camelCase wire provenance. Green CI is necessary, not sufficient.
 
-A still-held item crossing the 220 px boundary originally wasted cognition cycles. The qualified wake surface is observer state + fetchable item IDs + new own execution experience, while ignored held-item churn silently refreshes the temporal baseline.
+## 8. Deliberately missing — do not call debt by absence
 
-### Rendered-UI quality lesson
+Without a concrete next-stage requirement or current failure, do not automatically build:
 
-Green domain CI did not catch a severely broken desktop shell where Debug Workspace content expanded the entire page/game and scrolling the debug scrolled the runtime. Owner testing exposed it.
+- generalized pathfinding/navmesh;
+- actor-actor collision gameplay semantics;
+- hearing/speech;
+- long-term/episodic memory;
+- generic planner/GOAP/behavior trees;
+- autonomous open-ended goals;
+- multi-NPC coordination;
+- persistence/save systems;
+- final conversation UI;
+- final map-authoring pipeline;
+- final model selection;
+- large-scale spatial indexing;
+- generic observability stack;
+- full account/auth/product infrastructure for this private laboratory.
 
-The debt campaign therefore treats rendered shell/scroll/status behavior as a first-class quality surface rather than assuming unit tests imply usable UI.
+## 9. Residual bounded decisions that are NOT silently repaired
 
-## 8. Current technical-debt closure state
+Do not turn closure language into a false claim that every old note disappeared:
 
-The E1 branch already contains these repairs:
+- repository branch protection / required-check governance has historically been weak; treat this as an explicit release/integration governance decision if topology changes;
+- actor-body separation semantics are intentionally unqualified;
+- soft-reset/remount is not a selected runtime contract; current listener lifetime assumes page-lifetime singleton runtime;
+- Node is pinned to major 22 rather than one patch;
+- current small-specimen duplicate projection/read work is not evidence for a large performance refactor.
 
-- desktop shell fixed to viewport;
-- independent Debug Workspace scrolling;
-- explicit narrow-window collapsed layout;
-- explicit mobile portrait app/debug scroll contract;
-- live `E1 cognition armed/disarmed` shell status;
-- E1-aligned `/api/health` provenance;
-- executor no-replacement invariant + regression test;
-- E1 checks `executor.start()` acceptance;
-- manual B2 trigger disabled while executor is running and debug state no longer invents an `accepted` acknowledgement.
+These are not a mandate for immediate cleanup. Require a concrete material failure or next-stage prerequisite.
 
-Do not treat intentionally missing future systems as technical debt. The goal is zero **known material debt in current P1/E1 scope**, not speculative framework completion.
+## 10. Immediate takeover job
 
-## 9. Immediate takeover job
+There is **no preselected implementation task**.
 
-**Do not begin a new feature or research experiment yet.**
+A new conversation should:
 
-First:
+1. verify live E1 ref and exact changes after `7cc7bbde...`;
+2. confirm final checks remain green and repair/evidence PRs are not unexpectedly open;
+3. recover Owner intent from the current conversation/project context;
+4. critically survey the repaired substrate and choose the next **bounded research uncertainty**;
+5. define what would falsify the proposed experiment before implementing it;
+6. keep the new slice small enough to produce real hands-on evidence.
 
-1. verify live PR #23 head and compare it to runtime-clean checkpoint `15ed5e3146df07cb2624c7bd77dd5f2e9a4a5105`;
-2. confirm any newer changes are documentation/closure unless explicitly proven otherwise;
-3. perform a second critical audit of the P1→E1 diff and current runtime/config/docs for remaining known material debt;
-4. run full CI + exact Cloudflare deployment;
-5. use only the focused Owner smoke needed to validate repaired shell/provenance behavior;
-6. then make an explicit E1 integration/closure decision.
+Do not restart the old audit merely because the old evidence branch exists. Do not automatically continue E1 into a generic agent framework.
 
-Only after that should the next research uncertainty be selected.
+## 11. Owner judgement to carry forward
 
-## 10. Owner judgement to carry forward
+Treat these as current Owner judgement rather than universal rules:
 
-Treat these as current Owner judgement, not universal truths:
-
-- real player ↔ NPC ↔ world interaction is more valuable than prompt-only roleplay;
-- small functioning experiments should precede broad formal architectures;
-- the current world is large/readable enough for the present research laboratory;
-- mobile is a useful real Owner-test surface, not a separate game fork;
-- interpolation materially improved movement feel;
-- current visual polish is enough unless a research need justifies more;
+- real player ↔ NPC ↔ world interaction matters more than prompt-only roleplay;
+- small functioning experiments should precede broad architectures;
+- the current world is large/readable enough for the current lab;
+- mobile is a real useful Owner-test surface;
 - direct mouse/touch targeting is useful and qualified;
-- debugging should expose causal/provenance structure, not just telemetry;
-- apparently tiny UX/layout defects matter because they directly affect the Owner test loop and confidence in the apparatus;
-- before the next stage, known technical debt should be deliberately paid down rather than accumulated behind new features.
+- interpolation materially improved movement feel;
+- debugging should make causation and provenance legible;
+- small UI/apparatus failures matter because they affect confidence in research evidence;
+- known material debt should not be hidden behind new features.
 
-## 11. Things intentionally deferred
+## 12. Suggested fresh-conversation opening
 
-Do not smuggle these into debt cleanup or the next slice without evidence:
+A compact continuation prompt can simply say:
 
-- broad behavior framework;
-- generalized navigation/pathfinding;
-- large Tiled/map migration;
-- another cosmetic campaign;
-- full placement system;
-- sophisticated long-term memory;
-- full speech/hearing architecture;
-- multi-NPC society simulation;
-- auth/account/product infrastructure for the lab preview unless a concrete risk requires it.
+> Przejmij `Jozzpoly/Llm-Live-NPC` po zamknięciu pre-LLM readiness campaign. Zweryfikuj live `experiment/e1-grounded-notice-fetch`; runtime checkpoint przed docs-only handoffem to `7cc7bbde976963372ac590a8ad91518493ac76c1`, ale nie ufaj SHA bez sprawdzenia. Przeczytaj `README.md`, `docs/PROJECT_STATE.md`, `docs/FRESH_TAKEOVER.md`, potem live refs/checks. Nie powtarzaj P1/E1/R0–R7 bez nowego evidence. Ugruntuj projekt, krytycznie wybierz następny bounded embodied-agent research problem i dopiero wtedy zaplanuj dalszą pracę.
 
-They are future possibilities, not current debts merely because they do not exist.
-
-## 12. Repo hygiene note
-
-Three accidental branches remain documented:
-
-- `tmp-do-not-use`
-- `tmp-do-not-use-2`
-- `tmp-stop`
-
-They contain no unique canonical implementation. Available GitHub write tooling during closure did not expose branch deletion, so they were documented instead of falsely reported as removed.
-
-Historical experiment/evidence branches are not automatically debt.
-
-## 13. Takeover rehearsal checklist
-
-Before declaring yourself grounded, answer from live evidence:
-
-1. Why does `main` remain P0 while P1 and E1 live on draft integration/experiment lines?
-2. What exact claim does P1/B2 prove?
-3. What exact additional claim does E1 prove?
-4. What did the first E1 Owner gate expose, and how was wake/rate-limit behavior repaired?
-5. What Workers AI/Granite function-calling shapes were actually proven live?
-6. Where does canonical world truth live, and what may Phaser/LLM own?
-7. Why is geometric LOS not qualified NPC sight?
-8. Why can a green domain CI still be insufficient evidence for the rendered Owner loop?
-9. Which current items are real technical debt versus intentionally deferred capabilities?
-10. Why is the immediate frontier debt/integration closure rather than another cognition feature?
-
-If any answer is unclear or live state contradicts the docs, resolve it before new feature work.
-
-## 14. Expected takeover behavior
-
-Act as the Owner's browser-based second brain / technical co-worker. Recover intent from live repo evidence, independently challenge stale recommendations, perform research/implementation/validation where justified, and keep claims narrower than evidence.
-
-Once the debt/closure frontier is clean, do not preserve this handoff forever. Update the canonical spine for the next stage and let obsolete closure detail recede.
+If live state contradicts this document, live repository/runtime evidence wins and the contradiction must be resolved before new implementation.
