@@ -4,156 +4,121 @@ Experimental web laboratory for embodied LLM-driven NPCs.
 
 Core research question:
 
-> Can a lightweight LLM-driven NPC become a believable resident of a game world by receiving bounded perception, maintaining its own experience/beliefs, and acting only through validated world affordances rather than directly mutating world truth?
+> Can a lightweight LLM-driven NPC become a believable resident of a game world by receiving bounded local evidence, preserving causal continuity, and acting only through validated world mechanics rather than directly mutating world truth?
 
 ## Current state
 
-Three evidence layers now exist and must not be conflated.
+The first three project layers are now closed evidence and should not be conflated.
 
 ### P0 — model transport: qualified
 
-GitHub → Cloudflare deployment, Workers AI through AI Gateway, usage/log correlation and a replaceable model transport seam were proven with live tests.
+`main` remains the historical production/model-transport baseline. It proved GitHub → Cloudflare deployment, Workers AI through AI Gateway, usage/log correlation and replaceable model transport. Granite 4.0 H Micro and Llama 3.2 3B Instruct both produced usable bounded completions; no final NPC model is selected.
 
-`@cf/ibm-granite/granite-4.0-h-micro` and `@cf/meta/llama-3.2-3b-instruct` both produced usable bounded completions through the same transport seam. Earlier `@cf/zai-org/glm-4.7-flash` probes remain negative evidence. **No final NPC model is selected.**
+### P1 — pre-cognition substrate: qualified and preserved
 
-`main` intentionally remains this proven P0 baseline until later integration is deliberate.
+Canonical historical branch:
 
-### P1 — pre-cognition world/execution substrate: qualified
+`p1/playable-world-slice` at `e453f5862286328df92db91ba2f9adabc1e7899e`
 
-Canonical line: `p1/playable-world-slice` at `e453f5862286328df92db91ba2f9adabc1e7899e`.
+P1 qualified project-owned `World` truth, fixed-step movement, presentation interpolation, desktop/mobile input, direct interaction, actor facing, placement validation and deterministic non-LLM NPC execution through the same World legality used by the player.
 
-P1 contains:
+P1 is intentionally retained as the historical pre-cognition substrate rather than being rewritten by later experiments.
 
-- project-owned TypeScript `World` truth;
-- a small top-down settlement specimen with collision, locations, items and semantic events;
-- fixed-step movement with interpolated Phaser presentation;
-- desktop/mobile human control and direct target interaction;
-- canonical actor facing and world-owned placement validation;
-- deterministic non-LLM NPC execution shared by browser runtime and headless evidence;
-- Owner-qualified embodied pickup through the same validated World action substrate used by the player;
-- explicit execution/debug provenance and bounded runtime failure state.
+### E1 — Grounded Notice → Fetch: qualified, readiness-repaired, closed
 
-P1 itself does **not** qualify autonomous cognition, NPC sight/hearing, pathfinding or conversation.
+Canonical E1 line:
 
-### E1 — Grounded Notice → Fetch: qualified at its bounded stop boundary
+`experiment/e1-grounded-notice-fetch`
 
-Active integration/closure branch: `experiment/e1-grounded-notice-fetch`, draft PR #23 against P1.
+Final repaired runtime checkpoint before documentation-only handoff closure:
 
-E1 is the first real vertical cognition experiment:
+`7cc7bbde976963372ac590a8ad91518493ac76c1`
 
-`World change → bounded local perception → explicit temporal perceptual delta → real Granite wait|fetch intention → validated existing executor → World outcome → next cognition cycle with real prior experience`
+Historical E1 PR #23 is **closed without merge**. This is deliberate: E1 is a qualified experiment/repaired research line, while P1 remains the preserved pre-cognition stage.
 
-The final Owner re-gate passed the intended two-cycle Lantern scenario:
+E1 originally qualified this bounded real-model loop:
 
-1. player-held Lantern becomes free inside NPC-local perception;
-2. E1 derives `holder player.jozz → free`;
-3. Granite proposes `fetch(item.lantern)`;
-4. NPC-001 picks it up through the existing executor/World path;
-5. the next cycle receives `picked_up_item`, NPC-held state and `holder free → npc.001`;
-6. Granite settles to `wait`.
+`player-caused held→free World change → bounded local evidence → Granite wait|fetch intention → client revalidation → deterministic executor → canonical World outcome → subsequent experience-bearing cognition cycle`
 
-This qualifies only that narrow loop. It does **not** qualify semantic sight, long-term memory, general planning, autonomous goals, pathfinding, speech/hearing, multiple NPCs or a final agent architecture.
+The final Owner re-gate with Lantern completed fetch → pickup → real execution experience → wait with inspectable World/executor/model/Gateway provenance.
 
-See [`docs/E1_GROUNDED_NOTICE_FETCH_DESIGN.md`](docs/E1_GROUNDED_NOTICE_FETCH_DESIGN.md) for the exact contract, recovered Workers AI/Granite quirks, falsification history and evidence boundary.
+That research claim remains deliberately narrow. It does not establish general sight, long-term memory, pathfinding, speech/hearing, generic autonomy/planning, multi-NPC architecture or a final model/agent architecture.
 
-## Technical-debt closure before the next research stage
+## Expanded pre-LLM readiness campaign — closed
 
-After the E1 Owner re-gate, the project was deliberately held for a bounded debt campaign instead of immediately adding features. Owner testing exposed quality gaps that domain tests had not caught, especially in shell/UI and provenance.
+After E1 qualified, feature work was frozen for a broad readiness/gap audit. Temporary evidence PR #25 characterized material gaps and was **closed without merge** after independent repairs landed.
 
-Repairs on the E1 branch include:
+The bounded repair sequence was:
 
-- fixed viewport shell: no giant blank game region or document/debug scroll coupling on desktop;
-- independent Debug Workspace scroll and explicit narrow/mobile layout contracts;
-- live `E1 cognition armed/disarmed` shell status instead of stale `cognition disabled` text;
-- `/api/health` stage provenance aligned with the E1 preview runtime;
-- executor refuses silent replacement of a running task;
-- E1 checks executor start acceptance before claiming an accepted fetch;
-- manual B2 debug trigger is disabled while the executor is running and reports actual executor state rather than an inferred button acknowledgement;
-- regression coverage for held-item wake cadence and executor task replacement.
+- #26 — R0/R1 validation truth + causal interaction/executor legality;
+- #27 — R2 WorldSpecimen ingress integrity;
+- #28 — R3a swept static-blocker movement;
+- #29 — R3b held-item canonical locality separated from presentation attachment;
+- #30 — R3c explicit priority-based location identity;
+- #31–#33 — R4 action/debug truth, manual trigger lifecycle and exact build provenance;
+- #34–#35 — R5 cognition session/request identity, timeout/cancellation and bounded retries;
+- #37–#39 — R6 egocentric perception + frame-local semantic occurrences + bounded sensory delivery;
+- #41–#42 — R7 bounded inference ingress, qualifier retirement, stable provider errors and per-attempt model-usage provenance.
 
-The next research stage must not begin until the current debt/continuity campaign is closed and the final preview has passed its focused smoke.
+Evidence-only PRs #36 and #40 were also closed without merge after their findings were repaired independently.
 
-## Architectural boundary
+Final runtime validation at `7cc7bbde...`:
 
-Target loop:
+- strict TypeScript: PASS;
+- final repair-head Vitest: **167 / 167 PASS across 29 files**;
+- Vite production build: PASS;
+- self-contained preview dry-run: PASS;
+- final E1 merge-head GitHub validation: PASS;
+- final E1 merge-head Cloudflare Workers Build: PASS;
+- final E1 Worker Version ID: `1cd90a41-a1ea-4677-8cff-4162bf97f84d`.
 
-`WORLD → PERCEPTION → COGNITION/MEMORY → INTENTION → NON-LLM EXECUTION → VALIDATED WORLD ACTIONS → WORLD`
+## Current important contracts
 
-Current strongest proven vertical slice:
-
-`player-caused World change → E1 bounded perception + delta → Granite intention → DeterministicExecutor → ExecutionDriver → World.attemptAction(...) → World outcome/event → E1 prior experience → next Granite intention`
-
-Phaser is presentation/input infrastructure, not canonical world truth. Cognition proposes bounded intentions; it does not mutate positions, inventory or events directly.
+- `World` owns canonical entities, movement legality, interaction legality and semantic outcomes.
+- Phaser owns presentation/camera/input, not world truth.
+- cognition receives bounded World-derived evidence and proposes only bounded intentions.
+- deterministic execution translates accepted intentions into actor controls + validated World actions.
+- explicit interaction legality is shared between World and executor.
+- current movement uses deterministic swept static-blocker collision under the public step-duration contract.
+- held items are canonically co-located with their holder; decorative carry offset is presentation-only.
+- singular location identity uses explicit authored priority rather than array order.
+- E1 perceived direction is observer-body-relative; geometric LOS remains only an occlusion primitive, not qualified sight.
+- event-time item ownership occurrences can survive same-frame state reversal and temporary cognition unavailability through a bounded local sensory buffer; this is not event sourcing or long-term memory.
+- cognition requests have page-lifetime session/request identity, 12 s attempt timeout and at most two provider attempts per logical request.
+- E1 Worker ingress requires JSON, rejects explicit cross-site browser requests, bounds raw body size to 96 KiB, rate-limits before body parsing and no longer exposes the historical two-model `/api/ai/qualify` route.
+- provider exceptions use stable external errors; bounded Workers AI usage remains inspectable per provider attempt.
+- runtime debug exposes exact build commit / Worker version provenance.
 
 ## Canonical project spine
 
-1. [`docs/PROJECT_STATE.md`](docs/PROJECT_STATE.md) — current live truth, evidence boundaries, architecture and frontier;
-2. [`docs/E1_GROUNDED_NOTICE_FETCH_DESIGN.md`](docs/E1_GROUNDED_NOTICE_FETCH_DESIGN.md) — qualified E1 experiment/evidence;
-3. [`docs/FRESH_TAKEOVER.md`](docs/FRESH_TAKEOVER.md) — startup mandate for a new conversation.
+Read in this order:
 
-## Infrastructure contract
+1. [`docs/PROJECT_STATE.md`](docs/PROJECT_STATE.md) — current authority, repair closure and remaining boundaries;
+2. [`docs/FRESH_TAKEOVER.md`](docs/FRESH_TAKEOVER.md) — exact startup mandate for a new conversation;
+3. [`docs/E1_GROUNDED_NOTICE_FETCH_DESIGN.md`](docs/E1_GROUNDED_NOTICE_FETCH_DESIGN.md) — historical E1 qualification evidence and original bounded research contract.
 
-- `main` remains the production P0 source of truth until integration is intentional.
-- `p1/playable-world-slice` is the qualified P1 substrate line.
-- `experiment/e1-grounded-notice-fetch` / PR #23 carries the qualified E1 vertical slice and current debt closure.
-- Cloudflare Worker serves laboratory previews and APIs.
-- Workers AI is routed through AI Gateway for observability.
-- `/api/ai/qualify` remains historical P0 transport evidence; it is not the NPC cognition architecture.
-- E1 cognition uses same-origin `POST /api/agent/e1/decide` on E1 builds.
-- Vite 8 + official Cloudflare Vite plugin drive builds.
-- `package-lock.json` is committed and CI uses locked installation.
-- non-production branches receive exact Cloudflare preview builds for Owner testing.
+The E1 design document is evidence for the experiment that was actually qualified; use `PROJECT_STATE.md` + live code for the post-readiness repaired runtime semantics.
 
-## Current production vs preview endpoints
+## Infrastructure
 
-Production `main` remains P0:
+- `main` remains historical P0 production/model-transport truth.
+- `p1/playable-world-slice` remains historical qualified P1.
+- `experiment/e1-grounded-notice-fetch` is the qualified + readiness-repaired E1 research line and current best substrate for future work unless a later explicit integration decision changes topology.
+- E1 cognition uses same-origin browser `POST /api/agent/e1/decide` with bounded Worker ingress.
+- `/api/ai/qualify` is retired on E1 (`410 Gone`); P0 transport qualification remains historical evidence.
+- Vite + Cloudflare Worker/Workers AI/AI Gateway remain the current laboratory stack.
+- exact branch preview URLs should be recovered from the current Cloudflare build rather than copied from old handoffs.
 
-- `/` — production P0 laboratory;
-- `/api/health` — Worker/AI-binding readiness for that deployed branch;
-- `/api/ai/qualify` — fixed-input transport qualification;
-- `/api/ai/smoke` — retired GLM smoke route (`410 Gone`).
+## Deliberately missing / not debt by absence alone
 
-E1 preview additionally exposes:
+Do not automatically implement generalized pathfinding/navmesh, actor-actor collision gameplay semantics, hearing/speech, long-term memory, generic planner/behavior-tree infrastructure, multi-NPC coordination, persistence, final conversation UI, final model choice, a large authoring pipeline, generic observability infrastructure or full account/auth product systems merely because they do not yet exist.
 
-- `/api/agent/e1/decide` — sanitized bounded E1 cognition endpoint.
-
-Production laboratory:
-
-`https://llm-live-npc.jozzpoly.workers.dev`
-
-P1/E1 URLs must be taken from the exact current Cloudflare commit build rather than copied from an old handoff.
-
-## Toolchain
-
-Current bounded versions:
-
-- Node `22`;
-- Phaser `4.2.1`;
-- Vite `8.2.2`;
-- Cloudflare Vite plugin `1.54.3`;
-- Wrangler `4.129.0`;
-- TypeScript `7.0.2`;
-- Vitest `5.0.0`.
-
-Useful commands after dependencies are installed:
-
-```bash
-npm run check
-npm run preview
-npm run deploy
-npm run deploy:preview
-```
-
-`deploy:preview` is self-contained: it builds before `wrangler versions upload`, preventing non-production Workers Builds from uploading an input config before Vite has generated deployment assets/configuration.
+A future stage may require one of them, but it must begin from a concrete research uncertainty and falsification criterion.
 
 ## Next work
 
-Do **not** restart P1 or E1.
+Do **not** restart P1, E1 or the R0–R7 readiness campaign.
 
-Immediate frontier is closure quality, not another feature:
+The next conversation should first verify that changes after runtime checkpoint `7cc7bbde...` are documentation-only, recover the canonical spine, inspect live repository/PR state, and then choose the **next bounded embodied-agent research uncertainty**. Before committing to a major new layer, distinguish deliberately missing future capabilities, low-priority governance choices and any newly reproduced current defect.
 
-1. finish the bounded technical-debt/continuity campaign on PR #23;
-2. run final automated + exact-deployment validation;
-3. perform only the focused Owner smoke needed to validate repaired shell/provenance behavior;
-4. then make an explicit integration/closure decision for E1;
-5. only after that, critically choose the next research question from the new evidence rather than automatically expanding E1 into a generic agent framework.
+No next experiment is preselected by this README.
