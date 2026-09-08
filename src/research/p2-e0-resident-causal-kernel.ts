@@ -429,6 +429,26 @@ export class P2E0ResidentCausalKernel {
     return cloneBinding(binding);
   }
 
+  /**
+   * Releases the exact task/run ownership of an active matter only when that
+   * task was grounded from an older semantic revision than the matter currently
+   * holds. This is not task failure, success or matter terminalization: it is
+   * the narrow resident mutation needed when a still-live intention has changed
+   * enough that its previous mechanical attempt must be replaced.
+   */
+  disposeSupersededTaskBinding(matterId: string, runId: number): P2E0TaskBinding | null {
+    const matter = this.matters.get(matterId);
+    if (!matter || matter.status !== "active" || matter.activeTaskRunId !== runId) return null;
+
+    const binding = this.taskBindings.get(runId);
+    if (!binding || binding.matterId !== matterId) return null;
+    if (binding.semanticRevision >= matter.semanticRevision) return null;
+
+    this.taskBindings.delete(runId);
+    matter.activeTaskRunId = null;
+    return cloneBinding(binding);
+  }
+
   recordTaskOutcome(input: P2E0TaskOutcomeInput): P2E0EvidenceRecord {
     const binding = this.taskBindings.get(input.runId);
     if (!binding) throw new Error(`P2-E0 task outcome has no causal binding: ${input.runId}`);

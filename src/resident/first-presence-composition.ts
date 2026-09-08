@@ -5,7 +5,8 @@ import { World } from "../world/world";
 import {
   P2E0ResidentCausalKernel,
   type P2E0EvidenceRecord,
-  type P2E0MatterState
+  type P2E0MatterState,
+  type P2E0ProposalCommitResult
 } from "../research/p2-e0-resident-causal-kernel";
 import { P2E2CommunicationRuntimeBoundary } from "../research/p2-e2-communication-runtime-boundary";
 import {
@@ -28,11 +29,15 @@ import {
   P2E7GroundedTaskOutcomeBoundary,
   type P2E7OutcomeReconciliationResult
 } from "../research/p2-e7-grounded-task-outcome-causality";
+import {
+  SupersededTaskDispositionBoundary,
+  type SupersededTaskDispositionResult
+} from "./superseded-task-disposition";
 
 /**
- * Deterministic in-process semantic stub used only by the first composition
- * slice. Live/async provider transport is intentionally deferred until its
- * admission, timeout and retry ownership can be composed explicitly.
+ * Deterministic in-process semantic stub used by the first composition slices.
+ * Live/async provider transport is intentionally deferred until its admission,
+ * timeout and retry ownership can be composed explicitly.
  */
 export type FirstPresenceSemanticProvider = (
   input: P2E5ModelSemanticInput
@@ -63,6 +68,14 @@ type FirstPresenceTraceEvent =
       semanticRevision: number;
     }
   | {
+      kind: "task_superseded";
+      matterId: string;
+      taskId: string;
+      runId: number;
+      taskSemanticRevision: number;
+      currentSemanticRevision: number;
+    }
+  | {
       kind: "task_outcome";
       matterId: string;
       runId: number;
@@ -91,29 +104,32 @@ export type FirstPresenceReconsiderResult =
 export type FirstPresenceTaskStartResult = P2E6PrepareResult | P2E6StartResult;
 
 /**
- * First product-adjacent composition experiment.
+ * First product-adjacent Presence composition.
  *
- * This is deliberately narrower than a final Mind/Resident API. It composes
- * already-qualified Pass-2 causal seams around the recovered World/executor so
- * one explicitly-admitted matter can travel through grounded experience ->
- * semantic proposal -> local task -> factual World outcome while a small
- * bounded owner-level trace preserves the causal joins needed for debugging.
+ * Slice 1 joined one explicitly admitted matter through grounded experience ->
+ * semantic proposal -> local task -> factual World outcome.
  *
- * Communication ingress and matter admission are intentionally separate. This
- * owner does not decide that every heard utterance becomes an unresolved matter.
- * The semantic provider is deliberately synchronous/deterministic in Slice 1,
- * so async provider admission/retry authority is not accidentally selected.
- * Slice 1 also exposes no provider retry handle: an exception or rejected output
- * therefore abandons that exact P2-E17 attempt rather than leaking authority.
+ * Slice 2 adds one deliberately explicit mid-task revision path. New grounded
+ * evidence may be attributed to the same still-live matter, reconsideration may
+ * change its semantic course, and the caller may then retire the exact old task
+ * only when it presents the applied semantic decision that is still current and
+ * the task binding is now semantically superseded. The matter itself remains
+ * active and can ground a replacement task from the current revision.
  *
- * Crucially, this composition does not own or step an ExecutionDriver. The
- * browser/headless runtime remains the sole owner of the canonical World clock
- * and passes completed ExecutionFrameResult values here for causal outcome
- * reconciliation. That keeps composition from creating a second simulation
- * clock when it is later wired into the browser runtime.
+ * Communication ingress and matter admission remain separate. This owner does
+ * not decide that every heard utterance becomes an unresolved matter or that
+ * every heard utterance is relevant to an existing matter.
  *
- * The owner also does not yet choose attention, interruption, semantic
- * satisfaction, terminal retention or browser presentation.
+ * The semantic provider remains synchronous/deterministic for these slices, so
+ * async admission/timeout/retry policy is not selected here. Provider failure
+ * still abandons exact P2-E17 attempt authority rather than leaking it.
+ *
+ * The composition also does not own or step an ExecutionDriver. Browser/headless
+ * runtime remains the sole owner of the canonical World clock and passes
+ * completed ExecutionFrameResult values here for factual outcome reconciliation.
+ *
+ * Attention, interruption choice, semantic satisfaction, terminal retention,
+ * live provider transport and browser presentation remain future responsibilities.
  */
 export class FirstPresenceComposition {
   readonly resident = new P2E0ResidentCausalKernel();
@@ -123,6 +139,7 @@ export class FirstPresenceComposition {
   private readonly providerMembrane = new P2E5SemanticProviderAuthorityMembrane();
   private readonly taskStart = new P2E6GroundedTaskStartBoundary();
   private readonly taskOutcome = new P2E7GroundedTaskOutcomeBoundary();
+  private readonly supersededTaskDisposition = new SupersededTaskDispositionBoundary();
   private readonly traceValue: FirstPresenceTraceRecord[] = [];
   private nextTraceSeq = 1;
   private nextMatterSeq = 1;
@@ -162,11 +179,7 @@ export class FirstPresenceComposition {
     evidenceId: string,
     semanticCourse = "uninterpreted"
   ): P2E0MatterState {
-    const evidence = this.resident.recentEvidence().find((candidate) => candidate.id === evidenceId);
-    if (!evidence) {
-      throw new Error(`First Presence matter admission requires recent grounded evidence: ${evidenceId}`);
-    }
-
+    const evidence = this.requireRecentEvidence(evidenceId);
     const matter = this.resident.openMatter({
       id: `matter.presence.${this.nextMatterSeq++}`,
       originEvidenceId: evidence.id,
@@ -175,6 +188,18 @@ export class FirstPresenceComposition {
     this.appendTrace({
       kind: "experience",
       matterId: matter.id,
+      evidenceId: evidence.id,
+      summary: evidence.summary
+    });
+    return matter;
+  }
+
+  advanceMatterFromEvidence(matterId: string, evidenceId: string): P2E0MatterState {
+    const evidence = this.requireRecentEvidence(evidenceId);
+    const matter = this.resident.advanceSemanticContext(matterId, evidence.id);
+    this.appendTrace({
+      kind: "experience",
+      matterId,
       evidenceId: evidence.id,
       summary: evidence.summary
     });
@@ -223,6 +248,29 @@ export class FirstPresenceComposition {
       });
     }
     return settlement;
+  }
+
+  disposeSupersededMatterTask(
+    matterId: string,
+    decision: P2E0ProposalCommitResult
+  ): SupersededTaskDispositionResult {
+    const result = this.supersededTaskDisposition.dispose(
+      this.resident,
+      this.executor,
+      matterId,
+      decision
+    );
+    if (result.status === "disposed") {
+      this.appendTrace({
+        kind: "task_superseded",
+        matterId: result.record.matterId,
+        taskId: result.record.taskId,
+        runId: result.record.runId,
+        taskSemanticRevision: result.record.taskSemanticRevision,
+        currentSemanticRevision: result.record.currentSemanticRevision
+      });
+    }
+    return result;
   }
 
   startMatterTask(matterId: string): FirstPresenceTaskStartResult {
@@ -282,6 +330,14 @@ export class FirstPresenceComposition {
 
   trace(): FirstPresenceTraceRecord[] {
     return this.traceValue.map((record) => ({ ...record }));
+  }
+
+  private requireRecentEvidence(evidenceId: string): P2E0EvidenceRecord {
+    const evidence = this.resident.recentEvidence().find((candidate) => candidate.id === evidenceId);
+    if (!evidence) {
+      throw new Error(`First Presence semantic admission requires recent grounded evidence: ${evidenceId}`);
+    }
+    return evidence;
   }
 
   private abandonProviderRun(run: P2E5LocalProviderRun): "released" | "already_inactive" {
