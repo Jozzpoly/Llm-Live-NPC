@@ -33,6 +33,12 @@ import {
   SupersededTaskDispositionBoundary,
   type SupersededTaskDispositionResult
 } from "./superseded-task-disposition";
+import {
+  FirstPresenceTrace,
+  type FirstPresenceTraceEvent,
+  type FirstPresenceTraceRecord,
+  type FirstPresenceTraceSink
+} from "./first-presence-trace";
 
 /**
  * Deterministic in-process semantic stub used by the first composition slices.
@@ -42,48 +48,6 @@ import {
 export type FirstPresenceSemanticProvider = (
   input: P2E5ModelSemanticInput
 ) => { semanticCourse: string };
-
-type FirstPresenceTraceEvent =
-  | {
-      kind: "experience";
-      matterId: string;
-      evidenceId: string;
-      summary: string;
-    }
-  | {
-      kind: "semantic_commit";
-      matterId: string;
-      proposalId: number;
-      semanticEvidenceId: string;
-      fromRevision: number;
-      toRevision: number;
-      fromCourse: string;
-      toCourse: string;
-    }
-  | {
-      kind: "task_started";
-      matterId: string;
-      taskId: string;
-      runId: number;
-      semanticRevision: number;
-    }
-  | {
-      kind: "task_superseded";
-      matterId: string;
-      taskId: string;
-      runId: number;
-      taskSemanticRevision: number;
-      currentSemanticRevision: number;
-    }
-  | {
-      kind: "task_outcome";
-      matterId: string;
-      runId: number;
-      evidenceId: string;
-      summary: string;
-    };
-
-export type FirstPresenceTraceRecord = FirstPresenceTraceEvent & { seq: number };
 
 type FirstPresenceContextRejectionReason = Extract<
   P2E4SemanticProposalContextResult,
@@ -102,6 +66,7 @@ export type FirstPresenceReconsiderResult =
     };
 
 export type FirstPresenceTaskStartResult = P2E6PrepareResult | P2E6StartResult;
+export type { FirstPresenceTraceRecord } from "./first-presence-trace";
 
 /**
  * First product-adjacent Presence composition.
@@ -140,8 +105,7 @@ export class FirstPresenceComposition {
   private readonly taskStart = new P2E6GroundedTaskStartBoundary();
   private readonly taskOutcome = new P2E7GroundedTaskOutcomeBoundary();
   private readonly supersededTaskDisposition = new SupersededTaskDispositionBoundary();
-  private readonly traceValue: FirstPresenceTraceRecord[] = [];
-  private nextTraceSeq = 1;
+  private readonly traceLog: FirstPresenceTrace;
   private nextMatterSeq = 1;
 
   constructor(
@@ -150,11 +114,9 @@ export class FirstPresenceComposition {
     private readonly semanticProvider: FirstPresenceSemanticProvider,
     private readonly grounder: P2E6LocalTaskGrounder,
     private readonly actorId: EntityId = "npc.001",
-    private readonly traceLimit = 32
+    traceLimit = 32
   ) {
-    if (!Number.isInteger(traceLimit) || traceLimit <= 0) {
-      throw new Error(`First Presence trace limit must be a positive integer: ${traceLimit}`);
-    }
+    this.traceLog = new FirstPresenceTrace(traceLimit);
     this.communication = new P2E2CommunicationRuntimeBoundary(
       this.world,
       new Map([[this.actorId, this.resident]])
@@ -329,7 +291,16 @@ export class FirstPresenceComposition {
   }
 
   trace(): FirstPresenceTraceRecord[] {
-    return this.traceValue.map((record) => ({ ...record }));
+    return this.traceLog.records();
+  }
+
+  /**
+   * Explicit write-only diagnostic seam for adjacent Presence owners that share
+   * this composition's causal story. The sink carries no gameplay authority and
+   * is never read by the composition to decide semantic or mechanical behavior.
+   */
+  traceSink(): FirstPresenceTraceSink {
+    return this.traceLog;
   }
 
   private requireRecentEvidence(evidenceId: string): P2E0EvidenceRecord {
@@ -349,9 +320,6 @@ export class FirstPresenceComposition {
   }
 
   private appendTrace(event: FirstPresenceTraceEvent): void {
-    this.traceValue.push({ seq: this.nextTraceSeq++, ...event });
-    if (this.traceValue.length > this.traceLimit) {
-      this.traceValue.splice(0, this.traceValue.length - this.traceLimit);
-    }
+    this.traceLog.append(event);
   }
 }
