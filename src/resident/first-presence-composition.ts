@@ -7,14 +7,17 @@ import type { EntityId } from "../world/types";
 import { World } from "../world/world";
 import {
   P2E0ResidentCausalKernel,
-  type P2E0MatterState,
-  type P2E0ProposalCommitResult
+  type P2E0MatterState
 } from "../research/p2-e0-resident-causal-kernel";
 import { P2E2CommunicationRuntimeBoundary } from "../research/p2-e2-communication-runtime-boundary";
-import { P2E4SemanticProposalContextSeam } from "../research/p2-e4-semantic-proposal-context";
+import {
+  P2E4SemanticProposalContextSeam,
+  type P2E4SemanticProposalContextResult
+} from "../research/p2-e4-semantic-proposal-context";
 import {
   P2E5SemanticProviderAuthorityMembrane,
-  type P2E5ModelSemanticInput
+  type P2E5ModelSemanticInput,
+  type P2E5SettlementResult
 } from "../research/p2-e5-semantic-provider-authority-membrane";
 import {
   P2E6GroundedTaskStartBoundary,
@@ -30,16 +33,14 @@ export type FirstPresenceSemanticProvider = (
   input: P2E5ModelSemanticInput
 ) => unknown | Promise<unknown>;
 
-export type FirstPresenceTraceRecord =
+type FirstPresenceTraceEvent =
   | {
-      seq: number;
       kind: "experience";
       matterId: string;
       evidenceId: string;
       summary: string;
     }
   | {
-      seq: number;
       kind: "semantic_commit";
       matterId: string;
       proposalId: number;
@@ -50,7 +51,6 @@ export type FirstPresenceTraceRecord =
       toCourse: string;
     }
   | {
-      seq: number;
       kind: "task_started";
       matterId: string;
       taskId: string;
@@ -58,7 +58,6 @@ export type FirstPresenceTraceRecord =
       semanticRevision: number;
     }
   | {
-      seq: number;
       kind: "task_outcome";
       matterId: string;
       runId: number;
@@ -66,10 +65,21 @@ export type FirstPresenceTraceRecord =
       summary: string;
     };
 
+export type FirstPresenceTraceRecord = FirstPresenceTraceEvent & { seq: number };
+
 export type FirstPresenceRequestResult = {
   matter: P2E0MatterState;
   evidenceId: string;
 };
+
+export type FirstPresenceReconsiderResult =
+  | P2E5SettlementResult
+  | {
+      status: "context_rejected";
+      reason: P2E4SemanticProposalContextResult extends { status: "rejected"; reason: infer Reason }
+        ? Reason
+        : never;
+    };
 
 export type FirstPresenceStepResult = {
   frame: ExecutionFrameResult;
@@ -147,26 +157,19 @@ export class FirstPresenceComposition {
     return { matter, evidenceId: delivery.evidence.id };
   }
 
-  async reconsiderMatter(matterId: string): Promise<P2E0ProposalCommitResult> {
+  async reconsiderMatter(matterId: string): Promise<FirstPresenceReconsiderResult> {
     const before = this.resident.matter(matterId);
     if (!before) {
-      return { status: "stale", reason: "matter_missing" };
+      return { status: "context_rejected", reason: "matter_missing" };
+    }
+    if (before.status === "resolved" || before.status === "cancelled") {
+      return { status: "context_rejected", reason: "matter_terminal" };
     }
 
     const ticket = this.resident.beginSemanticProposal(matterId);
     const context = this.contextSeam.build(this.resident, ticket);
     if (context.status !== "ready") {
-      return {
-        status: "stale",
-        reason:
-          context.reason === "matter_missing"
-            ? "matter_missing"
-            : context.reason === "matter_terminal"
-              ? "matter_terminal"
-              : context.reason === "semantic_dependency_changed"
-                ? "semantic_revision_changed"
-                : "proposal_not_pending"
-      };
+      return { status: "context_rejected", reason: context.reason };
     }
 
     const run = this.providerMembrane.prepare(context.context).run;
@@ -250,8 +253,8 @@ export class FirstPresenceComposition {
     return this.traceValue.map((record) => ({ ...record }));
   }
 
-  private appendTrace(record: Omit<FirstPresenceTraceRecord, "seq">): void {
-    this.traceValue.push({ seq: this.nextTraceSeq++, ...record } as FirstPresenceTraceRecord);
+  private appendTrace(event: FirstPresenceTraceEvent): void {
+    this.traceValue.push({ seq: this.nextTraceSeq++, ...event });
     if (this.traceValue.length > this.traceLimit) {
       this.traceValue.splice(0, this.traceValue.length - this.traceLimit);
     }
