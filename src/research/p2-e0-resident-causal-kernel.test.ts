@@ -159,7 +159,8 @@ describe("P2-E0 resident causal kernel", () => {
     expect(kernel.bindTask(opened.id, { taskId: "task.fetch-red", runId: 41 })).toEqual({
       matterId: opened.id,
       taskId: "task.fetch-red",
-      runId: 41
+      runId: 41,
+      semanticRevision: opened.semanticRevision
     });
     expect(kernel.taskBinding(41)?.matterId).toBe(opened.id);
 
