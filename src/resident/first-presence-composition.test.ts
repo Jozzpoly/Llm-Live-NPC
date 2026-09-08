@@ -24,7 +24,7 @@ const exactFetchLabelGrounder: P2E6LocalTaskGrounder = ({ semanticCourse, actorI
 };
 
 describe("first product-adjacent Presence composition", () => {
-  it("joins one explicitly admitted grounded request through semantic authority, task execution and factual outcome", async () => {
+  it("joins one explicitly admitted grounded request through semantic authority, task execution and factual outcome", () => {
     const specimen = createP1Specimen();
     const npc = specimen.entities.find((entity) => entity.id === "npc.001");
     const mug = specimen.entities.find((entity) => entity.id === "item.mug");
@@ -38,7 +38,7 @@ describe("first product-adjacent Presence composition", () => {
     const owner = new FirstPresenceComposition(
       world,
       executor,
-      async (input) => {
+      (input) => {
         expect(input).toMatchObject({
           currentSemanticCourse: "uninterpreted",
           semanticEvidence: {
@@ -71,7 +71,7 @@ describe("first product-adjacent Presence composition", () => {
       status: "active"
     });
 
-    const semantic = await owner.reconsiderMatter(matter.id);
+    const semantic = owner.reconsiderMatter(matter.id);
     expect(semantic).toMatchObject({
       status: "applied",
       matter: {
