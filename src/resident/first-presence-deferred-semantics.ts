@@ -2,6 +2,7 @@ import { DeterministicExecutor } from "../execution/deterministic-executor";
 import type {
   P2E0MatterState,
   P2E0ProposalCommitResult,
+  P2E0ProposalTicket,
   P2E0ResidentCausalKernel
 } from "../research/p2-e0-resident-causal-kernel";
 import {
@@ -42,11 +43,11 @@ export function createFirstPresenceDeferredExecution(
 }
 
 export interface FirstPresenceDeferredSemanticAttempt {
-  attemptId: number;
-  matterId: string;
-  modelInput: P2E5ModelSemanticInput;
-  heldRunId: number;
-  reusedExistingHold: boolean;
+  readonly attemptId: number;
+  readonly matterId: string;
+  readonly modelInput: P2E5ModelSemanticInput;
+  readonly heldRunId: number;
+  readonly reusedExistingHold: boolean;
 }
 
 type FirstPresenceDeferredContextRejectionReason = Extract<
@@ -59,6 +60,11 @@ type FirstPresenceDeferredHoldRejectionReason = Extract<
   { status: "rejected" }
 >["reason"];
 
+type FirstPresenceDeferredBaseSettlementResult = Exclude<
+  P2E5SettlementResult,
+  { status: "provider_output_rejected" }
+>;
+
 export type FirstPresenceDeferredBeginResult =
   | { status: "pending"; attempt: FirstPresenceDeferredSemanticAttempt }
   | {
@@ -67,6 +73,7 @@ export type FirstPresenceDeferredBeginResult =
         | "matter_missing"
         | "matter_terminal"
         | "matter_not_active"
+        | "matter_attempt_pending"
         | "no_active_task"
         | "task_binding_missing"
         | "task_not_semantically_superseded"
@@ -82,7 +89,7 @@ export type FirstPresenceDeferredBeginResult =
     };
 
 export type FirstPresenceDeferredSettlementResult =
-  | P2E5SettlementResult
+  | FirstPresenceDeferredBaseSettlementResult
   | {
       status: "attempt_rejected";
       reason: "unknown_attempt";
@@ -110,6 +117,13 @@ export type FirstPresenceDeferredResumeResult =
       reason: "matter_missing" | "no_active_task" | "hold_not_active";
     };
 
+export type FirstPresenceDeferredReplaceResult =
+  | SupersededTaskDispositionResult
+  | {
+      status: "rejected";
+      reason: "matter_missing" | "no_active_task" | "hold_not_active";
+    };
+
 export interface FirstPresenceDeferredState {
   pendingAttempts: Array<{
     attemptId: number;
@@ -122,21 +136,33 @@ export interface FirstPresenceDeferredState {
 
 interface AttemptAuthority {
   publicAttempt: FirstPresenceDeferredSemanticAttempt;
+  attemptId: number;
+  matterId: string;
+  heldRunId: number;
+  reusedExistingHold: boolean;
+  ticket: P2E0ProposalTicket;
   providerRun: P2E5LocalProviderRun;
 }
 
 function cloneModelInput(input: P2E5ModelSemanticInput): P2E5ModelSemanticInput {
-  return {
-    currentSemanticCourse: input.currentSemanticCourse,
-    semanticEvidence: {
-      kind: input.semanticEvidence.kind,
-      source:
-        input.semanticEvidence.source.kind === "actor"
-          ? { kind: "actor", actorId: input.semanticEvidence.source.actorId }
-          : { kind: input.semanticEvidence.source.kind },
-      summary: input.semanticEvidence.summary
-    }
+  const source =
+    input.semanticEvidence.source.kind === "actor"
+      ? { kind: "actor" as const, actorId: input.semanticEvidence.source.actorId }
+      : { kind: input.semanticEvidence.source.kind };
+  Object.freeze(source);
+
+  const semanticEvidence = {
+    kind: input.semanticEvidence.kind,
+    source,
+    summary: input.semanticEvidence.summary
   };
+  Object.freeze(semanticEvidence);
+
+  const clone: P2E5ModelSemanticInput = {
+    currentSemanticCourse: input.currentSemanticCourse,
+    semanticEvidence
+  };
+  return Object.freeze(clone);
 }
 
 function sameMatterDecision(a: P2E0MatterState, b: P2E0MatterState): boolean {
@@ -145,6 +171,15 @@ function sameMatterDecision(a: P2E0MatterState, b: P2E0MatterState): boolean {
     a.semanticCourse === b.semanticCourse &&
     a.semanticRevision === b.semanticRevision &&
     a.latestSemanticEvidenceId === b.latestSemanticEvidenceId
+  );
+}
+
+function sameTicket(a: P2E0ProposalTicket, b: P2E0ProposalTicket): boolean {
+  return (
+    a.proposalId === b.proposalId &&
+    a.matterId === b.matterId &&
+    a.semanticRevision === b.semanticRevision &&
+    a.semanticEvidenceId === b.semanticEvidenceId
   );
 }
 
@@ -157,6 +192,13 @@ function sameMatterDecision(a: P2E0MatterState, b: P2E0MatterState): boolean {
  * only attempt.modelInput across an async/network boundary while the canonical
  * ExecutionDriver keeps advancing World/player time through the hold-aware
  * executor.
+ *
+ * Exactly one still-authoritative provider attempt is admitted per matter by
+ * this owner. If newer semantic evidence revokes an older pending attempt, the
+ * owner consumes that dead local provider authority before admitting the newer
+ * attempt. The already-held mechanical run is conservatively reused: a newer
+ * correction strengthens the reason not to resume it; it does not need a second
+ * hold or a temporary execution window.
  *
  * settle() or abandon() consumes exactly the local attempt object. Abandonment
  * deliberately does not release the mechanical hold: provider failure is not a
@@ -182,6 +224,8 @@ export class FirstPresenceDeferredSemanticOwner {
   ) {}
 
   beginReconsideration(matterId: string): FirstPresenceDeferredBeginResult {
+    this.pruneInactiveAttempts(matterId);
+
     const matter = this.resident.matter(matterId);
     if (!matter) return { status: "rejected", reason: "matter_missing" };
     if (matter.status === "resolved" || matter.status === "cancelled") {
@@ -189,6 +233,9 @@ export class FirstPresenceDeferredSemanticOwner {
     }
     if (matter.status !== "active") {
       return { status: "rejected", reason: "matter_not_active" };
+    }
+    if ([...this.attemptsById.values()].some((attempt) => attempt.matterId === matterId)) {
+      return { status: "rejected", reason: "matter_attempt_pending" };
     }
     if (matter.activeTaskRunId === null) {
       return { status: "rejected", reason: "no_active_task" };
@@ -218,8 +265,7 @@ export class FirstPresenceDeferredSemanticOwner {
         existingHold.matterId !== matter.id ||
         existingHold.runId !== binding.runId ||
         existingHold.taskSemanticRevision !== binding.semanticRevision ||
-        existingHold.reconsiderationSemanticRevision !== matter.semanticRevision ||
-        existingHold.semanticEvidenceId !== matter.latestSemanticEvidenceId
+        existingHold.reconsiderationSemanticRevision > matter.semanticRevision
       ) {
         this.provider.abandon(this.resident, providerRun);
         return { status: "rejected", reason: "held_run_conflict" };
@@ -234,15 +280,25 @@ export class FirstPresenceDeferredSemanticOwner {
     }
     this.knownHeldRunIds.add(binding.runId);
 
-    const attempt: FirstPresenceDeferredSemanticAttempt = {
-      attemptId: this.nextAttemptId++,
+    const attemptId = this.nextAttemptId++;
+    const attempt = Object.freeze({
+      attemptId,
       matterId,
       modelInput: cloneModelInput(providerRun.modelInput),
       heldRunId: binding.runId,
       reusedExistingHold
+    }) as FirstPresenceDeferredSemanticAttempt;
+    const authority: AttemptAuthority = {
+      publicAttempt: attempt,
+      attemptId,
+      matterId,
+      heldRunId: binding.runId,
+      reusedExistingHold,
+      ticket,
+      providerRun
     };
-    this.authorityByAttempt.set(attempt, attempt.attemptId);
-    this.attemptsById.set(attempt.attemptId, { publicAttempt: attempt, providerRun });
+    this.authorityByAttempt.set(attempt, attemptId);
+    this.attemptsById.set(attemptId, authority);
     return { status: "pending", attempt };
   }
 
@@ -278,9 +334,9 @@ export class FirstPresenceDeferredSemanticOwner {
     }
     return {
       status: "abandoned",
-      attemptId: attempt.attemptId,
-      matterId: attempt.matterId,
-      heldRunId: attempt.heldRunId,
+      attemptId: authority.attemptId,
+      matterId: authority.matterId,
+      heldRunId: authority.heldRunId,
       residentAuthority: abandoned.residentAuthority
     };
   }
@@ -311,7 +367,17 @@ export class FirstPresenceDeferredSemanticOwner {
   replaceHeldTask(
     matterId: string,
     decision: P2E0ProposalCommitResult
-  ): SupersededTaskDispositionResult {
+  ): FirstPresenceDeferredReplaceResult {
+    const matter = this.resident.matter(matterId);
+    if (!matter) return { status: "rejected", reason: "matter_missing" };
+    if (matter.activeTaskRunId === null) {
+      return { status: "rejected", reason: "no_active_task" };
+    }
+    const hold = this.execution.holds.holdForRun(matter.activeTaskRunId);
+    if (!hold || hold.matterId !== matterId) {
+      return { status: "rejected", reason: "hold_not_active" };
+    }
+
     const result = this.disposition.dispose(
       this.resident,
       this.execution.executor,
@@ -323,12 +389,16 @@ export class FirstPresenceDeferredSemanticOwner {
   }
 
   state(): FirstPresenceDeferredState {
-    const pendingAttempts = [...this.attemptsById.values()].map(({ publicAttempt }) => ({
-      attemptId: publicAttempt.attemptId,
-      matterId: publicAttempt.matterId,
-      heldRunId: publicAttempt.heldRunId,
-      reusedExistingHold: publicAttempt.reusedExistingHold
-    }));
+    this.pruneInactiveAttempts();
+
+    const pendingAttempts = [...this.attemptsById.values()]
+      .sort((a, b) => a.attemptId - b.attemptId)
+      .map((attempt) => ({
+        attemptId: attempt.attemptId,
+        matterId: attempt.matterId,
+        heldRunId: attempt.heldRunId,
+        reusedExistingHold: attempt.reusedExistingHold
+      }));
 
     const heldRuns: P2E9SemanticHold[] = [];
     for (const runId of [...this.knownHeldRunIds]) {
@@ -350,14 +420,32 @@ export class FirstPresenceDeferredSemanticOwner {
     return !!matter && sameMatterDecision(matter, decision.matter);
   }
 
+  private pruneInactiveAttempts(matterId?: string): void {
+    const pendingTickets = this.resident.pendingSemanticProposals();
+    for (const authority of [...this.attemptsById.values()]) {
+      if (matterId !== undefined && authority.matterId !== matterId) continue;
+      if (pendingTickets.some((ticket) => sameTicket(ticket, authority.ticket))) continue;
+
+      const abandoned = this.provider.abandon(this.resident, authority.providerRun);
+      if (abandoned.status !== "abandoned") {
+        throw new Error("Deferred semantic owner lost stale provider authority during cleanup.");
+      }
+      this.discardAttempt(authority);
+    }
+  }
+
   private takeAttempt(attempt: FirstPresenceDeferredSemanticAttempt): AttemptAuthority | null {
     const attemptId = this.authorityByAttempt.get(attempt);
     if (attemptId === undefined) return null;
     const authority = this.attemptsById.get(attemptId);
     if (!authority || authority.publicAttempt !== attempt) return null;
 
-    this.authorityByAttempt.delete(attempt);
-    this.attemptsById.delete(attemptId);
+    this.discardAttempt(authority);
     return authority;
+  }
+
+  private discardAttempt(authority: AttemptAuthority): void {
+    this.authorityByAttempt.delete(authority.publicAttempt);
+    this.attemptsById.delete(authority.attemptId);
   }
 }
