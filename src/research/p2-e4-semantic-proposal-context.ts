@@ -54,6 +54,12 @@ function terminal(status: P2E0MatterStatus): boolean {
  * recent-evidence churn. The seam still prefers the ordinary recent ring, then
  * falls back only to the same matter's exact resident-owned semantic anchor.
  * It does not search an archive or retrieve arbitrary historical evidence.
+ *
+ * P2-E12 removes proposals from the active-pending set as soon as their scoped
+ * authority is known to be dead. A bounded resident revocation record is still
+ * consulted here before returning the generic `proposal_not_pending`, so exact
+ * recently-revoked tickets retain the older causal rejection semantics while
+ * forged or unrelated ticket identities do not inherit that provenance.
  */
 export class P2E4SemanticProposalContextSeam {
   build(
@@ -64,6 +70,18 @@ export class P2E4SemanticProposalContextSeam {
       .pendingSemanticProposals()
       .find((candidate) => candidate.proposalId === ticket.proposalId);
     if (!pending || !sameTicket(pending, ticket)) {
+      const revocation = resident
+        .recentSemanticProposalRevocations()
+        .find((candidate) => sameTicket(candidate.proposal, ticket));
+      if (revocation) {
+        return {
+          status: "rejected",
+          reason:
+            revocation.reason === "matter_terminal"
+              ? "matter_terminal"
+              : "semantic_dependency_changed"
+        };
+      }
       return { status: "rejected", reason: "proposal_not_pending" };
     }
 
