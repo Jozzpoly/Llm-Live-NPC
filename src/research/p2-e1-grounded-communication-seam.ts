@@ -84,6 +84,7 @@ function cloneActor(actor: ActorEntity): ActorEntity {
  */
 export class P2E1GroundedCommunicationSeam {
   private nextOccurrenceSeq = 1;
+  private speechInProgress = false;
 
   speak(
     snapshot: WorldSnapshot,
@@ -98,68 +99,76 @@ export class P2E1GroundedCommunicationSeam {
     if (!isActor(speaker)) {
       throw new Error(`P2-E1 speech requires an actor speaker: ${input.speakerId}`);
     }
+    if (this.speechInProgress) {
+      throw new Error("P2-E1 communication seam does not allow reentrant speech.");
+    }
 
-    const occurrence: P2E1CommunicationOccurrence = {
-      id: `speech.${this.nextOccurrenceSeq}`,
-      tick: snapshot.tick,
-      kind: "spoken",
-      speakerId: speaker.id,
-      text: input.text,
-      sourcePosition: { ...speaker.position }
-    };
+    this.speechInProgress = true;
+    try {
+      const occurrence: P2E1CommunicationOccurrence = {
+        id: `speech.${this.nextOccurrenceSeq}`,
+        tick: snapshot.tick,
+        kind: "spoken",
+        speakerId: speaker.id,
+        text: input.text,
+        sourcePosition: { ...speaker.position }
+      };
 
-    const speakerExperience: P2E1SpokeExperience = {
-      kind: "spoke",
-      occurrenceId: occurrence.id,
-      tick: occurrence.tick,
-      actorId: speaker.id,
-      text: occurrence.text
-    };
+      const speakerExperience: P2E1SpokeExperience = {
+        kind: "spoke",
+        occurrenceId: occurrence.id,
+        tick: occurrence.tick,
+        actorId: speaker.id,
+        text: occurrence.text
+      };
 
-    const deliveries = snapshot.entities
-      .filter((entity): entity is ActorEntity => isActor(entity) && entity.id !== speaker.id)
-      .sort((a, b) => a.id.localeCompare(b.id))
-      .map((observer): P2E1DeliveryRecord => {
-        const couldReceive = canReceive({
-          snapshot: structuredClone(snapshot),
-          occurrence: cloneOccurrence(occurrence),
-          speaker: cloneActor(speaker),
-          observer: cloneActor(observer)
+      const deliveries = snapshot.entities
+        .filter((entity): entity is ActorEntity => isActor(entity) && entity.id !== speaker.id)
+        .sort((a, b) => a.id.localeCompare(b.id))
+        .map((observer): P2E1DeliveryRecord => {
+          const couldReceive = canReceive({
+            snapshot: structuredClone(snapshot),
+            occurrence: cloneOccurrence(occurrence),
+            speaker: cloneActor(speaker),
+            observer: cloneActor(observer)
+          });
+          if (typeof couldReceive !== "boolean") {
+            throw new Error(`P2-E1 reception policy must return boolean for observer ${observer.id}.`);
+          }
+
+          return {
+            observerId: observer.id,
+            couldReceive,
+            experience: couldReceive
+              ? {
+                  kind: "heard",
+                  occurrenceId: occurrence.id,
+                  tick: occurrence.tick,
+                  observerId: observer.id,
+                  source: { kind: "actor", actorId: speaker.id },
+                  text: occurrence.text
+                }
+              : null
+          };
         });
-        if (typeof couldReceive !== "boolean") {
-          throw new Error(`P2-E1 reception policy must return boolean for observer ${observer.id}.`);
-        }
 
-        return {
-          observerId: observer.id,
-          couldReceive,
-          experience: couldReceive
+      this.nextOccurrenceSeq += 1;
+
+      return {
+        occurrence: cloneOccurrence(occurrence),
+        speakerExperience: { ...speakerExperience },
+        deliveries: deliveries.map((delivery) => ({
+          ...delivery,
+          experience: delivery.experience
             ? {
-                kind: "heard",
-                occurrenceId: occurrence.id,
-                tick: occurrence.tick,
-                observerId: observer.id,
-                source: { kind: "actor", actorId: speaker.id },
-                text: occurrence.text
+                ...delivery.experience,
+                source: { ...delivery.experience.source }
               }
             : null
-        };
-      });
-
-    this.nextOccurrenceSeq += 1;
-
-    return {
-      occurrence: cloneOccurrence(occurrence),
-      speakerExperience: { ...speakerExperience },
-      deliveries: deliveries.map((delivery) => ({
-        ...delivery,
-        experience: delivery.experience
-          ? {
-              ...delivery.experience,
-              source: { ...delivery.experience.source }
-            }
-          : null
-      }))
-    };
+        }))
+      };
+    } finally {
+      this.speechInProgress = false;
+    }
   }
 }
