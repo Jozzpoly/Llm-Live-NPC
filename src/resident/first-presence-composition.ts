@@ -14,6 +14,7 @@ import {
 } from "../research/p2-e4-semantic-proposal-context";
 import {
   P2E5SemanticProviderAuthorityMembrane,
+  type P2E5LocalProviderRun,
   type P2E5ModelSemanticInput,
   type P2E5SettlementResult
 } from "../research/p2-e5-semantic-provider-authority-membrane";
@@ -81,6 +82,10 @@ export type FirstPresenceReconsiderResult =
   | {
       status: "context_rejected";
       reason: FirstPresenceContextRejectionReason;
+    }
+  | {
+      status: "provider_exception";
+      residentAuthority: "released" | "already_inactive";
     };
 
 export type FirstPresenceTaskStartResult = P2E6PrepareResult | P2E6StartResult;
@@ -98,6 +103,8 @@ export type FirstPresenceTaskStartResult = P2E6PrepareResult | P2E6StartResult;
  * owner does not decide that every heard utterance becomes an unresolved matter.
  * The semantic provider is deliberately synchronous/deterministic in Slice 1,
  * so async provider admission/retry authority is not accidentally selected.
+ * Slice 1 also exposes no provider retry handle: an exception or rejected output
+ * therefore abandons that exact P2-E17 attempt rather than leaking authority.
  *
  * Crucially, this composition does not own or step an ExecutionDriver. The
  * browser/headless runtime remains the sole owner of the canonical World clock
@@ -190,8 +197,19 @@ export class FirstPresenceComposition {
     }
 
     const run = this.providerMembrane.prepare(context.context).run;
-    const rawOutput = this.semanticProvider(structuredClone(run.modelInput));
+    let rawOutput: { semanticCourse: string };
+    try {
+      rawOutput = this.semanticProvider(structuredClone(run.modelInput));
+    } catch {
+      const abandoned = this.abandonProviderRun(run);
+      return { status: "provider_exception", residentAuthority: abandoned };
+    }
+
     const settlement = this.providerMembrane.settle(this.resident, run, rawOutput);
+    if (settlement.status === "provider_output_rejected") {
+      this.abandonProviderRun(run);
+      return settlement;
+    }
     if (settlement.status === "applied") {
       this.appendTrace({
         kind: "semantic_commit",
@@ -264,6 +282,14 @@ export class FirstPresenceComposition {
 
   trace(): FirstPresenceTraceRecord[] {
     return this.traceValue.map((record) => ({ ...record }));
+  }
+
+  private abandonProviderRun(run: P2E5LocalProviderRun): "released" | "already_inactive" {
+    const result = this.providerMembrane.abandon(this.resident, run);
+    if (result.status !== "abandoned") {
+      throw new Error("First Presence lost ownership of a provider run before abandonment.");
+    }
+    return result.residentAuthority;
   }
 
   private appendTrace(event: FirstPresenceTraceEvent): void {
