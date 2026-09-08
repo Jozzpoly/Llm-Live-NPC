@@ -102,7 +102,8 @@ describe("First Presence semantic Worker transport", () => {
         function?: {
           name?: string;
           parameters?: {
-            additionalProperties?: boolean;
+            type?: string;
+            properties?: { semanticCourse?: { type?: string } };
             required?: string[];
           };
         };
@@ -118,8 +119,9 @@ describe("First Presence semantic Worker transport", () => {
     expect(userContent).not.toContain("runId");
     expect(aiInput.tools?.map((tool) => tool.function?.name)).toEqual(["set_semantic_course"]);
     expect(aiInput.tools?.[0]?.function?.parameters).toMatchObject({
-      additionalProperties: false,
-      required: ["semanticCourse"]
+      type: "object",
+      required: ["semanticCourse"],
+      properties: { semanticCourse: { type: "string" } }
     });
 
     const options = call.options as {
