@@ -8,7 +8,7 @@ Updated: 2026-09-08
 
 **Pass 2 — architecture / donor / comparative research — is closed as a bounded architecture-selection pass.**
 
-**P2-E0 — headless resident causal-kernel probe — is closed and canonical.**
+**The executable Pass-2 research chain P2-E0…P2-E12 is canonical and independently qualified through its current merge head.**
 
 Current-best architecture hypothesis for the first Presence experiment remains:
 
@@ -18,35 +18,35 @@ Current research/refoundation branch:
 
 `recovery/owner-fail-2026-09-07`
 
-Canonical P2-E0 merge head:
+Current canonical head:
 
-`ae967830847ef4d5b62e0694e262c0a64fe41d4a`
+`be543147bbfcc43f92fd18bbc8aa7aac30588621`
 
-Merge-head qualification:
+Exact canonical qualification:
 
-- 160/160 tests across 28 files;
+- **247/247 tests across 56 files**;
 - strict TypeScript PASS;
 - Worker/client production build PASS;
 - preview deploy dry-run PASS;
-- Cloudflare PASS;
-- Worker Version ID `986dcd72-326c-4abe-bcf5-a153e5d9bfa2`.
+- GitHub validate PASS;
+- Cloudflare Workers Build PASS;
+- Worker Version ID `f22afa01-3fc0-4008-9a27-1150750e0f12`.
 
-Next earned frontier:
+This qualifies the cumulative **research substrate plus unchanged broader build surface**. It does not claim a fresh playable/Owner Presence PASS or that all `src/research` seams are already composed into the final browser runtime.
 
-> **world-grounded communication / experience seam**.
+### Immediate working frontier
 
-Before adding live LLM semantics, characterize the current World/client/perception boundaries and prove the smallest truthful route by which a communication occurrence can become sourced resident evidence without becoming canonical truth merely because someone said it.
+Do **not** preselect P2-E13 by inertia.
 
-Do not begin by implementing generic chat UI, long-term memory, a planner or a new model endpoint.
+The immediate task is:
 
-Canonical research documents:
+> **broaden the post-P2-E12 gap/readiness audit, compare the remaining architectural responsibilities against live evidence, then select the smallest next falsifiable frontier only if one is materially justified.**
 
-- `docs/LIVE_NPC_PASS1_PRESENCE_CONTRACT.md`
-- `docs/LIVE_NPC_PASS2_ARCHITECTURE_DECISION.md`
+One current candidate is admission/bounding for multiple **genuinely-live** same-revision semantic requests. That is not yet a selected invariant: P2-E5 deliberately remains robust to concurrent same-revision runs, and Pass 2 explicitly left concurrent LLM calls per matter unresolved. If a bound is earned, it likely belongs in an admission/scheduling layer rather than by weakening P2-E0/P2-E5 race tolerance.
 
 ---
 
-## 2. Evidence boundary
+## 2. Evidence / qualification boundaries
 
 ### Recovered playable-runtime donor
 
@@ -67,14 +67,14 @@ Qualification:
 - Cloudflare PASS;
 - Worker Version ID `0e1a7e36-edba-4660-8fa2-f2b38172d760`.
 
-This remains **automated/R8-qualified donor evidence**, not a fresh final qualitative Owner/browser PASS.
+This remains **automated/R8-qualified donor evidence, not a fresh final qualitative Owner/browser PASS**.
 
 ### Independent combined R8
 
 Evidence-only PR #75, closed without merge:
 
 - evidence head `72ea11abd7a0b56230ced6019e7c550b5109b476`;
-- exactly one test file added, no runtime product changes;
+- one test file only, no runtime changes;
 - 149/149 tests across 27 files;
 - combined R8 4/4 PASS;
 - strict TypeScript/build/preview PASS;
@@ -83,21 +83,21 @@ Evidence-only PR #75, closed without merge:
 
 Bounded conclusion:
 
-> No new general causal-correctness defect was exposed in the tested recovered World→execution→cognition ownership/outcome substrate. The old substrate is trustworthy enough to preserve as bounded donor evidence instead of continuing historical repair by inertia.
+> No new general causal-correctness defect was exposed in the tested recovered World→execution→cognition ownership/outcome substrate. The old substrate is trustworthy enough to preserve as a donor rather than continuing historical repair by inertia.
 
-This is **not** production readiness.
+This is not production readiness.
 
 ### Owner-quality boundary
 
 The broad old readiness line failed its final 2026-09-07 Owner/browser gate. That negative evidence remains valid.
 
-The recovered playable runtime has **not** yet received a new final qualitative Owner/browser re-gate after selective recovery. A new Owner gate becomes necessary when a later claim depends on browser feel/usability or when a meaningful playable Presence slice exists.
+Selective recovery did **not** repair that line forward. It restarted from the last good pre-readiness substrate and independently re-earned selected changes.
 
-### Research/refoundation qualification
+No later P2 research merge silently supersedes the missing qualitative Owner re-gate. A new Owner/browser gate becomes meaningful when a coherent playable Presence slice exists and the decision depends on feel, readability, continuity or usability.
 
-Pass 1 and Pass 2 closure commits are research/docs decisions and do not silently extend the recovered runtime claim.
+### Current research qualification
 
-P2-E0 is different only in that it adds executable **research** apparatus under `src/research`. Its 160/160 canonical gate qualifies the causal-kernel probe and preserves the unchanged broader build surface; it is still not a new playable/Owner Presence qualification.
+P2-E0…P2-E12 are executable research claims, mostly under `src/research/`. Their tests run inside the full repository gate, so they also defend the unchanged broader substrate, but they do not by themselves prove final runtime composition, production hosting, live semantic-provider behavior or Presence quality.
 
 ---
 
@@ -121,87 +121,34 @@ Final P1 head:
 
 `e453f5862286328df92db91ba2f9adabc1e7899e`
 
-PR #3 is closed without merge as historical donor/integration evidence. Recovery is a full descendant of that line, so no unique P1 runtime was lost by closing the stale PR.
+PR #3 is closed without merge as historical donor/integration evidence. Recovery descends from the useful P1 ancestry, so no unique P1 runtime was lost by closing the stale PR.
 
-### Old E1/readiness line — non-canonical
+### Old E1/readiness line — negative/historical evidence
 
-`experiment/e1-grounded-notice-fetch` continued beyond the last good pre-readiness runtime. Automated evidence became strong, but the final Owner/browser gate found the playable laboratory materially worse than the previous good surface.
+`experiment/e1-grounded-notice-fetch` produced useful bounded E1 evidence and later a broad pre-LLM readiness campaign, but the final old readiness line materially failed Owner/browser quality.
 
-Recovery therefore did **not** repair forward from that line. Selective recovery restarted from:
-
-`15ed5e3146df07cb2624c7bd77dd5f2e9a4a5105`
-
-Useful changes were independently re-earned when justified.
+Historical pre-LLM audit branches and PR #25 are evidence only. They are **not** the current takeover authority and should not be resurrected as a repair checklist.
 
 ### Current refoundation line
 
 `recovery/owner-fail-2026-09-07`
 
-Important canonical checkpoints:
+Important checkpoints:
 
 - recovered runtime donor: `b31a851c3f708077fbf9e6fb8206fa392f8def13`;
-- Pass 1 closure: `0cd648a8b0d0e656d61f930196dbb08169469f8c`;
-- Pass 2 closure: `dc66d970a5966e6bed9ca284557261797bec372e`;
-- P2-E0 merge: `ae967830847ef4d5b62e0694e262c0a64fe41d4a`.
+- Pass 1 closure: PR #77;
+- Pass 2 closure: PR #78;
+- P2-E0 causal-kernel merge: PR #79;
+- P2-E1…P2-E12 cumulative research: PRs #82–#94, excluding evidence-only #84;
+- current canonical P2-E12 merge: `be543147bbfcc43f92fd18bbc8aa7aac30588621`.
 
-Live evidence wins if the branch has advanced beyond the copied head.
-
----
-
-## 4. Durable donor boundaries
-
-These remain worth preserving unless later evidence disproves them.
-
-### World authority
-
-`World` owns canonical entities, movement/action legality and factual outcomes.
-
-The model does not directly set positions, inventory, canonical events, perceptions or success.
-
-### Presentation/input separation
-
-Phaser and human input adapters may resolve intended input, but they do not bypass World legality.
-
-### Layer separation
-
-Keep conceptually distinct:
-
-1. continuous controls/movement;
-2. atomic World actions;
-3. durative execution/tasks;
-4. semantic World occurrences/events;
-5. actor experience/outcomes;
-6. higher semantic cognition/intention.
-
-### Real outcome feedback
-
-A chosen intention does not equal success. Execution returns through World truth, and later cognition may receive what actually happened.
-
-### Causal provenance
-
-Research/debug should make it possible to trace:
-
-`cause/evidence → semantic intention → task/run → World attempt → actual outcome`
-
-Provenance is diagnostic and must not change gameplay legality.
-
-### Recovered concrete donors
-
-Current code already provides useful bounded donors:
-
-- `World` truth/legality and factual action outcomes;
-- E1 per-observer projection and temporal change characterization;
-- E1 arm/session/cycle stale-response protection;
-- `DeterministicExecutor` as a local durative competence;
-- `ExecutionDriver` + executor run provenance as causal execution/debug substrate.
-
-Do not mechanically promote the whole E1 harness into the future Mind. Its responsibilities should remain separable.
+Live evidence wins if the branch advances beyond this copied head.
 
 ---
 
-## 5. Pass 1 Presence Contract
+## 4. Product contract / durable architecture boundaries
 
-North star:
+Pass 1 north star:
 
 > Create one persistent resident of a shared simulated world whose experience is grounded, whose meaningful unresolved consequences persist, whose semantic cognition can interpret novel language and revise intentions without fabricating reality, and whose physical/communication outcomes remain determined by the world.
 
@@ -209,157 +156,248 @@ Shorthand:
 
 > **meaning may be generative; reality must remain grounded.**
 
-Current strongest product invariants:
+Preserve unless later evidence overturns them:
 
 - one NPC remains one resident in one shared present;
-- experience is situated rather than omniscient;
-- material information retains epistemic source/provenance;
-- utterance ≠ automatic canonical truth;
-- continuity and unresolved consequence persist beyond single model calls;
+- `World` owns canonical physical truth, legality and factual outcomes;
+- perception/communication experience is situated and keeps epistemic source/provenance;
+- `A said X` does not make X canonical World truth;
+- continuity and unresolved consequence persist beyond one model request;
 - uncertainty is legitimate;
-- novel language can materially change semantic intention;
-- intention, attempt and success remain distinct;
-- World/execution owns real outcomes;
-- meaningful elapsed time cannot disappear from continuity;
-- communication belongs to one world-grounded reality rather than private per-player chatbot universes.
+- meaningful novel language may change semantic direction;
+- semantic intention, grounded task, mechanical attempt and factual outcome are distinct;
+- mechanical task completion does not automatically equal semantic satisfaction;
+- slow semantic inference returns a proposal rather than owning resident state;
+- proposal validity is scoped to semantic dependencies, not every unrelated World mutation;
+- routine mechanics should not require semantic LLM control;
+- causal provenance should remain inspectable without exposing hidden model chain-of-thought;
+- one logical resident owner is a consistency requirement, not a mandate for a particular actor/hosting framework.
 
-Full contract:
+Full contracts:
 
-`docs/LIVE_NPC_PASS1_PRESENCE_CONTRACT.md`
-
----
-
-## 6. Pass 2 architecture decision
-
-Canonical decision:
-
-`docs/LIVE_NPC_PASS2_ARCHITECTURE_DECISION.md`
-
-For the first Presence experiment, the current-best shape is a **Minimal Resident Kernel** with these responsibilities:
-
-1. one logical resident owner;
-2. bounded grounded recent experience;
-3. a small set of unresolved/open semantic matters;
-4. semantic reconsideration only when meaning requires it;
-5. external LLM inference as a proposal rather than resident ownership;
-6. scoped causal reconciliation of returned proposals;
-7. a clean intent→grounded-task boundary;
-8. local deterministic competence/execution through World authority;
-9. real outcome returning as evidence;
-10. causal observability across the whole chain.
-
-External architecture donor status remains:
-
-- **BDI/PRS:** commitment, reconsideration and interruption/resumption semantics;
-- **C4:** perceptual honesty and World→individual-experience separation;
-- **actor/single-writer systems:** one logical owner of mutable resident continuity;
-- **BT/GOAP/HTN/skills:** possible later competence composition, not semantic identity;
-- **memory-centric agents:** later memory/reflection donors;
-- **event sourcing:** possible later audit/persistence donor, not current authority model.
-
-Critical async rule:
-
-> Do not use `any state change during inference → reject result`.
-
-Proposal validity is scoped to semantic dependencies. Unrelated World change can leave meaning valid; later same-matter semantic supersession invalidates the old proposal. Task grounding/revalidation then reads current World/evidence.
+- `docs/LIVE_NPC_PASS1_PRESENCE_CONTRACT.md`
+- `docs/LIVE_NPC_PASS2_ARCHITECTURE_DECISION.md`
 
 ---
 
-## 7. P2-E0 — canonical result
+## 5. Cumulative P2-E0…P2-E12 result
 
-Merged PR #79 qualified a host-agnostic deterministic causal-kernel specimen without integrating it into playable runtime.
+The following is the current compact map. Exact RED/fix/re-attack histories remain in merged PRs.
 
-Canonical merge head:
+### P2-E0 — resident causal kernel — PR #79
 
-`ae967830847ef4d5b62e0694e262c0a64fe41d4a`
+Earned:
 
-### Earned findings
-
-P2-E0 directly supports:
-
-- unresolved matters surviving outside inference-call lifetime;
+- bounded recent evidence;
+- open semantic matters independent of inference-call lifetime;
 - proposal identity scoped to `matterId + semanticRevision + semanticEvidenceId`;
-- physical evidence not automatically staling semantic meaning;
-- later same-matter semantic revision invalidating older proposal authority;
-- task/run bindings carrying the semantic revision at grounding;
-- late outcomes from older runs remaining factual evidence without semantic rollback;
-- task outcome remaining distinct from semantic satisfaction;
-- bounded interruption as active target → suspended by one active interruptor, refusing overwrite/cycles;
-- resumption after interruptor resolution/cancellation without hidden semantic mutation;
-- bounded recent evidence without introducing long-term memory.
+- unrelated physical evidence does not globally stale meaning;
+- same-matter semantic supersession does stale older proposals;
+- task/run bindings retain semantic revision at grounding;
+- mechanical outcomes return as evidence without automatic semantic resolution;
+- bounded acyclic interruption/resumption.
 
-### Preserved falsification evidence
+Did not select a general belief DB, planner, blackboard or long-term memory.
 
-RED #1:
+### P2-E1 — grounded communication seam — PR #82
 
-`19a44207e677c7793699aa7bb77900ea658d190c`
+Earned:
 
-Result: 153 PASS / 3 FAIL. It exposed missing task semantic-revision provenance plus interruption overwrite/cycle defects.
+- one canonical spoken occurrence with speaker/text/tick/source position;
+- separate speaker `spoke` and receiver-specific `heard` experience;
+- occurrence-time receiver assessment;
+- no omniscient access merely because canonical occurrence exists;
+- actor + canonical occurrence provenance survives resident ingress;
+- failed/reentrant assessment cannot consume/duplicate occurrence identity.
 
-RED #2:
+Hearing range/channel/addressedness/UI remain unselected.
 
-`90fb94395adcdd9b4f26b827fb89431979dcb047`
+### P2-E2 — communication runtime ownership — PR #83
 
-Result: 158 PASS / 1 FAIL. It exposed missing semantic-evidence provenance on proposal tickets.
+Earned:
 
-Both checkpoints remain in merged ancestry. Final candidate `f445ac0f...` and canonical merge head `ae967830...` qualify at 160/160 tests / 28 files plus strict build/preview/Cloudflare PASS.
+- one occurrence-side sequencer can sit beside a World instance in a headless boundary;
+- receiver assessment completes from one occurrence-time World snapshot before resident mutation;
+- only the matching registered resident receives committed `heard` evidence;
+- speech remains outside the physical World event log and old E1 prompt plumbing.
 
-### Deliberate non-claims
+This demonstrates ownership semantics, not final production hosting.
 
-P2-E0 did **not** solve:
+### P2-E3 — explicit semantic attribution — PR #85
 
-- attention/addressedness;
-- communication channel/range/UI;
-- real LLM provider integration;
-- final execution-during-pending-reconsideration policy;
-- general beliefs/desires/planning;
-- long-term memory;
-- evidence payload retention after bounded recent-buffer eviction;
-- multiplayer resident hosting;
-- final production resident schema.
+Earned:
 
-Evidence-retention was explicitly attacked and deferred. Durable IDs/tokens may outlive recent payloads; do not add an archive/pinning system until an earned consumer such as a causal inspector or live cognition-context builder proves what dereference behavior is actually needed.
+- grounded evidence may explicitly advance semantic context without duplicating the occurrence;
+- the same evidence identity may be relevant to more than one matter;
+- merely recording new evidence does not itself advance semantic clocks;
+- attribution still requires retained evidence identity and refuses terminal matters.
+
+Attention/matter-selection policy remains upstream and unselected.
+
+### P2-E4 — bounded semantic proposal context — PR #86
+
+Earned:
+
+- exact pending ticket + selected matter semantic state + exact semantic evidence can form a bounded provider context;
+- raw World, E1 perception, UI, unrelated evidence and task/executor state do not spill into the provider boundary;
+- activity/focus status is deliberately not exposed because it is not covered by the semantic CAS;
+- forged/stale/terminal dependencies fail closed.
+
+### P2-E5 — semantic provider authority membrane — PR #87, later strengthened by P2-E12
+
+Earned:
+
+- public/model-visible run contains semantic content only;
+- resident mutation authority stays in a local private sidecar;
+- serialization/cloning cannot recreate authority;
+- provider output is bounded semantic-only content;
+- valid response reconciles through resident-owned authority;
+- malformed output may retry only while resident authority remains genuinely live;
+- concurrent same-revision runs are defensively race-safe: only one can commit.
+
+No live model/provider/HTTP endpoint is selected by this seam.
+
+### P2-E6 — grounded task start causality — PR #88
+
+Earned:
+
+- semantic course is grounded locally against current World snapshot;
+- public candidate does not itself carry authority;
+- exact semantic revision is privately retained through prepare→start;
+- current target facts are revalidated before start;
+- stale semantic grounding cannot be laundered into a newer revision;
+- executor start and resident binding are protected from run-ID collision/partial-start failure;
+- unrelated World tick change alone does not invalidate a still-correct target.
+
+The exact-label test grounder is apparatus, not a production parser/planner.
+
+### P2-E7 — factual task outcome causality — PR #89
+
+Earned:
+
+- exact resident binding + exact terminal executor run + matching real World action when applicable produce resident `task_outcome` evidence;
+- caller-authored free-standing outcome payload is not the normal authority path;
+- duplicate/premature/foreign settlement is refused;
+- a late older-run outcome remains factual after semantic revision without rolling semantics back;
+- a new run cannot replace an unreconciled terminal executor run.
+
+Semantic satisfaction remains separate.
+
+### P2-E8 — open-matter semantic evidence continuity — PR #90
+
+Earned:
+
+- each unresolved matter retains exactly one clone of its **current** semantic evidence dependency;
+- unrelated recent-evidence churn may evict the ordinary ring copy without making the matter semantically inert;
+- advancing semantic context replaces the anchor rather than preserving history;
+- suspended unresolved matter keeps its current dependency;
+- cross-matter access is isolated;
+- terminal matter releases its anchor.
+
+This is not a general evidence archive or long-term memory.
+
+### P2-E9 — semantic reconsideration hold — PR #91
+
+Earned:
+
+- when new semantic evidence supersedes the revision that grounded an active task, the exact affected executor run can be held;
+- shared World/player processing continues;
+- held run emits no command and consumes no executor progress;
+- unresolved/stale/foreign semantic authority cannot release the hold;
+- after a current applied semantic decision, explicit release may resume the exact same run and preserve outcome causality.
+
+Whether the post-decision old task should resume/replace/cancel remains a caller policy question.
+
+### P2-E10 — matter suspension execution causality — PR #92
+
+Earned:
+
+- an explicitly suspended matter's exact owned run can be mechanically paused without freezing the shared present;
+- World time continues and executor step count does not advance;
+- active/unbound unrelated execution is not globally frozen;
+- once interruptor becomes terminal and the earlier matter is explicitly resumed, the same run can continue and reconcile normally.
+
+Automatic focus/priority/interruption choice remains unselected.
+
+### P2-E11 — terminal matter task disposition — PR #93
+
+Earned:
+
+- a terminal matter may explicitly dispose its exact still-running owned task before later World effects;
+- `DeterministicExecutor.retireCurrentRun(expectedRunId)` neutrally retires exact running state to idle without fabricating success/failure;
+- resident terminal task binding is consumed without fake `task_outcome` evidence;
+- already-factual terminal executor outcomes remain P2-E7 authority;
+- P2-E9/P2-E10 wrapper composition forwards retirement correctly;
+- P2-E9 hold sidecar cannot outlive successful retirement.
+
+Automatic production orchestration of terminalization→disposition remains unselected.
+
+### P2-E12 — pending cognition authority lifecycle — PR #94
+
+Canonical merge:
+
+`be543147bbfcc43f92fd18bbc8aa7aac30588621`
+
+Earned:
+
+- active `pendingSemanticProposals()` now means proposals with genuinely live scoped commit authority;
+- terminalization, explicit semantic revision and a winning same-revision proposal revoke known-dead authority immediately;
+- suspension does not incorrectly revoke still-current semantic clarification;
+- bounded exact-identity revocation records preserve recent causal stale reasons without becoming unbounded history;
+- P2-E4 keeps truthful `matter_terminal` / semantic-dependency rejection for exact recently revoked tickets;
+- forged ticket identities do not inherit another proposal's provenance;
+- P2-E5 consumes a local provider-run sidecar immediately when resident authority is already stale, so dead authority cannot retain a meaningless formatting retry path;
+- malformed output retry remains valid for genuinely live resident authority.
+
+Canonical exact gate: **247/247 tests / 56 files**, build/dry-run/GitHub/Cloudflare PASS, Version ID `f22afa01-3fc0-4008-9a27-1150750e0f12`.
 
 ---
 
-## 8. Immediate frontier — world-grounded communication / experience
+## 6. What the campaign has not earned
 
-P2-E0 earned the next boundary but did **not** specify its final implementation.
+Do not infer from the depth of P2-E0…P2-E12 that the following are solved:
 
-The immediate job is to recover live truth around how communication can exist in the simulated world and reach one resident as sourced experience.
+- final production resident/Mind class/schema/API;
+- automatic composition of all research seams into the browser runtime;
+- live semantic LLM/provider integration;
+- final cognition admission/scheduling/cognitive-pressure policy;
+- whether multiple genuinely-live same-revision requests should be deduplicated, bounded or allowed;
+- automatic matter creation, focus, interruption choice or semantic satisfaction;
+- final addressedness/hearing/acoustics/channel/UI semantics;
+- general beliefs/desires;
+- planner/BT/GOAP/HTN/skill architecture;
+- long-term/episodic memory, consolidation or forgetting;
+- pathfinding/navmesh;
+- persistence/offscreen simulation;
+- multiplayer resident hosting/concurrency;
+- multi-NPC society;
+- production cost/routing/scaling;
+- final model/provider.
 
-Start with characterization, not feature construction.
+Cloudflare Durable Objects remain a promising future hosting donor for shared resident authority, not an immediate selection.
 
-### Questions to answer first
-
-1. What player→NPC communication or actor-interaction surfaces exist in current recovery code, if any?
-2. Which layer should own the factual occurrence “actor A communicated payload X through channel C”?
-3. What does the NPC legitimately receive as experience from that occurrence?
-4. How do we preserve `A said X` as sourced evidence without promoting X to World truth?
-5. What identities/time/occurrence provenance are already available and which minimum new token is actually needed?
-6. How can the seam remain useful later for shared multiplayer without creating private per-player NPC universes?
-7. What is the smallest headless/product-adjacent experiment that can falsify the design before UI or live LLM work?
-
-### Deliberate exclusions for the first communication seam
-
-- no long-term memory;
-- no general belief ontology;
-- no planner framework;
-- no generic social ontology;
-- no model-generated communication success;
-- no live LLM requirement;
-- no assumption that current P2-E0 research class should simply be imported wholesale into runtime;
-- no Owner/browser Presence gate until a meaningful playable slice exists.
-
-The expected sequence is:
-
-`live characterization → bounded communication/experience contract → headless/product-adjacent evidence → runtime seam if earned → live semantic provider later`
-
-Do not skip directly to the last item.
+Historical R5b timeout/retry, later R6 sensory-buffer work and R7 Worker ingress/provider-observability hardening remain donors. Re-evaluate them when a current consumer earns the requirement rather than porting them mechanically.
 
 ---
 
-## 9. Presence Qualification v0
+## 7. Current post-P2-E12 gap audit
+
+The research chain now covers most of the causal path selected by Pass 2, so the stopping rule should become stricter: do not invent P2-E13 just to continue numbering.
+
+Current audit questions include:
+
+1. **Cognition admission / concurrency:** P2-E0 can intentionally represent several genuinely-live same-revision proposals, and P2-E5 safely resolves the race. Can an upstream caller nevertheless create unbounded live in-flight work if providers never return and semantics never change? If proven material, should admission/deduplication live above the kernel/provider membrane?
+2. **Composition readiness:** which qualified seams still exist only as research apparatus, and what minimum composition boundary would be needed before a meaningful playable Presence slice? Do not assume wholesale import.
+3. **Remaining lifecycle cross-products:** are there untested compositions among hold, suspension, terminal disposition, proposal revocation and factual outcome ordering that can produce split authority despite each local seam passing?
+4. **Causal observability:** can a bounded inspector answer the intended `experience → reconsideration → semantic change → task/run → World outcome` trace from current records without introducing a general event-sourcing system?
+5. **Time / elapsed experience:** Pass 1 requires meaningful elapsed time not to disappear. Current P2 evidence supports an `elapsed` kind, but no broad claim should be made until the next consumer proves whether current temporal semantics are sufficient.
+6. **Product integration boundary:** when research evidence is strong enough, determine the smallest safe route toward a playable experiment before adding live model variance, rather than keeping an indefinitely separate research graph.
+
+These are audit targets, not a checklist and not automatically equal-priority implementation tasks. Independent broad passes should first look for stronger contradictions or already-defended areas.
+
+---
+
+## 8. Presence Qualification v0
 
 The architecture remains constrained by the parameterized 5–10 minute single-NPC Life Test.
 
@@ -367,9 +405,9 @@ Required stressors include variants of:
 
 - request → grounded action;
 - mid-task semantic revision;
-- ambiguous reference requiring honest clarification or context;
+- ambiguous reference requiring honest clarification/context;
 - unverified player information;
-- later World contradiction/expectation violation;
+- later World contradiction or expectation violation;
 - real execution failure/race;
 - interruption by another meaningful matter;
 - later return/resumption after activity or elapsed time.
@@ -382,60 +420,39 @@ Hard failure examples:
 - transcript claim becoming World truth;
 - private contradictory NPC copies for different players;
 - meaningful language unable to change intention;
-- coherent state existing only during an LLM request;
+- coherent resident state existing only during an LLM request;
 - forced certainty when evidence is insufficient.
 
 A later multiplayer extension should place at least two players around one NPC with conflicting/overlapping requests and verify that one coherent present survives.
 
----
-
-## 10. What remains explicitly unselected
-
-Do not infer that Pass 2 or P2-E0 solved:
-
-- final production resident/Mind architecture;
-- exact class/schema names;
-- exact cognitive-pressure scheduling;
-- final attention/addressedness;
-- general belief representation;
-- long-term memory/consolidation/forgetting;
-- planner/BT/GOAP/HTN/skill composition;
-- speech/hearing range/channel/UI;
-- evidence-retention/dereference strategy;
-- final task semantic-satisfaction algorithm;
-- persistence/offscreen simulation;
-- multiplayer resident hosting;
-- multi-NPC society;
-- concurrent LLM-call strategy;
-- model routing/cost strategy;
-- final model/provider.
-
-Cloudflare Durable Objects are a promising future hosting donor for shared resident authority, not an immediate architecture selection.
-
-Historical R5b timeout/retry, later R6 sensory-buffer work and R7 ingress/provider-observability hardening remain donors, not an automatic repair queue.
+P2-E0…P2-E12 make this later playable test increasingly architecturally meaningful. They do not themselves constitute that qualitative test.
 
 ---
 
-## 11. Working method
+## 9. Working method
 
 Use:
 
-`live truth → narrow claim → adversarial characterization/research → competing hypotheses → falsification → bounded experiment → Owner judgement when qualitative evidence matters`
+`live truth → narrow claim → adversarial characterization/research → competing hypotheses → falsification → bounded experiment → independent exact-head qualification → Owner judgement when qualitative evidence matters`
 
 Preserve:
 
 - negative evidence;
 - exact provenance;
+- meaningful RED checkpoints;
 - explicit non-claims;
-- separation between demonstrated behavior and architectural hypothesis.
+- separation between demonstrated behavior and architectural hypothesis;
+- exact canonical-vs-branch qualification boundaries.
 
 Do not implement a former checklist item merely because it once appeared in readiness work.
 
 Do not defend the selected architecture by expanding scope if bounded evidence falsifies it.
 
+When an adapter/lifecycle method is added, actively audit composition rather than assuming locally green seams compose correctly — P2-E11 already exposed this class of wrapper debt.
+
 ---
 
-## 12. Canonical handoff spine
+## 10. Canonical handoff spine
 
 A fresh conversation should read:
 
@@ -445,14 +462,17 @@ A fresh conversation should read:
 4. `docs/LIVE_NPC_PASS2_ARCHITECTURE_DECISION.md`;
 5. `docs/FRESH_TAKEOVER.md`.
 
-Then inspect closed PRs/historical docs only when exact evidence is needed, especially:
+Then inspect exact PR evidence only when needed:
 
-- #47 — Owner FAIL that triggered selective recovery;
-- #70–#74 — final bounded recovery repairs;
+- #47 — decisive Owner/browser FAIL of the old readiness line;
+- #70–#74 — final selective recovery repairs;
 - #75 — combined R8 evidence-only re-attack;
-- #77 — canonical Pass 1 closure;
-- #78 — canonical Pass 2 closure;
-- #79 — P2-E0 executable falsification campaign;
+- #77 — Pass 1 closure;
+- #78 — Pass 2 architecture closure;
+- #79 — P2-E0 causal kernel;
+- #82–#94 — P2-E1…P2-E12 cumulative research, with #84 evidence-only and closed without merge;
 - #3 — historical P1 donor/integration line.
 
-If live repository state contradicts this spine, **live evidence wins** and the contradiction must be resolved before implementation.
+Historical pre-LLM readiness documents on `evidence/pre-llm-readiness-audit` describe an older 2026-09-06 campaign and are **not** the current execution mandate.
+
+If live repository state contradicts this spine, **live evidence wins** and the contradiction should be resolved before implementation or strong claims.
