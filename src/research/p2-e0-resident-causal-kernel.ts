@@ -351,6 +351,26 @@ export class P2E0ResidentCausalKernel {
     return binding ? cloneBinding(binding) : null;
   }
 
+  /**
+   * Releases the exact task/run ownership of a terminal matter without
+   * manufacturing a mechanical task outcome. Both matter and binding identity
+   * must still match, so stale lifecycle code cannot detach a different run.
+   *
+   * P2-E11 owns the higher-level disposition provenance. This kernel method is
+   * deliberately only the resident ownership mutation needed by that boundary.
+   */
+  disposeTerminalTaskBinding(matterId: string, runId: number): P2E0TaskBinding | null {
+    const matter = this.matters.get(matterId);
+    if (!matter || !isTerminal(matter.status) || matter.activeTaskRunId !== runId) return null;
+
+    const binding = this.taskBindings.get(runId);
+    if (!binding || binding.matterId !== matterId) return null;
+
+    this.taskBindings.delete(runId);
+    matter.activeTaskRunId = null;
+    return cloneBinding(binding);
+  }
+
   recordTaskOutcome(input: P2E0TaskOutcomeInput): P2E0EvidenceRecord {
     const binding = this.taskBindings.get(input.runId);
     if (!binding) throw new Error(`P2-E0 task outcome has no causal binding: ${input.runId}`);

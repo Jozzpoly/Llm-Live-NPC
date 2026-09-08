@@ -42,6 +42,12 @@ export interface ExecutorState {
   run: ExecutorRunProvenance | null;
 }
 
+export interface ExecutorRetirement {
+  run: ExecutorRunProvenance;
+  task: ExecutorTask;
+  stepsUsed: number;
+}
+
 function cloneCause(cause: ExecutorRunCause): ExecutorRunCause {
   switch (cause.kind) {
     case "manual":
@@ -93,6 +99,37 @@ export class DeterministicExecutor {
     };
     this.nextRunId += 1;
     return true;
+  }
+
+  /**
+   * Explicitly withdraws the exact currently running task without inventing a
+   * success or failure. The last run provenance and consumed step count remain
+   * observable while there is no current task, so a later start keeps run IDs
+   * monotonic and causal debugging can still identify what was retired.
+   *
+   * The expected run ID makes retirement identity-safe: stale lifecycle code
+   * cannot accidentally retire a newer run that replaced the one it observed.
+   */
+  retireCurrentRun(expectedRunId: number): ExecutorRetirement | null {
+    if (
+      this.statusValue !== "running" ||
+      !this.taskValue ||
+      !this.runValue ||
+      this.runValue.runId !== expectedRunId
+    ) {
+      return null;
+    }
+
+    const retirement: ExecutorRetirement = {
+      run: cloneRun(this.runValue)!,
+      task: { ...this.taskValue },
+      stepsUsed: this.stepsUsedValue
+    };
+
+    this.taskValue = null;
+    this.statusValue = "idle";
+    this.failureCodeValue = null;
+    return retirement;
   }
 
   state(): ExecutorState {
