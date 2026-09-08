@@ -177,6 +177,19 @@ export class P2E9SemanticReconsiderationHoldBoundary {
     return hold ? cloneHold(hold) : null;
   }
 
+  /**
+   * Removes hold authority for a run that has already been mechanically
+   * retired. This is not semantic release: there is no resumed task and no
+   * semantic decision is granted authority. It is lifecycle cleanup owned by
+   * the hold sidecar itself.
+   */
+  discardForRetiredRun(runId: number): P2E9SemanticHold | null {
+    const hold = this.holdsByRunId.get(runId);
+    if (!hold) return null;
+    this.holdsByRunId.delete(runId);
+    return cloneHold(hold);
+  }
+
   release(
     resident: P2E0ResidentCausalKernel,
     executor: DeterministicExecutor,
@@ -235,6 +248,10 @@ export class P2E9SemanticReconsiderationHoldBoundary {
  * real executor state transitions, but when the current exact run is held it
  * returns an empty command without calling `inner.next()`. The hold therefore
  * does not consume executor step budget or manufacture an executor outcome.
+ *
+ * Mechanical retirement is also delegated to the inner executor. Only after
+ * exact retirement succeeds does this adapter discard any hold attached to that
+ * retired run, preventing P2-E9 sidecar authority from outliving execution.
  */
 export class P2E9HoldAwareExecutor extends DeterministicExecutor {
   constructor(
@@ -249,7 +266,10 @@ export class P2E9HoldAwareExecutor extends DeterministicExecutor {
   }
 
   override retireCurrentRun(expectedRunId: number): ExecutorRetirement | null {
-    return this.inner.retireCurrentRun(expectedRunId);
+    const retired = this.inner.retireCurrentRun(expectedRunId);
+    if (!retired) return null;
+    this.holds.discardForRetiredRun(retired.run.runId);
+    return retired;
   }
 
   override state(): ExecutorState {
