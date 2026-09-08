@@ -7,6 +7,7 @@ import type { EntityId } from "../world/types";
 import { World } from "../world/world";
 import {
   P2E0ResidentCausalKernel,
+  type P2E0EvidenceRecord,
   type P2E0MatterState
 } from "../research/p2-e0-resident-causal-kernel";
 import { P2E2CommunicationRuntimeBoundary } from "../research/p2-e2-communication-runtime-boundary";
@@ -67,11 +68,6 @@ type FirstPresenceTraceEvent =
 
 export type FirstPresenceTraceRecord = FirstPresenceTraceEvent & { seq: number };
 
-export type FirstPresenceRequestResult = {
-  matter: P2E0MatterState;
-  evidenceId: string;
-};
-
 type FirstPresenceContextRejectionReason = Extract<
   P2E4SemanticProposalContextResult,
   { status: "rejected" }
@@ -94,14 +90,14 @@ export type FirstPresenceStepResult = {
  *
  * This is deliberately narrower than a final Mind/Resident API. It composes
  * already-qualified Pass-2 causal seams around the recovered World/executor so
- * one request can travel through grounded experience -> semantic proposal ->
- * local task -> factual World outcome while a small bounded owner-level trace
- * preserves the causal joins needed for debugging.
+ * one explicitly-admitted matter can travel through grounded experience ->
+ * semantic proposal -> local task -> factual World outcome while a small
+ * bounded owner-level trace preserves the causal joins needed for debugging.
  *
- * The owner does not yet choose attention, interruption, semantic satisfaction,
- * terminal retention, live provider transport or browser presentation. Those
- * responsibilities must be earned by later composition variants rather than
- * being smuggled into this first happy-path slice.
+ * Communication ingress and matter admission are intentionally separate. This
+ * owner does not decide that every heard utterance becomes an unresolved matter.
+ * It also does not yet choose attention, interruption, semantic satisfaction,
+ * terminal retention, live provider transport or browser presentation.
  */
 export class FirstPresenceComposition {
   readonly resident = new P2E0ResidentCausalKernel();
@@ -134,7 +130,7 @@ export class FirstPresenceComposition {
     this.driver = new ExecutionDriver(this.world, this.executor);
   }
 
-  openPlayerRequest(text: string): FirstPresenceRequestResult {
+  receiveDirectPlayerSpeech(text: string): P2E0EvidenceRecord {
     const communication = this.communication.speak(
       { speakerId: "player.jozz", text },
       ({ observer }) => observer.id === this.actorId
@@ -143,21 +139,32 @@ export class FirstPresenceComposition {
       (candidate) => candidate.observerId === this.actorId
     );
     if (!delivery) {
-      throw new Error(`First Presence request was not grounded for resident ${this.actorId}.`);
+      throw new Error(`First Presence speech was not grounded for resident ${this.actorId}.`);
+    }
+    return { ...delivery.evidence, source: { ...delivery.evidence.source } };
+  }
+
+  openMatterFromEvidence(
+    evidenceId: string,
+    semanticCourse = "uninterpreted"
+  ): P2E0MatterState {
+    const evidence = this.resident.recentEvidence().find((candidate) => candidate.id === evidenceId);
+    if (!evidence) {
+      throw new Error(`First Presence matter admission requires recent grounded evidence: ${evidenceId}`);
     }
 
     const matter = this.resident.openMatter({
       id: `matter.presence.${this.nextMatterSeq++}`,
-      originEvidenceId: delivery.evidence.id,
-      semanticCourse: "uninterpreted"
+      originEvidenceId: evidence.id,
+      semanticCourse
     });
     this.appendTrace({
       kind: "experience",
       matterId: matter.id,
-      evidenceId: delivery.evidence.id,
-      summary: delivery.evidence.summary
+      evidenceId: evidence.id,
+      summary: evidence.summary
     });
-    return { matter, evidenceId: delivery.evidence.id };
+    return matter;
   }
 
   async reconsiderMatter(matterId: string): Promise<FirstPresenceReconsiderResult> {
