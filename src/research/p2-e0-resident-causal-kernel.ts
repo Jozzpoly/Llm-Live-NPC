@@ -1,7 +1,7 @@
 export type P2E0EvidenceKind = "observed" | "heard" | "task_outcome" | "elapsed";
 
 export type P2E0EvidenceSource =
-  | { kind: "actor"; actorId: string }
+  | { kind: "actor"; actorId: string; occurrenceId?: string }
   | { kind: "world"; occurrenceId?: string }
   | { kind: "task"; runId: number }
   | { kind: "clock" };
@@ -67,7 +67,9 @@ export interface P2E0EvidenceInput {
 function cloneSource(source: P2E0EvidenceSource): P2E0EvidenceSource {
   switch (source.kind) {
     case "actor":
-      return { kind: "actor", actorId: source.actorId };
+      return source.occurrenceId === undefined
+        ? { kind: "actor", actorId: source.actorId }
+        : { kind: "actor", actorId: source.actorId, occurrenceId: source.occurrenceId };
     case "world":
       return source.occurrenceId === undefined
         ? { kind: "world" }
