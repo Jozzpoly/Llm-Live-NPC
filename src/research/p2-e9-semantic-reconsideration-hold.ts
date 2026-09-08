@@ -33,8 +33,13 @@ export type P2E9HoldArmResult =
         | "task_binding_missing"
         | "executor_not_running"
         | "executor_run_mismatch"
-        | "task_not_semantically_superseded";
+        | "task_not_semantically_superseded"
+        | "run_already_held";
     };
+
+export type P2E9HoldReleaseResult =
+  | { status: "released"; hold: P2E9SemanticHold }
+  | { status: "rejected"; reason: "hold_not_active" | "hold_identity_changed" };
 
 function sameTicket(a: P2E0ProposalTicket, b: P2E0ProposalTicket): boolean {
   return (
@@ -42,6 +47,17 @@ function sameTicket(a: P2E0ProposalTicket, b: P2E0ProposalTicket): boolean {
     a.matterId === b.matterId &&
     a.semanticRevision === b.semanticRevision &&
     a.semanticEvidenceId === b.semanticEvidenceId
+  );
+}
+
+function sameHold(a: P2E9SemanticHold, b: P2E9SemanticHold): boolean {
+  return (
+    a.matterId === b.matterId &&
+    a.runId === b.runId &&
+    a.taskSemanticRevision === b.taskSemanticRevision &&
+    a.reconsiderationSemanticRevision === b.reconsiderationSemanticRevision &&
+    a.semanticEvidenceId === b.semanticEvidenceId &&
+    a.proposalId === b.proposalId
   );
 }
 
@@ -61,6 +77,9 @@ function cloneHold(hold: P2E9SemanticHold): P2E9SemanticHold {
  * the executor remains running with the same run provenance and resident task
  * binding. Only command derivation for that exact run is suppressed, allowing
  * the canonical ExecutionDriver to keep advancing player/World processing.
+ * Release is explicit and identity-checked; this apparatus deliberately does
+ * not infer from semantic content whether the old task should resume, be
+ * replaced or be cancelled.
  */
 export class P2E9SemanticReconsiderationHoldBoundary {
   private readonly holdsByRunId = new Map<number, P2E9SemanticHold>();
@@ -107,6 +126,9 @@ export class P2E9SemanticReconsiderationHoldBoundary {
     if (binding.semanticRevision >= matter.semanticRevision) {
       return { status: "rejected", reason: "task_not_semantically_superseded" };
     }
+    if (this.holdsByRunId.has(binding.runId)) {
+      return { status: "rejected", reason: "run_already_held" };
+    }
 
     const hold: P2E9SemanticHold = {
       matterId: matter.id,
@@ -123,6 +145,16 @@ export class P2E9SemanticReconsiderationHoldBoundary {
   holdForRun(runId: number): P2E9SemanticHold | null {
     const hold = this.holdsByRunId.get(runId);
     return hold ? cloneHold(hold) : null;
+  }
+
+  release(hold: P2E9SemanticHold): P2E9HoldReleaseResult {
+    const active = this.holdsByRunId.get(hold.runId);
+    if (!active) return { status: "rejected", reason: "hold_not_active" };
+    if (!sameHold(active, hold)) {
+      return { status: "rejected", reason: "hold_identity_changed" };
+    }
+    this.holdsByRunId.delete(active.runId);
+    return { status: "released", hold: cloneHold(active) };
   }
 }
 
