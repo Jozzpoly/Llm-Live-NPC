@@ -10,7 +10,6 @@ import type { FirstPresenceTraceRecord } from "../resident/first-presence-trace"
 import { createP1Specimen } from "../world/specimen";
 import type { WorldSpecimen } from "../world/types";
 import { World } from "../world/world";
-import type { FirstPresenceSemanticTransportEnvelope } from "./first-presence-semantic-api";
 import {
   FirstPresenceSemanticTransportCoordinator,
   type FirstPresenceSemanticTransportProvider,
@@ -72,7 +71,7 @@ export interface FirstPresenceBrowserProbeState {
   activeTaskRunId: number | null;
   heldRunIds: number[];
   pendingAttemptIds: number[];
-  transportStatus: FirstPresenceSemanticTransportRunResult["status"] | null;
+  transportStatus: "pending" | FirstPresenceSemanticTransportRunResult["status"] | null;
   model: string | null;
   gatewayLogId: string | null;
   latencyMs: number | null;
@@ -125,7 +124,7 @@ export class FirstPresenceBrowserProbe {
   private pendingSemantic: Promise<void> | null = null;
 
   constructor(
-    private readonly world: World,
+    world: World,
     transport?: FirstPresenceSemanticTransportProvider
   ) {
     this.presence = new FirstPresenceComposition(
@@ -260,7 +259,7 @@ export class FirstPresenceBrowserProbe {
       activeTaskRunId: matter?.activeTaskRunId ?? null,
       heldRunIds: deferred.heldRuns.map((hold) => hold.runId),
       pendingAttemptIds: deferred.pendingAttempts.map((attempt) => attempt.attemptId),
-      transportStatus: this.transportResult?.status ?? (this.pendingSemantic ? "provider_returned" : null),
+      transportStatus: this.pendingSemantic ? "pending" : this.transportResult?.status ?? null,
       model: diagnostics?.model ?? null,
       gatewayLogId: diagnostics?.gatewayLogId ?? null,
       latencyMs: diagnostics?.latencyMs ?? null,
@@ -282,7 +281,6 @@ export class FirstPresenceBrowserProbe {
     if (!this.matterIdValue) {
       this.phaseValue = "blocked";
       this.lastErrorValue = "missing_probe_matter";
-      this.pendingSemantic = null;
       return;
     }
     const evidence = this.presence.receiveDirectPlayerSpeech(LIVE_CORRECTION);
@@ -336,16 +334,4 @@ export function createFirstPresenceBrowserProbe(
   transport?: FirstPresenceSemanticTransportProvider
 ): FirstPresenceBrowserProbe {
   return new FirstPresenceBrowserProbe(world, transport);
-}
-
-export function firstPresenceProbeEnvelope(
-  semanticCourse: string
-): FirstPresenceSemanticTransportEnvelope {
-  return {
-    output: { semanticCourse },
-    model: "probe-test-provider",
-    gatewayLogId: null,
-    latencyMs: 0,
-    usage: null
-  };
 }
