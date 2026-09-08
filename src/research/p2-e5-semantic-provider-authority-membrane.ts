@@ -54,6 +54,42 @@ function modelEvidenceSource(source: P2E0EvidenceSource): P2E5ModelEvidenceSourc
   }
 }
 
+function sameTicket(a: P2E0ProposalTicket, b: P2E0ProposalTicket): boolean {
+  return (
+    a.proposalId === b.proposalId &&
+    a.matterId === b.matterId &&
+    a.semanticRevision === b.semanticRevision &&
+    a.semanticEvidenceId === b.semanticEvidenceId
+  );
+}
+
+function preflightResidentAuthority(
+  resident: P2E0ResidentCausalKernel,
+  ticket: P2E0ProposalTicket
+): P2E0ProposalCommitResult | null {
+  const pending = resident.pendingSemanticProposals().find((candidate) => sameTicket(candidate, ticket));
+  if (!pending) {
+    const revocation = resident
+      .recentSemanticProposalRevocations()
+      .find((candidate) => sameTicket(candidate.proposal, ticket));
+    return {
+      status: "stale",
+      reason: revocation?.reason ?? "proposal_not_pending"
+    };
+  }
+
+  const matter = resident.matter(ticket.matterId);
+  if (!matter) return { status: "stale", reason: "matter_missing" };
+  if (matter.status === "resolved" || matter.status === "cancelled") {
+    return { status: "stale", reason: "matter_terminal" };
+  }
+  if (matter.semanticRevision !== ticket.semanticRevision) {
+    return { status: "stale", reason: "semantic_revision_changed" };
+  }
+
+  return null;
+}
+
 function normalizeSemanticProposal(
   value: unknown
 ): { semanticCourse: string } | { rejection: P2E5ProviderOutputRejection } {
@@ -94,8 +130,9 @@ function normalizeSemanticProposal(
  * It lives in an instance-local WeakMap sidecar keyed by the original run
  * object. Serializing/cloning the public run therefore cannot carry authority
  * out and back into the resident. A valid normalized response consumes that
- * local run exactly once; malformed provider output does not, so transport or
- * formatting recovery can retry without minting a new resident ticket.
+ * local run exactly once; malformed provider output preserves the local run only
+ * while the resident ticket itself remains live, so transport or formatting
+ * recovery cannot keep an already-revoked semantic authority alive.
  *
  * The 512-character output limit is a probe-local safety bound, not a selected
  * final product schema.
@@ -126,6 +163,12 @@ export class P2E5SemanticProviderAuthorityMembrane {
     const localAuthority = this.authorityByRun.get(run);
     if (!localAuthority) {
       return { status: "local_run_rejected", reason: "unknown_local_run" };
+    }
+
+    const stale = preflightResidentAuthority(resident, localAuthority);
+    if (stale) {
+      this.authorityByRun.delete(run);
+      return stale;
     }
 
     const normalized = normalizeSemanticProposal(rawProviderOutput);
