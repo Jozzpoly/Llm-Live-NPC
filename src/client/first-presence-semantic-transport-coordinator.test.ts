@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { P2E5ModelSemanticInput } from "../research/p2-e5-semantic-provider-authority-membrane";
 import type { P2E6LocalTaskGrounder } from "../research/p2-e6-grounded-task-start-causality";
 import { FirstPresenceComposition } from "../resident/first-presence-composition";
@@ -298,5 +298,23 @@ describe("First Presence semantic transport coordinator", () => {
           event.reason === "semantic_revision_changed"
       )
     ).toBe(true);
+  });
+
+  it("does not disguise a resident settlement invariant exception as a transport failure", async () => {
+    const { presence, deferred, matter } = createFixture();
+    advanceFromSpeech(presence, matter.id, "Actually, bring me the blue mug.");
+
+    const settle = vi.spyOn(deferred, "settle").mockImplementation(() => {
+      throw new Error("synthetic resident settlement invariant");
+    });
+    const coordinator = new FirstPresenceSemanticTransportCoordinator(deferred, async () =>
+      transportEnvelope("fetch Blue mug")
+    );
+
+    await expect(coordinator.reconsider(matter.id)).rejects.toThrow(
+      "synthetic resident settlement invariant"
+    );
+    expect(settle).toHaveBeenCalledTimes(1);
+    expect(deferred.state().pendingAttempts).toHaveLength(1);
   });
 });
