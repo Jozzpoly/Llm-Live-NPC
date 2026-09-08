@@ -142,7 +142,7 @@ describe("post-P2-E15 whole-chain composition audit", () => {
       world.snapshot(),
       executor,
       grounded.candidate,
-      { kind: "cognition", sessionId: "audit.whole-chain", cycleId: 1 }
+      { kind: "cognition", sessionId: 1, cycleId: 1 }
     );
     expect(started.status).toBe("started");
     if (started.status !== "started") return;
@@ -153,7 +153,7 @@ describe("post-P2-E15 whole-chain composition audit", () => {
     });
     expect(started.executorRun).toMatchObject({
       runId: started.binding.runId,
-      cause: { kind: "cognition", sessionId: "audit.whole-chain", cycleId: 1 }
+      cause: { kind: "cognition", sessionId: 1, cycleId: 1 }
     });
 
     const frame = driver.step({ playerControl: { moveX: 0, moveY: 0 } });
