@@ -120,11 +120,19 @@ function isTerminal(status: P2E0MatterStatus): boolean {
  * A slow semantic proposal depends on the semantic revision of one matter, not
  * on a global resident/World version. This makes unrelated physical change safe
  * while still allowing later semantic input for the same matter to stale it.
+ *
+ * Recent grounded experience remains a bounded ring. Each non-terminal matter
+ * additionally owns exactly one clone of its current semantic dependency so an
+ * unresolved consequence does not become semantically inert merely because
+ * unrelated evidence churn displaced that record from the recent ring. This is
+ * a causal anchor, not a general evidence archive; advancing semantic context
+ * replaces it and terminalizing the matter releases it.
  */
 export class P2E0ResidentCausalKernel {
   private readonly matters = new Map<string, P2E0MatterState>();
   private readonly pendingProposals = new Map<number, P2E0ProposalTicket>();
   private readonly taskBindings = new Map<number, P2E0TaskBinding>();
+  private readonly semanticEvidenceAnchors = new Map<string, P2E0EvidenceRecord>();
   private readonly evidence: P2E0EvidenceRecord[] = [];
   private nextEvidenceSeq = 1;
   private nextProposalId = 1;
@@ -155,7 +163,7 @@ export class P2E0ResidentCausalKernel {
     semanticCourse: string;
   }): P2E0MatterState {
     if (this.matters.has(input.id)) throw new Error(`Duplicate P2-E0 matter id: ${input.id}`);
-    this.requireRecentEvidence(input.originEvidenceId);
+    const originEvidence = this.requireRecentEvidence(input.originEvidenceId);
 
     const matter: P2E0MatterState = {
       id: input.id,
@@ -169,6 +177,7 @@ export class P2E0ResidentCausalKernel {
       lastTaskOutcomeEvidenceId: null
     };
     this.matters.set(matter.id, matter);
+    this.semanticEvidenceAnchors.set(matter.id, cloneEvidence(originEvidence));
     return cloneMatter(matter);
   }
 
@@ -179,6 +188,19 @@ export class P2E0ResidentCausalKernel {
 
   recentEvidence(): P2E0EvidenceRecord[] {
     return this.evidence.map(cloneEvidence);
+  }
+
+  semanticEvidenceAnchor(matterId: string, evidenceId: string): P2E0EvidenceRecord | null {
+    const matter = this.matters.get(matterId);
+    if (
+      !matter ||
+      isTerminal(matter.status) ||
+      matter.latestSemanticEvidenceId !== evidenceId
+    ) {
+      return null;
+    }
+    const anchor = this.semanticEvidenceAnchors.get(matterId);
+    return anchor?.id === evidenceId ? cloneEvidence(anchor) : null;
   }
 
   /**
@@ -199,10 +221,11 @@ export class P2E0ResidentCausalKernel {
     if (isTerminal(matter.status)) {
       throw new Error(`Cannot advance terminal P2-E0 matter: ${matterId}`);
     }
-    this.requireRecentEvidence(evidenceId);
+    const semanticEvidence = this.requireRecentEvidence(evidenceId);
 
     matter.semanticRevision += 1;
     matter.latestSemanticEvidenceId = evidenceId;
+    this.semanticEvidenceAnchors.set(matter.id, cloneEvidence(semanticEvidence));
     return cloneMatter(matter);
   }
 
@@ -290,6 +313,7 @@ export class P2E0ResidentCausalKernel {
     const matter = this.requireMatter(matterId);
     matter.status = "resolved";
     matter.suspendedByMatterId = null;
+    this.semanticEvidenceAnchors.delete(matterId);
     return cloneMatter(matter);
   }
 
@@ -297,6 +321,7 @@ export class P2E0ResidentCausalKernel {
     const matter = this.requireMatter(matterId);
     matter.status = "cancelled";
     matter.suspendedByMatterId = null;
+    this.semanticEvidenceAnchors.delete(matterId);
     return cloneMatter(matter);
   }
 

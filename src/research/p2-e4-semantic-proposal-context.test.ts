@@ -179,7 +179,7 @@ describe("P2-E4 semantic proposal context seam", () => {
     expect("status" in result.context.matter).toBe(false);
   });
 
-  it("rejects a proposal context when its exact semantic evidence is no longer retained", () => {
+  it("uses the matter-owned current semantic anchor after unrelated evidence evicts that record from the recent ring", () => {
     const resident = new P2E0ResidentCausalKernel(2);
     const seam = new P2E4SemanticProposalContextSeam();
     const origin = resident.recordEvidence({
@@ -213,8 +213,16 @@ describe("P2-E4 semantic proposal context seam", () => {
 
     expect(resident.recentEvidence().map((evidence) => evidence.id)).not.toContain(revision.id);
     expect(seam.build(resident, ticket)).toEqual({
-      status: "rejected",
-      reason: "semantic_evidence_not_retained"
+      status: "ready",
+      context: {
+        proposal: ticket,
+        matter: {
+          id: matter.id,
+          semanticCourse: "fetch blue mug",
+          semanticRevision: ticket.semanticRevision
+        },
+        semanticEvidence: revision
+      }
     });
   });
 

@@ -49,6 +49,11 @@ function terminal(status: P2E0MatterStatus): boolean {
  * into the provider boundary. Only semantic state whose changes are covered by
  * the proposal ticket is exposed. The P2-E0 ticket remains the causal authority
  * used when a later proposal is reconciled back into resident continuity.
+ *
+ * P2-E8 permits the exact current semantic dependency to outlive unrelated
+ * recent-evidence churn. The seam still prefers the ordinary recent ring, then
+ * falls back only to the same matter's exact resident-owned semantic anchor.
+ * It does not search an archive or retrieve arbitrary historical evidence.
  */
 export class P2E4SemanticProposalContextSeam {
   build(
@@ -72,9 +77,9 @@ export class P2E4SemanticProposalContextSeam {
       return { status: "rejected", reason: "semantic_dependency_changed" };
     }
 
-    const semanticEvidence = resident
-      .recentEvidence()
-      .find((evidence) => evidence.id === ticket.semanticEvidenceId);
+    const semanticEvidence =
+      resident.recentEvidence().find((evidence) => evidence.id === ticket.semanticEvidenceId) ??
+      resident.semanticEvidenceAnchor(ticket.matterId, ticket.semanticEvidenceId);
     if (!semanticEvidence) {
       return { status: "rejected", reason: "semantic_evidence_not_retained" };
     }
