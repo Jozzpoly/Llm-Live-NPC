@@ -58,7 +58,9 @@ describe("post-P2-E15 cognitive pressure characterization", () => {
 
     // The kernel does correctly collapse known-dead authority as soon as the
     // semantic dependency changes. This distinguishes lifecycle safety from
-    // admission/backpressure policy.
+    // admission/backpressure policy. Exact stale-reason provenance is separately
+    // bounded to the most recent 32 revocations, so old delayed runs remain safe
+    // but eventually degrade to the generic proposal_not_pending reason.
     const revision = resident.recordEvidence({
       kind: "heard",
       source: { kind: "actor", actorId: "player.jozz", occurrenceId: "speech.revision" },
@@ -67,10 +69,14 @@ describe("post-P2-E15 cognitive pressure characterization", () => {
     resident.advanceSemanticContext(matter.id, revision.id);
 
     expect(resident.pendingSemanticProposals()).toEqual([]);
-    expect(resident.recentSemanticProposalRevocations()).toHaveLength(32);
+    const revocations = resident.recentSemanticProposalRevocations();
+    expect(revocations).toHaveLength(32);
+    expect(revocations[0]?.proposal.proposalId).toBe(tickets[96]?.proposalId);
+    expect(revocations[31]?.proposal.proposalId).toBe(tickets[127]?.proposalId);
+
     expect(
       membrane.settle(resident, runs[0], { semanticCourse: "new course" })
-    ).toEqual({ status: "stale", reason: "semantic_revision_changed" });
+    ).toEqual({ status: "stale", reason: "proposal_not_pending" });
     expect(
       membrane.settle(resident, runs[127], { semanticCourse: "other course" })
     ).toEqual({ status: "stale", reason: "semantic_revision_changed" });
