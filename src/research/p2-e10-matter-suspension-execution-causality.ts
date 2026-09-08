@@ -12,18 +12,18 @@ import type { P2E0ResidentCausalKernel } from "./p2-e0-resident-causal-kernel";
 /**
  * P2-E10 research apparatus only.
  *
- * P2-E0 suspension is a resident-level interruption relation. This adapter
- * attacks the missing execution consequence without changing the recovered
+ * P2-E0 activity state is resident-owned execution eligibility. This adapter
+ * attacks that execution consequence without changing the recovered
  * deterministic executor or canonical ExecutionDriver: when the currently
- * running exact executor run is causally bound to a matter whose current
- * status is `suspended`, command derivation is suppressed without calling the
- * inner executor at all.
+ * running exact executor run is causally bound to a matter that is no longer
+ * `active`, command derivation is suppressed without calling the inner executor
+ * at all.
  *
- * Therefore World/player processing may continue while the suspended run keeps
- * the same task, run provenance and step budget. Re-activating the owning
- * matter through P2-E0 resume semantics makes the same run eligible to continue
- * on the next frame. Terminal matter/task disposal is deliberately not selected
- * here; that remains a separate lifecycle question.
+ * Suspension therefore preserves the same task, run provenance and step budget
+ * until a legal resume makes the matter active again. Terminal matter state is
+ * different: it can never resume, so the run remains mechanically quiescent
+ * until P2-E11 explicitly retires that exact run and releases its resident
+ * binding. Terminalization itself is not treated as a World task outcome.
  */
 export class P2E10MatterSuspensionAwareExecutor extends DeterministicExecutor {
   constructor(
@@ -51,7 +51,11 @@ export class P2E10MatterSuspensionAwareExecutor extends DeterministicExecutor {
       const binding = this.resident.taskBinding(state.run.runId);
       if (binding) {
         const matter = this.resident.matter(binding.matterId);
-        if (matter?.status === "suspended" && matter.activeTaskRunId === state.run.runId) {
+        if (
+          matter &&
+          matter.status !== "active" &&
+          matter.activeTaskRunId === state.run.runId
+        ) {
           return {};
         }
       }
