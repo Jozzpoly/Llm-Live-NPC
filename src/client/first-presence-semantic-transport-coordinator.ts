@@ -69,6 +69,10 @@ function describeTransportError(error: unknown): string {
  * the exact provider attempt and deliberately leaves the mechanical hold intact.
  * Retry is a later explicit call, which mints a new attempt and may reuse that
  * same already-qualified hold.
+ *
+ * Only the awaited transport call is classified as transport failure. Resident
+ * settlement/authority invariant exceptions are intentionally allowed to escape
+ * rather than being mislabeled as network failures and hidden behind abandon().
  */
 export class FirstPresenceSemanticTransportCoordinator {
   constructor(
@@ -84,23 +88,9 @@ export class FirstPresenceSemanticTransportCoordinator {
     }
 
     const { attempt } = begun;
+    let envelope: FirstPresenceSemanticTransportEnvelope;
     try {
-      const envelope = await this.transport(attempt.modelInput);
-      const settlement = this.deferred.settle(attempt, envelope.output);
-      return {
-        status: "provider_returned",
-        attemptId: attempt.attemptId,
-        matterId: attempt.matterId,
-        heldRunId: attempt.heldRunId,
-        reusedExistingHold: attempt.reusedExistingHold,
-        settlement,
-        diagnostics: {
-          model: envelope.model,
-          gatewayLogId: envelope.gatewayLogId,
-          latencyMs: envelope.latencyMs,
-          usage: envelope.usage
-        }
-      };
+      envelope = await this.transport(attempt.modelInput);
     } catch (error) {
       const abandonment = this.deferred.abandon(attempt);
       return {
@@ -113,5 +103,21 @@ export class FirstPresenceSemanticTransportCoordinator {
         abandonment
       };
     }
+
+    const settlement = this.deferred.settle(attempt, envelope.output);
+    return {
+      status: "provider_returned",
+      attemptId: attempt.attemptId,
+      matterId: attempt.matterId,
+      heldRunId: attempt.heldRunId,
+      reusedExistingHold: attempt.reusedExistingHold,
+      settlement,
+      diagnostics: {
+        model: envelope.model,
+        gatewayLogId: envelope.gatewayLogId,
+        latencyMs: envelope.latencyMs,
+        usage: envelope.usage
+      }
+    };
   }
 }
