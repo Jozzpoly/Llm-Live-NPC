@@ -7,6 +7,8 @@ import {
 } from "../execution/deterministic-executor";
 import type { WorldActionResult, WorldSnapshot } from "../world/types";
 import type {
+  P2E0MatterState,
+  P2E0ProposalCommitResult,
   P2E0ProposalTicket,
   P2E0ResidentCausalKernel
 } from "./p2-e0-resident-causal-kernel";
@@ -39,7 +41,17 @@ export type P2E9HoldArmResult =
 
 export type P2E9HoldReleaseResult =
   | { status: "released"; hold: P2E9SemanticHold }
-  | { status: "rejected"; reason: "hold_not_active" | "hold_identity_changed" };
+  | {
+      status: "rejected";
+      reason:
+        | "hold_not_active"
+        | "hold_identity_changed"
+        | "semantic_reconsideration_unresolved"
+        | "semantic_decision_not_current"
+        | "matter_not_active"
+        | "task_binding_changed"
+        | "executor_run_changed";
+    };
 
 function sameTicket(a: P2E0ProposalTicket, b: P2E0ProposalTicket): boolean {
   return (
@@ -61,6 +73,20 @@ function sameHold(a: P2E9SemanticHold, b: P2E9SemanticHold): boolean {
   );
 }
 
+function sameMatterSnapshot(a: P2E0MatterState, b: P2E0MatterState): boolean {
+  return (
+    a.id === b.id &&
+    a.originEvidenceId === b.originEvidenceId &&
+    a.semanticCourse === b.semanticCourse &&
+    a.semanticRevision === b.semanticRevision &&
+    a.latestSemanticEvidenceId === b.latestSemanticEvidenceId &&
+    a.status === b.status &&
+    a.suspendedByMatterId === b.suspendedByMatterId &&
+    a.activeTaskRunId === b.activeTaskRunId &&
+    a.lastTaskOutcomeEvidenceId === b.lastTaskOutcomeEvidenceId
+  );
+}
+
 function cloneHold(hold: P2E9SemanticHold): P2E9SemanticHold {
   return { ...hold };
 }
@@ -77,9 +103,12 @@ function cloneHold(hold: P2E9SemanticHold): P2E9SemanticHold {
  * the executor remains running with the same run provenance and resident task
  * binding. Only command derivation for that exact run is suppressed, allowing
  * the canonical ExecutionDriver to keep advancing player/World processing.
- * Release is explicit and identity-checked; this apparatus deliberately does
- * not infer from semantic content whether the old task should resume, be
- * replaced or be cancelled.
+ *
+ * Release is also causal rather than temporal. The exact held run may resume
+ * only after the caller presents an applied semantic decision that is still the
+ * current state of the same matter. The boundary does not infer from semantic
+ * text whether resumption is desirable: presenting that current decision plus
+ * calling release is the caller's explicit choice to resume this exact run.
  */
 export class P2E9SemanticReconsiderationHoldBoundary {
   private readonly holdsByRunId = new Map<number, P2E9SemanticHold>();
@@ -147,12 +176,53 @@ export class P2E9SemanticReconsiderationHoldBoundary {
     return hold ? cloneHold(hold) : null;
   }
 
-  release(hold: P2E9SemanticHold): P2E9HoldReleaseResult {
+  release(
+    resident: P2E0ResidentCausalKernel,
+    executor: DeterministicExecutor,
+    hold: P2E9SemanticHold,
+    decision: P2E0ProposalCommitResult
+  ): P2E9HoldReleaseResult {
     const active = this.holdsByRunId.get(hold.runId);
     if (!active) return { status: "rejected", reason: "hold_not_active" };
     if (!sameHold(active, hold)) {
       return { status: "rejected", reason: "hold_identity_changed" };
     }
+    if (decision.status !== "applied") {
+      return { status: "rejected", reason: "semantic_reconsideration_unresolved" };
+    }
+
+    const currentMatter = resident.matter(active.matterId);
+    if (
+      !currentMatter ||
+      decision.matter.id !== active.matterId ||
+      !sameMatterSnapshot(decision.matter, currentMatter) ||
+      currentMatter.semanticRevision <= active.reconsiderationSemanticRevision
+    ) {
+      return { status: "rejected", reason: "semantic_decision_not_current" };
+    }
+    if (currentMatter.status !== "active") {
+      return { status: "rejected", reason: "matter_not_active" };
+    }
+
+    const binding = resident.taskBinding(active.runId);
+    if (
+      currentMatter.activeTaskRunId !== active.runId ||
+      !binding ||
+      binding.matterId !== active.matterId ||
+      binding.semanticRevision !== active.taskSemanticRevision
+    ) {
+      return { status: "rejected", reason: "task_binding_changed" };
+    }
+
+    const executorState = executor.state();
+    if (
+      executorState.status !== "running" ||
+      !executorState.run ||
+      executorState.run.runId !== active.runId
+    ) {
+      return { status: "rejected", reason: "executor_run_changed" };
+    }
+
     this.holdsByRunId.delete(active.runId);
     return { status: "released", hold: cloneHold(active) };
   }
