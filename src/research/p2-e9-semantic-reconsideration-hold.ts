@@ -57,10 +57,10 @@ function cloneHold(hold: P2E9SemanticHold): P2E9SemanticHold {
  * same active matter, after that matter has gained newer explicitly attributed
  * semantic context and an exact proposal ticket for reconsideration exists.
  *
- * The first RED deliberately does not yet make the execution adapter suppress
- * commands. That leaves the current failure mode observable end-to-end: even
- * though a semantically superseded run is causally identified as held, the old
- * mechanical action can still cross into World while reconsideration is open.
+ * Holding is deliberately narrower than cancellation or semantic resolution:
+ * the executor remains running with the same run provenance and resident task
+ * binding. Only command derivation for that exact run is suppressed, allowing
+ * the canonical ExecutionDriver to keep advancing player/World processing.
  */
 export class P2E9SemanticReconsiderationHoldBoundary {
   private readonly holdsByRunId = new Map<number, P2E9SemanticHold>();
@@ -128,10 +128,10 @@ export class P2E9SemanticReconsiderationHoldBoundary {
 
 /**
  * Adapter used only by the P2-E9 research probe so the canonical
- * ExecutionDriver can remain untouched. The initial RED is intentionally a
- * transparent delegate even for an armed hold; the follow-up implementation
- * must suppress only the exact held run's command derivation while continuing
- * to delegate state/start/action-result semantics to the real executor.
+ * ExecutionDriver and DeterministicExecutor remain untouched. It delegates all
+ * real executor state transitions, but when the current exact run is held it
+ * returns an empty command without calling `inner.next()`. The hold therefore
+ * does not consume executor step budget or manufacture an executor outcome.
  */
 export class P2E9HoldAwareExecutor extends DeterministicExecutor {
   constructor(
@@ -150,7 +150,14 @@ export class P2E9HoldAwareExecutor extends DeterministicExecutor {
   }
 
   override next(snapshot: WorldSnapshot): ExecutorCommand {
-    void this.holds;
+    const state = this.inner.state();
+    if (
+      state.status === "running" &&
+      state.run &&
+      this.holds.holdForRun(state.run.runId)
+    ) {
+      return {};
+    }
     return this.inner.next(snapshot);
   }
 
