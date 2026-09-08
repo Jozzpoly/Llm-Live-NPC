@@ -1,7 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { createP1Specimen } from "../world/specimen";
 import { World } from "../world/world";
-import { P2E0ResidentCausalKernel } from "./p2-e0-resident-causal-kernel";
+import {
+  P2E0ResidentCausalKernel,
+  type P2E0EvidenceInput
+} from "./p2-e0-resident-causal-kernel";
 import { P2E1GroundedCommunicationSeam } from "./p2-e1-grounded-communication-seam";
 
 function canonicalSnapshot() {
@@ -19,10 +22,20 @@ describe("P2-E1 adversarial causality", () => {
     const heard = frame.deliveries.find((delivery) => delivery.observerId === "npc.001")?.experience;
     if (!heard) throw new Error("P2-E1 bridge attack requires a grounded heard experience.");
 
+    // Runtime-inject the complete communication provenance through the current
+    // P2-E0 actor-source boundary. The cast is intentional test apparatus: the
+    // current public type cannot express occurrenceId on an actor source, and
+    // this attack asks whether the kernel would preserve that supplied field.
+    const actorSource = {
+      kind: "actor" as const,
+      actorId: heard.source.actorId,
+      occurrenceId: heard.occurrenceId
+    } as unknown as P2E0EvidenceInput["source"];
+
     const kernel = new P2E0ResidentCausalKernel();
     const evidence = kernel.recordEvidence({
       kind: "heard",
-      source: { kind: "actor", actorId: heard.source.actorId },
+      source: actorSource,
       summary: `${heard.source.actorId} said: ${heard.text}`
     });
 
