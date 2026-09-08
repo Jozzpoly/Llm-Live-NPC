@@ -41,6 +41,13 @@ export type P2E5SettlementResult =
   | { status: "provider_output_rejected"; reason: P2E5ProviderOutputRejection }
   | { status: "local_run_rejected"; reason: "unknown_local_run" };
 
+export type P2E5AbandonResult =
+  | {
+      status: "abandoned";
+      residentAuthority: "released" | "already_inactive";
+    }
+  | { status: "local_run_rejected"; reason: "unknown_local_run" };
+
 function modelEvidenceSource(source: P2E0EvidenceSource): P2E5ModelEvidenceSource {
   switch (source.kind) {
     case "actor":
@@ -153,6 +160,28 @@ export class P2E5SemanticProviderAuthorityMembrane {
     };
     this.authorityByRun.set(run, { ...context.proposal });
     return { status: "ready", run };
+  }
+
+  /**
+   * P2-E17 attempt-lifecycle seam. It consumes only the exact local run object.
+   * The E0 release mutation is deliberately still RED-stubbed at this checkpoint.
+   */
+  abandon(
+    resident: P2E0ResidentCausalKernel,
+    run: P2E5LocalProviderRun
+  ): P2E5AbandonResult {
+    const localAuthority = this.authorityByRun.get(run);
+    if (!localAuthority) {
+      return { status: "local_run_rejected", reason: "unknown_local_run" };
+    }
+
+    this.authorityByRun.delete(run);
+    return {
+      status: "abandoned",
+      residentAuthority: resident.releaseSemanticProposal(localAuthority)
+        ? "released"
+        : "already_inactive"
+    };
   }
 
   settle(
