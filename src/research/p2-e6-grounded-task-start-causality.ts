@@ -68,7 +68,8 @@ export type P2E6StartResult =
         | "actor_not_npc"
         | "target_missing"
         | "target_not_item"
-        | "executor_busy";
+        | "executor_busy"
+        | "run_id_conflict";
     };
 
 function cloneTask(task: ExecutorTask): ExecutorTask {
@@ -103,6 +104,11 @@ function validGroundedTask(
  * routine physical movement should not invalidate a still-correct semantic
  * target. Once started, the recovered deterministic executor continues reading
  * current World snapshots frame by frame.
+ *
+ * The recovered executor allocates monotonically increasing run IDs. P2-E6
+ * preflights the exact next run ID against resident task bindings before
+ * starting the executor, so the synchronous start→bind handoff cannot leave a
+ * running executor behind if that resident run identity is already occupied.
  */
 export class P2E6GroundedTaskStartBoundary {
   private readonly candidateAuthority = new WeakMap<
@@ -189,8 +195,14 @@ export class P2E6GroundedTaskStartBoundary {
     );
     if (!target) return { status: "rejected", reason: "target_missing" };
     if (target.kind !== "item") return { status: "rejected", reason: "target_not_item" };
-    if (executor.state().status === "running") {
+
+    const executorBefore = executor.state();
+    if (executorBefore.status === "running") {
       return { status: "rejected", reason: "executor_busy" };
+    }
+    const expectedRunId = (executorBefore.run?.runId ?? 0) + 1;
+    if (resident.taskBinding(expectedRunId)) {
+      return { status: "rejected", reason: "run_id_conflict" };
     }
 
     const started = executor.start(cloneTask(authority.task), cause);
@@ -198,6 +210,11 @@ export class P2E6GroundedTaskStartBoundary {
     const executorRun = executor.state().run;
     if (!executorRun) {
       throw new Error("P2-E6 accepted executor start requires run provenance.");
+    }
+    if (executorRun.runId !== expectedRunId) {
+      throw new Error(
+        `P2-E6 executor run allocation changed during synchronous start: expected ${expectedRunId}, got ${executorRun.runId}.`
+      );
     }
 
     const binding = resident.bindTask(authority.matterId, {
