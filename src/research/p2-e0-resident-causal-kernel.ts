@@ -46,6 +46,7 @@ export interface P2E0TaskBinding {
   matterId: string;
   taskId: string;
   runId: number;
+  semanticRevision: number;
 }
 
 export interface P2E0TaskOutcomeInput {
@@ -251,9 +252,11 @@ export class P2E0ResidentCausalKernel {
     const matter = this.requireMatter(matterId);
     const interrupt = this.requireMatter(interruptedByMatterId);
     if (matter.id === interrupt.id) throw new Error("A P2-E0 matter cannot interrupt itself.");
-    if (isTerminal(matter.status)) throw new Error(`Cannot suspend terminal P2-E0 matter: ${matterId}`);
-    if (isTerminal(interrupt.status)) {
-      throw new Error(`Terminal P2-E0 matter cannot be an active interrupt: ${interruptedByMatterId}`);
+    if (matter.status !== "active") {
+      throw new Error(`Only active P2-E0 matter can be suspended: ${matterId}`);
+    }
+    if (interrupt.status !== "active") {
+      throw new Error(`Only active P2-E0 matter can be an interrupt: ${interruptedByMatterId}`);
     }
 
     matter.status = "suspended";
@@ -300,7 +303,12 @@ export class P2E0ResidentCausalKernel {
       throw new Error(`Duplicate P2-E0 task run id: ${task.runId}`);
     }
 
-    const binding: P2E0TaskBinding = { matterId, taskId: task.taskId, runId: task.runId };
+    const binding: P2E0TaskBinding = {
+      matterId,
+      taskId: task.taskId,
+      runId: task.runId,
+      semanticRevision: matter.semanticRevision
+    };
     this.taskBindings.set(task.runId, binding);
     matter.activeTaskRunId = task.runId;
     return cloneBinding(binding);
