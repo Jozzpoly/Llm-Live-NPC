@@ -79,6 +79,7 @@ describe("post-P2-E15 terminal matter execution-window RED", () => {
         kind: "item",
         heldBy: null
       });
+      expect.soft(fixture.resident.recentEvidence().filter((evidence) => evidence.kind === "task_outcome")).toEqual([]);
 
       // Once the safe window is preserved, E11 should still own explicit causal
       // retirement rather than manufacturing a task outcome.
@@ -100,11 +101,13 @@ describe("post-P2-E15 terminal matter execution-window RED", () => {
         activeTaskRunId: null
       });
 
-      // There must be no factual World task outcome because the run was retired,
-      // not allowed to complete after terminal semantic authority was established.
+      // E11 retirement removes both executor-run and resident-binding authority.
+      // A later E7 reconciliation therefore rejects the absent run and still may
+      // not manufacture any factual task-outcome evidence.
       expect.soft(
         new P2E7GroundedTaskOutcomeBoundary().reconcile(fixture.resident, fixture.executor, frame)
-      ).toEqual({ status: "ignored", reason: "no_executor_action_result" });
+      ).toEqual({ status: "rejected", reason: "executor_run_missing" });
+      expect.soft(fixture.resident.recentEvidence().filter((evidence) => evidence.kind === "task_outcome")).toEqual([]);
     });
   }
 });
