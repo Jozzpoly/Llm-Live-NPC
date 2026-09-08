@@ -182,22 +182,24 @@ export class P2E0ResidentCausalKernel {
   }
 
   /**
-   * Explicitly advances only this matter's semantic dependency clock.
+   * Explicitly attributes an existing resident evidence item as semantically
+   * relevant to this matter and advances only this matter's dependency clock.
    *
    * Recording evidence alone does not do this: a physical observation may be
    * relevant to later task grounding without invalidating a still-correct
    * semantic interpretation. The caller that owns attention/reconsideration
    * decides when an evidence item materially advances semantic context.
+   *
+   * Evidence identity and ingress provenance remain unchanged. The same
+   * grounded evidence may therefore be explicitly relevant to more than one
+   * matter without duplicating or exclusively re-scoping the evidence record.
    */
   advanceSemanticContext(matterId: string, evidenceId: string): P2E0MatterState {
     const matter = this.requireMatter(matterId);
     if (isTerminal(matter.status)) {
       throw new Error(`Cannot advance terminal P2-E0 matter: ${matterId}`);
     }
-    const evidence = this.requireRecentEvidence(evidenceId);
-    if (evidence.matterId !== matterId) {
-      throw new Error(`P2-E0 semantic evidence ${evidenceId} is not scoped to matter ${matterId}.`);
-    }
+    this.requireRecentEvidence(evidenceId);
 
     matter.semanticRevision += 1;
     matter.latestSemanticEvidenceId = evidenceId;
