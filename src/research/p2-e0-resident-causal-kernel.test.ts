@@ -185,6 +185,50 @@ describe("P2-E0 resident causal kernel", () => {
     });
   });
 
+  it("retains the semantic revision that grounded a task even after the matter is revised", () => {
+    const kernel = new P2E0ResidentCausalKernel();
+    const opened = openMatter(kernel, "matter.mug", "fetch blue mug");
+    const binding = kernel.bindTask(opened.id, { taskId: "task.fetch-blue", runId: 52 });
+
+    expect(binding).toMatchObject({ semanticRevision: opened.semanticRevision });
+
+    const revision = kernel.beginSemanticProposal(opened.id);
+    expect(kernel.commitSemanticProposal(revision, { semanticCourse: "fetch red mug" })).toMatchObject({
+      status: "applied"
+    });
+
+    expect(kernel.taskBinding(52)).toMatchObject({
+      matterId: opened.id,
+      taskId: "task.fetch-blue",
+      runId: 52,
+      semanticRevision: opened.semanticRevision
+    });
+    expect(kernel.matter(opened.id)?.semanticRevision).toBe(opened.semanticRevision + 1);
+  });
+
+  it("refuses to overwrite the causal interrupt of a matter that is already suspended", () => {
+    const kernel = new P2E0ResidentCausalKernel();
+    openMatter(kernel, "matter.a", "A");
+    openMatter(kernel, "matter.b", "B", "player.bob");
+    openMatter(kernel, "matter.c", "C", "player.carol");
+
+    kernel.suspendMatter("matter.a", "matter.b");
+
+    expect(() => kernel.suspendMatter("matter.a", "matter.c")).toThrow();
+    expect(kernel.matter("matter.a")?.suspendedByMatterId).toBe("matter.b");
+  });
+
+  it("refuses a suspended matter as a new active interruptor so interruption cycles cannot form", () => {
+    const kernel = new P2E0ResidentCausalKernel();
+    openMatter(kernel, "matter.a", "A");
+    openMatter(kernel, "matter.b", "B", "player.bob");
+
+    kernel.suspendMatter("matter.a", "matter.b");
+
+    expect(() => kernel.suspendMatter("matter.b", "matter.a")).toThrow();
+    expect(kernel.matter("matter.b")?.status).toBe("active");
+  });
+
   it("bounds retained recent evidence without turning the probe into a long-term memory store", () => {
     const kernel = new P2E0ResidentCausalKernel(2);
 
