@@ -8,7 +8,7 @@ Updated: 2026-09-08
 
 **Pass 2 — architecture / donor / comparative research — is closed as a bounded architecture-selection pass.**
 
-**The executable Pass-2 research chain P2-E0…P2-E12 is canonical and independently qualified through its current merge head.**
+**The executable Pass-2 research chain P2-E0…P2-E12 is canonical and independently qualified through its P2-E12 research checkpoint.**
 
 Current-best architecture hypothesis for the first Presence experiment remains:
 
@@ -18,11 +18,11 @@ Current research/refoundation branch:
 
 `recovery/owner-fail-2026-09-07`
 
-Current canonical head:
+Qualified canonical P2-E12 research checkpoint:
 
 `be543147bbfcc43f92fd18bbc8aa7aac30588621`
 
-Exact canonical qualification:
+Exact qualification of that checkpoint:
 
 - **247/247 tests across 56 files**;
 - strict TypeScript PASS;
@@ -32,7 +32,9 @@ Exact canonical qualification:
 - Cloudflare Workers Build PASS;
 - Worker Version ID `f22afa01-3fc0-4008-9a27-1150750e0f12`.
 
-This qualifies the cumulative **research substrate plus unchanged broader build surface**. It does not claim a fresh playable/Owner Presence PASS or that all `src/research` seams are already composed into the final browser runtime.
+The live branch head may be later because documentation/handoff or subsequent work can advance the branch without changing the qualified P2-E12 research checkpoint. Always verify live `recovery/owner-fail-2026-09-07` before continuing.
+
+This qualification covers the cumulative **research substrate plus unchanged broader build surface**. It does not claim a fresh playable/Owner Presence PASS or that all `src/research` seams are already composed into the final browser runtime.
 
 ### Immediate working frontier
 
@@ -140,9 +142,9 @@ Important checkpoints:
 - Pass 2 closure: PR #78;
 - P2-E0 causal-kernel merge: PR #79;
 - P2-E1…P2-E12 cumulative research: PRs #82–#94, excluding evidence-only #84;
-- current canonical P2-E12 merge: `be543147bbfcc43f92fd18bbc8aa7aac30588621`.
+- qualified canonical P2-E12 research checkpoint: `be543147bbfcc43f92fd18bbc8aa7aac30588621`.
 
-Live evidence wins if the branch advances beyond this copied head.
+Live evidence wins if the branch has advanced beyond this checkpoint.
 
 ---
 
@@ -334,7 +336,7 @@ Automatic production orchestration of terminalization→disposition remains unse
 
 ### P2-E12 — pending cognition authority lifecycle — PR #94
 
-Canonical merge:
+Qualified canonical research checkpoint:
 
 `be543147bbfcc43f92fd18bbc8aa7aac30588621`
 
@@ -349,7 +351,7 @@ Earned:
 - P2-E5 consumes a local provider-run sidecar immediately when resident authority is already stale, so dead authority cannot retain a meaningless formatting retry path;
 - malformed output retry remains valid for genuinely live resident authority.
 
-Canonical exact gate: **247/247 tests / 56 files**, build/dry-run/GitHub/Cloudflare PASS, Version ID `f22afa01-3fc0-4008-9a27-1150750e0f12`.
+Exact gate at this checkpoint: **247/247 tests / 56 files**, build/dry-run/GitHub/Cloudflare PASS, Version ID `f22afa01-3fc0-4008-9a27-1150750e0f12`.
 
 ---
 
