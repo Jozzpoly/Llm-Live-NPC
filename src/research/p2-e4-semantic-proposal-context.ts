@@ -9,7 +9,6 @@ export interface P2E4SemanticProposalContext {
   proposal: P2E0ProposalTicket;
   matter: {
     id: string;
-    status: P2E0MatterStatus;
     semanticCourse: string;
     semanticRevision: number;
   };
@@ -46,9 +45,10 @@ function terminal(status: P2E0MatterStatus): boolean {
  *
  * Projects one already-selected resident matter into a bounded, self-contained
  * semantic proposal context. It deliberately does not pull raw World state, E1
- * perception, UI state or unrelated resident evidence into the provider
- * boundary. The P2-E0 proposal ticket remains the causal authority used when a
- * later proposal is reconciled back into resident continuity.
+ * perception, UI state, unrelated resident evidence or activity/focus status
+ * into the provider boundary. Only semantic state whose changes are covered by
+ * the proposal ticket is exposed. The P2-E0 ticket remains the causal authority
+ * used when a later proposal is reconciled back into resident continuity.
  */
 export class P2E4SemanticProposalContextSeam {
   build(
@@ -85,7 +85,6 @@ export class P2E4SemanticProposalContextSeam {
         proposal: { ...ticket },
         matter: {
           id: matter.id,
-          status: matter.status,
           semanticCourse: matter.semanticCourse,
           semanticRevision: matter.semanticRevision
         },
