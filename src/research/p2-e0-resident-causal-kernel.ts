@@ -294,6 +294,20 @@ export class P2E0ResidentCausalKernel {
       .map(cloneTicket);
   }
 
+  /**
+   * Relinquishes only the exact still-pending semantic authority identified by
+   * this ticket. Attempt lifecycle is not semantic invalidation: releasing a
+   * failed/abandoned attempt therefore does not mutate the matter or manufacture
+   * a semantic revocation record. A forged/stale ticket cannot release another
+   * proposal that merely shares a matter or semantic revision.
+   */
+  releaseSemanticProposal(ticket: P2E0ProposalTicket): boolean {
+    const pending = this.pendingProposals.get(ticket.proposalId);
+    if (!pending || !sameTicket(pending, ticket)) return false;
+    this.pendingProposals.delete(ticket.proposalId);
+    return true;
+  }
+
   recentSemanticProposalRevocations(): P2E0ProposalRevocationRecord[] {
     return [...this.proposalRevocations.values()].map(cloneRevocation);
   }
