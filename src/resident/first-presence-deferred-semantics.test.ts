@@ -40,7 +40,7 @@ function createFixture() {
     throw new Error("Deferred Presence fixture requires player.jozz, npc.001 and item.mug.");
   }
 
-  red.position = { x: npc.position.x + 210, y: npc.position.y };
+  red.position = { x: npc.position.x + 180, y: npc.position.y };
   specimen.entities.push({
     id: "item.blue-mug",
     kind: "item",
@@ -185,7 +185,10 @@ describe("First Presence deferred semantic owner", () => {
       task: { kind: "approach-and-interact", targetId: "item.blue-mug" }
     });
 
-    expect(runUntilOutcome(driver, presence)?.status).toBe("recorded");
+    expect(runUntilOutcome(driver, presence)).toMatchObject({
+      status: "recorded",
+      evidence: { summary: expect.stringMatching(/^succeeded ·/) }
+    });
     const final = world.snapshot();
     expect(final.entities.find((entity) => entity.id === "npc.001")).toMatchObject({
       kind: "npc",
@@ -276,7 +279,10 @@ describe("First Presence deferred semantic owner", () => {
     });
     expect(deferred.state()).toEqual({ pendingAttempts: [], heldRuns: [] });
 
-    expect(runUntilOutcome(driver, presence)?.status).toBe("recorded");
+    expect(runUntilOutcome(driver, presence)).toMatchObject({
+      status: "recorded",
+      evidence: { summary: expect.stringMatching(/^succeeded ·/) }
+    });
     const final = world.snapshot();
     expect(final.entities.find((entity) => entity.id === "npc.001")).toMatchObject({
       kind: "npc",
