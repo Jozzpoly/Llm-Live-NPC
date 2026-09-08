@@ -53,11 +53,13 @@ function matchingTerminalWorldResult(
  * the authority (for example, already-held-target success or step-budget
  * exhaustion).
  *
- * Callers cannot provide a free-standing success/failure payload to this seam.
- * A terminal run must still own a live resident binding, and recording the
- * outcome consumes that binding through P2-E0. Mechanical completion remains
- * evidence only: this boundary deliberately does not resolve the semantic
- * matter or advance its semantic revision.
+ * The executor and ExecutionFrameResult are trusted local runtime inputs here;
+ * this is a causal/provenance boundary, not a hostile in-process object-
+ * authentication or security membrane. Callers cannot provide a free-standing
+ * success/failure payload to this seam. A terminal run must still own a live
+ * resident binding, and recording the outcome consumes that binding through
+ * P2-E0. Mechanical completion remains evidence only: this boundary deliberately
+ * does not resolve the semantic matter or advance its semantic revision.
  */
 export class P2E7GroundedTaskOutcomeBoundary {
   reconcile(
