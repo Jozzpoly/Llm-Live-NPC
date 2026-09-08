@@ -31,15 +31,22 @@ export interface P2E6GroundedTaskCandidate {
   groundedAtWorldTick: number;
 }
 
+interface P2E6CandidateAuthority {
+  matterId: string;
+  semanticRevision: number;
+  taskId: string;
+  task: ExecutorTask;
+}
+
 export type P2E6PrepareResult =
   | { status: "ready"; candidate: P2E6GroundedTaskCandidate }
   | {
       status: "rejected";
       reason:
-        | "apparatus_not_implemented"
         | "matter_missing"
         | "matter_not_active"
         | "matter_has_active_task"
+        | "semantic_revision_changed"
         | "grounding_failed"
         | "grounded_task_invalid";
     };
@@ -64,22 +71,45 @@ export type P2E6StartResult =
         | "executor_busy";
     };
 
+function cloneTask(task: ExecutorTask): ExecutorTask {
+  return { ...task };
+}
+
+function validGroundedTask(
+  result: P2E6LocalGroundingResult,
+  actorId: string,
+  snapshot: WorldSnapshot
+): boolean {
+  if (result.taskId.trim().length === 0) return false;
+  if (result.task.kind !== "approach-and-interact" || result.task.actorId !== actorId) return false;
+  const actor = snapshot.entities.find((entity) => entity.id === actorId);
+  if (!actor || actor.kind !== "npc") return false;
+  const target = snapshot.entities.find((entity) => entity.id === result.task.targetId);
+  return target?.kind === "item";
+}
+
 /**
  * P2-E6 research apparatus only.
  *
  * Attacks the intent→task boundary selected by Pass 2. A semantic course may
  * be grounded into an executable local competence only from current World
- * state, and the resulting candidate must retain the exact matter semantic
- * revision that authorized that grounding. A later semantic revision must not
- * be able to "launder" an older grounded task by binding it as if it belonged
- * to the newer meaning.
+ * state, and the resulting candidate retains private authority from the exact
+ * matter semantic revision that authorized that grounding. A later semantic
+ * revision therefore cannot "launder" an older grounded task by binding it as
+ * if it belonged to the newer meaning.
  *
- * World tick is diagnostic only. The intended boundary must revalidate the
- * targeted current World facts before start rather than using a global
- * `worldTick changed => stale` rule, because routine physical movement should
- * not invalidate a still-correct semantic target.
+ * World tick is diagnostic only. Start revalidates only targeted current World
+ * facts rather than applying a global `worldTick changed => stale` rule, because
+ * routine physical movement should not invalidate a still-correct semantic
+ * target. Once started, the recovered deterministic executor continues reading
+ * current World snapshots frame by frame.
  */
 export class P2E6GroundedTaskStartBoundary {
+  private readonly candidateAuthority = new WeakMap<
+    P2E6GroundedTaskCandidate,
+    P2E6CandidateAuthority
+  >();
+
   prepare(
     resident: P2E0ResidentCausalKernel,
     snapshot: WorldSnapshot,
@@ -87,12 +117,47 @@ export class P2E6GroundedTaskStartBoundary {
     actorId: string,
     grounder: P2E6LocalTaskGrounder
   ): P2E6PrepareResult {
-    void resident;
-    void snapshot;
-    void matterId;
-    void actorId;
-    void grounder;
-    return { status: "rejected", reason: "apparatus_not_implemented" };
+    const matter = resident.matter(matterId);
+    if (!matter) return { status: "rejected", reason: "matter_missing" };
+    if (matter.status !== "active") return { status: "rejected", reason: "matter_not_active" };
+    if (matter.activeTaskRunId !== null) {
+      return { status: "rejected", reason: "matter_has_active_task" };
+    }
+
+    const result = grounder({
+      semanticCourse: matter.semanticCourse,
+      actorId,
+      snapshot: structuredClone(snapshot)
+    });
+    if (!result) return { status: "rejected", reason: "grounding_failed" };
+    if (!validGroundedTask(result, actorId, snapshot)) {
+      return { status: "rejected", reason: "grounded_task_invalid" };
+    }
+
+    const currentMatter = resident.matter(matterId);
+    if (!currentMatter) return { status: "rejected", reason: "matter_missing" };
+    if (currentMatter.status !== "active") {
+      return { status: "rejected", reason: "matter_not_active" };
+    }
+    if (currentMatter.activeTaskRunId !== null) {
+      return { status: "rejected", reason: "matter_has_active_task" };
+    }
+    if (currentMatter.semanticRevision !== matter.semanticRevision) {
+      return { status: "rejected", reason: "semantic_revision_changed" };
+    }
+
+    const candidate: P2E6GroundedTaskCandidate = {
+      taskId: result.taskId,
+      task: cloneTask(result.task),
+      groundedAtWorldTick: snapshot.tick
+    };
+    this.candidateAuthority.set(candidate, {
+      matterId,
+      semanticRevision: matter.semanticRevision,
+      taskId: result.taskId,
+      task: cloneTask(result.task)
+    });
+    return { status: "ready", candidate };
   }
 
   start(
@@ -102,11 +167,48 @@ export class P2E6GroundedTaskStartBoundary {
     candidate: P2E6GroundedTaskCandidate,
     cause: ExecutorRunCause = { kind: "unattributed" }
   ): P2E6StartResult {
-    void resident;
-    void currentSnapshot;
-    void executor;
-    void candidate;
-    void cause;
-    return { status: "rejected", reason: "unknown_candidate" };
+    const authority = this.candidateAuthority.get(candidate);
+    if (!authority) return { status: "rejected", reason: "unknown_candidate" };
+
+    const matter = resident.matter(authority.matterId);
+    if (!matter) return { status: "rejected", reason: "matter_missing" };
+    if (matter.status !== "active") return { status: "rejected", reason: "matter_not_active" };
+    if (matter.semanticRevision !== authority.semanticRevision) {
+      return { status: "rejected", reason: "semantic_revision_changed" };
+    }
+    if (matter.activeTaskRunId !== null) {
+      return { status: "rejected", reason: "matter_has_active_task" };
+    }
+
+    const actor = currentSnapshot.entities.find(
+      (entity) => entity.id === authority.task.actorId
+    );
+    if (!actor || actor.kind !== "npc") return { status: "rejected", reason: "actor_not_npc" };
+    const target = currentSnapshot.entities.find(
+      (entity) => entity.id === authority.task.targetId
+    );
+    if (!target) return { status: "rejected", reason: "target_missing" };
+    if (target.kind !== "item") return { status: "rejected", reason: "target_not_item" };
+    if (executor.state().status === "running") {
+      return { status: "rejected", reason: "executor_busy" };
+    }
+
+    const started = executor.start(cloneTask(authority.task), cause);
+    if (!started) return { status: "rejected", reason: "executor_busy" };
+    const executorRun = executor.state().run;
+    if (!executorRun) {
+      throw new Error("P2-E6 accepted executor start requires run provenance.");
+    }
+
+    const binding = resident.bindTask(authority.matterId, {
+      taskId: authority.taskId,
+      runId: executorRun.runId
+    });
+    if (binding.semanticRevision !== authority.semanticRevision) {
+      throw new Error("P2-E6 task binding lost its grounding semantic revision.");
+    }
+
+    this.candidateAuthority.delete(candidate);
+    return { status: "started", binding, executorRun };
   }
 }
