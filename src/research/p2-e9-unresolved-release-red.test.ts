@@ -3,7 +3,7 @@ import { DeterministicExecutor } from "../execution/deterministic-executor";
 import { P2E0ResidentCausalKernel } from "./p2-e0-resident-causal-kernel";
 import { P2E9SemanticReconsiderationHoldBoundary } from "./p2-e9-semantic-reconsideration-hold";
 
-describe("P2-E9 unresolved reconsideration release RED", () => {
+describe("P2-E9 unresolved reconsideration release regression", () => {
   it("does not release the exact held run while the semantic proposal is still pending", () => {
     const resident = new P2E0ResidentCausalKernel();
     const executor = new DeterministicExecutor();
@@ -27,7 +27,7 @@ describe("P2-E9 unresolved reconsideration release RED", () => {
       )
     ).toBe(true);
     const run = executor.state().run;
-    if (!run) throw new Error("P2-E9 RED requires an accepted executor run.");
+    if (!run) throw new Error("P2-E9 regression requires an accepted executor run.");
     resident.bindTask(matter.id, { taskId: "fetch:item.mug", runId: run.runId });
 
     const revision = resident.recordEvidence({
@@ -42,8 +42,16 @@ describe("P2-E9 unresolved reconsideration release RED", () => {
     expect(armed.status).toBe("held");
     if (armed.status !== "held") return;
 
+    // Produce a real non-applied commit result without consuming the exact
+    // pending reconsideration ticket under test.
+    const nonDecision = resident.commitSemanticProposal(
+      { ...ticket, proposalId: ticket.proposalId + 1000 },
+      { semanticCourse: "fetch Red mug" }
+    );
+    expect(nonDecision.status).toBe("stale");
     expect(resident.pendingSemanticProposals()).toContainEqual(ticket);
-    expect(holds.release(armed.hold)).toEqual({
+
+    expect(holds.release(resident, executor, armed.hold, nonDecision)).toEqual({
       status: "rejected",
       reason: "semantic_reconsideration_unresolved"
     });
