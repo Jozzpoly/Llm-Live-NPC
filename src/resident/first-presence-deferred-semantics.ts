@@ -389,9 +389,9 @@ export class FirstPresenceDeferredSemanticOwner {
   }
 
   state(): FirstPresenceDeferredState {
-    this.pruneInactiveAttempts();
-
+    const pendingTickets = this.resident.pendingSemanticProposals();
     const pendingAttempts = [...this.attemptsById.values()]
+      .filter((attempt) => pendingTickets.some((ticket) => sameTicket(ticket, attempt.ticket)))
       .sort((a, b) => a.attemptId - b.attemptId)
       .map((attempt) => ({
         attemptId: attempt.attemptId,
@@ -401,13 +401,9 @@ export class FirstPresenceDeferredSemanticOwner {
       }));
 
     const heldRuns: P2E9SemanticHold[] = [];
-    for (const runId of [...this.knownHeldRunIds]) {
+    for (const runId of this.knownHeldRunIds) {
       const hold = this.execution.holds.holdForRun(runId);
-      if (!hold) {
-        this.knownHeldRunIds.delete(runId);
-        continue;
-      }
-      heldRuns.push(hold);
+      if (hold) heldRuns.push(hold);
     }
     heldRuns.sort((a, b) => a.runId - b.runId);
 
