@@ -92,8 +92,11 @@ function cloneHold(hold: P2E9SemanticHold): P2E9SemanticHold {
  *
  * Establishes exact causal ownership for a prospective execution hold. A hold
  * can only be armed for the currently running executor run already bound to the
- * same active matter, after that matter has gained newer explicitly attributed
- * semantic context and an exact proposal ticket for reconsideration exists.
+ * same non-terminal matter, after that matter has gained newer explicitly
+ * attributed semantic context and an exact proposal ticket for reconsideration
+ * exists. Activity suspension may already be supplying the mechanical pause;
+ * that does not remove the need or authority to latch the exact superseded run
+ * semantically before a later resume can expose it again.
  *
  * Holding is deliberately narrower than cancellation or semantic resolution:
  * the executor remains running with the same run provenance and resident task
@@ -128,7 +131,7 @@ export class P2E9SemanticReconsiderationHoldBoundary {
 
     const matter = resident.matter(ticket.matterId);
     if (!matter) return { status: "rejected", reason: "matter_missing" };
-    if (matter.status !== "active") {
+    if (matter.status !== "active" && matter.status !== "suspended") {
       return { status: "rejected", reason: "matter_not_active" };
     }
     if (
