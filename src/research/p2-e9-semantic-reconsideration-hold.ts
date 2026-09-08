@@ -74,17 +74,12 @@ function sameHold(a: P2E9SemanticHold, b: P2E9SemanticHold): boolean {
   );
 }
 
-function sameMatterSnapshot(a: P2E0MatterState, b: P2E0MatterState): boolean {
+function sameSemanticDecisionState(a: P2E0MatterState, b: P2E0MatterState): boolean {
   return (
     a.id === b.id &&
-    a.originEvidenceId === b.originEvidenceId &&
     a.semanticCourse === b.semanticCourse &&
     a.semanticRevision === b.semanticRevision &&
-    a.latestSemanticEvidenceId === b.latestSemanticEvidenceId &&
-    a.status === b.status &&
-    a.suspendedByMatterId === b.suspendedByMatterId &&
-    a.activeTaskRunId === b.activeTaskRunId &&
-    a.lastTaskOutcomeEvidenceId === b.lastTaskOutcomeEvidenceId
+    a.latestSemanticEvidenceId === b.latestSemanticEvidenceId
   );
 }
 
@@ -106,10 +101,15 @@ function cloneHold(hold: P2E9SemanticHold): P2E9SemanticHold {
  * the canonical ExecutionDriver to keep advancing player/World processing.
  *
  * Release is also causal rather than temporal. The exact held run may resume
- * only after the caller presents an applied semantic decision that is still the
- * current state of the same matter. The boundary does not infer from semantic
- * text whether resumption is desirable: presenting that current decision plus
- * calling release is the caller's explicit choice to resume this exact run.
+ * only after the caller presents an applied semantic decision whose semantic
+ * state is still current for the same matter. Activity/focus fields such as
+ * `status` and `suspendedByMatterId` are deliberately not semantic-decision
+ * dependencies: a valid decision may land while the matter is suspended and
+ * remain current after a legal resume. Release still independently requires the
+ * matter to be active now and the exact original task binding/executor run to be
+ * intact. The boundary does not infer from semantic text whether resumption is
+ * desirable: presenting that current decision plus calling release is the
+ * caller's explicit choice to resume this exact run.
  */
 export class P2E9SemanticReconsiderationHoldBoundary {
   private readonly holdsByRunId = new Map<number, P2E9SemanticHold>();
@@ -209,7 +209,7 @@ export class P2E9SemanticReconsiderationHoldBoundary {
     if (
       !currentMatter ||
       decision.matter.id !== active.matterId ||
-      !sameMatterSnapshot(decision.matter, currentMatter) ||
+      !sameSemanticDecisionState(decision.matter, currentMatter) ||
       currentMatter.semanticRevision <= active.reconsiderationSemanticRevision
     ) {
       return { status: "rejected", reason: "semantic_decision_not_current" };
