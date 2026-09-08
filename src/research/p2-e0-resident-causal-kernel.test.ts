@@ -230,6 +230,57 @@ describe("P2-E0 resident causal kernel", () => {
     expect(kernel.matter("matter.b")?.status).toBe("active");
   });
 
+  it("routes a late task outcome to its matter after the semantic course has been revised", () => {
+    const kernel = new P2E0ResidentCausalKernel();
+    const opened = openMatter(kernel, "matter.mug", "fetch blue mug");
+    kernel.bindTask(opened.id, { taskId: "task.fetch-blue", runId: 77 });
+
+    const revision = kernel.beginSemanticProposal(opened.id);
+    expect(kernel.commitSemanticProposal(revision, { semanticCourse: "fetch red mug" })).toMatchObject({
+      status: "applied"
+    });
+    expect(kernel.taskBinding(77)?.semanticRevision).toBe(opened.semanticRevision);
+
+    const outcome = kernel.recordTaskOutcome({
+      runId: 77,
+      status: "succeeded",
+      code: "picked_up_item",
+      message: "The older blue-mug run completed after the revision."
+    });
+
+    expect(outcome).toMatchObject({
+      kind: "task_outcome",
+      source: { kind: "task", runId: 77 },
+      matterId: opened.id
+    });
+    expect(kernel.taskBinding(77)).toBeNull();
+    expect(kernel.matter(opened.id)).toMatchObject({
+      status: "active",
+      semanticCourse: "fetch red mug",
+      semanticRevision: opened.semanticRevision + 1,
+      activeTaskRunId: null,
+      lastTaskOutcomeEvidenceId: outcome.id
+    });
+  });
+
+  it("resumes a cancelled interrupt without silently changing the suspended matter semantics", () => {
+    const kernel = new P2E0ResidentCausalKernel();
+    const original = openMatter(kernel, "matter.jozz", "place mug by north crate");
+    openMatter(kernel, "matter.bob", "help Bob with lantern", "player.bob");
+
+    kernel.suspendMatter(original.id, "matter.bob");
+    kernel.cancelMatter("matter.bob");
+
+    expect(kernel.canResumeMatter(original.id)).toBe(true);
+    expect(kernel.resumeMatter(original.id)).toBe(true);
+    expect(kernel.matter(original.id)).toMatchObject({
+      status: "active",
+      suspendedByMatterId: null,
+      semanticCourse: original.semanticCourse,
+      semanticRevision: original.semanticRevision
+    });
+  });
+
   it("bounds retained recent evidence without turning the probe into a long-term memory store", () => {
     const kernel = new P2E0ResidentCausalKernel(2);
 
