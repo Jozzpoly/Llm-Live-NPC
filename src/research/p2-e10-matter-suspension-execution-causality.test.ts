@@ -4,21 +4,23 @@ import { ExecutionDriver } from "../execution/execution-driver";
 import { createP1Specimen } from "../world/specimen";
 import { World } from "../world/world";
 import { P2E0ResidentCausalKernel } from "./p2-e0-resident-causal-kernel";
+import { P2E10MatterSuspensionAwareExecutor } from "./p2-e10-matter-suspension-execution-causality";
 
-describe("P2-E10 matter suspension execution causality RED", () => {
+describe("P2-E10 matter suspension execution causality", () => {
   it("does not let the exact task of a suspended matter keep crossing mechanical World progress", () => {
     const specimen = createP1Specimen();
     const npc = specimen.entities.find((entity) => entity.id === "npc.001");
     const mug = specimen.entities.find((entity) => entity.id === "item.mug");
     if (!npc || npc.kind !== "npc" || !mug || mug.kind !== "item") {
-      throw new Error("P2-E10 RED requires canonical NPC and mug.");
+      throw new Error("P2-E10 requires canonical NPC and mug.");
     }
     mug.position = { x: npc.position.x + 36, y: npc.position.y };
 
     const world = new World(specimen);
     const resident = new P2E0ResidentCausalKernel();
     const executor = new DeterministicExecutor();
-    const driver = new ExecutionDriver(world, executor);
+    const suspensionAwareExecutor = new P2E10MatterSuspensionAwareExecutor(executor, resident);
+    const driver = new ExecutionDriver(world, suspensionAwareExecutor);
 
     const firstEvidence = resident.recordEvidence({
       kind: "heard",
@@ -38,7 +40,7 @@ describe("P2-E10 matter suspension execution causality RED", () => {
       )
     ).toBe(true);
     const run = executor.state().run;
-    if (!run) throw new Error("P2-E10 RED requires an accepted executor run.");
+    if (!run) throw new Error("P2-E10 requires an accepted executor run.");
     resident.bindTask(firstMatter.id, { taskId: `fetch:${mug.id}`, runId: run.runId });
 
     const interruptEvidence = resident.recordEvidence({
