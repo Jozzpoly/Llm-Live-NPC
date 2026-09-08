@@ -11,7 +11,7 @@ import {
 import { P2E10MatterSuspensionAwareExecutor } from "./p2-e10-matter-suspension-execution-causality";
 
 describe("post-P2-E14 semantic revision while matter is already suspended RED", () => {
-  it("does not let an older task automatically resume after suspended-time reconsideration commits", () => {
+  it("can arm an exact semantic hold while suspended so an older task cannot auto-resume", () => {
     const specimen = createP1Specimen();
     const npc = specimen.entities.find((entity) => entity.id === "npc.001");
     const mug = specimen.entities.find((entity) => entity.id === "item.mug");
@@ -77,6 +77,14 @@ describe("post-P2-E14 semantic revision while matter is already suspended RED", 
     resident.advanceSemanticContext(matter.id, revision.id);
     const ticket = resident.beginSemanticProposal(matter.id);
 
+    // E9 is explicit orchestration authority, not an automatic scheduler. The
+    // missing contract is the ability to arm the exact superseded run while E10
+    // already supplies the mechanical pause. That semantic hold must then
+    // survive the later activity resume.
+    const armed = holds.arm(resident, executor, ticket);
+    expect(armed.status).toBe("held");
+    if (armed.status !== "held") return;
+
     // P2-E4/P2-E13 establish that semantic proposal authority may remain valid
     // while activity/focus state is suspended. A valid reconsideration can land.
     const decision = resident.commitSemanticProposal(ticket, {
@@ -92,10 +100,8 @@ describe("post-P2-E14 semantic revision while matter is already suspended RED", 
     resident.resolveMatter(interrupt.id);
     expect(resident.resumeMatter(matter.id)).toBe(true);
 
-    // Resuming activity must not silently resume a task grounded to an older
-    // semantic revision. Reconsideration completed while suspension already
-    // supplied the mechanical pause, so some exact-run hold/disposition
-    // authority must survive the activity transition before this task can act.
+    // No semantic release was granted. Resuming activity therefore must not
+    // silently resume the older task even though E10 no longer blocks it.
     const beforeResumeStepCount = inner.state().stepsUsed;
     const resumedFrame = driver.step({ playerControl: { moveX: 0, moveY: 0 } });
 
@@ -109,5 +115,6 @@ describe("post-P2-E14 semantic revision while matter is already suspended RED", 
       kind: "item",
       heldBy: null
     });
+    expect.soft(holds.holdForRun(run.runId)).toEqual(armed.hold);
   });
 });
