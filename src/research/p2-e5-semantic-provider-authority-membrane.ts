@@ -163,8 +163,10 @@ export class P2E5SemanticProviderAuthorityMembrane {
   }
 
   /**
-   * P2-E17 attempt-lifecycle seam. It consumes only the exact local run object.
-   * The E0 release mutation is deliberately still RED-stubbed at this checkpoint.
+   * P2-E17 attempt-lifecycle seam. It consumes only the exact local run object
+   * and asks the resident to release only that run's exact still-pending ticket.
+   * If semantic lifecycle already revoked the ticket, the local run is still
+   * consumed without rewriting that existing stale cause.
    */
   abandon(
     resident: P2E0ResidentCausalKernel,
