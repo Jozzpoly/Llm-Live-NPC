@@ -2,7 +2,11 @@ import type {
   DeterministicExecutor,
   ExecutorRunCause
 } from "../execution/deterministic-executor";
-import type { P2E0ResidentCausalKernel } from "../research/p2-e0-resident-causal-kernel";
+import type {
+  P2E0MatterState,
+  P2E0ProposalCommitResult,
+  P2E0ResidentCausalKernel
+} from "../research/p2-e0-resident-causal-kernel";
 
 export interface SupersededTaskDispositionRecord {
   matterId: string;
@@ -25,6 +29,8 @@ export type SupersededTaskDispositionResult =
         | "matter_not_active"
         | "matter_has_no_active_task"
         | "task_binding_missing"
+        | "semantic_reconsideration_unresolved"
+        | "semantic_decision_not_current"
         | "task_not_superseded"
         | "executor_run_mismatch"
         | "executor_not_running";
@@ -43,12 +49,27 @@ function cloneCause(cause: ExecutorRunCause): ExecutorRunCause {
   }
 }
 
+function sameSemanticDecisionState(a: P2E0MatterState, b: P2E0MatterState): boolean {
+  return (
+    a.id === b.id &&
+    a.semanticCourse === b.semanticCourse &&
+    a.semanticRevision === b.semanticRevision &&
+    a.latestSemanticEvidenceId === b.latestSemanticEvidenceId
+  );
+}
+
 /**
  * Product-adjacent lifecycle boundary earned by First Presence composition.
  *
  * A still-active semantic matter may change meaning while its old mechanical
  * task is already running. This boundary retires exactly that old run only when
- * the resident binding proves it was grounded from an older semantic revision.
+ * the resident binding proves it was grounded from an older semantic revision
+ * and the caller presents the exact applied semantic decision that is still the
+ * current decision state for the same matter.
+ *
+ * Requiring current applied decision evidence prevents mere evidence attribution
+ * from becoming authority to destroy a task before reconsideration has actually
+ * decided what the resident now means to do.
  *
  * It deliberately does not mark the task succeeded/failed and does not
  * terminalize the matter. The operation only removes a mechanically obsolete
@@ -59,7 +80,8 @@ export class SupersededTaskDispositionBoundary {
   dispose(
     resident: P2E0ResidentCausalKernel,
     executor: DeterministicExecutor,
-    matterId: string
+    matterId: string,
+    decision: P2E0ProposalCommitResult
   ): SupersededTaskDispositionResult {
     const matter = resident.matter(matterId);
     if (!matter) return { status: "rejected", reason: "matter_missing" };
@@ -74,6 +96,15 @@ export class SupersededTaskDispositionBoundary {
     const binding = resident.taskBinding(runId);
     if (!binding || binding.matterId !== matter.id) {
       return { status: "rejected", reason: "task_binding_missing" };
+    }
+    if (decision.status !== "applied") {
+      return { status: "rejected", reason: "semantic_reconsideration_unresolved" };
+    }
+    if (
+      decision.matter.id !== matter.id ||
+      !sameSemanticDecisionState(decision.matter, matter)
+    ) {
+      return { status: "rejected", reason: "semantic_decision_not_current" };
     }
     if (binding.semanticRevision >= matter.semanticRevision) {
       return { status: "rejected", reason: "task_not_superseded" };
