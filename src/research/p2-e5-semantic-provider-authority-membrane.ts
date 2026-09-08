@@ -25,10 +25,8 @@ export interface P2E5ModelSemanticInput {
 }
 
 export interface P2E5LocalProviderRun {
-  /** Serialize only `modelInput` across a semantic-provider boundary. */
+  /** This is the only public/serializable surface of one provider run. */
   modelInput: P2E5ModelSemanticInput;
-  /** Causal authority remains resident-side and must never come from provider output. */
-  localAuthority: P2E0ProposalTicket;
 }
 
 export type P2E5PrepareResult = { status: "ready"; run: P2E5LocalProviderRun };
@@ -40,7 +38,8 @@ export type P2E5ProviderOutputRejection =
 
 export type P2E5SettlementResult =
   | P2E0ProposalCommitResult
-  | { status: "provider_output_rejected"; reason: P2E5ProviderOutputRejection };
+  | { status: "provider_output_rejected"; reason: P2E5ProviderOutputRejection }
+  | { status: "local_run_rejected"; reason: "unknown_local_run" };
 
 function modelEvidenceSource(source: P2E0EvidenceSource): P2E5ModelEvidenceSource {
   switch (source.kind) {
@@ -91,25 +90,32 @@ function normalizeSemanticProposal(
  * value becomes a bounded semantic proposal before the original resident-owned
  * proposal ticket is used for reconciliation.
  *
+ * Crucially, causal authority is not a public property of the provider run.
+ * It lives in an instance-local WeakMap sidecar keyed by the original run
+ * object. Serializing/cloning the public run therefore cannot carry authority
+ * out and back into the resident. A valid normalized response consumes that
+ * local run exactly once; malformed provider output does not, so transport or
+ * formatting recovery can retry without minting a new resident ticket.
+ *
  * The 512-character output limit is a probe-local safety bound, not a selected
  * final product schema.
  */
 export class P2E5SemanticProviderAuthorityMembrane {
+  private readonly authorityByRun = new WeakMap<P2E5LocalProviderRun, P2E0ProposalTicket>();
+
   prepare(context: P2E4SemanticProposalContext): P2E5PrepareResult {
-    return {
-      status: "ready",
-      run: {
-        modelInput: {
-          currentSemanticCourse: context.matter.semanticCourse,
-          semanticEvidence: {
-            kind: context.semanticEvidence.kind,
-            source: modelEvidenceSource(context.semanticEvidence.source),
-            summary: context.semanticEvidence.summary
-          }
-        },
-        localAuthority: { ...context.proposal }
+    const run: P2E5LocalProviderRun = {
+      modelInput: {
+        currentSemanticCourse: context.matter.semanticCourse,
+        semanticEvidence: {
+          kind: context.semanticEvidence.kind,
+          source: modelEvidenceSource(context.semanticEvidence.source),
+          summary: context.semanticEvidence.summary
+        }
       }
     };
+    this.authorityByRun.set(run, { ...context.proposal });
+    return { status: "ready", run };
   }
 
   settle(
@@ -117,11 +123,17 @@ export class P2E5SemanticProviderAuthorityMembrane {
     run: P2E5LocalProviderRun,
     rawProviderOutput: unknown
   ): P2E5SettlementResult {
+    const localAuthority = this.authorityByRun.get(run);
+    if (!localAuthority) {
+      return { status: "local_run_rejected", reason: "unknown_local_run" };
+    }
+
     const normalized = normalizeSemanticProposal(rawProviderOutput);
     if ("rejection" in normalized) {
       return { status: "provider_output_rejected", reason: normalized.rejection };
     }
 
-    return resident.commitSemanticProposal(run.localAuthority, normalized);
+    this.authorityByRun.delete(run);
+    return resident.commitSemanticProposal(localAuthority, normalized);
   }
 }
