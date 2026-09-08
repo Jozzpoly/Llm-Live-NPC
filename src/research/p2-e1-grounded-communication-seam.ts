@@ -100,7 +100,7 @@ export class P2E1GroundedCommunicationSeam {
     }
 
     const occurrence: P2E1CommunicationOccurrence = {
-      id: `speech.${this.nextOccurrenceSeq++}`,
+      id: `speech.${this.nextOccurrenceSeq}`,
       tick: snapshot.tick,
       kind: "spoken",
       speakerId: speaker.id,
@@ -145,6 +145,8 @@ export class P2E1GroundedCommunicationSeam {
             : null
         };
       });
+
+    this.nextOccurrenceSeq += 1;
 
     return {
       occurrence: cloneOccurrence(occurrence),
