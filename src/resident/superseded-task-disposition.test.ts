@@ -64,8 +64,16 @@ function createFixture() {
   const matter = resident.openMatter({
     id: "matter.fetch-mug",
     originEvidenceId: origin.id,
+    semanticCourse: "uninterpreted"
+  });
+  const initialTicket = resident.beginSemanticProposal(matter.id);
+  const initialDecision = resident.commitSemanticProposal(initialTicket, {
     semanticCourse: "fetch Red mug"
   });
+  if (initialDecision.status !== "applied") {
+    throw new Error(`Fixture semantic decision failed: ${initialDecision.reason}`);
+  }
+
   const prepared = taskStart.prepare(
     resident,
     world.snapshot(),
@@ -83,21 +91,31 @@ function createFixture() {
   );
   if (started.status !== "started") throw new Error(`Fixture start failed: ${started.reason}`);
 
-  return { world, resident, executor, holds, taskStart, disposition, matter, started };
+  return {
+    world,
+    resident,
+    executor,
+    holds,
+    taskStart,
+    disposition,
+    matter,
+    initialDecision,
+    started
+  };
 }
 
 describe("superseded task disposition", () => {
-  it("refuses to retire the still-current task of an active matter", () => {
-    const { resident, executor, disposition, matter, started } = createFixture();
+  it("refuses to retire the still-current task even when given the applied decision that grounded it", () => {
+    const { resident, executor, disposition, matter, initialDecision, started } = createFixture();
 
-    expect(disposition.dispose(resident, executor, matter.id)).toEqual({
+    expect(disposition.dispose(resident, executor, matter.id, initialDecision)).toEqual({
       status: "rejected",
       reason: "task_not_superseded"
     });
     expect(resident.taskBinding(started.binding.runId)).toEqual(started.binding);
     expect(resident.matter(matter.id)).toMatchObject({
       status: "active",
-      semanticRevision: 1,
+      semanticRevision: 2,
       activeTaskRunId: started.binding.runId
     });
     expect(executor.state()).toMatchObject({
@@ -106,7 +124,28 @@ describe("superseded task disposition", () => {
     });
   });
 
-  it("retires an exact held superseded run without fabricating outcome or terminalizing the matter, then allows a replacement task", () => {
+  it("refuses disposal after evidence attribution alone when no new applied decision exists yet", () => {
+    const { resident, executor, disposition, matter, initialDecision, started } = createFixture();
+
+    const correction = resident.recordEvidence({
+      kind: "heard",
+      source: { kind: "actor", actorId: "player.jozz" },
+      summary: "player.jozz said: Actually, bring me the blue mug."
+    });
+    resident.advanceSemanticContext(matter.id, correction.id);
+
+    expect(disposition.dispose(resident, executor, matter.id, initialDecision)).toEqual({
+      status: "rejected",
+      reason: "semantic_decision_not_current"
+    });
+    expect(resident.taskBinding(started.binding.runId)).toEqual(started.binding);
+    expect(executor.state()).toMatchObject({
+      status: "running",
+      run: { runId: started.binding.runId }
+    });
+  });
+
+  it("retires an exact held superseded run only after current applied reconsideration, then allows a replacement task", () => {
     const { world, resident, executor, holds, taskStart, disposition, matter, started } = createFixture();
 
     const correction = resident.recordEvidence({
@@ -124,15 +163,15 @@ describe("superseded task disposition", () => {
     expect(decision.status).toBe("applied");
     if (decision.status !== "applied") return;
 
-    const result = disposition.dispose(resident, executor, matter.id);
+    const result = disposition.dispose(resident, executor, matter.id, decision);
     expect(result).toMatchObject({
       status: "disposed",
       record: {
         matterId: matter.id,
         taskId: "fetch:item.mug",
         runId: started.binding.runId,
-        taskSemanticRevision: 1,
-        currentSemanticRevision: 3,
+        taskSemanticRevision: 2,
+        currentSemanticRevision: 4,
         disposition: "retired",
         reason: "semantic_revision_superseded"
       }
@@ -143,7 +182,7 @@ describe("superseded task disposition", () => {
     expect(resident.matter(matter.id)).toMatchObject({
       status: "active",
       semanticCourse: "fetch Blue mug",
-      semanticRevision: 3,
+      semanticRevision: 4,
       activeTaskRunId: null,
       lastTaskOutcomeEvidenceId: null
     });
@@ -173,7 +212,7 @@ describe("superseded task disposition", () => {
     });
     expect(replacementStarted.binding).toMatchObject({
       matterId: matter.id,
-      semanticRevision: 3
+      semanticRevision: 4
     });
   });
 });
