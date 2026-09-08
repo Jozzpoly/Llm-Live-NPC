@@ -24,7 +24,7 @@ const exactFetchLabelGrounder: P2E6LocalTaskGrounder = ({ semanticCourse, actorI
 };
 
 describe("first product-adjacent Presence composition", () => {
-  it("joins one grounded request through semantic authority, task execution and factual outcome with bounded owner provenance", async () => {
+  it("joins one explicitly admitted grounded request through semantic authority, task execution and factual outcome", async () => {
     const specimen = createP1Specimen();
     const npc = specimen.entities.find((entity) => entity.id === "npc.001");
     const mug = specimen.entities.find((entity) => entity.id === "item.mug");
@@ -52,28 +52,38 @@ describe("first product-adjacent Presence composition", () => {
       exactFetchLabelGrounder
     );
 
-    const request = owner.openPlayerRequest("Bring me the red mug.");
-    expect(request.matter).toMatchObject({
+    const heard = owner.receiveDirectPlayerSpeech("Bring me the red mug.");
+    expect(heard).toMatchObject({
+      kind: "heard",
+      source: { kind: "actor", actorId: "player.jozz" },
+      summary: "player.jozz said: Bring me the red mug."
+    });
+    expect(owner.trace()).toEqual([]);
+
+    // Matter admission is an explicit caller decision. Hearing alone did not
+    // silently promote the utterance into an unresolved resident consequence.
+    const matter = owner.openMatterFromEvidence(heard.id);
+    expect(matter).toMatchObject({
       id: "matter.presence.1",
       semanticCourse: "uninterpreted",
       semanticRevision: 1,
-      latestSemanticEvidenceId: request.evidenceId,
+      latestSemanticEvidenceId: heard.id,
       status: "active"
     });
 
-    const semantic = await owner.reconsiderMatter(request.matter.id);
+    const semantic = await owner.reconsiderMatter(matter.id);
     expect(semantic).toMatchObject({
       status: "applied",
       matter: {
-        id: request.matter.id,
+        id: matter.id,
         semanticCourse: "fetch Red mug",
         semanticRevision: 2,
-        latestSemanticEvidenceId: request.evidenceId,
+        latestSemanticEvidenceId: heard.id,
         status: "active"
       }
     });
 
-    const started = owner.startMatterTask(request.matter.id);
+    const started = owner.startMatterTask(matter.id);
     expect(started.status).toBe("started");
     if (started.status !== "started") return;
 
@@ -92,11 +102,11 @@ describe("first product-adjacent Presence composition", () => {
 
     // Mechanical success becomes factual resident evidence, but the composition
     // deliberately does not claim semantic satisfaction or terminalize the matter.
-    expect(owner.resident.matter(request.matter.id)).toMatchObject({
+    expect(owner.resident.matter(matter.id)).toMatchObject({
       status: "active",
       semanticCourse: "fetch Red mug",
       semanticRevision: 2,
-      latestSemanticEvidenceId: request.evidenceId,
+      latestSemanticEvidenceId: heard.id,
       activeTaskRunId: null,
       lastTaskOutcomeEvidenceId: recordedOutcome.evidence.id
     });
@@ -126,8 +136,12 @@ describe("first product-adjacent Presence composition", () => {
       return;
     }
 
+    expect(experience).toMatchObject({
+      matterId: matter.id,
+      evidenceId: heard.id
+    });
     expect(semanticCommit).toMatchObject({
-      matterId: request.matter.id,
+      matterId: matter.id,
       semanticEvidenceId: experience.evidenceId,
       fromRevision: 1,
       toRevision: 2,
@@ -135,12 +149,12 @@ describe("first product-adjacent Presence composition", () => {
       toCourse: "fetch Red mug"
     });
     expect(taskStarted).toMatchObject({
-      matterId: request.matter.id,
+      matterId: matter.id,
       runId: started.binding.runId,
       semanticRevision: semanticCommit.toRevision
     });
     expect(taskOutcome).toMatchObject({
-      matterId: request.matter.id,
+      matterId: matter.id,
       runId: taskStarted.runId,
       evidenceId: recordedOutcome.evidence.id
     });
