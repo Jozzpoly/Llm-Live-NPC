@@ -139,4 +139,37 @@ describe("P2-E2 communication runtime ownership boundary", () => {
     });
     expect(npc2.recentEvidence()).toEqual([]);
   });
+
+  it("leaves resident continuity untouched when receiver assessment aborts before the communication frame commits", () => {
+    const world = new World(createP1Specimen());
+    const npc = new P2E0ResidentCausalKernel();
+    const boundary = new P2E2CommunicationRuntimeBoundary(
+      world,
+      new Map([["npc.001", npc]])
+    );
+
+    expect(() =>
+      boundary.speak(
+        { speakerId: "player.jozz", text: "This frame must abort." },
+        () => {
+          throw new Error("receiver assessment failed");
+        }
+      )
+    ).toThrow("receiver assessment failed");
+
+    expect(npc.recentEvidence()).toEqual([]);
+
+    const committed = boundary.speak(
+      { speakerId: "player.jozz", text: "First committed speech." },
+      ({ observer }) => observer.id === "npc.001"
+    );
+
+    expect(committed.frame.occurrence.id).toBe("speech.1");
+    expect(npc.recentEvidence()).toHaveLength(1);
+    expect(npc.recentEvidence()[0]?.source).toMatchObject({
+      kind: "actor",
+      actorId: "player.jozz",
+      occurrenceId: "speech.1"
+    });
+  });
 });
