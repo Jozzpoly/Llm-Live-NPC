@@ -362,21 +362,11 @@ export class P2E0ResidentCausalKernel {
   }
 
   resolveMatter(matterId: string): P2E0MatterState {
-    const matter = this.requireMatter(matterId);
-    matter.status = "resolved";
-    matter.suspendedByMatterId = null;
-    this.revokePendingProposalsForMatter(matter, "matter_terminal");
-    this.semanticEvidenceAnchors.delete(matterId);
-    return cloneMatter(matter);
+    return this.terminalizeMatter(matterId, "resolved");
   }
 
   cancelMatter(matterId: string): P2E0MatterState {
-    const matter = this.requireMatter(matterId);
-    matter.status = "cancelled";
-    matter.suspendedByMatterId = null;
-    this.revokePendingProposalsForMatter(matter, "matter_terminal");
-    this.semanticEvidenceAnchors.delete(matterId);
-    return cloneMatter(matter);
+    return this.terminalizeMatter(matterId, "cancelled");
   }
 
   bindTask(matterId: string, task: { taskId: string; runId: number }): P2E0TaskBinding {
@@ -445,6 +435,27 @@ export class P2E0ResidentCausalKernel {
     // The factual outcome is evidence. A later policy/cognition step may decide
     // that it satisfies or semantically changes the matter.
     return evidence;
+  }
+
+  /**
+   * Terminalization is a monotonic causal transition. The first terminal state
+   * owns the matter's terminal cause; repeated same or opposite terminal calls
+   * are idempotent reads of that already-established state rather than history
+   * rewrites. The returned matter lets orchestration detect that an opposite
+   * request did not take authority without introducing an exception race.
+   */
+  private terminalizeMatter(
+    matterId: string,
+    status: Extract<P2E0MatterStatus, "resolved" | "cancelled">
+  ): P2E0MatterState {
+    const matter = this.requireMatter(matterId);
+    if (isTerminal(matter.status)) return cloneMatter(matter);
+
+    matter.status = status;
+    matter.suspendedByMatterId = null;
+    this.revokePendingProposalsForMatter(matter, "matter_terminal");
+    this.semanticEvidenceAnchors.delete(matterId);
+    return cloneMatter(matter);
   }
 
   private revokePendingProposalsForMatter(
