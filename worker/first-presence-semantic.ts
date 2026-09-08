@@ -164,7 +164,6 @@ function semanticTool() {
         "Propose the resident matter's current semantic course after considering only the supplied current course and latest grounded evidence.",
       parameters: {
         type: "object",
-        additionalProperties: false,
         properties: {
           semanticCourse: {
             type: "string",
