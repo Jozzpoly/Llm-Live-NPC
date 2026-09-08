@@ -23,6 +23,7 @@ import {
 import {
   P2E6GroundedTaskStartBoundary,
   type P2E6LocalTaskGrounder,
+  type P2E6PrepareResult,
   type P2E6StartResult
 } from "../research/p2-e6-grounded-task-start-causality";
 import {
@@ -84,6 +85,8 @@ export type FirstPresenceReconsiderResult =
       status: "context_rejected";
       reason: FirstPresenceContextRejectionReason;
     };
+
+export type FirstPresenceTaskStartResult = P2E6PrepareResult | P2E6StartResult;
 
 export type FirstPresenceStepResult = {
   frame: ExecutionFrameResult;
@@ -207,7 +210,7 @@ export class FirstPresenceComposition {
     return settlement;
   }
 
-  startMatterTask(matterId: string): P2E6StartResult {
+  startMatterTask(matterId: string): FirstPresenceTaskStartResult {
     const prepared = this.taskStart.prepare(
       this.resident,
       this.world.snapshot(),
