@@ -72,13 +72,16 @@ export type FirstPresenceRequestResult = {
   evidenceId: string;
 };
 
+type FirstPresenceContextRejectionReason = Extract<
+  P2E4SemanticProposalContextResult,
+  { status: "rejected" }
+>["reason"];
+
 export type FirstPresenceReconsiderResult =
   | P2E5SettlementResult
   | {
       status: "context_rejected";
-      reason: P2E4SemanticProposalContextResult extends { status: "rejected"; reason: infer Reason }
-        ? Reason
-        : never;
+      reason: FirstPresenceContextRejectionReason;
     };
 
 export type FirstPresenceStepResult = {
