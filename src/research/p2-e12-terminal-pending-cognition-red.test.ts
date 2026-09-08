@@ -15,7 +15,7 @@ function openMatter(
   return resident.openMatter({ id, originEvidenceId: evidence.id, semanticCourse });
 }
 
-describe("P2-E12 terminal pending cognition lifecycle RED", () => {
+describe("P2-E12 pending cognition authority lifecycle RED", () => {
   for (const terminal of ["resolved", "cancelled"] as const) {
     it(`does not report never-returning proposals as actively pending after their matter becomes ${terminal}`, () => {
       const resident = new P2E0ResidentCausalKernel();
@@ -67,6 +67,47 @@ describe("P2-E12 terminal pending cognition lifecycle RED", () => {
       status: "suspended",
       semanticCourse: "place mug by north crate"
     });
+  });
+
+  it("removes an older proposal from the active pending set as soon as newer semantic evidence supersedes its dependency", () => {
+    const resident = new P2E0ResidentCausalKernel();
+    const matter = openMatter(resident, "matter.revision", "fetch blue mug");
+    const oldTicket = resident.beginSemanticProposal(matter.id);
+
+    const newerSpeech = resident.recordEvidence({
+      kind: "heard",
+      source: { kind: "actor", actorId: "player.jozz", occurrenceId: "speech.revision.newer" },
+      summary: "No, red after all.",
+      matterId: matter.id
+    });
+    resident.advanceSemanticContext(matter.id, newerSpeech.id);
+
+    expect(resident.pendingSemanticProposals()).toEqual([]);
+    const late = resident.commitSemanticProposal(oldTicket, { semanticCourse: "fetch blue mug" });
+    expect(late.status).toBe("stale");
+    expect(resident.matter(matter.id)).toMatchObject({
+      status: "active",
+      semanticCourse: "fetch blue mug",
+      semanticRevision: oldTicket.semanticRevision + 1,
+      latestSemanticEvidenceId: newerSpeech.id
+    });
+  });
+
+  it("removes losing same-revision siblings from active pending authority once one proposal commits", () => {
+    const resident = new P2E0ResidentCausalKernel();
+    const matter = openMatter(resident, "matter.siblings", "fetch mug");
+    const winner = resident.beginSemanticProposal(matter.id);
+    const loser = resident.beginSemanticProposal(matter.id);
+
+    expect(resident.pendingSemanticProposals()).toEqual([winner, loser]);
+    expect(
+      resident.commitSemanticProposal(winner, { semanticCourse: "fetch red mug" })
+    ).toMatchObject({ status: "applied" });
+
+    expect(resident.pendingSemanticProposals()).toEqual([]);
+    const lateLoser = resident.commitSemanticProposal(loser, { semanticCourse: "fetch blue mug" });
+    expect(lateLoser.status).toBe("stale");
+    expect(resident.matter(matter.id)?.semanticCourse).toBe("fetch red mug");
   });
 
   it("does not accumulate active pending cognition from repeated terminal matters whose providers never return", () => {
