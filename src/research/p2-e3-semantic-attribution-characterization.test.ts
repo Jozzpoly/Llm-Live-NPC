@@ -136,4 +136,33 @@ describe("P2-E3 semantic attribution characterization", () => {
     expect(fetchInterpretation.semanticCourse).toBe("fetch mug");
     expect(clarificationInterpretation.semanticCourse).toBe("clarify which mug");
   });
+
+  it("already permits one grounded evidence item to originate more than one semantic matter", () => {
+    const resident = new P2E0ResidentCausalKernel();
+    const origin = resident.recordEvidence({
+      kind: "heard",
+      source: {
+        kind: "actor",
+        actorId: "player.jozz",
+        occurrenceId: "speech.multi"
+      },
+      summary: "player.jozz said: Bring me the mug, and remember that Bob asked about the lantern."
+    });
+
+    const mugMatter = resident.openMatter({
+      id: "matter.mug",
+      originEvidenceId: origin.id,
+      semanticCourse: "clarify and then handle the mug request"
+    });
+    const bobMatter = resident.openMatter({
+      id: "matter.bob-lantern",
+      originEvidenceId: origin.id,
+      semanticCourse: "retain Bob's lantern request as unresolved"
+    });
+
+    expect(mugMatter.originEvidenceId).toBe(origin.id);
+    expect(bobMatter.originEvidenceId).toBe(origin.id);
+    expect(mugMatter.id).not.toBe(bobMatter.id);
+    expect(resident.recentEvidence()).toHaveLength(1);
+  });
 });
