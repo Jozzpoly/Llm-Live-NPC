@@ -14,17 +14,26 @@ Shorthand:
 
 ## Current phase
 
-**Live NPC Refoundation Pass 1 — presence / invariants / anti-goals — is closed as a problem-definition pass.**
+**Pass 1 — Presence Contract — is closed.**
 
-Next stage:
+**Pass 2 — architecture / donor / comparative research — is closed as a bounded architecture-selection pass.**
 
-**Pass 2 — architecture / donor / research campaign.**
+Current-best architecture hypothesis for the first Presence experiment:
 
-Do **not** begin Pass 2 by implementing chat, memory, a planner or a `Mind Runtime`. The next job is to compare competing architecture hypotheses against the Presence Contract and select the smallest architecture capable of supporting a genuinely informative first Life Test.
+> a **Minimal Resident Kernel**: one logical resident owner preserving bounded grounded experience, unresolved semantic matters, task causality and scoped asynchronous semantic proposals, while local competences act through World authority.
 
-Canonical Pass 1 contract:
+BDI/PRS and C4 remain important design donors rather than adopted whole frameworks. Planner families, long-term memory, a global blackboard and full event sourcing remain deliberately unselected.
 
-[`docs/LIVE_NPC_PASS1_PRESENCE_CONTRACT.md`](docs/LIVE_NPC_PASS1_PRESENCE_CONTRACT.md)
+Next bounded frontier:
+
+**P2-E0 — headless resident causal-kernel probe.**
+
+P2-E0 must deterministically prove or falsify matter persistence, scoped stale-proposal reconciliation, interruption/resumption and task/outcome causality **before** new speech UI, real LLM semantics or runtime integration are added.
+
+Canonical research docs:
+
+- [`docs/LIVE_NPC_PASS1_PRESENCE_CONTRACT.md`](docs/LIVE_NPC_PASS1_PRESENCE_CONTRACT.md)
+- [`docs/LIVE_NPC_PASS2_ARCHITECTURE_DECISION.md`](docs/LIVE_NPC_PASS2_ARCHITECTURE_DECISION.md)
 
 ## Live repository state
 
@@ -77,7 +86,7 @@ The recovered ancestry supports a bounded donor stack containing:
 
 E1 constants and names (`npc.001`, range, cooldown, `wait|fetch`) are experiment apparatus, not future architecture.
 
-## Pass 1 product truths
+## Product truths preserved from Pass 1
 
 The strongest current invariants are:
 
@@ -91,21 +100,33 @@ The strongest current invariants are:
 - canonical physical/communication outcomes remain World-grounded;
 - meaningful elapsed time cannot disappear from NPC continuity.
 
-Several attractive ideas remain **hypotheses**, not requirements: an explicit `Active Life State`, cognitive-pressure scheduling, a semantic-transition validator, skills/competences, a persistent `Live Mind Runtime`, planner families, long-term memory design and exact communication mechanics.
+## Pass 2 current-best architecture constraints
+
+For the first experiment:
+
+- the resident has one logical current owner, independent of where it is hosted;
+- recent grounded experience and unresolved matters persist outside LLM calls;
+- the LLM returns a **semantic proposal**, not ownership of the resident or World;
+- proposal validity is scoped to the semantic matter/evidence it depends on rather than one global World-version CAS;
+- task grounding/revalidation uses current World/evidence after semantic commit;
+- routine local competence should continue without unnecessary semantic inference;
+- task success returns as evidence and does not automatically equal arbitrary semantic satisfaction.
+
+These are current research decisions for P2-E0, not a claim that the final production architecture is solved.
 
 ## Explicit non-claims
 
 The project has not yet solved or selected:
 
-- final Live Mind architecture;
+- final production Live Mind/resident architecture;
 - generic speech/hearing/shared-chat mechanics;
-- attention/addressedness;
-- belief representation;
+- final attention/addressedness policy;
+- general belief representation;
 - long-term memory/consolidation/forgetting;
-- task/skill/planner architecture;
+- planner/BT/GOAP/HTN/skill composition architecture;
 - routines/proactive autonomy/long-horizon goals;
 - pathfinding/navmesh;
-- multiplayer cognitive concurrency;
+- multiplayer resident hosting/concurrency;
 - persistence/offscreen simulation/time scaling;
 - production scaling/cost architecture;
 - final model/provider;
@@ -121,7 +142,8 @@ A fresh takeover should read:
 
 1. `README.md` — fast orientation;
 2. `docs/PROJECT_STATE.md` — live evidence/topology/frontier;
-3. `docs/LIVE_NPC_PASS1_PRESENCE_CONTRACT.md` — problem definition and qualification target;
-4. `docs/FRESH_TAKEOVER.md` — startup mandate for the next conversation.
+3. `docs/LIVE_NPC_PASS1_PRESENCE_CONTRACT.md` — product/problem contract;
+4. `docs/LIVE_NPC_PASS2_ARCHITECTURE_DECISION.md` — current architecture decision and first probe;
+5. `docs/FRESH_TAKEOVER.md` — startup mandate for the next conversation.
 
 Historical design/evidence documents and closed PRs remain available when exact provenance is needed, but they are not the primary startup path.
