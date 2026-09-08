@@ -28,24 +28,69 @@ export type P2E4SemanticProposalContextResult =
         | "semantic_evidence_not_retained";
     };
 
+function sameTicket(a: P2E0ProposalTicket, b: P2E0ProposalTicket): boolean {
+  return (
+    a.proposalId === b.proposalId &&
+    a.matterId === b.matterId &&
+    a.semanticRevision === b.semanticRevision &&
+    a.semanticEvidenceId === b.semanticEvidenceId
+  );
+}
+
+function terminal(status: P2E0MatterStatus): boolean {
+  return status === "resolved" || status === "cancelled";
+}
+
 /**
  * P2-E4 research apparatus only.
  *
- * The seam should project one already-selected resident matter into a bounded,
- * self-contained semantic proposal context. It must not pull raw World state,
- * E1 perception, UI state or unrelated resident evidence into the provider
- * boundary. The proposal ticket remains the causal authority for reconciliation.
+ * Projects one already-selected resident matter into a bounded, self-contained
+ * semantic proposal context. It deliberately does not pull raw World state, E1
+ * perception, UI state or unrelated resident evidence into the provider
+ * boundary. The P2-E0 proposal ticket remains the causal authority used when a
+ * later proposal is reconciled back into resident continuity.
  */
 export class P2E4SemanticProposalContextSeam {
   build(
     resident: P2E0ResidentCausalKernel,
     ticket: P2E0ProposalTicket
   ): P2E4SemanticProposalContextResult {
-    // RED apparatus: the context projection has not yet been earned. Returning
-    // a deterministic rejection lets the first behavioral attack fail at the
-    // missing boundary rather than on TypeScript/import plumbing.
-    void resident;
-    void ticket;
-    return { status: "rejected", reason: "proposal_not_pending" };
+    const pending = resident
+      .pendingSemanticProposals()
+      .find((candidate) => candidate.proposalId === ticket.proposalId);
+    if (!pending || !sameTicket(pending, ticket)) {
+      return { status: "rejected", reason: "proposal_not_pending" };
+    }
+
+    const matter = resident.matter(ticket.matterId);
+    if (!matter) return { status: "rejected", reason: "matter_missing" };
+    if (terminal(matter.status)) return { status: "rejected", reason: "matter_terminal" };
+    if (
+      matter.semanticRevision !== ticket.semanticRevision ||
+      matter.latestSemanticEvidenceId !== ticket.semanticEvidenceId
+    ) {
+      return { status: "rejected", reason: "semantic_dependency_changed" };
+    }
+
+    const semanticEvidence = resident
+      .recentEvidence()
+      .find((evidence) => evidence.id === ticket.semanticEvidenceId);
+    if (!semanticEvidence) {
+      return { status: "rejected", reason: "semantic_evidence_not_retained" };
+    }
+
+    return {
+      status: "ready",
+      context: {
+        proposal: { ...ticket },
+        matter: {
+          id: matter.id,
+          status: matter.status,
+          semanticCourse: matter.semanticCourse,
+          semanticRevision: matter.semanticRevision
+        },
+        semanticEvidence
+      }
+    };
   }
 }
