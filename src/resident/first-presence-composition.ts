@@ -30,9 +30,14 @@ import {
   type P2E7OutcomeReconciliationResult
 } from "../research/p2-e7-grounded-task-outcome-causality";
 
+/**
+ * Deterministic in-process semantic stub used only by the first composition
+ * slice. Live/async provider transport is intentionally deferred until its
+ * admission, timeout and retry ownership can be composed explicitly.
+ */
 export type FirstPresenceSemanticProvider = (
   input: P2E5ModelSemanticInput
-) => unknown | Promise<unknown>;
+) => { semanticCourse: string };
 
 type FirstPresenceTraceEvent =
   | {
@@ -96,8 +101,10 @@ export type FirstPresenceStepResult = {
  *
  * Communication ingress and matter admission are intentionally separate. This
  * owner does not decide that every heard utterance becomes an unresolved matter.
- * It also does not yet choose attention, interruption, semantic satisfaction,
- * terminal retention, live provider transport or browser presentation.
+ * The semantic provider is deliberately synchronous/deterministic in Slice 1,
+ * so async provider admission/retry authority is not accidentally selected.
+ * The owner also does not yet choose attention, interruption, semantic
+ * satisfaction, terminal retention or browser presentation.
  */
 export class FirstPresenceComposition {
   readonly resident = new P2E0ResidentCausalKernel();
@@ -167,7 +174,7 @@ export class FirstPresenceComposition {
     return matter;
   }
 
-  async reconsiderMatter(matterId: string): Promise<FirstPresenceReconsiderResult> {
+  reconsiderMatter(matterId: string): FirstPresenceReconsiderResult {
     const before = this.resident.matter(matterId);
     if (!before) {
       return { status: "context_rejected", reason: "matter_missing" };
@@ -183,7 +190,7 @@ export class FirstPresenceComposition {
     }
 
     const run = this.providerMembrane.prepare(context.context).run;
-    const rawOutput = await this.semanticProvider(structuredClone(run.modelInput));
+    const rawOutput = this.semanticProvider(structuredClone(run.modelInput));
     const settlement = this.providerMembrane.settle(this.resident, run, rawOutput);
     if (settlement.status === "applied") {
       this.appendTrace({
