@@ -40,12 +40,31 @@ export class P2E2CommunicationRuntimeBoundary {
   ) {}
 
   speak(input: P2E1SpeechInput, canReceive: P2E1ReceptionPolicy): P2E2CommunicationResult {
+    // The seam completes receiver assessment against one occurrence-time World
+    // snapshot before resident state is touched. No resident can therefore gain
+    // a partial "heard" record from a communication frame that never committed.
     const frame = this.seam.speak(this.world.snapshot(), input, canReceive);
+    const residentEvidence: P2E2ResidentEvidenceDelivery[] = [];
 
-    // RED apparatus: P2-E2 has not yet earned the receiver-specific resident
-    // ingress. The first behavioral attack should fail here rather than passing
-    // through prompt plumbing or a global World event log by accident.
-    void this.residents;
-    return { frame, residentEvidence: [] };
+    for (const delivery of frame.deliveries) {
+      const heard = delivery.experience;
+      if (!heard) continue;
+
+      const resident = this.residents.get(delivery.observerId);
+      if (!resident) continue;
+
+      const evidence = resident.recordEvidence({
+        kind: "heard",
+        source: {
+          kind: "actor",
+          actorId: heard.source.actorId,
+          occurrenceId: heard.occurrenceId
+        },
+        summary: `${heard.source.actorId} said: ${heard.text}`
+      });
+      residentEvidence.push({ observerId: delivery.observerId, evidence });
+    }
+
+    return { frame, residentEvidence };
   }
 }
