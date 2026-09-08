@@ -107,6 +107,8 @@ describe("First Presence deferred semantic owner", () => {
     const begun = deferred.beginReconsideration(matter.id);
     expect(begun.status).toBe("pending");
     if (begun.status !== "pending") return;
+    expect(Object.isFrozen(begun.attempt)).toBe(true);
+    expect(Object.isFrozen(begun.attempt.modelInput)).toBe(true);
     expect(begun.attempt).toMatchObject({
       matterId: matter.id,
       heldRunId: started.binding.runId,
@@ -284,5 +286,68 @@ describe("First Presence deferred semantic owner", () => {
       kind: "item",
       heldBy: "npc.001"
     });
+  });
+
+  it("bounds same-matter concurrency and lets newer semantic evidence supersede a pending attempt without opening an execution window", () => {
+    const { execution, presence, deferred, matter, started } = createFixture();
+
+    const firstCorrection = presence.receiveDirectPlayerSpeech("Actually, bring me the blue mug.");
+    presence.advanceMatterFromEvidence(matter.id, firstCorrection.id);
+
+    const first = deferred.beginReconsideration(matter.id);
+    expect(first.status).toBe("pending");
+    if (first.status !== "pending") return;
+    expect(deferred.beginReconsideration(matter.id)).toEqual({
+      status: "rejected",
+      reason: "matter_attempt_pending"
+    });
+
+    const heldSteps = execution.executor.state().stepsUsed;
+    const newerCorrection = presence.receiveDirectPlayerSpeech(
+      "No — definitely the blue mug; ignore my earlier uncertainty."
+    );
+    expect(presence.advanceMatterFromEvidence(matter.id, newerCorrection.id)).toMatchObject({
+      id: matter.id,
+      semanticRevision: 4,
+      activeTaskRunId: started.binding.runId
+    });
+    expect(presence.resident.pendingSemanticProposals()).toEqual([]);
+
+    const newer = deferred.beginReconsideration(matter.id);
+    expect(newer.status).toBe("pending");
+    if (newer.status !== "pending") return;
+    expect(newer.attempt).toMatchObject({
+      heldRunId: started.binding.runId,
+      reusedExistingHold: true,
+      modelInput: {
+        semanticEvidence: { summary: expect.stringContaining("definitely the blue mug") }
+      }
+    });
+    expect(newer.attempt.attemptId).not.toBe(first.attempt.attemptId);
+    expect(deferred.settle(first.attempt, { semanticCourse: "fetch Red mug" })).toEqual({
+      status: "attempt_rejected",
+      reason: "unknown_attempt"
+    });
+    expect(execution.executor.state()).toMatchObject({
+      status: "running",
+      stepsUsed: heldSteps,
+      run: { runId: started.binding.runId }
+    });
+    expect(deferred.state()).toMatchObject({
+      pendingAttempts: [{ attemptId: newer.attempt.attemptId, reusedExistingHold: true }],
+      heldRuns: [{ matterId: matter.id, runId: started.binding.runId }]
+    });
+
+    const decision = deferred.settle(newer.attempt, { semanticCourse: "fetch Blue mug" });
+    expect(decision).toMatchObject({
+      status: "applied",
+      matter: { id: matter.id, semanticCourse: "fetch Blue mug", semanticRevision: 5 }
+    });
+    if (decision.status !== "applied") return;
+    expect(deferred.replaceHeldTask(matter.id, decision)).toMatchObject({
+      status: "disposed",
+      record: { runId: started.binding.runId, currentSemanticRevision: 5 }
+    });
+    expect(deferred.state()).toEqual({ pendingAttempts: [], heldRuns: [] });
   });
 });
