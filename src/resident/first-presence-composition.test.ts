@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { DeterministicExecutor } from "../execution/deterministic-executor";
+import { ExecutionDriver } from "../execution/execution-driver";
 import type { P2E6LocalTaskGrounder } from "../research/p2-e6-grounded-task-start-causality";
 import { createP1Specimen } from "../world/specimen";
 import { World } from "../world/world";
@@ -24,7 +25,7 @@ const exactFetchLabelGrounder: P2E6LocalTaskGrounder = ({ semanticCourse, actorI
 };
 
 describe("first product-adjacent Presence composition", () => {
-  it("joins one explicitly admitted grounded request through semantic authority, task execution and factual outcome", () => {
+  it("joins one explicitly admitted grounded request through the canonical execution driver and factual outcome", () => {
     const specimen = createP1Specimen();
     const npc = specimen.entities.find((entity) => entity.id === "npc.001");
     const mug = specimen.entities.find((entity) => entity.id === "item.mug");
@@ -35,6 +36,7 @@ describe("first product-adjacent Presence composition", () => {
 
     const world = new World(specimen);
     const executor = new DeterministicExecutor();
+    const driver = new ExecutionDriver(world, executor);
     const owner = new FirstPresenceComposition(
       world,
       executor,
@@ -87,14 +89,18 @@ describe("first product-adjacent Presence composition", () => {
     expect(started.status).toBe("started");
     if (started.status !== "started") return;
 
-    let recordedOutcome: Extract<ReturnType<typeof owner.step>["outcome"], { status: "recorded" }> | null = null;
-    for (let step = 0; step < 120 && !recordedOutcome; step += 1) {
-      const result = owner.step();
-      if (result.outcome?.status === "recorded") recordedOutcome = result.outcome;
+    let recordedOutcome: ReturnType<typeof owner.afterExecutionFrame> = null;
+    for (let step = 0; step < 120; step += 1) {
+      const frame = driver.step({ playerControl: { moveX: 0, moveY: 0 } });
+      const outcome = owner.afterExecutionFrame(frame);
+      if (outcome?.status === "recorded") {
+        recordedOutcome = outcome;
+        break;
+      }
     }
 
     expect(recordedOutcome).not.toBeNull();
-    if (!recordedOutcome) return;
+    if (!recordedOutcome || recordedOutcome.status !== "recorded") return;
     expect(recordedOutcome.evidence).toMatchObject({
       kind: "task_outcome",
       source: { kind: "task", runId: started.binding.runId }
