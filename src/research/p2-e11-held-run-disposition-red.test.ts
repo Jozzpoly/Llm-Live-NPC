@@ -80,6 +80,15 @@ describe("P2-E11 held-run terminal disposition RED", () => {
     if (armed.status !== "held") return;
     expect(holds.holdForRun(started.executorRun.runId)).toEqual(armed.hold);
 
+    // Wrong/stale retirement identity must neither touch the real run nor clean
+    // its hold as a side effect.
+    expect(executor.retireCurrentRun(started.executorRun.runId + 1)).toBeNull();
+    expect(inner.state()).toMatchObject({
+      status: "running",
+      run: { runId: started.executorRun.runId }
+    });
+    expect(holds.holdForRun(started.executorRun.runId)).toEqual(armed.hold);
+
     resident.cancelMatter(matter.id);
     expect(dispositions.dispose(resident, executor, matter.id)).toMatchObject({
       status: "disposed",
@@ -101,5 +110,6 @@ describe("P2-E11 held-run terminal disposition RED", () => {
     // mechanical execution and resident task ownership are disposed, retaining
     // it would be stale lifecycle state with no valid release path.
     expect(holds.holdForRun(started.executorRun.runId)).toBeNull();
+    expect(holds.discardForRetiredRun(started.executorRun.runId)).toBeNull();
   });
 });
