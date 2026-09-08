@@ -26,6 +26,7 @@ import {
   SupersededTaskDispositionBoundary,
   type SupersededTaskDispositionResult
 } from "./superseded-task-disposition";
+import type { FirstPresenceTraceEvent, FirstPresenceTraceSink } from "./first-presence-trace";
 
 export interface FirstPresenceDeferredExecution {
   executor: P2E9HoldAwareExecutor;
@@ -208,6 +209,9 @@ function sameTicket(a: P2E0ProposalTicket, b: P2E0ProposalTicket): boolean {
  * After an applied current decision the caller must explicitly choose either
  * resumeHeldTask() or replaceHeldTask(). Time, provider failure and model text
  * never choose between those mechanical consequences on their own.
+ *
+ * An optional FirstPresenceTraceSink only observes these transitions. It carries
+ * no semantic/provider/executor authority and is never read to decide behavior.
  */
 export class FirstPresenceDeferredSemanticOwner {
   private readonly contextSeam = new P2E4SemanticProposalContextSeam();
@@ -220,7 +224,8 @@ export class FirstPresenceDeferredSemanticOwner {
 
   constructor(
     private readonly resident: P2E0ResidentCausalKernel,
-    private readonly execution: FirstPresenceDeferredExecution
+    private readonly execution: FirstPresenceDeferredExecution,
+    private readonly trace?: FirstPresenceTraceSink
   ) {}
 
   beginReconsideration(matterId: string): FirstPresenceDeferredBeginResult {
@@ -259,6 +264,7 @@ export class FirstPresenceDeferredSemanticOwner {
     const providerRun = this.provider.prepare(context.context).run;
     const existingHold = this.execution.holds.holdForRun(binding.runId);
     let reusedExistingHold = false;
+    let newlyArmedHold: P2E9SemanticHold | null = null;
 
     if (existingHold) {
       if (
@@ -277,6 +283,7 @@ export class FirstPresenceDeferredSemanticOwner {
         this.provider.abandon(this.resident, providerRun);
         return { status: "hold_rejected", reason: armed.reason };
       }
+      newlyArmedHold = armed.hold;
     }
     this.knownHeldRunIds.add(binding.runId);
 
@@ -299,6 +306,28 @@ export class FirstPresenceDeferredSemanticOwner {
     };
     this.authorityByAttempt.set(attempt, attemptId);
     this.attemptsById.set(attemptId, authority);
+
+    this.appendTrace({
+      kind: "semantic_pending",
+      matterId,
+      attemptId,
+      proposalId: ticket.proposalId,
+      semanticEvidenceId: ticket.semanticEvidenceId,
+      semanticRevision: ticket.semanticRevision,
+      heldRunId: binding.runId,
+      reusedExistingHold
+    });
+    if (newlyArmedHold) {
+      this.appendTrace({
+        kind: "task_held",
+        matterId: newlyArmedHold.matterId,
+        runId: newlyArmedHold.runId,
+        taskSemanticRevision: newlyArmedHold.taskSemanticRevision,
+        reconsiderationSemanticRevision: newlyArmedHold.reconsiderationSemanticRevision,
+        semanticEvidenceId: newlyArmedHold.semanticEvidenceId
+      });
+    }
+
     return { status: "pending", attempt };
   }
 
@@ -309,17 +338,52 @@ export class FirstPresenceDeferredSemanticOwner {
     const authority = this.takeAttempt(attempt);
     if (!authority) return { status: "attempt_rejected", reason: "unknown_attempt" };
 
+    const before = this.resident.matter(authority.matterId);
     const result = this.provider.settle(this.resident, authority.providerRun, rawProviderOutput);
     if (result.status === "provider_output_rejected") {
       const abandoned = this.provider.abandon(this.resident, authority.providerRun);
       if (abandoned.status !== "abandoned") {
         throw new Error("Deferred semantic owner lost provider authority after output rejection.");
       }
+      this.appendTrace({
+        kind: "semantic_attempt_ended",
+        matterId: authority.matterId,
+        attemptId: authority.attemptId,
+        proposalId: authority.ticket.proposalId,
+        heldRunId: authority.heldRunId,
+        outcome: "provider_output_rejected",
+        reason: result.reason
+      });
       return {
         status: "provider_output_rejected",
         reason: result.reason,
         residentAuthority: abandoned.residentAuthority
       };
+    }
+    if (result.status === "applied") {
+      if (!before) {
+        throw new Error("Deferred semantic decision applied after its matter disappeared from preflight.");
+      }
+      this.appendTrace({
+        kind: "semantic_commit",
+        matterId: authority.matterId,
+        proposalId: authority.ticket.proposalId,
+        semanticEvidenceId: authority.ticket.semanticEvidenceId,
+        fromRevision: before.semanticRevision,
+        toRevision: result.matter.semanticRevision,
+        fromCourse: before.semanticCourse,
+        toCourse: result.matter.semanticCourse
+      });
+    } else if (result.status === "stale") {
+      this.appendTrace({
+        kind: "semantic_attempt_ended",
+        matterId: authority.matterId,
+        attemptId: authority.attemptId,
+        proposalId: authority.ticket.proposalId,
+        heldRunId: authority.heldRunId,
+        outcome: "stale",
+        reason: result.reason
+      });
     }
     return result;
   }
@@ -332,6 +396,15 @@ export class FirstPresenceDeferredSemanticOwner {
     if (abandoned.status !== "abandoned") {
       throw new Error("Deferred semantic owner lost provider authority before abandonment.");
     }
+    this.appendTrace({
+      kind: "semantic_attempt_ended",
+      matterId: authority.matterId,
+      attemptId: authority.attemptId,
+      proposalId: authority.ticket.proposalId,
+      heldRunId: authority.heldRunId,
+      outcome: "abandoned",
+      reason: `provider_abandoned:${abandoned.residentAuthority}`
+    });
     return {
       status: "abandoned",
       attemptId: authority.attemptId,
@@ -360,7 +433,17 @@ export class FirstPresenceDeferredSemanticOwner {
       hold,
       decision
     );
-    if (result.status === "released") this.knownHeldRunIds.delete(result.hold.runId);
+    if (result.status === "released") {
+      this.knownHeldRunIds.delete(result.hold.runId);
+      this.appendTrace({
+        kind: "task_resumed",
+        matterId: result.hold.matterId,
+        runId: result.hold.runId,
+        taskSemanticRevision: result.hold.taskSemanticRevision,
+        reconsiderationSemanticRevision: result.hold.reconsiderationSemanticRevision,
+        semanticEvidenceId: result.hold.semanticEvidenceId
+      });
+    }
     return result;
   }
 
@@ -384,7 +467,17 @@ export class FirstPresenceDeferredSemanticOwner {
       matterId,
       decision
     );
-    if (result.status === "disposed") this.knownHeldRunIds.delete(result.record.runId);
+    if (result.status === "disposed") {
+      this.knownHeldRunIds.delete(result.record.runId);
+      this.appendTrace({
+        kind: "task_superseded",
+        matterId: result.record.matterId,
+        taskId: result.record.taskId,
+        runId: result.record.runId,
+        taskSemanticRevision: result.record.taskSemanticRevision,
+        currentSemanticRevision: result.record.currentSemanticRevision
+      });
+    }
     return result;
   }
 
@@ -422,10 +515,22 @@ export class FirstPresenceDeferredSemanticOwner {
       if (matterId !== undefined && authority.matterId !== matterId) continue;
       if (pendingTickets.some((ticket) => sameTicket(ticket, authority.ticket))) continue;
 
+      const revocation = this.resident
+        .recentSemanticProposalRevocations()
+        .find((candidate) => sameTicket(candidate.proposal, authority.ticket));
       const abandoned = this.provider.abandon(this.resident, authority.providerRun);
       if (abandoned.status !== "abandoned") {
         throw new Error("Deferred semantic owner lost stale provider authority during cleanup.");
       }
+      this.appendTrace({
+        kind: "semantic_attempt_ended",
+        matterId: authority.matterId,
+        attemptId: authority.attemptId,
+        proposalId: authority.ticket.proposalId,
+        heldRunId: authority.heldRunId,
+        outcome: revocation?.reason === "semantic_revision_changed" ? "superseded" : "stale",
+        reason: revocation?.reason ?? "proposal_not_pending"
+      });
       this.discardAttempt(authority);
     }
   }
@@ -443,5 +548,9 @@ export class FirstPresenceDeferredSemanticOwner {
   private discardAttempt(authority: AttemptAuthority): void {
     this.authorityByAttempt.delete(authority.publicAttempt);
     this.attemptsById.delete(authority.attemptId);
+  }
+
+  private appendTrace(event: FirstPresenceTraceEvent): void {
+    this.trace?.append(event);
   }
 }
