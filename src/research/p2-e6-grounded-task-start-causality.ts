@@ -69,6 +69,7 @@ export type P2E6StartResult =
         | "target_missing"
         | "target_not_item"
         | "executor_busy"
+        | "previous_run_unreconciled"
         | "run_id_conflict";
     };
 
@@ -109,6 +110,9 @@ function validGroundedTask(
  * preflights the exact next run ID against resident task bindings before
  * starting the executor, so the synchronous start→bind handoff cannot leave a
  * running executor behind if that resident run identity is already occupied.
+ * A terminal executor run must also have had its resident binding reconciled
+ * before another run can replace the executor's terminal state; otherwise its
+ * factual outcome could become unreachable to the P2-E7 outcome seam.
  */
 export class P2E6GroundedTaskStartBoundary {
   private readonly candidateAuthority = new WeakMap<
@@ -199,6 +203,9 @@ export class P2E6GroundedTaskStartBoundary {
     const executorBefore = executor.state();
     if (executorBefore.status === "running") {
       return { status: "rejected", reason: "executor_busy" };
+    }
+    if (executorBefore.run && resident.taskBinding(executorBefore.run.runId)) {
+      return { status: "rejected", reason: "previous_run_unreconciled" };
     }
     const expectedRunId = (executorBefore.run?.runId ?? 0) + 1;
     if (resident.taskBinding(expectedRunId)) {
