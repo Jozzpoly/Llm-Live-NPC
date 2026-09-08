@@ -8,6 +8,7 @@ import {
   P2E6GroundedTaskStartBoundary,
   type P2E6LocalTaskGrounder
 } from "./p2-e6-grounded-task-start-causality";
+import { P2E7GroundedTaskOutcomeBoundary } from "./p2-e7-grounded-task-outcome-causality";
 
 const exactFetchLabelGrounder: P2E6LocalTaskGrounder = ({ semanticCourse, actorId, snapshot }) => {
   const match = /^fetch\s+(.+)$/i.exec(semanticCourse.trim());
@@ -38,7 +39,7 @@ function openMatter(
 }
 
 describe("P2-E7 unreconciled terminal run ordering", () => {
-  it("refuses a new bound executor run while the previous terminal run still owns an unreconciled resident binding", () => {
+  it("holds the next prepared candidate until the previous terminal outcome is reconciled, then releases that same candidate", () => {
     const specimen = createP1Specimen();
     const npc = specimen.entities.find((entity) => entity.id === "npc.001");
     const mug = specimen.entities.find((entity) => entity.id === "item.mug");
@@ -57,10 +58,11 @@ describe("P2-E7 unreconciled terminal run ordering", () => {
     const resident = new P2E0ResidentCausalKernel();
     const executor = new DeterministicExecutor();
     const driver = new ExecutionDriver(world, executor);
-    const boundary = new P2E6GroundedTaskStartBoundary();
+    const startBoundary = new P2E6GroundedTaskStartBoundary();
+    const outcomeBoundary = new P2E7GroundedTaskOutcomeBoundary();
 
     const mugMatter = openMatter(resident, "matter.mug", "speech.1", "fetch Red mug");
-    const mugPrepared = boundary.prepare(
+    const mugPrepared = startBoundary.prepare(
       resident,
       world.snapshot(),
       mugMatter.id,
@@ -69,11 +71,16 @@ describe("P2-E7 unreconciled terminal run ordering", () => {
     );
     expect(mugPrepared.status).toBe("ready");
     if (mugPrepared.status !== "ready") return;
-    const mugStarted = boundary.start(resident, world.snapshot(), executor, mugPrepared.candidate);
+    const mugStarted = startBoundary.start(
+      resident,
+      world.snapshot(),
+      executor,
+      mugPrepared.candidate
+    );
     expect(mugStarted.status).toBe("started");
     if (mugStarted.status !== "started") return;
 
-    driver.step({ playerControl: { moveX: 0, moveY: 0 } });
+    const mugTerminalFrame = driver.step({ playerControl: { moveX: 0, moveY: 0 } });
     expect(executor.state()).toMatchObject({
       status: "succeeded",
       run: { runId: mugStarted.executorRun.runId }
@@ -89,7 +96,7 @@ describe("P2-E7 unreconciled terminal run ordering", () => {
       "speech.2",
       "fetch Lantern"
     );
-    const lanternPrepared = boundary.prepare(
+    const lanternPrepared = startBoundary.prepare(
       resident,
       world.snapshot(),
       lanternMatter.id,
@@ -100,7 +107,7 @@ describe("P2-E7 unreconciled terminal run ordering", () => {
     if (lanternPrepared.status !== "ready") return;
 
     expect(
-      boundary.start(resident, world.snapshot(), executor, lanternPrepared.candidate)
+      startBoundary.start(resident, world.snapshot(), executor, lanternPrepared.candidate)
     ).toEqual({ status: "rejected", reason: "previous_run_unreconciled" });
 
     expect(executor.state()).toMatchObject({
@@ -112,5 +119,35 @@ describe("P2-E7 unreconciled terminal run ordering", () => {
       matterId: mugMatter.id
     });
     expect(resident.matter(lanternMatter.id)?.activeTaskRunId).toBeNull();
+
+    const reconciled = outcomeBoundary.reconcile(resident, executor, mugTerminalFrame);
+    expect(reconciled.status).toBe("recorded");
+    if (reconciled.status !== "recorded") return;
+    expect(resident.taskBinding(mugStarted.executorRun.runId)).toBeNull();
+    expect(resident.matter(mugMatter.id)).toMatchObject({
+      status: "active",
+      activeTaskRunId: null,
+      lastTaskOutcomeEvidenceId: reconciled.evidence.id
+    });
+
+    const lanternStarted = startBoundary.start(
+      resident,
+      world.snapshot(),
+      executor,
+      lanternPrepared.candidate
+    );
+    expect(lanternStarted.status).toBe("started");
+    if (lanternStarted.status !== "started") return;
+    expect(lanternStarted.executorRun.runId).toBe(mugStarted.executorRun.runId + 1);
+    expect(lanternStarted.binding).toMatchObject({
+      matterId: lanternMatter.id,
+      taskId: "fetch:item.lantern",
+      runId: lanternStarted.executorRun.runId
+    });
+    expect(executor.state()).toMatchObject({
+      status: "running",
+      run: { runId: lanternStarted.executorRun.runId },
+      task: { targetId: lantern.id }
+    });
   });
 });
