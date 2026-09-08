@@ -1,8 +1,5 @@
 import { DeterministicExecutor } from "../execution/deterministic-executor";
-import {
-  ExecutionDriver,
-  type ExecutionFrameResult
-} from "../execution/execution-driver";
+import type { ExecutionFrameResult } from "../execution/execution-driver";
 import type { EntityId } from "../world/types";
 import { World } from "../world/world";
 import {
@@ -88,11 +85,6 @@ export type FirstPresenceReconsiderResult =
 
 export type FirstPresenceTaskStartResult = P2E6PrepareResult | P2E6StartResult;
 
-export type FirstPresenceStepResult = {
-  frame: ExecutionFrameResult;
-  outcome: P2E7OutcomeReconciliationResult | null;
-};
-
 /**
  * First product-adjacent composition experiment.
  *
@@ -106,6 +98,13 @@ export type FirstPresenceStepResult = {
  * owner does not decide that every heard utterance becomes an unresolved matter.
  * The semantic provider is deliberately synchronous/deterministic in Slice 1,
  * so async provider admission/retry authority is not accidentally selected.
+ *
+ * Crucially, this composition does not own or step an ExecutionDriver. The
+ * browser/headless runtime remains the sole owner of the canonical World clock
+ * and passes completed ExecutionFrameResult values here for causal outcome
+ * reconciliation. That keeps composition from creating a second simulation
+ * clock when it is later wired into the browser runtime.
+ *
  * The owner also does not yet choose attention, interruption, semantic
  * satisfaction, terminal retention or browser presentation.
  */
@@ -117,7 +116,6 @@ export class FirstPresenceComposition {
   private readonly providerMembrane = new P2E5SemanticProviderAuthorityMembrane();
   private readonly taskStart = new P2E6GroundedTaskStartBoundary();
   private readonly taskOutcome = new P2E7GroundedTaskOutcomeBoundary();
-  private readonly driver: ExecutionDriver;
   private readonly traceValue: FirstPresenceTraceRecord[] = [];
   private nextTraceSeq = 1;
   private nextMatterSeq = 1;
@@ -137,7 +135,6 @@ export class FirstPresenceComposition {
       this.world,
       new Map([[this.actorId, this.resident]])
     );
-    this.driver = new ExecutionDriver(this.world, this.executor);
   }
 
   receiveDirectPlayerSpeech(text: string): P2E0EvidenceRecord {
@@ -239,22 +236,18 @@ export class FirstPresenceComposition {
     return started;
   }
 
-  step(): FirstPresenceStepResult {
-    const frame = this.driver.step({
-      playerControl: { moveX: 0, moveY: 0 }
-    });
-
+  afterExecutionFrame(frame: ExecutionFrameResult): P2E7OutcomeReconciliationResult | null {
     const executorState = this.executor.state();
     if (
       (executorState.status !== "succeeded" && executorState.status !== "failed") ||
       !executorState.run
     ) {
-      return { frame, outcome: null };
+      return null;
     }
 
     const runId = executorState.run.runId;
     const binding = this.resident.taskBinding(runId);
-    if (!binding) return { frame, outcome: null };
+    if (!binding) return null;
 
     const outcome = this.taskOutcome.reconcile(this.resident, this.executor, frame);
     if (outcome.status === "recorded") {
@@ -266,7 +259,7 @@ export class FirstPresenceComposition {
         summary: outcome.evidence.summary
       });
     }
-    return { frame, outcome };
+    return outcome;
   }
 
   trace(): FirstPresenceTraceRecord[] {
