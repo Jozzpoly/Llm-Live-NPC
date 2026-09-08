@@ -33,6 +33,7 @@ export interface P2E0ProposalTicket {
   proposalId: number;
   matterId: string;
   semanticRevision: number;
+  semanticEvidenceId: string;
 }
 
 export type P2E0ProposalCommitResult =
@@ -210,7 +211,8 @@ export class P2E0ResidentCausalKernel {
     const ticket: P2E0ProposalTicket = {
       proposalId: this.nextProposalId++,
       matterId,
-      semanticRevision: matter.semanticRevision
+      semanticRevision: matter.semanticRevision,
+      semanticEvidenceId: matter.latestSemanticEvidenceId
     };
     this.pendingProposals.set(ticket.proposalId, ticket);
     return cloneTicket(ticket);
@@ -230,7 +232,8 @@ export class P2E0ResidentCausalKernel {
     if (
       !pending ||
       pending.matterId !== ticket.matterId ||
-      pending.semanticRevision !== ticket.semanticRevision
+      pending.semanticRevision !== ticket.semanticRevision ||
+      pending.semanticEvidenceId !== ticket.semanticEvidenceId
     ) {
       return { status: "stale", reason: "proposal_not_pending" };
     }
