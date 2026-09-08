@@ -12,13 +12,13 @@ Current research/refoundation line:
 
 `recovery/owner-fail-2026-09-07`
 
-Expected canonical head at this handoff:
+Qualified canonical P2-E12 research checkpoint:
 
 `be543147bbfcc43f92fd18bbc8aa7aac30588621`
 
-Do **not** trust copied SHAs without live verification. If the branch is newer, inspect the changes after this checkpoint before extending any claim or following the frontier below.
+Do **not** treat that checkpoint as a promise that the live branch head is identical. Documentation/handoff or later work may advance the branch. First verify live `recovery/owner-fail-2026-09-07`; if it is newer, inspect changes since `be543147...` before extending any claim or following the frontier below.
 
-Exact current canonical qualification:
+Exact qualification of the P2-E12 checkpoint:
 
 - **247/247 tests across 56 files**;
 - strict TypeScript PASS;
@@ -72,7 +72,7 @@ Never describe the failed line as having been fixed forward into recovery.
 
 The recovered donor later survived the combined R8 re-attack and is useful substrate evidence, but it is **not a fresh final Owner/browser PASS**.
 
-## 4. What the current canonical head is qualified to claim
+## 4. What the P2-E12 checkpoint is qualified to claim
 
 `be543147...` qualifies a cumulative executable **research substrate** through P2-E12 while preserving the broader build/test surface.
 
@@ -167,7 +167,7 @@ Proved terminal semantic state can explicitly retire the exact still-running tas
 
 Proved active `pending` cognition represents genuinely-live scoped authority, not merely requests that once started. Terminal/superseded/losing proposals are revoked immediately with bounded recent provenance; exact late returns keep truthful stale reasons; dead resident authority cannot preserve a meaningless provider-format retry path.
 
-Current canonical P2-E12 merge:
+Qualified canonical P2-E12 research checkpoint:
 
 `be543147bbfcc43f92fd18bbc8aa7aac30588621`
 
