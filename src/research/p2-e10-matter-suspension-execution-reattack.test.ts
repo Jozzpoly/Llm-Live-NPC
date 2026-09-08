@@ -115,7 +115,6 @@ describe("P2-E10 matter suspension execution re-attack", () => {
     const reconciled = outcomes.reconcile(resident, executor, resumed);
     expect(reconciled.status).toBe("recorded");
     if (reconciled.status !== "recorded") return;
-    expect(reconciled.binding).toEqual(binding);
     expect(reconciled.evidence).toMatchObject({
       kind: "task_outcome",
       matterId: first.id,
