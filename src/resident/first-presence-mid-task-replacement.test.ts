@@ -84,7 +84,8 @@ describe("First Presence mid-task semantic replacement", () => {
       activeTaskRunId: redStarted.binding.runId,
       latestSemanticEvidenceId: correction.id
     });
-    expect(owner.reconsiderMatter(matter.id)).toMatchObject({
+    const correctionDecision = owner.reconsiderMatter(matter.id);
+    expect(correctionDecision).toMatchObject({
       status: "applied",
       matter: {
         id: matter.id,
@@ -94,8 +95,9 @@ describe("First Presence mid-task semantic replacement", () => {
         activeTaskRunId: redStarted.binding.runId
       }
     });
+    if (correctionDecision.status !== "applied") return;
 
-    const disposed = owner.disposeSupersededMatterTask(matter.id);
+    const disposed = owner.disposeSupersededMatterTask(matter.id, correctionDecision);
     expect(disposed).toMatchObject({
       status: "disposed",
       record: {
