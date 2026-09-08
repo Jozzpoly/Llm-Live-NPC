@@ -166,4 +166,64 @@ describe("first product-adjacent Presence composition", () => {
     });
     expect(trace.map((record) => record.seq)).toEqual([1, 2, 3, 4]);
   });
+
+  it("releases exact proposal authority when the deterministic semantic provider throws", () => {
+    const world = new World(createP1Specimen());
+    const executor = new DeterministicExecutor();
+    const owner = new FirstPresenceComposition(
+      world,
+      executor,
+      () => {
+        throw new Error("synthetic provider failure");
+      },
+      exactFetchLabelGrounder
+    );
+
+    const heard = owner.receiveDirectPlayerSpeech("Bring me the red mug.");
+    const matter = owner.openMatterFromEvidence(heard.id);
+    const result = owner.reconsiderMatter(matter.id);
+
+    expect(result).toEqual({
+      status: "provider_exception",
+      residentAuthority: "released"
+    });
+    expect(owner.resident.pendingSemanticProposals()).toEqual([]);
+    expect(owner.resident.recentSemanticProposalRevocations()).toEqual([]);
+    expect(owner.resident.matter(matter.id)).toMatchObject({
+      status: "active",
+      semanticCourse: "uninterpreted",
+      semanticRevision: 1,
+      latestSemanticEvidenceId: heard.id
+    });
+    expect(owner.trace().map((record) => record.kind)).toEqual(["experience"]);
+  });
+
+  it("abandons rejected provider output because Slice 1 exposes no retry owner", () => {
+    const world = new World(createP1Specimen());
+    const executor = new DeterministicExecutor();
+    const owner = new FirstPresenceComposition(
+      world,
+      executor,
+      () => ({ semanticCourse: "   " }),
+      exactFetchLabelGrounder
+    );
+
+    const heard = owner.receiveDirectPlayerSpeech("Bring me the red mug.");
+    const matter = owner.openMatterFromEvidence(heard.id);
+    const result = owner.reconsiderMatter(matter.id);
+
+    expect(result).toEqual({
+      status: "provider_output_rejected",
+      reason: "invalid_semantic_course"
+    });
+    expect(owner.resident.pendingSemanticProposals()).toEqual([]);
+    expect(owner.resident.recentSemanticProposalRevocations()).toEqual([]);
+    expect(owner.resident.matter(matter.id)).toMatchObject({
+      status: "active",
+      semanticCourse: "uninterpreted",
+      semanticRevision: 1,
+      latestSemanticEvidenceId: heard.id
+    });
+    expect(owner.trace().map((record) => record.kind)).toEqual(["experience"]);
+  });
 });
