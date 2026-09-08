@@ -5,7 +5,8 @@ import { World } from "../world/world";
 import {
   P2E0ResidentCausalKernel,
   type P2E0EvidenceRecord,
-  type P2E0MatterState
+  type P2E0MatterState,
+  type P2E0ProposalCommitResult
 } from "../research/p2-e0-resident-causal-kernel";
 import { P2E2CommunicationRuntimeBoundary } from "../research/p2-e2-communication-runtime-boundary";
 import {
@@ -111,8 +112,9 @@ export type FirstPresenceTaskStartResult = P2E6PrepareResult | P2E6StartResult;
  * Slice 2 adds one deliberately explicit mid-task revision path. New grounded
  * evidence may be attributed to the same still-live matter, reconsideration may
  * change its semantic course, and the caller may then retire the exact old task
- * only if its task binding is now semantically superseded. The matter itself
- * remains active and can ground a replacement task from the current revision.
+ * only when it presents the applied semantic decision that is still current and
+ * the task binding is now semantically superseded. The matter itself remains
+ * active and can ground a replacement task from the current revision.
  *
  * Communication ingress and matter admission remain separate. This owner does
  * not decide that every heard utterance becomes an unresolved matter or that
@@ -248,11 +250,15 @@ export class FirstPresenceComposition {
     return settlement;
   }
 
-  disposeSupersededMatterTask(matterId: string): SupersededTaskDispositionResult {
+  disposeSupersededMatterTask(
+    matterId: string,
+    decision: P2E0ProposalCommitResult
+  ): SupersededTaskDispositionResult {
     const result = this.supersededTaskDisposition.dispose(
       this.resident,
       this.executor,
-      matterId
+      matterId,
+      decision
     );
     if (result.status === "disposed") {
       this.appendTrace({
