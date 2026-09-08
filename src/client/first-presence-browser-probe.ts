@@ -301,15 +301,15 @@ export class FirstPresenceBrowserProbe {
       if (result.status === "provider_returned" && result.settlement.status === "applied") {
         this.decision = result.settlement;
         this.phaseValue = "decision_ready";
+      } else if (result.status === "transport_failed") {
+        this.phaseValue = "semantic_retryable";
+        this.lastErrorValue = result.error;
       } else if (
-        result.status === "transport_failed" ||
-        (result.status === "provider_returned" && result.settlement.status === "provider_output_rejected")
+        result.status === "provider_returned" &&
+        result.settlement.status === "provider_output_rejected"
       ) {
         this.phaseValue = "semantic_retryable";
-        this.lastErrorValue =
-          result.status === "transport_failed"
-            ? result.error
-            : `provider_output_rejected:${result.settlement.reason}`;
+        this.lastErrorValue = `provider_output_rejected:${result.settlement.reason}`;
       } else {
         this.phaseValue = "blocked";
         this.lastErrorValue =
