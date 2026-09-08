@@ -36,6 +36,16 @@ export interface P2E0ProposalTicket {
   semanticEvidenceId: string;
 }
 
+export type P2E0ProposalRevocationReason = "matter_terminal" | "semantic_revision_changed";
+
+export interface P2E0ProposalRevocationRecord {
+  proposal: P2E0ProposalTicket;
+  reason: P2E0ProposalRevocationReason;
+  matterStatus: P2E0MatterStatus;
+  currentSemanticRevision: number;
+  currentSemanticEvidenceId: string;
+}
+
 export type P2E0ProposalCommitResult =
   | { status: "applied"; matter: P2E0MatterState }
   | {
@@ -96,6 +106,22 @@ function cloneTicket(ticket: P2E0ProposalTicket): P2E0ProposalTicket {
   return { ...ticket };
 }
 
+function sameTicket(a: P2E0ProposalTicket, b: P2E0ProposalTicket): boolean {
+  return (
+    a.proposalId === b.proposalId &&
+    a.matterId === b.matterId &&
+    a.semanticRevision === b.semanticRevision &&
+    a.semanticEvidenceId === b.semanticEvidenceId
+  );
+}
+
+function cloneRevocation(record: P2E0ProposalRevocationRecord): P2E0ProposalRevocationRecord {
+  return {
+    ...record,
+    proposal: cloneTicket(record.proposal)
+  };
+}
+
 function cloneBinding(binding: P2E0TaskBinding): P2E0TaskBinding {
   return { ...binding };
 }
@@ -127,19 +153,35 @@ function isTerminal(status: P2E0MatterStatus): boolean {
  * unrelated evidence churn displaced that record from the recent ring. This is
  * a causal anchor, not a general evidence archive; advancing semantic context
  * replaces it and terminalizing the matter releases it.
+ *
+ * Active pending cognition is likewise authority-bearing state, not a historical
+ * request log. When a proposal's scoped semantic dependency is known to have
+ * become invalid before its provider returns, the proposal is removed from the
+ * active pending set immediately. A small bounded revocation ledger preserves
+ * enough exact ticket identity to reject late returns with their causal stale
+ * reason without retaining dead authority without bound.
  */
 export class P2E0ResidentCausalKernel {
   private readonly matters = new Map<string, P2E0MatterState>();
   private readonly pendingProposals = new Map<number, P2E0ProposalTicket>();
+  private readonly proposalRevocations = new Map<number, P2E0ProposalRevocationRecord>();
   private readonly taskBindings = new Map<number, P2E0TaskBinding>();
   private readonly semanticEvidenceAnchors = new Map<string, P2E0EvidenceRecord>();
   private readonly evidence: P2E0EvidenceRecord[] = [];
   private nextEvidenceSeq = 1;
   private nextProposalId = 1;
 
-  constructor(private readonly recentEvidenceLimit = 32) {
+  constructor(
+    private readonly recentEvidenceLimit = 32,
+    private readonly proposalRevocationLimit = 32
+  ) {
     if (!Number.isInteger(recentEvidenceLimit) || recentEvidenceLimit <= 0) {
       throw new Error(`P2-E0 recent evidence limit must be a positive integer: ${recentEvidenceLimit}`);
+    }
+    if (!Number.isInteger(proposalRevocationLimit) || proposalRevocationLimit <= 0) {
+      throw new Error(
+        `P2-E0 proposal revocation limit must be a positive integer: ${proposalRevocationLimit}`
+      );
     }
   }
 
@@ -226,6 +268,7 @@ export class P2E0ResidentCausalKernel {
     matter.semanticRevision += 1;
     matter.latestSemanticEvidenceId = evidenceId;
     this.semanticEvidenceAnchors.set(matter.id, cloneEvidence(semanticEvidence));
+    this.revokeSupersededProposals(matter);
     return cloneMatter(matter);
   }
 
@@ -251,6 +294,10 @@ export class P2E0ResidentCausalKernel {
       .map(cloneTicket);
   }
 
+  recentSemanticProposalRevocations(): P2E0ProposalRevocationRecord[] {
+    return [...this.proposalRevocations.values()].map(cloneRevocation);
+  }
+
   commitSemanticProposal(
     ticket: P2E0ProposalTicket,
     proposal: { semanticCourse: string }
@@ -262,6 +309,10 @@ export class P2E0ResidentCausalKernel {
       pending.semanticRevision !== ticket.semanticRevision ||
       pending.semanticEvidenceId !== ticket.semanticEvidenceId
     ) {
+      const revocation = this.proposalRevocations.get(ticket.proposalId);
+      if (revocation && sameTicket(revocation.proposal, ticket)) {
+        return { status: "stale", reason: revocation.reason };
+      }
       return { status: "stale", reason: "proposal_not_pending" };
     }
 
@@ -275,6 +326,7 @@ export class P2E0ResidentCausalKernel {
 
     matter.semanticCourse = proposal.semanticCourse;
     matter.semanticRevision += 1;
+    this.revokeSupersededProposals(matter);
     return { status: "applied", matter: cloneMatter(matter) };
   }
 
@@ -313,6 +365,7 @@ export class P2E0ResidentCausalKernel {
     const matter = this.requireMatter(matterId);
     matter.status = "resolved";
     matter.suspendedByMatterId = null;
+    this.revokePendingProposalsForMatter(matter, "matter_terminal");
     this.semanticEvidenceAnchors.delete(matterId);
     return cloneMatter(matter);
   }
@@ -321,6 +374,7 @@ export class P2E0ResidentCausalKernel {
     const matter = this.requireMatter(matterId);
     matter.status = "cancelled";
     matter.suspendedByMatterId = null;
+    this.revokePendingProposalsForMatter(matter, "matter_terminal");
     this.semanticEvidenceAnchors.delete(matterId);
     return cloneMatter(matter);
   }
@@ -391,6 +445,51 @@ export class P2E0ResidentCausalKernel {
     // The factual outcome is evidence. A later policy/cognition step may decide
     // that it satisfies or semantically changes the matter.
     return evidence;
+  }
+
+  private revokePendingProposalsForMatter(
+    matter: P2E0MatterState,
+    reason: P2E0ProposalRevocationReason
+  ): void {
+    for (const [proposalId, ticket] of this.pendingProposals) {
+      if (ticket.matterId !== matter.id) continue;
+      this.pendingProposals.delete(proposalId);
+      this.rememberProposalRevocation(ticket, reason, matter);
+    }
+  }
+
+  private revokeSupersededProposals(matter: P2E0MatterState): void {
+    for (const [proposalId, ticket] of this.pendingProposals) {
+      if (ticket.matterId !== matter.id) continue;
+      if (
+        ticket.semanticRevision === matter.semanticRevision &&
+        ticket.semanticEvidenceId === matter.latestSemanticEvidenceId
+      ) {
+        continue;
+      }
+      this.pendingProposals.delete(proposalId);
+      this.rememberProposalRevocation(ticket, "semantic_revision_changed", matter);
+    }
+  }
+
+  private rememberProposalRevocation(
+    ticket: P2E0ProposalTicket,
+    reason: P2E0ProposalRevocationReason,
+    matter: P2E0MatterState
+  ): void {
+    this.proposalRevocations.set(ticket.proposalId, {
+      proposal: cloneTicket(ticket),
+      reason,
+      matterStatus: matter.status,
+      currentSemanticRevision: matter.semanticRevision,
+      currentSemanticEvidenceId: matter.latestSemanticEvidenceId
+    });
+
+    while (this.proposalRevocations.size > this.proposalRevocationLimit) {
+      const oldestProposalId = this.proposalRevocations.keys().next().value;
+      if (oldestProposalId === undefined) break;
+      this.proposalRevocations.delete(oldestProposalId);
+    }
   }
 
   private appendEvidence(input: {
