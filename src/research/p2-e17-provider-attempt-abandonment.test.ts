@@ -93,4 +93,120 @@ describe("P2-E17 provider attempt abandonment", () => {
       provider.settle(resident, prepared.run, { semanticCourse: "fetch Red mug" })
     ).toEqual({ status: "local_run_rejected", reason: "unknown_local_run" });
   });
+
+  it("abandons only one exact same-revision sibling while the other remains fully usable", () => {
+    const resident = new P2E0ResidentCausalKernel();
+    const contextBoundary = new P2E4SemanticProposalContextSeam();
+    const provider = new P2E5SemanticProviderAuthorityMembrane();
+    const matter = openMatter(resident);
+    const first = prepareRun(resident, contextBoundary, provider, matter.id);
+    const second = prepareRun(resident, contextBoundary, provider, matter.id);
+
+    expect(resident.pendingSemanticProposals()).toEqual([first.ticket, second.ticket]);
+    expect(provider.abandon(resident, first.run)).toEqual({
+      status: "abandoned",
+      residentAuthority: "released"
+    });
+    expect(resident.pendingSemanticProposals()).toEqual([second.ticket]);
+    expect(resident.recentSemanticProposalRevocations()).toEqual([]);
+
+    expect(
+      provider.settle(resident, first.run, { semanticCourse: "fetch Red mug" })
+    ).toEqual({ status: "local_run_rejected", reason: "unknown_local_run" });
+
+    const settled = provider.settle(resident, second.run, { semanticCourse: "fetch Red mug" });
+    expect(settled).toMatchObject({
+      status: "applied",
+      matter: { semanticCourse: "fetch Red mug", semanticRevision: matter.semanticRevision + 1 }
+    });
+    expect(resident.pendingSemanticProposals()).toEqual([]);
+    expect(resident.recentSemanticProposalRevocations()).toEqual([]);
+  });
+
+  it("rejects a cloned public run without consuming the original local authority", () => {
+    const resident = new P2E0ResidentCausalKernel();
+    const contextBoundary = new P2E4SemanticProposalContextSeam();
+    const provider = new P2E5SemanticProviderAuthorityMembrane();
+    const matter = openMatter(resident);
+    const prepared = prepareRun(resident, contextBoundary, provider, matter.id);
+    const clonedRun = structuredClone(prepared.run);
+
+    expect(provider.abandon(resident, clonedRun)).toEqual({
+      status: "local_run_rejected",
+      reason: "unknown_local_run"
+    });
+    expect(resident.pendingSemanticProposals()).toEqual([prepared.ticket]);
+
+    expect(provider.abandon(resident, prepared.run)).toEqual({
+      status: "abandoned",
+      residentAuthority: "released"
+    });
+    expect(resident.pendingSemanticProposals()).toEqual([]);
+  });
+
+  it("does not let a forged exact-id ticket release resident authority", () => {
+    const resident = new P2E0ResidentCausalKernel();
+    const matter = openMatter(resident);
+    const first = resident.beginSemanticProposal(matter.id);
+    const sibling = resident.beginSemanticProposal(matter.id);
+
+    expect(
+      resident.releaseSemanticProposal({
+        ...first,
+        semanticEvidenceId: `${first.semanticEvidenceId}.forged`
+      })
+    ).toBe(false);
+    expect(resident.pendingSemanticProposals()).toEqual([first, sibling]);
+
+    expect(resident.releaseSemanticProposal(first)).toBe(true);
+    expect(resident.releaseSemanticProposal(first)).toBe(false);
+    expect(resident.pendingSemanticProposals()).toEqual([sibling]);
+    expect(resident.recentSemanticProposalRevocations()).toEqual([]);
+  });
+
+  it("keeps settlement and abandonment mutually one-shot without semantic rollback", () => {
+    const resident = new P2E0ResidentCausalKernel();
+    const contextBoundary = new P2E4SemanticProposalContextSeam();
+    const provider = new P2E5SemanticProviderAuthorityMembrane();
+    const matter = openMatter(resident);
+    const prepared = prepareRun(resident, contextBoundary, provider, matter.id);
+
+    expect(
+      provider.settle(resident, prepared.run, { semanticCourse: "fetch Red mug" })
+    ).toMatchObject({
+      status: "applied",
+      matter: { semanticCourse: "fetch Red mug", semanticRevision: matter.semanticRevision + 1 }
+    });
+    const afterSettle = resident.matter(matter.id);
+
+    expect(provider.abandon(resident, prepared.run)).toEqual({
+      status: "local_run_rejected",
+      reason: "unknown_local_run"
+    });
+    expect(resident.matter(matter.id)).toEqual(afterSettle);
+    expect(resident.pendingSemanticProposals()).toEqual([]);
+  });
+
+  it("allows malformed provider output to be followed by explicit abandonment of the same attempt", () => {
+    const resident = new P2E0ResidentCausalKernel();
+    const contextBoundary = new P2E4SemanticProposalContextSeam();
+    const provider = new P2E5SemanticProviderAuthorityMembrane();
+    const matter = openMatter(resident);
+    const prepared = prepareRun(resident, contextBoundary, provider, matter.id);
+    const matterBefore = resident.matter(matter.id);
+
+    expect(provider.settle(resident, prepared.run, { command: "fetch" })).toEqual({
+      status: "provider_output_rejected",
+      reason: "unexpected_fields"
+    });
+    expect(resident.pendingSemanticProposals()).toEqual([prepared.ticket]);
+
+    expect(provider.abandon(resident, prepared.run)).toEqual({
+      status: "abandoned",
+      residentAuthority: "released"
+    });
+    expect(resident.pendingSemanticProposals()).toEqual([]);
+    expect(resident.matter(matter.id)).toEqual(matterBefore);
+    expect(resident.recentSemanticProposalRevocations()).toEqual([]);
+  });
 });
