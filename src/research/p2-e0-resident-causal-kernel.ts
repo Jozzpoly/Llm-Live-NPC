@@ -294,6 +294,16 @@ export class P2E0ResidentCausalKernel {
       .map(cloneTicket);
   }
 
+  /**
+   * P2-E17 RED apparatus only. The public shape is intentional, but this stub
+   * deliberately does not release authority yet so the behavioral repair can
+   * earn the mutation independently of TypeScript compilation.
+   */
+  releaseSemanticProposal(ticket: P2E0ProposalTicket): boolean {
+    void ticket;
+    return false;
+  }
+
   recentSemanticProposalRevocations(): P2E0ProposalRevocationRecord[] {
     return [...this.proposalRevocations.values()].map(cloneRevocation);
   }
