@@ -1,6 +1,7 @@
 import {
   DeterministicExecutor,
   type ExecutorCommand,
+  type ExecutorRetirement,
   type ExecutorRunCause,
   type ExecutorState,
   type ExecutorTask
@@ -245,6 +246,10 @@ export class P2E9HoldAwareExecutor extends DeterministicExecutor {
 
   override start(task: ExecutorTask, cause: ExecutorRunCause = { kind: "unattributed" }): boolean {
     return this.inner.start(task, cause);
+  }
+
+  override retireCurrentRun(expectedRunId: number): ExecutorRetirement | null {
+    return this.inner.retireCurrentRun(expectedRunId);
   }
 
   override state(): ExecutorState {
