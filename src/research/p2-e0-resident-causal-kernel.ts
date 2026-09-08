@@ -295,13 +295,17 @@ export class P2E0ResidentCausalKernel {
   }
 
   /**
-   * P2-E17 RED apparatus only. The public shape is intentional, but this stub
-   * deliberately does not release authority yet so the behavioral repair can
-   * earn the mutation independently of TypeScript compilation.
+   * Relinquishes only the exact still-pending semantic authority identified by
+   * this ticket. Attempt lifecycle is not semantic invalidation: releasing a
+   * failed/abandoned attempt therefore does not mutate the matter or manufacture
+   * a semantic revocation record. A forged/stale ticket cannot release another
+   * proposal that merely shares a matter or semantic revision.
    */
   releaseSemanticProposal(ticket: P2E0ProposalTicket): boolean {
-    void ticket;
-    return false;
+    const pending = this.pendingProposals.get(ticket.proposalId);
+    if (!pending || !sameTicket(pending, ticket)) return false;
+    this.pendingProposals.delete(ticket.proposalId);
+    return true;
   }
 
   recentSemanticProposalRevocations(): P2E0ProposalRevocationRecord[] {
