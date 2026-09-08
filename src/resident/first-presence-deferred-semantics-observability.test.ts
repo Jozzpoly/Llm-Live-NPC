@@ -37,22 +37,22 @@ describe("First Presence deferred diagnostic observability", () => {
     const presence = new FirstPresenceComposition(
       world,
       execution.executor,
-      () => ({ semanticCourse: "fetch Mug" }),
+      () => ({ semanticCourse: "fetch Red mug" }),
       fetchGrounder
     );
     const deferred = new FirstPresenceDeferredSemanticOwner(presence.resident, execution);
 
-    const initial = presence.receiveDirectPlayerSpeech("Bring me the mug.");
+    const initial = presence.receiveDirectPlayerSpeech("Bring me the red mug.");
     const matter = presence.openMatterFromEvidence(initial.id);
     expect(presence.reconsiderMatter(matter.id)).toMatchObject({
       status: "applied",
-      matter: { semanticCourse: "fetch Mug", semanticRevision: 2 }
+      matter: { semanticCourse: "fetch Red mug", semanticRevision: 2 }
     });
     const started = presence.startMatterTask(matter.id);
     expect(started.status).toBe("started");
     if (started.status !== "started") return;
 
-    const firstCorrection = presence.receiveDirectPlayerSpeech("Actually, reconsider that mug.");
+    const firstCorrection = presence.receiveDirectPlayerSpeech("Actually, reconsider that red mug.");
     presence.advanceMatterFromEvidence(matter.id, firstCorrection.id);
     const first = deferred.beginReconsideration(matter.id);
     expect(first.status).toBe("pending");
@@ -74,7 +74,7 @@ describe("First Presence deferred diagnostic observability", () => {
       heldRuns: [{ matterId: matter.id, runId: started.binding.runId }]
     });
 
-    expect(deferred.settle(first.attempt, { semanticCourse: "fetch Mug" })).toEqual({
+    expect(deferred.settle(first.attempt, { semanticCourse: "fetch Red mug" })).toEqual({
       status: "stale",
       reason: "semantic_revision_changed"
     });
