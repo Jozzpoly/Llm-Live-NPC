@@ -173,6 +173,7 @@ export class FirstPresenceDeferredSemanticOwner {
   private readonly disposition = new SupersededTaskDispositionBoundary();
   private readonly authorityByAttempt = new WeakMap<FirstPresenceDeferredSemanticAttempt, number>();
   private readonly attemptsById = new Map<number, AttemptAuthority>();
+  private readonly knownHeldRunIds = new Set<number>();
   private nextAttemptId = 1;
 
   constructor(
@@ -231,6 +232,7 @@ export class FirstPresenceDeferredSemanticOwner {
         return { status: "hold_rejected", reason: armed.reason };
       }
     }
+    this.knownHeldRunIds.add(binding.runId);
 
     const attempt: FirstPresenceDeferredSemanticAttempt = {
       attemptId: this.nextAttemptId++,
@@ -296,24 +298,28 @@ export class FirstPresenceDeferredSemanticOwner {
     if (!hold || hold.matterId !== matterId) {
       return { status: "rejected", reason: "hold_not_active" };
     }
-    return this.execution.holds.release(
+    const result = this.execution.holds.release(
       this.resident,
       this.execution.executor,
       hold,
       decision
     );
+    if (result.status === "released") this.knownHeldRunIds.delete(result.hold.runId);
+    return result;
   }
 
   replaceHeldTask(
     matterId: string,
     decision: P2E0ProposalCommitResult
   ): SupersededTaskDispositionResult {
-    return this.disposition.dispose(
+    const result = this.disposition.dispose(
       this.resident,
       this.execution.executor,
       matterId,
       decision
     );
+    if (result.status === "disposed") this.knownHeldRunIds.delete(result.record.runId);
+    return result;
   }
 
   state(): FirstPresenceDeferredState {
@@ -324,13 +330,16 @@ export class FirstPresenceDeferredSemanticOwner {
       reusedExistingHold: publicAttempt.reusedExistingHold
     }));
 
-    const heldRunIds = new Set<number>();
-    for (const matter of this.resident.unresolvedMatters()) {
-      if (matter.activeTaskRunId !== null) heldRunIds.add(matter.activeTaskRunId);
+    const heldRuns: P2E9SemanticHold[] = [];
+    for (const runId of [...this.knownHeldRunIds]) {
+      const hold = this.execution.holds.holdForRun(runId);
+      if (!hold) {
+        this.knownHeldRunIds.delete(runId);
+        continue;
+      }
+      heldRuns.push(hold);
     }
-    const heldRuns = [...heldRunIds]
-      .map((runId) => this.execution.holds.holdForRun(runId))
-      .filter((hold): hold is P2E9SemanticHold => hold !== null);
+    heldRuns.sort((a, b) => a.runId - b.runId);
 
     return { pendingAttempts, heldRuns };
   }
