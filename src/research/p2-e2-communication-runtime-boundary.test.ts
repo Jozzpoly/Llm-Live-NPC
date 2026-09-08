@@ -1,8 +1,22 @@
 import { describe, expect, it } from "vitest";
 import { createP1Specimen } from "../world/specimen";
 import { World } from "../world/world";
+import type { ActorEntity } from "../world/types";
 import { P2E0ResidentCausalKernel } from "./p2-e0-resident-causal-kernel";
 import { P2E2CommunicationRuntimeBoundary } from "./p2-e2-communication-runtime-boundary";
+
+function requireActor(entity: unknown): ActorEntity {
+  if (
+    !entity ||
+    typeof entity !== "object" ||
+    !("kind" in entity) ||
+    ((entity as { kind?: unknown }).kind !== "player" &&
+      (entity as { kind?: unknown }).kind !== "npc")
+  ) {
+    throw new Error("P2-E2 fixture requires an actor entity.");
+  }
+  return entity as ActorEntity;
+}
 
 describe("P2-E2 communication runtime ownership boundary", () => {
   it("routes one committed heard experience into only the matching resident continuity with canonical occurrence provenance", () => {
@@ -66,5 +80,63 @@ describe("P2-E2 communication runtime ownership boundary", () => {
 
     expect(result.frame.deliveries.find((delivery) => delivery.observerId === "npc.001")?.couldReceive).toBe(true);
     expect(result.residentEvidence).toEqual([]);
+  });
+
+  it("keeps communication out of the global World event log while resident evidence receives it", () => {
+    const world = new World(createP1Specimen());
+    const npc = new P2E0ResidentCausalKernel();
+    const boundary = new P2E2CommunicationRuntimeBoundary(
+      world,
+      new Map([["npc.001", npc]])
+    );
+    const worldEventsBefore = world.recentEvents(128);
+
+    boundary.speak(
+      { speakerId: "player.jozz", text: "This should be situated evidence, not global cognition history." },
+      ({ observer }) => observer.id === "npc.001"
+    );
+
+    expect(world.recentEvents(128)).toEqual(worldEventsBefore);
+    expect(npc.recentEvidence()).toHaveLength(1);
+  });
+
+  it("keeps one shared occurrence while routing heard evidence only to the receiver among multiple resident owners", () => {
+    const specimen = createP1Specimen();
+    const firstNpc = requireActor(specimen.entities.find((entity) => entity.id === "npc.001"));
+    specimen.entities.push({
+      ...structuredClone(firstNpc),
+      id: "npc.002",
+      label: "NPC-002",
+      position: { x: firstNpc.position.x + 80, y: firstNpc.position.y }
+    });
+
+    const world = new World(specimen);
+    const npc1 = new P2E0ResidentCausalKernel();
+    const npc2 = new P2E0ResidentCausalKernel();
+    const boundary = new P2E2CommunicationRuntimeBoundary(
+      world,
+      new Map([
+        ["npc.001", npc1],
+        ["npc.002", npc2]
+      ])
+    );
+
+    const result = boundary.speak(
+      { speakerId: "player.jozz", text: "One occurrence, receiver-specific experience." },
+      ({ observer }) => observer.id === "npc.001"
+    );
+
+    expect(result.frame.occurrence.id).toBe("speech.1");
+    expect(result.frame.deliveries.map((delivery) => delivery.observerId)).toEqual([
+      "npc.001",
+      "npc.002"
+    ]);
+    expect(result.residentEvidence.map((delivery) => delivery.observerId)).toEqual(["npc.001"]);
+    expect(npc1.recentEvidence()[0]?.source).toMatchObject({
+      kind: "actor",
+      actorId: "player.jozz",
+      occurrenceId: "speech.1"
+    });
+    expect(npc2.recentEvidence()).toEqual([]);
   });
 });
