@@ -228,8 +228,9 @@ export async function handleResidentConversation(request: Request, env: LivingRe
   try {
     const result = await withinDeadline(env.AI.run(RESIDENT_MODEL, {
       messages: [
-        { role: "system", content: `${SYSTEM_PROMPT}\n\nidle oznacza powrót do własnej spokojnej aktywności: spacerów i odpoczynku. Nie wymaga celu. /no_think` },
-        { role: "user", content: JSON.stringify(input) }
+        { role: "system", content: `${SYSTEM_PROMPT}\n\nNajnowsza wypowiedź gracza wyznacza obecną prośbę. Historia służy do rozumienia odniesień, nie do ponawiania poprzednich zadań. go to jednorazowe dojście do wskazanego celu. follow utrzymuje osobę jako ruchomy cel: chodzenie za graczem lub towarzyszenie mu wymaga follow z identyfikatorem gracza, a nie go do przypuszczalnego miejsca. Czekanie wymaga wait. idle oznacza powrót do własnej spokojnej aktywności: spacerów i odpoczynku. Nie wymaga celu. Sprawdź, czy intent rzeczywiście wykona to, co deklarujesz w reply. /no_think` },
+        { role: "user", content: JSON.stringify(input) },
+        { role: "user", content: `Odpowiedz teraz na aktualną wypowiedź gracza: ${input.latestUtterance}\n/no_think` }
       ],
       tools: [replyTool(input)],
       max_tokens: 512,
