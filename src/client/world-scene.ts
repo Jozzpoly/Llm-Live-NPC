@@ -1,4 +1,7 @@
 import * as Phaser from "phaser";
+import { LivingRuntime } from "../living/runtime";
+import { requestResidentReply } from "../living/provider";
+import type { ResidentViewState } from "../living/types";
 import type { ExecutorStatus } from "../execution/deterministic-executor";
 import { ExecutionDriver, type ActionAttemptRecord } from "../execution/execution-driver";
 import { World } from "../world/world";
@@ -89,6 +92,8 @@ export class WorldScene extends Phaser.Scene {
   private readonly npcExecutor = this.firstPresence.executor;
   private readonly executionDriver = new ExecutionDriver(this.world, this.npcExecutor);
   private readonly e1Agent = new E1AgentHarness(this.world, this.npcExecutor);
+  private readonly living: LivingRuntime | null;
+  private typing = false;
   private readonly debugSink: DebugSink;
   private readonly playerControls: PlayerControlBuffer;
   private readonly entityViews = new Map<string, Phaser.GameObjects.Container>();
@@ -112,10 +117,11 @@ export class WorldScene extends Phaser.Scene {
   private pointerInsideCanvas = false;
   private pointerTarget: PointerTargetSample | null = null;
 
-  constructor(debugSink: DebugSink, playerControls: PlayerControlBuffer) {
+  constructor(debugSink: DebugSink, playerControls: PlayerControlBuffer, livingMode = false) {
     super({ key: "world" });
     this.debugSink = debugSink;
     this.playerControls = playerControls;
+    this.living = livingMode ? new LivingRuntime(this.world, requestResidentReply) : null;
   }
 
   create(): void {
@@ -139,6 +145,7 @@ export class WorldScene extends Phaser.Scene {
 
     const canvas = this.game.canvas;
     const handleCanvasPointerUp = (event: PointerEvent) => {
+      if (this.living && document.activeElement instanceof HTMLElement) document.activeElement.blur();
       if (event.pointerType === "touch" || event.button !== 0) return;
       this.queueDirectInteractionAtClientPoint(event.clientX, event.clientY, MOUSE_TARGET_RADIUS_PX);
     };
@@ -177,7 +184,7 @@ export class WorldScene extends Phaser.Scene {
     this.accumulatorMs += boundedDelta;
     this.debugAccumulatorMs += boundedDelta;
 
-    if (this.keys) {
+    if (this.keys && !this.typing) {
       this.pendingInteract = this.pendingInteract || Phaser.Input.Keyboard.JustDown(this.keys.E);
       this.pendingDrop = this.pendingDrop || Phaser.Input.Keyboard.JustDown(this.keys.Q);
       if (Phaser.Input.Keyboard.JustDown(this.keys.V)) this.toggleDebugOverlay();
@@ -197,7 +204,7 @@ export class WorldScene extends Phaser.Scene {
           (this.keys?.S.isDown || this.cursors?.down.isDown ? 1 : 0) -
           (this.keys?.W.isDown || this.cursors?.up.isDown ? 1 : 0)
       };
-      const movement = combineControlMovement(keyboardMove, this.playerControls.movement());
+      const movement = this.typing ? { x: 0, y: 0 } : combineControlMovement(keyboardMove, this.playerControls.movement());
       const playerActions: WorldActionRequest[] = [];
       if (this.pendingDrop) {
         playerActions.push({ action: "drop", actorId: "player.jozz" });
@@ -213,14 +220,14 @@ export class WorldScene extends Phaser.Scene {
       }
 
       this.previousPresentationSnapshot = this.currentPresentationSnapshot;
-      const frameResult = this.executionDriver.step({
-        playerControl: { moveX: movement.x, moveY: movement.y },
-        playerActions
-      });
-      if (this.firstPresence.isActive()) {
-        this.firstPresence.afterExecutionFrame(frameResult);
+      if (this.living) {
+        this.living.step({ moveX: movement.x, moveY: movement.y }, playerActions);
       } else {
-        void this.e1Agent.afterExecutionStep(frameResult, time);
+        const frameResult = this.executionDriver.step({
+          playerControl: { moveX: movement.x, moveY: movement.y }, playerActions
+        });
+        if (this.firstPresence.isActive()) this.firstPresence.afterExecutionFrame(frameResult);
+        else void this.e1Agent.afterExecutionStep(frameResult, time);
       }
 
       this.currentPresentationSnapshot = this.world.snapshot();
@@ -241,6 +248,22 @@ export class WorldScene extends Phaser.Scene {
     this.debugOverlayVisible = !this.debugOverlayVisible;
   }
 
+  residentState(): ResidentViewState | null { return this.living?.state() ?? null; }
+  speakToResident(text: string): Promise<void> { return this.living?.send(text) ?? Promise.resolve(); }
+  retryResident(): Promise<void> { return this.living?.retry() ?? Promise.resolve(); }
+  stopResident(): void { this.living?.stop(); }
+  setTyping(typing: boolean): void {
+    this.typing = typing;
+    this.playerControls.clearMovement();
+    this.playerControls.consumeActions();
+    this.pendingInteract = this.pendingDrop = false;
+    this.pendingDirectInteractTargetId = null;
+    if (this.input?.keyboard) {
+      this.input.keyboard.resetKeys();
+      this.input.keyboard.enabled = !typing;
+    }
+  }
+
   toggleLabels(): void {
     this.labelsVisible = !this.labelsVisible;
   }
@@ -250,7 +273,7 @@ export class WorldScene extends Phaser.Scene {
   }
 
   toggleE1Agent(): E1HarnessDebugState {
-    if (this.firstPresence.isActive()) this.e1Agent.disarm();
+    if (this.living || this.firstPresence.isActive()) this.e1Agent.disarm();
     else this.e1Agent.toggle();
     this.emitDebugState(this.currentPresentationSnapshot);
     return this.e1Agent.state();
@@ -269,6 +292,7 @@ export class WorldScene extends Phaser.Scene {
   }
 
   startFirstPresence(): FirstPresenceBrowserProbeState {
+    if (this.living) return this.firstPresence.state();
     this.firstPresence.start();
     // Disarm only after ownership changes. A refused start must not interrupt E1.
     // Disarming also invalidates any E1 response already in flight.
@@ -296,7 +320,7 @@ export class WorldScene extends Phaser.Scene {
   }
 
   startNpcFetchLanternTask(): ManualExecutorStartResult {
-    if (this.firstPresence.isActive()) {
+    if (this.living || this.firstPresence.isActive()) {
       return { started: false, state: this.npcExecutor.state() };
     }
     const result = startManualExecutorTask(
@@ -479,7 +503,7 @@ export class WorldScene extends Phaser.Scene {
       this.entityViews.set(entity.id, view);
 
       const label = this.add
-        .text(entity.position.x, entity.position.y - entity.radius - 18, entity.label, {
+        .text(entity.position.x, entity.position.y - entity.radius - 18, this.living && entity.id === "npc.001" ? "Mira" : entity.label, {
           fontFamily: "system-ui, sans-serif",
           fontSize: visual.labelFontSize,
           color: "#f0f4f7",

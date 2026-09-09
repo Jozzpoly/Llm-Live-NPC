@@ -1,6 +1,8 @@
 import * as Phaser from "phaser";
 import "./style.css";
 import "./mobile-style.css";
+import "./living-style.css";
+import { LivingPanel } from "./living-panel";
 import { ActionAttemptDebugPanel } from "./action-attempt-debug-panel";
 import { DebugWorkspace } from "./debug-workspace";
 import { E1DebugPanel } from "./e1-debug-panel";
@@ -21,14 +23,32 @@ if (!appRoot || !debugRoot || !gameRoot || !stageChip) {
 const stageChipNode: HTMLElement = stageChip;
 const mobileOwnerMode = isTouchOwnerDevice();
 appRoot.classList.toggle("mobile-owner-mode", mobileOwnerMode);
+const livingMode = new URLSearchParams(location.search).get("lab") !== "1";
+appRoot.classList.toggle("living-mode", livingMode);
+if (livingMode) {
+  document.documentElement.lang = "pl";
+  document.title = "Mira i Ty — LLM Live NPC";
+  document.querySelector("h1")!.textContent = "Mira i Ty";
+  document.querySelector(".game-shell .eyebrow")!.textContent = "Pierwsze wspólne chwile";
+  document.querySelector(".game-shell footer")!.innerHTML = "<span>Ruch: WASD / strzałki</span><span>Podnieś: E · Odłóż: Q</span><span>Kliknij świat, aby wrócić do ruchu</span>";
+  gameRoot.setAttribute("aria-label", "Świat Miry i gracza");
+}
 
 let scene: WorldScene;
 let e1Panel: E1DebugPanel | null = null;
 let actionAttemptPanel: ActionAttemptDebugPanel | null = null;
 let firstPresencePanel: FirstPresenceDebugPanel | null = null;
+let livingPanel: LivingPanel | null = null;
 const playerControls = new PlayerControlBuffer();
 
 function updateNpcUi(): void {
+  const resident = scene.residentState();
+  if (resident) {
+    livingPanel?.update(resident);
+    stageChipNode.textContent = resident.pending ? "Mira myśli…" : "Wspólny świat";
+    stageChipNode.classList.add("is-active");
+    return;
+  }
   const state = scene.e1AgentState();
   const presence = scene.firstPresenceState();
   const presenceActive = presence.phase !== "idle";
@@ -41,32 +61,43 @@ function updateNpcUi(): void {
   stageChipNode.classList.toggle("is-active", presenceActive || state.armed);
 }
 
-const workspace = new DebugWorkspace(debugRoot, appRoot, {
+const workspace = livingMode ? null : new DebugWorkspace(debugRoot, appRoot, {
   toggleLabels: () => scene.toggleLabels(),
   toggleLosProbe: () => scene.toggleDebugOverlay(),
   togglePointerProbe: () => scene.togglePointerProbe(),
   startNpcFetchLantern: () => scene.startNpcFetchLanternTask()
 });
-if (mobileOwnerMode) workspace.setCollapsed(true);
+if (mobileOwnerMode) workspace?.setCollapsed(true);
 
 scene = new WorldScene((state) => {
-  workspace.update(state);
+  workspace?.update(state);
   actionAttemptPanel?.update(scene.recentActionAttempts());
   updateNpcUi();
-}, playerControls);
+}, playerControls, livingMode);
 
-e1Panel = new E1DebugPanel(debugRoot, {
-  toggle: () => scene.toggleE1Agent()
-});
-actionAttemptPanel = new ActionAttemptDebugPanel(debugRoot);
-firstPresencePanel = new FirstPresenceDebugPanel(debugRoot, {
-  start: () => scene.startFirstPresence(),
-  retry: () => scene.retryFirstPresence(),
-  resume: () => scene.resumeFirstPresence(),
-  replace: () => scene.replaceFirstPresence()
-});
+if (livingMode) {
+  debugRoot.hidden = true;
+  const residentRoot = document.createElement("aside");
+  appRoot.append(residentRoot);
+  livingPanel = new LivingPanel(residentRoot, {
+    send: text => scene.speakToResident(text),
+    retry: () => scene.retryResident(), stop: () => scene.stopResident(),
+    typing: active => scene.setTyping(active)
+  });
+} else {
+  e1Panel = new E1DebugPanel(debugRoot, {
+    toggle: () => scene.toggleE1Agent()
+  });
+  actionAttemptPanel = new ActionAttemptDebugPanel(debugRoot);
+  firstPresencePanel = new FirstPresenceDebugPanel(debugRoot, {
+    start: () => scene.startFirstPresence(),
+    retry: () => scene.retryFirstPresence(),
+    resume: () => scene.resumeFirstPresence(),
+    replace: () => scene.replaceFirstPresence()
+  });
+}
 updateNpcUi();
-actionAttemptPanel.update(scene.recentActionAttempts());
+actionAttemptPanel?.update(scene.recentActionAttempts());
 
 new Phaser.Game({
   type: Phaser.AUTO,
@@ -91,3 +122,13 @@ new MobileOwnerControls(gameRoot, playerControls, {
   zoomByScale: (scale) => scene.zoomByScale(scale),
   interactAtClientPoint: (clientX, clientY) => scene.queueTouchInteractionAtClientPoint(clientX, clientY)
 });
+
+if (livingMode) {
+  gameRoot.addEventListener("pointerdown", () => {
+    if (document.activeElement instanceof HTMLTextAreaElement) document.activeElement.blur();
+  }, { capture: true });
+  for (const [key, label] of [["interact", "Podnieś"], ["drop", "Odłóż"]]) {
+    const button = gameRoot.querySelector<HTMLButtonElement>(`[data-mobile-control="${key}"]`);
+    if (button) { button.setAttribute("aria-label", label); button.querySelector("strong")!.textContent = label; }
+  }
+}
