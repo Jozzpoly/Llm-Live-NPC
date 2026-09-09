@@ -51,7 +51,7 @@ afterEach(() => {
 });
 
 describe("resident conversation Worker", () => {
-  it("routes a grounded Polish conversation to the existing model and returns only reply plus intention", async () => {
+  it("routes a grounded Polish conversation to the resident model and returns only reply plus intention", async () => {
     const environment = env();
     const response = await worker.fetch(request({ ...input(), hiddenFacts: "INVISIBLE SECRET" }), environment);
     expect(response.status).toBe(200);
@@ -59,7 +59,7 @@ describe("resident conversation Worker", () => {
     expect(response.headers.get("cache-control")).toBe("no-store");
     expect(environment.AI_PROBE_LIMITER.limit).toHaveBeenCalledWith({ key: "living-resident-converse:192.0.2.8" });
     const call = environment.AI.run.mock.calls[0] as unknown[];
-    expect(call[0]).toBe("@cf/ibm-granite/granite-4.0-h-micro");
+    expect(call[0]).toBe("@cf/qwen/qwen3-30b-a3b-fp8");
     const inference = call[1] as { messages: Array<{ role: string; content: string }> };
     const content = inference.messages.find((message) => message.role === "user")?.content;
     expect(JSON.parse(content ?? "null")).toEqual(input());

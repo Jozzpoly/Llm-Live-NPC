@@ -2,7 +2,8 @@ import type { KnownEntity, ResidentModelInput, ResidentReply } from "../src/livi
 import { parseResidentReply } from "../src/living/provider";
 import type { FirstPresenceSemanticEnv } from "./first-presence-semantic";
 
-const RESIDENT_MODEL = "@cf/ibm-granite/granite-4.0-h-micro";
+// The earlier probe's micro model failed natural Polish conversation in live use.
+const RESIDENT_MODEL = "@cf/qwen/qwen3-30b-a3b-fp8";
 const MAX_REQUEST_BYTES = 65_536;
 const MAX_TOOL_ARGUMENTS_LENGTH = 8192;
 const BODY_TIMEOUT_MS = 5000;
@@ -227,12 +228,14 @@ export async function handleResidentConversation(request: Request, env: LivingRe
   try {
     const result = await withinDeadline(env.AI.run(RESIDENT_MODEL, {
       messages: [
-        { role: "system", content: SYSTEM_PROMPT },
+        { role: "system", content: `${SYSTEM_PROMPT}\n\nidle oznacza powrót do własnej spokojnej aktywności: spacerów i odpoczynku. Nie wymaga celu. /no_think` },
         { role: "user", content: JSON.stringify(input) }
       ],
       tools: [replyTool(input)],
-      max_tokens: 384,
-      temperature: 0.3
+      max_tokens: 512,
+      temperature: 0.7,
+      top_p: 0.8,
+      top_k: 20
     }, {
       gateway: {
         id: "default", skipCache: true, collectLog: true,
