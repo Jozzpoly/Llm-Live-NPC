@@ -64,6 +64,7 @@ export class DebugWorkspace {
   private readonly eventsList: HTMLUListElement;
   private collapsed = false;
   private executorRunning = false;
+  private firstPresenceActive = false;
   private lastEventSignature = "";
 
   constructor(root: HTMLElement, appRoot: HTMLElement, actions: DebugWorkspaceActions) {
@@ -240,7 +241,11 @@ export class DebugWorkspace {
     this.executorStatusValue.classList.toggle("pass", state.executorStatus === "succeeded");
     this.executorStatusValue.classList.toggle("blocked", state.executorStatus === "failed");
     this.executorRunning = state.executorStatus === "running";
-    this.npcTaskButton.disabled = this.executorRunning;
+    this.firstPresenceActive = state.firstPresenceActive;
+    this.npcTaskButton.disabled = this.executorRunning || this.firstPresenceActive;
+    this.npcTaskButton.title = this.firstPresenceActive
+      ? "First Presence controls this NPC. Reload to return to manual tasks."
+      : "";
     this.npcTaskButton.setAttribute("aria-pressed", String(this.executorRunning));
     this.npcTaskButton.classList.toggle("is-active", this.executorRunning);
 
@@ -269,8 +274,10 @@ export class DebugWorkspace {
   }
 
   private startNpcFetchLantern(): void {
-    if (this.executorRunning) {
-      this.executorTriggerValue.textContent = "blocked · executor already running";
+    if (this.executorRunning || this.firstPresenceActive) {
+      this.executorTriggerValue.textContent = this.firstPresenceActive
+        ? "blocked · First Presence owns this NPC"
+        : "blocked · executor already running";
       this.executorTriggerValue.classList.remove("pass");
       this.executorTriggerValue.classList.add("blocked");
       return;

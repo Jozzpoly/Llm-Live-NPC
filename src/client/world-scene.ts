@@ -1,10 +1,6 @@
 import * as Phaser from "phaser";
-import {
-  DeterministicExecutor,
-  type ExecutorStatus
-} from "../execution/deterministic-executor";
+import type { ExecutorStatus } from "../execution/deterministic-executor";
 import { ExecutionDriver, type ActionAttemptRecord } from "../execution/execution-driver";
-import { createP1Specimen } from "../world/specimen";
 import { World } from "../world/world";
 import type {
   Aabb,
@@ -17,6 +13,11 @@ import type {
   WorldSnapshot
 } from "../world/types";
 import { E1AgentHarness, type E1HarnessDebugState } from "./e1-agent-harness";
+import {
+  FirstPresenceBrowserProbe,
+  createFirstPresenceBrowserProbeSpecimen,
+  type FirstPresenceBrowserProbeState
+} from "./first-presence-browser-probe";
 import {
   interpolationAlpha,
   resolveInterpolatedEntityPositions
@@ -59,6 +60,7 @@ export interface WorldDebugState {
   npcLineOfSight: boolean;
   npcDistance: number;
   entityCount: number;
+  firstPresenceActive: boolean;
   executorStatus: ExecutorStatus;
   executorActorId: EntityId | null;
   executorTargetId: EntityId | null;
@@ -82,8 +84,9 @@ function clamp(value: number, min: number, max: number): number {
 }
 
 export class WorldScene extends Phaser.Scene {
-  private readonly world = new World(createP1Specimen());
-  private readonly npcExecutor = new DeterministicExecutor();
+  private readonly world = new World(createFirstPresenceBrowserProbeSpecimen());
+  private readonly firstPresence = new FirstPresenceBrowserProbe(this.world);
+  private readonly npcExecutor = this.firstPresence.executor;
   private readonly executionDriver = new ExecutionDriver(this.world, this.npcExecutor);
   private readonly e1Agent = new E1AgentHarness(this.world, this.npcExecutor);
   private readonly debugSink: DebugSink;
@@ -214,7 +217,11 @@ export class WorldScene extends Phaser.Scene {
         playerControl: { moveX: movement.x, moveY: movement.y },
         playerActions
       });
-      void this.e1Agent.afterExecutionStep(frameResult, time);
+      if (this.firstPresence.isActive()) {
+        this.firstPresence.afterExecutionFrame(frameResult);
+      } else {
+        void this.e1Agent.afterExecutionStep(frameResult, time);
+      }
 
       this.currentPresentationSnapshot = this.world.snapshot();
       this.pendingInteract = false;
@@ -243,9 +250,10 @@ export class WorldScene extends Phaser.Scene {
   }
 
   toggleE1Agent(): E1HarnessDebugState {
-    const state = this.e1Agent.toggle();
+    if (this.firstPresence.isActive()) this.e1Agent.disarm();
+    else this.e1Agent.toggle();
     this.emitDebugState(this.currentPresentationSnapshot);
-    return state;
+    return this.e1Agent.state();
   }
 
   e1AgentState(): E1HarnessDebugState {
@@ -256,7 +264,41 @@ export class WorldScene extends Phaser.Scene {
     return this.executionDriver.recentActionAttempts();
   }
 
+  firstPresenceState(): FirstPresenceBrowserProbeState {
+    return this.firstPresence.state();
+  }
+
+  startFirstPresence(): FirstPresenceBrowserProbeState {
+    this.firstPresence.start();
+    // Disarm only after ownership changes. A refused start must not interrupt E1.
+    // Disarming also invalidates any E1 response already in flight.
+    if (this.firstPresence.isActive()) this.e1Agent.disarm();
+    this.emitDebugState(this.currentPresentationSnapshot);
+    return this.firstPresence.state();
+  }
+
+  retryFirstPresence(): FirstPresenceBrowserProbeState {
+    this.firstPresence.retry();
+    this.emitDebugState(this.currentPresentationSnapshot);
+    return this.firstPresence.state();
+  }
+
+  resumeFirstPresence(): FirstPresenceBrowserProbeState {
+    this.firstPresence.resume();
+    this.emitDebugState(this.currentPresentationSnapshot);
+    return this.firstPresence.state();
+  }
+
+  replaceFirstPresence(): FirstPresenceBrowserProbeState {
+    this.firstPresence.replace();
+    this.emitDebugState(this.currentPresentationSnapshot);
+    return this.firstPresence.state();
+  }
+
   startNpcFetchLanternTask(): ManualExecutorStartResult {
+    if (this.firstPresence.isActive()) {
+      return { started: false, state: this.npcExecutor.state() };
+    }
     const result = startManualExecutorTask(
       this.npcExecutor,
       {
@@ -586,6 +628,7 @@ export class WorldScene extends Phaser.Scene {
       npcLineOfSight: this.world.hasLineOfSight(npc.position, player.position),
       npcDistance: Math.hypot(npc.position.x - player.position.x, npc.position.y - player.position.y),
       entityCount: snapshot.entities.length,
+      firstPresenceActive: this.firstPresence.isActive(),
       executorStatus: executorState.status,
       executorActorId: executorState.task?.actorId ?? null,
       executorTargetId: executorState.task?.targetId ?? null,

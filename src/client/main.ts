@@ -4,7 +4,7 @@ import "./mobile-style.css";
 import { ActionAttemptDebugPanel } from "./action-attempt-debug-panel";
 import { DebugWorkspace } from "./debug-workspace";
 import { E1DebugPanel } from "./e1-debug-panel";
-import type { E1HarnessDebugState } from "./e1-agent-harness";
+import { FirstPresenceDebugPanel } from "./first-presence-debug-panel";
 import { isTouchOwnerDevice, MobileOwnerControls } from "./mobile-controls";
 import { PlayerControlBuffer } from "./player-control-buffer";
 import { WorldScene } from "./world-scene";
@@ -25,12 +25,20 @@ appRoot.classList.toggle("mobile-owner-mode", mobileOwnerMode);
 let scene: WorldScene;
 let e1Panel: E1DebugPanel | null = null;
 let actionAttemptPanel: ActionAttemptDebugPanel | null = null;
+let firstPresencePanel: FirstPresenceDebugPanel | null = null;
 const playerControls = new PlayerControlBuffer();
 
-function updateE1Ui(state: E1HarnessDebugState): void {
+function updateNpcUi(): void {
+  const state = scene.e1AgentState();
+  const presence = scene.firstPresenceState();
+  const presenceActive = presence.phase !== "idle";
+  e1Panel?.setLockedByPresence(presenceActive);
   e1Panel?.update(state);
-  stageChipNode.textContent = state.armed ? "E1 cognition armed" : "E1 cognition disarmed";
-  stageChipNode.classList.toggle("is-active", state.armed);
+  firstPresencePanel?.update(presence);
+  stageChipNode.textContent = presenceActive
+    ? `First Presence · ${presence.phase.replaceAll("_", " ")}`
+    : state.armed ? "E1 cognition armed" : "First Presence ready";
+  stageChipNode.classList.toggle("is-active", presenceActive || state.armed);
 }
 
 const workspace = new DebugWorkspace(debugRoot, appRoot, {
@@ -44,14 +52,20 @@ if (mobileOwnerMode) workspace.setCollapsed(true);
 scene = new WorldScene((state) => {
   workspace.update(state);
   actionAttemptPanel?.update(scene.recentActionAttempts());
-  updateE1Ui(scene.e1AgentState());
+  updateNpcUi();
 }, playerControls);
 
 e1Panel = new E1DebugPanel(debugRoot, {
   toggle: () => scene.toggleE1Agent()
 });
 actionAttemptPanel = new ActionAttemptDebugPanel(debugRoot);
-updateE1Ui(scene.e1AgentState());
+firstPresencePanel = new FirstPresenceDebugPanel(debugRoot, {
+  start: () => scene.startFirstPresence(),
+  retry: () => scene.retryFirstPresence(),
+  resume: () => scene.resumeFirstPresence(),
+  replace: () => scene.replaceFirstPresence()
+});
+updateNpcUi();
 actionAttemptPanel.update(scene.recentActionAttempts());
 
 new Phaser.Game({

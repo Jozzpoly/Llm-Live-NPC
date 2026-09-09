@@ -67,6 +67,14 @@ const actorVisuals: Record<"player" | "npc", EntityVisualDescriptor> = {
 };
 
 const itemVisuals: Record<string, Omit<EntityVisualDescriptor, "depth" | "labelFontSize">> = {
+  "item.blue-mug": {
+    glyph: "mug",
+    fillColor: 0x538fd0,
+    secondaryColor: 0xa7d3ff,
+    strokeColor: 0x233e63,
+    strokeAlpha: 0.95,
+    shadowAlpha: 0.2
+  },
   "item.mug": {
     glyph: "mug",
     fillColor: 0xc85b5b,

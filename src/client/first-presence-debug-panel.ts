@@ -82,7 +82,7 @@ export class FirstPresenceDebugPanel {
     const section = element("section", "debug-section");
     section.append(element("h3", "debug-section-title", "First Presence · live semantic probe"));
 
-    const controls = element("div", "debug-control-row");
+    const controls = element("div", "debug-control-row first-presence-controls");
     this.startButton = controlButton("Start Red → live Blue");
     this.retryButton = controlButton("Retry semantic");
     this.resumeButton = controlButton("Resume Red");
@@ -136,7 +136,7 @@ export class FirstPresenceDebugPanel {
         "Probe only: Red is seeded, one real Red frame runs, then the fixed Blue correction goes through live semantic transport. World/player time continues during inference. Model output cannot resume or replace the held task; those remain explicit Owner buttons. E1 is disabled once this probe starts. Reload the page to reset the specimen."
       )
     );
-    content.append(section);
+    content.prepend(section);
   }
 
   update(state: FirstPresenceBrowserProbeState): void {
