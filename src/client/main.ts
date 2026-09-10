@@ -82,6 +82,7 @@ if (livingMode) {
   livingPanel = new LivingPanel(residentRoot, {
     send: text => scene.speakToResident(text),
     retry: () => scene.retryResident(), stop: () => scene.stopResident(),
+    call: () => scene.callResident(),
     typing: active => scene.setTyping(active)
   });
 } else {

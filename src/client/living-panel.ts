@@ -2,7 +2,7 @@ import type { ResidentViewState } from "../living/types";
 
 export interface LivingPanelActions {
   send(text: string): Promise<void>; retry(): Promise<void>;
-  stop(): void; typing(active: boolean): void;
+  stop(): void; call(): void; typing(active: boolean): void;
 }
 
 export class LivingPanel {
@@ -13,6 +13,7 @@ export class LivingPanel {
   private readonly error: HTMLElement;
   private readonly retryButton: HTMLButtonElement;
   private readonly sendButton: HTMLButtonElement;
+  private readonly contact: HTMLElement;
   private lastConversationKey = "";
 
   constructor(root: HTMLElement, private readonly actions: LivingPanelActions) {
@@ -24,6 +25,7 @@ export class LivingPanel {
       <div class="resident-error" role="alert"></div>
       <button type="button" class="resident-retry">Spróbuj ponownie</button>
       <form class="conversation-form"><label for="resident-message">Napisz do Miry</label><div class="compose-row"><textarea id="resident-message" rows="2" maxlength="800" placeholder="O czym myślisz? Możesz też zaproponować wspólne działanie…"></textarea><button type="submit" aria-label="Wyślij wiadomość">Wyślij <span aria-hidden="true">↗</span></button></div><p class="compose-hint">Enter wysyła · Shift+Enter dodaje wiersz</p></form>
+      <div class="resident-contact"><span></span><button type="button" class="resident-call">Zawołaj Mirę</button></div>
       <footer class="resident-footer"><button type="button" class="resident-stop">Zatrzymaj działanie</button><span>Pamięć tej sesji</span></footer>`;
     this.input = root.querySelector("textarea")!;
     this.log = root.querySelector(".conversation")!;
@@ -32,6 +34,8 @@ export class LivingPanel {
     this.error = root.querySelector(".resident-error")!;
     this.retryButton = root.querySelector(".resident-retry")!;
     this.sendButton = root.querySelector('[type="submit"]')!;
+    this.contact = root.querySelector(".resident-contact span")!;
+    root.querySelector(".resident-call")!.addEventListener("click", () => this.actions.call());
     this.input.addEventListener("input", () => this.updateSendButton());
     this.input.addEventListener("focus", () => this.actions.typing(true));
     this.input.addEventListener("blur", () => this.actions.typing(false));
@@ -55,6 +59,7 @@ export class LivingPanel {
   private updateSendButton(): void { this.sendButton.disabled = !this.input.value.trim(); }
   update(state: ResidentViewState): void {
     this.activity.textContent = state.activity;
+    this.contact.textContent = state.contact ?? "";
     this.pending.textContent = state.pending ? "Mira zastanawia się… Możesz dopowiedzieć coś jeszcze." : "";
     this.error.textContent = state.error ?? "";
     this.retryButton.hidden = !state.error;

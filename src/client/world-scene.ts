@@ -1,6 +1,7 @@
 import * as Phaser from "phaser";
-import { LivingRuntime } from "../living/runtime";
+import { LivingRuntime, stepLivingResidents } from "../living/runtime";
 import { requestResidentReply } from "../living/provider";
+import { createLivingSpecimen } from "../living/specimen";
 import type { ResidentViewState } from "../living/types";
 import type { ExecutorStatus } from "../execution/deterministic-executor";
 import { ExecutionDriver, type ActionAttemptRecord } from "../execution/execution-driver";
@@ -87,11 +88,11 @@ function clamp(value: number, min: number, max: number): number {
 }
 
 export class WorldScene extends Phaser.Scene {
-  private readonly world = new World(createFirstPresenceBrowserProbeSpecimen());
-  private readonly firstPresence = new FirstPresenceBrowserProbe(this.world);
-  private readonly npcExecutor = this.firstPresence.executor;
-  private readonly executionDriver = new ExecutionDriver(this.world, this.npcExecutor);
-  private readonly e1Agent = new E1AgentHarness(this.world, this.npcExecutor);
+  private readonly world: World;
+  private readonly firstPresence: FirstPresenceBrowserProbe;
+  private readonly npcExecutor: FirstPresenceBrowserProbe["executor"];
+  private readonly executionDriver: ExecutionDriver;
+  private readonly e1Agent: E1AgentHarness;
   private readonly living: LivingRuntime | null;
   private typing = false;
   private readonly debugSink: DebugSink;
@@ -99,8 +100,8 @@ export class WorldScene extends Phaser.Scene {
   private readonly entityViews = new Map<string, Phaser.GameObjects.Container>();
   private readonly entityLabels = new Map<string, Phaser.GameObjects.Text>();
   private readonly locationLabels: Phaser.GameObjects.Text[] = [];
-  private previousPresentationSnapshot = this.world.snapshot();
-  private currentPresentationSnapshot = this.previousPresentationSnapshot;
+  private previousPresentationSnapshot: WorldSnapshot;
+  private currentPresentationSnapshot: WorldSnapshot;
   private groundGraphics!: Phaser.GameObjects.Graphics;
   private sceneryGraphics!: Phaser.GameObjects.Graphics;
   private debugGraphics!: Phaser.GameObjects.Graphics;
@@ -119,6 +120,13 @@ export class WorldScene extends Phaser.Scene {
 
   constructor(debugSink: DebugSink, playerControls: PlayerControlBuffer, livingMode = false) {
     super({ key: "world" });
+    this.world = new World(livingMode ? createLivingSpecimen() : createFirstPresenceBrowserProbeSpecimen());
+    this.firstPresence = new FirstPresenceBrowserProbe(this.world);
+    this.npcExecutor = this.firstPresence.executor;
+    this.executionDriver = new ExecutionDriver(this.world, this.npcExecutor);
+    this.e1Agent = new E1AgentHarness(this.world, this.npcExecutor);
+    this.previousPresentationSnapshot = this.world.snapshot();
+    this.currentPresentationSnapshot = this.previousPresentationSnapshot;
     this.debugSink = debugSink;
     this.playerControls = playerControls;
     this.living = livingMode ? new LivingRuntime(this.world, requestResidentReply) : null;
@@ -221,7 +229,7 @@ export class WorldScene extends Phaser.Scene {
 
       this.previousPresentationSnapshot = this.currentPresentationSnapshot;
       if (this.living) {
-        this.living.step({ moveX: movement.x, moveY: movement.y }, playerActions);
+        stepLivingResidents(this.world, [this.living], { moveX: movement.x, moveY: movement.y }, playerActions);
       } else {
         const frameResult = this.executionDriver.step({
           playerControl: { moveX: movement.x, moveY: movement.y }, playerActions
@@ -252,6 +260,7 @@ export class WorldScene extends Phaser.Scene {
   speakToResident(text: string): Promise<void> { return this.living?.send(text) ?? Promise.resolve(); }
   retryResident(): Promise<void> { return this.living?.retry() ?? Promise.resolve(); }
   stopResident(): void { this.living?.stop(); }
+  callResident(): void { this.living?.callFromPlayer(); }
   setTyping(typing: boolean): void {
     this.typing = typing;
     this.playerControls.clearMovement();
@@ -566,6 +575,12 @@ export class WorldScene extends Phaser.Scene {
     }
 
     container.add([shadow, glyph]);
+    if (this.living && (entity.kind === "npc" || entity.kind === "player")) {
+      const attention = this.add.graphics().setName("attention");
+      attention.fillStyle(entity.kind === "npc" ? 0xf4d69d : 0xb0e3fa, 0.95);
+      attention.fillTriangle(entity.radius + 10, 0, entity.radius + 2, -4, entity.radius + 2, 4);
+      container.add(attention);
+    }
     return container;
   }
 
@@ -583,6 +598,10 @@ export class WorldScene extends Phaser.Scene {
       const renderedPosition = renderedPositions.get(entity.id) ?? entity.position;
       const view = this.entityViews.get(entity.id);
       if (view) view.setPosition(renderedPosition.x, renderedPosition.y);
+      if (view && (entity.kind === "npc" || entity.kind === "player")) {
+        const attention = view.getByName("attention") as Phaser.GameObjects.Graphics | null;
+        attention?.setRotation(Math.atan2(entity.facing.y, entity.facing.x));
+      }
 
       const label = this.entityLabels.get(entity.id);
       if (!label) continue;

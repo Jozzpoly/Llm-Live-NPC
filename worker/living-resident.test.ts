@@ -51,6 +51,31 @@ afterEach(() => {
 });
 
 describe("resident conversation Worker", () => {
+  it("accepts an unresolved item description and all-items purpose without inventing a target ID", async () => {
+    const output = { reply: "Sprawdzę znane miejsca i przyniosę pasujące rzeczy.", intent: {
+      kind: "find_item", description: { itemType: "mug", color: "red", nearPlaceId: "room.kitchen" }, quantity: "all"
+    } };
+    const context = input();
+    context.knownEntities = context.knownEntities.filter(e => e.kind !== "item");
+    expect((await handleResidentConversation(request(context), env(toolCall(output)))).status).toBe(200);
+    const invalid = { ...output, intent: { ...output.intent, description: { itemType: "mug", nearPlaceId: "secret.room" } } };
+    expect((await handleResidentConversation(request(context), env(toolCall(invalid)))).status).toBe(502);
+  });
+
+  it("preserves explicit absence, observed appearance and real sensory evidence, stripping hidden fields", async () => {
+    const context = input();
+    context.knownEntities[2] = { ...context.knownEntities[2], visible: false, lastCheckedAbsentAtTick: 19, source: "sight", appearance: { itemType: "mug", color: "red" } };
+    context.experiences = [{ id: 1, tick: 19, kind: "heard_call", text: "Słyszę wołanie z zachodu; nie znam dokładnej pozycji." }];
+    context.currentCommitment = "Przynieść dwa kubki. Jeden już dostarczony.";
+    const raw = structuredClone(context) as unknown as Record<string, unknown>;
+    (raw.knownEntities as Record<string, unknown>[])[2].hiddenPosition = { x: 999, y: 999 };
+    const environment = env(toolCall({ reply: "Poszukam cię.", intent: { kind: "search", targetId: "player.jozz" } }));
+    expect((await handleResidentConversation(request(raw), environment)).status).toBe(200);
+    const call = environment.AI.run.mock.calls[0] as unknown[];
+    const inference = call[1] as { messages: Array<{ role: string; content: string }> };
+    expect(JSON.parse(inference.messages[1].content)).toEqual(context);
+  });
+
   it("routes a grounded Polish conversation to the resident model and returns only reply plus intention", async () => {
     const environment = env();
     const response = await worker.fetch(request({ ...input(), hiddenFacts: "INVISIBLE SECRET" }), environment);

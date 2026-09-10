@@ -17,15 +17,32 @@ export function parseResidentReply(value: unknown, input: ResidentModelInput): R
   if (!record(value.intent)) return null;
   const intent = value.intent;
 
+  if (intent.kind === "find_item") {
+    if (Object.keys(intent).length !== 3 || !record(intent.description) || (intent.quantity !== "one" && intent.quantity !== "all")) return null;
+    const d = intent.description;
+    if (Object.keys(d).some(key => !["itemType", "color", "nearPlaceId", "withinPlaceId"].includes(key)) ||
+      !["mug", "hammer", "lantern", "any"].includes(String(d.itemType)) ||
+      (d.color !== undefined && d.color !== "red" && d.color !== "blue") ||
+      (d.nearPlaceId !== undefined && !input.places.some(p => p.id === d.nearPlaceId)) ||
+      (d.withinPlaceId !== undefined && !input.places.some(p => p.id === d.withinPlaceId))) return null;
+    return { reply, intent: { kind: "find_item", description: {
+      itemType: d.itemType as "mug" | "hammer" | "lantern" | "any",
+      ...(d.color ? { color: d.color } : {}), ...(typeof d.nearPlaceId === "string" ? { nearPlaceId: d.nearPlaceId } : {}),
+      ...(typeof d.withinPlaceId === "string" ? { withinPlaceId: d.withinPlaceId } : {})
+    }, quantity: intent.quantity } };
+  }
+
   if (intent.kind === "continue" || intent.kind === "idle" || intent.kind === "wait" || intent.kind === "drop") {
     return Object.keys(intent).length === 1 ? { reply, intent: { kind: intent.kind } } : null;
   }
-  if (intent.kind !== "go" && intent.kind !== "follow" && intent.kind !== "fetch") return null;
+  if (intent.kind !== "go" && intent.kind !== "follow" && intent.kind !== "fetch" && intent.kind !== "search") return null;
   if (Object.keys(intent).length !== 2 || typeof intent.targetId !== "string") return null;
 
   const entity = input.knownEntities.find((known) => known.id === intent.targetId);
   const allowed = intent.kind === "fetch"
     ? entity?.kind === "item"
+    : intent.kind === "search"
+      ? Boolean(entity) && entity!.id !== input.actorId
     : intent.kind === "follow"
       ? (entity?.kind === "player" || entity?.kind === "npc") && entity.id !== input.actorId
       : Boolean(entity) || input.places.some((place) => place.id === intent.targetId);

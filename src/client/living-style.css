@@ -34,6 +34,8 @@
 .resident-footer { display: flex; padding: 10px 16px 13px; gap: 12px; justify-content: space-between; align-items: center; background: #141e21; }
 .resident-footer span { font-size: 10px; color: #82928b; }
 .resident-stop { padding: 6px 0; border: 0; background: none; color: #b9c8bf; font-size: 11px; cursor: pointer; text-decoration: underline; text-underline-offset: 4px; }
+.resident-contact { display: flex; gap: 8px; justify-content: space-between; align-items: center; padding: 7px 16px; color: #a6b3a9; font-size: 11px; }
+.resident-call { min-height: 36px; border: 1px solid #536452; border-radius: 8px; background: #26382d; color: #e3dfcc; padding: 7px 10px; cursor: pointer; }
 .living-mode .game-shell header { background: #121d1d; }
 .living-mode .stage-chip { max-width: 150px; text-align: center; }
 @media(max-width: 980px) {
