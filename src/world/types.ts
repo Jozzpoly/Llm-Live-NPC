@@ -37,6 +37,7 @@ export type ActorEntity = PlayerEntity | NpcEntity;
 export interface ItemEntity extends BaseEntity {
   kind: "item";
   heldBy: EntityId | null;
+  appearance?: { itemType: "mug" | "hammer" | "lantern"; color?: "red" | "blue" };
 }
 
 export type WorldEntity = ActorEntity | ItemEntity;
@@ -117,6 +118,16 @@ export interface WorldSpecimen {
 export interface WorldInput {
   moveX: number;
   moveY: number;
+  /** Optional direction of attention. Turning in place does not require walking. */
+  lookDirection?: Vec2;
+}
+
+/** Physical stimulus. Only a sensory adapter may expose it to an actor's mind. */
+export interface WorldCall {
+  seq: number;
+  tick: number;
+  actorId: EntityId;
+  position: Vec2;
 }
 
 export interface ActorControlInput extends WorldInput {

@@ -12,6 +12,7 @@ import type {
   Vec2,
   WorldActionRequest,
   WorldActionResult,
+  WorldCall,
   WorldEntity,
   WorldEvent,
   WorldInput,
@@ -167,6 +168,9 @@ function assertFiniteMovement(input: WorldInput, label: string): void {
   if (!Number.isFinite(input.moveX) || !Number.isFinite(input.moveY)) {
     throw new Error(`${label} requires a finite movement vector.`);
   }
+  if (input.lookDirection && (!Number.isFinite(input.lookDirection.x) || !Number.isFinite(input.lookDirection.y))) {
+    throw new Error(`${label} requires a finite look direction.`);
+  }
 }
 
 export class World {
@@ -179,6 +183,8 @@ export class World {
   private readonly locations: WorldSpecimen["locations"];
   private readonly placementSites: WorldSpecimen["placementSites"];
   private readonly eventLog: WorldEvent[] = [];
+  private readonly calls: WorldCall[] = [];
+  private callSequence = 0;
   private tickValue = 0;
   private eventSequence = 0;
   private actionSequence = 0;
@@ -309,6 +315,16 @@ export class World {
     return this.eventLog.slice(-Math.max(0, limit)).map((event) => ({ ...event }));
   }
 
+  callOut(actorId: EntityId): boolean {
+    const actor = this.entities.get(actorId);
+    if (!isActor(actor)) return false;
+    this.calls.push({ seq: ++this.callSequence, tick: this.tick, actorId, position: { ...actor.position } });
+    if (this.calls.length > 32) this.calls.shift();
+    return true;
+  }
+
+  recentCalls(): WorldCall[] { return structuredClone(this.calls); }
+
   lastActionResult(): WorldActionResult | null {
     return this.lastActionResultValue ? { ...this.lastActionResultValue } : null;
   }
@@ -424,12 +440,16 @@ export class World {
 
   private moveActor(actor: ActorEntity, input: WorldInput, seconds: number): void {
     const magnitude = Math.hypot(input.moveX, input.moveY);
+    const look = input.lookDirection;
+    if (look && Math.hypot(look.x, look.y) > 1e-6) {
+      const current = Math.atan2(actor.facing.y, actor.facing.x);
+      const difference = Math.atan2(Math.sin(Math.atan2(look.y, look.x) - current), Math.cos(Math.atan2(look.y, look.x) - current));
+      const angle = current + clamp(difference, -2 * Math.PI * seconds, 2 * Math.PI * seconds);
+      actor.facing = { x: Math.cos(angle), y: Math.sin(angle) };
+    } else if (magnitude > 0) {
+      actor.facing = { x: input.moveX / magnitude, y: input.moveY / magnitude };
+    }
     if (magnitude <= 0) return;
-
-    actor.facing = {
-      x: input.moveX / magnitude,
-      y: input.moveY / magnitude
-    };
 
     const movementScale = Math.max(1, magnitude);
     const movementX = input.moveX / movementScale;

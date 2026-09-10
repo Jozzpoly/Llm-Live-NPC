@@ -1,10 +1,10 @@
 import * as Phaser from "phaser";
-import {
-  DeterministicExecutor,
-  type ExecutorStatus
-} from "../execution/deterministic-executor";
+import { LivingRuntime, stepLivingResidents } from "../living/runtime";
+import { requestResidentReply } from "../living/provider";
+import { createLivingSpecimen } from "../living/specimen";
+import type { ResidentViewState } from "../living/types";
+import type { ExecutorStatus } from "../execution/deterministic-executor";
 import { ExecutionDriver, type ActionAttemptRecord } from "../execution/execution-driver";
-import { createP1Specimen } from "../world/specimen";
 import { World } from "../world/world";
 import type {
   Aabb,
@@ -17,6 +17,11 @@ import type {
   WorldSnapshot
 } from "../world/types";
 import { E1AgentHarness, type E1HarnessDebugState } from "./e1-agent-harness";
+import {
+  FirstPresenceBrowserProbe,
+  createFirstPresenceBrowserProbeSpecimen,
+  type FirstPresenceBrowserProbeState
+} from "./first-presence-browser-probe";
 import {
   interpolationAlpha,
   resolveInterpolatedEntityPositions
@@ -59,6 +64,7 @@ export interface WorldDebugState {
   npcLineOfSight: boolean;
   npcDistance: number;
   entityCount: number;
+  firstPresenceActive: boolean;
   executorStatus: ExecutorStatus;
   executorActorId: EntityId | null;
   executorTargetId: EntityId | null;
@@ -82,17 +88,20 @@ function clamp(value: number, min: number, max: number): number {
 }
 
 export class WorldScene extends Phaser.Scene {
-  private readonly world = new World(createP1Specimen());
-  private readonly npcExecutor = new DeterministicExecutor();
-  private readonly executionDriver = new ExecutionDriver(this.world, this.npcExecutor);
-  private readonly e1Agent = new E1AgentHarness(this.world, this.npcExecutor);
+  private readonly world: World;
+  private readonly firstPresence: FirstPresenceBrowserProbe;
+  private readonly npcExecutor: FirstPresenceBrowserProbe["executor"];
+  private readonly executionDriver: ExecutionDriver;
+  private readonly e1Agent: E1AgentHarness;
+  private readonly living: LivingRuntime | null;
+  private typing = false;
   private readonly debugSink: DebugSink;
   private readonly playerControls: PlayerControlBuffer;
   private readonly entityViews = new Map<string, Phaser.GameObjects.Container>();
   private readonly entityLabels = new Map<string, Phaser.GameObjects.Text>();
   private readonly locationLabels: Phaser.GameObjects.Text[] = [];
-  private previousPresentationSnapshot = this.world.snapshot();
-  private currentPresentationSnapshot = this.previousPresentationSnapshot;
+  private previousPresentationSnapshot: WorldSnapshot;
+  private currentPresentationSnapshot: WorldSnapshot;
   private groundGraphics!: Phaser.GameObjects.Graphics;
   private sceneryGraphics!: Phaser.GameObjects.Graphics;
   private debugGraphics!: Phaser.GameObjects.Graphics;
@@ -109,10 +118,18 @@ export class WorldScene extends Phaser.Scene {
   private pointerInsideCanvas = false;
   private pointerTarget: PointerTargetSample | null = null;
 
-  constructor(debugSink: DebugSink, playerControls: PlayerControlBuffer) {
+  constructor(debugSink: DebugSink, playerControls: PlayerControlBuffer, livingMode = false) {
     super({ key: "world" });
+    this.world = new World(livingMode ? createLivingSpecimen() : createFirstPresenceBrowserProbeSpecimen());
+    this.firstPresence = new FirstPresenceBrowserProbe(this.world);
+    this.npcExecutor = this.firstPresence.executor;
+    this.executionDriver = new ExecutionDriver(this.world, this.npcExecutor);
+    this.e1Agent = new E1AgentHarness(this.world, this.npcExecutor);
+    this.previousPresentationSnapshot = this.world.snapshot();
+    this.currentPresentationSnapshot = this.previousPresentationSnapshot;
     this.debugSink = debugSink;
     this.playerControls = playerControls;
+    this.living = livingMode ? new LivingRuntime(this.world, requestResidentReply) : null;
   }
 
   create(): void {
@@ -136,6 +153,7 @@ export class WorldScene extends Phaser.Scene {
 
     const canvas = this.game.canvas;
     const handleCanvasPointerUp = (event: PointerEvent) => {
+      if (this.living && document.activeElement instanceof HTMLElement) document.activeElement.blur();
       if (event.pointerType === "touch" || event.button !== 0) return;
       this.queueDirectInteractionAtClientPoint(event.clientX, event.clientY, MOUSE_TARGET_RADIUS_PX);
     };
@@ -174,7 +192,7 @@ export class WorldScene extends Phaser.Scene {
     this.accumulatorMs += boundedDelta;
     this.debugAccumulatorMs += boundedDelta;
 
-    if (this.keys) {
+    if (this.keys && !this.typing) {
       this.pendingInteract = this.pendingInteract || Phaser.Input.Keyboard.JustDown(this.keys.E);
       this.pendingDrop = this.pendingDrop || Phaser.Input.Keyboard.JustDown(this.keys.Q);
       if (Phaser.Input.Keyboard.JustDown(this.keys.V)) this.toggleDebugOverlay();
@@ -194,7 +212,7 @@ export class WorldScene extends Phaser.Scene {
           (this.keys?.S.isDown || this.cursors?.down.isDown ? 1 : 0) -
           (this.keys?.W.isDown || this.cursors?.up.isDown ? 1 : 0)
       };
-      const movement = combineControlMovement(keyboardMove, this.playerControls.movement());
+      const movement = this.typing ? { x: 0, y: 0 } : combineControlMovement(keyboardMove, this.playerControls.movement());
       const playerActions: WorldActionRequest[] = [];
       if (this.pendingDrop) {
         playerActions.push({ action: "drop", actorId: "player.jozz" });
@@ -210,11 +228,15 @@ export class WorldScene extends Phaser.Scene {
       }
 
       this.previousPresentationSnapshot = this.currentPresentationSnapshot;
-      const frameResult = this.executionDriver.step({
-        playerControl: { moveX: movement.x, moveY: movement.y },
-        playerActions
-      });
-      void this.e1Agent.afterExecutionStep(frameResult, time);
+      if (this.living) {
+        stepLivingResidents(this.world, [this.living], { moveX: movement.x, moveY: movement.y }, playerActions);
+      } else {
+        const frameResult = this.executionDriver.step({
+          playerControl: { moveX: movement.x, moveY: movement.y }, playerActions
+        });
+        if (this.firstPresence.isActive()) this.firstPresence.afterExecutionFrame(frameResult);
+        else void this.e1Agent.afterExecutionStep(frameResult, time);
+      }
 
       this.currentPresentationSnapshot = this.world.snapshot();
       this.pendingInteract = false;
@@ -234,6 +256,23 @@ export class WorldScene extends Phaser.Scene {
     this.debugOverlayVisible = !this.debugOverlayVisible;
   }
 
+  residentState(): ResidentViewState | null { return this.living?.state() ?? null; }
+  speakToResident(text: string): Promise<void> { return this.living?.send(text) ?? Promise.resolve(); }
+  retryResident(): Promise<void> { return this.living?.retry() ?? Promise.resolve(); }
+  stopResident(): void { this.living?.stop(); }
+  callResident(): void { this.living?.callFromPlayer(); }
+  setTyping(typing: boolean): void {
+    this.typing = typing;
+    this.playerControls.clearMovement();
+    this.playerControls.consumeActions();
+    this.pendingInteract = this.pendingDrop = false;
+    this.pendingDirectInteractTargetId = null;
+    if (this.input?.keyboard) {
+      this.input.keyboard.resetKeys();
+      this.input.keyboard.enabled = !typing;
+    }
+  }
+
   toggleLabels(): void {
     this.labelsVisible = !this.labelsVisible;
   }
@@ -243,9 +282,10 @@ export class WorldScene extends Phaser.Scene {
   }
 
   toggleE1Agent(): E1HarnessDebugState {
-    const state = this.e1Agent.toggle();
+    if (this.living || this.firstPresence.isActive()) this.e1Agent.disarm();
+    else this.e1Agent.toggle();
     this.emitDebugState(this.currentPresentationSnapshot);
-    return state;
+    return this.e1Agent.state();
   }
 
   e1AgentState(): E1HarnessDebugState {
@@ -256,7 +296,42 @@ export class WorldScene extends Phaser.Scene {
     return this.executionDriver.recentActionAttempts();
   }
 
+  firstPresenceState(): FirstPresenceBrowserProbeState {
+    return this.firstPresence.state();
+  }
+
+  startFirstPresence(): FirstPresenceBrowserProbeState {
+    if (this.living) return this.firstPresence.state();
+    this.firstPresence.start();
+    // Disarm only after ownership changes. A refused start must not interrupt E1.
+    // Disarming also invalidates any E1 response already in flight.
+    if (this.firstPresence.isActive()) this.e1Agent.disarm();
+    this.emitDebugState(this.currentPresentationSnapshot);
+    return this.firstPresence.state();
+  }
+
+  retryFirstPresence(): FirstPresenceBrowserProbeState {
+    this.firstPresence.retry();
+    this.emitDebugState(this.currentPresentationSnapshot);
+    return this.firstPresence.state();
+  }
+
+  resumeFirstPresence(): FirstPresenceBrowserProbeState {
+    this.firstPresence.resume();
+    this.emitDebugState(this.currentPresentationSnapshot);
+    return this.firstPresence.state();
+  }
+
+  replaceFirstPresence(): FirstPresenceBrowserProbeState {
+    this.firstPresence.replace();
+    this.emitDebugState(this.currentPresentationSnapshot);
+    return this.firstPresence.state();
+  }
+
   startNpcFetchLanternTask(): ManualExecutorStartResult {
+    if (this.living || this.firstPresence.isActive()) {
+      return { started: false, state: this.npcExecutor.state() };
+    }
     const result = startManualExecutorTask(
       this.npcExecutor,
       {
@@ -437,7 +512,7 @@ export class WorldScene extends Phaser.Scene {
       this.entityViews.set(entity.id, view);
 
       const label = this.add
-        .text(entity.position.x, entity.position.y - entity.radius - 18, entity.label, {
+        .text(entity.position.x, entity.position.y - entity.radius - 18, this.living && entity.id === "npc.001" ? "Mira" : entity.label, {
           fontFamily: "system-ui, sans-serif",
           fontSize: visual.labelFontSize,
           color: "#f0f4f7",
@@ -500,6 +575,12 @@ export class WorldScene extends Phaser.Scene {
     }
 
     container.add([shadow, glyph]);
+    if (this.living && (entity.kind === "npc" || entity.kind === "player")) {
+      const attention = this.add.graphics().setName("attention");
+      attention.fillStyle(entity.kind === "npc" ? 0xf4d69d : 0xb0e3fa, 0.95);
+      attention.fillTriangle(entity.radius + 10, 0, entity.radius + 2, -4, entity.radius + 2, 4);
+      container.add(attention);
+    }
     return container;
   }
 
@@ -517,6 +598,10 @@ export class WorldScene extends Phaser.Scene {
       const renderedPosition = renderedPositions.get(entity.id) ?? entity.position;
       const view = this.entityViews.get(entity.id);
       if (view) view.setPosition(renderedPosition.x, renderedPosition.y);
+      if (view && (entity.kind === "npc" || entity.kind === "player")) {
+        const attention = view.getByName("attention") as Phaser.GameObjects.Graphics | null;
+        attention?.setRotation(Math.atan2(entity.facing.y, entity.facing.x));
+      }
 
       const label = this.entityLabels.get(entity.id);
       if (!label) continue;
@@ -586,6 +671,7 @@ export class WorldScene extends Phaser.Scene {
       npcLineOfSight: this.world.hasLineOfSight(npc.position, player.position),
       npcDistance: Math.hypot(npc.position.x - player.position.x, npc.position.y - player.position.y),
       entityCount: snapshot.entities.length,
+      firstPresenceActive: this.firstPresence.isActive(),
       executorStatus: executorState.status,
       executorActorId: executorState.task?.actorId ?? null,
       executorTargetId: executorState.task?.targetId ?? null,

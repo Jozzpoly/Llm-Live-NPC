@@ -1,5 +1,6 @@
 import { handleE1AgentDecision } from "./e1-agent";
 import { handleFirstPresenceSemanticProposal } from "./first-presence-semantic";
+import { handleResidentConversation } from "./living-resident";
 
 const GATEWAY_ID = "default";
 const LIVE_STAGE = "e1-grounded-notice-fetch";
@@ -166,6 +167,7 @@ export default {
         stage: LIVE_STAGE,
         cognitionEndpoint: "/api/agent/e1/decide",
         firstPresenceSemanticEndpoint: "/api/first-presence/semantic/propose",
+        residentConversationEndpoint: "/api/resident/converse",
         transportQualificationEndpoint: "/api/ai/qualify",
         probeCandidates: PROBE_CANDIDATES
       });
@@ -177,6 +179,10 @@ export default {
 
     if (url.pathname === "/api/first-presence/semantic/propose") {
       return handleFirstPresenceSemanticProposal(request, env);
+    }
+
+    if (url.pathname === "/api/resident/converse") {
+      return handleResidentConversation(request, env);
     }
 
     if (url.pathname === "/api/ai/smoke") {

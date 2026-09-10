@@ -102,6 +102,11 @@ export class E1DebugPanel {
     content.append(section);
   }
 
+  setLockedByPresence(locked: boolean): void {
+    this.button.disabled = locked;
+    this.button.title = locked ? "First Presence controls this NPC. Reload to return to E1." : "";
+  }
+
   update(state: E1HarnessDebugState): void {
     this.button.setAttribute("aria-pressed", String(state.armed));
     this.button.classList.toggle("is-active", state.armed);
