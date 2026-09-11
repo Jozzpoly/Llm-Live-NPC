@@ -29,6 +29,8 @@ interface RateLimitBinding {
 interface Env {
   AI: AiBinding;
   AI_PROBE_LIMITER: RateLimitBinding;
+  RESIDENT_PROVIDER?: "workers-ai" | "openai-luna";
+  OPENAI_API_KEY?: string;
 }
 
 interface UsageShape {
@@ -163,6 +165,8 @@ export default {
         ok: true,
         service: "llm-live-npc",
         aiBinding: Boolean(env.AI),
+        residentProvider: env.RESIDENT_PROVIDER ?? "workers-ai",
+        openAIKeyConfigured: Boolean(env.OPENAI_API_KEY?.trim()),
         gateway: GATEWAY_ID,
         stage: LIVE_STAGE,
         cognitionEndpoint: "/api/agent/e1/decide",
