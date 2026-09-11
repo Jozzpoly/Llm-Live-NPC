@@ -85,7 +85,7 @@ describe("Luna baseline transplant", () => {
     expect(body.parallel_tool_calls).toBe(false);
     expect(body.store).toBe(false);
     expect(body.instructions).not.toContain("/no_think");
-    expect(body.input[0].content).toBe(JSON.stringify(input()));
+    expect(JSON.parse(String(body.input[0].content))).toEqual(input());
     expect(JSON.stringify(body)).not.toContain("INVISIBLE SECRET");
     expect(body.tools).toHaveLength(1);
     expect(body.tools[0].name).toBe("resident_reply");
