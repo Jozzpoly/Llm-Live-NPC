@@ -1,3 +1,4 @@
+// Diagnostic redeploy marker only; runtime semantics intentionally match frozen Qwen baseline 3f45138b.
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "llm-live-npc",
