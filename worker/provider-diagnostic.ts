@@ -1,3 +1,4 @@
+// Redeploy checkpoint after Owner rotated OPENAI_API_KEY on 2026-09-11.
 interface DiagnosticAiBinding {
   run(model: string, input: unknown, options?: unknown): Promise<unknown>;
 }
