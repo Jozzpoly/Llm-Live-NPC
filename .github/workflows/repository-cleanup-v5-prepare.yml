@@ -55,7 +55,7 @@ jobs:
           out.summarySha256=crypto.createHash('sha256').update(JSON.stringify(out)).digest('hex');
           fs.writeFileSync(p+'/prepare-summary.json',JSON.stringify(out,null,2)+'\n');
           console.log(JSON.stringify({status:out.status,summarySha256:out.summarySha256,archiveSha:out.archive.archiveSha,deleteCount:out.freeze.delete.length}));
-NODE
+          NODE
           helper_sha="$(git ls-remote origin "$CLEANUP_HELPER_REF" | awk '{print $1}')"
           [[ -n "$helper_sha" ]] || { echo helper-missing-before-self-retire; exit 22; }
           git push --atomic --force-with-lease=refs/heads/main:"$CLEANUP_EXPECT_CANONICAL" --force-with-lease="$CLEANUP_ARCHIVE_REF:$archive_sha" --force-with-lease="$CLEANUP_HELPER_REF:$helper_sha" origin "$CLEANUP_EXPECT_CANONICAL:refs/heads/main" "$archive_sha:$CLEANUP_ARCHIVE_REF" ":$CLEANUP_HELPER_REF"
