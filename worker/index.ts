@@ -1,6 +1,7 @@
 import { handleE1AgentDecision } from "./e1-agent";
 import { handleFirstPresenceSemanticProposal } from "./first-presence-semantic";
 import { handleResidentConversation } from "./living-resident";
+import { handleProviderDiagnostic } from "./provider-diagnostic";
 
 const GATEWAY_ID = "default";
 const LIVE_STAGE = "e1-grounded-notice-fetch";
@@ -175,6 +176,10 @@ export default {
         transportQualificationEndpoint: "/api/ai/qualify",
         probeCandidates: PROBE_CANDIDATES
       });
+    }
+
+    if (url.pathname === "/api/diagnostic/providers") {
+      return handleProviderDiagnostic(request, env);
     }
 
     if (url.pathname === "/api/agent/e1/decide") {
