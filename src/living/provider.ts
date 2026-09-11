@@ -53,7 +53,7 @@ function requestError(status: number): string {
   if (status === 429) return "Za dużo wiadomości naraz. Odczekaj chwilę i spróbuj ponownie.";
   if (status === 400 || status === 413) return "Nie udało się wysłać tej wiadomości. Spróbuj napisać ją krócej.";
   if (status === 504 || status === 408) return "Odpowiedź trwała zbyt długo. Spróbuj ponownie.";
-  return "Rozmowa jest chwilowo niedostępna. Spróbuj ponownie.";
+  return `Rozmowa jest chwilowo niedostępna. Spróbuj ponownie. [HTTP ${status}]`;
 }
 
 async function readResponse(response: Response): Promise<unknown> {

@@ -1,6 +1,9 @@
 import { handleE1AgentDecision } from "./e1-agent";
 import { handleFirstPresenceSemanticProposal } from "./first-presence-semantic";
 import { handleResidentConversation } from "./living-resident";
+import { handleProviderDiagnostic } from "./provider-diagnostic";
+import { handleResidentContractDiagnostic } from "./resident-contract-diagnostic";
+import { handleRealResidentMatrixDiagnostic } from "./real-resident-matrix-diagnostic";
 
 const GATEWAY_ID = "default";
 const LIVE_STAGE = "e1-grounded-notice-fetch";
@@ -29,6 +32,8 @@ interface RateLimitBinding {
 interface Env {
   AI: AiBinding;
   AI_PROBE_LIMITER: RateLimitBinding;
+  RESIDENT_PROVIDER?: "workers-ai" | "openai-luna";
+  OPENAI_API_KEY?: string;
 }
 
 interface UsageShape {
@@ -163,6 +168,8 @@ export default {
         ok: true,
         service: "llm-live-npc",
         aiBinding: Boolean(env.AI),
+        residentProvider: env.RESIDENT_PROVIDER ?? "workers-ai",
+        openAIKeyConfigured: Boolean(env.OPENAI_API_KEY?.trim()),
         gateway: GATEWAY_ID,
         stage: LIVE_STAGE,
         cognitionEndpoint: "/api/agent/e1/decide",
@@ -171,6 +178,18 @@ export default {
         transportQualificationEndpoint: "/api/ai/qualify",
         probeCandidates: PROBE_CANDIDATES
       });
+    }
+
+    if (url.pathname === "/api/diagnostic/providers") {
+      return handleProviderDiagnostic(request, env);
+    }
+
+    if (url.pathname === "/api/diagnostic/resident-contract") {
+      return handleResidentContractDiagnostic(request, env);
+    }
+
+    if (url.pathname === "/api/diagnostic/real-resident-matrix") {
+      return handleRealResidentMatrixDiagnostic(request, env);
     }
 
     if (url.pathname === "/api/agent/e1/decide") {
