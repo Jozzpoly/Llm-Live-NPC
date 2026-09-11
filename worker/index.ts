@@ -2,6 +2,7 @@ import { handleE1AgentDecision } from "./e1-agent";
 import { handleFirstPresenceSemanticProposal } from "./first-presence-semantic";
 import { handleResidentConversation } from "./living-resident";
 import { handleProviderDiagnostic } from "./provider-diagnostic";
+import { handleResidentContractDiagnostic } from "./resident-contract-diagnostic";
 
 const GATEWAY_ID = "default";
 const LIVE_STAGE = "e1-grounded-notice-fetch";
@@ -180,6 +181,10 @@ export default {
 
     if (url.pathname === "/api/diagnostic/providers") {
       return handleProviderDiagnostic(request, env);
+    }
+
+    if (url.pathname === "/api/diagnostic/resident-contract") {
+      return handleResidentContractDiagnostic(request, env);
     }
 
     if (url.pathname === "/api/agent/e1/decide") {
