@@ -11,6 +11,9 @@
   "vars": {
     "RESIDENT_PROVIDER": "openai-luna"
   },
+  "secrets": {
+    "required": ["OPENAI_API_KEY"]
+  },
   "ai": {
     "binding": "AI"
   },
