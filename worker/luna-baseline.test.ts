@@ -31,7 +31,7 @@ function environment() {
   const run = vi.fn(async (_model: string, _input: unknown, _options?: unknown): Promise<unknown> => null);
   return {
     RESIDENT_PROVIDER: "openai-luna" as const,
-    OPENAI_API_KEY: "sk-test-not-a-real-key",
+    OPENAI_API_KEY: "sk-test-not-a-real-key" as string | undefined,
     AI: { aiGatewayLogId: "unused", run },
     AI_PROBE_LIMITER: { limit: vi.fn(async (_options: { key: string }) => ({ success: true })) }
   };
@@ -95,7 +95,7 @@ describe("Luna baseline transplant", () => {
     const fetchMock = vi.fn();
     vi.stubGlobal("fetch", fetchMock);
     const env = environment();
-    delete env.OPENAI_API_KEY;
+    env.OPENAI_API_KEY = undefined;
 
     const response = await handleResidentConversation(request(), env);
 
