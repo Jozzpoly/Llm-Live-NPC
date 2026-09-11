@@ -1,0 +1,70 @@
+name: Repository Cleanup v5 remote prepare
+
+on:
+  push:
+    branches:
+      - "maintenance/repository-cleanup-v5-prepare-c584673d1d44815012"
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Native v5 prepare
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CLEANUP_CONFIG_B64: 'eyJyZXBvc2l0b3J5IjoiSm96enBvbHkvTGxtLUxpdmUtTlBDIiwiY2Fub25pY2FsQnJhbmNoIjoibWFpbiIsImFyY2hpdmVCcmFuY2giOiJhcmNoaXZlL3JlcG9zaXRvcnktY2xlYW51cC12NS1uYXRpdmUtZTJlLWM3YTVlNCIsImhhcmREZW55UmVmcyI6WyJyZWNvdmVyeS9vd25lci1mYWlsLTIwMjYtMDktMDciLCJpbnRlZ3JhdGlvbi9maXJzdC1wcmVzZW5jZS1icm93c2VyLWxpdmUtcHJvYmUiLCJhcmNoaXZlL3JlcG9zaXRvcnktY2xlYW51cC0yMDI2LTA5LTExIl0sImhlbHBlckJyYW5jaCI6Im1haW50ZW5hbmNlL3JlcG9zaXRvcnktY2xlYW51cC12NS1wcmVwYXJlLWM1ODQ2NzNkMWQ0NDgxNTAxMiJ9'
+          CLEANUP_DECISIONS_B64: 'W3sicmVmIjoicmVmcy9oZWFkcy9tYWluIiwiZGlzcG9zaXRpb24iOiJLRUVQIiwicmVhc29uIjoiY2Fub25pY2FsIHByb2R1Y3QgcmVmIn0seyJyZWYiOiJyZWZzL2hlYWRzL21haW50ZW5hbmNlL3JlcG9zaXRvcnktY2xlYW51cC12NS1lMmUtaGVscGVyLWRkNDRjMDE4ODk4NiIsImRpc3Bvc2l0aW9uIjoiREVMRVRFIiwicmVhc29uIjoiZmFpbGVkIHY1IGFjY2VwdGFuY2UgaGVscGVyIHJlc2lkdWUiLCJleHRlcm5hbFBheWxvYWRBY2tub3dsZWRnZWQiOnRydWV9LHsicmVmIjoicmVmcy9oZWFkcy9tYWludGVuYW5jZS9yZXBvc2l0b3J5LWNsZWFudXAtdjUtZTJlLXRhcmdldC1kZDQ0YzAxODg5ODYiLCJkaXNwb3NpdGlvbiI6IkRFTEVURSIsInJlYXNvbiI6ImRpc3Bvc2FibGUgdjUgYWNjZXB0YW5jZSB0YXJnZXQiLCJleHRlcm5hbFBheWxvYWRBY2tub3dsZWRnZWQiOnRydWV9LHsicmVmIjoicmVmcy9oZWFkcy9tYWludGVuYW5jZS9yZXBvc2l0b3J5LWNsZWFudXAtdjUtcHJlcGFyZS0yMzFkNmY1ZjczYmYzMDdlNmIiLCJkaXNwb3NpdGlvbiI6IkRFTEVURSIsInJlYXNvbiI6ImludGVycnVwdGVkIHY1IHByZXBhcmUgaGVscGVyIHJlc2lkdWUiLCJleHRlcm5hbFBheWxvYWRBY2tub3dsZWRnZWQiOnRydWV9LHsicmVmIjoicmVmcy9oZWFkcy9tYWludGVuYW5jZS9yZXBvc2l0b3J5LWNsZWFudXAtdjUtcHJlcGFyZS0zY2Q0NGJiNzBkMmI1ZjIzYTQiLCJkaXNwb3NpdGlvbiI6IkRFTEVURSIsInJlYXNvbiI6InN0YWxlIHN0YWdlZCBydW50aW1lIGhlbHBlciByZXNpZHVlIGJlZm9yZSBmcm96ZW4gZXhlY3V0aW9uIGJ1aWxkIiwiZXh0ZXJuYWxQYXlsb2FkQWNrbm93bGVkZ2VkIjp0cnVlfSx7InJlZiI6InJlZnMvaGVhZHMvbWFpbnRlbmFuY2UvcmVwb3NpdG9yeS1jbGVhbnVwLXY1LXByZXBhcmUtYzU4NDY3M2QxZDQ0ODE1MDEyIiwiZGlzcG9zaXRpb24iOiJLRUVQIiwicmVhc29uIjoiZXBoZW1lcmFsIHJlbW90ZS1wcmVwYXJlIGV4ZWN1dG9yOyBzZWxmLXJldGlyZWQgYWZ0ZXIgZXZpZGVuY2UgcHVibGljYXRpb24ifV0='
+          CLEANUP_REPOSITORY_ID: ${{ github.repository_id }}
+          CLEANUP_EXPECT_CANONICAL: 'f207419ee87c03979544d2d579e624f043300bbc'
+          CLEANUP_HELPER_REF: 'refs/heads/maintenance/repository-cleanup-v5-prepare-c584673d1d44815012'
+          CLEANUP_ARCHIVE_REF: 'refs/heads/archive/repository-cleanup-v5-native-e2e-c7a5e4'
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/cleanup-kit /tmp/cleanup-out
+          cp .cleanup-bootstrap/runtime.zip /tmp/cleanup-kit.zip
+          actual_runtime_sha="$(sha256sum /tmp/cleanup-kit.zip | awk '{print $1}')"
+          [[ "$actual_runtime_sha" == "fafee98257b4af0b81842f343459b94c8a5ba7799ad5f45d8498b1cbc287dad8" ]] || { echo runtime-digest-mismatch; exit 19; }
+          unzip -q /tmp/cleanup-kit.zip -d /tmp/cleanup-kit
+          printf '%s' "$CLEANUP_CONFIG_B64" | base64 -d > /tmp/cleanup-out/config.json
+          printf '%s' "$CLEANUP_DECISIONS_B64" | base64 -d > /tmp/cleanup-out/decisions.json
+          cli=/tmp/cleanup-kit/src/cli.mjs
+          [[ "$(git ls-remote origin refs/heads/main | awk '{print $1}')" == "$CLEANUP_EXPECT_CANONICAL" ]] || { echo canonical-drift; exit 20; }
+          node "$cli" audit --repo="$GITHUB_WORKSPACE" --config=/tmp/cleanup-out/config.json --out=/tmp/cleanup-out/audit.json
+          node "$cli" freeze --repo="$GITHUB_WORKSPACE" --config=/tmp/cleanup-out/config.json --audit=/tmp/cleanup-out/audit.json --decisions=/tmp/cleanup-out/decisions.json --out=/tmp/cleanup-out/freeze.json
+          node "$cli" archive --repo="$GITHUB_WORKSPACE" --config=/tmp/cleanup-out/config.json --freeze=/tmp/cleanup-out/freeze.json --out=/tmp/cleanup-out/archive.json
+          node "$cli" rehearse --repo="$GITHUB_WORKSPACE" --config=/tmp/cleanup-out/config.json --freeze=/tmp/cleanup-out/freeze.json --archive=/tmp/cleanup-out/archive.json --out=/tmp/cleanup-out/rehearsal-dir --result-out=/tmp/cleanup-out/rehearsal.json
+          node "$cli" preservation --repo="$GITHUB_WORKSPACE" --config=/tmp/cleanup-out/config.json --archive=/tmp/cleanup-out/archive.json --rehearsal=/tmp/cleanup-out/rehearsal.json --repository-id="$CLEANUP_REPOSITORY_ID" --out=/tmp/cleanup-out/preservation-v1.json
+          node "$cli" preservation-v2 --repo="$GITHUB_WORKSPACE" --config=/tmp/cleanup-out/config.json --preservation=/tmp/cleanup-out/preservation-v1.json --root-ref="$CLEANUP_ARCHIVE_REF" --out=/tmp/cleanup-out/preservation-v2-anchor.json
+          node "$cli" bootstrap-provenance-v5 --repo="$GITHUB_WORKSPACE" --config=/tmp/cleanup-out/config.json --archive=/tmp/cleanup-out/archive.json --preservation=/tmp/cleanup-out/preservation-v2-anchor.json --helper-ref="$CLEANUP_HELPER_REF" --helper-sha="$GITHUB_SHA" --out=/tmp/cleanup-out/bootstrap-provenance.json --preservation-out=/tmp/cleanup-out/preservation-v2.json --execute
+          archive_sha="$(node -e "console.log(require('/tmp/cleanup-out/bootstrap-provenance.json').rootSha)")"
+          remote_archive="$(git ls-remote origin "$CLEANUP_ARCHIVE_REF" | awk '{print $1}')"
+          [[ "$remote_archive" == "$archive_sha" ]] || { echo archive-publication-mismatch; exit 21; }
+          node - <<'NODE'
+          const fs=require('fs'),crypto=require('crypto');
+          const p='/tmp/cleanup-out';
+          const read=n=>JSON.parse(fs.readFileSync(p+'/'+n,'utf8'));
+          const out={status:'PASS_NATIVE_REMOTE_PREPARE',audit:read('audit.json'),freeze:read('freeze.json'),archive:read('archive.json'),bootstrapProvenance:read('bootstrap-provenance.json'),preservationV1:read('preservation-v1.json'),preservationV2:read('preservation-v2.json')};
+          out.summarySha256=crypto.createHash('sha256').update(JSON.stringify(out)).digest('hex');
+          fs.writeFileSync(p+'/prepare-summary.json',JSON.stringify(out,null,2)+'\n');
+          console.log(JSON.stringify({status:out.status,summarySha256:out.summarySha256,archiveSha:out.archive.archiveSha,deleteCount:out.freeze.delete.length}));
+NODE
+          helper_sha="$(git ls-remote origin "$CLEANUP_HELPER_REF" | awk '{print $1}')"
+          [[ -n "$helper_sha" ]] || { echo helper-missing-before-self-retire; exit 22; }
+          git push --atomic --force-with-lease=refs/heads/main:"$CLEANUP_EXPECT_CANONICAL" --force-with-lease="$CLEANUP_ARCHIVE_REF:$archive_sha" --force-with-lease="$CLEANUP_HELPER_REF:$helper_sha" origin "$CLEANUP_EXPECT_CANONICAL:refs/heads/main" "$archive_sha:$CLEANUP_ARCHIVE_REF" ":$CLEANUP_HELPER_REF"
+          [[ -z "$(git ls-remote origin "$CLEANUP_HELPER_REF")" ]] || { echo helper-self-retire-failed; exit 23; }
+          echo PASS_NATIVE_REMOTE_PREPARE_AND_SELF_RETIRE
+      - name: Upload native prepare evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: repository-cleanup-v5-prepare-c584673d1d44815012
+          path: /tmp/cleanup-out
+          if-no-files-found: error
+          retention-days: 7
