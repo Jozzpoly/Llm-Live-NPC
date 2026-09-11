@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { ResidentModelInput, ResidentReply } from "../src/living/types";
-import { handleResidentConversation, type LivingResidentEnv } from "./living-resident";
+import { handleResidentConversation } from "./living-resident";
 
 function input(): ResidentModelInput {
   return {
@@ -27,12 +27,13 @@ const reply: ResidentReply = {
   intent: { kind: "fetch", targetId: "item.red-mug" }
 };
 
-function environment(): LivingResidentEnv & { AI: { run: ReturnType<typeof vi.fn> } } {
+function environment() {
+  const run = vi.fn(async (_model: string, _input: unknown, _options?: unknown): Promise<unknown> => null);
   return {
-    RESIDENT_PROVIDER: "openai-luna",
+    RESIDENT_PROVIDER: "openai-luna" as const,
     OPENAI_API_KEY: "sk-test-not-a-real-key",
-    AI: { aiGatewayLogId: "unused", run: vi.fn() },
-    AI_PROBE_LIMITER: { limit: vi.fn(async () => ({ success: true })) }
+    AI: { aiGatewayLogId: "unused", run },
+    AI_PROBE_LIMITER: { limit: vi.fn(async (_options: { key: string }) => ({ success: true })) }
   };
 }
 
@@ -50,7 +51,7 @@ afterEach(() => {
 
 describe("Luna baseline transplant", () => {
   it("sends the same sanitized resident context through Responses API and preserves the reply contract", async () => {
-    const fetchMock = vi.fn(async (_url: string, init?: RequestInit) => Response.json({
+    const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) => Response.json({
       id: "resp_test",
       status: "completed",
       output: [{
