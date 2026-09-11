@@ -1,0 +1,147 @@
+name: Repository Cleanup v5 connector-only native E2E dd44c0188986
+
+on:
+  push:
+    branches:
+      - "maintenance/repository-cleanup-v5-e2e-helper-dd44c0188986"
+
+permissions:
+  contents: write
+  pull-requests: read
+  actions: read
+
+jobs:
+  native-e2e:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TEST_NONCE: "dd44c0188986"
+      TARGET_BRANCH: "maintenance/repository-cleanup-v5-e2e-target-dd44c0188986"
+      HELPER_BRANCH: "maintenance/repository-cleanup-v5-e2e-helper-dd44c0188986"
+      ARCHIVE_BRANCH: "archive/repository-cleanup-v5-e2e-dd44c0188986"
+      EXPECT_MAIN: "f207419ee87c03979544d2d579e624f043300bbc"
+      EXPECT_RECOVERY: "883bb1d39d0244f64c950770858c82cf60b34e72"
+      EXPECT_LIVING: "3f45138ba37a72a5b96ba33902c786a4ce861918"
+      EXPECT_PRODUCT_ARCHIVE: "874e49976321119e36a3ed1997e2ff0e0b48f942"
+      EXPECT_REPOSITORY_ID: "1358058339"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+          persist-credentials: true
+
+      - name: Run native cleanup kernel end-to-end
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$RUNNER_TEMP/native-cleanup-e2e"
+          mkdir -p "$work"
+          tar -xzf .cleanup-kit.tgz -C "$work"
+          cli="$work/toolkit/src/cli.mjs"
+          state="$work/state"
+          mkdir -p "$state"
+
+          git config user.name "repository-cleanup-v5-e2e"
+          git config user.email "repository-cleanup-v5-e2e@invalid.local"
+
+          target_ref="refs/heads/$TARGET_BRANCH"
+          helper_ref="refs/heads/$HELPER_BRANCH"
+          archive_ref="refs/heads/$ARCHIVE_BRANCH"
+
+          target_sha="$(git ls-remote --heads origin "$target_ref" | awk '{print $1}')"
+          helper_sha="$(git ls-remote --heads origin "$helper_ref" | awk '{print $1}')"
+          [[ "$target_sha" == "$EXPECT_MAIN" ]] || { echo "target identity mismatch"; exit 30; }
+          [[ "$helper_sha" == "$GITHUB_SHA" ]] || { echo "helper identity mismatch"; exit 31; }
+          [[ -z "$(git ls-remote --heads origin "$archive_ref")" ]] || { echo "test archive already exists"; exit 32; }
+
+          cat > "$state/config.json" <<JSON
+          {
+            "repository":"Jozzpoly/Llm-Live-NPC",
+            "canonicalBranch":"main",
+            "archiveBranch":"$ARCHIVE_BRANCH",
+            "helperBranch":"$HELPER_BRANCH",
+            "hardDenyRefs":[
+              "recovery/owner-fail-2026-09-07",
+              "integration/first-presence-browser-live-probe",
+              "archive/repository-cleanup-2026-09-11"
+            ]
+          }
+          JSON
+          cat > "$state/decisions.json" <<JSON
+          [
+            {"ref":"main","disposition":"KEEP","reason":"canonical product ref"},
+            {"ref":"$TARGET_BRANCH","disposition":"DELETE","reason":"disposable connector-only native E2E target","externalPayloadAcknowledged":true}
+          ]
+          JSON
+
+          node "$cli" audit --config="$state/config.json" --repo="$GITHUB_WORKSPACE" --out="$state/audit.json"
+          node "$cli" freeze --config="$state/config.json" --audit="$state/audit.json" --decisions="$state/decisions.json" --repo="$GITHUB_WORKSPACE" --out="$state/freeze.json"
+          node "$cli" archive --config="$state/config.json" --freeze="$state/freeze.json" --repo="$GITHUB_WORKSPACE" --out="$state/archive.json"
+          node "$cli" rehearse --config="$state/config.json" --freeze="$state/freeze.json" --archive="$state/archive.json" --repo="$GITHUB_WORKSPACE" --out="$state/rehearsal"
+          node "$cli" preservation --config="$state/config.json" --archive="$state/archive.json" --rehearsal="$state/rehearsal/rehearsal.json" --repository-id="$EXPECT_REPOSITORY_ID" --repo="$GITHUB_WORKSPACE" --out="$state/p1-v1.json"
+          node "$cli" preservation-v2 --config="$state/config.json" --preservation="$state/p1-v1.json" --repo="$GITHUB_WORKSPACE" --out="$state/p1.json"
+          node "$cli" publish-archive --config="$state/config.json" --freeze="$state/freeze.json" --archive="$state/archive.json" --repo="$GITHUB_WORKSPACE" --execute
+
+          archive_sha="$(node -e 'console.log(JSON.parse(require("fs").readFileSync(process.argv[1])).archiveSha)' "$state/archive.json")"
+          cat > "$state/intent.json" <<JSON
+          {
+            "repositoryId":"$EXPECT_REPOSITORY_ID",
+            "destructiveGroups":[
+              {"name":"bulk-e2e-target","targets":[{"ref":"$TARGET_BRANCH","sha":"$target_sha"}]},
+              {"name":"terminal-helper-retirement","targets":[{"ref":"$HELPER_BRANCH","sha":"$helper_sha"}],"requiresConsumedGroups":["bulk-e2e-target"]}
+            ],
+            "protectedRefPolicies":[
+              {"ref":"main","kind":"EXACT_SHA","sha":"$EXPECT_MAIN"},
+              {"ref":"recovery/owner-fail-2026-09-07","kind":"EXACT_SHA","sha":"$EXPECT_RECOVERY"},
+              {"ref":"integration/first-presence-browser-live-probe","kind":"EXACT_SHA","sha":"$EXPECT_LIVING"},
+              {"ref":"archive/repository-cleanup-2026-09-11","kind":"EXACT_SHA","sha":"$EXPECT_PRODUCT_ARCHIVE"},
+              {"ref":"$ARCHIVE_BRANCH","kind":"DESCENDANT_OF","sha":"$archive_sha"}
+            ],
+            "terminalHeadPolicies":[
+              {"ref":"main","kind":"EXACT_SHA","sha":"$EXPECT_MAIN"},
+              {"ref":"recovery/owner-fail-2026-09-07","kind":"EXACT_SHA","sha":"$EXPECT_RECOVERY"},
+              {"ref":"integration/first-presence-browser-live-probe","kind":"EXACT_SHA","sha":"$EXPECT_LIVING"},
+              {"ref":"archive/repository-cleanup-2026-09-11","kind":"EXACT_SHA","sha":"$EXPECT_PRODUCT_ARCHIVE"},
+              {"ref":"$ARCHIVE_BRANCH","kind":"DESCENDANT_OF","sha":"$archive_sha"},
+              {"ref":"$TARGET_BRANCH","kind":"MUST_BE_ABSENT"},
+              {"ref":"$HELPER_BRANCH","kind":"MUST_BE_ABSENT"}
+            ],
+            "preservationRequirements":{"objectRecovery":true,"historyAwareSemantics":true,"historyWideExternalPayloadAudit":true},
+            "mutationGuarantees":{"targetCas":true,"retainedCas":true,"atomicDeleteSet":true,"atomicAuthorityMarker":true},
+            "acceptedPlatformEffects":[
+              "WORKFLOW_DELETE_EVENT_POSSIBLE_UNOBSERVED",
+              "WEBHOOK_DELETE_EVENT_POSSIBLE_UNOBSERVED",
+              "WORKFLOW_PUSH_DELETE_EVENT",
+              "WEBHOOK_PUSH_DELETE_EVENT"
+            ]
+          }
+          JSON
+          node "$cli" authority-v2 --config="$state/config.json" --intent="$state/intent.json" --repo="$GITHUB_WORKSPACE" --out="$state/authority.json"
+
+          node "$cli" plan-phase --config="$state/config.json" --authority="$state/authority.json" --group=bulk-e2e-target --repo="$GITHUB_WORKSPACE" --out="$state/bulk-plan.json"
+          node "$cli" qualify-phase --authority="$state/authority.json" --plan="$state/bulk-plan.json" --preservation="$state/p1.json" --executor=git-push-atomic-delete --repo="$GITHUB_WORKSPACE" --platform-out="$state/bulk-platform.json" --assessment-out="$state/bulk-assessment.json" --out="$state/bulk-q.json"
+          node "$cli" apply-phase --config="$state/config.json" --authority="$state/authority.json" --plan="$state/bulk-plan.json" --qualification="$state/bulk-q.json" --executor=git-push-atomic-delete --execution-out="$state/bulk-execution.json" --repo="$GITHUB_WORKSPACE" --execute
+
+          node "$cli" seal --config="$state/config.json" --freeze="$state/freeze.json" --archive="$state/archive.json" --repo="$GITHUB_WORKSPACE" --out="$state/seal.json"
+          node "$cli" publish-seal --config="$state/config.json" --freeze="$state/freeze.json" --archive="$state/archive.json" --seal="$state/seal.json" --repo="$GITHUB_WORKSPACE" --execute
+          node "$cli" extend-preservation-v2 --config="$state/config.json" --previous="$state/p1.json" --seal="$state/seal.json" --repo="$GITHUB_WORKSPACE" --out="$state/p2.json"
+
+          node "$cli" plan-phase --config="$state/config.json" --authority="$state/authority.json" --group=terminal-helper-retirement --repo="$GITHUB_WORKSPACE" --out="$state/helper-plan.json"
+          node "$cli" qualify-phase --authority="$state/authority.json" --plan="$state/helper-plan.json" --preservation="$state/p2.json" --previous-preservation="$state/p1.json" --executor=git-push-atomic-delete --repo="$GITHUB_WORKSPACE" --platform-out="$state/helper-platform.json" --assessment-out="$state/helper-assessment.json" --out="$state/helper-q.json"
+          node "$cli" apply-phase --config="$state/config.json" --authority="$state/authority.json" --plan="$state/helper-plan.json" --qualification="$state/helper-q.json" --executor=git-push-atomic-delete --execution-out="$state/helper-execution.json" --repo="$GITHUB_WORKSPACE" --execute
+
+          node "$cli" observe-consumption --authority="$state/authority.json" --group=bulk-e2e-target --repo="$GITHUB_WORKSPACE" --out="$state/bulk-consumption.json"
+          node "$cli" observe-consumption --authority="$state/authority.json" --group=terminal-helper-retirement --repo="$GITHUB_WORKSPACE" --out="$state/helper-consumption.json"
+          node "$cli" closure-v2 --config="$state/config.json" --authority="$state/authority.json" --preservation="$state/p2.json" --repo="$GITHUB_WORKSPACE" --out="$state/closure.json"
+          node "$cli" verify-terminal-v2 --authority="$state/authority.json" --preservation="$state/p2.json" --closure-contract="$state/closure.json" --repo="$GITHUB_WORKSPACE" --github-surface --platform-out="$state/terminal-platform.json" --assessment-out="$state/terminal-assessment.json" --out="$state/terminal-proof.json"
+
+          node -e 'const fs=require("fs");const p=JSON.parse(fs.readFileSync(process.argv[1]));if(p.status!=="PASS")process.exit(44);console.log(JSON.stringify({status:"PASS_NATIVE_CONNECTOR_ONLY_REMOTE_E2E",proof:p.status,authority:p.authoritySha256,closure:p.closureContractSha256,archive:p.finalPreservationSha256}))' "$state/terminal-proof.json"
+
+      - name: Upload native-v5 acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: repository-cleanup-v5-native-e2e-dd44c0188986
+          path: ${{ runner.temp }}/native-cleanup-e2e/state
+          if-no-files-found: warn
