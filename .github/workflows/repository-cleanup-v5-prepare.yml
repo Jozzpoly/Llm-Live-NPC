@@ -1,0 +1,65 @@
+name: Repository Cleanup v5 remote prepare
+
+on:
+  push:
+    branches:
+      - "maintenance/repository-cleanup-v5-prepare-fa1ab57d197a961321"
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Native v5 prepare
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CLEANUP_CONFIG_B64: 'eyJyZXBvc2l0b3J5IjoiSm96enBvbHkvTGxtLUxpdmUtTlBDIiwiY2Fub25pY2FsQnJhbmNoIjoibWFpbiIsImFyY2hpdmVCcmFuY2giOiJhcmNoaXZlL3JlcG9zaXRvcnktY2xlYW51cC12NS1yZWNvdmVyeS0yMDI2LTA5LTEyIiwiaGFyZERlbnlSZWZzIjpbInJlZnMvaGVhZHMvYXJjaGl2ZS9yZXBvc2l0b3J5LWNsZWFudXAtMjAyNi0wOS0xMSIsInJlZnMvaGVhZHMvYXJjaGl2ZS9yZXBvc2l0b3J5LWNsZWFudXAtdjUtcmVjb3ZlcnktMjAyNi0wOS0xMiIsInJlZnMvaGVhZHMvZXhwZXJpbWVudC9sdW5hLWJhc2VsaW5lLXRyYW5zcGxhbnQiLCJyZWZzL2hlYWRzL2V4cGVyaW1lbnQvcXdlbi1iYXNlbGluZS1yZWRlcGxveSIsInJlZnMvaGVhZHMvaW50ZWdyYXRpb24vZmlyc3QtcHJlc2VuY2UtYnJvd3Nlci1saXZlLXByb2JlIiwicmVmcy9oZWFkcy9tYWluIiwicmVmcy9oZWFkcy9yZWNvdmVyeS9vd25lci1mYWlsLTIwMjYtMDktMDciXSwiY2Fub25pY2FsUmVmIjoicmVmcy9oZWFkcy9tYWluIiwiYXJjaGl2ZVJlZiI6InJlZnMvaGVhZHMvYXJjaGl2ZS9yZXBvc2l0b3J5LWNsZWFudXAtdjUtcmVjb3ZlcnktMjAyNi0wOS0xMiIsImhlbHBlclJlZiI6bnVsbCwiYXJjaGl2ZVRhZyI6bnVsbCwiaGVscGVyQnJhbmNoIjoibWFpbnRlbmFuY2UvcmVwb3NpdG9yeS1jbGVhbnVwLXY1LXByZXBhcmUtZmExYWI1N2QxOTdhOTYxMzIxIn0='
+          CLEANUP_DECISIONS_B64: 'W3sicmVmIjoicmVmcy9oZWFkcy9hcmNoaXZlL3JlcG9zaXRvcnktY2xlYW51cC0yMDI2LTA5LTExIiwiZGlzcG9zaXRpb24iOiJLRUVQIiwicmVhc29uIjoiY3VycmVudCBGaXJzdCBIZWFydGggbGl2ZS9wcm9kdWN0L3Jlc2VhcmNoIHJlZjsgb3V0c2lkZSB2NSBhY2NlcHRhbmNlIGNsZWFudXAifSx7InJlZiI6InJlZnMvaGVhZHMvZXhwZXJpbWVudC9sdW5hLWJhc2VsaW5lLXRyYW5zcGxhbnQiLCJkaXNwb3NpdGlvbiI6IktFRVAiLCJyZWFzb24iOiJjdXJyZW50IEZpcnN0IEhlYXJ0aCBsaXZlL3Byb2R1Y3QvcmVzZWFyY2ggcmVmOyBvdXRzaWRlIHY1IGFjY2VwdGFuY2UgY2xlYW51cCJ9LHsicmVmIjoicmVmcy9oZWFkcy9leHBlcmltZW50L3F3ZW4tYmFzZWxpbmUtcmVkZXBsb3kiLCJkaXNwb3NpdGlvbiI6IktFRVAiLCJyZWFzb24iOiJjdXJyZW50IEZpcnN0IEhlYXJ0aCBsaXZlL3Byb2R1Y3QvcmVzZWFyY2ggcmVmOyBvdXRzaWRlIHY1IGFjY2VwdGFuY2UgY2xlYW51cCJ9LHsicmVmIjoicmVmcy9oZWFkcy9pbnRlZ3JhdGlvbi9maXJzdC1wcmVzZW5jZS1icm93c2VyLWxpdmUtcHJvYmUiLCJkaXNwb3NpdGlvbiI6IktFRVAiLCJyZWFzb24iOiJjdXJyZW50IEZpcnN0IEhlYXJ0aCBsaXZlL3Byb2R1Y3QvcmVzZWFyY2ggcmVmOyBvdXRzaWRlIHY1IGFjY2VwdGFuY2UgY2xlYW51cCJ9LHsicmVmIjoicmVmcy9oZWFkcy9tYWluIiwiZGlzcG9zaXRpb24iOiJLRUVQIiwicmVhc29uIjoiY3VycmVudCBGaXJzdCBIZWFydGggbGl2ZS9wcm9kdWN0L3Jlc2VhcmNoIHJlZjsgb3V0c2lkZSB2NSBhY2NlcHRhbmNlIGNsZWFudXAifSx7InJlZiI6InJlZnMvaGVhZHMvbWFpbnRlbmFuY2UvcmVwb3NpdG9yeS1jbGVhbnVwLXY1LWUyZS1oZWxwZXItZGQ0NGMwMTg4OTg2IiwiZGlzcG9zaXRpb24iOiJERUxFVEUiLCJyZWFzb24iOiJwcm92ZW4gUmVwb3NpdG9yeSBDbGVhbnVwIHY1IGludGVycnVwdGVkLXRlc3QgcmVzaWR1ZSBmcm9tIHByaW9yIGFjY2VwdGFuY2UgYXR0ZW1wdHMiLCJleHRlcm5hbFBheWxvYWRBY2tub3dsZWRnZWQiOnRydWV9LHsicmVmIjoicmVmcy9oZWFkcy9tYWludGVuYW5jZS9yZXBvc2l0b3J5LWNsZWFudXAtdjUtZTJlLXRhcmdldC1kZDQ0YzAxODg5ODYiLCJkaXNwb3NpdGlvbiI6IkRFTEURSIsInJlYXNvbiI6InByb3ZlbiBSZXBvc2l0b3J5IENsZWFudXAgdjUgaW50ZXJydXB0ZWQtdGVzdCByZXNpZHVlIGZyb20gcHJpb3IgYWNjZXB0YW5jZSBhdHRlbXB0cyIsImV4dGVybmFsUGF5bG9hZEFja25vd2xlZGdlZCI6dHJ1ZX0seyJyZWYiOiJyZWZzL2hlYWRzL21haW50ZW5hbmNlL3JlcG9zaXRvcnktY2xlYW51cC12NS1wcmVwYXJlLTIzMWQ2ZjVmNzNiZjMwN2U2YiIsImRpc3Bvc2l0aW9uIjoiREVMRVRFIiwicmVhc29uIjoicHJvdmVuIFJlcG9zaXRvcnkgQ2xlYW51cCB2NSBpbnRlcnJ1cHRlZC10ZXN0IHJlc2lkdWUgZnJvbSBwcmlvciBhY2NlcHRhbmNlIGF0dGVtcHRzIiwiZXh0ZXJuYWxQYXlsb2FkQWNrbm93bGVkZ2VkIjp0cnVlfSx7InJlZiI6InJlZnMvaGVhZHMvbWFpbnRlbmFuY2UvcmVwb3NpdG9yeS1jbGVhbnVwLXY1LXByZXBhcmUtM2NkNDRiYjcwZDJiNWYyM2E0IiwiZGlzcG9zaXRpb24iOiJERUxFVEUiLCJyZWFzb24iOiJwcm92ZW4gUmVwb3NpdG9yeSBDbGVhbnVwIHY1IGludGVycnVwdGVkLXRlc3QgcmVzaWR1ZSBmcm9tIHByaW9yIGFjY2VwdGFuY2UgYXR0ZW1wdHMiLCJleHRlcm5hbFBheWxvYWRBY2tub3dsZWRnZWQiOnRydWV9LHsicmVmIjoicmVmcy9oZWFkcy9tYWludGVuYW5jZS9yZXBvc2l0b3J5LWNsZWFudXAtdjUtcHJlcGFyZS03Y2JlMTJiMzliMGU1MjQ3N2YiLCJkaXNwb3NpdGlvbiI6IkRFTEURSIsInJlYXNvbiI6ImludGVycnVwdGVkIHY1IHByZXBhcmUgaGVscGVyIGNyZWF0ZWQgZHVyaW5nIGN1cnJlbnQgYWNjZXB0YW5jZSByZWNvdmVyeSIsImV4dGVybmFsUGF5bG9hZEFja25vd2xlZGdlZCI6dHJ1ZX0seyJyZWYiOiJyZWZzL2hlYWRzL21haW50ZW5hbmNlL3JlcG9zaXRvcnktY2xlYW51cC12NS1wcmVwYXJlLWM1ODQ2NzNkMWQ0NDgxNTAxMiIsImRpc3Bvc2l0aW9uIjoiREVMRVRFIiwicmVhc29uIjoicHJvdmVuIFJlcG9zaXRvcnkgQ2xlYW51cCB2NSBpbnRlcnJ1cHRlZC10ZXN0IHJlc2lkdWUgZnJvbSBwcmlvciBhY2NlcHRhbmNlIGF0dGVtcHRzIiwiZXh0ZXJuYWxQYXlsb2FkQWNrbm93bGVkZ2VkIjp0cnVlfSx7InJlZiI6InJlZnMvaGVhZHMvbWFpbnRlbmFuY2UvcmVwb3NpdG9yeS1jbGVhbnVwLXY1LXByZXBhcmUtZmExYWI1N2QxOTdhOTYxMzIxIiwiZGlzcG9zaXRpb24iOiJLRUVQIiwicmVhc29uIjoiZXBoZW1lcmFsIHJlbW90ZSBwcmVwYXJlIGV4ZWN1dG9yOyBzZWxmLXJldGlyZWQgYWZ0ZXIgZXZpZGVuY2UgcHVibGljYXRpb24ifSx7InJlZiI6InJlZnMvaGVhZHMvbWFpbnRlbmFuY2UvcmVwb3NpdG9yeS1jbGVhbnVwLXY1LXByZXBhcmUtZmE4MjliMmE5N2Q1ZWM2NGViIiwiZGlzcG9zaXRpb24iOiJERUxFVEUiLCJyZWFzb24iOiJwcm92ZW4gUmVwb3NpdG9yeSBDbGVhbnVwIHY1IGludGVycnVwdGVkLXRlc3QgcmVzaWR1ZSBmcm9tIHByaW9yIGFjY2VwdGFuY2UgYXR0ZW1wdHMiLCJleHRlcm5hbFBheWxvYWRBY2tub3dsZWRnZWQiOnRydWV9LHsicmVmIjoicmVmcy9oZWFkcy9yZWNvdmVyeS9vd25lci1mYWlsLTIwMjYtMDktMDciLCJkaXNwb3NpdGlvbiI6IktFRVAiLCJyZWFzb24iOiJjdXJyZW50IEZpcnN0IEhlYXJ0aCBsaXZlL3Byb2R1Y3QvcmVzZWFyY2ggcmVmOyBvdXRzaWRlIHY1IGFjY2VwdGFuY2UgY2xlYW51cCJ9XQ=='
+          CLEANUP_REPOSITORY_ID: ${{ github.repository_id }}
+          CLEANUP_EXPECT_CANONICAL: 'f207419ee87c03979544d2d579e624f043300bbc'
+          CLEANUP_HELPER_REF: 'refs/heads/maintenance/repository-cleanup-v5-prepare-fa1ab57d197a961321'
+          CLEANUP_ARCHIVE_REF: 'refs/heads/archive/repository-cleanup-v5-recovery-2026-09-12'
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/cleanup-kit /tmp/cleanup-out
+          cat .cleanup-bootstrap/runtime.zip.b64.part-* | base64 -d > /tmp/cleanup-kit.zip
+          [[ "$(sha256sum /tmp/cleanup-kit.zip | awk '{print $1}')" == "c636bd765ae402a27e0669152a07a65accb018e9cb35abc53d959f140ccaebf5" ]] || { echo runtime-digest-mismatch; exit 19; }
+          unzip -q /tmp/cleanup-kit.zip -d /tmp/cleanup-kit
+          printf '%s' "$CLEANUP_CONFIG_B64" | base64 -d > /tmp/cleanup-out/config.json
+          printf '%s' "$CLEANUP_DECISIONS_B64" | base64 -d > /tmp/cleanup-out/decisions.json
+          cli=/tmp/cleanup-kit/src/cli.mjs
+          [[ "$(git ls-remote origin refs/heads/main | awk '{print $1}')" == "$CLEANUP_EXPECT_CANONICAL" ]] || { echo canonical-drift; exit 20; }
+          node "$cli" audit --repo="$GITHUB_WORKSPACE" --config=/tmp/cleanup-out/config.json --out=/tmp/cleanup-out/audit.json
+          node "$cli" freeze --repo="$GITHUB_WORKSPACE" --config=/tmp/cleanup-out/config.json --audit=/tmp/cleanup-out/audit.json --decisions=/tmp/cleanup-out/decisions.json --out=/tmp/cleanup-out/freeze.json
+          node "$cli" archive --repo="$GITHUB_WORKSPACE" --config=/tmp/cleanup-out/config.json --freeze=/tmp/cleanup-out/freeze.json --out=/tmp/cleanup-out/archive.json
+          node "$cli" rehearse --repo="$GITHUB_WORKSPACE" --config=/tmp/cleanup-out/config.json --freeze=/tmp/cleanup-out/freeze.json --archive=/tmp/cleanup-out/archive.json --out=/tmp/cleanup-out/rehearsal-dir --result-out=/tmp/cleanup-out/rehearsal.json
+          node "$cli" preservation --repo="$GITHUB_WORKSPACE" --config=/tmp/cleanup-out/config.json --archive=/tmp/cleanup-out/archive.json --rehearsal=/tmp/cleanup-out/rehearsal.json --repository-id="$CLEANUP_REPOSITORY_ID" --out=/tmp/cleanup-out/preservation-v1.json
+          node "$cli" preservation-v2 --repo="$GITHUB_WORKSPACE" --config=/tmp/cleanup-out/config.json --preservation=/tmp/cleanup-out/preservation-v1.json --root-ref="$CLEANUP_ARCHIVE_REF" --out=/tmp/cleanup-out/preservation-v2.json
+          node "$cli" publish-archive --repo="$GITHUB_WORKSPACE" --config=/tmp/cleanup-out/config.json --freeze=/tmp/cleanup-out/freeze.json --archive=/tmp/cleanup-out/archive.json --execute
+          archive_sha="$(node -e "console.log(require('/tmp/cleanup-out/archive.json').archiveSha)")"
+          [[ "$(git ls-remote origin "$CLEANUP_ARCHIVE_REF" | awk '{print $1}')" == "$archive_sha" ]] || { echo archive-publication-mismatch; exit 21; }
+          cp /tmp/cleanup-out/freeze.json /tmp/cleanup-out/OWNER_AUTHORITY_INPUT_FREEZE.json
+          echo PASS_NATIVE_REMOTE_PREPARE
+      - name: Upload native prepare evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: repository-cleanup-v5-prepare-fa1ab57d197a961321
+          path: /tmp/cleanup-out
+          if-no-files-found: error
+          retention-days: 7
+      - name: Self-retire prepare helper
+        shell: bash
+        run: |
+          set -euo pipefail
+          helper_sha="$(git ls-remote origin "$CLEANUP_HELPER_REF" | awk '{print $1}')"
+          [[ -n "$helper_sha" ]] || exit 22
+          git push --atomic --force-with-lease=refs/heads/main:"$CLEANUP_EXPECT_CANONICAL" --force-with-lease="$CLEANUP_HELPER_REF:$helper_sha" origin "$CLEANUP_EXPECT_CANONICAL:refs/heads/main" ":$CLEANUP_HELPER_REF"
+          echo PASS_NATIVE_REMOTE_PREPARE_AND_SELF_RETIRE
