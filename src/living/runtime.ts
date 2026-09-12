@@ -33,6 +33,12 @@ type Search = { targetId: string; startedAt: number; cueSequence: number; points
 type Collection = { description: ItemDescription; quantity: "one" | "all"; delivered: string[]; unavailable: string[];
   places: Place[]; placeIndex: number; scan: Scan | null; reportKey: string | null };
 
+export interface LivingBodyOptions {
+  /** The new host owns cognition and concerns; this is only a temporary execution donor. */
+  managed?: boolean;
+  name?: string;
+}
+
 /** Every resident observes the same frame. Adding residents must not multiply World time. */
 export function stepLivingResidents(world: World, residents: readonly LivingRuntime[], playerControl: WorldInput, playerActions: readonly WorldActionRequest[]): void {
   const before = world.snapshot();
@@ -73,9 +79,15 @@ export class LivingRuntime {
   private collection: Collection | null = null;
   private completedCollection: Collection | null = null;
   private readonly deliveredAt = new Map<string, number>();
+  private readonly name: string;
+  private recipientId: string | null = null;
+  private bodyStatus: "idle" | "running" | "completed" | "blocked" = "idle";
+  private bodyOutcomeSequence = 0;
 
-  constructor(private readonly world: World, private readonly provider: ResidentProvider, readonly actorId = "npc.001") {
-    this.perception = new ResidentPerception(world, actorId, (id, fallback) => id === actorId ? "Mira" : label(id, fallback));
+  constructor(private readonly world: World, private readonly provider: ResidentProvider, readonly actorId = "npc.001",
+    private readonly options: LivingBodyOptions = {}) {
+    this.name = options.name ?? "Mira";
+    this.perception = new ResidentPerception(world, actorId, (id, fallback) => id === actorId ? this.name : label(id, fallback));
     this.known = this.perception.known;
     this.visible = this.perception.visible;
     const snapshot = world.snapshot();
@@ -87,12 +99,32 @@ export class LivingRuntime {
     this.restUntil = world.tick + 60;
     this.observe(snapshot);
     // Authored introduction, not a fabricated model response or past conversation.
-    this.addLine("npc", this.visible.has("player.jozz") ? "Cześć, jestem Mira. Miło cię widzieć." : "Cześć, jestem Mira.");
+    if (options.managed) this.task = { kind: "wait" };
+    else this.addLine("npc", this.visible.has("player.jozz") ? "Cześć, jestem Mira. Miło cię widzieć." : "Cześć, jestem Mira.");
   }
+
+  /** Explicit donor boundary. No provider is invoked by this execution path. */
+  perform(intent: ResidentIntent, recipientId?: string): void {
+    this.recipientId = recipientId ?? null;
+    this.bodyStatus = "running";
+    this.lastOutcome = null;
+    this.applyIntent(intent);
+  }
+
+  executionState() {
+    return { status: this.bodyStatus, sequence: this.bodyOutcomeSequence, outcome: this.lastOutcome };
+  }
+
+  personalContext() {
+    return { observations: this.remembered(), experiences: this.perception.recentExperiences(),
+      speech: this.perception.recentSpeech(), places: this.places.map(p => ({ id: p.id, label: p.label })) };
+  }
+
+  dispose(): void { this.inFlight?.controller.abort(); this.perception.dispose(); }
 
   state(): ResidentViewState {
     return {
-      actorId: this.actorId, name: "Mira", activity: this.activity,
+      actorId: this.actorId, name: this.name, activity: this.activity.replaceAll("Mira", this.name),
       pending: this.queued !== null || this.inFlight?.revision === this.requestRevision,
       error: this.error, conversation: this.conversation.map(line => ({ ...line })),
       knownEntities: this.remembered(), tick: this.world.tick, lastOutcome: this.lastOutcome,
@@ -133,7 +165,7 @@ export class LivingRuntime {
     const player = this.world.snapshot().entities.find(e => e.kind === "player")!;
     this.world.callOut(player.id);
     this.observe(this.world.snapshot());
-    this.addLine("world", "Wołasz Mirę. Głos daje jej wskazówkę tylko wtedy, gdy do niej dociera.");
+    // The panel action is not a heard experience and must not enter a model transcript.
   }
 
   send(text: string): Promise<void> {
@@ -187,11 +219,14 @@ export class LivingRuntime {
       const collectionAtRequest = this.collection;
       this.observe(snapshot);
       const input: ResidentModelInput = {
-        actorId: this.actorId, actorName: "Mira", latestUtterance: request.text,
+        actorId: this.actorId, actorName: this.name, latestUtterance: request.text,
         conversation: this.conversation.map(({ speaker, text }) => ({ speaker, text })),
         currentActivity: this.activity, heldItemId: this.actor(snapshot).heldItemId,
         knownEntities: this.remembered(), places: this.places.map(({ id, label }) => ({ id, label })),
-        experiences: this.perception.recentExperiences(),
+        // Preserve the historical transport's small projection; the new host uses personalContext instead.
+        experiences: this.perception.recentExperiences().slice(-12).map(e => ({ ...e,
+          kind: e.kind === "heard_speech" || e.kind === "witnessed_manipulation" ? "noticed" : e.kind,
+          text: e.text.slice(0, 600) })),
         ...(this.collection ? { currentCommitment: ("Aktywny zamiar. " + this.commitmentDescription(this.collection)).slice(0, 1200) }
           : this.completedCollection ? { currentCommitment: ("Ten zamiar jest już zakończony, nie wykonuj go ponownie. " + this.commitmentDescription(this.completedCollection)).slice(0, 1200) } : {})
       };
@@ -249,7 +284,7 @@ export class LivingRuntime {
     if (intent.kind === "idle") { this.resumeRoutine(); return; }
     if (intent.kind === "wait") {
       this.task = { kind: "wait" };
-      this.activity = "Czekam tutaj na kolejne polecenie.";
+      this.activity = this.options.managed ? "Zatrzymuję się tutaj i rozglądam." : "Czekam tutaj na kolejne polecenie.";
       return;
     }
     if (intent.kind === "drop") {
@@ -273,7 +308,7 @@ export class LivingRuntime {
         return;
       }
       this.task = {
-        kind: "fetch", targetId: entity.id, recipientId: snapshot.entities.find(e => e.kind === "player")!.id,
+        kind: "fetch", targetId: entity.id, recipientId: this.recipientId ?? snapshot.entities.find(e => e.kind === "player")!.id,
         phase: actor.heldItemId === entity.id ? "deliver" : "collect"
       };
       this.activity = `Idę po: ${entity.label}.`;
@@ -443,7 +478,9 @@ export class LivingRuntime {
       }
       if (!search.exhausted) {
         search.exhausted = true;
-        this.outcome(`Mira sprawdziła kilka miejsc, ale nie odnalazła: ${memory.label}. Zachowuje rozpoczęte zadanie; nowe spotkanie lub wołanie pozwoli jej wrócić do działania.`, false);
+        const message = `Mira sprawdziła kilka miejsc, ale nie odnalazła: ${memory.label}. Potrzebna jest nowa wskazówka albo inna metoda.`;
+        if (this.options.managed) { this.needsJudgement(message); return { control: STILL }; }
+        this.outcome(message, false);
       }
       this.activity = `Nie odnalazłam: ${memory.label}. Nasłuchuję i czekam na wskazówkę.`;
       return { control: STILL };
@@ -489,7 +526,8 @@ export class LivingRuntime {
       (goal.description.itemType === "any" || e.appearance?.itemType === goal.description.itemType) &&
       (!goal.description.color || e.appearance?.color === goal.description.color) &&
       (!restrictedPlace || inBounds(e.position, restrictedPlace.bounds)));
-    if (goal.quantity === "one" && matches.length > 1) {
+    // The managed gather capability explicitly asks for one matching item, not a unique referent.
+    if (!this.options.managed && goal.quantity === "one" && matches.length > 1) {
       const key = matches.map(e => e.id).sort().join(",");
       if (goal.reportKey !== key) {
         goal.reportKey = key;
@@ -502,11 +540,12 @@ export class LivingRuntime {
     if (available.length) {
       if (actor.heldItemId && !available.some(e => e.id === actor.heldItemId)) {
         this.activity = "Pamiętam prośbę, ale mam zajęte ręce. Potrzebuję ustalić, co zrobić z niesioną rzeczą.";
+        if (this.options.managed) { this.needsJudgement(this.activity); return { control: STILL }; }
         if (goal.reportKey !== "hands") { goal.reportKey = "hands"; this.outcome(this.activity, false); }
         return { control: STILL };
       }
       const target = available.find(e => e.id === actor.heldItemId) ?? available.sort((a, b) => distance(actor.position, a.position) - distance(actor.position, b.position))[0];
-      this.task = { kind: "fetch", targetId: target.id, recipientId: snapshot.entities.find(e => e.kind === "player")!.id,
+      this.task = { kind: "fetch", targetId: target.id, recipientId: this.recipientId ?? snapshot.entities.find(e => e.kind === "player")!.id,
         phase: actor.heldItemId === target.id ? "deliver" : "collect" };
       this.search = null;
       this.clearRoute();
@@ -536,7 +575,13 @@ export class LivingRuntime {
         "To wynik jej poszukiwań; nie ma pewności, że nigdzie poza sprawdzonymi miejscami nie zostało coś jeszcze.", false);
       if (goal.delivered.length > 0 && missing.length === 0) {
         this.completedCollection = goal;
+        this.bodyStatus = "completed";
+        this.bodyOutcomeSequence++;
         this.resumeRoutine();
+        return { control: STILL };
+      }
+      if (this.options.managed) {
+        this.needsJudgement(this.lastOutcome ?? "Sprawdziłem znane miejsca, ale ta metoda nie dała pełnego wyniku.");
         return { control: STILL };
       }
     }
@@ -634,16 +679,16 @@ export class LivingRuntime {
   private clearRoute(): void { this.route = null; this.previousMove = null; this.stuckTicks = 0; this.replanFailures = 0; }
   private resumeRoutine(): void {
     this.collection = null;
-    this.task = { kind: "routine" };
+    this.task = this.options.managed ? { kind: "wait" } : { kind: "routine" };
     this.search = null;
     this.arrivalScan = null;
     this.clearRoute();
     this.restUntil = this.world.tick + 120;
-    this.activity = "Chwilę odpoczywam, potem wrócę do spaceru.";
+    this.activity = this.options.managed ? "Rozglądam się i zastanawiam, co dalej." : "Chwilę odpoczywam, potem wrócę do spaceru.";
   }
   private outcome(text: string, completed = true): void {
-    this.lastOutcome = text;
-    this.addLine("world", text);
+    this.lastOutcome = text.replaceAll("Mira", this.name);
+    this.addLine("world", this.lastOutcome);
     if (completed && this.collection && this.task.kind === "fetch") {
       this.collection.delivered.push(this.task.targetId);
       if (this.collection.quantity === "all") {
@@ -655,7 +700,11 @@ export class LivingRuntime {
       }
       this.completedCollection = this.collection;
     }
-    if (completed) this.resumeRoutine();
+    if (completed) {
+      this.bodyStatus = "completed";
+      this.bodyOutcomeSequence++;
+      this.resumeRoutine();
+    }
   }
   private fail(text: string): void {
     this.outcome(text, false);
@@ -667,7 +716,16 @@ export class LivingRuntime {
       return;
     }
     this.task = { kind: "wait" };
+    this.bodyStatus = "blocked";
+    this.bodyOutcomeSequence++;
     this.clearRoute();
     this.activity = "Nie mogę dokończyć zadania. Czekam na kolejne polecenie.";
+  }
+  private needsJudgement(text: string): void {
+    // A stalled donor reports its limit; the host preserves the concern and requests a new judgement.
+    this.collection = null;
+    this.search = null;
+    this.fail(text);
+    this.activity = "Ten sposób nie wystarczył. Zastanawiam się, co zmienić.";
   }
 }

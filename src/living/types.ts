@@ -27,7 +27,17 @@ export interface KnownEntity {
 }
 export interface ResidentExperience {
   id: number; tick: number;
-  kind: "noticed" | "lost_sight" | "checked_absent" | "heard_call" | "action" | "search";
+  kind: "noticed" | "lost_sight" | "checked_absent" | "heard_call" | "heard_speech" | "witnessed_manipulation" | "action" | "search";
+  text: string;
+  /** Private, already acquired references; an unknown voice has no sourceId. */
+  sourceId?: string;
+  subjectId?: string;
+}
+export interface ReceivedSpeech {
+  /** Reference to this listener's own experience, not a shared world occurrence id. */
+  id: number;
+  tick: number;
+  sourceId?: string;
   text: string;
 }
 export interface ResidentModelInput {
