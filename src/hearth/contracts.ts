@@ -164,7 +164,8 @@ export function parseCognitionProposal(value: unknown, context: CognitionContext
       (d.kind === "resume" && (!basis || plan)) ||
       (d.kind === "stop" && (!basis || plan)) ||
       (d.kind === "suspend" && (!basis || basis.status !== "running")) ||
-      (d.kind === "continue" && plan) || (d.kind === "replace" && !plan)) return null;
+      (d.kind === "continue" && plan && context.realization?.status === "running") ||
+      (d.kind === "replace" && !plan)) return null;
     activityDisposition = { kind: d.kind as NonNullable<CognitionProposal["activityDisposition"]>["kind"],
       reason: d.reason, basedOnRealizationId: d.basedOnRealizationId as string | null };
   }
