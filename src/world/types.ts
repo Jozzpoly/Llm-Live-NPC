@@ -130,6 +130,37 @@ export interface WorldCall {
   position: Vec2;
 }
 
+export type SpeechMode = "quiet" | "normal" | "call";
+
+/** Physical occurrences are available to sensory adapters, never as a mind's transcript. */
+export type WorldOccurrenceData =
+  | {
+      type: "item.picked_up" | "item.dropped";
+      actorId: EntityId;
+      entityId: EntityId;
+      actionSeq: number;
+      before: ItemEntity;
+      after: ItemEntity;
+    }
+  | {
+      type: "speech.spoken";
+      actorId: EntityId;
+      position: Vec2;
+      text: string;
+      mode: SpeechMode;
+    }
+  | {
+      type: "call.emitted";
+      actorId: EntityId;
+      position: Vec2;
+      callSeq: number;
+    };
+
+export type WorldOccurrence = WorldOccurrenceData & { seq: number; tick: number };
+
+/** Synchronous, read-only projection at occurrence time; World does not retain these snapshots. */
+export type WorldOccurrenceListener = (occurrence: WorldOccurrence, snapshot: WorldSnapshot) => void;
+
 export interface ActorControlInput extends WorldInput {
   actorId: EntityId;
 }

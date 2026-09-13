@@ -1,8 +1,7 @@
 import * as Phaser from "phaser";
-import { LivingRuntime, stepLivingResidents } from "../living/runtime";
-import { requestResidentReply } from "../living/provider";
-import { createLivingSpecimen } from "../living/specimen";
-import type { ResidentViewState } from "../living/types";
+import { HearthHost } from "../hearth/host";
+import { createHearthCognitionProvider } from "../hearth/transport";
+import { createHearthSpecimen, HEARTH_RESIDENTS } from "../hearth/scene";
 import type { ExecutorStatus } from "../execution/deterministic-executor";
 import { ExecutionDriver, type ActionAttemptRecord } from "../execution/execution-driver";
 import { World } from "../world/world";
@@ -38,6 +37,7 @@ import {
   type EntityVisualDescriptor
 } from "./presentation";
 import { combineControlMovement, PlayerControlBuffer } from "./player-control-buffer";
+import { observationStatus, type HearthResearchState, type ResidentResearchLens } from "./hearth-research-panel";
 import {
   clientPointToScreen,
   resolveDirectInteractionTarget,
@@ -53,6 +53,14 @@ const ZOOM_STEP = 0.1;
 const ITEM_LABEL_DISTANCE = 150;
 const MOUSE_TARGET_RADIUS_PX = 16;
 const TOUCH_TARGET_RADIUS_PX = 28;
+const SPEECH_BUBBLE_LIFETIME_TICKS = 240;
+
+interface SpeechBubbleProjection {
+  id: number; tick: number; sourceId: string; text: string; position: Vec2;
+}
+interface SpeechBubbleView {
+  view: Phaser.GameObjects.Container; width: number; height: number;
+}
 
 type MovementKeys = Record<"W" | "A" | "S" | "D" | "E" | "Q" | "V" | "L", Phaser.Input.Keyboard.Key>;
 
@@ -93,7 +101,7 @@ export class WorldScene extends Phaser.Scene {
   private readonly npcExecutor: FirstPresenceBrowserProbe["executor"];
   private readonly executionDriver: ExecutionDriver;
   private readonly e1Agent: E1AgentHarness;
-  private readonly living: LivingRuntime | null;
+  private readonly living: HearthHost | null;
   private typing = false;
   private readonly debugSink: DebugSink;
   private readonly playerControls: PlayerControlBuffer;
@@ -117,10 +125,16 @@ export class WorldScene extends Phaser.Scene {
   private pointerProbeVisible = false;
   private pointerInsideCanvas = false;
   private pointerTarget: PointerTargetSample | null = null;
+  private researchActorId: string | null = null;
+  private researchLens: ResidentResearchLens = "resident";
+  private researchSnapshot: HearthResearchState | null = null;
+  private readonly researchLabels = new Map<string, Phaser.GameObjects.Text>();
+  private readonly speechBubbleViews = new Map<number, SpeechBubbleView>();
+  private presentationBubbles: SpeechBubbleProjection[] = [];
 
   constructor(debugSink: DebugSink, playerControls: PlayerControlBuffer, livingMode = false) {
     super({ key: "world" });
-    this.world = new World(livingMode ? createLivingSpecimen() : createFirstPresenceBrowserProbeSpecimen());
+    this.world = new World(livingMode ? createHearthSpecimen() : createFirstPresenceBrowserProbeSpecimen());
     this.firstPresence = new FirstPresenceBrowserProbe(this.world);
     this.npcExecutor = this.firstPresence.executor;
     this.executionDriver = new ExecutionDriver(this.world, this.npcExecutor);
@@ -129,10 +143,17 @@ export class WorldScene extends Phaser.Scene {
     this.currentPresentationSnapshot = this.previousPresentationSnapshot;
     this.debugSink = debugSink;
     this.playerControls = playerControls;
-    this.living = livingMode ? new LivingRuntime(this.world, requestResidentReply) : null;
+    this.living = livingMode ? new HearthHost(this.world, createHearthCognitionProvider(), HEARTH_RESIDENTS) : null;
   }
 
   create(): void {
+    this.events.once("shutdown", () => {
+      this.living?.dispose();
+      this.speechBubbleViews.clear();
+      this.researchLabels.clear();
+      this.presentationBubbles = [];
+      this.researchSnapshot = null;
+    });
     if (this.input.keyboard) {
       this.cursors = this.input.keyboard.createCursorKeys();
       this.keys = this.input.keyboard.addKeys("W,A,S,D,E,Q,V,L") as MovementKeys;
@@ -229,7 +250,7 @@ export class WorldScene extends Phaser.Scene {
 
       this.previousPresentationSnapshot = this.currentPresentationSnapshot;
       if (this.living) {
-        stepLivingResidents(this.world, [this.living], { moveX: movement.x, moveY: movement.y }, playerActions);
+        this.living.step({ moveX: movement.x, moveY: movement.y }, playerActions);
       } else {
         const frameResult = this.executionDriver.step({
           playerControl: { moveX: movement.x, moveY: movement.y }, playerActions
@@ -247,20 +268,40 @@ export class WorldScene extends Phaser.Scene {
 
     this.updatePointerTarget();
 
+    // The host supplies only legitimately heard speech with a currently visible anchor.
+    // No renderer lookup of a speaker's hidden World position is needed for bubbles.
+    if (this.living) this.presentationBubbles = this.living.state().bubbles;
+
     const emitDebugState = this.debugAccumulatorMs >= DEBUG_STATE_INTERVAL_MS;
     this.syncPresentation(emitDebugState, interpolationAlpha(this.accumulatorMs, FIXED_STEP_MS));
     if (emitDebugState) this.debugAccumulatorMs %= DEBUG_STATE_INTERVAL_MS;
   }
 
   toggleDebugOverlay(): void {
+    if (this.living) return; // First Hearth research uses its explicit panel, never the legacy V probe.
     this.debugOverlayVisible = !this.debugOverlayVisible;
   }
 
-  residentState(): ResidentViewState | null { return this.living?.state() ?? null; }
-  speakToResident(text: string): Promise<void> { return this.living?.send(text) ?? Promise.resolve(); }
+  residentState(): ReturnType<HearthHost["state"]> | null { return this.living?.state() ?? null; }
+  residentResearchState(): HearthResearchState | null {
+    const state = this.living?.researchState() ?? null;
+    if (this.researchActorId) this.researchSnapshot = state;
+    return state;
+  }
+  setResidentResearchView(actorId: string | null, lens: ResidentResearchLens): void {
+    this.researchActorId = actorId;
+    this.researchLens = lens;
+    this.researchSnapshot = actorId ? this.living?.researchState() ?? null : null;
+    if (!actorId) for (const label of this.researchLabels.values()) label.setVisible(false);
+    const follow = this.entityViews.get(actorId && lens === "resident" ? actorId : "player.jozz");
+    if (follow && this.cameras?.main) this.cameras.main.startFollow(follow, true, 0.14, 0.14);
+    if (this.sys.isActive()) this.scale.refresh();
+  }
+  speakToResident(text: string, mode: "quiet" | "normal" | "call" = "normal"): Promise<void> { return this.living?.speak(text, mode) ?? Promise.resolve(); }
+  selectResident(actorId: string): void { this.living?.select(actorId); }
   retryResident(): Promise<void> { return this.living?.retry() ?? Promise.resolve(); }
   stopResident(): void { this.living?.stop(); }
-  callResident(): void { this.living?.callFromPlayer(); }
+  callResident(): void { this.living?.call(); }
   setTyping(typing: boolean): void {
     this.typing = typing;
     this.playerControls.clearMovement();
@@ -593,11 +634,17 @@ export class WorldScene extends Phaser.Scene {
     );
     const player = snapshot.entities.find((entity) => entity.kind === "player");
     const playerRenderedPosition = player ? renderedPositions.get(player.id) : undefined;
+    const researchResident = this.researchSnapshot?.residents.find(resident => resident.id === this.researchActorId);
+    const lensVisibleIds = researchResident && this.researchLens === "resident"
+      ? new Set(researchResident.perception.visibleIds) : null;
 
     for (const entity of snapshot.entities) {
       const renderedPosition = renderedPositions.get(entity.id) ?? entity.position;
       const view = this.entityViews.get(entity.id);
-      if (view) view.setPosition(renderedPosition.x, renderedPosition.y);
+      if (view) {
+        view.setPosition(renderedPosition.x, renderedPosition.y);
+        view.setVisible(!lensVisibleIds || lensVisibleIds.has(entity.id));
+      }
       if (view && (entity.kind === "npc" || entity.kind === "player")) {
         const attention = view.getByName("attention") as Phaser.GameObjects.Graphics | null;
         attention?.setRotation(Math.atan2(entity.facing.y, entity.facing.x));
@@ -607,7 +654,7 @@ export class WorldScene extends Phaser.Scene {
       if (!label) continue;
       label.setPosition(renderedPosition.x, renderedPosition.y - entity.radius - 18);
 
-      let visible = this.labelsVisible;
+      let visible = this.labelsVisible && (!lensVisibleIds || lensVisibleIds.has(entity.id));
       if (visible && entity.kind === "item" && player && playerRenderedPosition) {
         const distance = Math.hypot(
           renderedPosition.x - playerRenderedPosition.x,
@@ -621,11 +668,72 @@ export class WorldScene extends Phaser.Scene {
     for (const label of this.locationLabels) label.setVisible(this.labelsVisible);
 
     this.drawDebug(snapshot, renderedPositions);
+    this.drawSpeechBubbles(this.presentationBubbles, snapshot.tick);
     if (emitDebugState) this.emitDebugState(snapshot);
+  }
+
+  private createSpeechBubble(text: string, player: boolean): SpeechBubbleView {
+    const words = this.add.text(0, 0, text.replace(/\s+/gu, " ").trim(), {
+      fontFamily: "system-ui, sans-serif", fontSize: "13px", color: "#23332b",
+      lineSpacing: 2, wordWrap: { width: 214, useAdvancedWrap: true }
+    }).setOrigin(0.5, 1);
+    const lines = words.getWrappedText();
+    if (lines.length > 4) words.setText([...lines.slice(0, 3), lines[3].slice(0, -2).trimEnd() + "…"].join("\n"));
+    const width = words.width + 22, height = words.height + 16;
+    words.setPosition(0, -8);
+    const background = this.add.graphics();
+    background.fillStyle(player ? 0xdcebdd : 0xf2eddf, 0.98);
+    background.lineStyle(1, player ? 0x759681 : 0xa69a80, 1);
+    background.fillRoundedRect(-width / 2, -height, width, height, 10);
+    background.strokeRoundedRect(-width / 2, -height, width, height, 10);
+    background.fillTriangle(-6, 0, 6, 0, 0, 7);
+    const view = this.add.container(0, 0, [background, words]).setDepth(PRESENTATION_DEPTH.effects + 2);
+    return { view, width, height };
+  }
+
+  private drawSpeechBubbles(bubbles: readonly SpeechBubbleProjection[], tick: number): void {
+    const newest = new Map<string, SpeechBubbleProjection>();
+    for (const bubble of bubbles) {
+      const age = tick - bubble.tick;
+      if (age < 0 || age > SPEECH_BUBBLE_LIFETIME_TICKS || !bubble.text.trim()) continue;
+      if (!newest.has(bubble.sourceId) || newest.get(bubble.sourceId)!.id < bubble.id) newest.set(bubble.sourceId, bubble);
+    }
+    const active = [...newest.values()].sort((a, b) => b.id - a.id).slice(0, 3);
+    const ids = new Set(active.map(b => b.id));
+    for (const [id, bubble] of this.speechBubbleViews) {
+      if (!ids.has(id)) { bubble.view.destroy(true); this.speechBubbleViews.delete(id); }
+    }
+    const zoom = this.cameras.main.zoom;
+    const camera = this.cameras.main.worldView;
+    const boxes: Array<{ left: number; right: number; top: number; bottom: number }> = [];
+    for (const bubble of active) {
+      let display = this.speechBubbleViews.get(bubble.id);
+      if (!display) {
+        display = this.createSpeechBubble(bubble.text, bubble.sourceId === "player.jozz");
+        this.speechBubbleViews.set(bubble.id, display);
+      }
+      const halfWidth = display.width / (zoom * 2), height = display.height / zoom;
+      const x = clamp(bubble.position.x, camera.left + halfWidth + 6 / zoom, camera.right - halfWidth - 6 / zoom);
+      let y = bubble.position.y - 46 / zoom;
+      for (const previous of boxes) {
+        if (x - halfWidth < previous.right && x + halfWidth > previous.left && y > previous.top && y - height < previous.bottom) y = previous.top - 10 / zoom;
+      }
+      y = Math.max(camera.top + height + 6 / zoom, y);
+      boxes.push({ left: x - halfWidth, right: x + halfWidth, top: y - height, bottom: y });
+      display.view.setPosition(x, y).setScale(1 / zoom)
+        .setAlpha(clamp((SPEECH_BUBBLE_LIFETIME_TICKS - (tick - bubble.tick)) / 30, 0, 1));
+      // Research may hide physical entities, but never creates extra speech beyond this public projection.
+      display.view.setVisible(!this.researchActorId || this.researchLens === "world");
+    }
   }
 
   private drawDebug(snapshot: WorldSnapshot, renderedPositions: ReadonlyMap<string, Vec2>): void {
     this.debugGraphics.clear();
+
+    if (this.living) {
+      this.drawResidentResearch(snapshot, renderedPositions);
+      return;
+    }
 
     if (this.pointerProbeVisible && this.pointerTarget) {
       const { x, y } = this.pointerTarget.world;
@@ -650,6 +758,49 @@ export class WorldScene extends Phaser.Scene {
 
     this.debugGraphics.lineStyle(1, 0x9fb0be, 0.22);
     this.debugGraphics.strokeCircle(npcRendered.x, npcRendered.y, 220);
+  }
+
+  private drawResidentResearch(snapshot: WorldSnapshot, renderedPositions: ReadonlyMap<string, Vec2>): void {
+    const resident = this.researchSnapshot?.residents.find(r => r.id === this.researchActorId);
+    const usedLabels = new Set<string>();
+    if (resident) {
+      const visible = new Set(resident.perception.visibleIds);
+      const actor = snapshot.entities.find(entity => entity.id === resident.id);
+      const sight = resident.perception.sight;
+      if (actor && actor.kind !== "item" && sight) {
+        const point = renderedPositions.get(actor.id) ?? actor.position;
+        const heading = Math.atan2(actor.facing.y, actor.facing.x);
+        this.debugGraphics.lineStyle(1.5, 0x91cbd8, 0.6);
+        this.debugGraphics.beginPath();
+        this.debugGraphics.arc(point.x, point.y, sight.range, heading - sight.halfFieldRadians, heading + sight.halfFieldRadians);
+        this.debugGraphics.strokePath();
+        for (const angle of [heading - sight.halfFieldRadians, heading + sight.halfFieldRadians]) {
+          this.debugGraphics.lineBetween(point.x, point.y, point.x + Math.cos(angle) * sight.range, point.y + Math.sin(angle) * sight.range);
+        }
+      }
+      for (const entity of resident.context.observations) {
+        const status = observationStatus(entity, visible);
+        const point = status === "body" || status === "visible" ? renderedPositions.get(entity.id) ?? entity.position : entity.position;
+        const color = status === "body" ? 0x91cbd8 : status === "visible" ? 0x9fe1a3 : status === "absent" ? 0xe8a287 : 0xdfc287;
+        this.debugGraphics.lineStyle(2, color, 0.9);
+        this.debugGraphics.strokeCircle(point.x, point.y, status === "body" ? 23 : 20);
+        if (status === "visible" || status === "body") continue;
+        if (status === "absent") {
+          this.debugGraphics.lineBetween(point.x - 8, point.y - 8, point.x + 8, point.y + 8);
+          this.debugGraphics.lineBetween(point.x - 8, point.y + 8, point.x + 8, point.y - 8);
+        }
+        usedLabels.add(entity.id);
+        let label = this.researchLabels.get(entity.id);
+        if (!label) {
+          label = this.add.text(0, 0, "", { fontFamily: "system-ui, sans-serif", fontSize: "11px", backgroundColor: "#171c20ed", padding: { x: 5, y: 3 } })
+            .setOrigin(0.5, 0).setDepth(PRESENTATION_DEPTH.debug + 1);
+          this.researchLabels.set(entity.id, label);
+        }
+        label.setPosition(point.x, point.y + 25).setColor(status === "absent" ? "#efb49d" : "#ead2a4")
+          .setText(`${entity.label} · ${status === "absent" ? "nie ma tu" : "pamięć"} · t${entity.seenAtTick}`).setVisible(true);
+      }
+    }
+    for (const [id, label] of this.researchLabels) if (!usedLabels.has(id)) label.setVisible(false);
   }
 
   private emitDebugState(snapshot: WorldSnapshot): void {
