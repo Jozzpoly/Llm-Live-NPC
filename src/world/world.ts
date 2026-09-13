@@ -9,6 +9,7 @@ import type {
   PlacementSite,
   PlacementTargetValidation,
   PlayerEntity,
+  SpeechMode,
   Vec2,
   WorldActionRequest,
   WorldActionResult,
@@ -16,6 +17,8 @@ import type {
   WorldEntity,
   WorldEvent,
   WorldInput,
+  WorldOccurrenceData,
+  WorldOccurrenceListener,
   WorldSnapshot,
   WorldSpecimen
 } from "./types";
@@ -173,6 +176,15 @@ function assertFiniteMovement(input: WorldInput, label: string): void {
   }
 }
 
+/** These fresh domain copies contain plain data only and are shared read-only by listeners. */
+function freezeOccurrenceCopy<T>(value: T): T {
+  if (value !== null && typeof value === "object") {
+    for (const child of Object.values(value)) freezeOccurrenceCopy(child);
+    Object.freeze(value);
+  }
+  return value;
+}
+
 export class World {
   readonly width: number;
   readonly height: number;
@@ -184,6 +196,8 @@ export class World {
   private readonly placementSites: WorldSpecimen["placementSites"];
   private readonly eventLog: WorldEvent[] = [];
   private readonly calls: WorldCall[] = [];
+  private readonly occurrenceListeners = new Set<WorldOccurrenceListener>();
+  private occurrenceSequence = 0;
   private callSequence = 0;
   private tickValue = 0;
   private eventSequence = 0;
@@ -320,10 +334,25 @@ export class World {
     if (!isActor(actor)) return false;
     this.calls.push({ seq: ++this.callSequence, tick: this.tick, actorId, position: { ...actor.position } });
     if (this.calls.length > 32) this.calls.shift();
+    this.emitOccurrence({ type: "call.emitted", actorId, position: { ...actor.position }, callSeq: this.callSequence });
     return true;
   }
 
   recentCalls(): WorldCall[] { return structuredClone(this.calls); }
+
+  speak(actorId: EntityId, text: string, mode: SpeechMode = "normal"): void {
+    const actor = this.entities.get(actorId);
+    if (!isActor(actor)) throw new Error(`Speech actor not found: ${actorId}.`);
+    if (typeof text !== "string" || text.trim().length === 0) throw new Error("Speech requires non-empty words.");
+    if (mode !== "quiet" && mode !== "normal" && mode !== "call") throw new Error(`Invalid speech mode: ${mode}.`);
+    this.emitOccurrence({ type: "speech.spoken", actorId, position: { ...actor.position }, text, mode });
+  }
+
+  /** Subscribers only admit sensory data here; they must not perform world actions. No replay. */
+  onOccurrence(listener: WorldOccurrenceListener): () => void {
+    this.occurrenceListeners.add(listener);
+    return () => { this.occurrenceListeners.delete(listener); };
+  }
 
   lastActionResult(): WorldActionResult | null {
     return this.lastActionResultValue ? { ...this.lastActionResultValue } : null;
@@ -617,6 +646,7 @@ export class World {
       });
     }
 
+    const before = structuredClone(target);
     actor.heldItemId = target.id;
     target.heldBy = actor.id;
     this.followHeldItem(actor);
@@ -626,7 +656,7 @@ export class World {
       entityId: target.id,
       message: `${actor.label} picked up ${target.label}.`
     });
-    return this.recordAction({
+    const result = this.recordAction({
       actorId: actor.id,
       action: "interact",
       status: "succeeded",
@@ -634,6 +664,9 @@ export class World {
       targetId: target.id,
       message: `Picked up ${target.label}.`
     });
+    this.emitOccurrence({ type: "item.picked_up", actorId: actor.id, entityId: target.id,
+      actionSeq: result.seq, before, after: structuredClone(target) });
+    return result;
   }
 
   private dropHeldItem(actor: ActorEntity): WorldActionResult {
@@ -650,6 +683,7 @@ export class World {
     const item = this.entities.get(actor.heldItemId);
     if (!item || item.kind !== "item") throw new Error(`Held item missing: ${actor.heldItemId}`);
 
+    const before = structuredClone(item);
     const position = this.findDropPosition(actor.position, actor.radius + item.radius + 14, item.radius);
     item.position = position;
     item.heldBy = null;
@@ -661,7 +695,7 @@ export class World {
       entityId: item.id,
       message: `${actor.label} dropped ${item.label}.`
     });
-    return this.recordAction({
+    const result = this.recordAction({
       actorId: actor.id,
       action: "drop",
       status: "succeeded",
@@ -669,6 +703,9 @@ export class World {
       targetId: item.id,
       message: `Dropped ${item.label}.`
     });
+    this.emitOccurrence({ type: "item.dropped", actorId: actor.id, entityId: item.id,
+      actionSeq: result.seq, before, after: structuredClone(item) });
+    return result;
   }
 
   private findDropPosition(origin: Vec2, distance: number, radius: number): Vec2 {
@@ -696,6 +733,13 @@ export class World {
     this.eventSequence += 1;
     this.eventLog.push({ seq: this.eventSequence, tick: this.tickValue, ...event });
     if (this.eventLog.length > EVENT_LIMIT) this.eventLog.splice(0, this.eventLog.length - EVENT_LIMIT);
+  }
+
+  private emitOccurrence(data: WorldOccurrenceData): void {
+    const occurrence = freezeOccurrenceCopy({ seq: ++this.occurrenceSequence, tick: this.tick, ...data });
+    if (this.occurrenceListeners.size === 0) return;
+    const snapshot = freezeOccurrenceCopy(this.snapshot());
+    for (const listener of [...this.occurrenceListeners]) listener(occurrence, snapshot);
   }
 
   private recordAction(result: Omit<WorldActionResult, "seq" | "tick">): WorldActionResult {

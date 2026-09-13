@@ -3,6 +3,7 @@ import { LivingRuntime } from "./runtime";
 import { World } from "../world/world";
 import { createP1Specimen } from "../world/specimen";
 import type { ResidentModelInput, ResidentReply } from "./types";
+import { handleResidentConversation } from "../../worker/living-resident";
 
 function until(runtime: LivingRuntime, done: () => boolean) {
   for (let i = 0; i < 1800 && !done(); i++) runtime.step({moveX:0,moveY:0},[]);
@@ -10,6 +11,25 @@ function until(runtime: LivingRuntime, done: () => boolean) {
 }
 
 describe("living resident integrated experience", () => {
+  it("projects expanded private experiences through the bounded historical transport without breaking its wire format", async () => {
+    const world = new World(createP1Specimen());
+    const runtime = new LivingRuntime(world, async input => {
+      expect(input.experiences).toHaveLength(12);
+      const reply: ResidentReply = { reply: "Pamiętam rozmowę.", intent: { kind: "continue" } };
+      const result = await handleResidentConversation(new Request("https://hearth.test/api/resident/converse", {
+        method: "POST", body: JSON.stringify(input)
+      }), { AI_PROBE_LIMITER: { limit: async () => ({ success: true }) }, AI: {
+        run: async () => ({ tool_calls: [{ function: { name: "resident_reply", arguments: JSON.stringify(reply) } }] })
+      } });
+      expect(result.status).toBe(200);
+      return reply;
+    });
+    for (let i = 0; i < 20; i++) world.speak("player.jozz", "Kolejna odebrana wypowiedź " + i);
+    await runtime.send("Co słyszałaś?");
+    expect(runtime.state().error).toBeNull();
+    runtime.dispose();
+  });
+
   it("discovers the hammer in the workshop, walks around walls, brings it back and leaves it within the player's reach", async () => {
     const world = new World(createP1Specimen());
     const inputs: ResidentModelInput[] = [];
