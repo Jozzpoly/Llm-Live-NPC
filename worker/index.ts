@@ -1,6 +1,7 @@
 import { handleE1AgentDecision } from "./e1-agent";
 import { handleFirstPresenceSemanticProposal } from "./first-presence-semantic";
 import { handleResidentConversation } from "./living-resident";
+import { handleHearthCognition, type HearthCognitionEnv } from "./hearth-cognition";
 
 const GATEWAY_ID = "default";
 const LIVE_STAGE = "e1-grounded-notice-fetch";
@@ -26,7 +27,7 @@ interface RateLimitBinding {
   limit(options: { key: string }): Promise<{ success: boolean }>;
 }
 
-interface Env {
+interface Env extends HearthCognitionEnv {
   AI: AiBinding;
   AI_PROBE_LIMITER: RateLimitBinding;
 }
@@ -168,6 +169,9 @@ export default {
         cognitionEndpoint: "/api/agent/e1/decide",
         firstPresenceSemanticEndpoint: "/api/first-presence/semantic/propose",
         residentConversationEndpoint: "/api/resident/converse",
+        hearthCognitionEndpoint: "/api/hearth/cognition",
+        hearthModelConfigured: env.HEARTH_COGNITION_MODEL ?? "gpt-5.6-luna",
+        hearthKeyConfigured: Boolean(env.OPENAI_API_KEY?.trim()),
         transportQualificationEndpoint: "/api/ai/qualify",
         probeCandidates: PROBE_CANDIDATES
       });
@@ -183,6 +187,10 @@ export default {
 
     if (url.pathname === "/api/resident/converse") {
       return handleResidentConversation(request, env);
+    }
+
+    if (url.pathname === "/api/hearth/cognition") {
+      return handleHearthCognition(request, env);
     }
 
     if (url.pathname === "/api/ai/smoke") {

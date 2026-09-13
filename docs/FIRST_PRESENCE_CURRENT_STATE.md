@@ -1,6 +1,32 @@
-# Living resident — Current State
+# First Hearth — Current State
 
-Updated: 2026-09-10
+Updated: 2026-09-12
+
+## Integrated resident loop — 2026-09-12
+
+Current integration branch: `integration/first-hearth-resident-loop-2026-09-12`, based on `3f45138ba37a72a5b96ba33902c786a4ce861918`. PR119 and PR120 remain historical donors, not the source of this new loop. The coordinating workspace keeps the larger direction in `pilot/living-npc/refoundation-2026-09-11/FOUNDATION_DIRECTION_PL.md` and the resumable checkpoint in `PRACA_TERAZ.md`.
+
+The ordinary scene now runs Mira and Janek through one `HearthHost`: independent identity, private experience, revisable beliefs and enduring concerns; a separate multi-step realization; one World tick for every resident. Model responses enter through a versioned proposal and are admitted at a simulation boundary. New heard communication invalidates an older answer; a changed execution step invalidates its older plan without consulting hidden World revisions. Local travel, search, delivery and collection continue during an outstanding model request. The default managed body no longer starts the old yard/grove patrol.
+
+Speech is a World occurrence. Quiet/normal/call have different clear and occluded ranges. Every listener receives its own event-time word receipt; entering range later cannot hear an old conversation. Spoken calls also produce a coarse directional cue for local searching. Successful pickup/drop produces event-time witnessing, so a brief visible transfer between two observation frames is not lost. Hidden actions and distant speech do not enter private experience. The sidebar shows what the player actually heard. Selecting a resident changes the displayed person and session controls; speech remains audible to nearby people, and names in the utterance address an individual.
+
+Concerns, speech and physical results remain separate. A resident can say something mistaken or consider a concern satisfied without moving an item or fabricating a successful realization. Finishing chosen steps does not automatically satisfy the concern. Exhausted search and occupied hands return a need for new judgement; they do not silently delete the concern. Completing an all-items collection now advances the encompassing plan. `gather(one)` in this host explicitly means one matching item, so its local executor may select a candidate; a specific known referent uses `deliver`.
+
+The new `/api/hearth/cognition` route uses the existing server-side OpenAI secret, Responses and strict structured output. Defaults: `gpt-5.6-luna`, reasoning `low`, 4096 output tokens. Model, reasoning and output limit are configurable. The resident chooses a self-review interval and relevant private events can wake it earlier. Default concurrency is two and the adjustable local burst floor is three simulation seconds. The independent edge limiter is 120/min per address; the legacy endpoint retains its old limiter. Neither limit defines the nature of resident cognition. Request, response and latency limits, abort propagation and validation fail closed. Token measurements are nullable; they are not a billing total, especially for failed or interrupted requests.
+
+Validation at this checkpoint: TypeScript, 83 files / 399 tests, and Worker/client production builds passed. Host cases include autonomous startup, separate minds, actual multi-step delivery, all-items continuation, blocked search, concurrent local execution, stale-plan rejection, remote speech exclusion, fallible speech and deadline/disposal handling. Event-time perception and transport each have additional tests. Chromium at 1440×1000 and 390×844 passed the real client/World/host path with controlled cognition HTTP: two residents, resident selection, discovery and successive delivery of red and blue mugs, shared hearing, no page errors or horizontal overflow. Screenshots were inspected; the mobile conversation window is small but usable. Phaser bundle-size and screenshot GPU warnings are recorded, not application errors.
+
+**This is an integrated foundation step, not the finished inhabited-world experience.** The browser proof controls decisions; real Luna quality on this exact new path and remote publication are recorded separately in the coordinating checkpoint. The previous Luna transplant's success does not validate this new contract. No local API key or Cloudflare CLI credential was available; client QA used a Vite server without the legacy remote Workers AI proxy. The Worker path is covered separately by route/transport tests. Wrangler upload dry-run passed after running the local package check outside the ancestor-directory restriction that blocked esbuild; no upload occurred in that check.
+
+### What is intentionally replaceable
+
+The current text/JSON projection is an adapter for this provider episode, not the definition of a person. The bounded experience window and belief/concern maps are working state, not durable memory or a complete cognitive architecture. The six current capabilities and the `LivingRuntime` body donor are provisional modules; the donor still uses authored static geometry and heuristic local navigation/search. Do not extend those representations into a universal ontology. There is currently no save/restore of resident life, belief retirement/archive policy, learned voice recognition, dynamic doors, actor collision, new purposeful work, illumination-dependent perception or generative motion in the game. Those limitations remain visible rather than being filled with roleplay.
+
+Owner's September 12 clarification preserves technical autonomy and frames Owner + Browser as critical co-discoverers. New evidence can change everyone's judgement. Checkpoints expose a concrete foundational decision before too many dependencies grow around it; they are not repeated approval gates. Changes to model/memory/body mechanisms should preserve meaningful World state and resident history. The next coherent addition couples a real world mechanism with private perception, local action and save/restore, making those replacement and continuity boundaries testable before adding many more systems. Build richer life and a richer world together, rather than adding only mind schemas.
+
+---
+
+## Historical checkpoint — September 10
 
 This checkpoint describes the candidate in [PR #119](https://github.com/Jozzpoly/Llm-Live-NPC/pull/119). Refresh the PR head, checks and preview before resuming. The user accepted the earlier probe's technical behavior but asked for free conversation and real actions in one coherent experience. That direction supersedes adding more probe controls.
 

@@ -1,8 +1,7 @@
 import * as Phaser from "phaser";
-import { LivingRuntime, stepLivingResidents } from "../living/runtime";
-import { requestResidentReply } from "../living/provider";
-import { createLivingSpecimen } from "../living/specimen";
-import type { ResidentViewState } from "../living/types";
+import { HearthHost } from "../hearth/host";
+import { createHearthCognitionProvider } from "../hearth/transport";
+import { createHearthSpecimen, HEARTH_RESIDENTS } from "../hearth/scene";
 import type { ExecutorStatus } from "../execution/deterministic-executor";
 import { ExecutionDriver, type ActionAttemptRecord } from "../execution/execution-driver";
 import { World } from "../world/world";
@@ -93,7 +92,7 @@ export class WorldScene extends Phaser.Scene {
   private readonly npcExecutor: FirstPresenceBrowserProbe["executor"];
   private readonly executionDriver: ExecutionDriver;
   private readonly e1Agent: E1AgentHarness;
-  private readonly living: LivingRuntime | null;
+  private readonly living: HearthHost | null;
   private typing = false;
   private readonly debugSink: DebugSink;
   private readonly playerControls: PlayerControlBuffer;
@@ -120,7 +119,7 @@ export class WorldScene extends Phaser.Scene {
 
   constructor(debugSink: DebugSink, playerControls: PlayerControlBuffer, livingMode = false) {
     super({ key: "world" });
-    this.world = new World(livingMode ? createLivingSpecimen() : createFirstPresenceBrowserProbeSpecimen());
+    this.world = new World(livingMode ? createHearthSpecimen() : createFirstPresenceBrowserProbeSpecimen());
     this.firstPresence = new FirstPresenceBrowserProbe(this.world);
     this.npcExecutor = this.firstPresence.executor;
     this.executionDriver = new ExecutionDriver(this.world, this.npcExecutor);
@@ -129,10 +128,11 @@ export class WorldScene extends Phaser.Scene {
     this.currentPresentationSnapshot = this.previousPresentationSnapshot;
     this.debugSink = debugSink;
     this.playerControls = playerControls;
-    this.living = livingMode ? new LivingRuntime(this.world, requestResidentReply) : null;
+    this.living = livingMode ? new HearthHost(this.world, createHearthCognitionProvider(), HEARTH_RESIDENTS) : null;
   }
 
   create(): void {
+    this.events.once("shutdown", () => this.living?.dispose());
     if (this.input.keyboard) {
       this.cursors = this.input.keyboard.createCursorKeys();
       this.keys = this.input.keyboard.addKeys("W,A,S,D,E,Q,V,L") as MovementKeys;
@@ -229,7 +229,7 @@ export class WorldScene extends Phaser.Scene {
 
       this.previousPresentationSnapshot = this.currentPresentationSnapshot;
       if (this.living) {
-        stepLivingResidents(this.world, [this.living], { moveX: movement.x, moveY: movement.y }, playerActions);
+        this.living.step({ moveX: movement.x, moveY: movement.y }, playerActions);
       } else {
         const frameResult = this.executionDriver.step({
           playerControl: { moveX: movement.x, moveY: movement.y }, playerActions
@@ -256,11 +256,12 @@ export class WorldScene extends Phaser.Scene {
     this.debugOverlayVisible = !this.debugOverlayVisible;
   }
 
-  residentState(): ResidentViewState | null { return this.living?.state() ?? null; }
-  speakToResident(text: string): Promise<void> { return this.living?.send(text) ?? Promise.resolve(); }
+  residentState(): ReturnType<HearthHost["state"]> | null { return this.living?.state() ?? null; }
+  speakToResident(text: string, mode: "quiet" | "normal" | "call" = "normal"): Promise<void> { return this.living?.speak(text, mode) ?? Promise.resolve(); }
+  selectResident(actorId: string): void { this.living?.select(actorId); }
   retryResident(): Promise<void> { return this.living?.retry() ?? Promise.resolve(); }
   stopResident(): void { this.living?.stop(); }
-  callResident(): void { this.living?.callFromPlayer(); }
+  callResident(): void { this.living?.call(); }
   setTyping(typing: boolean): void {
     this.typing = typing;
     this.playerControls.clearMovement();

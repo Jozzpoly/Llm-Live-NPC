@@ -27,11 +27,11 @@ const livingMode = new URLSearchParams(location.search).get("lab") !== "1";
 appRoot.classList.toggle("living-mode", livingMode);
 if (livingMode) {
   document.documentElement.lang = "pl";
-  document.title = "Mira i Ty — LLM Live NPC";
-  document.querySelector("h1")!.textContent = "Mira i Ty";
+  document.title = "First Hearth — Wspólny świat";
+  document.querySelector("h1")!.textContent = "First Hearth";
   document.querySelector(".game-shell .eyebrow")!.textContent = "Pierwsze wspólne chwile";
   document.querySelector(".game-shell footer")!.innerHTML = "<span>Ruch: WASD / strzałki</span><span>Podnieś: E · Odłóż: Q</span><span>Kliknij świat, aby wrócić do ruchu</span>";
-  gameRoot.setAttribute("aria-label", "Świat Miry i gracza");
+  gameRoot.setAttribute("aria-label", "Świat mieszkańców i gracza");
 }
 
 let scene: WorldScene;
@@ -45,7 +45,7 @@ function updateNpcUi(): void {
   const resident = scene.residentState();
   if (resident) {
     livingPanel?.update(resident);
-    stageChipNode.textContent = resident.pending ? "Mira myśli…" : "Wspólny świat";
+    stageChipNode.textContent = resident.pending ? resident.name + " myśli…" : "Wspólny świat";
     stageChipNode.classList.add("is-active");
     return;
   }
@@ -80,7 +80,8 @@ if (livingMode) {
   const residentRoot = document.createElement("aside");
   appRoot.append(residentRoot);
   livingPanel = new LivingPanel(residentRoot, {
-    send: text => scene.speakToResident(text),
+    send: (text, mode) => scene.speakToResident(text, mode),
+    select: actorId => scene.selectResident(actorId),
     retry: () => scene.retryResident(), stop: () => scene.stopResident(),
     call: () => scene.callResident(),
     typing: active => scene.setTyping(active)
