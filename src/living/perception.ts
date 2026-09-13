@@ -10,7 +10,7 @@ export const RESIDENT_SPEECH_RANGE: Record<SpeechMode, { clear: number; occluded
   call: { clear: 700, occluded: 460 }
 };
 const EXPERIENCE_LIMIT = 96;
-const HALF_FIELD = Math.PI / 2;
+export const RESIDENT_HALF_FIELD = Math.PI / 2;
 const distance = (a: Vec2, b: Vec2) => Math.hypot(a.x - b.x, a.y - b.y);
 
 export interface HeardCall {
@@ -89,7 +89,7 @@ export class ResidentPerception {
     const dx = point.x - actor.position.x, dy = point.y - actor.position.y;
     const length = Math.hypot(dx, dy);
     if (length > RESIDENT_SIGHT) return false;
-    if (length > 1e-6 && (dx * actor.facing.x + dy * actor.facing.y) / length < Math.cos(HALF_FIELD) - 1e-6) return false;
+    if (length > 1e-6 && (dx * actor.facing.x + dy * actor.facing.y) / length < Math.cos(RESIDENT_HALF_FIELD) - 1e-6) return false;
     return this.world.hasLineOfSight(actor.position, point);
   }
 

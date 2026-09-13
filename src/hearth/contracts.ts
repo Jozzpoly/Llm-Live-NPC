@@ -3,7 +3,7 @@ import type { ItemDescription, KnownEntity } from "../living/types";
 /** First integrated contract. Identity and acceptance belong to the host, never the provider. */
 export interface Experience {
   id: string; tick: number; kind: string; text: string;
-  sourceId?: string;
+  sourceId?: string; subjectId?: string;
 }
 export interface Belief {
   id: string; claim: string; evidenceIds: string[];
@@ -21,6 +21,7 @@ export interface ResidentIdentity {
 export type CapabilityStep =
   | { skill: "travel"; targetId: string }
   | { skill: "accompany"; targetId: string; durationSeconds: number }
+  | { skill: "communicate"; targetId: string; text: string; mode: "normal" | "quiet" | "call" }
   | { skill: "deliver"; targetId: string; recipientId: string }
   | { skill: "gather"; description: ItemDescription; quantity: "one" | "all"; recipientId: string }
   | { skill: "put_down" }
@@ -40,6 +41,7 @@ export interface CognitionContext {
   beliefs: Belief[];
   concerns: Concern[];
   realization: Realization | null;
+  suspendedRealization?: Realization | null;
   places: Array<{ id: string; label: string }>;
 }
 export interface CognitionProposal {
@@ -49,6 +51,9 @@ export interface CognitionProposal {
   concerns: Concern[];
   /** null preserves the existing realization; a replacement never erases its concern. */
   plan: { concernId: string; steps: CapabilityStep[] } | null;
+  /** Explicit coordination decision. Optional only for old controlled v1 fixtures/adapters. */
+  activityDisposition?: { kind: "continue" | "replace" | "stop" | "suspend" | "resume";
+    reason: string; basedOnRealizationId: string | null } | null;
   reviewAfterSeconds: number;
 }
 export interface CognitionUsage {
@@ -81,6 +86,10 @@ export function parseCapabilityStep(value: unknown, context: CognitionContext, s
     case "accompany":
       return keys(value, ["skill", "targetId", "durationSeconds"]) && text(value.targetId, 120) && actor(value.targetId) && seconds(value.durationSeconds)
         ? { skill: "accompany", targetId: value.targetId, durationSeconds: value.durationSeconds as number } : null;
+    case "communicate":
+      return keys(value, ["skill", "targetId", "text", "mode"]) && text(value.targetId, 120) && actor(value.targetId) &&
+        text(value.text, 1200) && ["normal", "quiet", "call"].includes(String(value.mode))
+        ? { skill: "communicate", targetId: value.targetId, text: value.text, mode: value.mode as "normal" | "quiet" | "call" } : null;
     case "deliver":
       return keys(value, ["skill", "targetId", "recipientId"]) && text(value.targetId, 120) &&
         (structuralOnly || known(value.targetId)?.kind === "item") && text(value.recipientId, 120) && actor(value.recipientId)
@@ -108,7 +117,7 @@ export function parseCapabilityStep(value: unknown, context: CognitionContext, s
 }
 
 export function parseCognitionProposal(value: unknown, context: CognitionContext): CognitionProposal | null {
-  if (!object(value) || !keys(value, ["version", "speech", "beliefs", "concerns", "plan", "reviewAfterSeconds"]) ||
+  if (!object(value) || !keys(value, ["version", "speech", "beliefs", "concerns", "plan", "reviewAfterSeconds", "activityDisposition"]) ||
     value.version !== 1 || !seconds(value.reviewAfterSeconds) ||
     !Array.isArray(value.beliefs) || value.beliefs.length > 8 || !Array.isArray(value.concerns) || value.concerns.length > 8) return null;
   const allowedEvidence = new Set(context.experiences.map(e => e.id));
@@ -144,14 +153,30 @@ export function parseCognitionProposal(value: unknown, context: CognitionContext
     if (steps.some(s => !s)) return null;
     plan = { concernId: p.concernId, steps: steps as CapabilityStep[] };
   }
-  return { version: 1, speech, beliefs, concerns, plan, reviewAfterSeconds: value.reviewAfterSeconds as number };
+  let activityDisposition: CognitionProposal["activityDisposition"] = value.activityDisposition === undefined ? undefined : null;
+  if (value.activityDisposition !== undefined && value.activityDisposition !== null) {
+    const d = value.activityDisposition;
+    if (!object(d) || !keys(d, ["kind", "reason", "basedOnRealizationId"]) ||
+      !["continue", "replace", "stop", "suspend", "resume"].includes(String(d.kind)) || !text(d.reason) ||
+      (d.basedOnRealizationId !== null && !text(d.basedOnRealizationId, 120))) return null;
+    const basis = d.kind === "resume" ? context.suspendedRealization : context.realization;
+    if (d.basedOnRealizationId !== (basis?.id ?? null) ||
+      (d.kind === "resume" && (!basis || plan)) ||
+      (d.kind === "stop" && (!basis || plan)) ||
+      (d.kind === "suspend" && (!basis || basis.status !== "running")) ||
+      (d.kind === "continue" && plan) || (d.kind === "replace" && !plan)) return null;
+    activityDisposition = { kind: d.kind as NonNullable<CognitionProposal["activityDisposition"]>["kind"],
+      reason: d.reason, basedOnRealizationId: d.basedOnRealizationId as string | null };
+  }
+  return { version: 1, speech, beliefs, concerns, plan,
+    ...(activityDisposition !== undefined ? { activityDisposition } : {}), reviewAfterSeconds: value.reviewAfterSeconds as number };
 }
 
 /** Structural input guard shared by Worker and local captures. Incoming data never executes code. */
 export function isCognitionContext(v: unknown): v is CognitionContext {
   if (!object(v) || !tick(v.tick)) return false;
   const currentTick = v.tick;
-  if (!object(v) || !keys(v, ["version", "resident", "tick", "reasons", "places", "observations", "experiences", "beliefs", "concerns", "realization"]) ||
+  if (!object(v) || !keys(v, ["version", "resident", "tick", "reasons", "places", "observations", "experiences", "beliefs", "concerns", "realization", "suspendedRealization"]) ||
     v.version !== 1 || !object(v.resident) || !keys(v.resident, ["id", "name", "background"]) || !text(v.resident.id, 120) ||
     !text(v.resident.name, 120) || !text(v.resident.background, 4000) ||
     !tick(v.tick) ||
@@ -169,15 +194,16 @@ export function isCognitionContext(v: unknown): v is CognitionContext {
         ["mug", "hammer", "lantern"].includes(String(e.appearance.itemType)) &&
         (e.appearance.color === undefined || ["red", "blue"].includes(String(e.appearance.color)))))) ||
     !Array.isArray(v.experiences) || v.experiences.length > 128 ||
-    !v.experiences.every(e => object(e) && keys(e, ["id", "tick", "kind", "text", "sourceId"]) && text(e.id, 120) && text(e.kind, 80) && text(e.text, 1600) &&
-      tick(e.tick) && e.tick <= currentTick && (e.sourceId === undefined || text(e.sourceId, 120))) ||
+    !v.experiences.every(e => object(e) && keys(e, ["id", "tick", "kind", "text", "sourceId", "subjectId"]) && text(e.id, 120) && text(e.kind, 80) && text(e.text, 1600) &&
+      tick(e.tick) && e.tick <= currentTick && (e.sourceId === undefined || text(e.sourceId, 120)) &&
+      (e.subjectId === undefined || text(e.subjectId, 120))) ||
     !Array.isArray(v.beliefs) || v.beliefs.length > 32 || !Array.isArray(v.concerns) || v.concerns.length > 24) return false;
   if (!v.beliefs.every(b => object(b) && keys(b, ["id", "claim", "evidenceIds", "confidence"]) && text(b.id, 64) && text(b.claim) && Array.isArray(b.evidenceIds) &&
     b.evidenceIds.length <= 12 && b.evidenceIds.every(id => text(id, 120)) && ["tentative", "expected", "doubted"].includes(String(b.confidence)))) return false;
   if (!v.concerns.every(c => object(c) && keys(c, ["id", "description", "reason", "status", "evidenceIds"]) && text(c.id, 64) && text(c.description) && text(c.reason) && Array.isArray(c.evidenceIds) &&
     c.evidenceIds.length <= 12 && c.evidenceIds.every(id => text(id, 120)) && ["open", "satisfied", "abandoned"].includes(String(c.status)))) return false;
-  if (v.realization !== null) {
-    const r = v.realization;
+  for (const r of [v.realization, ...(v.suspendedRealization === undefined ? [] : [v.suspendedRealization])]) {
+    if (r === null) continue;
     if (!object(r) || !keys(r, ["id", "concernId", "steps", "index", "status", "outcome"]) || !text(r.id, 120) || !text(r.concernId, 64) ||
       !Array.isArray(r.steps) || r.steps.length < 1 || r.steps.length > 12 ||
       !Number.isSafeInteger(r.index) || (r.index as number) < 0 || (r.index as number) > r.steps.length ||

@@ -3,6 +3,7 @@ import "./style.css";
 import "./mobile-style.css";
 import "./living-style.css";
 import { LivingPanel } from "./living-panel";
+import { HearthResearchPanel } from "./hearth-research-panel";
 import { ActionAttemptDebugPanel } from "./action-attempt-debug-panel";
 import { DebugWorkspace } from "./debug-workspace";
 import { E1DebugPanel } from "./e1-debug-panel";
@@ -30,7 +31,7 @@ if (livingMode) {
   document.title = "First Hearth — Wspólny świat";
   document.querySelector("h1")!.textContent = "First Hearth";
   document.querySelector(".game-shell .eyebrow")!.textContent = "Pierwsze wspólne chwile";
-  document.querySelector(".game-shell footer")!.innerHTML = "<span>Ruch: WASD / strzałki</span><span>Podnieś: E · Odłóż: Q</span><span>Kliknij świat, aby wrócić do ruchu</span>";
+  document.querySelector(".game-shell footer")!.innerHTML = "<span>Ruch: WASD / strzałki</span><span>Podnieś: E · Odłóż: Q</span><span>Rozmowa: Enter · Powrót do ruchu: Esc</span>";
   gameRoot.setAttribute("aria-label", "Świat mieszkańców i gracza");
 }
 
@@ -39,13 +40,16 @@ let e1Panel: E1DebugPanel | null = null;
 let actionAttemptPanel: ActionAttemptDebugPanel | null = null;
 let firstPresencePanel: FirstPresenceDebugPanel | null = null;
 let livingPanel: LivingPanel | null = null;
+let researchPanel: HearthResearchPanel | null = null;
+const uiListeners = new AbortController();
 const playerControls = new PlayerControlBuffer();
 
 function updateNpcUi(): void {
   const resident = scene.residentState();
   if (resident) {
     livingPanel?.update(resident);
-    stageChipNode.textContent = resident.pending ? resident.name + " myśli…" : "Wspólny świat";
+    if (researchPanel?.isOpen()) researchPanel.update(scene.residentResearchState());
+    stageChipNode.textContent = "Wspólny świat";
     stageChipNode.classList.add("is-active");
     return;
   }
@@ -81,9 +85,25 @@ if (livingMode) {
   appRoot.append(residentRoot);
   livingPanel = new LivingPanel(residentRoot, {
     send: (text, mode) => scene.speakToResident(text, mode),
-    select: actorId => scene.selectResident(actorId),
-    retry: () => scene.retryResident(), stop: () => scene.stopResident(),
-    call: () => scene.callResident(),
+    retry: () => scene.retryResident(),
+    typing: active => scene.setTyping(active)
+  });
+  const researchRoot = document.createElement("aside");
+  const researchToggle = document.createElement("button");
+  researchToggle.type = "button";
+  researchToggle.className = "research-toggle";
+  researchToggle.textContent = "Badania / God";
+  const headerActions = document.createElement("div");
+  headerActions.className = "hearth-header-actions";
+  headerActions.append(stageChipNode, researchToggle);
+  document.querySelector(".game-shell header")!.append(headerActions);
+  appRoot.append(researchRoot);
+  researchPanel = new HearthResearchPanel(researchRoot, researchToggle, {
+    read: () => scene.residentResearchState(),
+    view: (actorId, lens) => {
+      appRoot.classList.toggle("research-open", actorId !== null);
+      scene.setResidentResearchView(actorId, lens);
+    },
     typing: active => scene.setTyping(active)
   });
 } else {
@@ -101,7 +121,7 @@ if (livingMode) {
 updateNpcUi();
 actionAttemptPanel?.update(scene.recentActionAttempts());
 
-new Phaser.Game({
+const game = new Phaser.Game({
   type: Phaser.AUTO,
   parent: gameRoot,
   width: 960,
@@ -113,7 +133,7 @@ new Phaser.Game({
     pixelArt: false
   },
   scale: {
-    mode: mobileOwnerMode ? Phaser.Scale.RESIZE : Phaser.Scale.FIT,
+    mode: livingMode || mobileOwnerMode ? Phaser.Scale.RESIZE : Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
     width: 960,
     height: 640
@@ -126,11 +146,21 @@ new MobileOwnerControls(gameRoot, playerControls, {
 });
 
 if (livingMode) {
+  const resize = new ResizeObserver(() => { if (game.scale) game.scale.refresh(); });
+  resize.observe(gameRoot);
+  game.events.once("destroy", () => resize.disconnect());
   gameRoot.addEventListener("pointerdown", () => {
-    if (document.activeElement instanceof HTMLTextAreaElement) document.activeElement.blur();
-  }, { capture: true });
+    livingPanel?.closeComposer();
+  }, { capture: true, signal: uiListeners.signal });
   for (const [key, label] of [["interact", "Podnieś"], ["drop", "Odłóż"]]) {
     const button = gameRoot.querySelector<HTMLButtonElement>(`[data-mobile-control="${key}"]`);
     if (button) { button.setAttribute("aria-label", label); button.querySelector("strong")!.textContent = label; }
   }
 }
+
+game.events.once("destroy", () => {
+  livingPanel?.destroy();
+  researchPanel?.destroy();
+  uiListeners.abort();
+});
+if (import.meta.hot) import.meta.hot.dispose(() => game.destroy(true));

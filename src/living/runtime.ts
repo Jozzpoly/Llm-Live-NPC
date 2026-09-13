@@ -33,6 +33,12 @@ type Search = { targetId: string; startedAt: number; cueSequence: number; points
 type Collection = { description: ItemDescription; quantity: "one" | "all"; delivered: string[]; unavailable: string[];
   places: Place[]; placeIndex: number; scan: Scan | null; reportKey: string | null };
 
+/** Local donor checkpoint, never provider input or a portable resident/history format. */
+export interface LivingExecutionCheckpoint {
+  version: 1; actorId: string; task: Task; collection: Collection | null;
+  recipientId: string | null; activity: string;
+}
+
 export interface LivingBodyOptions {
   /** The new host owns cognition and concerns; this is only a temporary execution donor. */
   managed?: boolean;
@@ -113,6 +119,23 @@ export class LivingRuntime {
 
   executionState() {
     return { status: this.bodyStatus, sequence: this.bodyOutcomeSequence, outcome: this.lastOutcome };
+  }
+
+  captureExecution(): LivingExecutionCheckpoint {
+    return structuredClone({ version: 1, actorId: this.actorId, task: this.task, collection: this.collection,
+      recipientId: this.recipientId, activity: this.activity });
+  }
+
+  resumeExecution(checkpoint: LivingExecutionCheckpoint): void {
+    if (checkpoint.version !== 1 || checkpoint.actorId !== this.actorId) throw new Error("Wrong body checkpoint");
+    const saved = structuredClone(checkpoint);
+    this.task = saved.task; this.collection = saved.collection; this.recipientId = saved.recipientId;
+    this.activity = saved.activity; this.bodyStatus = "running"; this.lastOutcome = null;
+    // Keep completed collection members and the current carry phase. Reacquire routes and
+    // contact from current private perception; restoring work never restores physical state.
+    if (this.collection) this.collection.scan = null;
+    this.completedCollection = null; this.search = null; this.arrivalScan = null;
+    this.clearRoute();
   }
 
   personalContext() {
@@ -687,7 +710,8 @@ export class LivingRuntime {
     this.activity = this.options.managed ? "Rozglądam się i zastanawiam, co dalej." : "Chwilę odpoczywam, potem wrócę do spaceru.";
   }
   private outcome(text: string, completed = true): void {
-    this.lastOutcome = text.replaceAll("Mira", this.name);
+    // Adapt the legacy actor prefix only. A recipient named Mira must remain Mira.
+    this.lastOutcome = text.replace(/^Mira\b/u, this.name);
     this.addLine("world", this.lastOutcome);
     if (completed && this.collection && this.task.kind === "fetch") {
       this.collection.delivered.push(this.task.targetId);

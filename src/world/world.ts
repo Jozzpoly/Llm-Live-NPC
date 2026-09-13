@@ -198,6 +198,7 @@ export class World {
   private readonly calls: WorldCall[] = [];
   private readonly occurrenceListeners = new Set<WorldOccurrenceListener>();
   private occurrenceSequence = 0;
+  private readonly observerFaults: Array<{ tick: number; occurrenceSeq: number; message: string }> = [];
   private callSequence = 0;
   private tickValue = 0;
   private eventSequence = 0;
@@ -353,6 +354,9 @@ export class World {
     this.occurrenceListeners.add(listener);
     return () => { this.occurrenceListeners.delete(listener); };
   }
+
+  /** Research can detect missing observation delivery without becoming an action authority. */
+  occurrenceDeliveryErrors() { return structuredClone(this.observerFaults); }
 
   lastActionResult(): WorldActionResult | null {
     return this.lastActionResultValue ? { ...this.lastActionResultValue } : null;
@@ -739,7 +743,16 @@ export class World {
     const occurrence = freezeOccurrenceCopy({ seq: ++this.occurrenceSequence, tick: this.tick, ...data });
     if (this.occurrenceListeners.size === 0) return;
     const snapshot = freezeOccurrenceCopy(this.snapshot());
-    for (const listener of [...this.occurrenceListeners]) listener(occurrence, snapshot);
+    for (const listener of [...this.occurrenceListeners]) {
+      try { listener(occurrence, snapshot); }
+      catch (error) {
+        // The physical effect has already committed. A broken observer must not turn it into
+        // an apparent failed action or prevent the other private sensory adapters receiving it.
+        this.observerFaults.push({ tick: this.tick, occurrenceSeq: occurrence.seq,
+          message: (error instanceof Error ? error.message : "Observer failed").slice(0, 300) });
+        if (this.observerFaults.length > 64) this.observerFaults.shift();
+      }
+    }
   }
 
   private recordAction(result: Omit<WorldActionResult, "seq" | "tick">): WorldActionResult {

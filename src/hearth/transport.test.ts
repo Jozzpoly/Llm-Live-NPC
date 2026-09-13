@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { CognitionContext, CognitionProposal } from "./contracts";
-import { createHearthCognitionProvider } from "./transport";
+import { createHearthCognitionProvider, HearthCognitionFailure, safeHearthStructuredOutput } from "./transport";
 
 const context = (): CognitionContext => ({
   version: 1, resident: { id: "npc.ada", name: "Ada", background: "Lubi doglądać podwórza." }, tick: 10,
@@ -9,7 +9,7 @@ const context = (): CognitionContext => ({
   concerns: [{ id: "concern.1", description: "Obejrzeć podwórze", reason: "Lubię tu zaglądać.", status: "open", evidenceIds: [] }],
   realization: null, places: [{ id: "place.yard", label: "Podwórze" }]
 });
-const proposal = (): CognitionProposal => ({ version: 1, speech: null, beliefs: [], concerns: [], plan: null, reviewAfterSeconds: 2 });
+const proposal = (): CognitionProposal => ({ version: 1, speech: null, beliefs: [], concerns: [], plan: null, activityDisposition: null, reviewAfterSeconds: 2 });
 const result = () => ({ ok: true, proposal: proposal(), usage: { model: "gpt-5.6-luna", inputTokens: 50, outputTokens: 20, totalTokens: 70, elapsedMs: 12 } });
 const controller = () => new AbortController();
 
@@ -32,6 +32,18 @@ describe("First Hearth browser cognition transport", () => {
     const response = await createHearthCognitionProvider({ endpoint: "/custom-cognition", fetcher })(context(), controller().signal);
     expect(fetcher.mock.calls[0][0]).toBe("/custom-cognition");
     expect(response.usage).toEqual({ model: "gpt-5.6-luna", elapsedMs: 4, inputTokens: null, outputTokens: null, totalTokens: null });
+  });
+
+  it("carries private suspended work and its explicit resume decision without changing protocol version", async () => {
+    const input = context();
+    input.experiences[0].subjectId = "player";
+    input.suspendedRealization = { id: "realization.saved", concernId: "concern.1", steps: [{ skill: "accompany", targetId: "player", durationSeconds: 20 }],
+      index: 0, status: "interrupted", outcome: null };
+    const value: CognitionProposal = { ...proposal(), activityDisposition: { kind: "resume", reason: "Wracam do poprzedniego zajęcia.", basedOnRealizationId: "realization.saved" } };
+    const fetcher = vi.fn<typeof fetch>(async () => Response.json({ ...result(), proposal: value }));
+    const received = await createHearthCognitionProvider({ fetcher })(input, controller().signal);
+    expect(received.proposal).toEqual(value);
+    expect(JSON.parse(String(fetcher.mock.calls[0][1]?.body))).toEqual(input);
   });
 
   it("rejects private-context extras and malformed nested perception before sending", async () => {
@@ -75,6 +87,60 @@ describe("First Hearth browser cognition transport", () => {
     for (let i = 0; i < 2; i++) await expect(provider(context(), controller().signal)).rejects.toThrow("Namysł mieszkańca jest chwilowo niedostępny.");
     const limited = createHearthCognitionProvider({ fetcher: vi.fn<typeof fetch>(async () => Response.json({ error: "private" }, { status: 429 })) });
     await expect(limited(context(), controller().signal)).rejects.toThrow("Zbyt wiele prób namysłu");
+  });
+
+  it("preserves safe failure metadata and rejected-output usage separately from the friendly message", async () => {
+    const diagnostic = { stage: "proposal_validation", code: "schema_or_grounding", upstreamStatus: 200,
+      responseId: "resp_probe", requestId: "req_probe", responseStatus: "completed", outputTypes: ["reasoning", "message"],
+      structuredOutput: { ...proposal(), plan: { concernId: "concern.1", steps: [{ skill: "travel", targetId: "unknown" }] } } };
+    const observer = vi.fn((received: { code: string }) => { received.code = "observer_mutation"; throw new Error("research observer failed"); });
+    const fetcher = vi.fn<typeof fetch>(async () => Response.json({ ok: false, error: "private upstream error",
+      diagnostic, usage: result().usage }, { status: 502 }));
+    const error = await createHearthCognitionProvider({ fetcher, onDiagnostic: observer })(context(), controller().signal).catch(error => error);
+    expect(error).toBeInstanceOf(HearthCognitionFailure);
+    expect(error).toMatchObject({ message: "Namysł mieszkańca jest chwilowo niedostępny.", diagnostic, usage: result().usage });
+    expect(observer).toHaveBeenCalledOnce();
+    expect(String(error)).not.toMatch(/private|observer|unknown/u);
+  });
+
+  it("rejects arbitrary diagnostic envelopes and strips non-proposal payloads from structured diagnostics", async () => {
+    const payloads = [
+      { stage: "proposal_validation", code: "schema_or_grounding", authorization: "never-forward-auth" },
+      { stage: "proposal_validation", code: "schema_or_grounding", structuredOutput: {
+        ...proposal(), hiddenReasoning: "never-forward-reasoning",
+        speech: { text: "Echo sk-proj-fictionalcredential123", mode: "normal", authorization: "never-forward-nested" }
+      } }
+    ];
+    for (const diagnostic of payloads) {
+      const fetcher = vi.fn<typeof fetch>(async () => Response.json({ ok: false, error: "never-forward-error", diagnostic }, { status: 502 }));
+      const error = await createHearthCognitionProvider({ fetcher })(context(), controller().signal).catch(error => error);
+      expect(error).toBeInstanceOf(HearthCognitionFailure);
+      expect(JSON.stringify(error)).not.toMatch(/never-forward|fictionalcredential/u);
+      if ("authorization" in diagnostic) expect(error.diagnostic).toBeNull();
+      else expect(error.diagnostic.structuredOutput.speech.text).toBe("Echo [redacted]");
+    }
+    const oversized = { ...proposal(), beliefs: Array.from({ length: 8 }, () => ({ id: "b", claim: "ż".repeat(1600), confidence: "expected", evidenceIds: [] })),
+      concerns: Array.from({ length: 8 }, () => ({ id: "c", description: "ż".repeat(1600), reason: "ż".repeat(1600), status: "open", evidenceIds: [] })) };
+    expect(safeHearthStructuredOutput(oversized)).toBeUndefined();
+    expect(safeHearthStructuredOutput("raw non-proposal text")).toBeUndefined();
+  });
+
+  it("retains usage when client grounding rejects a successful server envelope", async () => {
+    const fetcher = vi.fn<typeof fetch>(async () => Response.json({ ...result(), proposal: { ...proposal(),
+      plan: { concernId: "concern.1", steps: [{ skill: "travel", targetId: "hidden" }] } } }));
+    const error = await createHearthCognitionProvider({ fetcher })(context(), controller().signal).catch(error => error);
+    expect(error).toMatchObject({ message: "Nie udało się odczytać namysłu mieszkańca.",
+      diagnostic: { stage: "client_validation", code: "schema_or_grounding" }, usage: result().usage });
+  });
+
+  it("bounds and cancels a stalled HTTP error body while attempting diagnostic extraction", async () => {
+    vi.useFakeTimers();
+    const cancel = vi.fn();
+    const fetcher = vi.fn<typeof fetch>(async () => new Response(new ReadableStream<Uint8Array>({ cancel }), { status: 502 }));
+    const pending = createHearthCognitionProvider({ fetcher, timeoutMs: 30 })(context(), controller().signal).catch(error => error);
+    await vi.advanceTimersByTimeAsync(31);
+    expect(await pending).toMatchObject({ message: "Namysł mieszkańca trwał zbyt długo.", diagnostic: { stage: "deadline", code: "timeout" } });
+    expect(cancel).toHaveBeenCalled();
   });
 
   it("does not start a pre-cancelled request or reveal its abort reason", async () => {

@@ -1,6 +1,40 @@
 # First Hearth — Current State
 
-Updated: 2026-09-12
+Updated: 2026-09-13
+
+## Integrated continuity scene — 2026-09-13 evening
+
+**Current implementation:** [Continuity Owner build](CONTINUITY_OWNER_BUILD.md). The resident coordination and embodied communication changes are integrated with Enter-to-speak, speech bubbles and an observational World/private-perspective panel. The source remains on the canonical PR123 branch. The following re-entry section describes the earlier baseline, not the new code.
+
+The host preserves active work across overheard remarks, requires explicit replacement/suspension/resumption, retains local collection/carry progress, seeks actual contact before carrying a message, reconsiders candidates from a completed execution boundary, restores private cited evidence after window turnover, and retries failed cognition. World isolates faulty observers. Worker diagnostics distinguish output/admission failures and keep available usage without exposing provider reasoning or secrets.
+
+Local complete check: **418 tests in 84 files**, TypeScript, Worker and client build passed. Controlled browser scenarios on 1440×1000 and 390×844 passed: two deliveries, Janek continuing accompaniment, Enter returning movement, Shift+Enter/Escape, private lenses and JSON export; images inspected and canvas sizing corrected. These are controlled provider tests, not real-Luna or Owner acceptance. Deployed version, CI and the subsequent real-Luna result are recorded in [PR123](https://github.com/Jozzpoly/Llm-Live-NPC/pull/123) and the workspace checkpoint.
+
+The next product evidence should come from inhabiting this scene before another broad redesign. The wider material-world/work/persistence plan remains open; those systems have not been built in this patch. See the top of [the foundation judgement](FIRST_HEARTH_FOUNDATION.md) for the updated sequencing.
+
+## Post-playtest re-entry and canonical publication — 2026-09-13
+
+**Current direction:** [First Hearth foundation after the two-resident playtest](FIRST_HEARTH_FOUNDATION.md). This replaces the previous campaign order. The next implementation is a bounded replacement of resident coordination, continuing activity and asynchronous admission, with material world activity, physical communication, private history and an observational research view in one playable scene. The existing World, perception, search, manipulation and transport are donors. No new resident architecture has been implemented by this documentation checkpoint.
+
+The original local source `a5b8e5b9ce6c2e644fb834d57852e7e723411671` is now published canonically as `df0b06a9dba79b32037bc0b8926f411bd5e382e7` in [draft PR #123](https://github.com/Jozzpoly/Llm-Live-NPC/pull/123), on `integration/first-hearth-resident-loop-2026-09-12`. Both commits have **exactly the same full tree `408ebc028be967338dfdf44091ee633e0bea82b5`**. GitHub publication metadata differs because native push authentication was unavailable. The local source is preserved on `archive/first-hearth-local-a5b8e5b`; the integration checkout is aligned with the published history. This documentation update is a subsequent change, not part of that exact tree assertion.
+
+[Preview of that baseline](https://dddc8591-llm-live-npc.jozzpoly.workers.dev/) is confirmed by Workers Builds for `df0b06a9`. GitHub Actions Check run `34731354448` completed successfully. Source tests/build and controlled desktop/mobile results below remain evidence about the exact tree, not proof of a new architectural quality bar.
+
+Owner + Browser published [rescue PR #122](https://github.com/Jozzpoly/Llm-Live-NPC/pull/122), commit `0cc780a2e5cfe65cff70355028a4409aec3e8de1`, while Codex was unavailable. Direct Git comparison confirmed identical production/runtime files and seven test/documentation differences. Its [immutable preview](https://9948d2fa-llm-live-npc.jozzpoly.workers.dev/) is the historical first real two-SPC playtest specimen. PR122 remains draft/unmerged; its description now points to PR123. It is not a competing implementation line.
+
+The September 13 Owner package was extracted with path validation, hashed, read and confronted with code. An independent controlled harness reproduced broad speech invalidation without preemption, speech before travel, stale self-status speech/belief admission after completed travel, execution continuing after concern abandonment, dangling evidence after trimming during a pending request, and quiet-world cognition suppression after a transient failure. Three grouped probe tests passed by reproducing these behaviors. These are not request-level reconstructions of the Owner video. Source inspection also confirmed dropped `subjectId` and observer exceptions escaping after World mutation.
+
+Separately, a short **real Luna** browser observation on the canonical preview started 10 requests and captured seven successful responses (20,165 reported tokens). It also saw two HTTP 502 errors; response-body capture was incomplete, and remaining work was interrupted when the page closed. This is a partial live result with failures, not a clean provider/gameplay PASS or account billing verification. A returned Janek follow plan disappeared before the next request after Mira's acknowledgement; the data strongly matches the reproduced coarse invalidation mechanism. Desktop selection/layout and mobile layout were checked. Enter still leaves focus in the textarea. No UI redesign was made.
+
+Two additional isolated requests using captured contexts #2 and #8 both returned HTTP 502 with `Nie udało się odczytać namysłu mieszkańca.` This narrows those new failures to output extraction/validation after upstream JSON was read; it does not identify the exact rejection reason or establish an account/billing failure. The first instrumented successor must distinguish provider status, decoding, schema/grounding rejection and admission. Total newly initiated project requests in this audit: 12; available token telemetry covers only the seven captured successful responses.
+
+Artifacts remain in the coordinating workspace under `pilot/living-npc/reentry-2026-09-13/`: `REENTRY_RECEIPT.json`, `audit-probes/causal-audit.test.ts`, `audit-probes/causal-audit-results.json`, `live-reentry-check.cjs`, `live-reentry-results.json`, `provider-error-recheck-results.json` and the desktop/mobile screenshots. Raw packet/video claims remain labelled separately from these fresh reproductions. The larger packet is input about Owner intent, not a specification.
+
+**Standing project mandate:** Owner explicitly delegated ordinary technical repository/GitHub management, including branches, draft PRs, versions, CI and technical documentation. Do not re-request routine permission. Genuine system-required approval or exceptional irreversible/Owner decisions remain exceptions. Existing project API reuse is authorized; no keys were retrieved or created. WEB HOLD remains; no automatic chat message was sent. No new automation or usage-reset credit was used.
+
+**Resume:** verify current head/dirty/CI, then execute section 6 step 1 of `FIRST_HEARTH_FOUNDATION.md`. Do not republish the baseline or repeat the entire audit. Its defined next result is a coherent scene for inhabitation, not a sequence of Owner micro-approvals.
+
+---
 
 ## Integrated resident loop — 2026-09-12
 
