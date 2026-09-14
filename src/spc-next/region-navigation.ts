@@ -37,6 +37,11 @@ export class RegionNavigationGraph {
     }
   }
 
+  anchor(regionId: string): Vec2 | null {
+    const node = this.nodes.get(regionId);
+    return node ? { ...node.anchor } : null;
+  }
+
   route(from: string, to: string): RegionRoute | null {
     if (!this.nodes.has(from) || !this.nodes.has(to)) return null;
     if (from === to) return { regionIds: [from], waypoints: [], totalCost: 0 };
