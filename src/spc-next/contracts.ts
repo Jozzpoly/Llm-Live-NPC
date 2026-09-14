@@ -43,6 +43,7 @@ export interface WorldOccurrence {
   radius: number;
   summary: string;
   text: string | null;
+  addressedActorIds: readonly string[];
 }
 
 export type PerceptionModality = "hearing" | "sight" | "self";
@@ -57,6 +58,7 @@ export interface ResidentPercept {
   position: Vec2;
   summary: string;
   text: string | null;
+  addressed: boolean;
 }
 
 export type ActivityKind =
