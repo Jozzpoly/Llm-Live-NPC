@@ -30,6 +30,7 @@ export class ResidentRuntime {
   private cognitionSequence = 0;
   private routeWaypointIndex = 0;
   private currentRegionId: string | null = null;
+  private decisionRevisionValue = 0;
 
   constructor(
     readonly profile: ResidentProfile,
@@ -64,9 +65,14 @@ export class ResidentRuntime {
     };
   }
 
+  decisionRevision(): number {
+    return this.decisionRevisionValue;
+  }
+
   ingestPercepts(percepts: readonly ResidentPercept[]): void {
     this.mind.observe(percepts);
     for (const percept of percepts) {
+      if (percept.modality === "hearing" && percept.addressed) this.decisionRevisionValue += 1;
       this.recentPercepts.push(structuredClone(percept));
       if (percept.actorId) this.lastKnownActorPositions.set(percept.actorId, { ...percept.position });
       if (percept.subjectId) this.lastKnownActorPositions.set(percept.subjectId, { ...percept.position });
@@ -102,6 +108,7 @@ export class ResidentRuntime {
   setActivity(activity: ResidentActivity, tick: number): void {
     this.activity = structuredClone(activity);
     this.routeWaypointIndex = 0;
+    this.decisionRevisionValue += 1;
     this.appendTrace({
       tick,
       residentId: this.profile.id,
@@ -118,6 +125,11 @@ export class ResidentRuntime {
 
   applySemanticUpdates(proposal: ResidentCognitionProposal, tick: number): void {
     this.mind.applySemanticUpdates(proposal, tick);
+  }
+
+  requeueCognitionBatch(batch: CognitionBatch): void {
+    if (batch.residentId !== this.profile.id) throw new Error("cognition batch belongs to another resident");
+    for (const reason of batch.reasons) this.scheduler.note(reason);
   }
 
   fastStep(view: ResidentExecutionView): ResidentCommand {
@@ -286,6 +298,7 @@ export class ResidentRuntime {
       reason: `completed ${completed.id}`,
     };
     this.routeWaypointIndex = 0;
+    this.decisionRevisionValue += 1;
   }
 
   private reasonFromPercept(percept: ResidentPercept): CognitionReason | null {
