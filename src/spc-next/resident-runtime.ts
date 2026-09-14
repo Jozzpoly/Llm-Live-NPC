@@ -24,6 +24,7 @@ export class ResidentRuntime {
   private readonly trace: ResidentTraceEvent[] = [];
   private readonly lastKnownActorPositions = new Map<string, Vec2>();
   private cognitionSequence = 0;
+  private routeWaypointIndex = 0;
 
   constructor(
     readonly profile: ResidentProfile,
@@ -87,6 +88,7 @@ export class ResidentRuntime {
 
   setActivity(activity: ResidentActivity, tick: number): void {
     this.activity = structuredClone(activity);
+    this.routeWaypointIndex = 0;
     this.appendTrace({
       tick,
       residentId: this.profile.id,
@@ -107,7 +109,7 @@ export class ResidentRuntime {
         return { kind: "none" };
       case "travel":
       case "investigate":
-        return this.stepTowardPosition(view, this.activity.targetPosition);
+        return this.stepRoutedActivity(view);
       case "follow": {
         const visible = this.activity.targetActorId
           ? view.visibleActors.find((actor) => actor.id === this.activity.targetActorId)
@@ -153,6 +155,18 @@ export class ResidentRuntime {
       summary,
       refIds: [reason.id, this.activity.id],
     });
+  }
+
+  private stepRoutedActivity(view: ResidentExecutionView): ResidentCommand {
+    const route = this.activity.routeWaypoints ?? [];
+    while (this.routeWaypointIndex < route.length) {
+      const waypoint = route[this.routeWaypointIndex]!;
+      if (distanceSquared(view.selfPosition, waypoint) > ARRIVAL_DISTANCE * ARRIVAL_DISTANCE) {
+        return this.stepTowardPosition(view, waypoint, false);
+      }
+      this.routeWaypointIndex += 1;
+    }
+    return this.stepTowardPosition(view, this.activity.targetPosition, true);
   }
 
   private stepTowardPosition(
@@ -242,6 +256,7 @@ export class ResidentRuntime {
       speed: null,
       reason: `completed ${completed.id}`,
     };
+    this.routeWaypointIndex = 0;
   }
 
   private reasonFromPercept(percept: ResidentPercept): CognitionReason | null {
