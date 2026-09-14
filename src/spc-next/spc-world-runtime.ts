@@ -102,7 +102,12 @@ export class SpcWorldRuntime {
     }
   }
 
-  speak(actorId: string, text: string, radius?: number): WorldOccurrence {
+  speak(
+    actorId: string,
+    text: string,
+    radius?: number,
+    addressedActorIds: readonly string[] = [],
+  ): WorldOccurrence {
     const actor = this.requireActor(actorId);
     const occurrence: WorldOccurrence = {
       id: `occurrence:${this.tickValue}:${this.occurrenceSequence++}`,
@@ -114,6 +119,7 @@ export class SpcWorldRuntime {
       radius: radius ?? actor.hearingRadius,
       summary: "speech",
       text,
+      addressedActorIds: [...new Set(addressedActorIds)],
     };
     this.pendingOccurrences.push(occurrence);
     return structuredClone(occurrence);
@@ -131,6 +137,7 @@ export class SpcWorldRuntime {
       radius,
       summary,
       text: null,
+      addressedActorIds: [],
     };
     this.pendingOccurrences.push(occurrence);
     return structuredClone(occurrence);
@@ -228,6 +235,7 @@ export class SpcWorldRuntime {
         position: { ...occurrence.position },
         summary: occurrence.summary,
         text: occurrence.text,
+        addressed: occurrence.addressedActorIds.includes(residentId),
       }]);
     }
   }
@@ -252,6 +260,7 @@ export class SpcWorldRuntime {
           position: { ...candidate.position },
           summary: `actor ${candidate.id} entered sight`,
           text: null,
+          addressed: false,
         });
       }
 
@@ -279,7 +288,7 @@ export class SpcWorldRuntime {
       return;
     }
     actor.velocity = { x: 0, y: 0 };
-    this.speak(actor.id, command.text, command.radius);
+    this.speak(actor.id, command.text, command.radius, command.addressedActorIds);
   }
 
   private addActor(actor: ActorState): void {
