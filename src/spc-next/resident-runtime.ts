@@ -68,7 +68,7 @@ export class ResidentRuntime {
         tick: percept.tick,
         residentId: this.profile.id,
         kind: "perception",
-        summary: `${percept.modality}: ${percept.summary}`,
+        summary: `${percept.modality}${percept.addressed ? " addressed" : ""}: ${percept.summary}`,
         refIds: [percept.id, percept.occurrenceId],
       });
 
@@ -210,7 +210,12 @@ export class ResidentRuntime {
 
     const visible = view.visibleActors.find((actor) => actor.id === targetId);
     if (visible && distanceSquared(view.selfPosition, visible.position) <= COMMUNICATION_DISTANCE ** 2) {
-      const command: ResidentCommand = { kind: "speak", text, radius: this.profile.hearingRadius };
+      const command: ResidentCommand = {
+        kind: "speak",
+        text,
+        radius: this.profile.hearingRadius,
+        addressedActorIds: [targetId],
+      };
       this.appendTrace({
         tick: view.tick,
         residentId: this.profile.id,
@@ -265,8 +270,10 @@ export class ResidentRuntime {
         id: `reason:${this.profile.id}:speech:${percept.occurrenceId}`,
         tick: percept.tick,
         kind: "heard_speech",
-        salience: 0.9,
-        summary: `Heard speech: ${percept.text}`,
+        salience: percept.addressed ? 1 : 0.4,
+        summary: percept.addressed
+          ? `Speech addressed to me: ${percept.text}`
+          : `Overheard speech: ${percept.text}`,
         evidenceIds: [percept.id],
       };
     }
