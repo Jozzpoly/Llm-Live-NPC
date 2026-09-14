@@ -75,6 +75,7 @@ export interface ResidentActivity {
   text: string | null;
   speed: number | null;
   reason: string;
+  routeWaypoints?: readonly Vec2[];
 }
 
 export interface VisibleActor {
