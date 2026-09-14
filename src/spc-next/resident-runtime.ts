@@ -1,3 +1,4 @@
+import type { ResidentCognitionContext, ResidentCognitionProposal } from "./cognition-contract";
 import {
   distanceSquared,
   normalizedDirection,
@@ -12,8 +13,10 @@ import {
   type ResidentPublicState,
   type ResidentTraceEvent,
   type Vec2,
+  type WorldRegion,
 } from "./contracts";
 import { createDefaultCognitionScheduler, type CognitionScheduler } from "./cognition-scheduler";
+import { ResidentMind } from "./resident-mind";
 
 const ARRIVAL_DISTANCE = 18;
 const COMMUNICATION_DISTANCE = 80;
@@ -23,13 +26,16 @@ export class ResidentRuntime {
   private readonly recentPercepts: ResidentPercept[] = [];
   private readonly trace: ResidentTraceEvent[] = [];
   private readonly lastKnownActorPositions = new Map<string, Vec2>();
+  private readonly mind: ResidentMind;
   private cognitionSequence = 0;
   private routeWaypointIndex = 0;
+  private currentRegionId: string | null = null;
 
   constructor(
     readonly profile: ResidentProfile,
     private readonly scheduler: CognitionScheduler = createDefaultCognitionScheduler(profile.id),
   ) {
+    this.mind = new ResidentMind(profile);
     this.activity = {
       id: `activity:${profile.id}:idle:0`,
       kind: "idle",
@@ -59,6 +65,7 @@ export class ResidentRuntime {
   }
 
   ingestPercepts(percepts: readonly ResidentPercept[]): void {
+    this.mind.observe(percepts);
     for (const percept of percepts) {
       this.recentPercepts.push(structuredClone(percept));
       if (percept.actorId) this.lastKnownActorPositions.set(percept.actorId, { ...percept.position });
@@ -73,17 +80,23 @@ export class ResidentRuntime {
       });
 
       const reason = this.reasonFromPercept(percept);
-      if (reason) {
-        this.scheduler.note(reason);
-        this.appendTrace({
-          tick: percept.tick,
-          residentId: this.profile.id,
-          kind: "cognition_reason",
-          summary: reason.summary,
-          refIds: [reason.id, ...reason.evidenceIds],
-        });
-      }
+      if (reason) this.noteCognitionReason(reason);
     }
+  }
+
+  enterRegion(region: WorldRegion, tick: number, initial = false): void {
+    const changed = this.currentRegionId !== region.id;
+    this.currentRegionId = region.id;
+    this.mind.discoverRegion(region, tick);
+    if (!changed || initial) return;
+    this.noteCognitionReason({
+      id: `reason:${this.profile.id}:region:${region.id}:${tick}`,
+      tick,
+      kind: "direct_world_change",
+      salience: 0.35,
+      summary: `Entered region: ${region.label}`,
+      evidenceIds: [`region-entry:${this.profile.id}:${region.id}:${tick}`],
+    });
   }
 
   setActivity(activity: ResidentActivity, tick: number): void {
@@ -96,6 +109,15 @@ export class ResidentRuntime {
       summary: `${activity.kind}: ${activity.reason}`,
       refIds: [activity.id],
     });
+  }
+
+  cognitionContext(batch: CognitionBatch): ResidentCognitionContext {
+    if (batch.residentId !== this.profile.id) throw new Error("cognition batch belongs to another resident");
+    return this.mind.context(batch.requestedAtTick, batch.reasons, this.activity, this.recentPercepts);
+  }
+
+  applySemanticUpdates(proposal: ResidentCognitionProposal, tick: number): void {
+    this.mind.applySemanticUpdates(proposal, tick);
   }
 
   fastStep(view: ResidentExecutionView): ResidentCommand {
@@ -139,21 +161,24 @@ export class ResidentRuntime {
   }
 
   noteActivityBlocked(tick: number, summary: string): void {
-    const reason: CognitionReason = {
+    this.noteCognitionReason({
       id: `reason:${this.profile.id}:blocked:${this.cognitionSequence++}`,
       tick,
       kind: "activity_blocked",
       salience: 0.9,
       summary,
       evidenceIds: [this.activity.id],
-    };
+    });
+  }
+
+  private noteCognitionReason(reason: CognitionReason): void {
     this.scheduler.note(reason);
     this.appendTrace({
-      tick,
+      tick: reason.tick,
       residentId: this.profile.id,
       kind: "cognition_reason",
-      summary,
-      refIds: [reason.id, this.activity.id],
+      summary: reason.summary,
+      refIds: [reason.id, ...reason.evidenceIds],
     });
   }
 
@@ -243,15 +268,14 @@ export class ResidentRuntime {
       summary,
       refIds: [completed.id],
     });
-    const reason: CognitionReason = {
+    this.noteCognitionReason({
       id: `reason:${this.profile.id}:completed:${this.cognitionSequence++}`,
       tick,
       kind: "activity_completed",
       salience: 0.55,
       summary: `${completed.kind} completed: ${summary}`,
       evidenceIds: [completed.id],
-    };
-    this.scheduler.note(reason);
+    });
     this.activity = {
       id: `activity:${this.profile.id}:idle:${tick}`,
       kind: "idle",
