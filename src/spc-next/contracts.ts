@@ -95,7 +95,7 @@ export interface ResidentExecutionView {
 export type ResidentCommand =
   | { kind: "none" }
   | { kind: "move"; desiredVelocity: Vec2 }
-  | { kind: "speak"; text: string; radius: number };
+  | { kind: "speak"; text: string; radius: number; addressedActorIds: readonly string[] };
 
 export type CognitionReasonKind =
   | "direct_world_change"
