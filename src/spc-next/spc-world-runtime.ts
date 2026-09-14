@@ -68,10 +68,11 @@ export class SpcWorldRuntime {
       ...profileOverrides,
     };
     if (profile.brainIntervalTicks < 1) throw new Error("brainIntervalTicks must be positive");
+    const boundedPosition = this.clampPosition(position);
     this.addActor({
       id,
       kind: "resident",
-      position: this.clampPosition(position),
+      position: boundedPosition,
       velocity: { x: 0, y: 0 },
       hearingRadius: profile.hearingRadius,
       sightRadius: profile.sightRadius,
@@ -81,6 +82,8 @@ export class SpcWorldRuntime {
     const brainPhase = this.residents.size % profile.brainIntervalTicks;
     this.residents.set(id, { runtime, brainPhase });
     this.visibleByResident.set(id, new Set());
+    const initialRegion = this.regionAt(boundedPosition);
+    if (initialRegion) runtime.enterRegion(initialRegion, this.tickValue, true);
     return runtime;
   }
 
@@ -203,6 +206,11 @@ export class SpcWorldRuntime {
         y: actor.position.y + actor.velocity.y * this.options.fixedDeltaSeconds,
       });
       this.spatial.upsert(actor.id, actor.position);
+      const resident = this.residents.get(actor.id);
+      if (resident) {
+        const region = this.regionAt(actor.position);
+        if (region) resident.runtime.enterRegion(region, this.tickValue);
+      }
     }
   }
 
