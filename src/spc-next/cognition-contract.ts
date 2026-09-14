@@ -84,6 +84,7 @@ const ACTIVITY_KINDS = new Set<ProposedActivityKind>([
   "idle", "travel", "follow", "communicate", "investigate", "work",
 ]);
 const CONCERN_STATUSES = new Set(["open", "resolved"] as const);
+const GROUNDED_POSITION_TOLERANCE = 4;
 
 export function parseResidentCognitionProposal(
   value: unknown,
@@ -102,10 +103,8 @@ export function parseResidentCognitionProposal(
     ...context.concerns.flatMap((concern) => concern.evidenceIds),
     ...context.beliefs.flatMap((belief) => belief.evidenceIds),
   ]);
-  const actorIds = new Set(context.knownActors.map((actor) => actor.id));
-  const regionIds = new Set(context.knownRegions.map((region) => region.id));
 
-  const activityDirective = parseActivityDirective(value.activityDirective, actorIds, regionIds);
+  const activityDirective = parseActivityDirective(value.activityDirective, context);
   if (!activityDirective) return null;
 
   const beliefs: BeliefUpdate[] = [];
@@ -156,8 +155,7 @@ export function parseResidentCognitionProposal(
 
 function parseActivityDirective(
   value: unknown,
-  actorIds: ReadonlySet<string>,
-  regionIds: ReadonlySet<string>,
+  context: ResidentCognitionContext,
 ): ActivityDirective | null {
   if (!isRecord(value) || !isNonEmptyString(value.kind) || !isNonEmptyString(value.reason)) return null;
   if (value.kind === "keep") {
@@ -169,15 +167,14 @@ function parseActivityDirective(
     return { kind: "stop", reason: value.reason };
   }
   if (value.kind !== "replace") return null;
-  const activity = parseProposedActivity(value.activity, actorIds, regionIds);
+  const activity = parseProposedActivity(value.activity, context);
   if (!activity) return null;
   return { kind: "replace", reason: value.reason, activity };
 }
 
 function parseProposedActivity(
   value: unknown,
-  actorIds: ReadonlySet<string>,
-  regionIds: ReadonlySet<string>,
+  context: ResidentCognitionContext,
 ): ProposedActivity | null {
   if (!isRecord(value)
     || typeof value.kind !== "string"
@@ -189,13 +186,28 @@ function parseProposedActivity(
   const targetPosition = value.targetPosition === null ? null : parseVec2(value.targetPosition);
   const text = value.text === null ? null : (isNonEmptyString(value.text) ? value.text : undefined);
   if (targetActorId === undefined || targetRegionId === undefined || targetPosition === undefined || text === undefined) return null;
+
+  const actorIds = new Set(context.knownActors.map((actor) => actor.id));
+  const regionIds = new Set(context.knownRegions.map((region) => region.id));
   if (targetActorId !== null && !actorIds.has(targetActorId)) return null;
   if (targetRegionId !== null && !regionIds.has(targetRegionId)) return null;
+  if (targetPosition !== null && !isGroundedPosition(targetPosition, context)) return null;
 
   const kind = value.kind as ProposedActivityKind;
-  if ((kind === "follow" || kind === "communicate") && targetActorId === null) return null;
-  if (kind === "communicate" && text === null) return null;
-  if ((kind === "travel" || kind === "investigate") && targetRegionId === null && targetPosition === null) return null;
+  if (kind === "idle" || kind === "work") {
+    if (targetActorId !== null || targetRegionId !== null || targetPosition !== null || text !== null) return null;
+  }
+  if (kind === "follow") {
+    if (targetActorId === null || targetRegionId !== null || targetPosition !== null || text !== null) return null;
+  }
+  if (kind === "communicate") {
+    if (targetActorId === null || targetRegionId !== null || targetPosition !== null || text === null) return null;
+  }
+  if (kind === "travel" || kind === "investigate") {
+    if (targetActorId !== null || text !== null) return null;
+    const targetCount = Number(targetRegionId !== null) + Number(targetPosition !== null);
+    if (targetCount !== 1) return null;
+  }
 
   return {
     kind,
@@ -205,6 +217,17 @@ function parseProposedActivity(
     targetPosition,
     text,
   };
+}
+
+function isGroundedPosition(position: Vec2, context: ResidentCognitionContext): boolean {
+  const sources: Vec2[] = [
+    ...context.recentPercepts.map((percept) => percept.position),
+    ...context.knownActors.flatMap((actor) => actor.lastKnownPosition ? [actor.lastKnownPosition] : []),
+  ];
+  return sources.some((source) => (
+    Math.abs(source.x - position.x) <= GROUNDED_POSITION_TOLERANCE
+    && Math.abs(source.y - position.y) <= GROUNDED_POSITION_TOLERANCE
+  ));
 }
 
 function parseVec2(value: unknown): Vec2 | undefined {
