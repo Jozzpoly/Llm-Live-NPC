@@ -92,14 +92,14 @@ describe("SPC Next five-resident world foundation", () => {
     expect(world.tick).toBe(180);
   });
 
-  it("keeps cognition scheduling resident-local and permits urgent bursts without a global poll", () => {
+  it("keeps cognition scheduling resident-local and permits urgent addressed bursts without a global poll", () => {
     const world = createWorld();
     world.addResident("resident.mira", "Mira", { x: 500, y: 500 });
     world.addResident("resident.janek", "Janek", { x: 650, y: 500 });
     world.addResident("resident.ida", "Ida", { x: 4_000, y: 4_000 });
     world.addPlayer("player.jozz", { x: 520, y: 500 });
 
-    world.speak("player.jozz", "Mira, Janek, chodźcie", 420);
+    world.speak("player.jozz", "Mira, Janek, chodźcie", 420, ["resident.mira", "resident.janek"]);
     world.step();
 
     expect(world.takeCognitionBatch("resident.mira")?.reasons[0]?.kind).toBe("heard_speech");
@@ -107,10 +107,36 @@ describe("SPC Next five-resident world foundation", () => {
     expect(world.takeCognitionBatch("resident.ida")).toBeNull();
 
     world.step(12);
-    world.speak("player.jozz", "druga pilna zmiana", 420);
+    world.speak("player.jozz", "Mira, druga pilna zmiana", 420, ["resident.mira"]);
     world.step();
     expect(world.takeCognitionBatch("resident.mira")?.reasons[0]?.summary).toContain("druga pilna zmiana");
+    expect(world.takeCognitionBatch("resident.janek")).toBeNull();
     expect(world.takeCognitionBatch("resident.ida")).toBeNull();
+  });
+
+  it("lets a nearby bystander hear addressed speech without treating it as equally urgent cognition", () => {
+    const world = createWorld();
+    world.addResident("resident.mira", "Mira", { x: 500, y: 500 });
+    world.addResident("resident.janek", "Janek", { x: 560, y: 500 });
+    world.addPlayer("player.jozz", { x: 520, y: 500 });
+
+    world.speak("player.jozz", "hej wam", 420, ["resident.mira", "resident.janek"]);
+    world.step();
+    expect(world.takeCognitionBatch("resident.mira")).not.toBeNull();
+    expect(world.takeCognitionBatch("resident.janek")).not.toBeNull();
+
+    world.step(12);
+    world.speak("player.jozz", "Mira, tylko do ciebie", 420, ["resident.mira"]);
+    world.step();
+
+    const miraPercept = world.residentDiagnostics("resident.mira").recentPercepts.at(-1)!;
+    const janekPercept = world.residentDiagnostics("resident.janek").recentPercepts.at(-1)!;
+    expect(miraPercept.text).toBe("Mira, tylko do ciebie");
+    expect(miraPercept.addressed).toBe(true);
+    expect(janekPercept.text).toBe("Mira, tylko do ciebie");
+    expect(janekPercept.addressed).toBe(false);
+    expect(world.takeCognitionBatch("resident.mira")?.reasons[0]?.salience).toBe(1);
+    expect(world.takeCognitionBatch("resident.janek")).toBeNull();
   });
 
   it("uses spatial candidate queries rather than a whole-map perception scan", () => {
