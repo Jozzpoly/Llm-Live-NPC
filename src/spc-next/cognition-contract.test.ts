@@ -82,7 +82,7 @@ describe("SPC Next cognition contract", () => {
   });
 
   it("rejects unknown actors, unknown regions and fabricated evidence", () => {
-    const base = {
+    const unknownActor = {
       version: 1,
       activityDirective: {
         kind: "replace",
@@ -100,21 +100,62 @@ describe("SPC Next cognition contract", () => {
       concerns: [],
       reviewAfterSeconds: 3,
     };
-    expect(parseResidentCognitionProposal(base, context())).toBeNull();
+    expect(parseResidentCognitionProposal(unknownActor, context())).toBeNull();
 
-    const unknownRegion = structuredClone(base);
-    unknownRegion.activityDirective.activity.kind = "travel";
-    unknownRegion.activityDirective.activity.targetActorId = null;
-    unknownRegion.activityDirective.activity.targetRegionId = "moon";
-    unknownRegion.activityDirective.activity.text = null;
+    const unknownRegion = {
+      version: 1,
+      activityDirective: {
+        kind: "replace",
+        reason: "go",
+        activity: {
+          kind: "travel",
+          goal: "travel to a place I do not know",
+          targetActorId: null,
+          targetRegionId: "moon",
+          targetPosition: null,
+          text: null,
+        },
+      },
+      beliefs: [],
+      concerns: [],
+      reviewAfterSeconds: 3,
+    };
     expect(parseResidentCognitionProposal(unknownRegion, context())).toBeNull();
 
     const fabricatedEvidence = {
-      ...base,
+      version: 1,
       activityDirective: { kind: "keep", reason: "continue" },
       beliefs: [{ id: "b", statement: "invented", confidence: 1, evidenceIds: ["secret-world-truth"] }],
+      concerns: [],
+      reviewAfterSeconds: 3,
     };
     expect(parseResidentCognitionProposal(fabricatedEvidence, context())).toBeNull();
+  });
+
+  it("rejects model-invented coordinates but permits positions grounded in private perception", () => {
+    const invented = {
+      version: 1,
+      activityDirective: {
+        kind: "replace",
+        reason: "guess a location",
+        activity: {
+          kind: "investigate",
+          goal: "walk to guessed coordinates",
+          targetActorId: null,
+          targetRegionId: null,
+          targetPosition: { x: 7_777, y: 7_777 },
+          text: null,
+        },
+      },
+      beliefs: [],
+      concerns: [],
+      reviewAfterSeconds: 5,
+    };
+    expect(parseResidentCognitionProposal(invented, context())).toBeNull();
+
+    const grounded = structuredClone(invented);
+    grounded.activityDirective.activity.targetPosition = { x: 500, y: 500 };
+    expect(parseResidentCognitionProposal(grounded, context())?.activityDirective.kind).toBe("replace");
   });
 
   it("does not reproduce the old continue-plus-plan ambiguity: keep cannot carry a replacement activity", () => {
