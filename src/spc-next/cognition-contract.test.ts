@@ -29,6 +29,7 @@ function context(): ResidentCognitionContext {
       id: "percept:1",
       occurrenceId: "occurrence:1",
       tick: 120,
+      phenomenon: "speech",
       modality: "hearing",
       actorId: "player.jozz",
       subjectId: null,
@@ -44,6 +45,8 @@ function context(): ResidentCognitionContext {
       label: "Jozz",
       lastKnownPosition: null,
       lastObservedTick: null,
+      currentlyVisible: false,
+      visibilityChangedTick: null,
       lastHeardDirection: { x: -1, y: 0 },
       lastHeardDistanceBand: "near",
       lastHeardTick: 120,
@@ -181,12 +184,14 @@ describe("SPC Next cognition contract", () => {
     expect(parseResidentCognitionProposal(investigate({ x: 500, y: 500 }), context())).toBeNull();
 
     const withSight = context();
+    withSight.tick = 121;
     withSight.recentPercepts = [
       ...withSight.recentPercepts,
       {
         id: "percept:sight",
         occurrenceId: "sight-entry:mira:jozz:121",
         tick: 121,
+        phenomenon: "actor_sight_enter",
         modality: "sight",
         actorId: "player.jozz",
         subjectId: "player.jozz",
@@ -196,6 +201,13 @@ describe("SPC Next cognition contract", () => {
         addressed: false,
       },
     ];
+    withSight.knownActors = [{
+      ...withSight.knownActors[0]!,
+      lastKnownPosition: { x: 500, y: 500 },
+      lastObservedTick: 121,
+      currentlyVisible: true,
+      visibilityChangedTick: 121,
+    }];
     expect(parseResidentCognitionProposal(investigate({ x: 500, y: 500 }), withSight)?.activityDirective.kind).toBe("replace");
   });
 
