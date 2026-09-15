@@ -4,12 +4,14 @@ import {
   type FiveResidentJanekDeliveryStep,
 } from "./five-resident-delivery-slice";
 import type { ResidentContinuityKernel } from "./resident-continuity-kernel";
+import type { ResidentMaterialKnowledge } from "./resident-material-knowledge";
 import type { ResidentWorldExecutionAuthority } from "./resident-world-execution-authority";
 import type { SpcWorldRuntime } from "./spc-world-runtime";
 
 export interface FiveResidentJanekMaterialSlice {
   world: SpcWorldRuntime;
   kernel: ResidentContinuityKernel;
+  materialKnowledge: ResidentMaterialKnowledge;
   authority: ResidentWorldExecutionAuthority;
   stepJanek(): FiveResidentJanekDeliveryStep;
   reconciliation(): RunOutcomeReconciliationResult | null;
@@ -30,6 +32,7 @@ export function createFiveResidentJanekMaterialSlice(): FiveResidentJanekMateria
   return {
     world: delivery.world,
     kernel: delivery.kernel,
+    materialKnowledge: delivery.materialKnowledge,
     authority: delivery.authority,
     stepJanek: () => delivery.stepJanek(),
     reconciliation: () => delivery.pickupReconciliation(),
