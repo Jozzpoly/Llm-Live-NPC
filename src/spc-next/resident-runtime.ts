@@ -31,17 +31,23 @@ export interface ResidentCognitionRevision {
   activity: number;
 }
 
+interface ExactActorContact {
+  position: Vec2;
+  tick: number;
+}
+
 interface HeardActorCue {
   direction: Vec2;
   distanceBand: PerceptDistanceBand;
   tick: number;
+  observerPosition: Vec2 | null;
 }
 
 export class ResidentRuntime {
   private activity: ResidentActivity;
   private readonly recentPercepts: ResidentPercept[] = [];
   private readonly trace: ResidentTraceEvent[] = [];
-  private readonly lastKnownActorPositions = new Map<string, Vec2>();
+  private readonly lastKnownActorContacts = new Map<string, ExactActorContact>();
   private readonly lastHeardActorCues = new Map<string, HeardActorCue>();
   private readonly mind: ResidentMind;
   private cognitionSequence = 0;
@@ -50,6 +56,7 @@ export class ResidentRuntime {
   private attentionRevisionValue = 0;
   private activityRevisionValue = 0;
   private lastMovementTraceSignature: string | null = null;
+  private lastBlockedSignature: string | null = null;
 
   constructor(
     readonly profile: ResidentProfile,
@@ -103,20 +110,26 @@ export class ResidentRuntime {
     this.scheduler.scheduleQuietReviewAfter(tick, delayTicks);
   }
 
-  ingestPercepts(percepts: readonly ResidentPercept[]): void {
+  ingestPercepts(percepts: readonly ResidentPercept[], observerPosition: Vec2 | null = null): void {
     this.mind.observe(percepts);
     for (const percept of percepts) {
       if (percept.modality === "hearing" && percept.addressed) this.attentionRevisionValue += 1;
       this.recentPercepts.push(structuredClone(percept));
       if (percept.actorId) {
         if (percept.spatial.kind === "exact") {
-          this.lastKnownActorPositions.set(percept.actorId, { ...percept.spatial.position });
+          this.lastKnownActorContacts.set(percept.actorId, {
+            position: { ...percept.spatial.position },
+            tick: percept.tick,
+          });
+          this.lastBlockedSignature = null;
         } else if (percept.spatial.kind === "directional") {
           this.lastHeardActorCues.set(percept.actorId, {
             direction: { ...percept.spatial.direction },
             distanceBand: percept.spatial.distanceBand,
             tick: percept.tick,
+            observerPosition: observerPosition ? { ...observerPosition } : null,
           });
+          this.lastBlockedSignature = null;
         }
       }
       // subjectId is causal provenance. Do not assign the event source's spatial cue to the subject.
@@ -134,6 +147,10 @@ export class ResidentRuntime {
     }
   }
 
+  familiarizeRegion(region: WorldRegion, tick: number): void {
+    this.mind.familiarizeRegion(region, tick);
+  }
+
   enterRegion(region: WorldRegion, tick: number, initial = false): void {
     const changed = this.currentRegionId !== region.id;
     this.currentRegionId = region.id;
@@ -145,7 +162,7 @@ export class ResidentRuntime {
       kind: "direct_world_change",
       salience: 0.35,
       summary: `Entered region: ${region.label}`,
-      evidenceIds: [`region-entry:${this.profile.id}:${region.id}:${tick}`],
+      evidenceIds: [],
     });
   }
 
@@ -154,6 +171,7 @@ export class ResidentRuntime {
     this.routeWaypointIndex = 0;
     this.activityRevisionValue += 1;
     this.lastMovementTraceSignature = null;
+    this.lastBlockedSignature = null;
     this.appendTrace({
       tick,
       residentId: this.profile.id,
@@ -165,7 +183,13 @@ export class ResidentRuntime {
 
   cognitionContext(batch: CognitionBatch): ResidentCognitionContext {
     if (batch.residentId !== this.profile.id) throw new Error("cognition batch belongs to another resident");
-    return this.mind.context(batch.requestedAtTick, batch.reasons, this.activity, this.recentPercepts);
+    return this.mind.context(
+      batch.requestedAtTick,
+      this.currentRegionId,
+      batch.reasons,
+      this.activity,
+      this.recentPercepts,
+    );
   }
 
   applySemanticUpdates(proposal: ResidentCognitionProposal, tick: number): void {
@@ -179,7 +203,10 @@ export class ResidentRuntime {
 
   fastStep(view: ResidentExecutionView): ResidentCommand {
     for (const actor of view.visibleActors) {
-      this.lastKnownActorPositions.set(actor.id, { ...actor.position });
+      this.lastKnownActorContacts.set(actor.id, {
+        position: { ...actor.position },
+        tick: view.tick,
+      });
     }
 
     switch (this.activity.kind) {
@@ -189,17 +216,8 @@ export class ResidentRuntime {
       case "travel":
       case "investigate":
         return this.stepRoutedActivity(view);
-      case "follow": {
-        const visible = this.activity.targetActorId
-          ? view.visibleActors.find((actor) => actor.id === this.activity.targetActorId)
-          : undefined;
-        const target = visible?.position
-          ?? (this.activity.targetActorId ? this.lastKnownActorPositions.get(this.activity.targetActorId) : undefined)
-          ?? (this.activity.targetActorId ? this.hearingProbeTarget(view.selfPosition, this.activity.targetActorId) : null)
-          ?? this.activity.targetPosition
-          ?? null;
-        return this.stepTowardPosition(view, target, false);
-      }
+      case "follow":
+        return this.stepFollow(view);
       case "communicate":
         return this.stepCommunicate(view);
     }
@@ -219,6 +237,9 @@ export class ResidentRuntime {
   }
 
   noteActivityBlocked(tick: number, summary: string): void {
+    const signature = `${this.activity.id}:${summary}`;
+    if (signature === this.lastBlockedSignature) return;
+    this.lastBlockedSignature = signature;
     this.noteCognitionReason({
       id: `reason:${this.profile.id}:blocked:${this.cognitionSequence++}`,
       tick,
@@ -253,6 +274,86 @@ export class ResidentRuntime {
     return this.stepTowardPosition(view, this.activity.targetPosition, true);
   }
 
+  private stepFollow(view: ResidentExecutionView): ResidentCommand {
+    const targetId = this.activity.targetActorId;
+    if (!targetId) {
+      this.noteActivityBlocked(view.tick, "follow has no target actor");
+      return this.movementCommand(view.tick, { x: 0, y: 0 }, "follow blocked");
+    }
+    const visible = view.visibleActors.find((actor) => actor.id === targetId);
+    if (visible) {
+      this.lastBlockedSignature = null;
+      return this.stepTowardPosition(view, visible.position, false);
+    }
+    return this.stepTowardMissingActorContact(view, targetId, "follow");
+  }
+
+  private stepCommunicate(view: ResidentExecutionView): ResidentCommand {
+    const targetId = this.activity.targetActorId;
+    const text = this.activity.text;
+    if (!targetId || !text) {
+      this.noteActivityBlocked(view.tick, "communicate lacks target actor or text");
+      return this.movementCommand(view.tick, { x: 0, y: 0 }, "communicate blocked");
+    }
+
+    const visible = view.visibleActors.find((actor) => actor.id === targetId);
+    if (visible && distanceSquared(view.selfPosition, visible.position) <= COMMUNICATION_DISTANCE ** 2) {
+      const command: ResidentCommand = {
+        kind: "speak",
+        text,
+        radius: this.profile.hearingRadius,
+        addressedActorIds: [targetId],
+      };
+      this.lastMovementTraceSignature = null;
+      this.lastBlockedSignature = null;
+      this.appendTrace({
+        tick: view.tick,
+        residentId: this.profile.id,
+        kind: "command",
+        summary: `speak to ${targetId}`,
+        refIds: [this.activity.id, targetId],
+      });
+      this.completeActivity(view.tick, "message spoken after physical contact");
+      return command;
+    }
+    if (visible) {
+      this.lastBlockedSignature = null;
+      return this.stepTowardPosition(view, visible.position, false);
+    }
+    return this.stepTowardMissingActorContact(view, targetId, "communicate");
+  }
+
+  private stepTowardMissingActorContact(
+    view: ResidentExecutionView,
+    targetId: string,
+    activityKind: "follow" | "communicate",
+  ): ResidentCommand {
+    const target = this.bestContactTarget(targetId) ?? this.activity.targetPosition;
+    if (!target) {
+      this.noteActivityBlocked(view.tick, `${activityKind} has identity but no usable contact location for ${targetId}`);
+      return this.movementCommand(view.tick, { x: 0, y: 0 }, `${activityKind} awaiting contact evidence`);
+    }
+    if (distanceSquared(view.selfPosition, target) <= ARRIVAL_DISTANCE ** 2) {
+      this.noteActivityBlocked(view.tick, `${activityKind} checked best-known contact point but ${targetId} is not visible`);
+      return this.movementCommand(view.tick, { x: 0, y: 0 }, `${activityKind} contact point exhausted`);
+    }
+    return this.stepTowardPosition(view, target, false);
+  }
+
+  private bestContactTarget(actorId: string): Vec2 | null {
+    const exact = this.lastKnownActorContacts.get(actorId);
+    const heard = this.lastHeardActorCues.get(actorId);
+    if (heard && heard.observerPosition && (!exact || heard.tick > exact.tick)) {
+      const fraction = heard.distanceBand === "near" ? 0.25 : heard.distanceBand === "mid" ? 0.55 : 0.85;
+      const distance = this.profile.hearingRadius * fraction;
+      return {
+        x: heard.observerPosition.x + heard.direction.x * distance,
+        y: heard.observerPosition.y + heard.direction.y * distance,
+      };
+    }
+    return exact ? { ...exact.position } : null;
+  }
+
   private stepTowardPosition(
     view: ResidentExecutionView,
     target: Vec2 | null,
@@ -275,53 +376,6 @@ export class ResidentRuntime {
       { x: direction.x * speed, y: direction.y * speed },
       `${this.activity.kind} movement`,
     );
-  }
-
-  private stepCommunicate(view: ResidentExecutionView): ResidentCommand {
-    const targetId = this.activity.targetActorId;
-    const text = this.activity.text;
-    if (!targetId || !text) {
-      this.noteActivityBlocked(view.tick, "communicate lacks target actor or text");
-      return this.movementCommand(view.tick, { x: 0, y: 0 }, "communicate blocked");
-    }
-
-    const visible = view.visibleActors.find((actor) => actor.id === targetId);
-    if (visible && distanceSquared(view.selfPosition, visible.position) <= COMMUNICATION_DISTANCE ** 2) {
-      const command: ResidentCommand = {
-        kind: "speak",
-        text,
-        radius: this.profile.hearingRadius,
-        addressedActorIds: [targetId],
-      };
-      this.lastMovementTraceSignature = null;
-      this.appendTrace({
-        tick: view.tick,
-        residentId: this.profile.id,
-        kind: "command",
-        summary: `speak to ${targetId}`,
-        refIds: [this.activity.id, targetId],
-      });
-      this.completeActivity(view.tick, "message spoken after physical contact");
-      return command;
-    }
-
-    const target = visible?.position
-      ?? this.lastKnownActorPositions.get(targetId)
-      ?? this.hearingProbeTarget(view.selfPosition, targetId)
-      ?? this.activity.targetPosition
-      ?? null;
-    return this.stepTowardPosition(view, target, false);
-  }
-
-  private hearingProbeTarget(origin: Vec2, actorId: string): Vec2 | null {
-    const cue = this.lastHeardActorCues.get(actorId);
-    if (!cue) return null;
-    const fraction = cue.distanceBand === "near" ? 0.25 : cue.distanceBand === "mid" ? 0.55 : 0.85;
-    const distance = this.profile.hearingRadius * fraction;
-    return {
-      x: origin.x + cue.direction.x * distance,
-      y: origin.y + cue.direction.y * distance,
-    };
   }
 
   private movementCommand(tick: number, desiredVelocity: Vec2, summary: string): ResidentCommand {
@@ -372,6 +426,7 @@ export class ResidentRuntime {
     this.routeWaypointIndex = 0;
     this.activityRevisionValue += 1;
     this.lastMovementTraceSignature = null;
+    this.lastBlockedSignature = null;
   }
 
   private reasonFromPercept(percept: ResidentPercept): CognitionReason | null {
