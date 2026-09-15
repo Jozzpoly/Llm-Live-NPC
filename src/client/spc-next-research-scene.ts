@@ -176,6 +176,16 @@ export class SpcNextResearchScene extends Phaser.Scene {
     this.pushFrame(true);
   }
 
+  playerAddressResident(residentId: string, text = "Hej!"): WorldOccurrence {
+    if (!this.snapshot.residents.some((resident) => resident.id === residentId)) {
+      throw new Error(`unknown SPC Next addressed resident: ${residentId}`);
+    }
+    const occurrence = this.world.speak(PLAYER_ID, text, PLAYER_CALL_RADIUS, [residentId]);
+    this.captureNewSpeechOccurrences();
+    this.pushFrame(true);
+    return occurrence;
+  }
+
   selectResident(residentId: string | null): void {
     if (residentId !== null && !this.snapshot.residents.some((resident) => resident.id === residentId)) {
       throw new Error(`unknown SPC Next resident selection: ${residentId}`);
