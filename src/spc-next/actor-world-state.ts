@@ -10,6 +10,8 @@ import { clampWorldPosition, limitVelocity, validateActorState } from "./world-i
 
 const MOTION_EPSILON = 1e-9;
 
+type ActorStateInput = Omit<ActorState, "facing"> & { facing?: Vec2 };
+
 /**
  * Owns mutable physical actor state and its spatial index.
  * Callers receive snapshots only; resident logic and perception never mutate actor truth directly.
@@ -33,12 +35,14 @@ export class ActorWorldState {
     return this.actors.has(id);
   }
 
-  add(actor: ActorState): ActorState {
+  add(actor: ActorStateInput): ActorState {
     if (this.actors.has(actor.id)) throw new Error(`actor already exists: ${actor.id}`);
-    const stored = structuredClone(actor);
+    const stored: ActorState = {
+      ...structuredClone(actor),
+      facing: initialFacing(actor),
+    };
     stored.position = clampWorldPosition(stored.position, this.bounds);
     stored.velocity = limitVelocity(stored.velocity, stored.maxSpeed);
-    stored.facing = normalizedFacing(stored.facing);
     validateActorState(stored);
     this.actors.set(stored.id, stored);
     this.desiredVelocities.set(stored.id, { ...stored.velocity });
@@ -143,6 +147,14 @@ export class ActorWorldState {
   spatialStats(): SpatialQueryStats {
     return this.spatial.stats();
   }
+}
+
+function initialFacing(actor: ActorStateInput): Vec2 {
+  if (actor.facing) return normalizedFacing(actor.facing);
+  if (Math.hypot(actor.velocity.x, actor.velocity.y) > MOTION_EPSILON) {
+    return normalizedFacing(actor.velocity);
+  }
+  return { x: 1, y: 0 };
 }
 
 function normalizedFacing(value: Vec2): Vec2 {
