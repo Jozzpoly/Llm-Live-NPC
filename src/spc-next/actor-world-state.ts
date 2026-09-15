@@ -14,7 +14,8 @@ const MOTION_EPSILON = 1e-9;
  * Owns mutable physical actor state and its spatial index.
  * Callers receive snapshots only; resident logic and perception never mutate actor truth directly.
  * Desired motion is retained separately from resolved physical velocity so future collision
- * can constrain bodies without rewriting controller intent.
+ * can constrain bodies without rewriting controller intent. Facing is persistent physical
+ * orientation: movement may update it from resolved motion, but stopping never erases it.
  */
 export class ActorWorldState {
   private readonly actors = new Map<string, ActorState>();
@@ -37,6 +38,7 @@ export class ActorWorldState {
     const stored = structuredClone(actor);
     stored.position = clampWorldPosition(stored.position, this.bounds);
     stored.velocity = limitVelocity(stored.velocity, stored.maxSpeed);
+    stored.facing = normalizedFacing(stored.facing);
     validateActorState(stored);
     this.actors.set(stored.id, stored);
     this.desiredVelocities.set(stored.id, { ...stored.velocity });
@@ -74,6 +76,12 @@ export class ActorWorldState {
     if (Math.hypot(limited.x, limited.y) <= MOTION_EPSILON) {
       actor.velocity = { x: 0, y: 0 };
     }
+  }
+
+  setFacing(id: string, direction: Vec2): void {
+    const actor = this.actors.get(id);
+    if (!actor) throw new Error(`unknown actor: ${id}`);
+    actor.facing = normalizedFacing(direction);
   }
 
   desiredVelocity(id: string): Vec2 {
@@ -114,6 +122,9 @@ export class ActorWorldState {
 
       actor.position = { ...after };
       actor.velocity = { ...resolvedVelocity };
+      if (Math.hypot(resolvedVelocity.x, resolvedVelocity.y) > MOTION_EPSILON) {
+        actor.facing = normalizedFacing(resolvedVelocity);
+      }
       this.spatial.upsert(actor.id, actor.position);
       outcomes.push({
         actorId,
@@ -132,6 +143,20 @@ export class ActorWorldState {
   spatialStats(): SpatialQueryStats {
     return this.spatial.stats();
   }
+}
+
+function normalizedFacing(value: Vec2): Vec2 {
+  if (!Number.isFinite(value.x) || !Number.isFinite(value.y)) {
+    throw new Error("actor facing must be finite");
+  }
+  const length = Math.hypot(value.x, value.y);
+  if (length <= MOTION_EPSILON) throw new Error("actor facing must be non-zero");
+  const x = value.x / length;
+  const y = value.y / length;
+  return {
+    x: Math.abs(x) <= MOTION_EPSILON ? 0 : x,
+    y: Math.abs(y) <= MOTION_EPSILON ? 0 : y,
+  };
 }
 
 function positionsEqual(a: Vec2, b: Vec2): boolean {
