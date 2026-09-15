@@ -32,6 +32,7 @@ export interface SpcWorldDiagnostics {
 }
 
 const WORLD_OCCURRENCE_LIMIT = 1_024;
+const HEARING_DIRECTION_SECTORS = 8;
 
 export class SpcWorldRuntime {
   private tickValue = 0;
@@ -46,6 +47,11 @@ export class SpcWorldRuntime {
 
   constructor(readonly options: SpcWorldOptions) {
     if (options.fixedDeltaSeconds <= 0) throw new Error("fixedDeltaSeconds must be positive");
+    const regionIds = new Set<string>();
+    for (const region of options.regions) {
+      if (regionIds.has(region.id)) throw new Error(`duplicate region id: ${region.id}`);
+      regionIds.add(region.id);
+    }
     this.spatial = new ChunkSpatialIndex(options.chunkSize);
   }
 
@@ -96,6 +102,15 @@ export class SpcWorldRuntime {
     const initialRegion = this.regionAt(boundedPosition);
     if (initialRegion) runtime.enterRegion(initialRegion, this.tickValue, true);
     return runtime;
+  }
+
+  familiarizeResidentWithRegions(residentId: string, regionIds: readonly string[]): void {
+    const resident = this.requireResident(residentId).runtime;
+    for (const regionId of [...new Set(regionIds)]) {
+      const region = this.options.regions.find((candidate) => candidate.id === regionId);
+      if (!region) throw new Error(`unknown region: ${regionId}`);
+      resident.familiarizeRegion(region, this.tickValue);
+    }
   }
 
   setResidentActivity(residentId: string, activity: ResidentActivity): void {
@@ -270,7 +285,7 @@ export class SpcWorldRuntime {
         summary: occurrence.summary,
         text: occurrence.text,
         addressed: occurrence.addressedActorIds.includes(residentId),
-      }]);
+      }], residentActor.position);
     }
   }
 
@@ -298,7 +313,7 @@ export class SpcWorldRuntime {
         });
       }
 
-      if (newPercepts.length > 0) registered.runtime.ingestPercepts(newPercepts);
+      if (newPercepts.length > 0) registered.runtime.ingestPercepts(newPercepts, actor.position);
       this.visibleByResident.set(residentId, current);
     }
   }
@@ -362,9 +377,17 @@ function directionalHearingCue(observer: Vec2, source: Vec2, range: number): Per
   const distance = Math.sqrt(distanceSquared(observer, source));
   const ratio = range <= 0 ? 0 : distance / range;
   const distanceBand: PerceptDistanceBand = ratio <= 0.33 ? "near" : ratio <= 0.66 ? "mid" : "far";
+  const exactDirection = normalizedDirection(observer, source);
+  const direction = quantizeDirection(exactDirection, HEARING_DIRECTION_SECTORS);
+  return { kind: "directional", direction, distanceBand };
+}
+
+function quantizeDirection(direction: Vec2, sectors: number): Vec2 {
+  if (Math.hypot(direction.x, direction.y) <= 1e-9) return { x: 0, y: 0 };
+  const sectorAngle = (Math.PI * 2) / sectors;
+  const quantized = Math.round(Math.atan2(direction.y, direction.x) / sectorAngle) * sectorAngle;
   return {
-    kind: "directional",
-    direction: normalizedDirection(observer, source),
-    distanceBand,
+    x: Math.abs(Math.cos(quantized)) < 1e-12 ? 0 : Math.cos(quantized),
+    y: Math.abs(Math.sin(quantized)) < 1e-12 ? 0 : Math.sin(quantized),
   };
 }
