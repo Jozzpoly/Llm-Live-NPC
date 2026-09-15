@@ -10,13 +10,14 @@ const OUTPUT_FILE = resolve(process.env.MISSING_CRATE_OUTPUT ?? "evidence/browse
 const OUTPUT_DIR = dirname(OUTPUT_FILE);
 const VIEWPORT = { width: 1400, height: 900, deviceScaleFactor: 1, mobile: false };
 const REPEAT_COUNT = 3;
-const MAX_RESIDENT_STEPS = 380;
+const MAX_RESIDENT_STEPS = 560;
 const CRATE_ID = "crate.workshop.01";
 const JANEK_ID = "resident.janek";
 const RELOCATOR_ID = "player.relocator";
 const RUN_ID = "run.janek.pickup-last-known-crate";
 const REMEMBERED_CRATE_POSITION = { x: 1_952, y: 720 };
 const PICKUP_ATTEMPT_DISTANCE = 56;
+const MID_INSPECTION_CAPTURE_STEPS = 24;
 
 mkdirSync(OUTPUT_DIR, { recursive: true });
 const sleep = (ms) => new Promise((resolveSleep) => setTimeout(resolveSleep, ms));
@@ -128,7 +129,7 @@ async function run() {
 
   let cdp;
   const report = {
-    schemaVersion: 2,
+    schemaVersion: 3,
     sourceSha: SOURCE_SHA,
     startedAt: new Date().toISOString(),
     chrome: null,
@@ -194,8 +195,10 @@ async function run() {
       && first.postRelocation.relocatorPerceptCount === 0
     ), { pre: first?.pre ?? null, postRelocation: first?.postRelocation ?? null });
 
-    assert(report, "resident follows stale history until factual rejection creates checked absence", Boolean(
-      first?.checkedAbsence?.matterStatus === "active"
+    assert(report, "resident physically inspects stale history before checked absence without probing hidden object truth", Boolean(
+      first?.inspectionStartedTick !== null
+      && first?.inspectionStepCount > 0
+      && first.checkedAbsence?.matterStatus === "active"
       && first.checkedAbsence.semanticRevision === 2
       && first.checkedAbsence.activeRunId === null
       && first.checkedAbsence.activeRunCanMutateWorld === false
@@ -206,8 +209,8 @@ async function run() {
       && samePosition(first.checkedAbsence.crateLocation?.position, first.postRelocation.crateLocation?.position)
       && first.checkedAbsence.relocatorPerceptCount === 0
       && first.checkedAbsence.pendingProposalCount === 0
-      && first.checkedAbsence.actionFacts?.some((fact) => fact.runId === RUN_ID && fact.outcomeStatus === "rejected" && fact.code === "out_of_range")
-      && distance(first.checkedAbsence.janekPosition, REMEMBERED_CRATE_POSITION) < distance(first.pre.janekPosition, REMEMBERED_CRATE_POSITION)
+      && first.checkedAbsence.actionFacts?.length === 0
+      && distance(first.checkedAbsence.janekPosition, REMEMBERED_CRATE_POSITION) < 60
     ), first?.checkedAbsence ?? null);
 
     for (const checkpoint of ["preHash", "postRelocationHash", "checkedAbsenceHash"]) {
@@ -216,14 +219,18 @@ async function run() {
     }
     const checkedTicks = runs.map((entry) => entry.checkedAbsence?.tick ?? null);
     assert(report, "checked-absence causal boundary occurs at the same World tick across reloads", checkedTicks.every((tick) => tick === checkedTicks[0]), checkedTicks);
+    const inspectionTicks = runs.map((entry) => entry.inspectionStartedTick);
+    assert(report, "local-inspection causal boundary occurs at the same World tick across reloads", inspectionTicks.every((tick) => tick === inspectionTicks[0]), inspectionTicks);
     assert(report, "participant causal-frame screenshots are non-empty and canonically frozen", Boolean(
       first?.visualEvidence?.pre?.bytes > 10_000
       && first.visualEvidence?.postRelocation?.bytes > 10_000
-      && first.visualEvidence?.beforeCheckedAbsence?.bytes > 10_000
+      && first.visualEvidence?.beforeInspection?.bytes > 10_000
+      && first.visualEvidence?.midInspection?.bytes > 10_000
       && first.visualEvidence?.checkedAbsenceWorld?.bytes > 10_000
       && first.visualEvidence?.checkedAbsenceResearch?.bytes > 10_000
       && first.visualEvidence?.pre?.tick === first.pre.tick
       && first.visualEvidence?.postRelocation?.tick === first.postRelocation.tick
+      && first.visualEvidence?.beforeInspection?.tick === first.inspectionStartedTick
       && first.visualEvidence?.checkedAbsenceWorld?.tick === first.checkedAbsence.tick
       && first.visualEvidence?.checkedAbsenceResearch?.tick === first.checkedAbsence.tick
     ), first?.visualEvidence ?? null);
@@ -272,37 +279,54 @@ async function captureMissingCrateRun(cdp, runIndex) {
   let checkedCanonical = postCanonical;
   let checkedFrame = postFrame;
   let residentSteps = 0;
-  let beforeCheckedCaptured = false;
+  let inspectionStartedTick = null;
+  let inspectionStepCount = 0;
+  let midInspectionCaptured = false;
   while (!isCheckedAbsenceBoundary(checkedCanonical) && residentSteps < MAX_RESIDENT_STEPS) {
-    if (visualEvidence && !beforeCheckedCaptured && readyForStalePickupAttempt(checkedCanonical)) {
-      visualEvidence.beforeCheckedAbsence = await captureCausalFrame(
-        cdp,
-        "missing-crate-03-before-checked-absence-world.png",
-        checkedCanonical.tick,
-      );
-      beforeCheckedCaptured = true;
+    if (inspectionStartedTick === null && readyForLocalInspection(checkedCanonical)) {
+      inspectionStartedTick = checkedCanonical.tick;
+      if (visualEvidence) {
+        visualEvidence.beforeInspection = await captureCausalFrame(
+          cdp,
+          "missing-crate-03-before-local-inspection-world.png",
+          checkedCanonical.tick,
+        );
+      }
     }
+
     checkedFrame = await stepEvidence(cdp, 1);
     checkedCanonical = await canonicalSnapshot(cdp);
     residentSteps += 1;
+
+    if (inspectionStartedTick !== null && !isCheckedAbsenceBoundary(checkedCanonical)) {
+      inspectionStepCount += 1;
+      if (visualEvidence && !midInspectionCaptured && inspectionStepCount >= MID_INSPECTION_CAPTURE_STEPS) {
+        visualEvidence.midInspection = await captureCausalFrame(
+          cdp,
+          "missing-crate-04-local-inspection-world.png",
+          checkedCanonical.tick,
+        );
+        midInspectionCaptured = true;
+      }
+    }
   }
   if (!isCheckedAbsenceBoundary(checkedCanonical)) {
     throw new Error(`run ${runIndex}: checked absence not reached within ${MAX_RESIDENT_STEPS} resident steps`);
   }
 
   if (visualEvidence) {
-    if (!beforeCheckedCaptured) {
-      throw new Error("visual evidence missed the pre-checked-absence causal boundary");
+    if (inspectionStartedTick === null || !midInspectionCaptured) {
+      throw new Error("visual evidence missed the local-inspection causal interval");
     }
     visualEvidence.checkedAbsenceWorld = await captureCausalFrame(
       cdp,
-      "missing-crate-04-checked-absence-world.png",
+      "missing-crate-05-checked-absence-world.png",
       checkedCanonical.tick,
     );
     await setWorldOnly(cdp, false);
     visualEvidence.checkedAbsenceResearch = await captureCausalFrame(
       cdp,
-      "missing-crate-05-checked-absence-research.png",
+      "missing-crate-06-checked-absence-research.png",
       checkedCanonical.tick,
     );
   }
@@ -310,6 +334,8 @@ async function captureMissingCrateRun(cdp, runIndex) {
   return {
     runIndex,
     residentSteps,
+    inspectionStartedTick,
+    inspectionStepCount,
     preHash,
     frozenPreHash: hashJson(frozenPre),
     postRelocationHash: hashJson(postCanonical),
@@ -328,7 +354,7 @@ function isCheckedAbsenceBoundary(snapshot) {
     && snapshot.continuity.semanticEvidence?.kind === "checked_absence";
 }
 
-function readyForStalePickupAttempt(snapshot) {
+function readyForLocalInspection(snapshot) {
   if (snapshot?.continuity?.matter?.semanticRevision !== 1 || snapshot.continuity.matter.activeRunId !== RUN_ID) return false;
   const janek = snapshot.authoritativeWorld?.actors?.find((actor) => actor.id === JANEK_ID) ?? null;
   return Boolean(janek && distance(janek.position, REMEMBERED_CRATE_POSITION) <= PICKUP_ATTEMPT_DISTANCE + 1e-6);
@@ -499,7 +525,7 @@ function assert(report, name, pass, detail) {
 
 run().catch((error) => {
   const failure = {
-    schemaVersion: 2,
+    schemaVersion: 3,
     sourceSha: SOURCE_SHA,
     outcome: "HARNESS_ERROR",
     error: error instanceof Error ? { message: error.message, stack: error.stack } : { message: String(error) },
