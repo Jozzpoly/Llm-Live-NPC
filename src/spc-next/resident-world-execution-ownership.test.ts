@@ -101,8 +101,6 @@ describe("SPC Next K5b recovered resident execution ownership", () => {
     });
     kernel.advanceSemanticContext("matter.mira.work", changed.id);
 
-    // No manual authority enforcement here. World itself must revoke the stale
-    // latched motion before the next integration.
     world.step(30);
     expect(x(world, "resident.mira")).toBe(afterAuthorizedMotion);
     expect(authority.motionOwner()).toBeNull();
@@ -134,6 +132,42 @@ describe("SPC Next K5b recovered resident execution ownership", () => {
     world.step(30);
     expect(x(world, "resident.mira")).toBe(afterAuthorizedMotion);
     expect(authority.motionOwner()).toBeNull();
+  });
+
+  it("routes recovered physical motion feedback to the exact run instead of legacy activity_blocked cognition", () => {
+    const world = new SpcWorldRuntime({
+      bounds: { minX: 0, minY: 0, maxX: 1_000, maxY: 1_000 },
+      regions: [],
+      chunkSize: 64,
+      fixedDeltaSeconds: 1,
+    });
+    world.addResident("resident.mira", "Mira", { x: 1_000, y: 500 }, { maxSpeed: 100 });
+
+    const kernel = new ResidentContinuityKernel();
+    const origin = kernel.recordEvidence({ id: "evidence:block", tick: 1, kind: "test", summary: "move east" });
+    kernel.openMatter({ id: "matter.block", originEvidenceId: origin.id, semanticCourse: "move east" });
+    kernel.bindRun({ matterId: "matter.block", taskId: "task.block", runId: "run.block" });
+    const authority = new ResidentWorldExecutionAuthority("resident.mira", kernel, world);
+
+    authority.apply({
+      runId: "run.block",
+      effects: [{ kind: "motion", desiredVelocity: { x: 100, y: 0 } }],
+    });
+    world.step();
+
+    expect(authority.lastMotionOutcome()).toMatchObject({
+      runId: "run.block",
+      tick: 1,
+      outcome: {
+        actorId: "resident.mira",
+        resolution: "blocked",
+        constraints: ["world_bounds"],
+        resolvedVelocity: { x: 0, y: 0 },
+      },
+    });
+    expect(world.residentDiagnostics("resident.mira").trace.some((event) =>
+      event.kind === "cognition_reason" && event.summary.includes("physical motion blocked")
+    )).toBe(false);
   });
 
   it("keeps direct player control and player speech outside resident execution authority", () => {

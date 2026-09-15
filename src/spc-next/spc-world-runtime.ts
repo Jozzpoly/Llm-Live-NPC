@@ -22,6 +22,7 @@ import {
 } from "./contracts";
 import { ActorWorldState } from "./actor-world-state";
 import type {
+  ResidentAuthorizedMotionOutcome,
   ResidentRunAuthority,
   ResidentWorldEffect,
   ResidentWorldExecutionFrame,
@@ -48,6 +49,7 @@ interface RegisteredResident {
 interface RegisteredExecutionAuthority {
   authority: ResidentRunAuthority;
   motionOwnerRunId: string | null;
+  lastMotionOutcome: ResidentAuthorizedMotionOutcome | null;
 }
 
 interface OccurrenceObserverSnapshot {
@@ -171,16 +173,22 @@ export class SpcWorldRuntime {
     if (this.residentExecutionAuthorities.has(residentId)) {
       throw new Error(`resident execution authority already claimed: ${residentId}`);
     }
-    this.residentExecutionAuthorities.set(residentId, { authority, motionOwnerRunId: null });
-    // Claiming the recovered path is a hard ownership transition. Any latched
-    // legacy controller desire is removed before the next World integration.
+    this.residentExecutionAuthorities.set(residentId, {
+      authority,
+      motionOwnerRunId: null,
+      lastMotionOutcome: null,
+    });
     this.actorState.setDesiredVelocity(residentId, { x: 0, y: 0 });
     this.activeMotionBlockages.delete(residentId);
   }
 
   residentMotionOwner(residentId: string): string | null {
-    const registered = this.requireResidentExecutionAuthority(residentId);
-    return registered.motionOwnerRunId;
+    return this.requireResidentExecutionAuthority(residentId).motionOwnerRunId;
+  }
+
+  residentAuthorizedMotionOutcome(residentId: string): ResidentAuthorizedMotionOutcome | null {
+    const outcome = this.requireResidentExecutionAuthority(residentId).lastMotionOutcome;
+    return outcome ? structuredClone(outcome) : null;
   }
 
   applyResidentExecutionFrame(
@@ -354,8 +362,6 @@ export class SpcWorldRuntime {
     this.updateSightPercepts();
 
     for (const [residentId, registered] of this.residentEntries()) {
-      // A recovered resident has exactly one execution authority. Its legacy
-      // activity automaton is not allowed to compete for bodily control.
       if (this.residentExecutionAuthorities.has(residentId)) continue;
       if (this.tickValue % registered.runtime.profile.brainIntervalTicks !== registered.brainPhase) continue;
       const actor = this.requireActor(residentId);
@@ -368,9 +374,6 @@ export class SpcWorldRuntime {
       this.applyResidentCommand(residentId, command);
     }
 
-    // Authority is checked at the last responsible moment before physical
-    // integration so a stale latched intent cannot move a resident for one
-    // extra World step while semantic/provider state changes asynchronously.
     for (const residentId of [...this.residentExecutionAuthorities.keys()].sort((a, b) => a.localeCompare(b))) {
       this.enforceResidentMotionAuthority(residentId);
     }
@@ -380,7 +383,23 @@ export class SpcWorldRuntime {
     for (const outcome of motion) {
       const resident = this.residents.get(outcome.actorId);
       if (!resident) continue;
-      this.updateResidentMotionBlockage(resident.runtime, outcome);
+
+      const recovered = this.residentExecutionAuthorities.get(outcome.actorId);
+      if (recovered) {
+        const runId = recovered.motionOwnerRunId;
+        if (runId) {
+          recovered.lastMotionOutcome = {
+            runId,
+            tick: this.tickValue,
+            outcome: structuredClone(outcome),
+          };
+        }
+        // Recovered execution owns interpretation of run-scoped physical
+        // feedback. Do not route it through legacy activity_blocked cognition.
+        this.activeMotionBlockages.delete(outcome.actorId);
+      } else {
+        this.updateResidentMotionBlockage(resident.runtime, outcome);
+      }
       resident.runtime.syncCurrentRegion(this.regionAt(outcome.after), this.tickValue);
     }
   }

@@ -1,4 +1,4 @@
-import type { Vec2, WorldOccurrence } from "./contracts";
+import type { ActorMotionOutcome, Vec2, WorldOccurrence } from "./contracts";
 
 export type ResidentWorldEffect =
   | { kind: "motion"; desiredVelocity: Vec2 }
@@ -11,6 +11,12 @@ export interface ResidentWorldExecutionFrame {
 
 export interface ResidentRunAuthority {
   canRunMutateWorld(runId: string): boolean;
+}
+
+export interface ResidentAuthorizedMotionOutcome {
+  runId: string;
+  tick: number;
+  outcome: ActorMotionOutcome;
 }
 
 export type ResidentWorldExecutionResult =

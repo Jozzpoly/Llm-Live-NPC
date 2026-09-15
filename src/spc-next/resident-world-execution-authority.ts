@@ -1,5 +1,6 @@
 import { ResidentContinuityKernel } from "./resident-continuity-kernel";
 import type {
+  ResidentAuthorizedMotionOutcome,
   ResidentWorldExecutionFrame,
   ResidentWorldExecutionResult,
 } from "./resident-world-execution-contract";
@@ -37,9 +38,14 @@ export class ResidentWorldExecutionAuthority {
   motionOwner(): string | null {
     return this.world.residentMotionOwner(this.residentId);
   }
+
+  lastMotionOutcome(): ResidentAuthorizedMotionOutcome | null {
+    return this.world.residentAuthorizedMotionOutcome(this.residentId);
+  }
 }
 
 export type {
+  ResidentAuthorizedMotionOutcome,
   ResidentWorldEffect,
   ResidentWorldExecutionFrame,
   ResidentWorldExecutionResult,
