@@ -47,6 +47,12 @@ export interface WorldOccurrence {
 }
 
 export type PerceptionModality = "hearing" | "sight" | "self";
+export type PerceptDistanceBand = "near" | "mid" | "far";
+
+export type PerceptSpatialCue =
+  | { kind: "exact"; position: Vec2 }
+  | { kind: "directional"; direction: Vec2; distanceBand: PerceptDistanceBand }
+  | { kind: "none" };
 
 export interface ResidentPercept {
   id: string;
@@ -55,7 +61,7 @@ export interface ResidentPercept {
   modality: PerceptionModality;
   actorId: string | null;
   subjectId: string | null;
-  position: Vec2;
+  spatial: PerceptSpatialCue;
   summary: string;
   text: string | null;
   addressed: boolean;
@@ -196,4 +202,8 @@ export function normalizedDirection(from: Vec2, to: Vec2): Vec2 {
   const length = Math.hypot(dx, dy);
   if (length <= 1e-9) return { x: 0, y: 0 };
   return { x: dx / length, y: dy / length };
+}
+
+export function exactPerceptPosition(percept: ResidentPercept): Vec2 | null {
+  return percept.spatial.kind === "exact" ? { ...percept.spatial.position } : null;
 }
