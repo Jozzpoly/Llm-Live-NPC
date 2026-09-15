@@ -91,11 +91,13 @@ export class SpcWorldRuntime {
   }
 
   regions(): WorldRegion[] {
-    return structuredClone(this.authoredOptions.regions);
+    return this.authoredOptions.regions.map((region) => structuredClone(region));
   }
 
   anchors(): WorldAnchor[] {
-    return structuredClone(this.authoredOptions.anchors ?? []).sort((a, b) => a.id.localeCompare(b.id));
+    return (this.authoredOptions.anchors ?? [])
+      .map((anchor) => structuredClone(anchor))
+      .sort((a, b) => a.id.localeCompare(b.id));
   }
 
   anchor(id: string): WorldAnchor | null {
