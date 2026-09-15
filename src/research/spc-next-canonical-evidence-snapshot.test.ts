@@ -21,6 +21,7 @@ describe("SPC canonical evidence snapshot v1", () => {
       world: slice.world,
       kernel: slice.kernel,
       materialKnowledge: slice.materialKnowledge,
+      authority: slice.authority,
     });
 
     expect(initial).toMatchObject({
@@ -41,6 +42,9 @@ describe("SPC canonical evidence snapshot v1", () => {
         },
         activeRunCanMutateWorld: true,
       },
+      causalProvenance: {
+        residentWorldActionFacts: [],
+      },
     });
     expect(initial.authoritativeWorld.materialObjects).toContainEqual(expect.objectContaining({
       id: CRATE_ID,
@@ -58,18 +62,38 @@ describe("SPC canonical evidence snapshot v1", () => {
       world: slice.world,
       kernel: slice.kernel,
       materialKnowledge: slice.materialKnowledge,
+      authority: slice.authority,
     });
 
     expect(afterPickup.authoritativeWorld.materialObjects).toContainEqual(expect.objectContaining({
       id: CRATE_ID,
       location: { kind: "held", actorId: RESIDENT_ID },
     }));
-    expect(afterPickup.authoritativeWorld.recentMaterialActions.at(-1)).toMatchObject({
+    const pickupWorldAction = afterPickup.authoritativeWorld.recentMaterialActions.at(-1);
+    expect(pickupWorldAction).toMatchObject({
       actorId: RESIDENT_ID,
       objectId: CRATE_ID,
       status: "succeeded",
       code: "picked_up",
     });
+    const pickupFact = afterPickup.causalProvenance.residentWorldActionFacts.at(-1);
+    expect(pickupFact).toMatchObject({
+      residentId: RESIDENT_ID,
+      runId: "run.janek.pickup-delivery-crate",
+      action: { kind: "material_pickup", objectId: CRATE_ID },
+      resolution: {
+        status: "resolved",
+        outcomeStatus: "succeeded",
+        code: "picked_up",
+      },
+    });
+    expect(pickupFact?.resolution.status).toBe("resolved");
+    if (!pickupWorldAction || !pickupFact || pickupFact.resolution.status !== "resolved") {
+      throw new Error("pickup causal evidence missing");
+    }
+    expect(pickupFact.resolution.actionSeq).toBe(pickupWorldAction.actionSeq);
+    expect(pickupFact.tick).toBe(pickupWorldAction.tick);
+
     expect(afterPickup.residentPrivate.materialKnowledge).toContainEqual(expect.objectContaining({
       objectId: CRATE_ID,
       lastKnownPosition: { x: 1_952, y: 720 },
@@ -89,6 +113,7 @@ describe("SPC canonical evidence snapshot v1", () => {
       },
       activeRunCanMutateWorld: true,
     });
+    expect(afterPickup.continuity.lastOutcomeEvidence?.id).toContain("run.janek.pickup-delivery-crate");
 
     let step = pickupBoundary;
     for (let guard = 0; guard < 1_400 && step.status !== "succeeded"; guard += 1) {
@@ -104,15 +129,38 @@ describe("SPC canonical evidence snapshot v1", () => {
       world: slice.world,
       kernel: slice.kernel,
       materialKnowledge: slice.materialKnowledge,
+      authority: slice.authority,
     });
     expect(final.authoritativeWorld.materialObjects).toContainEqual(expect.objectContaining({
       id: CRATE_ID,
       location: { kind: "free", position: JANEK_CRATE_DELIVERY_DESTINATION },
     }));
-    expect(final.authoritativeWorld.recentMaterialActions.at(-1)).toMatchObject({
+    const placedWorldAction = final.authoritativeWorld.recentMaterialActions.at(-1);
+    expect(placedWorldAction).toMatchObject({
       code: "placed",
       status: "succeeded",
     });
+    const placeFact = final.causalProvenance.residentWorldActionFacts.at(-1);
+    expect(placeFact).toMatchObject({
+      runId: "run.janek.place-delivery-crate",
+      action: {
+        kind: "material_place",
+        objectId: CRATE_ID,
+        position: JANEK_CRATE_DELIVERY_DESTINATION,
+      },
+      resolution: {
+        status: "resolved",
+        outcomeStatus: "succeeded",
+        code: "placed",
+      },
+    });
+    expect(placeFact?.resolution.status).toBe("resolved");
+    if (!placedWorldAction || !placeFact || placeFact.resolution.status !== "resolved") {
+      throw new Error("place causal evidence missing");
+    }
+    expect(placeFact.resolution.actionSeq).toBe(placedWorldAction.actionSeq);
+    expect(placeFact.tick).toBe(placedWorldAction.tick);
+
     expect(final.continuity.matter).toMatchObject({ status: "resolved", activeRunId: null });
     expect(final.continuity.activeRunBinding).toBeNull();
     expect(final.continuity.activeRunCanMutateWorld).toBe(false);
@@ -133,6 +181,7 @@ describe("SPC canonical evidence snapshot v1", () => {
       world: slice.world,
       kernel: slice.kernel,
       materialKnowledge: slice.materialKnowledge,
+      authority: slice.authority,
     });
 
     const worldCrate = beforePressure.authoritativeWorld.materialObjects.find((object) => object.id === CRATE_ID);
@@ -160,6 +209,7 @@ describe("SPC canonical evidence snapshot v1", () => {
       world: slice.world,
       kernel: slice.kernel,
       materialKnowledge: slice.materialKnowledge,
+      authority: slice.authority,
     });
     expect(afterPressure.continuity).toMatchObject({
       matter: {
@@ -178,6 +228,17 @@ describe("SPC canonical evidence snapshot v1", () => {
       activeRunCanMutateWorld: false,
     });
 
+    const failedPickupFact = afterPressure.causalProvenance.residentWorldActionFacts.at(-1);
+    expect(failedPickupFact).toMatchObject({
+      runId: "run.janek.pickup-last-known-crate",
+      action: { kind: "material_pickup", objectId: CRATE_ID },
+      resolution: {
+        status: "resolved",
+        outcomeStatus: "rejected",
+      },
+    });
+    expect(afterPressure.continuity.lastOutcomeEvidence?.id).toContain("run.janek.pickup-last-known-crate");
+
     const afterWorldCrate = afterPressure.authoritativeWorld.materialObjects.find((object) => object.id === CRATE_ID);
     const afterPrivateCrate = afterPressure.residentPrivate.materialKnowledge.find((object) => object.objectId === CRATE_ID);
     expect(afterWorldCrate).toEqual(worldCrate);
@@ -193,12 +254,15 @@ describe("SPC canonical evidence snapshot v1", () => {
       world: slice.world,
       kernel: slice.kernel,
       materialKnowledge: slice.materialKnowledge,
+      authority: slice.authority,
     });
 
     const janek = captured.authoritativeWorld.actors.find((actor) => actor.id === RESIDENT_ID);
     if (!janek) throw new Error("Janek missing from canonical evidence");
     janek.position.x = 9_999;
     if (captured.continuity.matter) captured.continuity.matter.semanticCourse = "forged research mutation";
+    const fact = captured.causalProvenance.residentWorldActionFacts[0];
+    if (fact) fact.runId = "forged.run";
 
     const recaptured = captureSpcCanonicalEvidenceSnapshot({
       scenarioId: "defensive-snapshot",
@@ -207,8 +271,10 @@ describe("SPC canonical evidence snapshot v1", () => {
       world: slice.world,
       kernel: slice.kernel,
       materialKnowledge: slice.materialKnowledge,
+      authority: slice.authority,
     });
     expect(recaptured.authoritativeWorld.actors.find((actor) => actor.id === RESIDENT_ID)?.position.x).toBe(1_900);
     expect(recaptured.continuity.matter?.semanticCourse).toBe("deliver the workshop crate to the crossroads storage point");
+    expect(recaptured.causalProvenance.residentWorldActionFacts).toEqual([]);
   });
 });
