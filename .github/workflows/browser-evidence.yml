@@ -7,6 +7,7 @@ on:
       - "worker/**"
       - "scripts/spc-browser-evidence.mjs"
       - "scripts/spc-browser-manual-control-evidence.mjs"
+      - "scripts/spc-browser-missing-crate-evidence.mjs"
       - "scripts/analyze-spc-browser-evidence.mjs"
       - "index.html"
       - "package.json"
@@ -86,6 +87,14 @@ jobs:
           SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: node scripts/spc-browser-manual-control-evidence.mjs
 
+      - name: Qualify missing-crate epistemic boundary
+        if: success()
+        env:
+          EVIDENCE_BASE_URL: http://127.0.0.1:4173
+          MISSING_CRATE_OUTPUT: evidence/browser/missing-crate.json
+          SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: node scripts/spc-browser-missing-crate-evidence.mjs
+
       - name: Print evidence summary
         if: always()
         shell: bash
@@ -105,6 +114,12 @@ jobs:
             cat evidence/browser/manual-control.json
           else
             echo "manual-control.json missing"
+          fi
+          echo "--- Missing-crate adversarial evidence ---"
+          if [ -f evidence/browser/missing-crate.json ]; then
+            cat evidence/browser/missing-crate.json
+          else
+            echo "missing-crate.json missing"
           fi
 
       - name: Upload browser evidence artifact
