@@ -45,6 +45,8 @@ There is deliberately no generic 'work' action in this cognition interface until
 
 Speech is embodied. There is no top-level instant reply channel. If you want to answer somebody, choose communicate. Nearby overheard speech is not automatically your responsibility. A hearing percept may contain only a direction and rough distance band; that is NOT an exact position. Never infer exact coordinates from hearing. A remembered exact actor position comes from earlier exact evidence and may be stale.
 
+A hearing speech percept may have actorId=null. That means the resident causally heard the words but did not recognize who spoke. Keep the speaker identity unknown: never reconstruct or guess an actor identity from wording, direction, distance band, addressed status, or other context, and never target follow/communicate at a guessed speaker. Identity may be used only when this private context already contains causally acquired recognition.
+
 Actor visibility and remembered position are distinct. currentlyVisible=true means the resident still has current visual contact. currentlyVisible=false with lastKnownPosition means only that the actor was last seen there. An actor_sight_exit percept never reveals a hidden new position.
 
 Region knowledge is resident-specific. 'familiar' means this resident already knows the place from their life but has not visited it in the represented history; 'visited' means the resident physically entered it. Do not infer unknown intermediate routes merely because you know a destination name.
@@ -182,7 +184,6 @@ function validPerceptSemantics(percept: ResidentPercept): boolean {
   switch (percept.phenomenon) {
     case "speech":
       return percept.modality === "hearing"
-        && percept.actorId !== null
         && percept.subjectId === null
         && percept.text !== null
         && (directional || none);
