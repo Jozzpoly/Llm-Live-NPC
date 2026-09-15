@@ -72,7 +72,8 @@ export class SpcWorldRuntime {
   private pendingOccurrences: PendingOccurrence[] = [];
   private readonly recentOccurrences: WorldOccurrence[] = [];
   private lastMotionOutcomes: ActorMotionOutcome[] = [];
-  private readonly activeMotionBlockages = new Map<string, string>();
+  /** Material non-full motion episode keyed by resident actor. Full progress resets it. */
+  private readonly activeMotionConstraintEpisodes = new Map<string, string>();
 
   constructor(options: SpcWorldOptions) {
     validateWorldOptions(options);
@@ -166,7 +167,7 @@ export class SpcWorldRuntime {
     validateResidentActivity(activity, this.authoredOptions.bounds, (id) => this.actorState.has(id));
     resident.runtime.setActivity(activity, this.tickValue);
     this.actorState.setDesiredVelocity(residentId, { x: 0, y: 0 });
-    this.activeMotionBlockages.delete(residentId);
+    this.activeMotionConstraintEpisodes.delete(residentId);
   }
 
   setActorMotionIntent(actorId: string, desiredVelocity: Vec2): void {
@@ -288,29 +289,48 @@ export class SpcWorldRuntime {
     for (const outcome of motion) {
       const resident = this.residents.get(outcome.actorId);
       if (!resident) continue;
-      this.updateResidentMotionBlockage(resident.runtime, outcome);
+      this.updateResidentMotionExperience(resident.runtime, outcome);
       const region = this.regionAt(outcome.after);
       if (region) resident.runtime.enterRegion(region, this.tickValue);
     }
   }
 
-  private updateResidentMotionBlockage(runtime: ResidentRuntime, outcome: ActorMotionOutcome): void {
+  private updateResidentMotionExperience(runtime: ResidentRuntime, outcome: ActorMotionOutcome): void {
     const desiredSpeed = Math.hypot(outcome.desiredVelocity.x, outcome.desiredVelocity.y);
-    if (outcome.resolution !== "blocked" || desiredSpeed <= MOTION_EPSILON) {
-      this.activeMotionBlockages.delete(outcome.actorId);
+    if (outcome.resolution === "full" || desiredSpeed <= MOTION_EPSILON) {
+      this.activeMotionConstraintEpisodes.delete(outcome.actorId);
       return;
     }
 
     const constraintKey = [...outcome.constraints].sort((a, b) => a.localeCompare(b)).join("+") || "unknown_constraint";
     const activityId = runtime.publicState().activity.id;
-    const episodeSignature = `${activityId}:${constraintKey}`;
-    if (this.activeMotionBlockages.get(outcome.actorId) === episodeSignature) return;
+    const episodeSignature = `${activityId}:${outcome.resolution}:${constraintKey}`;
+    if (this.activeMotionConstraintEpisodes.get(outcome.actorId) === episodeSignature) return;
 
-    this.activeMotionBlockages.set(outcome.actorId, episodeSignature);
-    runtime.noteActivityBlocked(
-      this.tickValue,
-      `physical motion blocked by ${constraintKey}; episode t${this.tickValue}`,
-    );
+    this.activeMotionConstraintEpisodes.set(outcome.actorId, episodeSignature);
+    const evidence: ResidentPercept = {
+      id: `percept:${outcome.actorId}:self-motion:${this.tickValue}:${this.perceptSequence++}`,
+      occurrenceId: `self-motion:${outcome.actorId}:${this.tickValue}`,
+      tick: this.tickValue,
+      phenomenon: "movement",
+      modality: "self",
+      actorId: outcome.actorId,
+      subjectId: null,
+      spatial: { kind: "none" },
+      summary: `physical motion ${outcome.resolution} by ${constraintKey}`,
+      text: null,
+      addressed: false,
+      selfMotionOutcome: structuredClone(outcome),
+    };
+    runtime.ingestPercepts([evidence], outcome.after);
+
+    if (outcome.resolution === "blocked") {
+      runtime.noteActivityBlocked(
+        this.tickValue,
+        `physical motion blocked by ${constraintKey}; episode t${this.tickValue}`,
+        [evidence.id],
+      );
+    }
   }
 
   private deliverOccurrence(pending: PendingOccurrence): void {
