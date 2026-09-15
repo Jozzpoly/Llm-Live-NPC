@@ -3,7 +3,7 @@ import "./style.css";
 import "./spc-next-research-style.css";
 import type { SpcCanonicalEvidenceSnapshotV1 } from "../evidence/spc-next-canonical-evidence-snapshot";
 import { FIVE_RESIDENT_ROLE_PRESSURES } from "../spc-next/five-resident-region";
-import type { ResidentPercept, ResidentTraceEvent } from "../spc-next/contracts";
+import type { ResidentPercept, ResidentTraceEvent, WorldOccurrence } from "../spc-next/contracts";
 import { SpcNextResearchScene, type SpcNextResearchFrame } from "./spc-next-research-scene";
 
 const params = new URLSearchParams(location.search);
@@ -240,6 +240,7 @@ if (evidenceMode) {
       snapshot(): SpcNextResearchFrame;
       canonicalSnapshot(): SpcCanonicalEvidenceSnapshotV1;
       stepWorld(steps?: number): SpcNextResearchFrame;
+      addressResident(residentId: string, text?: string): WorldOccurrence;
     }>;
   };
   Object.defineProperty(evidenceWindow, "__SPC_EVIDENCE__", {
@@ -252,6 +253,7 @@ if (evidenceMode) {
       snapshot: () => scene.currentFrame(),
       canonicalSnapshot: () => scene.currentCanonicalEvidenceSnapshot(),
       stepWorld: (steps = 1) => scene.stepEvidenceWorld(steps),
+      addressResident: (residentId: string, text = "Hej!") => scene.playerAddressResident(residentId, text),
     }),
   });
 }
