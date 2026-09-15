@@ -87,7 +87,10 @@ export class ResidentCognitionOwner {
       return { status: "rejected", reason: "grounding_rejected", detail: grounded.reason };
     }
 
-    this.resident.applySemanticUpdates(proposal, groundingView.tick);
+    // Use the exact private percept projection that the provider was allowed to
+    // cite, not whatever happens to remain in the bounded live ring after model
+    // latency. This preserves provenance without granting stale proposal authority.
+    this.resident.applySemanticUpdates(proposal, groundingView.tick, attempt.context.recentPercepts);
     return {
       status: "applied",
       proposal,
