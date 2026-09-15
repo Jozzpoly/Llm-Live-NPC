@@ -13,6 +13,8 @@ export interface CognitionCoordinatorState {
   capacity: number;
 }
 
+export const MAX_FAIR_QUEUE_WAIT_TICKS = 600;
+
 export class CognitionCoordinator {
   private readonly queued = new Map<string, CognitionBatch>();
   private readonly inFlight = new Map<string, CognitionDispatch>();
@@ -65,20 +67,28 @@ export class CognitionCoordinator {
   }
 
   private bestQueuedCandidate(tick: number): CognitionBatch | null {
-    let best: CognitionBatch | null = null;
-    let bestScore = Number.NEGATIVE_INFINITY;
-    for (const batch of this.queued.values()) {
-      if (this.inFlightByResident.has(batch.residentId)) continue;
-      const maxSalience = Math.max(0, ...batch.reasons.map((reason) => reason.salience));
-      const waitedTicks = Math.max(0, tick - batch.requestedAtTick);
-      const score = maxSalience + Math.min(waitedTicks / 10_000, 0.25);
-      if (score > bestScore || (score === bestScore && batch.residentId.localeCompare(best?.residentId ?? "") < 0)) {
-        best = batch;
-        bestScore = score;
-      }
+    const candidates = [...this.queued.values()].filter((batch) => !this.inFlightByResident.has(batch.residentId));
+    if (candidates.length === 0) return null;
+
+    const overdue = candidates.filter((batch) => tick - batch.requestedAtTick >= MAX_FAIR_QUEUE_WAIT_TICKS);
+    if (overdue.length > 0) {
+      return overdue.sort((a, b) => (
+        a.requestedAtTick - b.requestedAtTick
+        || maxSalience(b) - maxSalience(a)
+        || a.residentId.localeCompare(b.residentId)
+      ))[0]!;
     }
-    return best;
+
+    return candidates.sort((a, b) => (
+      maxSalience(b) - maxSalience(a)
+      || a.requestedAtTick - b.requestedAtTick
+      || a.residentId.localeCompare(b.residentId)
+    ))[0]!;
   }
+}
+
+function maxSalience(batch: CognitionBatch): number {
+  return Math.max(0, ...batch.reasons.map((reason) => reason.salience));
 }
 
 function mergeBatches(a: CognitionBatch, b: CognitionBatch): CognitionBatch {
