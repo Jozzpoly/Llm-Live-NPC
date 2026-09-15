@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ResidentContinuityKernel } from "./resident-continuity-kernel";
+import { ResidentMaterialKnowledge } from "./resident-material-knowledge";
 import { ResidentMaterialPickupExecutor } from "./resident-material-pickup-executor";
 import { ResidentWorldExecutionAuthority } from "./resident-world-execution-authority";
 import { SpcWorldRuntime } from "./spc-world-runtime";
@@ -22,13 +23,15 @@ function setup() {
   const origin = kernel.recordEvidence({ id: "evidence:work", tick: 0, kind: "life_context", summary: "Janek has workshop work." });
   kernel.openMatter({ id: "matter.work", originEvidenceId: origin.id, semanticCourse: "pick up the workshop crate" });
   kernel.bindRun({ matterId: "matter.work", taskId: "task.pickup", runId: "run.pickup" });
+  const knowledge = new ResidentMaterialKnowledge("resident.janek", ["crate.workshop.01"], world);
+  knowledge.sample();
   const authority = new ResidentWorldExecutionAuthority("resident.janek", kernel, world);
-  const executor = new ResidentMaterialPickupExecutor("run.pickup", "crate.workshop.01", authority, world);
-  return { world, kernel, authority, executor };
+  const executor = new ResidentMaterialPickupExecutor("run.pickup", "crate.workshop.01", knowledge, authority, world);
+  return { world, kernel, knowledge, authority, executor };
 }
 
 describe("ResidentMaterialPickupExecutor J1b", () => {
-  it("approaches in World, performs authorized pickup, and exposes a factual outcome for reconciliation", () => {
+  it("approaches acquired last-known position, performs authorized pickup, and exposes factual outcome", () => {
     const { world, kernel, executor } = setup();
     let state = executor.step();
     let guard = 0;
