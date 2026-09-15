@@ -42,8 +42,10 @@ export class CognitionGrounder {
     if (proposed.kind === "follow" || proposed.kind === "communicate") {
       const targetId = proposed.targetActorId;
       const known = view.context.knownActors.find((actor) => actor.id === targetId);
-      if (!targetId || !known?.lastKnownPosition) {
-        return { kind: "rejected", reason: "target_actor_has_no_grounded_position" };
+      if (!targetId || !known) return { kind: "rejected", reason: "target_actor_unknown" };
+      const hasDirectionalCue = Boolean(known.lastHeardDirection && known.lastHeardDistanceBand && known.lastHeardTick !== null);
+      if (!known.lastKnownPosition && !hasDirectionalCue) {
+        return { kind: "rejected", reason: "target_actor_has_no_grounded_contact_evidence" };
       }
       return {
         kind: "set_activity",
@@ -62,10 +64,14 @@ export class CognitionGrounder {
       if (!view.currentRegionId) return { kind: "rejected", reason: "resident_has_no_current_region" };
       const destination = this.navigation.anchor(proposed.targetRegionId);
       if (!destination) return { kind: "rejected", reason: "target_region_has_no_navigation_anchor" };
-      const route = this.navigation.route(view.currentRegionId, proposed.targetRegionId);
-      if (!route) return { kind: "rejected", reason: "target_region_unreachable" };
-      const routeWaypoints = route.waypoints.length > 0
-        ? route.waypoints.slice(0, -1)
+      const physicalRoute = this.navigation.route(view.currentRegionId, proposed.targetRegionId);
+      if (!physicalRoute) return { kind: "rejected", reason: "target_region_unreachable" };
+      const knownRegionIds = new Set(view.context.knownRegions.map((region) => region.id));
+      knownRegionIds.add(view.currentRegionId);
+      const knownRoute = this.navigation.route(view.currentRegionId, proposed.targetRegionId, knownRegionIds);
+      if (!knownRoute) return { kind: "rejected", reason: "target_region_route_not_known" };
+      const routeWaypoints = knownRoute.waypoints.length > 0
+        ? knownRoute.waypoints.slice(0, -1)
         : [];
       return {
         kind: "set_activity",
