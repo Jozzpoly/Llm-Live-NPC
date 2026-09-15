@@ -20,11 +20,19 @@ export interface FiveResidentRolePressure {
 
 export const FIVE_RESIDENT_ROLE_PRESSURES: readonly FiveResidentRolePressure[] = [
   { residentId: "resident.mira", name: "Mira", pressure: "settlement continuity and player contact" },
-  { residentId: "resident.janek", name: "Janek", pressure: "work interruption and return" },
+  { residentId: "resident.janek", name: "Janek", pressure: "future material work interruption and return" },
   { residentId: "resident.ida", name: "Ida", pressure: "social crossing and message delivery" },
   { residentId: "resident.oren", name: "Oren", pressure: "long-distance gathering and travel" },
   { residentId: "resident.nela", name: "Nela", pressure: "remote exploration and divergent history" },
 ];
+
+export const FIVE_RESIDENT_FAMILIARITY: Readonly<Record<string, readonly string[]>> = {
+  "resident.mira": ["hearth", "workshop", "fields", "crossroads"],
+  "resident.janek": ["workshop", "hearth", "crossroads", "fields"],
+  "resident.ida": ["crossroads", "workshop", "hearth", "fields", "old-road"],
+  "resident.oren": ["forest-edge", "fields", "crossroads", "deep-wilds"],
+  "resident.nela": ["ruins", "old-road", "crossroads", "deep-wilds"],
+};
 
 export function createFiveResidentRegionWorld(): SpcWorldRuntime {
   const world = new SpcWorldRuntime({
@@ -41,8 +49,12 @@ export function createFiveResidentRegionWorld(): SpcWorldRuntime {
   world.addResident("resident.oren", "Oren", { x: 4_650, y: 2_650 });
   world.addResident("resident.nela", "Nela", { x: 6_950, y: 1_100 });
 
+  for (const [residentId, familiarRegions] of Object.entries(FIVE_RESIDENT_FAMILIARITY)) {
+    world.familiarizeResidentWithRegions(residentId, familiarRegions);
+  }
+
   world.setResidentActivity("resident.mira", activity("mira", "travel", { x: 1_050, y: 760 }, "walk through the settlement"));
-  world.setResidentActivity("resident.janek", activity("janek", "work", null, "continue workshop work locally"));
+  world.setResidentActivity("resident.janek", activity("janek", "idle", null, "between tasks at the workshop; no fake work mechanic"));
   world.setResidentActivity("resident.ida", activity("ida", "travel", { x: 3_500, y: 1_000 }, "cross the social junction"));
   world.setResidentActivity("resident.oren", activity("oren", "travel", { x: 5_100, y: 3_300 }, "head deeper along the forest edge"));
   world.setResidentActivity("resident.nela", activity("nela", "investigate", { x: 7_650, y: 1_700 }, "inspect the remote ruins"));
