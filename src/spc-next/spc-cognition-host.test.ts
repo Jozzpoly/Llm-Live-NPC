@@ -23,18 +23,28 @@ function setup(): { world: SpcWorldRuntime; residents: ResidentRuntime[]; host: 
   return { world, residents, host };
 }
 
-function keepProposal() {
+function keepProposal(reviewAfterSeconds = 15) {
   return {
     version: 1,
     activityDirective: { kind: "keep", reason: "stay with current method" },
     beliefs: [],
     concerns: [],
-    reviewAfterSeconds: 15,
+    reviewAfterSeconds,
+  };
+}
+
+function stopProposal(reviewAfterSeconds = 20) {
+  return {
+    version: 1,
+    activityDirective: { kind: "stop", reason: "stop the current bodily activity" },
+    beliefs: [],
+    concerns: [],
+    reviewAfterSeconds,
   };
 }
 
 describe("SpcCognitionHost", () => {
-  it("can expose five independent cognition contexts concurrently without advancing a second World clock", () => {
+  it("can expose five independent urgent cognition contexts concurrently without advancing a second World clock", () => {
     const { world, host } = setup();
     const ids = ["resident.mira", "resident.janek", "resident.ida", "resident.oren", "resident.nela"];
     world.speak("player.jozz", "chodźcie wszyscy", 420, ids);
@@ -68,6 +78,41 @@ describe("SpcCognitionHost", () => {
     expect(host.settle(clone, keepProposal())).toEqual({ status: "rejected", reason: "unknown_host_request" });
     expect(host.state().activeRequestCount).toBeGreaterThan(0);
     expect(host.settle(request, keepProposal()).status).toBe("applied");
+  });
+
+  it("applies accepted activity transitions through World authority and clears inherited bodily velocity", () => {
+    const { world, host } = setup();
+    world.setActorVelocity("resident.mira", { x: 100, y: 0 });
+    world.speak("player.jozz", "Mira, zatrzymaj się", 420, ["resident.mira"]);
+    world.step();
+    host.collectReadyBatches();
+    const request = host.startReadyRequests().find((candidate) => candidate.residentId === "resident.mira")!;
+
+    expect(world.publicSnapshot().actors.find((actor) => actor.id === "resident.mira")!.velocity.x).toBeGreaterThan(0);
+    const settlement = host.settle(request, stopProposal());
+    expect(settlement.status).toBe("applied");
+
+    const actor = world.publicSnapshot().actors.find((candidate) => candidate.id === "resident.mira")!;
+    const resident = world.publicSnapshot().residents.find((candidate) => candidate.id === "resident.mira")!;
+    expect(actor.velocity).toEqual({ x: 0, y: 0 });
+    expect(resident.activity.kind).toBe("idle");
+  });
+
+  it("makes accepted reviewAfterSeconds control the next quiet cognition deadline", () => {
+    const { world, residents, host } = setup();
+    world.speak("player.jozz", "Mira, zapamiętaj i pomyśl później", 420, ["resident.mira"]);
+    world.step();
+    host.collectReadyBatches();
+    const request = host.startReadyRequests().find((candidate) => candidate.residentId === "resident.mira")!;
+    const mira = residents.find((resident) => resident.profile.id === "resident.mira")!;
+
+    const before = mira.cognitionScheduleDiagnostics().nextQuietReviewTick;
+    expect(host.settle(request, keepProposal(90)).status).toBe("applied");
+    const after = mira.cognitionScheduleDiagnostics().nextQuietReviewTick;
+
+    expect(after).toBeGreaterThanOrEqual(world.tick + 5_400);
+    expect(after).toBeLessThan(world.tick + 5_430);
+    expect(after).not.toBe(before);
   });
 
   it("abandons one resident request without cancelling sibling cognition and requeues that resident's reasons", () => {
