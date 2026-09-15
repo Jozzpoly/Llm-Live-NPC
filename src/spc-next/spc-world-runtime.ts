@@ -147,8 +147,7 @@ export class SpcWorldRuntime {
       brainPhase,
       sight: new SightContinuityTracker(this.authoredOptions.fixedDeltaSeconds),
     });
-    const initialRegion = this.regionAt(actor.position);
-    if (initialRegion) runtime.enterRegion(initialRegion, this.tickValue, true);
+    runtime.syncCurrentRegion(this.regionAt(actor.position), this.tickValue, true);
     return runtime;
   }
 
@@ -289,8 +288,7 @@ export class SpcWorldRuntime {
       const resident = this.residents.get(outcome.actorId);
       if (!resident) continue;
       this.updateResidentMotionBlockage(resident.runtime, outcome);
-      const region = this.regionAt(outcome.after);
-      if (region) resident.runtime.enterRegion(region, this.tickValue);
+      resident.runtime.syncCurrentRegion(this.regionAt(outcome.after), this.tickValue);
     }
   }
 
