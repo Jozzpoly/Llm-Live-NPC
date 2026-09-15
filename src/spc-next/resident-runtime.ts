@@ -4,6 +4,7 @@ import {
   normalizedDirection,
   type CognitionBatch,
   type CognitionReason,
+  type PerceptDistanceBand,
   type ResidentActivity,
   type ResidentCommand,
   type ResidentDiagnostics,
@@ -15,7 +16,11 @@ import {
   type Vec2,
   type WorldRegion,
 } from "./contracts";
-import { createDefaultCognitionScheduler, type CognitionScheduler } from "./cognition-scheduler";
+import {
+  createDefaultCognitionScheduler,
+  type CognitionScheduleDiagnostics,
+  type CognitionScheduler,
+} from "./cognition-scheduler";
 import { ResidentMind } from "./resident-mind";
 
 const ARRIVAL_DISTANCE = 18;
@@ -26,17 +31,25 @@ export interface ResidentCognitionRevision {
   activity: number;
 }
 
+interface HeardActorCue {
+  direction: Vec2;
+  distanceBand: PerceptDistanceBand;
+  tick: number;
+}
+
 export class ResidentRuntime {
   private activity: ResidentActivity;
   private readonly recentPercepts: ResidentPercept[] = [];
   private readonly trace: ResidentTraceEvent[] = [];
   private readonly lastKnownActorPositions = new Map<string, Vec2>();
+  private readonly lastHeardActorCues = new Map<string, HeardActorCue>();
   private readonly mind: ResidentMind;
   private cognitionSequence = 0;
   private routeWaypointIndex = 0;
   private currentRegionId: string | null = null;
   private attentionRevisionValue = 0;
   private activityRevisionValue = 0;
+  private lastMovementTraceSignature: string | null = null;
 
   constructor(
     readonly profile: ResidentProfile,
@@ -75,13 +88,38 @@ export class ResidentRuntime {
     return { attention: this.attentionRevisionValue, activity: this.activityRevisionValue };
   }
 
+  cognitionScheduleDiagnostics(): CognitionScheduleDiagnostics {
+    return this.scheduler.diagnostics();
+  }
+
+  scheduleAdaptiveReview(tick: number, reviewAfterSeconds: number, fixedDeltaSeconds: number): void {
+    if (!Number.isFinite(reviewAfterSeconds) || reviewAfterSeconds <= 0) {
+      throw new Error("reviewAfterSeconds must be positive");
+    }
+    if (!Number.isFinite(fixedDeltaSeconds) || fixedDeltaSeconds <= 0) {
+      throw new Error("fixedDeltaSeconds must be positive");
+    }
+    const delayTicks = Math.max(1, Math.ceil(reviewAfterSeconds / fixedDeltaSeconds));
+    this.scheduler.scheduleQuietReviewAfter(tick, delayTicks);
+  }
+
   ingestPercepts(percepts: readonly ResidentPercept[]): void {
     this.mind.observe(percepts);
     for (const percept of percepts) {
       if (percept.modality === "hearing" && percept.addressed) this.attentionRevisionValue += 1;
       this.recentPercepts.push(structuredClone(percept));
-      if (percept.actorId) this.lastKnownActorPositions.set(percept.actorId, { ...percept.position });
-      if (percept.subjectId) this.lastKnownActorPositions.set(percept.subjectId, { ...percept.position });
+      if (percept.actorId) {
+        if (percept.spatial.kind === "exact") {
+          this.lastKnownActorPositions.set(percept.actorId, { ...percept.spatial.position });
+        } else if (percept.spatial.kind === "directional") {
+          this.lastHeardActorCues.set(percept.actorId, {
+            direction: { ...percept.spatial.direction },
+            distanceBand: percept.spatial.distanceBand,
+            tick: percept.tick,
+          });
+        }
+      }
+      // subjectId is causal provenance. Do not assign the event source's spatial cue to the subject.
       this.trimPercepts();
       this.appendTrace({
         tick: percept.tick,
@@ -115,6 +153,7 @@ export class ResidentRuntime {
     this.activity = structuredClone(activity);
     this.routeWaypointIndex = 0;
     this.activityRevisionValue += 1;
+    this.lastMovementTraceSignature = null;
     this.appendTrace({
       tick,
       residentId: this.profile.id,
@@ -146,7 +185,7 @@ export class ResidentRuntime {
     switch (this.activity.kind) {
       case "idle":
       case "work":
-        return { kind: "none" };
+        return this.movementCommand(view.tick, { x: 0, y: 0 }, `${this.activity.kind} stationary`);
       case "travel":
       case "investigate":
         return this.stepRoutedActivity(view);
@@ -156,6 +195,7 @@ export class ResidentRuntime {
           : undefined;
         const target = visible?.position
           ?? (this.activity.targetActorId ? this.lastKnownActorPositions.get(this.activity.targetActorId) : undefined)
+          ?? (this.activity.targetActorId ? this.hearingProbeTarget(view.selfPosition, this.activity.targetActorId) : null)
           ?? this.activity.targetPosition
           ?? null;
         return this.stepTowardPosition(view, target, false);
@@ -208,6 +248,7 @@ export class ResidentRuntime {
         return this.stepTowardPosition(view, waypoint, false);
       }
       this.routeWaypointIndex += 1;
+      this.lastMovementTraceSignature = null;
     }
     return this.stepTowardPosition(view, this.activity.targetPosition, true);
   }
@@ -219,28 +260,21 @@ export class ResidentRuntime {
   ): ResidentCommand {
     if (!target) {
       this.noteActivityBlocked(view.tick, `${this.activity.kind} has no usable target.`);
-      return { kind: "move", desiredVelocity: { x: 0, y: 0 } };
+      return this.movementCommand(view.tick, { x: 0, y: 0 }, `${this.activity.kind} blocked`);
     }
 
     if (distanceSquared(view.selfPosition, target) <= ARRIVAL_DISTANCE * ARRIVAL_DISTANCE) {
       if (completeOnArrival) this.completeActivity(view.tick, "arrived at target");
-      return { kind: "move", desiredVelocity: { x: 0, y: 0 } };
+      return this.movementCommand(view.tick, { x: 0, y: 0 }, `${this.activity.kind} arrived`);
     }
 
     const direction = normalizedDirection(view.selfPosition, target);
     const speed = Math.min(this.profile.maxSpeed, this.activity.speed ?? this.profile.maxSpeed);
-    const command: ResidentCommand = {
-      kind: "move",
-      desiredVelocity: { x: direction.x * speed, y: direction.y * speed },
-    };
-    this.appendTrace({
-      tick: view.tick,
-      residentId: this.profile.id,
-      kind: "command",
-      summary: `${this.activity.kind} movement command`,
-      refIds: [this.activity.id],
-    });
-    return command;
+    return this.movementCommand(
+      view.tick,
+      { x: direction.x * speed, y: direction.y * speed },
+      `${this.activity.kind} movement`,
+    );
   }
 
   private stepCommunicate(view: ResidentExecutionView): ResidentCommand {
@@ -248,7 +282,7 @@ export class ResidentRuntime {
     const text = this.activity.text;
     if (!targetId || !text) {
       this.noteActivityBlocked(view.tick, "communicate lacks target actor or text");
-      return { kind: "none" };
+      return this.movementCommand(view.tick, { x: 0, y: 0 }, "communicate blocked");
     }
 
     const visible = view.visibleActors.find((actor) => actor.id === targetId);
@@ -259,6 +293,7 @@ export class ResidentRuntime {
         radius: this.profile.hearingRadius,
         addressedActorIds: [targetId],
       };
+      this.lastMovementTraceSignature = null;
       this.appendTrace({
         tick: view.tick,
         residentId: this.profile.id,
@@ -272,9 +307,40 @@ export class ResidentRuntime {
 
     const target = visible?.position
       ?? this.lastKnownActorPositions.get(targetId)
+      ?? this.hearingProbeTarget(view.selfPosition, targetId)
       ?? this.activity.targetPosition
       ?? null;
     return this.stepTowardPosition(view, target, false);
+  }
+
+  private hearingProbeTarget(origin: Vec2, actorId: string): Vec2 | null {
+    const cue = this.lastHeardActorCues.get(actorId);
+    if (!cue) return null;
+    const fraction = cue.distanceBand === "near" ? 0.25 : cue.distanceBand === "mid" ? 0.55 : 0.85;
+    const distance = this.profile.hearingRadius * fraction;
+    return {
+      x: origin.x + cue.direction.x * distance,
+      y: origin.y + cue.direction.y * distance,
+    };
+  }
+
+  private movementCommand(tick: number, desiredVelocity: Vec2, summary: string): ResidentCommand {
+    const speed = Math.hypot(desiredVelocity.x, desiredVelocity.y);
+    const direction = speed <= 1e-9 ? 0 : Math.atan2(desiredVelocity.y, desiredVelocity.x);
+    const sector = speed <= 1e-9 ? "stop" : String(Math.round(direction / (Math.PI / 4)));
+    const speedBucket = Math.round(speed / 10);
+    const signature = `${this.activity.id}:${sector}:${speedBucket}`;
+    if (signature !== this.lastMovementTraceSignature) {
+      this.lastMovementTraceSignature = signature;
+      this.appendTrace({
+        tick,
+        residentId: this.profile.id,
+        kind: "command",
+        summary,
+        refIds: [this.activity.id],
+      });
+    }
+    return { kind: "move", desiredVelocity };
   }
 
   private completeActivity(tick: number, summary: string): void {
@@ -305,6 +371,7 @@ export class ResidentRuntime {
     };
     this.routeWaypointIndex = 0;
     this.activityRevisionValue += 1;
+    this.lastMovementTraceSignature = null;
   }
 
   private reasonFromPercept(percept: ResidentPercept): CognitionReason | null {
