@@ -27,6 +27,39 @@ const DEFAULT_SEARCH_SPEED = 95;
 const SEARCH_WAYPOINT_TOLERANCE = 10;
 
 /**
+ * Produce a deterministic body-scale search ring around resident-owned remembered
+ * evidence. The helper knows nothing about current object truth or World material
+ * locations; callers remain responsible for choosing a semantically valid radius.
+ *
+ * The east-first ordering is deterministic only. It is not target steering: every
+ * caller with the same remembered origin receives the same plan regardless of where
+ * the object actually is now.
+ */
+export function radialMaterialSearchWaypoints(
+  rememberedOrigin: Vec2,
+  radius = 400,
+  sectorCount = 8,
+): Vec2[] {
+  if (!Number.isFinite(rememberedOrigin.x) || !Number.isFinite(rememberedOrigin.y)) {
+    throw new Error("material search remembered origin must be finite");
+  }
+  if (!Number.isFinite(radius) || radius <= 0) throw new Error("material search radius must be positive and finite");
+  if (!Number.isSafeInteger(sectorCount) || sectorCount < 4 || sectorCount > 32) {
+    throw new Error("material search sectorCount must be an integer between 4 and 32");
+  }
+
+  const waypoints: Vec2[] = [];
+  for (let index = 0; index < sectorCount; index += 1) {
+    const angle = index * Math.PI * 2 / sectorCount;
+    waypoints.push({
+      x: rememberedOrigin.x + Math.cos(angle) * radius,
+      y: rememberedOrigin.y + Math.sin(angle) * radius,
+    });
+  }
+  return waypoints;
+}
+
+/**
  * Bounded local-brain search over an already-grounded physical plan.
  *
  * This executor deliberately has no access to current hidden material World truth.
