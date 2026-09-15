@@ -27,6 +27,10 @@ import {
   type MaterialObjectState,
 } from "./material-world-state";
 import type {
+  ResidentWorldAction,
+  ResidentWorldActionResolution,
+} from "./resident-world-action-contract";
+import type {
   ResidentAuthorizedMotionOutcome,
   ResidentRunAuthority,
   ResidentWorldEffect,
@@ -152,8 +156,8 @@ export class SpcWorldRuntime {
   /**
    * Direct participant/control-source material action path for the current J0 World
    * experiment. Resident bodies are intentionally forbidden here: recovered SPC
-   * manipulation must enter through exact run authority in J1 rather than acquire
-   * a third mutation bypass beside legacy activity and K5 execution.
+   * manipulation must enter through exact run authority rather than acquire a third
+   * mutation bypass beside legacy activity and recovered execution.
    *
    * Callers provide semantic action intent only. World derives actor position and
    * line-of-sight from authoritative state and never trusts caller-supplied geometry.
@@ -162,39 +166,40 @@ export class SpcWorldRuntime {
     if (this.residents.has(actorId)) {
       throw new Error(`resident material action requires recovered execution authority: ${actorId}`);
     }
-    const actor = this.requireActor(actorId);
-    const object = this.materialState.object(intent.objectId);
-    let result: MaterialActionResult;
+    return this.resolveMaterialAction(actorId, intent);
+  }
 
-    if (intent.kind === "pickup") {
-      const targetPosition = object?.location.kind === "free" ? object.location.position : null;
-      const lineOfSight = targetPosition
-        ? this.sightGeometry.hasLineOfSight(actor.position, targetPosition)
-        : false;
-      result = this.materialState.attempt({
-        kind: "pickup",
-        actorId,
-        objectId: intent.objectId,
-        actorPosition: actor.position,
-        lineOfSight,
-      }, this.tickValue);
-    } else {
-      const lineOfSight = isFiniteVec2(intent.position)
-        ? this.sightGeometry.hasLineOfSight(actor.position, intent.position)
-        : false;
-      result = this.materialState.attempt({
-        kind: "place",
-        actorId,
-        objectId: intent.objectId,
-        actorPosition: actor.position,
-        position: { ...intent.position },
-        lineOfSight,
-      }, this.tickValue);
+  /**
+   * Atomic resident World action under the same exact run authority that gates K5
+   * execution effects. Material actions are kept separate from the multi-effect
+   * frame because pickup/place can be factually rejected by World geometry/state;
+   * this avoids introducing partial-commit semantics into motion + speech frames.
+   */
+  applyResidentWorldAction(
+    residentId: string,
+    runId: string,
+    action: ResidentWorldAction,
+  ): ResidentWorldActionResolution {
+    this.requireResident(residentId);
+    const registered = this.requireResidentExecutionAuthority(residentId);
+    const validated = validateResidentWorldAction(action);
+    if (!validated || typeof runId !== "string" || runId.trim().length === 0) {
+      return { status: "rejected", runId, reason: "invalid_action" };
+    }
+    if (!registered.authority.canRunMutateWorld(runId)) {
+      return { status: "rejected", runId, reason: "run_not_authorized" };
     }
 
-    this.recentMaterialActions.push(structuredClone(result));
-    while (this.recentMaterialActions.length > MATERIAL_ACTION_LIMIT) this.recentMaterialActions.shift();
-    return structuredClone(result);
+    const intent: SpcMaterialActionIntent = validated.kind === "material_pickup"
+      ? { kind: "pickup", objectId: validated.objectId }
+      : { kind: "place", objectId: validated.objectId, position: { ...validated.position } };
+    const materialOutcome = this.resolveMaterialAction(residentId, intent);
+    return {
+      status: "resolved",
+      runId,
+      action: structuredClone(validated),
+      materialOutcome,
+    };
   }
 
   addPlayer(id: string, position: Vec2, overrides: Partial<Omit<ActorState, "id" | "kind" | "position">> = {}): void {
@@ -483,6 +488,42 @@ export class SpcWorldRuntime {
     }
   }
 
+  private resolveMaterialAction(actorId: string, intent: SpcMaterialActionIntent): MaterialActionResult {
+    const actor = this.requireActor(actorId);
+    const object = this.materialState.object(intent.objectId);
+    let result: MaterialActionResult;
+
+    if (intent.kind === "pickup") {
+      const targetPosition = object?.location.kind === "free" ? object.location.position : null;
+      const lineOfSight = targetPosition
+        ? this.sightGeometry.hasLineOfSight(actor.position, targetPosition)
+        : false;
+      result = this.materialState.attempt({
+        kind: "pickup",
+        actorId,
+        objectId: intent.objectId,
+        actorPosition: actor.position,
+        lineOfSight,
+      }, this.tickValue);
+    } else {
+      const lineOfSight = isFiniteVec2(intent.position)
+        ? this.sightGeometry.hasLineOfSight(actor.position, intent.position)
+        : false;
+      result = this.materialState.attempt({
+        kind: "place",
+        actorId,
+        objectId: intent.objectId,
+        actorPosition: actor.position,
+        position: { ...intent.position },
+        lineOfSight,
+      }, this.tickValue);
+    }
+
+    this.recentMaterialActions.push(structuredClone(result));
+    while (this.recentMaterialActions.length > MATERIAL_ACTION_LIMIT) this.recentMaterialActions.shift();
+    return structuredClone(result);
+  }
+
   private emitSpeech(
     actorId: string,
     text: string,
@@ -698,6 +739,18 @@ function validateResidentWorldExecutionFrame(
   }
 
   return { runId: frame.runId, effects };
+}
+
+function validateResidentWorldAction(action: ResidentWorldAction): ResidentWorldAction | null {
+  if (!action || typeof action !== "object") return null;
+  if (typeof action.objectId !== "string" || action.objectId.trim().length === 0) return null;
+  if (action.kind === "material_pickup") {
+    return { kind: "material_pickup", objectId: action.objectId };
+  }
+  if (action.kind === "material_place" && isFiniteVec2(action.position)) {
+    return { kind: "material_place", objectId: action.objectId, position: { ...action.position } };
+  }
+  return null;
 }
 
 function isFiniteVec2(value: Vec2): boolean {
