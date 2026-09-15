@@ -26,9 +26,15 @@ function context(): ResidentCognitionContext {
       label: "Jozz",
       lastKnownPosition: { x: 700, y: 700 },
       lastObservedTick: 48,
+      lastHeardDirection: null,
+      lastHeardDistanceBand: null,
+      lastHeardTick: null,
     }],
     knownRegions: [
       { id: "hearth", label: "Hearth" },
+      { id: "workshop", label: "Workshop" },
+      { id: "crossroads", label: "Crossroads" },
+      { id: "old-road", label: "Old Road" },
       { id: "ruins", label: "Ruins" },
     ],
   };
@@ -45,7 +51,7 @@ function proposal(activity: Extract<ResidentCognitionProposal["activityDirective
 }
 
 describe("CognitionGrounder", () => {
-  it("turns a semantic region target into hierarchical local route waypoints", () => {
+  it("turns a known semantic region target into hierarchical local route waypoints", () => {
     const grounder = new CognitionGrounder(createFiveResidentNavigationGraph());
     const result = grounder.ground(proposal({
       kind: "investigate",
@@ -70,7 +76,33 @@ describe("CognitionGrounder", () => {
     }
   });
 
-  it("turns semantic communication into an embodied activity aimed at last-known contact", () => {
+  it("does not reveal unknown intermediate topology merely because the destination name is known", () => {
+    const grounder = new CognitionGrounder(createFiveResidentNavigationGraph());
+    const partial = context();
+    partial.knownRegions = [
+      { id: "hearth", label: "Hearth" },
+      { id: "ruins", label: "Ruins" },
+    ];
+
+    const result = grounder.ground(proposal({
+      kind: "travel",
+      goal: "go to the known ruins",
+      targetActorId: null,
+      targetRegionId: "ruins",
+      targetPosition: null,
+      text: null,
+    }), {
+      residentId: "resident.mira",
+      tick: 50,
+      currentPosition: { x: 780, y: 720 },
+      currentRegionId: "hearth",
+      context: partial,
+    });
+
+    expect(result).toEqual({ kind: "rejected", reason: "target_region_route_not_known" });
+  });
+
+  it("turns semantic communication into an embodied activity aimed at last-known visual contact", () => {
     const grounder = new CognitionGrounder(createFiveResidentNavigationGraph());
     const result = grounder.ground(proposal({
       kind: "communicate",
@@ -95,10 +127,53 @@ describe("CognitionGrounder", () => {
     }
   });
 
-  it("fails closed when semantic target cannot be grounded locally", () => {
+  it("can pursue a heard actor without converting a directional cue into an exact target coordinate", () => {
+    const grounder = new CognitionGrounder(createFiveResidentNavigationGraph());
+    const heard = context();
+    heard.knownActors = [{
+      id: "player.jozz",
+      label: "Jozz",
+      lastKnownPosition: null,
+      lastObservedTick: null,
+      lastHeardDirection: { x: 1, y: 0 },
+      lastHeardDistanceBand: "mid",
+      lastHeardTick: 49,
+    }];
+
+    const result = grounder.ground(proposal({
+      kind: "follow",
+      goal: "find and follow Jozz",
+      targetActorId: "player.jozz",
+      targetRegionId: null,
+      targetPosition: null,
+      text: null,
+    }), {
+      residentId: "resident.mira",
+      tick: 50,
+      currentPosition: { x: 780, y: 720 },
+      currentRegionId: "hearth",
+      context: heard,
+    });
+
+    expect(result.kind).toBe("set_activity");
+    if (result.kind === "set_activity") {
+      expect(result.activity.targetActorId).toBe("player.jozz");
+      expect(result.activity.targetPosition).toBeNull();
+    }
+  });
+
+  it("fails closed when an actor is known by identity but has no contact evidence", () => {
     const grounder = new CognitionGrounder(createFiveResidentNavigationGraph());
     const missingActor = context();
-    missingActor.knownActors = [{ id: "player.jozz", label: "Jozz", lastKnownPosition: null, lastObservedTick: null }];
+    missingActor.knownActors = [{
+      id: "player.jozz",
+      label: "Jozz",
+      lastKnownPosition: null,
+      lastObservedTick: null,
+      lastHeardDirection: null,
+      lastHeardDistanceBand: null,
+      lastHeardTick: null,
+    }];
     const result = grounder.ground(proposal({
       kind: "follow",
       goal: "follow Jozz",
@@ -114,6 +189,6 @@ describe("CognitionGrounder", () => {
       context: missingActor,
     });
 
-    expect(result).toEqual({ kind: "rejected", reason: "target_actor_has_no_grounded_position" });
+    expect(result).toEqual({ kind: "rejected", reason: "target_actor_has_no_grounded_contact_evidence" });
   });
 });
