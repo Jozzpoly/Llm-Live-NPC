@@ -49,6 +49,12 @@ export interface WorldOccurrence {
 
 export type PerceptionModality = "hearing" | "sight" | "self";
 export type PerceptDistanceBand = "near" | "mid" | "far";
+export type PerceptPhenomenon =
+  | "speech"
+  | "interaction"
+  | "actor_sight_enter"
+  | "actor_sight_update"
+  | "actor_sight_exit";
 
 export type PerceptSpatialCue =
   | { kind: "exact"; position: Vec2 }
@@ -59,6 +65,7 @@ export interface ResidentPercept {
   id: string;
   occurrenceId: string;
   tick: number;
+  phenomenon: PerceptPhenomenon;
   modality: PerceptionModality;
   actorId: string | null;
   subjectId: string | null;
