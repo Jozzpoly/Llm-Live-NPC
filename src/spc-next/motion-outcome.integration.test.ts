@@ -10,6 +10,12 @@ function world(fixedDeltaSeconds = 1): SpcWorldRuntime {
   });
 }
 
+function blockedReasons(runtime: SpcWorldRuntime) {
+  return runtime.residentDiagnostics("resident.mira").trace.filter((event) =>
+    event.kind === "cognition_reason" && event.summary.includes("physical motion blocked")
+  );
+}
+
 describe("SPC World motion intent -> physical outcome seam", () => {
   it("keeps non-zero desired motion while public physical velocity truthfully reports a blocked body", () => {
     const runtime = world();
@@ -33,13 +39,12 @@ describe("SPC World motion intent -> physical outcome seam", () => {
     const runtime = world();
     runtime.addResident("resident.mira", "Mira", { x: 1_000, y: 500 }, {
       maxSpeed: 100,
-      brainIntervalTicks: 100,
+      brainIntervalTicks: 1_000,
     });
     runtime.setActorMotionIntent("resident.mira", { x: 100, y: 0 });
     runtime.step();
 
-    const trace = runtime.residentDiagnostics("resident.mira").trace;
-    expect(trace.some((event) => event.kind === "cognition_reason" && event.summary.includes("physical motion blocked"))).toBe(true);
+    expect(blockedReasons(runtime)).toHaveLength(1);
   });
 
   it("deduplicates one continuous zero-progress blockage episode instead of producing cognition pressure every tick", () => {
@@ -51,10 +56,32 @@ describe("SPC World motion intent -> physical outcome seam", () => {
     runtime.setActorMotionIntent("resident.mira", { x: 100, y: 0 });
     runtime.step(60);
 
-    const blockedReasons = runtime.residentDiagnostics("resident.mira").trace.filter((event) =>
-      event.kind === "cognition_reason" && event.summary.includes("physical motion blocked")
-    );
-    expect(blockedReasons).toHaveLength(1);
+    expect(blockedReasons(runtime)).toHaveLength(1);
+  });
+
+  it("opens a new blockage episode after real physical progress", () => {
+    const runtime = world();
+    runtime.addResident("resident.mira", "Mira", { x: 1_000, y: 500 }, {
+      maxSpeed: 100,
+      brainIntervalTicks: 1_000,
+    });
+
+    runtime.setActorMotionIntent("resident.mira", { x: 100, y: 0 });
+    runtime.step();
+    expect(blockedReasons(runtime)).toHaveLength(1);
+
+    runtime.setActorMotionIntent("resident.mira", { x: -100, y: 0 });
+    runtime.step();
+    expect(runtime.publicSnapshot().actors.find((actor) => actor.id === "resident.mira")?.position.x).toBe(900);
+
+    runtime.setActorMotionIntent("resident.mira", { x: 100, y: 0 });
+    runtime.step();
+    expect(runtime.publicSnapshot().actors.find((actor) => actor.id === "resident.mira")?.position.x).toBe(1_000);
+    expect(blockedReasons(runtime)).toHaveLength(1);
+
+    runtime.step();
+    expect(blockedReasons(runtime)).toHaveLength(2);
+    expect(blockedReasons(runtime)[1]?.tick).toBeGreaterThan(blockedReasons(runtime)[0]!.tick);
   });
 
   it("reports partial movement as constrained while preserving the physically realized component", () => {

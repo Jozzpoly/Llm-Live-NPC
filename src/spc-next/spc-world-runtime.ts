@@ -58,6 +58,7 @@ export interface SpcWorldDiagnostics {
 
 const WORLD_OCCURRENCE_LIMIT = 1_024;
 const HEARING_DIRECTION_SECTORS = 8;
+const MOTION_EPSILON = 1e-9;
 
 export class SpcWorldRuntime {
   private tickValue = 0;
@@ -69,6 +70,8 @@ export class SpcWorldRuntime {
   private pendingOccurrences: PendingOccurrence[] = [];
   private readonly recentOccurrences: WorldOccurrence[] = [];
   private lastMotionOutcomes: ActorMotionOutcome[] = [];
+  /** Active zero-progress blockage episode keyed by actor. Progress clears it. */
+  private readonly activeMotionBlockages = new Map<string, string>();
 
   constructor(readonly options: SpcWorldOptions) {
     validateWorldOptions(options);
@@ -141,6 +144,7 @@ export class SpcWorldRuntime {
     validateResidentActivity(activity, this.options.bounds, (id) => this.actorState.has(id));
     resident.runtime.setActivity(activity, this.tickValue);
     this.actorState.setDesiredVelocity(residentId, { x: 0, y: 0 });
+    this.activeMotionBlockages.delete(residentId);
   }
 
   setActorMotionIntent(actorId: string, desiredVelocity: Vec2): void {
@@ -262,15 +266,29 @@ export class SpcWorldRuntime {
     for (const outcome of motion) {
       const resident = this.residents.get(outcome.actorId);
       if (!resident) continue;
-      if (outcome.resolution === "blocked" && Math.hypot(outcome.desiredVelocity.x, outcome.desiredVelocity.y) > 1e-9) {
-        resident.runtime.noteActivityBlocked(
-          this.tickValue,
-          `physical motion blocked by ${outcome.constraints.join("+") || "unknown constraint"}`,
-        );
-      }
+      this.updateResidentMotionBlockage(resident.runtime, outcome);
       const region = this.regionAt(outcome.after);
       if (region) resident.runtime.enterRegion(region, this.tickValue);
     }
+  }
+
+  private updateResidentMotionBlockage(runtime: ResidentRuntime, outcome: ActorMotionOutcome): void {
+    const desiredSpeed = Math.hypot(outcome.desiredVelocity.x, outcome.desiredVelocity.y);
+    if (outcome.resolution !== "blocked" || desiredSpeed <= MOTION_EPSILON) {
+      this.activeMotionBlockages.delete(outcome.actorId);
+      return;
+    }
+
+    const constraintKey = [...outcome.constraints].sort((a, b) => a.localeCompare(b)).join("+") || "unknown_constraint";
+    const activityId = runtime.publicState().activity.id;
+    const episodeSignature = `${activityId}:${constraintKey}`;
+    if (this.activeMotionBlockages.get(outcome.actorId) === episodeSignature) return;
+
+    this.activeMotionBlockages.set(outcome.actorId, episodeSignature);
+    runtime.noteActivityBlocked(
+      this.tickValue,
+      `physical motion blocked by ${constraintKey}; episode t${this.tickValue}`,
+    );
   }
 
   private deliverOccurrence(pending: PendingOccurrence): void {
