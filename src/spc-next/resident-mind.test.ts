@@ -13,6 +13,9 @@ const idle: ResidentActivity = {
   reason: "test",
 };
 
+const hearth = { id: "hearth", label: "Hearth", minX: 0, minY: 0, maxX: 200, maxY: 200 };
+const ruins = { id: "ruins", label: "Ruins", minX: 500, minY: 0, maxX: 700, maxY: 200 };
+
 function heardPercept(id = "percept:heard:1", tick = 20): ResidentPercept {
   return {
     id,
@@ -47,9 +50,10 @@ describe("ResidentMind", () => {
   it("learns direction but not hidden exact position from hearing alone", () => {
     const mind = new ResidentMind({ id: "resident.mira", name: "Mira" });
     mind.observe([heardPercept()]);
-    mind.discoverRegion({ id: "hearth", label: "Hearth", minX: 0, minY: 0, maxX: 200, maxY: 200 }, 20);
+    mind.discoverRegion(hearth, 20);
 
-    const context = mind.context(20, [], idle, [heardPercept()]);
+    const context = mind.context(20, "hearth", [], idle, [heardPercept()]);
+    expect(context.currentRegionId).toBe("hearth");
     expect(context.knownActors).toEqual([{
       id: "player.jozz",
       label: "player.jozz",
@@ -59,14 +63,39 @@ describe("ResidentMind", () => {
       lastHeardDistanceBand: "mid",
       lastHeardTick: 20,
     }]);
-    expect(context.knownRegions).toEqual([{ id: "hearth", label: "Hearth" }]);
+    expect(context.knownRegions).toEqual([{
+      id: "hearth",
+      label: "Hearth",
+      knowledge: "visited",
+      lastVisitedTick: 20,
+    }]);
     expect(context.knownRegions.some((region) => region.id === "ruins")).toBe(false);
+  });
+
+  it("can know an authored place without pretending to have visited it", () => {
+    const mind = new ResidentMind({ id: "resident.mira", name: "Mira" });
+    mind.discoverRegion(hearth, 20);
+    mind.familiarizeRegion(ruins, 20);
+
+    const beforeVisit = mind.context(20, "hearth", [], idle, []);
+    expect(beforeVisit.knownRegions.find((region) => region.id === "ruins")).toEqual({
+      id: "ruins",
+      label: "Ruins",
+      knowledge: "familiar",
+      lastVisitedTick: null,
+    });
+
+    mind.discoverRegion(ruins, 80);
+    const afterVisit = mind.context(80, "ruins", [], idle, []);
+    expect(afterVisit.currentRegionId).toBe("ruins");
+    expect(afterVisit.knownRegions.find((region) => region.id === "ruins")?.knowledge).toBe("visited");
+    expect(afterVisit.knownRegions.find((region) => region.id === "ruins")?.lastVisitedTick).toBe(80);
   });
 
   it("upgrades actor location only after exact visual evidence", () => {
     const mind = new ResidentMind({ id: "resident.mira", name: "Mira" });
     mind.observe([heardPercept(), sightPercept()]);
-    const actor = mind.context(21, [], idle, [heardPercept(), sightPercept()]).knownActors[0]!;
+    const actor = mind.context(21, null, [], idle, [heardPercept(), sightPercept()]).knownActors[0]!;
 
     expect(actor.lastKnownPosition).toEqual({ x: 100, y: 100 });
     expect(actor.lastObservedTick).toBe(21);
@@ -88,7 +117,7 @@ describe("ResidentMind", () => {
       addressed: false,
     }]);
 
-    const actors = mind.context(30, [], idle, []).knownActors;
+    const actors = mind.context(30, null, [], idle, []).knownActors;
     expect(actors.some((actor) => actor.id === "resident.janek" && actor.lastKnownPosition?.x === 300)).toBe(true);
     expect(actors.some((actor) => actor.id === "item.hammer")).toBe(false);
   });
@@ -116,7 +145,7 @@ describe("ResidentMind", () => {
       evidenceIds: [source.id],
     };
 
-    const context = mind.context(40, [reason], idle, []);
+    const context = mind.context(40, null, [reason], idle, []);
     expect(context.recentPercepts.some((percept) => percept.id === source.id)).toBe(true);
   });
 
@@ -146,9 +175,9 @@ describe("ResidentMind", () => {
   it("context copies cannot mutate the continuing resident mind", () => {
     const mind = new ResidentMind({ id: "resident.mira", name: "Mira" });
     mind.observe([sightPercept()]);
-    const context = mind.context(21, [], idle, [sightPercept()]);
+    const context = mind.context(21, null, [], idle, [sightPercept()]);
     context.knownActors[0]!.lastKnownPosition!.x = 9999;
 
-    expect(mind.context(21, [], idle, [sightPercept()]).knownActors[0]!.lastKnownPosition!.x).toBe(100);
+    expect(mind.context(21, null, [], idle, [sightPercept()]).knownActors[0]!.lastKnownPosition!.x).toBe(100);
   });
 });
