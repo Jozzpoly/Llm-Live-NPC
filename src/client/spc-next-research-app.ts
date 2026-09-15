@@ -253,7 +253,13 @@ if (evidenceMode) {
       snapshot: () => scene.currentFrame(),
       canonicalSnapshot: () => scene.currentCanonicalEvidenceSnapshot(),
       stepWorld: (steps = 1) => scene.stepEvidenceWorld(steps),
-      addressResident: (residentId: string, text = "Hej!") => scene.playerAddressResident(residentId, text),
+      addressResident: (residentId: string, text = "Hej!") => {
+        // Evidence that inspects a private resident plane must bind observation to
+        // the addressed resident on every replay. Selection is presentation-only;
+        // the participant action itself still enters through World.speak().
+        scene.selectResident(residentId);
+        return scene.playerAddressResident(residentId, text);
+      },
     }),
   });
 }
