@@ -66,6 +66,40 @@ describe("SPC Next five-resident world foundation", () => {
     expect(world.regionAt({ x: 7_000, y: 1_000 })?.id).toBe("ruins");
   });
 
+  it("keeps heard source geometry directional even when the same actor can separately become visible", () => {
+    const world = createWorld();
+    world.addResident("resident.mira", "Mira", { x: 500, y: 500 });
+    world.addPlayer("player.jozz", { x: 700, y: 500 });
+
+    world.speak("player.jozz", "Mira, słyszysz mnie?", 420, ["resident.mira"]);
+    world.step();
+
+    const percepts = world.residentDiagnostics("resident.mira").recentPercepts;
+    const heard = percepts.find((percept) => percept.text === "Mira, słyszysz mnie?")!;
+    const sight = percepts.find((percept) => percept.modality === "sight" && percept.actorId === "player.jozz")!;
+
+    expect(heard.spatial.kind).toBe("directional");
+    if (heard.spatial.kind === "directional") {
+      expect(heard.spatial.direction.x).toBeGreaterThan(0.99);
+      expect(heard.spatial.distanceBand).toBe("mid");
+    }
+    expect(sight.spatial).toEqual({ kind: "exact", position: { x: 700, y: 500 } });
+  });
+
+  it("preserves a bounded World occurrence ledger independently from resident perception", () => {
+    const world = createWorld();
+    world.addResident("resident.mira", "Mira", { x: 500, y: 500 });
+    world.addPlayer("player.jozz", { x: 520, y: 500 });
+
+    const speech = world.speak("player.jozz", "evidence", 420, ["resident.mira"]);
+    const interaction = world.emitInteraction("player.jozz", "item.hammer", "touched hammer");
+    world.step();
+
+    const ledger = world.diagnostics().recentOccurrences;
+    expect(ledger.map((occurrence) => occurrence.id)).toEqual([speech.id, interaction.id]);
+    expect(ledger[0]!.position).toEqual({ x: 520, y: 500 });
+  });
+
   it("advances several resident activities through one World clock without any model response", () => {
     const world = createWorld();
     addFiveResidents(world);
@@ -129,11 +163,11 @@ describe("SPC Next five-resident world foundation", () => {
     world.speak("player.jozz", "Mira, tylko do ciebie", 420, ["resident.mira"]);
     world.step();
 
-    const miraPercept = world.residentDiagnostics("resident.mira").recentPercepts.at(-1)!;
-    const janekPercept = world.residentDiagnostics("resident.janek").recentPercepts.at(-1)!;
-    expect(miraPercept.text).toBe("Mira, tylko do ciebie");
+    const miraPercept = world.residentDiagnostics("resident.mira").recentPercepts
+      .findLast((percept) => percept.text === "Mira, tylko do ciebie")!;
+    const janekPercept = world.residentDiagnostics("resident.janek").recentPercepts
+      .findLast((percept) => percept.text === "Mira, tylko do ciebie")!;
     expect(miraPercept.addressed).toBe(true);
-    expect(janekPercept.text).toBe("Mira, tylko do ciebie");
     expect(janekPercept.addressed).toBe(false);
     expect(world.takeCognitionBatch("resident.mira")?.reasons[0]?.salience).toBe(1);
     expect(world.takeCognitionBatch("resident.janek")).toBeNull();
@@ -150,6 +184,20 @@ describe("SPC Next five-resident world foundation", () => {
     const stats = world.spatialStats();
     expect(stats.totalQueries).toBeGreaterThan(0);
     expect(stats.lastCandidateCount).toBeLessThanOrEqual(3);
+  });
+
+  it("keeps the initiating causal story readable through a long local travel interval", () => {
+    const world = createWorld();
+    world.addResident("resident.mira", "Mira", { x: 500, y: 500 });
+    world.setResidentActivity("resident.mira", travel("mira-long", 3_500, 500));
+
+    world.step(1_200);
+    const trace = world.residentDiagnostics("resident.mira").trace;
+    const commandEvents = trace.filter((event) => event.kind === "command");
+
+    expect(trace.some((event) => event.kind === "activity_changed" && event.refIds.includes("activity:mira-long:travel"))).toBe(true);
+    expect(commandEvents.length).toBeLessThan(20);
+    expect(trace.length).toBeLessThan(64);
   });
 
   it("makes communication an embodied activity: approach first, speech only after contact", () => {
