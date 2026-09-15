@@ -339,7 +339,7 @@ describe("ResidentContinuityKernel recovery authority", () => {
     });
   });
 
-  it("keeps proposal revocation history bounded without turning dead attempts back into live authority", () => {
+  it("keeps proposal revocation history bounded without pretending to remember an evicted stale cause", () => {
     const kernel = new ResidentContinuityKernel({ revocationLimit: 2 });
     const tickets = [];
     for (let index = 0; index < 3; index += 1) {
@@ -356,7 +356,7 @@ describe("ResidentContinuityKernel recovery authority", () => {
     ]);
     expect(kernel.commitSemanticProposal(tickets[0]!, { semanticCourse: "too late" })).toEqual({
       status: "rejected",
-      reason: "matter_terminal",
+      reason: "semantic_authority_stale",
     });
   });
 });
