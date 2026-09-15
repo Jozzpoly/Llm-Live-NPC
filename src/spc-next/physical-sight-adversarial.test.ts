@@ -87,7 +87,7 @@ describe("SPC physical point-sight adversarial qualification", () => {
     expect(sightLifecycle(world).at(-1)?.phenomenon).toBe("actor_sight_enter");
 
     world.setActorVelocity("player.jozz", { x: 0, y: -180 });
-    world.step(4);
+    world.step(12); // Move 36 units: the ray now crosses the upper wall interior, not the doorway.
 
     const player = world.publicSnapshot().actors.find((actor) => actor.id === "player.jozz")!;
     expect(Math.hypot(player.position.x - 300, player.position.y - 500)).toBeLessThan(500 + 12);
