@@ -10,6 +10,7 @@ import type {
   CognitionReason,
   CognitionReasonKind,
   PerceptDistanceBand,
+  PerceptPhenomenon,
   PerceptSpatialCue,
   ResidentActivity,
   ResidentPercept,
@@ -43,6 +44,8 @@ Supported replacement activities:
 There is deliberately no generic 'work' action in this cognition interface until work has a real World-owned mechanic. Do not invent one.
 
 Speech is embodied. There is no top-level instant reply channel. If you want to answer somebody, choose communicate. Nearby overheard speech is not automatically your responsibility. A hearing percept may contain only a direction and rough distance band; that is NOT an exact position. Never infer exact coordinates from hearing. A remembered exact actor position comes from earlier exact evidence and may be stale.
+
+Actor visibility and remembered position are distinct. currentlyVisible=true means the resident still has current visual contact. currentlyVisible=false with lastKnownPosition means only that the actor was last seen there. An actor_sight_exit percept never reveals a hidden new position.
 
 Region knowledge is resident-specific. 'familiar' means this resident already knows the place from their life but has not visited it in the represented history; 'visited' means the resident physically entered it. Do not infer unknown intermediate routes merely because you know a destination name.
 
@@ -120,6 +123,10 @@ const activityKinds = new Set<ResidentActivity["kind"]>([
 ]);
 const distanceBands = new Set<PerceptDistanceBand>(["near", "mid", "far"]);
 const regionKnowledgeKinds = new Set(["familiar", "visited"] as const);
+const perceptPhenomena = new Set<PerceptPhenomenon>([
+  "speech", "movement", "interaction", "system",
+  "actor_sight_enter", "actor_sight_update", "actor_sight_exit",
+]);
 
 function sanitizeActivity(value: unknown): ResidentActivity | null {
   if (!record(value)) return null;
@@ -168,6 +175,46 @@ function sanitizeSpatial(value: unknown, modality: ResidentPercept["modality"]):
   return null;
 }
 
+function validPerceptSemantics(percept: ResidentPercept): boolean {
+  const exact = percept.spatial.kind === "exact";
+  const directional = percept.spatial.kind === "directional";
+  const none = percept.spatial.kind === "none";
+  switch (percept.phenomenon) {
+    case "speech":
+      return percept.modality === "hearing"
+        && percept.actorId !== null
+        && percept.subjectId === null
+        && percept.text !== null
+        && (directional || none);
+    case "interaction":
+    case "movement":
+      return percept.modality === "sight"
+        && percept.actorId !== null
+        && percept.text === null
+        && exact
+        && !percept.addressed;
+    case "system":
+      return percept.text === null
+        && !percept.addressed
+        && ((percept.modality === "sight" && exact) || (percept.modality === "self" && none));
+    case "actor_sight_enter":
+    case "actor_sight_update":
+      return percept.modality === "sight"
+        && percept.actorId !== null
+        && percept.subjectId === percept.actorId
+        && percept.text === null
+        && exact
+        && !percept.addressed;
+    case "actor_sight_exit":
+      return percept.modality === "sight"
+        && percept.actorId !== null
+        && percept.subjectId === percept.actorId
+        && percept.text === null
+        && none
+        && !percept.addressed;
+  }
+}
+
 export function sanitizeSpcNextContext(value: unknown): ResidentCognitionContext | null {
   if (!record(value) || value.version !== 1 || !record(value.resident) || !safeInt(value.tick)) return null;
   const residentId = identifier(value.resident.id);
@@ -192,8 +239,10 @@ export function sanitizeSpcNextContext(value: unknown): ResidentCognitionContext
   const recentPercepts: ResidentPercept[] = [];
   for (const raw of value.recentPercepts) {
     if (!record(raw) || !safeInt(raw.tick) || raw.tick > value.tick || !["hearing", "sight", "self"].includes(String(raw.modality))
+      || typeof raw.phenomenon !== "string" || !perceptPhenomena.has(raw.phenomenon as PerceptPhenomenon)
       || typeof raw.addressed !== "boolean") return null;
     const modality = raw.modality as ResidentPercept["modality"];
+    const phenomenon = raw.phenomenon as PerceptPhenomenon;
     const id = identifier(raw.id);
     const occurrenceId = identifier(raw.occurrenceId);
     const actorId = raw.actorId === null ? null : identifier(raw.actorId);
@@ -205,7 +254,11 @@ export function sanitizeSpcNextContext(value: unknown): ResidentCognitionContext
       || (actorId === null && raw.actorId !== null)
       || (subjectId === null && raw.subjectId !== null)
       || (text === null && raw.text !== null)) return null;
-    recentPercepts.push({ id, occurrenceId, tick: raw.tick, modality, actorId, subjectId, spatial, summary, text, addressed: raw.addressed });
+    const percept: ResidentPercept = {
+      id, occurrenceId, tick: raw.tick, phenomenon, modality, actorId, subjectId, spatial, summary, text, addressed: raw.addressed,
+    };
+    if (!validPerceptSemantics(percept)) return null;
+    recentPercepts.push(percept);
   }
 
   if (!Array.isArray(value.concerns) || value.concerns.length > 32) return null;
@@ -232,12 +285,13 @@ export function sanitizeSpcNextContext(value: unknown): ResidentCognitionContext
   const knownActors: KnownActorContext[] = [];
   const actorIds = new Set<string>();
   for (const raw of value.knownActors) {
-    if (!record(raw)) return null;
+    if (!record(raw) || typeof raw.currentlyVisible !== "boolean") return null;
     const id = identifier(raw.id), label = boundedText(raw.label, 120);
     if (!id || !label || actorIds.has(id)) return null;
     actorIds.add(id);
     const lastKnownPosition = raw.lastKnownPosition === null ? null : vec(raw.lastKnownPosition);
     const lastObservedTick = raw.lastObservedTick === null ? null : (safeInt(raw.lastObservedTick) ? raw.lastObservedTick : null);
+    const visibilityChangedTick = raw.visibilityChangedTick === null ? null : (safeInt(raw.visibilityChangedTick) ? raw.visibilityChangedTick : null);
     const lastHeardDirection = raw.lastHeardDirection === null ? null : vec(raw.lastHeardDirection);
     const lastHeardDistanceBand = raw.lastHeardDistanceBand === null ? null
       : (typeof raw.lastHeardDistanceBand === "string" && distanceBands.has(raw.lastHeardDistanceBand as PerceptDistanceBand)
@@ -245,11 +299,20 @@ export function sanitizeSpcNextContext(value: unknown): ResidentCognitionContext
     const lastHeardTick = raw.lastHeardTick === null ? null : (safeInt(raw.lastHeardTick) ? raw.lastHeardTick : null);
     if ((lastKnownPosition === null && raw.lastKnownPosition !== null)
       || (lastObservedTick === null && raw.lastObservedTick !== null)
+      || (visibilityChangedTick === null && raw.visibilityChangedTick !== null)
       || (lastHeardDirection === null && raw.lastHeardDirection !== null)
       || (lastHeardDistanceBand === null && raw.lastHeardDistanceBand !== null)
       || (lastHeardTick === null && raw.lastHeardTick !== null)) return null;
     if ((lastKnownPosition === null) !== (lastObservedTick === null)) return null;
-    if ((lastObservedTick !== null && lastObservedTick > value.tick) || (lastHeardTick !== null && lastHeardTick > value.tick)) return null;
+    if ((lastObservedTick !== null && lastObservedTick > value.tick)
+      || (visibilityChangedTick !== null && visibilityChangedTick > value.tick)
+      || (lastHeardTick !== null && lastHeardTick > value.tick)) return null;
+    if (raw.currentlyVisible && (lastKnownPosition === null || lastObservedTick === null || visibilityChangedTick === null)) return null;
+    if (raw.currentlyVisible && visibilityChangedTick! > lastObservedTick!) return null;
+    if (!raw.currentlyVisible && visibilityChangedTick === null && lastKnownPosition !== null) {
+      // A remembered exact position can predate this continuity contract, but current generated contexts always carry the loss/acquisition transition.
+      return null;
+    }
     const hearingFields = [lastHeardDirection, lastHeardDistanceBand, lastHeardTick];
     if (hearingFields.some((field) => field === null) && hearingFields.some((field) => field !== null)) return null;
     if (lastHeardDirection) {
@@ -258,7 +321,17 @@ export function sanitizeSpcNextContext(value: unknown): ResidentCognitionContext
       lastHeardDirection.x /= magnitude;
       lastHeardDirection.y /= magnitude;
     }
-    knownActors.push({ id, label, lastKnownPosition, lastObservedTick, lastHeardDirection, lastHeardDistanceBand, lastHeardTick });
+    knownActors.push({
+      id,
+      label,
+      lastKnownPosition,
+      lastObservedTick,
+      currentlyVisible: raw.currentlyVisible,
+      visibilityChangedTick,
+      lastHeardDirection,
+      lastHeardDistanceBand,
+      lastHeardTick,
+    });
   }
 
   if (!Array.isArray(value.knownRegions) || value.knownRegions.length > 64) return null;
