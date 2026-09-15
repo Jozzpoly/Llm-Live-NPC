@@ -3,12 +3,14 @@ export interface Vec2 {
   y: number;
 }
 
-export interface WorldBounds {
+export interface AxisAlignedBounds {
   minX: number;
   minY: number;
   maxX: number;
   maxY: number;
 }
+
+export interface WorldBounds extends AxisAlignedBounds {}
 
 export interface WorldRegion {
   id: string;
@@ -18,6 +20,13 @@ export interface WorldRegion {
   maxX: number;
   maxY: number;
   priority?: number;
+}
+
+/** Authored opaque geometry. This contract says nothing about movement collision. */
+export interface SightBlocker {
+  id: string;
+  label: string;
+  bounds: AxisAlignedBounds;
 }
 
 export type ActorKind = "player" | "resident";
@@ -180,6 +189,8 @@ export interface WorldPublicSnapshot {
 export interface SpcWorldOptions {
   bounds: WorldBounds;
   regions: readonly WorldRegion[];
+  /** Optional until authored physical sight geometry is introduced into a specimen. */
+  sightBlockers?: readonly SightBlocker[];
   chunkSize: number;
   fixedDeltaSeconds: number;
 }
