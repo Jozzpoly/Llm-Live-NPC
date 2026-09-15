@@ -17,7 +17,7 @@ describe("five-resident living-region specimen", () => {
     expect(Math.max(...xPositions) - Math.min(...xPositions)).toBeGreaterThan(5_000);
   });
 
-  it("runs a long local-life interval with bounded private memory and one authoritative clock", () => {
+  it("survives a long idle-heavy interval with bounded private memory and one authoritative clock", () => {
     const world = createFiveResidentRegionWorld();
     world.step(6_000);
 
@@ -34,6 +34,14 @@ describe("five-resident living-region specimen", () => {
     const nela = snapshot.actors.find((actor) => actor.id === "resident.nela")!;
     expect(nela.position.x).toBeGreaterThan(7_000);
     expect(world.regionAt(nela.position)?.id).toBe("ruins");
+  });
+
+  it("characterizes the current specimen honestly: initial authored activities collapse to idle within 15 seconds", () => {
+    const world = createFiveResidentRegionWorld();
+    world.step(900);
+
+    expect(world.publicSnapshot().residents.map((resident) => resident.activity.kind))
+      .toEqual(["idle", "idle", "idle", "idle", "idle"]);
   });
 
   it("does not synchronize quiet cognition deadlines across all five residents through a global scheduler", () => {

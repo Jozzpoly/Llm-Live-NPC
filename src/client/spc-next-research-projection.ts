@@ -1,4 +1,7 @@
 import type {
+  ActorMotionConstraint,
+  ActorMotionOutcome,
+  ActorMotionResolution,
   ResidentDiagnostics,
   ResidentPublicState,
   Vec2,
@@ -18,6 +21,14 @@ export interface DirectionalHearingMarker {
   direction: Vec2;
   distanceBand: "near" | "mid" | "far";
   summary: string;
+}
+
+export interface MotionFeedbackMarker {
+  actorId: string;
+  desiredVelocity: Vec2;
+  resolvedVelocity: Vec2;
+  resolution: ActorMotionResolution;
+  constraints: readonly ActorMotionConstraint[];
 }
 
 export function projectEpistemicActors(diagnostics: ResidentDiagnostics): EpistemicActorMarker[] {
@@ -64,6 +75,21 @@ export function projectRecentDirectionalHearing(
         summary: percept.summary,
       };
     });
+}
+
+export function projectMotionFeedback(
+  outcomes: readonly ActorMotionOutcome[],
+  actorId: string,
+): MotionFeedbackMarker | null {
+  const outcome = outcomes.find((candidate) => candidate.actorId === actorId);
+  if (!outcome) return null;
+  return {
+    actorId,
+    desiredVelocity: { ...outcome.desiredVelocity },
+    resolvedVelocity: { ...outcome.resolvedVelocity },
+    resolution: outcome.resolution,
+    constraints: [...outcome.constraints],
+  };
 }
 
 export function resolveActivityTarget(

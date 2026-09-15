@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
-import type { ResidentDiagnostics, ResidentPublicState, WorldPublicSnapshot } from "../spc-next/contracts";
+import type {
+  ActorMotionOutcome,
+  ResidentDiagnostics,
+  ResidentPublicState,
+  WorldPublicSnapshot,
+} from "../spc-next/contracts";
 import {
   projectEpistemicActors,
+  projectMotionFeedback,
   projectRecentDirectionalHearing,
   resolveActivityTarget,
 } from "./spc-next-research-projection";
@@ -98,6 +104,28 @@ describe("SPC Next research projection", () => {
       distanceBand: "far",
       summary: "speech",
     }]);
+  });
+
+  it("keeps controller intent distinct from resolved motion in the visual research projection", () => {
+    const outcomes: ActorMotionOutcome[] = [{
+      actorId: "resident.mira",
+      before: { x: 1_000, y: 500 },
+      desiredVelocity: { x: 100, y: 0 },
+      intendedAfter: { x: 1_100, y: 500 },
+      after: { x: 1_000, y: 500 },
+      resolvedVelocity: { x: 0, y: 0 },
+      resolution: "blocked",
+      constraints: ["world_bounds"],
+    }];
+
+    expect(projectMotionFeedback(outcomes, "resident.mira")).toEqual({
+      actorId: "resident.mira",
+      desiredVelocity: { x: 100, y: 0 },
+      resolvedVelocity: { x: 0, y: 0 },
+      resolution: "blocked",
+      constraints: ["world_bounds"],
+    });
+    expect(projectMotionFeedback(outcomes, "resident.ida")).toBeNull();
   });
 
   it("resolves activity targets from public World truth rather than private memory", () => {
