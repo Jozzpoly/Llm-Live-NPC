@@ -50,8 +50,7 @@ export interface WorldOccurrence {
 export type PerceptionModality = "hearing" | "sight" | "self";
 export type PerceptDistanceBand = "near" | "mid" | "far";
 export type PerceptPhenomenon =
-  | "speech"
-  | "interaction"
+  | OccurrenceKind
   | "actor_sight_enter"
   | "actor_sight_update"
   | "actor_sight_exit";
