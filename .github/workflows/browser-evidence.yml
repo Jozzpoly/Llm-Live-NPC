@@ -48,19 +48,19 @@ jobs:
           echo "CHROME_PATH=$CHROME_PATH" >> "$GITHUB_ENV"
           "$CHROME_PATH" --version
 
-      - name: Start Vite preview
+      - name: Start static built-client server
         shell: bash
         run: |
           set -euo pipefail
-          npm exec -- vite preview --host 127.0.0.1 --port 4173 > /tmp/spc-vite.log 2>&1 &
-          echo $! > /tmp/spc-vite.pid
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory dist/client > /tmp/spc-static.log 2>&1 &
+          echo $! > /tmp/spc-static.pid
           for attempt in $(seq 1 80); do
-            if curl --fail --silent --show-error http://127.0.0.1:4173/?spc=1 > /dev/null; then
+            if curl --fail --silent --show-error 'http://127.0.0.1:4173/?spc=1' > /dev/null; then
               exit 0
             fi
             sleep 0.25
           done
-          cat /tmp/spc-vite.log
+          cat /tmp/spc-static.log
           exit 1
 
       - name: Collect SPC browser evidence
@@ -74,8 +74,8 @@ jobs:
         if: always()
         shell: bash
         run: |
-          echo "--- Vite preview ---"
-          cat /tmp/spc-vite.log || true
+          echo "--- Static client server ---"
+          cat /tmp/spc-static.log || true
           echo "--- Evidence ---"
           if [ -f evidence/browser/evidence.json ]; then
             node -e 'const r=require("./evidence/browser/evidence.json"); console.log(JSON.stringify({sourceSha:r.sourceSha,outcome:r.outcome,chrome:r.chrome,assertions:r.assertions,checkpoints:r.checkpoints?.map(c=>({name:c.name,tick:c.snapshot?.tick,selected:c.snapshot?.selectedName,worldOnly:c.worldOnly,bytes:c.bytes})),runtimeExceptions:r.runtimeExceptions?.length,logErrors:r.logErrors?.length,networkFailures:r.networkFailures?.length,httpErrors:r.httpErrors?.length},null,2))'
