@@ -21,6 +21,7 @@ function speech(id: string, tick: number, addressed: boolean, text = "Mira, odpo
     id: `percept:${id}`,
     occurrenceId: `occurrence:${id}`,
     tick,
+    phenomenon: "speech",
     modality: "hearing",
     actorId: "player.jozz",
     subjectId: null,
