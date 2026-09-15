@@ -197,12 +197,16 @@ describe("SPC canonical evidence snapshot v1", () => {
     expect(beforePressure.continuity.activeRunCanMutateWorld).toBe(true);
 
     let semanticPressure = slice.stepJanek();
-    let sawInspect = semanticPressure.status === "running" && semanticPressure.local.phase === "inspect";
+    let sawInspect = semanticPressure.status === "running"
+      && semanticPressure.local.status === "running"
+      && semanticPressure.local.phase === "inspect";
     let guard = 0;
     while (guard < MAX_MISSING_CRATE_STEPS && semanticPressure.status === "running") {
       slice.world.step();
       semanticPressure = slice.stepJanek();
-      sawInspect ||= semanticPressure.status === "running" && semanticPressure.local.phase === "inspect";
+      sawInspect ||= semanticPressure.status === "running"
+        && semanticPressure.local.status === "running"
+        && semanticPressure.local.phase === "inspect";
       guard += 1;
     }
     expect(guard).toBeLessThan(MAX_MISSING_CRATE_STEPS);
