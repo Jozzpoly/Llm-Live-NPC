@@ -6,6 +6,7 @@ on:
       - "src/**"
       - "worker/**"
       - "scripts/spc-browser-evidence.mjs"
+      - "scripts/analyze-spc-browser-evidence.mjs"
       - "index.html"
       - "package.json"
       - "package-lock.json"
@@ -70,6 +71,12 @@ jobs:
           SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: node scripts/spc-browser-evidence.mjs
 
+      - name: Analyze browser evidence
+        if: success()
+        env:
+          EVIDENCE_OUTPUT_DIR: evidence/browser
+        run: node scripts/analyze-spc-browser-evidence.mjs
+
       - name: Print evidence summary
         if: always()
         shell: bash
@@ -82,6 +89,8 @@ jobs:
           else
             cat evidence/browser/harness-error.json || true
           fi
+          echo "--- Derived analysis ---"
+          cat evidence/browser/analysis.md 2>/dev/null || true
 
       - name: Upload browser evidence artifact
         if: always()
