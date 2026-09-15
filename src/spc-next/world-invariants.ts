@@ -3,6 +3,7 @@ import {
   type ActorState,
   type ResidentActivity,
   type ResidentProfile,
+  type SightBlocker,
   type SpcWorldOptions,
   type Vec2,
   type WorldBounds,
@@ -36,6 +37,26 @@ export function validateWorldOptions(options: SpcWorldOptions): void {
         throw new Error(`overlapping regions require distinct priority: ${a.id} / ${b.id}`);
       }
     }
+  }
+
+  const sightBlockerIds = new Set<string>();
+  for (const blocker of options.sightBlockers ?? []) {
+    validateSightBlocker(blocker, options.bounds);
+    if (sightBlockerIds.has(blocker.id)) throw new Error(`duplicate sight blocker id: ${blocker.id}`);
+    sightBlockerIds.add(blocker.id);
+  }
+}
+
+export function validateSightBlocker(blocker: SightBlocker, worldBounds: WorldBounds): void {
+  assertNonEmpty(blocker.id, "sight blocker id");
+  assertNonEmpty(blocker.label, `sight blocker ${blocker.id} label`);
+  const { minX, minY, maxX, maxY } = blocker.bounds;
+  if (![minX, minY, maxX, maxY].every(Number.isFinite)) {
+    throw new Error(`sight blocker bounds must be finite: ${blocker.id}`);
+  }
+  if (minX >= maxX || minY >= maxY) throw new Error(`sight blocker must have positive area: ${blocker.id}`);
+  if (minX < worldBounds.minX || maxX > worldBounds.maxX || minY < worldBounds.minY || maxY > worldBounds.maxY) {
+    throw new Error(`sight blocker outside world bounds: ${blocker.id}`);
   }
 }
 
