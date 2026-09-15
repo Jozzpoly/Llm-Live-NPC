@@ -11,6 +11,8 @@ export interface KnownActorContext {
   label: string;
   lastKnownPosition: Vec2 | null;
   lastObservedTick: number | null;
+  currentlyVisible: boolean;
+  visibilityChangedTick: number | null;
   lastHeardDirection: Vec2 | null;
   lastHeardDistanceBand: PerceptDistanceBand | null;
   lastHeardTick: number | null;
