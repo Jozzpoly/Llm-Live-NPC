@@ -17,6 +17,7 @@ export interface WorldRegion {
   minY: number;
   maxX: number;
   maxY: number;
+  priority?: number;
 }
 
 export type ActorKind = "player" | "resident";
