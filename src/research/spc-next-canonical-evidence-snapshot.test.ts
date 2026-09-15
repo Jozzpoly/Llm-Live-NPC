@@ -10,6 +10,7 @@ const RESIDENT_ID = "resident.janek";
 const DELIVERY_MATTER = "matter.janek.crate-delivery";
 const MISSING_MATTER = "matter.janek.missing-crate";
 const CRATE_ID = "crate.workshop.01";
+const MAX_MISSING_CRATE_STEPS = 520;
 
 describe("SPC canonical evidence snapshot v1", () => {
   it("joins World material truth, Janek private knowledge and exact continuity authority during delivery", () => {
@@ -196,10 +197,16 @@ describe("SPC canonical evidence snapshot v1", () => {
     expect(beforePressure.continuity.activeRunCanMutateWorld).toBe(true);
 
     let semanticPressure = slice.stepJanek();
-    for (let guard = 0; guard < 360 && semanticPressure.status === "running"; guard += 1) {
+    let sawInspect = semanticPressure.status === "running" && semanticPressure.local.phase === "inspect";
+    let guard = 0;
+    while (guard < MAX_MISSING_CRATE_STEPS && semanticPressure.status === "running") {
       slice.world.step();
       semanticPressure = slice.stepJanek();
+      sawInspect ||= semanticPressure.status === "running" && semanticPressure.local.phase === "inspect";
+      guard += 1;
     }
+    expect(guard).toBeLessThan(MAX_MISSING_CRATE_STEPS);
+    expect(sawInspect).toBe(true);
     expect(semanticPressure.status).toBe("semantic_pressure");
 
     const afterPressure = captureSpcCanonicalEvidenceSnapshot({
@@ -228,15 +235,11 @@ describe("SPC canonical evidence snapshot v1", () => {
       activeRunCanMutateWorld: false,
     });
 
-    const failedPickupFact = afterPressure.causalProvenance.residentWorldActionFacts.at(-1);
-    expect(failedPickupFact).toMatchObject({
-      runId: "run.janek.pickup-last-known-crate",
-      action: { kind: "material_pickup", objectId: CRATE_ID },
-      resolution: {
-        status: "resolved",
-        outcomeStatus: "rejected",
-      },
-    });
+    // Checked absence is produced by embodied inspection, not an object-id oracle.
+    // Research may see the hidden World/private-knowledge divergence, but the resident
+    // causal ledger must contain no pickup attempt against the unseen object.
+    expect(afterPressure.causalProvenance.residentWorldActionFacts).toEqual([]);
+    expect(afterPressure.authoritativeWorld.recentMaterialActions.filter((action) => action.actorId === RESIDENT_ID)).toEqual([]);
     expect(afterPressure.continuity.lastOutcomeEvidence?.id).toContain("run.janek.pickup-last-known-crate");
 
     const afterWorldCrate = afterPressure.authoritativeWorld.materialObjects.find((object) => object.id === CRATE_ID);
