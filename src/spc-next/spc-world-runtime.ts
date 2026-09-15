@@ -38,6 +38,18 @@ interface RegisteredResident {
   sight: SightContinuityTracker;
 }
 
+interface OccurrenceObserverSnapshot {
+  residentId: string;
+  position: Vec2;
+  hearingRadius: number;
+  sightRadius: number;
+}
+
+interface PendingOccurrence {
+  occurrence: WorldOccurrence;
+  observers: readonly OccurrenceObserverSnapshot[];
+}
+
 export interface SpcWorldDiagnostics {
   tick: number;
   recentOccurrences: readonly WorldOccurrence[];
@@ -54,7 +66,7 @@ export class SpcWorldRuntime {
   private readonly residents = new Map<string, RegisteredResident>();
   private readonly spatial: ChunkSpatialIndex;
   private readonly sightGeometry: SightGeometry;
-  private pendingOccurrences: WorldOccurrence[] = [];
+  private pendingOccurrences: PendingOccurrence[] = [];
   private readonly recentOccurrences: WorldOccurrence[] = [];
 
   constructor(readonly options: SpcWorldOptions) {
@@ -257,27 +269,25 @@ export class SpcWorldRuntime {
     }
   }
 
-  private deliverOccurrence(occurrence: WorldOccurrence): void {
-    const candidates = this.spatial.queryRadius(occurrence.position, occurrence.radius);
-    for (const residentId of candidates) {
-      if (residentId === occurrence.actorId) continue;
-      const registered = this.residents.get(residentId);
+  private deliverOccurrence(pending: PendingOccurrence): void {
+    const { occurrence, observers } = pending;
+    for (const observer of observers) {
+      const registered = this.residents.get(observer.residentId);
       if (!registered) continue;
-      const residentActor = this.requireActor(residentId);
-      const distanceSq = distanceSquared(residentActor.position, occurrence.position);
+      const distanceSq = distanceSquared(observer.position, occurrence.position);
 
       let modality: ResidentPercept["modality"] | null = null;
       let spatial: PerceptSpatialCue = { kind: "none" };
       if (occurrence.kind === "speech") {
-        const range = Math.min(occurrence.radius, residentActor.hearingRadius);
+        const range = Math.min(occurrence.radius, observer.hearingRadius);
         if (distanceSq <= range * range) {
           modality = "hearing";
-          spatial = directionalHearingCue(residentActor.position, occurrence.position, range);
+          spatial = directionalHearingCue(observer.position, occurrence.position, range);
         }
       } else {
-        const range = Math.min(occurrence.radius, residentActor.sightRadius);
+        const range = Math.min(occurrence.radius, observer.sightRadius);
         if (distanceSq <= range * range
-          && this.sightGeometry.hasLineOfSight(residentActor.position, occurrence.position)) {
+          && this.sightGeometry.hasLineOfSight(observer.position, occurrence.position)) {
           modality = "sight";
           spatial = { kind: "exact", position: { ...occurrence.position } };
         }
@@ -285,9 +295,9 @@ export class SpcWorldRuntime {
       if (!modality) continue;
 
       registered.runtime.ingestPercepts([{
-        id: `percept:${residentId}:${this.tickValue}:${this.perceptSequence++}`,
+        id: `percept:${observer.residentId}:${occurrence.tick}:${this.perceptSequence++}`,
         occurrenceId: occurrence.id,
-        tick: this.tickValue,
+        tick: occurrence.tick,
         phenomenon: occurrence.kind,
         modality,
         actorId: occurrence.actorId,
@@ -295,8 +305,8 @@ export class SpcWorldRuntime {
         spatial,
         summary: occurrence.summary,
         text: occurrence.text,
-        addressed: occurrence.addressedActorIds.includes(residentId),
-      }], residentActor.position);
+        addressed: occurrence.addressedActorIds.includes(observer.residentId),
+      }], observer.position);
     }
   }
 
@@ -356,7 +366,19 @@ export class SpcWorldRuntime {
 
   private queueOccurrence(occurrence: WorldOccurrence): void {
     const stored = structuredClone(occurrence);
-    this.pendingOccurrences.push(stored);
+    const observers: OccurrenceObserverSnapshot[] = [];
+    for (const residentId of this.spatial.queryRadius(stored.position, stored.radius)) {
+      if (residentId === stored.actorId) continue;
+      if (!this.residents.has(residentId)) continue;
+      const actor = this.requireActor(residentId);
+      observers.push({
+        residentId,
+        position: { ...actor.position },
+        hearingRadius: actor.hearingRadius,
+        sightRadius: actor.sightRadius,
+      });
+    }
+    this.pendingOccurrences.push({ occurrence: stored, observers });
     this.recentOccurrences.push(structuredClone(stored));
     while (this.recentOccurrences.length > WORLD_OCCURRENCE_LIMIT) this.recentOccurrences.shift();
   }
