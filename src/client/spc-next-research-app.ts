@@ -39,11 +39,9 @@ footer.innerHTML = [
   "<span>Zoom: kółko myszy</span>",
 ].join("");
 
-let latestFrame: SpcNextResearchFrame | null = null;
 let scene: SpcNextResearchScene;
 
 function renderPanel(frame: SpcNextResearchFrame): void {
-  latestFrame = frame;
   const selected = frame.selectedDiagnostics;
   const selectedActor = frame.selectedResidentId
     ? frame.snapshot.actors.find((actor) => actor.id === frame.selectedResidentId) ?? null
@@ -215,8 +213,3 @@ const resizeObserver = new ResizeObserver(() => game.scale.refresh());
 resizeObserver.observe(gameNode);
 game.events.once("destroy", () => resizeObserver.disconnect());
 if (import.meta.hot) import.meta.hot.dispose(() => game.destroy(true));
-
-queueMicrotask(() => {
-  latestFrame = scene.currentFrame();
-  renderPanel(latestFrame);
-});
