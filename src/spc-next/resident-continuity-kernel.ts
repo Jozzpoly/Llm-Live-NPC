@@ -1,4 +1,5 @@
 export type ResidentMatterStatus = "active" | "suspended" | "resolved" | "cancelled";
+export type ResidentRunOutcomeStatus = "succeeded" | "failed" | "blocked";
 
 export interface ResidentKernelEvidence {
   id: string;
@@ -33,9 +34,25 @@ export interface ResidentTaskRunBinding {
   semanticRevision: number;
 }
 
+export interface ResidentRunOutcome {
+  runId: string;
+  tick: number;
+  status: ResidentRunOutcomeStatus;
+  summary: string;
+}
+
 export type SemanticCommitResult =
   | { status: "applied"; matter: ResidentMatter }
   | { status: "rejected"; reason: "matter_missing" | "matter_terminal" | "semantic_authority_stale" };
+
+export type RunOutcomeReconciliationResult =
+  | {
+      status: "recorded";
+      binding: ResidentTaskRunBinding;
+      evidence: ResidentKernelEvidence;
+      matter: ResidentMatter;
+    }
+  | { status: "rejected"; reason: "run_missing" };
 
 export interface ResidentContinuityKernelOptions {
   recentEvidenceLimit?: number;
@@ -234,6 +251,39 @@ export class ResidentContinuityKernel {
       && matter.semanticRevision === binding.semanticRevision;
   }
 
+  /**
+   * Reconcile an already factual mechanical/World outcome back into resident evidence.
+   * This does not resolve semantic meaning. The caller owns proof that the outcome
+   * really occurred; this method only joins it to the exact resident run authority.
+   */
+  reconcileRunOutcome(outcome: ResidentRunOutcome): RunOutcomeReconciliationResult {
+    validateRunOutcome(outcome);
+    const binding = this.runBindings.get(outcome.runId);
+    if (!binding) return { status: "rejected", reason: "run_missing" };
+    const matter = this.matters.get(binding.matterId);
+    if (!matter || matter.activeRunId !== binding.runId) {
+      return { status: "rejected", reason: "run_missing" };
+    }
+
+    const resultEvidence = this.recordEvidence({
+      id: `task-outcome:${binding.runId}:${outcome.tick}`,
+      tick: outcome.tick,
+      kind: "task_outcome",
+      summary: `${outcome.status}: ${outcome.summary}`,
+    });
+
+    matter.lastOutcomeEvidenceId = resultEvidence.id;
+    matter.activeRunId = null;
+    this.runBindings.delete(binding.runId);
+
+    return {
+      status: "recorded",
+      binding: structuredClone(binding),
+      evidence: resultEvidence,
+      matter: structuredClone(matter),
+    };
+  }
+
   retireRun(runId: string): ResidentTaskRunBinding | null {
     const binding = this.runBindings.get(runId);
     if (!binding) return null;
@@ -249,8 +299,8 @@ export class ResidentContinuityKernel {
     if (isTerminal(matter.status)) return structuredClone(matter);
     matter.status = status;
     matter.suspendedByMatterId = null;
-    // Keep activeRunId until explicit mechanical retirement. canRunMutateWorld()
-    // already denies authority immediately because the matter is terminal.
+    // Keep activeRunId until explicit mechanical retirement/reconciliation.
+    // canRunMutateWorld() already denies authority immediately because the matter is terminal.
     this.pinnedSemanticEvidence.delete(matter.id);
     return structuredClone(matter);
   }
@@ -303,6 +353,14 @@ function validateEvidence(evidence: ResidentKernelEvidence): void {
   assertNonEmpty(evidence.summary, "evidence summary");
   if (!Number.isSafeInteger(evidence.tick) || evidence.tick < 0) {
     throw new Error("evidence tick must be a non-negative safe integer");
+  }
+}
+
+function validateRunOutcome(outcome: ResidentRunOutcome): void {
+  assertNonEmpty(outcome.runId, "run outcome run id");
+  assertNonEmpty(outcome.summary, "run outcome summary");
+  if (!Number.isSafeInteger(outcome.tick) || outcome.tick < 0) {
+    throw new Error("run outcome tick must be a non-negative safe integer");
   }
 }
 
