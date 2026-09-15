@@ -213,7 +213,7 @@ function escapeHtml(value: string): string {
     .replaceAll("'", "&#039;");
 }
 
-scene = new SpcNextResearchScene(renderPanel);
+scene = new SpcNextResearchScene(renderPanel, { manualWorldControl: evidenceMode });
 const game = new Phaser.Game({
   type: Phaser.AUTO,
   parent: gameNode,
@@ -233,16 +233,22 @@ const game = new Phaser.Game({
 if (evidenceMode) {
   const evidenceWindow = window as Window & {
     __SPC_EVIDENCE__?: Readonly<{
-      version: 1;
+      version: 2;
+      control: "manual-world";
+      ready(): boolean;
       snapshot(): SpcNextResearchFrame;
+      stepWorld(steps?: number): SpcNextResearchFrame;
     }>;
   };
   Object.defineProperty(evidenceWindow, "__SPC_EVIDENCE__", {
     configurable: true,
     enumerable: false,
     value: Object.freeze({
-      version: 1 as const,
+      version: 2 as const,
+      control: "manual-world" as const,
+      ready: () => scene.evidenceReady(),
       snapshot: () => scene.currentFrame(),
+      stepWorld: (steps = 1) => scene.stepEvidenceWorld(steps),
     }),
   });
 }
