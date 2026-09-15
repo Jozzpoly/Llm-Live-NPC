@@ -20,7 +20,7 @@ describe("missing-crate semantic provider composition", () => {
     const providerRun = membrane.prepare(slice.kernel, "matter.janek.missing-crate");
 
     expect(providerRun).toMatchObject({
-      version: 1,
+      version: 2,
       matter: {
         id: "matter.janek.missing-crate",
         semanticCourse: "go to the last-known workshop crate position and pick it up",
@@ -28,6 +28,7 @@ describe("missing-crate semantic provider composition", () => {
       semanticEvidence: {
         kind: "checked_absence",
       },
+      localCapabilities: [],
     });
     expect(providerRun).not.toHaveProperty("runId");
     expect(providerRun).not.toHaveProperty("activity");
@@ -38,6 +39,7 @@ describe("missing-crate semantic provider composition", () => {
     });
     expect(settled).toMatchObject({
       status: "applied",
+      localCapabilityId: null,
       matter: {
         id: "matter.janek.missing-crate",
         status: "active",
@@ -47,8 +49,8 @@ describe("missing-crate semantic provider composition", () => {
       },
     });
 
-    // Semantic authority alone may change resident meaning, but it does not grant
-    // body execution or mutate material World truth.
+    // With no resident-offered local capability, semantic authority may change
+    // meaning but still cannot create body execution or mutate material World truth.
     const afterActor = slice.world.publicSnapshot().actors.find((actor) => actor.id === "resident.janek")!;
     expect(afterActor.position).toEqual(beforeActor.position);
     expect(slice.world.materialObject("crate.workshop.01")).toEqual(beforeCrate);
