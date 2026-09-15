@@ -5,8 +5,13 @@ import type { SpcWorldRuntime } from "../spc-next/spc-world-runtime";
 import { createFiveResidentJanekMaterialSlice } from "../spc-next/five-resident-material-slice";
 import { createFiveResidentJanekMissingCrateStagedSlice } from "../spc-next/five-resident-missing-crate-slice";
 import { createFiveResidentJanekMissingCrateRecoverySlice } from "../spc-next/five-resident-missing-crate-recovery-slice";
+import { createFiveResidentJanekMissingCrateInterruptionSlice } from "../spc-next/five-resident-missing-crate-interruption-slice";
 
-export type SpcNextResearchScenarioKind = "baseline-delivery" | "missing-crate" | "missing-crate-recovery";
+export type SpcNextResearchScenarioKind =
+  | "baseline-delivery"
+  | "missing-crate"
+  | "missing-crate-recovery"
+  | "missing-crate-interruption";
 
 export interface SpcNextResearchScenario {
   readonly kind: SpcNextResearchScenarioKind;
@@ -24,6 +29,7 @@ export interface SpcNextResearchScenario {
 export function createSpcNextResearchScenario(kind: SpcNextResearchScenarioKind): SpcNextResearchScenario {
   if (kind === "missing-crate") return createMissingCrateScenario();
   if (kind === "missing-crate-recovery") return createMissingCrateRecoveryScenario();
+  if (kind === "missing-crate-interruption") return createMissingCrateInterruptionScenario();
   return createBaselineDeliveryScenario();
 }
 
@@ -32,6 +38,7 @@ export function researchScenarioKindFromSearch(search: string): SpcNextResearchS
   if (requested === null || requested === "" || requested === "baseline-delivery") return "baseline-delivery";
   if (requested === "missing-crate") return "missing-crate";
   if (requested === "missing-crate-recovery") return "missing-crate-recovery";
+  if (requested === "missing-crate-interruption") return "missing-crate-interruption";
   throw new Error(`unknown SPC Next research scenario: ${requested}`);
 }
 
@@ -93,6 +100,26 @@ function createMissingCrateRecoveryScenario(): SpcNextResearchScenario {
       // The recovery slice itself owns the deterministic one-tick state machine.
       // Scripted semantic choices exercise the real authority membrane but remain
       // research-fixture decisions; this scenario is not LIVE_PROVIDER evidence.
+      slice.advanceOneWorldTick();
+    },
+  };
+}
+
+function createMissingCrateInterruptionScenario(): SpcNextResearchScenario {
+  const slice = createFiveResidentJanekMissingCrateInterruptionSlice();
+  return {
+    kind: "missing-crate-interruption",
+    evidenceScenarioId: "browser-missing-crate-interruption",
+    residentId: "resident.janek",
+    matterId: "matter.janek.missing-crate",
+    world: slice.world,
+    kernel: slice.kernel,
+    materialKnowledge: slice.materialKnowledge,
+    authority: slice.authority,
+    advanceOneWorldTick(): void {
+      // Addressed participant speech still enters through World.speak() and private
+      // perception. This adapter only advances the already-qualified interruption
+      // state machine; it does not inject an interruption directly.
       slice.advanceOneWorldTick();
     },
   };
