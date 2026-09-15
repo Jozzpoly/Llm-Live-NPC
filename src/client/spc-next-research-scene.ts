@@ -392,13 +392,8 @@ export class SpcNextResearchScene extends Phaser.Scene {
         this.actorViews.set(actor.id, view);
       }
       view.container.setPosition(actor.position.x, actor.position.y);
-      const speed = Math.hypot(actor.velocity.x, actor.velocity.y);
-      if (speed > 1e-6) {
-        view.heading.setVisible(true);
-        view.heading.setRotation(Math.atan2(actor.velocity.y, actor.velocity.x));
-      } else {
-        view.heading.setVisible(false);
-      }
+      view.heading.setVisible(true);
+      view.heading.setRotation(Math.atan2(actor.facing.y, actor.facing.x));
       const publicResident = this.snapshot.residents.find((resident) => resident.id === actor.id);
       view.stateLabel.setText(publicResident ? publicResident.activity.kind : "player");
       view.stateLabel.setVisible(this.overlayEnabled);

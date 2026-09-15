@@ -122,7 +122,7 @@ async function run() {
 
   let cdp;
   const report = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     sourceSha: SOURCE_SHA,
     startedAt: new Date().toISOString(),
     chrome: null,
@@ -158,7 +158,11 @@ async function run() {
     report.visualEvidence = report.runs[0]?.visualEvidence ?? null;
 
     const first = report.runs[0];
-    assert(report, "player action becomes Janek private addressed speech evidence before interruption authority changes", Boolean(
+    const heardDirection = first?.interrupted?.addressedPercept?.spatial?.kind === "directional"
+      ? first.interrupted.addressedPercept.spatial.direction
+      : null;
+
+    assert(report, "player action becomes Janek private addressed directional speech evidence before interruption authority changes", Boolean(
       first?.interrupted?.scenarioId === "browser-missing-crate-interruption"
       && first.interrupted.matterStatus === "suspended"
       && first.interrupted.semanticRevision === 3
@@ -168,36 +172,45 @@ async function run() {
       && first.interrupted.addressedPercept?.actorId === PLAYER_ID
       && first.interrupted.addressedPercept?.text === CALL_TEXT
       && first.interrupted.addressedPercept?.addressed === true
+      && first.interrupted.addressedPercept?.spatial?.kind === "directional"
+      && Boolean(heardDirection)
     ), { call: first?.call ?? null, interrupted: first?.interrupted ?? null });
 
-    assert(report, "Janek visibly answers through a public World speech occurrence while the search remains suspended", Boolean(
+    assert(report, "Janek stops, turns to the private hearing cue, and answers through public World speech while search stays suspended", Boolean(
       first?.responded?.matterStatus === "suspended"
       && first.responded.semanticRevision === 3
       && first.responded.activeRunId === SEARCH_RUN_ID
       && first.responded.janekPosition
       && samePosition(first.responded.janekPosition, first.interrupted.janekPosition)
+      && vectorMagnitude(first.responded.janekVelocity) < 1e-9
+      && sameDirection(first.responded.janekFacing, heardDirection)
       && first.responded.responseOccurrence?.kind === "speech"
       && first.responded.responseOccurrence?.actorId === JANEK_ID
       && first.responded.responseOccurrence?.text === "Tak?"
       && first.responded.responseOccurrence?.addressedActorIds?.includes(PLAYER_ID)
     ), first?.responded ?? null);
 
-    assert(report, "bounded interruption keeps Janek physically still and preserves the exact search semantic revision and run id", Boolean(
+    assert(report, "bounded interruption keeps Janek physically still, facing the heard player direction, and preserves exact search continuity", Boolean(
       first?.holdInvariant?.positionStable === true
+      && first.holdInvariant.facingStable === true
       && first.holdInvariant.semanticRevisionStable === true
       && first.holdInvariant.runIdStable === true
       && first.holdInvariant.authorityDeniedThroughout === true
     ), first?.holdInvariant ?? null);
 
-    assert(report, "the same search run regains authority and physical motion after the player-contact matter ends", Boolean(
+    assert(report, "the same search run regains authority and real motion reclaims body facing after player contact ends", Boolean(
       first?.resumed?.matterStatus === "active"
       && first.resumed.semanticRevision === 3
       && first.resumed.activeRunId === SEARCH_RUN_ID
       && first.resumed.activeRunCanMutateWorld === true
+      && sameDirection(first.resumed.janekFacing, heardDirection)
       && first.afterResumeMotion?.activeRunId === SEARCH_RUN_ID
       && first.afterResumeMotion?.activeRunCanMutateWorld === true
       && distance(first.afterResumeMotion.janekPosition, first.resumed.janekPosition) > 0.01
-    ), { resumed: first?.resumed ?? null, afterResumeMotion: first?.afterResumeMotion ?? null });
+      && vectorMagnitude(first.afterResumeMotion.janekVelocity) > 0.01
+      && sameDirection(first.afterResumeMotion.janekFacing, normalized(first.afterResumeMotion.janekVelocity), 1e-6)
+      && !sameDirection(first.afterResumeMotion.janekFacing, heardDirection, 0.05)
+    ), { heardDirection, resumed: first?.resumed ?? null, afterResumeMotion: first?.afterResumeMotion ?? null });
 
     assert(report, "after returning to its own search Janek still reaches the original factual pickup consequence", Boolean(
       first?.resolved?.matterStatus === "resolved"
@@ -210,17 +223,17 @@ async function run() {
       && first.resolved.actionFacts[0]?.code === "picked_up"
     ), first?.resolved ?? null);
 
-    for (const checkpoint of ["interruptedHash", "respondedHash", "resumedHash", "resolvedHash"]) {
+    for (const checkpoint of ["interruptedHash", "respondedHash", "resumedHash", "afterResumeMotionHash", "resolvedHash"]) {
       const hashes = report.runs.map((entry) => entry[checkpoint]);
       assert(report, `${checkpoint} is reproducible across real-Chrome reloads`, hashes.every((hash) => hash === hashes[0]), hashes);
     }
-    assert(report, "interruption participant frames are non-empty and snapshot capture is canonically read-only", Boolean(
+    assert(report, "attention-turn participant frames are non-empty and screenshot capture is canonically read-only", Boolean(
       first?.visualEvidence?.searching?.bytes > 10_000
       && first.visualEvidence?.responded?.bytes > 10_000
-      && first.visualEvidence?.resumed?.bytes > 10_000
+      && first.visualEvidence?.returnedToSearch?.bytes > 10_000
       && first.visualEvidence?.resolved?.bytes > 10_000
     ), first?.visualEvidence ?? null);
-    assert(report, "interruption browser specimen has no uncaught runtime exceptions", report.runtimeExceptions.length === 0, report.runtimeExceptions);
+    assert(report, "interruption attention browser specimen has no uncaught runtime exceptions", report.runtimeExceptions.length === 0, report.runtimeExceptions);
 
     report.finishedAt = new Date().toISOString();
     report.outcome = report.assertions.every((entry) => entry.pass) ? "PASS" : "FAIL";
@@ -249,11 +262,13 @@ async function captureInterruptionRun(cdp, runIndex) {
   }
   if (!isActiveSearch(canonical)) throw new Error(`run ${runIndex}: active search not reached`);
 
-  // Advance one embodied search tick so the pre-interruption frame proves Janek was
-  // actually moving under the exact search run before the participant acted.
   frame = await stepEvidence(cdp, 1);
   canonical = await canonicalSnapshot(cdp);
   const searching = summarize(canonical, frame);
+  if (vectorMagnitude(searching.janekVelocity) <= 0.01) throw new Error(`run ${runIndex}: search did not establish physical motion`);
+  if (!sameDirection(searching.janekFacing, normalized(searching.janekVelocity), 1e-6)) {
+    throw new Error(`run ${runIndex}: search facing did not match resolved motion`);
+  }
   const visualEvidence = runIndex === 0 ? {} : null;
   if (visualEvidence) visualEvidence.searching = await captureFrozenScreenshot(cdp, "missing-crate-interruption-01-searching.png", canonical);
 
@@ -267,11 +282,19 @@ async function captureInterruptionRun(cdp, runIndex) {
   canonical = await canonicalSnapshot(cdp);
   const responded = summarize(canonical, frame, call.id);
   if (!responded.responseOccurrence) throw new Error(`run ${runIndex}: Janek did not emit a response occurrence`);
-  if (visualEvidence) visualEvidence.responded = await captureFrozenScreenshot(cdp, "missing-crate-interruption-02-responded.png", canonical);
+  const heardDirection = interrupted.addressedPercept?.spatial?.kind === "directional"
+    ? interrupted.addressedPercept.spatial.direction
+    : null;
+  if (!sameDirection(responded.janekFacing, heardDirection)) {
+    throw new Error(`run ${runIndex}: Janek did not face the private hearing cue while responding`);
+  }
+  if (visualEvidence) visualEvidence.responded = await captureFrozenScreenshot(cdp, "missing-crate-interruption-02-turned-and-responded.png", canonical);
 
   const holdPosition = { ...responded.janekPosition };
+  const holdFacing = { ...responded.janekFacing };
   const holdInvariant = {
     positionStable: true,
+    facingStable: true,
     semanticRevisionStable: true,
     runIdStable: true,
     authorityDeniedThroughout: true,
@@ -288,16 +311,23 @@ async function captureInterruptionRun(cdp, runIndex) {
     }
     holdInvariant.samples += 1;
     holdInvariant.positionStable &&= samePosition(current.janekPosition, holdPosition);
+    holdInvariant.facingStable &&= sameDirection(current.janekFacing, holdFacing);
     holdInvariant.semanticRevisionStable &&= current.semanticRevision === 3;
     holdInvariant.runIdStable &&= current.activeRunId === SEARCH_RUN_ID;
     holdInvariant.authorityDeniedThroughout &&= current.activeRunCanMutateWorld === false;
   }
   if (!resumed) throw new Error(`run ${runIndex}: search did not resume within ${MAX_TO_RESUME} ticks`);
-  if (visualEvidence) visualEvidence.resumed = await captureFrozenScreenshot(cdp, "missing-crate-interruption-03-resumed.png", canonical);
 
   frame = await stepEvidence(cdp, 1);
   canonical = await canonicalSnapshot(cdp);
   const afterResumeMotion = summarize(canonical, frame, call.id);
+  if (vectorMagnitude(afterResumeMotion.janekVelocity) <= 0.01) {
+    throw new Error(`run ${runIndex}: resumed search did not regain physical motion`);
+  }
+  if (!sameDirection(afterResumeMotion.janekFacing, normalized(afterResumeMotion.janekVelocity), 1e-6)) {
+    throw new Error(`run ${runIndex}: resumed physical motion did not reclaim facing`);
+  }
+  if (visualEvidence) visualEvidence.returnedToSearch = await captureFrozenScreenshot(cdp, "missing-crate-interruption-03-returned-to-search.png", canonical);
 
   let resolved = null;
   guard = 0;
@@ -323,6 +353,7 @@ async function captureInterruptionRun(cdp, runIndex) {
     interruptedHash: hashJson(interrupted),
     respondedHash: hashJson(responded),
     resumedHash: hashJson(resumed),
+    afterResumeMotionHash: hashJson(afterResumeMotion),
     resolvedHash: hashJson(resolved),
     visualEvidence,
   };
@@ -354,6 +385,7 @@ function summarize(canonical, frame, callId = null) {
     suspendedByMatterId: matter?.suspendedByMatterId ?? null,
     janekPosition: janek?.position ?? null,
     janekVelocity: janek?.velocity ?? null,
+    janekFacing: janek?.facing ?? null,
     crateLocation: crate?.location ?? null,
     addressedPercept,
     responseOccurrence,
@@ -433,10 +465,19 @@ function sortValue(value) {
 }
 function samePosition(a, b) { return Boolean(a && b && Math.abs(a.x - b.x) < 1e-9 && Math.abs(a.y - b.y) < 1e-9); }
 function distance(a, b) { return a && b ? Math.hypot(a.x - b.x, a.y - b.y) : Number.POSITIVE_INFINITY; }
+function vectorMagnitude(value) { return value ? Math.hypot(value.x, value.y) : Number.POSITIVE_INFINITY; }
+function normalized(value) {
+  const length = vectorMagnitude(value);
+  if (!Number.isFinite(length) || length <= 1e-12) return null;
+  return { x: value.x / length, y: value.y / length };
+}
+function sameDirection(a, b, tolerance = 1e-9) {
+  return Boolean(a && b && Math.abs(a.x - b.x) <= tolerance && Math.abs(a.y - b.y) <= tolerance);
+}
 
 run().catch((error) => {
   const fallback = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     sourceSha: SOURCE_SHA,
     outcome: "HARNESS_ERROR",
     error: { message: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : null },
