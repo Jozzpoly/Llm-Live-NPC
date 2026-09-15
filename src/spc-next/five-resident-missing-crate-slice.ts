@@ -19,6 +19,15 @@ export type FiveResidentJanekMissingCrateStep =
   | { status: "blocked_without_checked_absence"; local: Extract<ResidentMaterialPickupStep, { status: "blocked" }> }
   | { status: "authority_lost"; local: Extract<ResidentMaterialPickupStep, { status: "authority_lost" }> };
 
+export interface FiveResidentJanekMissingCrateOptions {
+  /**
+   * Test-fixture-only relocation speed used for the one hidden relocation tick.
+   * Different values let relational tests vary hidden World truth while keeping
+   * Janek's legally acquired history identical.
+   */
+  hiddenRelocationSpeed?: number;
+}
+
 export interface FiveResidentJanekMissingCrateSlice {
   world: SpcWorldRuntime;
   kernel: ResidentContinuityKernel;
@@ -38,7 +47,14 @@ export interface FiveResidentJanekMissingCrateSlice {
  * that old point, checked absence becomes new semantic evidence for the still-live
  * matter. No provider is involved yet.
  */
-export function createFiveResidentJanekMissingCrateSlice(): FiveResidentJanekMissingCrateSlice {
+export function createFiveResidentJanekMissingCrateSlice(
+  options: FiveResidentJanekMissingCrateOptions = {},
+): FiveResidentJanekMissingCrateSlice {
+  const hiddenRelocationSpeed = options.hiddenRelocationSpeed ?? 48_000;
+  if (!Number.isFinite(hiddenRelocationSpeed) || hiddenRelocationSpeed <= 0) {
+    throw new Error("hiddenRelocationSpeed must be positive and finite");
+  }
+
   const world = createFiveResidentRegionWorld();
 
   // Move Janek away from the crate while legacy control is still active, so the
@@ -56,13 +72,13 @@ export function createFiveResidentJanekMissingCrateSlice(): FiveResidentJanekMis
 
   // Adversarial external relocation between Janek's material perception samples.
   // The extreme helper speed is test-fixture pressure, not resident behavior.
-  world.addPlayer("player.relocator", { x: 1_952, y: 720 }, { maxSpeed: 48_000 });
+  world.addPlayer("player.relocator", { x: 1_952, y: 720 }, { maxSpeed: hiddenRelocationSpeed });
   const pickupByRelocator = world.attemptMaterialAction("player.relocator", {
     kind: "pickup",
     objectId: "crate.workshop.01",
   });
   if (pickupByRelocator.status !== "succeeded") throw new Error("failed to prepare hidden crate relocation");
-  world.setActorMotionIntent("player.relocator", { x: 48_000, y: 0 });
+  world.setActorMotionIntent("player.relocator", { x: hiddenRelocationSpeed, y: 0 });
   world.step();
   world.setActorMotionIntent("player.relocator", { x: 0, y: 0 });
   const relocator = world.publicSnapshot().actors.find((actor) => actor.id === "player.relocator");
