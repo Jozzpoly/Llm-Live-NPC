@@ -31,14 +31,22 @@ function context(): ResidentCognitionContext {
       modality: "hearing",
       actorId: "player.jozz",
       subjectId: null,
-      position: { x: 500, y: 500 },
+      spatial: { kind: "directional", direction: { x: -1, y: 0 }, distanceBand: "near" },
       summary: "speech",
       text: "Mira, sprawdź ruiny",
       addressed: true,
     }],
     concerns: [],
     beliefs: [],
-    knownActors: [{ id: "player.jozz", label: "Jozz", lastKnownPosition: { x: 500, y: 500 }, lastObservedTick: 120 }],
+    knownActors: [{
+      id: "player.jozz",
+      label: "Jozz",
+      lastKnownPosition: null,
+      lastObservedTick: null,
+      lastHeardDirection: { x: -1, y: 0 },
+      lastHeardDistanceBand: "near",
+      lastHeardTick: 120,
+    }],
     knownRegions: [
       { id: "hearth", label: "Hearth" },
       { id: "ruins", label: "Ruins" },
@@ -132,30 +140,46 @@ describe("SPC Next cognition contract", () => {
     expect(parseResidentCognitionProposal(fabricatedEvidence, context())).toBeNull();
   });
 
-  it("rejects model-invented coordinates but permits positions grounded in private perception", () => {
-    const invented = {
+  it("rejects model-invented coordinates and refuses to turn hearing direction into exact position", () => {
+    const investigate = (targetPosition: { x: number; y: number }) => ({
       version: 1,
       activityDirective: {
         kind: "replace",
-        reason: "guess a location",
+        reason: "walk to a coordinate",
         activity: {
           kind: "investigate",
-          goal: "walk to guessed coordinates",
+          goal: "inspect there",
           targetActorId: null,
           targetRegionId: null,
-          targetPosition: { x: 7_777, y: 7_777 },
+          targetPosition,
           text: null,
         },
       },
       beliefs: [],
       concerns: [],
       reviewAfterSeconds: 5,
-    };
-    expect(parseResidentCognitionProposal(invented, context())).toBeNull();
+    });
 
-    const grounded = structuredClone(invented);
-    grounded.activityDirective.activity.targetPosition = { x: 500, y: 500 };
-    expect(parseResidentCognitionProposal(grounded, context())?.activityDirective.kind).toBe("replace");
+    expect(parseResidentCognitionProposal(investigate({ x: 7_777, y: 7_777 }), context())).toBeNull();
+    expect(parseResidentCognitionProposal(investigate({ x: 500, y: 500 }), context())).toBeNull();
+
+    const withSight = context();
+    withSight.recentPercepts = [
+      ...withSight.recentPercepts,
+      {
+        id: "percept:sight",
+        occurrenceId: "sight-entry:mira:jozz:121",
+        tick: 121,
+        modality: "sight",
+        actorId: "player.jozz",
+        subjectId: "player.jozz",
+        spatial: { kind: "exact", position: { x: 500, y: 500 } },
+        summary: "actor player.jozz entered sight",
+        text: null,
+        addressed: false,
+      },
+    ];
+    expect(parseResidentCognitionProposal(investigate({ x: 500, y: 500 }), withSight)?.activityDirective.kind).toBe("replace");
   });
 
   it("does not reproduce the old continue-plus-plan ambiguity: keep cannot carry a replacement activity", () => {
