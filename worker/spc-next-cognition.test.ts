@@ -29,6 +29,7 @@ function validContext(): Record<string, unknown> {
       id: "percept:heard:1",
       occurrenceId: "occurrence:speech:1",
       tick: 120,
+      phenomenon: "speech",
       modality: "hearing",
       actorId: "player.jozz",
       subjectId: null,
@@ -44,6 +45,8 @@ function validContext(): Record<string, unknown> {
       label: "Jozz",
       lastKnownPosition: { x: 620, y: 620 },
       lastObservedTick: 110,
+      currentlyVisible: false,
+      visibilityChangedTick: 111,
       lastHeardDirection: { x: 1, y: 0 },
       lastHeardDistanceBand: "near",
       lastHeardTick: 120,
@@ -60,6 +63,7 @@ describe("SPC Next cognition private-context trust boundary", () => {
     const parsed = sanitizeSpcNextContext(validContext());
     expect(parsed).not.toBeNull();
     expect(parsed?.currentRegionId).toBe("hearth");
+    expect(parsed?.knownActors[0]?.currentlyVisible).toBe(false);
     expect(parsed?.knownRegions).toEqual([
       { id: "hearth", label: "Hearth", knowledge: "visited", lastVisitedTick: 119 },
       { id: "workshop", label: "Workshop", knowledge: "familiar", lastVisitedTick: null },
@@ -72,6 +76,66 @@ describe("SPC Next cognition private-context trust boundary", () => {
     const percept = (context.recentPercepts as Array<Record<string, unknown>>)[0]!;
     percept.spatial = { kind: "exact", position: { x: 620, y: 620 } };
     expect(sanitizeSpcNextContext(context)).toBeNull();
+  });
+
+  it("rejects phenomenon/modality/spatial combinations that imply impossible sensing", () => {
+    const speechAsSight = validContext();
+    const speech = (speechAsSight.recentPercepts as Array<Record<string, unknown>>)[0]!;
+    speech.modality = "sight";
+    speech.spatial = { kind: "exact", position: { x: 620, y: 620 } };
+    expect(sanitizeSpcNextContext(speechAsSight)).toBeNull();
+
+    const exitWithHiddenPosition = validContext();
+    (exitWithHiddenPosition.recentPercepts as Array<Record<string, unknown>>)[0] = {
+      id: "percept:exit",
+      occurrenceId: "sight:exit",
+      tick: 120,
+      phenomenon: "actor_sight_exit",
+      modality: "sight",
+      actorId: "player.jozz",
+      subjectId: "player.jozz",
+      spatial: { kind: "exact", position: { x: 999, y: 999 } },
+      summary: "left sight",
+      text: null,
+      addressed: false,
+    };
+    expect(sanitizeSpcNextContext(exitWithHiddenPosition)).toBeNull();
+
+    const updateWithoutExact = validContext();
+    (updateWithoutExact.recentPercepts as Array<Record<string, unknown>>)[0] = {
+      id: "percept:update",
+      occurrenceId: "sight:update",
+      tick: 120,
+      phenomenon: "actor_sight_update",
+      modality: "sight",
+      actorId: "player.jozz",
+      subjectId: "player.jozz",
+      spatial: { kind: "none" },
+      summary: "moved in sight",
+      text: null,
+      addressed: false,
+    };
+    expect(sanitizeSpcNextContext(updateWithoutExact)).toBeNull();
+  });
+
+  it("rejects impossible actor visibility memories", () => {
+    const visibleWithoutExact = validContext();
+    const actor = (visibleWithoutExact.knownActors as Array<Record<string, unknown>>)[0]!;
+    actor.currentlyVisible = true;
+    actor.lastKnownPosition = null;
+    actor.lastObservedTick = null;
+    actor.visibilityChangedTick = 120;
+    expect(sanitizeSpcNextContext(visibleWithoutExact)).toBeNull();
+
+    const visibleBeforeAcquisition = validContext();
+    const actor2 = (visibleBeforeAcquisition.knownActors as Array<Record<string, unknown>>)[0]!;
+    actor2.currentlyVisible = true;
+    actor2.visibilityChangedTick = 115;
+    expect(sanitizeSpcNextContext(visibleBeforeAcquisition)).toBeNull();
+
+    const lostWithoutTransition = validContext();
+    (lostWithoutTransition.knownActors as Array<Record<string, unknown>>)[0]!.visibilityChangedTick = null;
+    expect(sanitizeSpcNextContext(lostWithoutTransition)).toBeNull();
   });
 
   it("rejects impossible familiar-versus-visited region histories", () => {
@@ -102,6 +166,10 @@ describe("SPC Next cognition private-context trust boundary", () => {
     const futureActorMemory = validContext();
     (futureActorMemory.knownActors as Array<Record<string, unknown>>)[0]!.lastObservedTick = 121;
     expect(sanitizeSpcNextContext(futureActorMemory)).toBeNull();
+
+    const futureVisibility = validContext();
+    (futureVisibility.knownActors as Array<Record<string, unknown>>)[0]!.visibilityChangedTick = 121;
+    expect(sanitizeSpcNextContext(futureVisibility)).toBeNull();
 
     const futureVisit = validContext();
     (futureVisit.knownRegions as Array<Record<string, unknown>>)[0]!.lastVisitedTick = 121;
