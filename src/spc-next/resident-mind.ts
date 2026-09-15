@@ -6,9 +6,11 @@ import type {
 } from "./cognition-contract";
 import type {
   CognitionReason,
+  PerceptDistanceBand,
   ResidentActivity,
   ResidentPercept,
   ResidentProfile,
+  Vec2,
   WorldRegion,
 } from "./contracts";
 
@@ -17,20 +19,30 @@ export interface ResidentMindLimits {
   maxConcerns: number;
   maxKnownActors: number;
   maxKnownRegions: number;
+  maxPerceptEvidence?: number;
 }
 
-export const DEFAULT_MIND_LIMITS: ResidentMindLimits = {
+export const DEFAULT_MIND_LIMITS: Required<ResidentMindLimits> = {
   maxBeliefs: 64,
   maxConcerns: 32,
   maxKnownActors: 64,
   maxKnownRegions: 64,
+  maxPerceptEvidence: 512,
 };
+
+const CONTEXT_PERCEPT_LIMIT = 32;
+const CONTEXT_BELIEF_LIMIT = 24;
+const CONTEXT_CONCERN_LIMIT = 16;
+const CONTEXT_ACTOR_LIMIT = 32;
 
 interface KnownActorRecord {
   id: string;
   label: string;
-  lastKnownPosition: { x: number; y: number } | null;
+  lastKnownPosition: Vec2 | null;
   lastObservedTick: number | null;
+  lastHeardDirection: Vec2 | null;
+  lastHeardDistanceBand: PerceptDistanceBand | null;
+  lastHeardTick: number | null;
   touchedAtTick: number;
 }
 
@@ -46,24 +58,40 @@ export class ResidentMind {
   private readonly concerns = new Map<string, ResidentConcernState>();
   private readonly knownActors = new Map<string, KnownActorRecord>();
   private readonly knownRegions = new Map<string, KnownRegionRecord>();
+  private readonly perceptEvidence = new Map<string, ResidentPercept>();
+  private readonly limits: Required<ResidentMindLimits>;
 
   constructor(
     private readonly resident: Pick<ResidentProfile, "id" | "name">,
-    private readonly limits: ResidentMindLimits = DEFAULT_MIND_LIMITS,
+    limits: ResidentMindLimits = DEFAULT_MIND_LIMITS,
   ) {
-    validateLimits(limits);
+    this.limits = { ...DEFAULT_MIND_LIMITS, ...limits };
+    validateLimits(this.limits);
   }
 
   observe(percepts: readonly ResidentPercept[]): void {
     for (const percept of percepts) {
+      this.perceptEvidence.delete(percept.id);
+      this.perceptEvidence.set(percept.id, structuredClone(percept));
       if (percept.actorId && percept.actorId !== this.resident.id) {
-        this.rememberActor(percept.actorId, percept.position, percept.tick);
+        if (percept.spatial.kind === "exact") {
+          this.rememberSeenActor(percept.actorId, percept.spatial.position, percept.tick);
+        } else if (percept.spatial.kind === "directional") {
+          this.rememberHeardActor(
+            percept.actorId,
+            percept.spatial.direction,
+            percept.spatial.distanceBand,
+            percept.tick,
+          );
+        } else {
+          this.touchActor(percept.actorId, percept.tick);
+        }
       }
-      if (percept.subjectId && percept.subjectId !== this.resident.id) {
-        this.rememberActor(percept.subjectId, percept.position, percept.tick);
-      }
+      // subjectId is provenance only unless subject-specific spatial evidence exists.
+      // Never assign the event source position to a different subject.
     }
     this.trimKnownActors();
+    trimOldest(this.perceptEvidence, this.limits.maxPerceptEvidence, (percept) => percept.tick);
   }
 
   discoverRegion(region: WorldRegion, tick: number): void {
@@ -83,26 +111,48 @@ export class ResidentMind {
     currentActivity: ResidentActivity,
     recentPercepts: readonly ResidentPercept[],
   ): ResidentCognitionContext {
+    const requiredEvidenceIds = new Set(reasons.flatMap((reason) => reason.evidenceIds));
+    const selectedPercepts = new Map<string, ResidentPercept>();
+
+    for (const evidenceId of requiredEvidenceIds) {
+      const percept = this.perceptEvidence.get(evidenceId);
+      if (percept) selectedPercepts.set(percept.id, structuredClone(percept));
+    }
+    for (const percept of [...recentPercepts].sort((a, b) => b.tick - a.tick || a.id.localeCompare(b.id))) {
+      if (selectedPercepts.size >= CONTEXT_PERCEPT_LIMIT && !requiredEvidenceIds.has(percept.id)) continue;
+      if (!selectedPercepts.has(percept.id)) selectedPercepts.set(percept.id, structuredClone(percept));
+    }
+
     return {
       version: 1,
       resident: { id: this.resident.id, name: this.resident.name },
       tick,
       reasons: structuredClone(reasons),
       currentActivity: structuredClone(currentActivity),
-      recentPercepts: structuredClone(recentPercepts),
+      recentPercepts: [...selectedPercepts.values()]
+        .sort((a, b) => a.tick - b.tick || a.id.localeCompare(b.id)),
       concerns: [...this.concerns.values()]
-        .sort((a, b) => b.priority - a.priority || a.id.localeCompare(b.id))
+        .sort((a, b) => {
+          if (a.status !== b.status) return a.status === "open" ? -1 : 1;
+          return b.priority - a.priority || a.id.localeCompare(b.id);
+        })
+        .slice(0, CONTEXT_CONCERN_LIMIT)
         .map((value) => structuredClone(value)),
       beliefs: [...this.beliefs.values()]
         .sort((a, b) => b.updatedTick - a.updatedTick || a.id.localeCompare(b.id))
+        .slice(0, CONTEXT_BELIEF_LIMIT)
         .map((value) => structuredClone(value)),
       knownActors: [...this.knownActors.values()]
         .sort((a, b) => b.touchedAtTick - a.touchedAtTick || a.id.localeCompare(b.id))
+        .slice(0, CONTEXT_ACTOR_LIMIT)
         .map((value) => ({
           id: value.id,
           label: value.label,
           lastKnownPosition: value.lastKnownPosition ? { ...value.lastKnownPosition } : null,
           lastObservedTick: value.lastObservedTick,
+          lastHeardDirection: value.lastHeardDirection ? { ...value.lastHeardDirection } : null,
+          lastHeardDistanceBand: value.lastHeardDistanceBand,
+          lastHeardTick: value.lastHeardTick,
         })),
       knownRegions: [...this.knownRegions.values()]
         .sort((a, b) => b.lastVisitedTick - a.lastVisitedTick || a.id.localeCompare(b.id))
@@ -159,7 +209,11 @@ export class ResidentMind {
     }
   }
 
-  snapshot(): { beliefs: readonly ResidentBeliefState[]; concerns: readonly ResidentConcernState[]; knownRegionIds: readonly string[] } {
+  snapshot(): {
+    beliefs: readonly ResidentBeliefState[];
+    concerns: readonly ResidentConcernState[];
+    knownRegionIds: readonly string[];
+  } {
     return {
       beliefs: [...this.beliefs.values()].map((value) => structuredClone(value)),
       concerns: [...this.concerns.values()].map((value) => structuredClone(value)),
@@ -167,15 +221,34 @@ export class ResidentMind {
     };
   }
 
-  private rememberActor(id: string, position: { x: number; y: number }, tick: number): void {
+  private touchActor(id: string, tick: number): KnownActorRecord {
     const existing = this.knownActors.get(id);
-    this.knownActors.set(id, {
+    const record: KnownActorRecord = existing ?? {
       id,
-      label: existing?.label ?? id,
-      lastKnownPosition: { ...position },
-      lastObservedTick: tick,
+      label: id,
+      lastKnownPosition: null,
+      lastObservedTick: null,
+      lastHeardDirection: null,
+      lastHeardDistanceBand: null,
+      lastHeardTick: null,
       touchedAtTick: tick,
-    });
+    };
+    record.touchedAtTick = tick;
+    this.knownActors.set(id, record);
+    return record;
+  }
+
+  private rememberSeenActor(id: string, position: Vec2, tick: number): void {
+    const actor = this.touchActor(id, tick);
+    actor.lastKnownPosition = { ...position };
+    actor.lastObservedTick = tick;
+  }
+
+  private rememberHeardActor(id: string, direction: Vec2, distanceBand: PerceptDistanceBand, tick: number): void {
+    const actor = this.touchActor(id, tick);
+    actor.lastHeardDirection = { ...direction };
+    actor.lastHeardDistanceBand = distanceBand;
+    actor.lastHeardTick = tick;
   }
 
   private trimKnownActors(): void {
@@ -197,7 +270,7 @@ function trimOldest<T>(
   }
 }
 
-function validateLimits(limits: ResidentMindLimits): void {
+function validateLimits(limits: Required<ResidentMindLimits>): void {
   for (const [name, value] of Object.entries(limits)) {
     if (!Number.isInteger(value) || value < 1) throw new Error(`${name} must be a positive integer`);
   }
