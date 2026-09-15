@@ -3,11 +3,18 @@ import {
   type ResidentKernelEvidence,
   type RunOutcomeReconciliationResult,
 } from "./resident-continuity-kernel";
+import { distanceSquared, type Vec2 } from "./contracts";
 import { ResidentMaterialKnowledge } from "./resident-material-knowledge";
 import { ResidentMaterialPickupExecutor, type ResidentMaterialPickupStep } from "./resident-material-pickup-executor";
 import { ResidentWorldExecutionAuthority } from "./resident-world-execution-authority";
 import { createFiveResidentRegionWorld } from "./five-resident-region";
 import { SpcWorldRuntime } from "./spc-world-runtime";
+
+const JANEK_ID = "resident.janek";
+const CRATE_ID = "crate.workshop.01";
+const HIDDEN_RELOCATOR_ID = "player.relocator";
+const PREHISTORY_RETREAT_TICKS = 240;
+const PREHISTORY_RETREAT_SPEED = 120;
 
 export type FiveResidentJanekMissingCrateStep =
   | { status: "running"; local: ResidentMaterialPickupStep }
@@ -28,6 +35,13 @@ export interface FiveResidentJanekMissingCrateOptions {
   hiddenRelocationSpeed?: number;
 }
 
+export interface FiveResidentJanekHiddenRelocation {
+  tickBefore: number;
+  tickAfter: number;
+  from: Vec2;
+  to: Vec2;
+}
+
 export interface FiveResidentJanekMissingCrateSlice {
   world: SpcWorldRuntime;
   kernel: ResidentContinuityKernel;
@@ -38,58 +52,59 @@ export interface FiveResidentJanekMissingCrateSlice {
   semanticPressureEvidence(): ResidentKernelEvidence | null;
 }
 
+export interface FiveResidentJanekMissingCrateStagedSlice extends FiveResidentJanekMissingCrateSlice {
+  relocateCrateHidden(): FiveResidentJanekHiddenRelocation;
+  hiddenRelocationApplied(): boolean;
+}
+
 /**
- * First semantic-pressure composition.
+ * Staged missing-crate composition for causal/browser evidence.
  *
- * An external World change happens between Janek's material perception samples.
- * The local executor therefore continues toward Janek's last-known crate position,
- * not hidden World truth. Once the local pickup method fails and Janek can inspect
- * that old point, checked absence becomes new semantic evidence for the still-live
- * matter. No provider is involved yet.
+ * Prehistory is allowed to establish only legally acquired resident history: Janek
+ * sees the familiar crate, then retreats just outside sight range while retaining
+ * that last-known position. The variable under test — external relocation of the
+ * crate — is deliberately NOT performed by the constructor. Call
+ * relocateCrateHidden() to put that World change on an explicit causal boundary.
  */
-export function createFiveResidentJanekMissingCrateSlice(
+export function createFiveResidentJanekMissingCrateStagedSlice(
   options: FiveResidentJanekMissingCrateOptions = {},
-): FiveResidentJanekMissingCrateSlice {
+): FiveResidentJanekMissingCrateStagedSlice {
   const hiddenRelocationSpeed = options.hiddenRelocationSpeed ?? 48_000;
   if (!Number.isFinite(hiddenRelocationSpeed) || hiddenRelocationSpeed <= 0) {
     throw new Error("hiddenRelocationSpeed must be positive and finite");
   }
 
   const world = createFiveResidentRegionWorld();
+  const materialKnowledge = new ResidentMaterialKnowledge(JANEK_ID, [CRATE_ID], world);
 
-  // Move Janek away from the crate while legacy control is still active, so the
-  // later recovered executor must physically return to the acquired last-known point.
-  world.setActorMotionIntent("resident.janek", { x: -120, y: 0 });
-  world.step(90);
-  world.setActorMotionIntent("resident.janek", { x: 0, y: 0 });
+  // Legal acquisition happens while Janek is physically beside the familiar crate.
+  materialKnowledge.sample();
+  const acquired = materialKnowledge.observation(CRATE_ID);
+  if (!acquired?.currentlyVisible) throw new Error("Janek failed to acquire initial crate evidence");
 
-  const materialKnowledge = new ResidentMaterialKnowledge(
-    "resident.janek",
-    ["crate.workshop.01"],
-    world,
-  );
+  // Retreat under legacy fixture control before recovered execution claims the body.
+  // 240 ticks at 120 u/s puts Janek at x=1420, 532 units from the crate: outside
+  // the 520-unit default sight radius but still close enough for the bounded pickup
+  // executor to reach the remembered point within the existing 360-step guard.
+  world.setActorMotionIntent(JANEK_ID, { x: -PREHISTORY_RETREAT_SPEED, y: 0 });
+  world.step(PREHISTORY_RETREAT_TICKS);
+  world.setActorMotionIntent(JANEK_ID, { x: 0, y: 0 });
   materialKnowledge.sample();
 
-  // Adversarial external relocation between Janek's material perception samples.
-  // The extreme helper speed is test-fixture pressure, not resident behavior.
-  world.addPlayer("player.relocator", { x: 1_952, y: 720 }, { maxSpeed: hiddenRelocationSpeed });
-  const pickupByRelocator = world.attemptMaterialAction("player.relocator", {
-    kind: "pickup",
-    objectId: "crate.workshop.01",
-  });
-  if (pickupByRelocator.status !== "succeeded") throw new Error("failed to prepare hidden crate relocation");
-  world.setActorMotionIntent("player.relocator", { x: hiddenRelocationSpeed, y: 0 });
-  world.step();
-  world.setActorMotionIntent("player.relocator", { x: 0, y: 0 });
-  const relocator = world.publicSnapshot().actors.find((actor) => actor.id === "player.relocator");
-  if (!relocator) throw new Error("relocator actor missing");
-  const placedByRelocator = world.attemptMaterialAction("player.relocator", {
-    kind: "place",
-    objectId: "crate.workshop.01",
-    position: relocator.position,
-  });
-  if (placedByRelocator.status !== "succeeded") throw new Error("failed to finish hidden crate relocation");
-  materialKnowledge.sample();
+  const janek = world.publicSnapshot().actors.find((actor) => actor.id === JANEK_ID);
+  const crateBefore = world.materialObject(CRATE_ID);
+  if (!janek || !crateBefore || crateBefore.location.kind !== "free") {
+    throw new Error("missing-crate staged prehistory did not preserve Janek/crate World truth");
+  }
+  if (distanceSquared(janek.position, crateBefore.location.position) <= janek.sightRadius ** 2) {
+    throw new Error("missing-crate staged prehistory did not move Janek outside crate sight range");
+  }
+
+  const remembered = materialKnowledge.observation(CRATE_ID);
+  if (!remembered || remembered.currentlyVisible || remembered.lastKnownPosition.x !== crateBefore.location.position.x
+    || remembered.lastKnownPosition.y !== crateBefore.location.position.y) {
+    throw new Error("missing-crate staged prehistory did not preserve last-known crate evidence");
+  }
 
   const kernel = new ResidentContinuityKernel();
   const origin = kernel.recordEvidence({
@@ -109,15 +124,16 @@ export function createFiveResidentJanekMissingCrateSlice(
     runId: "run.janek.pickup-last-known-crate",
   });
 
-  const authority = new ResidentWorldExecutionAuthority("resident.janek", kernel, world);
+  const authority = new ResidentWorldExecutionAuthority(JANEK_ID, kernel, world);
   const executor = new ResidentMaterialPickupExecutor(
     "run.janek.pickup-last-known-crate",
-    "crate.workshop.01",
+    CRATE_ID,
     materialKnowledge,
     authority,
     world,
   );
 
+  let relocationApplied = false;
   let reconciliation: RunOutcomeReconciliationResult | null = null;
   let pressureEvidence: ResidentKernelEvidence | null = null;
 
@@ -126,7 +142,59 @@ export function createFiveResidentJanekMissingCrateSlice(
     kernel,
     materialKnowledge,
     authority,
+    relocateCrateHidden(): FiveResidentJanekHiddenRelocation {
+      if (relocationApplied) throw new Error("hidden crate relocation already applied");
+
+      const before = world.materialObject(CRATE_ID);
+      if (!before || before.location.kind !== "free") throw new Error("crate is not free before hidden relocation");
+      const privateBefore = materialKnowledge.snapshot();
+      const tickBefore = world.tick;
+
+      world.addPlayer(HIDDEN_RELOCATOR_ID, before.location.position, { maxSpeed: hiddenRelocationSpeed });
+      const pickupByRelocator = world.attemptMaterialAction(HIDDEN_RELOCATOR_ID, {
+        kind: "pickup",
+        objectId: CRATE_ID,
+      });
+      if (pickupByRelocator.status !== "succeeded") throw new Error("failed to prepare hidden crate relocation");
+
+      world.setActorMotionIntent(HIDDEN_RELOCATOR_ID, { x: hiddenRelocationSpeed, y: 0 });
+      world.step();
+      world.setActorMotionIntent(HIDDEN_RELOCATOR_ID, { x: 0, y: 0 });
+      const relocator = world.publicSnapshot().actors.find((actor) => actor.id === HIDDEN_RELOCATOR_ID);
+      if (!relocator) throw new Error("relocator actor missing");
+      const placedByRelocator = world.attemptMaterialAction(HIDDEN_RELOCATOR_ID, {
+        kind: "place",
+        objectId: CRATE_ID,
+        position: relocator.position,
+      });
+      if (placedByRelocator.status !== "succeeded") throw new Error("failed to finish hidden crate relocation");
+
+      materialKnowledge.sample();
+      const privateAfter = materialKnowledge.snapshot();
+      if (JSON.stringify(privateAfter) !== JSON.stringify(privateBefore)) {
+        throw new Error("hidden relocation leaked into Janek material knowledge");
+      }
+      const leakedRelocator = world.residentDiagnostics(JANEK_ID).recentPercepts
+        .some((percept) => percept.actorId === HIDDEN_RELOCATOR_ID);
+      if (leakedRelocator) throw new Error("hidden relocator leaked into Janek actor perception");
+
+      const after = world.materialObject(CRATE_ID);
+      if (!after || after.location.kind !== "free") throw new Error("crate is not free after hidden relocation");
+      relocationApplied = true;
+      return {
+        tickBefore,
+        tickAfter: world.tick,
+        from: { ...before.location.position },
+        to: { ...after.location.position },
+      };
+    },
+    hiddenRelocationApplied(): boolean {
+      return relocationApplied;
+    },
     stepJanek(): FiveResidentJanekMissingCrateStep {
+      if (!relocationApplied) {
+        throw new Error("hidden crate relocation must be applied before Janek execution begins");
+      }
       materialKnowledge.sample();
       const local = executor.step();
       if (local.status === "authority_lost") return { status: "authority_lost", local };
@@ -141,12 +209,12 @@ export function createFiveResidentJanekMissingCrateSlice(
         });
       }
 
-      const checked = materialKnowledge.checkedAbsence("crate.workshop.01");
+      const checked = materialKnowledge.checkedAbsence(CRATE_ID);
       if (!checked) return { status: "blocked_without_checked_absence", local };
 
       if (!pressureEvidence) {
         pressureEvidence = kernel.recordEvidence({
-          id: `evidence:janek:checked-absence:crate.workshop.01:${checked.checkedAtTick}`,
+          id: `evidence:janek:checked-absence:${CRATE_ID}:${checked.checkedAtTick}`,
           tick: checked.checkedAtTick,
           kind: "checked_absence",
           summary: `Checked (${checked.checkedPosition.x}, ${checked.checkedPosition.y}); the familiar workshop crate is not visible there now.`,
@@ -167,4 +235,19 @@ export function createFiveResidentJanekMissingCrateSlice(
       return pressureEvidence ? structuredClone(pressureEvidence) : null;
     },
   };
+}
+
+/**
+ * Convenience composition retained for deterministic/core tests.
+ *
+ * It now delegates to the staged specimen and explicitly applies the adversarial
+ * relocation before returning. Browser evidence can instead keep that relocation
+ * visible as its own causal boundary through createFiveResidentJanekMissingCrateStagedSlice().
+ */
+export function createFiveResidentJanekMissingCrateSlice(
+  options: FiveResidentJanekMissingCrateOptions = {},
+): FiveResidentJanekMissingCrateSlice {
+  const staged = createFiveResidentJanekMissingCrateStagedSlice(options);
+  staged.relocateCrateHidden();
+  return staged;
 }
