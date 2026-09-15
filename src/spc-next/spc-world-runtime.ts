@@ -231,7 +231,7 @@ export class SpcWorldRuntime {
     for (const [residentId, registered] of this.residents) {
       if (this.tickValue % registered.runtime.profile.brainIntervalTicks !== registered.brainPhase) continue;
       const actor = this.requireActor(residentId);
-      const visibleActors = this.visibleActorsFor(actor);
+      const visibleActors = this.visibleActorsForResident(actor, registered);
       const command = registered.runtime.fastStep({
         tick: this.tickValue,
         selfPosition: { ...actor.position },
@@ -299,7 +299,7 @@ export class SpcWorldRuntime {
   private updateSightPercepts(): void {
     for (const [residentId, registered] of this.residents) {
       const observer = this.requireActor(residentId);
-      const visible = this.visibleActorsFor(observer);
+      const visible = this.visibleActorsForResident(observer, registered);
       const drafts = registered.sight.update(this.tickValue, visible);
       if (drafts.length === 0) continue;
 
@@ -322,11 +322,16 @@ export class SpcWorldRuntime {
     }
   }
 
-  private visibleActorsFor(observer: ActorState): VisibleActor[] {
-    return this.spatial.queryRadius(observer.position, observer.sightRadius)
+  private visibleActorsForResident(observer: ActorState, registered: RegisteredResident): VisibleActor[] {
+    const retained = new Set(registered.sight.currentlyVisibleActorIds());
+    const releaseRadius = observer.sightRadius + registered.sight.policy.releaseMargin;
+    return this.spatial.queryRadius(observer.position, releaseRadius)
       .filter((id) => id !== observer.id)
       .map((id) => this.requireActor(id))
-      .filter((candidate) => distanceSquared(observer.position, candidate.position) <= observer.sightRadius ** 2)
+      .filter((candidate) => {
+        const radius = retained.has(candidate.id) ? releaseRadius : observer.sightRadius;
+        return distanceSquared(observer.position, candidate.position) <= radius ** 2;
+      })
       .map((candidate) => ({
         id: candidate.id,
         kind: candidate.kind,
