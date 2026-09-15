@@ -1,4 +1,5 @@
 import { ResidentContinuityKernel } from "./resident-continuity-kernel";
+import type { MaterialActionResult } from "./material-world-state";
 import type {
   ResidentWorldAction,
   ResidentWorldActionResolution,
@@ -18,6 +19,10 @@ import { SpcWorldRuntime } from "./spc-world-runtime";
  * continuity kernel. Once this facade claims a resident, SpcWorldRuntime disables
  * that resident's legacy fastStep/control path and becomes the phase-time enforcer
  * for latched effects and atomic World actions.
+ *
+ * Raw material outcomes stay World truth. Rejected actions are projected before
+ * returning to the resident so hidden current position / holder identity cannot be
+ * learned merely by probing an object id.
  */
 export class ResidentWorldExecutionAuthority {
   constructor(
@@ -36,7 +41,12 @@ export class ResidentWorldExecutionAuthority {
   }
 
   act(runId: string, action: ResidentWorldAction): ResidentWorldActionResolution {
-    return this.world.applyResidentWorldAction(this.residentId, runId, action);
+    const resolution = this.world.applyResidentWorldAction(this.residentId, runId, action);
+    if (resolution.status !== "resolved") return resolution;
+    return {
+      ...resolution,
+      materialOutcome: residentSafeMaterialOutcome(resolution.materialOutcome),
+    };
   }
 
   enforceMotionAuthority(): { status: "unchanged" } | { status: "revoked"; runId: string } {
@@ -50,6 +60,15 @@ export class ResidentWorldExecutionAuthority {
   lastMotionOutcome(): ResidentAuthorizedMotionOutcome | null {
     return this.world.residentAuthorizedMotionOutcome(this.residentId);
   }
+}
+
+function residentSafeMaterialOutcome(outcome: MaterialActionResult): MaterialActionResult {
+  if (outcome.status === "succeeded") return structuredClone(outcome);
+  return {
+    ...structuredClone(outcome),
+    before: null,
+    after: null,
+  };
 }
 
 export type {
