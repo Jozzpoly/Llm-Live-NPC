@@ -16,9 +16,13 @@ export interface KnownActorContext {
   lastHeardTick: number | null;
 }
 
+export type RegionKnowledgeKind = "familiar" | "visited";
+
 export interface KnownRegionContext {
   id: string;
   label: string;
+  knowledge: RegionKnowledgeKind;
+  lastVisitedTick: number | null;
 }
 
 export interface ResidentConcernState {
@@ -41,6 +45,7 @@ export interface ResidentCognitionContext {
   version: 1;
   resident: { id: string; name: string };
   tick: number;
+  currentRegionId: string | null;
   reasons: readonly CognitionReason[];
   currentActivity: ResidentActivity;
   recentPercepts: readonly ResidentPercept[];
@@ -107,6 +112,7 @@ export function parseResidentCognitionProposal(
   }
 
   const evidenceIds = new Set<string>([
+    ...context.reasons.map((reason) => reason.id),
     ...context.reasons.flatMap((reason) => reason.evidenceIds),
     ...context.recentPercepts.map((percept) => percept.id),
     ...context.concerns.flatMap((concern) => concern.evidenceIds),
