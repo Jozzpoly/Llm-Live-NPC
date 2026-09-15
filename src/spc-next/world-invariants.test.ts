@@ -51,6 +51,43 @@ describe("SPC World invariants", () => {
     })).toThrow(/distinct priority/);
   });
 
+  it("rejects malformed or ambiguous authored sight blockers at World construction", () => {
+    const base = {
+      bounds: { minX: 0, minY: 0, maxX: 100, maxY: 100 },
+      regions: [],
+      chunkSize: 32,
+      fixedDeltaSeconds: 1 / 60,
+    } as const;
+
+    expect(() => new SpcWorldRuntime({
+      ...base,
+      sightBlockers: [{ id: "wall", label: "Wall", bounds: { minX: 10, minY: 10, maxX: Number.NaN, maxY: 20 } }],
+    })).toThrow(/finite/);
+    expect(() => new SpcWorldRuntime({
+      ...base,
+      sightBlockers: [{ id: "wall", label: "Wall", bounds: { minX: 10, minY: 10, maxX: 10, maxY: 20 } }],
+    })).toThrow(/positive area/);
+    expect(() => new SpcWorldRuntime({
+      ...base,
+      sightBlockers: [{ id: "wall", label: "Wall", bounds: { minX: 10, minY: 10, maxX: 101, maxY: 20 } }],
+    })).toThrow(/outside world bounds/);
+    expect(() => new SpcWorldRuntime({
+      ...base,
+      sightBlockers: [
+        { id: "wall", label: "Wall A", bounds: { minX: 10, minY: 10, maxX: 20, maxY: 20 } },
+        { id: "wall", label: "Wall B", bounds: { minX: 30, minY: 30, maxX: 40, maxY: 40 } },
+      ],
+    })).toThrow(/duplicate sight blocker/);
+
+    expect(() => new SpcWorldRuntime({
+      ...base,
+      sightBlockers: [
+        { id: "wall.a", label: "Wall A", bounds: { minX: 10, minY: 10, maxX: 30, maxY: 30 } },
+        { id: "wall.b", label: "Wall B", bounds: { minX: 20, minY: 20, maxX: 40, maxY: 40 } },
+      ],
+    })).not.toThrow();
+  });
+
   it("makes authored overlap precedence explicit and shared boundaries half-open", () => {
     const overlapping = new SpcWorldRuntime({
       bounds: { minX: 0, minY: 0, maxX: 100, maxY: 100 },
