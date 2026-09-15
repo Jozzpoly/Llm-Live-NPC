@@ -5,6 +5,9 @@ import { FIVE_RESIDENT_ROLE_PRESSURES } from "../spc-next/five-resident-region";
 import type { ResidentPercept, ResidentTraceEvent } from "../spc-next/contracts";
 import { SpcNextResearchScene, type SpcNextResearchFrame } from "./spc-next-research-scene";
 
+const params = new URLSearchParams(location.search);
+const evidenceMode = params.get("evidence") === "1";
+
 const appRoot = document.querySelector<HTMLElement>("#app");
 const debugRoot = document.querySelector<HTMLElement>("#debug");
 const gameRoot = document.querySelector<HTMLElement>("#game");
@@ -77,9 +80,12 @@ function renderPanel(frame: SpcNextResearchFrame): void {
 
   const residentButtons = frame.snapshot.residents.map((resident) => {
     const active = resident.id === frame.selectedResidentId ? " is-active" : "";
+    const actor = frame.snapshot.actors.find((candidate) => candidate.id === resident.id);
+    const speed = actor ? Math.hypot(actor.velocity.x, actor.velocity.y) : 0;
+    const embodied = speed > 1 ? `moving ${speed.toFixed(0)}` : "still";
     return `<button class="spc-resident-button${active}" data-resident="${escapeHtml(resident.id)}">
       <span>${escapeHtml(resident.name)}</span>
-      <small>${escapeHtml(resident.activity.kind)} · C${resident.pendingCognitionReasonCount}</small>
+      <small>${embodied} · legacy ${escapeHtml(resident.activity.kind)} · C${resident.pendingCognitionReasonCount}</small>
     </button>`;
   }).join("");
 
@@ -97,6 +103,8 @@ function renderPanel(frame: SpcNextResearchFrame): void {
   const intentSpeed = motion ? Math.hypot(motion.desiredVelocity.x, motion.desiredVelocity.y) : 0;
   const activity = selected?.publicState.activity ?? null;
   const constraintLabel = motion?.constraints.length ? motion.constraints.join(" + ") : "—";
+  const bodyState = resolvedSpeed > 1 ? "moving" : "still";
+  const activityMismatch = Boolean(activity?.kind === "idle" && resolvedSpeed > 1);
 
   debugNode.innerHTML = `
     <div class="workspace-header spc-research-header">
@@ -123,13 +131,15 @@ function renderPanel(frame: SpcNextResearchFrame): void {
       </section>
 
       <section class="debug-section">
-        <h3 class="debug-section-title">Selected truth</h3>
+        <h3 class="debug-section-title">Selected body / projection</h3>
         ${selected && selectedActor ? `
           <div class="spc-selected-name">${escapeHtml(selected.publicState.name)}</div>
           <p class="spc-role">${escapeHtml(role?.pressure ?? "resident world participant")}</p>
           <dl class="spc-facts">
             <div><dt>region</dt><dd>${escapeHtml(frame.selectedRegionId ?? "—")}</dd></div>
-            <div><dt>activity</dt><dd>${escapeHtml(activity?.kind ?? "—")}</dd></div>
+            <div><dt>position</dt><dd>${selectedActor.position.x.toFixed(0)}, ${selectedActor.position.y.toFixed(0)}</dd></div>
+            <div><dt>body</dt><dd>${bodyState}</dd></div>
+            <div><dt>legacy activity</dt><dd>${escapeHtml(activity?.kind ?? "—")}</dd></div>
             <div><dt>motion intent</dt><dd>${intentSpeed.toFixed(1)}</dd></div>
             <div><dt>resolved velocity</dt><dd>${resolvedSpeed.toFixed(1)}</dd></div>
             <div><dt>resolution</dt><dd class="motion-${motion?.resolution ?? "none"}">${escapeHtml(motion?.resolution ?? "—")}</dd></div>
@@ -137,7 +147,8 @@ function renderPanel(frame: SpcNextResearchFrame): void {
             <div><dt>cognition queue</dt><dd>${selected.publicState.pendingCognitionReasonCount}</dd></div>
             <div><dt>camera zoom</dt><dd>${frame.cameraZoom.toFixed(2)}×</dd></div>
           </dl>
-          <p class="spc-activity-reason">${escapeHtml(activity?.reason ?? "")}</p>
+          ${activityMismatch ? '<p class="debug-note"><strong>Projection mismatch:</strong> ciało jest w ruchu mimo legacy activity=idle. Legacy activity nie jest tutaj bieżącym execution authority.</p>' : ""}
+          <p class="spc-activity-reason"><strong>legacy reason:</strong> ${escapeHtml(activity?.reason ?? "")}</p>
         ` : '<p class="spc-empty">Kliknij residenta w świecie albo wybierz go z listy.</p>'}
       </section>
 
@@ -145,11 +156,11 @@ function renderPanel(frame: SpcNextResearchFrame): void {
         <h3 class="debug-section-title">Jak czytać mikroskop</h3>
         <p><i class="legend-dot sight"></i> sight reach / dokładny ślad wzrokowy</p>
         <p><i class="legend-dot hearing"></i> hearing reach / kierunkowy ślad dźwięku</p>
-        <p><i class="legend-dot target"></i> public activity target</p>
-        <p><i class="legend-dot intent"></i> motion intent — czego controller próbuje</p>
+        <p><i class="legend-dot target"></i> legacy public activity target</p>
+        <p><i class="legend-dot intent"></i> motion intent — czego aktualny controller próbuje</p>
         <p><i class="legend-dot resolved"></i> resolved motion — co ciało faktycznie zrobiło</p>
         <p><i class="legend-dot constraint"></i> constrained / blocked physical outcome</p>
-        <p class="debug-note">Szara linia od epistemicznego śladu do prawdziwego aktora pokazuje rozjazd wiedzy NPC z aktualnym stanem świata. Overlay jest narzędziem badawczym; nie jest gameplay UI.</p>
+        <p class="debug-note">Legacy activity jest zachowaną projekcją starego runtime i nie może być traktowana jako execution authority recovered residenta. Szara linia od epistemicznego śladu do prawdziwego aktora pokazuje rozjazd wiedzy NPC z aktualnym stanem świata. Overlay jest narzędziem badawczym; nie jest gameplay UI.</p>
       </section>
 
       <section class="debug-section">
@@ -218,6 +229,23 @@ const game = new Phaser.Game({
     height: 640,
   },
 });
+
+if (evidenceMode) {
+  const evidenceWindow = window as Window & {
+    __SPC_EVIDENCE__?: Readonly<{
+      version: 1;
+      snapshot(): SpcNextResearchFrame;
+    }>;
+  };
+  Object.defineProperty(evidenceWindow, "__SPC_EVIDENCE__", {
+    configurable: true,
+    enumerable: false,
+    value: Object.freeze({
+      version: 1 as const,
+      snapshot: () => scene.currentFrame(),
+    }),
+  });
+}
 
 worldModeButton.addEventListener("click", () => {
   setWorldOnly(!worldOnly);
