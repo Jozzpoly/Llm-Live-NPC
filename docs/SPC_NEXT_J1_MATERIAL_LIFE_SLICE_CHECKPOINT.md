@@ -6,7 +6,7 @@ This checkpoint records the exact defended state of the first SPC Next material 
 
 ## Live verdict
 
-> **J0/J1 DETERMINISTIC MATERIAL FOUNDATION DEFENDED · FIRST LOCAL EMBODIED EXECUTOR DEFENDED · PHASER OWNER-OBSERVED SLICE STILL OPEN**
+> **J0/J1 DETERMINISTIC MATERIAL FOUNDATION DEFENDED · FIRST LOCAL EMBODIED EXECUTOR DEFENDED · PHASER SLICE VISUAL-RESEARCH READY · OWNER-OBSERVED / WORLD-READABLE PASS STILL OPEN**
 
 ## Defended truth boundaries
 
@@ -114,6 +114,25 @@ The qualification runs the composed specimen until Janek physically reaches and 
 Exact qualification head: `0a7d289c056cac80d8f34746ab65c3752e53ecd4`
 GitHub Check #740 PASS.
 
+### J1d — research-scene connection
+
+**VISUAL RESEARCH READY / FULL GREEN**
+
+The SPC Next Phaser research scene now uses the same `createFiveResidentJanekMaterialSlice()` composition that passed J1c.
+
+The scene does not create a second simulation clock or bypass recovered authority:
+
+- participant input is applied first;
+- Janek receives one local executor step;
+- the single authoritative `SpcWorldRuntime.step()` then advances World;
+- rendering reads the resulting World snapshot/material truth;
+- the rendered crate therefore follows the same possession state produced by the recovered material action path.
+
+Exact qualification head: `91b1131905982b44803524ffd18e7576e7feff77`
+GitHub Check #742 PASS.
+
+**This is not OWNER-OBSERVED evidence.** Build/test success proves the integration contract compiles and the deterministic substrate remains green; it does not prove that the resulting motion/readability/feel is acceptable when watched in the real browser.
+
 ## Important nonclaims
 
 This checkpoint does **not** prove:
@@ -132,8 +151,8 @@ This checkpoint does **not** prove:
 
 ## Immediate frontier
 
-1. Safely connect `createFiveResidentJanekMaterialSlice()` to the SPC Next research scene without changing World authority or creating a second simulation clock.
-2. Observe the real browser behavior: Janek must visibly approach the same rendered crate and the crate must become held from World truth.
+1. Observe the real browser behavior: Janek must visibly approach the same rendered crate and the crate must become held from World truth.
+2. Treat any visual/readability failure as a system finding, not as something the debug panel is allowed to explain away.
 3. Add participant/research observability for Janek's current matter, exact run and factual material outcome without exposing hidden model chain-of-thought.
 4. Only then extend the material competence to a real destination/place outcome.
 5. Build the first interruption/resume experiment on top of persistent World possession/progress rather than a fake `work` timer.
