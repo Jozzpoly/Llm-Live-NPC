@@ -181,7 +181,7 @@ describe("ResidentCognitionOwner", () => {
     if (result.status === "applied") {
       expect(result.activityTransition?.kind).toBe("communicate");
       expect(result.activityTransition?.targetActorId).toBe("player.jozz");
-      expect(result.activityTransition?.targetPosition).toBeNull();
+      expect(result.activityTransition?.targetPosition).toEqual({ x: 720, y: 650 });
     }
     expect(resident.publicState().activity.id).toBe(before);
   });
