@@ -10,6 +10,7 @@ const OUTPUT_FILE = resolve(process.env.MANUAL_CONTROL_OUTPUT ?? "evidence/brows
 const VIEWPORT = { width: 1400, height: 900, deviceScaleFactor: 1, mobile: false };
 const TARGET_TICKS = [0, 120, 360, 760];
 const REPEAT_COUNT = 3;
+const CRATE_ID = "crate.workshop.01";
 
 mkdirSync(dirname(OUTPUT_FILE), { recursive: true });
 const sleep = (ms) => new Promise((resolveSleep) => setTimeout(resolveSleep, ms));
@@ -121,7 +122,7 @@ async function run() {
 
   let cdp;
   const report = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     sourceSha: SOURCE_SHA,
     startedAt: new Date().toISOString(),
     chrome: null,
@@ -154,31 +155,56 @@ async function run() {
 
     await navigateEvidence(cdp);
     const meta = await evidenceMeta(cdp);
-    assert(report, "evidence API v2 exposes manual World control", meta.version === 2 && meta.control === "manual-world" && meta.ready === true, meta);
+    assert(report, "evidence API v3 exposes manual World control and canonical snapshot", meta.version === 3 && meta.control === "manual-world" && meta.ready === true && meta.hasCanonicalSnapshot === true, meta);
 
     const beforeWait = await evidenceSnapshot(cdp);
+    const canonicalBeforeWait = await canonicalSnapshot(cdp);
+    assert(report, "canonical snapshot v1 is available at the frozen initial boundary", canonicalBeforeWait.schemaVersion === 1 && canonicalBeforeWait.tick === 0 && canonicalBeforeWait.scenarioId === "browser-baseline-delivery", canonicalSummary(canonicalBeforeWait));
+
     await sleep(450);
     const afterWait = await evidenceSnapshot(cdp);
+    const canonicalAfterWait = await canonicalSnapshot(cdp);
     assert(report, "wall-clock passage does not advance evidence-controlled World", beforeWait.snapshot.tick === 0 && afterWait.snapshot.tick === 0, {
       beforeTick: beforeWait.snapshot.tick,
       afterTick: afterWait.snapshot.tick,
+    });
+    assert(report, "wall-clock passage leaves canonical causal state unchanged while frozen", stableJson(canonicalAfterWait) === stableJson(canonicalBeforeWait), {
+      beforeHash: hashJson(canonicalBeforeWait),
+      afterHash: hashJson(canonicalAfterWait),
     });
 
     const zoomBefore = beforeWait.cameraZoom;
     await click(cdp, `[data-action="overview"]`);
     await sleep(180);
     const afterOverview = await evidenceSnapshot(cdp);
+    const canonicalAfterOverview = await canonicalSnapshot(cdp);
     assert(report, "camera/render control can change while World tick stays frozen", afterOverview.snapshot.tick === 0 && afterOverview.cameraZoom !== zoomBefore, {
       tick: afterOverview.snapshot.tick,
       zoomBefore,
       zoomAfter: afterOverview.cameraZoom,
     });
+    assert(report, "camera/viewpoint changes do not mutate canonical causal state", stableJson(canonicalAfterOverview) === stableJson(canonicalBeforeWait), {
+      canonicalHashBefore: hashJson(canonicalBeforeWait),
+      canonicalHashAfter: hashJson(canonicalAfterOverview),
+    });
 
     const afterSeven = await stepEvidence(cdp, 7);
-    assert(report, "manual stepWorld advances exactly requested ticks", afterSeven.snapshot.tick === 7, { tick: afterSeven.snapshot.tick });
+    const canonicalAfterSeven = await canonicalSnapshot(cdp);
+    assert(report, "manual stepWorld advances exactly requested ticks", afterSeven.snapshot.tick === 7 && canonicalAfterSeven.tick === 7, {
+      presentationTick: afterSeven.snapshot.tick,
+      canonicalTick: canonicalAfterSeven.tick,
+    });
     await sleep(350);
     const afterSevenWait = await evidenceSnapshot(cdp);
-    assert(report, "World remains frozen again after a manual step burst", afterSevenWait.snapshot.tick === 7, { tick: afterSevenWait.snapshot.tick });
+    const canonicalAfterSevenWait = await canonicalSnapshot(cdp);
+    assert(report, "World remains frozen again after a manual step burst", afterSevenWait.snapshot.tick === 7 && canonicalAfterSevenWait.tick === 7, {
+      presentationTick: afterSevenWait.snapshot.tick,
+      canonicalTick: canonicalAfterSevenWait.tick,
+    });
+    assert(report, "frozen post-step canonical state remains stable", stableJson(canonicalAfterSevenWait) === stableJson(canonicalAfterSeven), {
+      canonicalHashBefore: hashJson(canonicalAfterSeven),
+      canonicalHashAfter: hashJson(canonicalAfterSevenWait),
+    });
     report.manualControl = {
       initialTick: beforeWait.snapshot.tick,
       tickAfterWallClock: afterWait.snapshot.tick,
@@ -186,6 +212,8 @@ async function run() {
       tickAfterSecondWallClock: afterSevenWait.snapshot.tick,
       zoomBefore,
       zoomAfter: afterOverview.cameraZoom,
+      canonicalInitial: canonicalSummary(canonicalBeforeWait),
+      canonicalAfterSeven: canonicalSummary(canonicalAfterSeven),
     };
 
     const repeatedRuns = [];
@@ -195,9 +223,27 @@ async function run() {
     report.repeatedRuns = repeatedRuns;
 
     for (const targetTick of TARGET_TICKS) {
-      const hashes = repeatedRuns.map((runRecord) => runRecord.checkpoints.find((checkpoint) => checkpoint.tick === targetTick)?.hash ?? null);
-      assert(report, `manual baseline projection is exactly reproducible at t${targetTick}`, hashes.every((hash) => hash !== null && hash === hashes[0]), hashes);
+      const presentationHashes = repeatedRuns.map((runRecord) => runRecord.checkpoints.find((checkpoint) => checkpoint.tick === targetTick)?.presentationHash ?? null);
+      const canonicalHashes = repeatedRuns.map((runRecord) => runRecord.checkpoints.find((checkpoint) => checkpoint.tick === targetTick)?.canonicalHash ?? null);
+      assert(report, `manual presentation projection is exactly reproducible at t${targetTick}`, presentationHashes.every((hash) => hash !== null && hash === presentationHashes[0]), presentationHashes);
+      assert(report, `canonical evidence snapshot is exactly reproducible at t${targetTick}`, canonicalHashes.every((hash) => hash !== null && hash === canonicalHashes[0]), canonicalHashes);
     }
+
+    const finalCheckpoint = repeatedRuns[0]?.checkpoints.find((checkpoint) => checkpoint.tick === 760) ?? null;
+    assert(report, "canonical t760 proves material delivery and matter terminality", Boolean(
+      finalCheckpoint?.canonical?.matterStatus === "resolved"
+      && finalCheckpoint?.canonical?.activeRunId === null
+      && finalCheckpoint?.canonical?.crateLocation?.kind === "free"
+      && Math.abs((finalCheckpoint?.canonical?.crateLocation?.position?.x ?? Number.NaN) - 2_980) < 1e-9
+      && Math.abs((finalCheckpoint?.canonical?.crateLocation?.position?.y ?? Number.NaN) - 1_080) < 1e-9
+    ), finalCheckpoint?.canonical ?? null);
+    assert(report, "canonical t760 retains exact pickup/place run-to-World action provenance", Boolean(
+      finalCheckpoint?.canonical?.actionFacts?.length === 2
+      && finalCheckpoint.canonical.actionFacts[0]?.runId === "run.janek.pickup-delivery-crate"
+      && finalCheckpoint.canonical.actionFacts[0]?.code === "picked_up"
+      && finalCheckpoint.canonical.actionFacts[1]?.runId === "run.janek.place-delivery-crate"
+      && finalCheckpoint.canonical.actionFacts[1]?.code === "placed"
+    ), finalCheckpoint?.canonical?.actionFacts ?? null);
 
     await navigateNormal(cdp);
     const normalHasEvidenceApi = await evaluate(cdp, `Boolean(window.__SPC_EVIDENCE__)`);
@@ -230,15 +276,18 @@ async function captureBaselineRun(cdp, runIndex) {
   for (const targetTick of TARGET_TICKS) {
     const delta = targetTick - previousTick;
     const frame = delta > 0 ? await stepEvidence(cdp, delta) : await evidenceSnapshot(cdp);
-    if (frame.snapshot.tick !== targetTick) {
-      throw new Error(`manual baseline run ${runIndex} expected t${targetTick}, got t${frame.snapshot.tick}`);
+    const canonical = await canonicalSnapshot(cdp);
+    if (frame.snapshot.tick !== targetTick || canonical.tick !== targetTick) {
+      throw new Error(`manual baseline run ${runIndex} expected t${targetTick}, got presentation t${frame.snapshot.tick} / canonical t${canonical.tick}`);
     }
     const projection = controlProjection(frame);
     checkpoints.push({
       tick: targetTick,
-      hash: createHash("sha256").update(JSON.stringify(projection)).digest("hex"),
+      presentationHash: hashJson(projection),
+      canonicalHash: hashJson(canonical),
       janek: actorSummary(frame, "resident.janek"),
       occurrenceCount: frame.recentOccurrences.length,
+      canonical: canonicalSummary(canonical),
     });
     previousTick = targetTick;
   }
@@ -256,10 +305,43 @@ function controlProjection(frame) {
   };
 }
 
+function canonicalSummary(snapshot) {
+  const crate = snapshot.authoritativeWorld?.materialObjects?.find((object) => object.id === CRATE_ID) ?? null;
+  return {
+    schemaVersion: snapshot.schemaVersion ?? null,
+    scenarioId: snapshot.scenarioId ?? null,
+    tick: snapshot.tick ?? null,
+    matterStatus: snapshot.continuity?.matter?.status ?? null,
+    semanticRevision: snapshot.continuity?.matter?.semanticRevision ?? null,
+    activeRunId: snapshot.continuity?.matter?.activeRunId ?? null,
+    activeRunCanMutateWorld: snapshot.continuity?.activeRunCanMutateWorld ?? null,
+    crateLocation: crate?.location ?? null,
+    materialKnowledge: snapshot.residentPrivate?.materialKnowledge ?? [],
+    actionFacts: (snapshot.causalProvenance?.residentWorldActionFacts ?? []).map((fact) => ({
+      id: fact.id,
+      tick: fact.tick,
+      runId: fact.runId,
+      kind: fact.action?.kind ?? null,
+      objectId: fact.action?.objectId ?? null,
+      outcomeStatus: fact.resolution?.outcomeStatus ?? fact.resolution?.status ?? null,
+      code: fact.resolution?.code ?? fact.resolution?.reason ?? null,
+      actionSeq: fact.resolution?.actionSeq ?? null,
+    })),
+  };
+}
+
 function actorSummary(frame, actorId) {
   const actor = frame.snapshot.actors.find((candidate) => candidate.id === actorId);
   if (!actor) return null;
   return { position: actor.position, velocity: actor.velocity };
+}
+
+function stableJson(value) {
+  return JSON.stringify(value);
+}
+
+function hashJson(value) {
+  return createHash("sha256").update(stableJson(value)).digest("hex");
 }
 
 async function navigateEvidence(cdp) {
@@ -275,12 +357,21 @@ async function navigateNormal(cdp) {
 async function evidenceMeta(cdp) {
   return await evaluate(cdp, `(() => {
     const api = window.__SPC_EVIDENCE__;
-    return { version: api?.version ?? null, control: api?.control ?? null, ready: api?.ready?.() ?? false };
+    return {
+      version: api?.version ?? null,
+      control: api?.control ?? null,
+      ready: api?.ready?.() ?? false,
+      hasCanonicalSnapshot: typeof api?.canonicalSnapshot === "function",
+    };
   })()`);
 }
 
 async function evidenceSnapshot(cdp) {
   return await evaluate(cdp, `window.__SPC_EVIDENCE__.snapshot()`);
+}
+
+async function canonicalSnapshot(cdp) {
+  return await evaluate(cdp, `window.__SPC_EVIDENCE__.canonicalSnapshot()`);
 }
 
 async function stepEvidence(cdp, steps) {
@@ -349,7 +440,7 @@ function assert(report, name, pass, detail) {
 
 run().catch((error) => {
   const failure = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     sourceSha: SOURCE_SHA,
     outcome: "HARNESS_ERROR",
     error: error instanceof Error ? { message: error.message, stack: error.stack } : { message: String(error) },
