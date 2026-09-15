@@ -44,6 +44,8 @@ There is deliberately no generic 'work' action in this cognition interface until
 
 Speech is embodied. There is no top-level instant reply channel. If you want to answer somebody, choose communicate. Nearby overheard speech is not automatically your responsibility. A hearing percept may contain only a direction and rough distance band; that is NOT an exact position. Never infer exact coordinates from hearing. A remembered exact actor position comes from earlier exact evidence and may be stale.
 
+Region knowledge is resident-specific. 'familiar' means this resident already knows the place from their life but has not visited it in the represented history; 'visited' means the resident physically entered it. Do not infer unknown intermediate routes merely because you know a destination name.
+
 World truth, perception, belief and memory are distinct. Do not invent hidden objects, unknown actors, unknown regions, coordinates, completed actions, or evidence IDs. A statement by any actor proves only that the statement was heard, not that its content is physically true. Cite only evidence IDs present in this private context. Keep beliefs tentative when evidence is weak.
 
 Concerns are continuing things that matter to you. They may arise from your situation, curiosity, relationships, danger, or another actor's request. You are not a command interpreter: you may refuse, defer, communicate, preserve your own current activity, or initiate supported activity for your own reasons. Reuse concern and belief IDs when revising the same thing.
@@ -117,6 +119,7 @@ const activityKinds = new Set<ResidentActivity["kind"]>([
   "idle", "travel", "follow", "communicate", "investigate", "work",
 ]);
 const distanceBands = new Set<PerceptDistanceBand>(["near", "mid", "far"]);
+const regionKnowledgeKinds = new Set(["familiar", "visited"] as const);
 
 function sanitizeActivity(value: unknown): ResidentActivity | null {
   if (!record(value)) return null;
@@ -170,12 +173,13 @@ export function sanitizeSpcNextContext(value: unknown): ResidentCognitionContext
   const residentId = identifier(value.resident.id);
   const residentName = boundedText(value.resident.name, 120);
   const currentActivity = sanitizeActivity(value.currentActivity);
-  if (!residentId || !residentName || !currentActivity) return null;
+  const currentRegionId = value.currentRegionId === null ? null : identifier(value.currentRegionId);
+  if (!residentId || !residentName || !currentActivity || (currentRegionId === null && value.currentRegionId !== null)) return null;
 
   if (!Array.isArray(value.reasons) || value.reasons.length > 8) return null;
   const reasons: CognitionReason[] = [];
   for (const raw of value.reasons) {
-    if (!record(raw) || !safeInt(raw.tick) || typeof raw.kind !== "string" || !reasonKinds.has(raw.kind as CognitionReasonKind)
+    if (!record(raw) || !safeInt(raw.tick) || raw.tick > value.tick || typeof raw.kind !== "string" || !reasonKinds.has(raw.kind as CognitionReasonKind)
       || !finite(raw.salience) || raw.salience < 0 || raw.salience > 1) return null;
     const id = identifier(raw.id);
     const summary = boundedText(raw.summary, 1600);
@@ -187,7 +191,7 @@ export function sanitizeSpcNextContext(value: unknown): ResidentCognitionContext
   if (!Array.isArray(value.recentPercepts) || value.recentPercepts.length > 64) return null;
   const recentPercepts: ResidentPercept[] = [];
   for (const raw of value.recentPercepts) {
-    if (!record(raw) || !safeInt(raw.tick) || !["hearing", "sight", "self"].includes(String(raw.modality))
+    if (!record(raw) || !safeInt(raw.tick) || raw.tick > value.tick || !["hearing", "sight", "self"].includes(String(raw.modality))
       || typeof raw.addressed !== "boolean") return null;
     const modality = raw.modality as ResidentPercept["modality"];
     const id = identifier(raw.id);
@@ -217,7 +221,8 @@ export function sanitizeSpcNextContext(value: unknown): ResidentCognitionContext
   if (!Array.isArray(value.beliefs) || value.beliefs.length > 64) return null;
   const beliefs: ResidentBeliefState[] = [];
   for (const raw of value.beliefs) {
-    if (!record(raw) || !finite(raw.confidence) || raw.confidence < 0 || raw.confidence > 1 || !safeInt(raw.updatedTick)) return null;
+    if (!record(raw) || !finite(raw.confidence) || raw.confidence < 0 || raw.confidence > 1
+      || !safeInt(raw.updatedTick) || raw.updatedTick > value.tick) return null;
     const id = identifier(raw.id), statement = boundedText(raw.statement, 1600), evidence = evidenceIds(raw.evidenceIds);
     if (!id || !statement || !evidence) return null;
     beliefs.push({ id, statement, confidence: raw.confidence, evidenceIds: evidence, updatedTick: raw.updatedTick });
@@ -243,6 +248,8 @@ export function sanitizeSpcNextContext(value: unknown): ResidentCognitionContext
       || (lastHeardDirection === null && raw.lastHeardDirection !== null)
       || (lastHeardDistanceBand === null && raw.lastHeardDistanceBand !== null)
       || (lastHeardTick === null && raw.lastHeardTick !== null)) return null;
+    if ((lastKnownPosition === null) !== (lastObservedTick === null)) return null;
+    if ((lastObservedTick !== null && lastObservedTick > value.tick) || (lastHeardTick !== null && lastHeardTick > value.tick)) return null;
     const hearingFields = [lastHeardDirection, lastHeardDistanceBand, lastHeardTick];
     if (hearingFields.some((field) => field === null) && hearingFields.some((field) => field !== null)) return null;
     if (lastHeardDirection) {
@@ -260,15 +267,28 @@ export function sanitizeSpcNextContext(value: unknown): ResidentCognitionContext
   for (const raw of value.knownRegions) {
     if (!record(raw)) return null;
     const id = identifier(raw.id), label = boundedText(raw.label, 120);
-    if (!id || !label || regionIds.has(id)) return null;
+    const knowledge = typeof raw.knowledge === "string" && regionKnowledgeKinds.has(raw.knowledge as "familiar" | "visited")
+      ? raw.knowledge as "familiar" | "visited"
+      : null;
+    const lastVisitedTick = raw.lastVisitedTick === null ? null : (safeInt(raw.lastVisitedTick) ? raw.lastVisitedTick : null);
+    if (!id || !label || !knowledge || regionIds.has(id)
+      || (lastVisitedTick === null && raw.lastVisitedTick !== null)
+      || (lastVisitedTick !== null && lastVisitedTick > value.tick)) return null;
+    if ((knowledge === "visited") !== (lastVisitedTick !== null)) return null;
     regionIds.add(id);
-    knownRegions.push({ id, label });
+    knownRegions.push({ id, label, knowledge, lastVisitedTick });
+  }
+
+  if (currentRegionId !== null) {
+    const currentRegion = knownRegions.find((region) => region.id === currentRegionId);
+    if (!currentRegion || currentRegion.knowledge !== "visited" || currentRegion.lastVisitedTick === null) return null;
   }
 
   return {
     version: 1,
     resident: { id: residentId, name: residentName },
     tick: value.tick,
+    currentRegionId,
     reasons,
     currentActivity,
     recentPercepts,
