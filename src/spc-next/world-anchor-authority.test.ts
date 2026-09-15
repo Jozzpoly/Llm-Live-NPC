@@ -51,7 +51,8 @@ describe("SPC authored World anchor authority", () => {
     const exposedOptions = world.options;
     exposedOptions.bounds.maxX = 200;
     exposedOptions.regions[0]!.label = "Tampered read";
-    exposedOptions.anchors?.[0] && (exposedOptions.anchors[0].position.x = 999);
+    const exposedAnchor = exposedOptions.anchors?.[0];
+    if (exposedAnchor) exposedAnchor.position.x = 999;
     expect(world.options.bounds.maxX).toBe(1_000);
     expect(world.regions()[0]?.label).toBe("Plain");
     expect(world.anchor("anchor.workbench")?.position.x).toBe(400);
