@@ -55,6 +55,84 @@ describe("ResidentMaterialKnowledge", () => {
     });
   });
 
+  it("tracks a recognized held object at a visible body position without exposing holder identity", () => {
+    const world = new SpcWorldRuntime({
+      bounds: { minX: 0, minY: 0, maxX: 500, maxY: 500 },
+      regions: [],
+      chunkSize: 128,
+      fixedDeltaSeconds: 1 / 60,
+    });
+    world.addResident("resident.janek", "Janek", { x: 100, y: 100 }, { brainIntervalTicks: 99 });
+    world.addPlayer("player.helper", { x: 150, y: 100 });
+    world.addMaterialObject({
+      id: "crate.workshop.01",
+      label: "Workshop crate",
+      radius: 16,
+      location: { kind: "free", position: { x: 150, y: 100 } },
+    });
+    const knowledge = new ResidentMaterialKnowledge("resident.janek", ["crate.workshop.01"], world);
+    knowledge.sample();
+    expect(world.attemptMaterialAction("player.helper", {
+      kind: "pickup",
+      objectId: "crate.workshop.01",
+    })).toMatchObject({ status: "succeeded", code: "picked_up" });
+    world.setActorMotionIntent("player.helper", { x: 90, y: 0 });
+    world.step(10);
+    world.setActorMotionIntent("player.helper", { x: 0, y: 0 });
+    const helper = world.publicSnapshot().actors.find((actor) => actor.id === "player.helper")!;
+
+    knowledge.sample();
+    const observation = knowledge.observation("crate.workshop.01");
+    expect(observation).toMatchObject({
+      objectId: "crate.workshop.01",
+      lastKnownPosition: helper.position,
+      currentlyVisible: true,
+    });
+    expect(observation).not.toHaveProperty("holderId");
+    expect(observation).not.toHaveProperty("actorId");
+  });
+
+  it("produces checked absence only for an inspectable last-known point, never global nonexistence", () => {
+    const world = new SpcWorldRuntime({
+      bounds: { minX: 0, minY: 0, maxX: 1_000, maxY: 1_000 },
+      regions: [],
+      chunkSize: 128,
+      fixedDeltaSeconds: 1 / 30,
+    });
+    world.addResident("resident.janek", "Janek", { x: 100, y: 100 }, { brainIntervalTicks: 99 });
+    world.addPlayer("player.helper", { x: 260, y: 100 }, { maxSpeed: 180 });
+    world.addMaterialObject({
+      id: "crate.workshop.01",
+      label: "Workshop crate",
+      radius: 16,
+      location: { kind: "free", position: { x: 260, y: 100 } },
+    });
+    const knowledge = new ResidentMaterialKnowledge("resident.janek", ["crate.workshop.01"], world);
+    knowledge.sample();
+
+    expect(world.attemptMaterialAction("player.helper", {
+      kind: "pickup",
+      objectId: "crate.workshop.01",
+    })).toMatchObject({ status: "succeeded", code: "picked_up" });
+    world.setActorMotionIntent("player.helper", { x: 180, y: 0 });
+    world.step(100);
+    world.setActorMotionIntent("player.helper", { x: 0, y: 0 });
+    const helper = world.publicSnapshot().actors.find((actor) => actor.id === "player.helper")!;
+    expect(world.attemptMaterialAction("player.helper", {
+      kind: "place",
+      objectId: "crate.workshop.01",
+      position: helper.position,
+    })).toMatchObject({ status: "succeeded", code: "placed" });
+
+    knowledge.sample();
+    expect(knowledge.checkedAbsence("crate.workshop.01")).toEqual({
+      objectId: "crate.workshop.01",
+      checkedPosition: { x: 260, y: 100 },
+      checkedAtTick: world.tick,
+    });
+    expect(world.materialObject("crate.workshop.01")).not.toBeNull();
+  });
+
   it("does not acquire a stable object identity that was not authored as recognizable", () => {
     const world = new SpcWorldRuntime({
       bounds: { minX: 0, minY: 0, maxX: 500, maxY: 500 },
