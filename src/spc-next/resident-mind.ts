@@ -30,9 +30,10 @@ export const DEFAULT_MIND_LIMITS: Required<ResidentMindLimits> = {
   maxPerceptEvidence: 512,
 };
 
-const CONTEXT_PERCEPT_LIMIT = 32;
-const CONTEXT_BELIEF_LIMIT = 24;
-const CONTEXT_CONCERN_LIMIT = 16;
+const CONTEXT_RECENT_PERCEPT_LIMIT = 32;
+const CONTEXT_REQUIRED_EVIDENCE_LIMIT = 48;
+const CONTEXT_BELIEF_LIMIT = 16;
+const CONTEXT_CONCERN_LIMIT = 12;
 const CONTEXT_ACTOR_LIMIT = 32;
 
 interface KnownActorRecord {
@@ -49,8 +50,8 @@ interface KnownActorRecord {
 interface KnownRegionRecord {
   id: string;
   label: string;
-  discoveredAtTick: number;
-  lastVisitedTick: number;
+  familiarizedAtTick: number;
+  lastVisitedTick: number | null;
 }
 
 export class ResidentMind {
@@ -87,61 +88,80 @@ export class ResidentMind {
           this.touchActor(percept.actorId, percept.tick);
         }
       }
-      // subjectId is provenance only unless subject-specific spatial evidence exists.
-      // Never assign the event source position to a different subject.
+      // subjectId is causal provenance only unless subject-specific spatial evidence exists.
     }
     this.trimKnownActors();
     trimOldest(this.perceptEvidence, this.limits.maxPerceptEvidence, (percept) => percept.tick);
   }
 
-  discoverRegion(region: WorldRegion, tick: number): void {
+  familiarizeRegion(region: WorldRegion, tick: number): void {
     const existing = this.knownRegions.get(region.id);
+    if (existing) {
+      existing.label = region.label;
+      return;
+    }
     this.knownRegions.set(region.id, {
       id: region.id,
       label: region.label,
-      discoveredAtTick: existing?.discoveredAtTick ?? tick,
-      lastVisitedTick: tick,
+      familiarizedAtTick: tick,
+      lastVisitedTick: null,
     });
-    trimOldest(this.knownRegions, this.limits.maxKnownRegions, (record) => record.lastVisitedTick);
+    this.trimKnownRegions();
+  }
+
+  discoverRegion(region: WorldRegion, tick: number): void {
+    this.familiarizeRegion(region, tick);
+    const record = this.knownRegions.get(region.id)!;
+    record.lastVisitedTick = tick;
   }
 
   context(
     tick: number,
+    currentRegionId: string | null,
     reasons: readonly CognitionReason[],
     currentActivity: ResidentActivity,
     recentPercepts: readonly ResidentPercept[],
   ): ResidentCognitionContext {
-    const requiredEvidenceIds = new Set(reasons.flatMap((reason) => reason.evidenceIds));
-    const selectedPercepts = new Map<string, ResidentPercept>();
+    const selectedConcerns = [...this.concerns.values()]
+      .sort((a, b) => {
+        if (a.status !== b.status) return a.status === "open" ? -1 : 1;
+        return b.priority - a.priority || a.id.localeCompare(b.id);
+      })
+      .slice(0, CONTEXT_CONCERN_LIMIT);
+    const selectedBeliefs = [...this.beliefs.values()]
+      .sort((a, b) => b.updatedTick - a.updatedTick || a.id.localeCompare(b.id))
+      .slice(0, CONTEXT_BELIEF_LIMIT);
 
+    const requiredEvidenceIds = uniqueLimited([
+      ...reasons.flatMap((reason) => reason.evidenceIds),
+      ...selectedConcerns.flatMap((concern) => concern.evidenceIds),
+      ...selectedBeliefs.flatMap((belief) => belief.evidenceIds),
+    ], CONTEXT_REQUIRED_EVIDENCE_LIMIT);
+    const selectedPercepts = new Map<string, ResidentPercept>();
     for (const evidenceId of requiredEvidenceIds) {
       const percept = this.perceptEvidence.get(evidenceId);
       if (percept) selectedPercepts.set(percept.id, structuredClone(percept));
     }
+
+    let recentAdded = 0;
     for (const percept of [...recentPercepts].sort((a, b) => b.tick - a.tick || a.id.localeCompare(b.id))) {
-      if (selectedPercepts.size >= CONTEXT_PERCEPT_LIMIT && !requiredEvidenceIds.has(percept.id)) continue;
-      if (!selectedPercepts.has(percept.id)) selectedPercepts.set(percept.id, structuredClone(percept));
+      if (selectedPercepts.has(percept.id)) continue;
+      if (recentAdded >= CONTEXT_RECENT_PERCEPT_LIMIT) break;
+      selectedPercepts.set(percept.id, structuredClone(percept));
+      recentAdded += 1;
     }
 
     return {
       version: 1,
       resident: { id: this.resident.id, name: this.resident.name },
       tick,
+      currentRegionId,
       reasons: structuredClone(reasons),
       currentActivity: structuredClone(currentActivity),
       recentPercepts: [...selectedPercepts.values()]
         .sort((a, b) => a.tick - b.tick || a.id.localeCompare(b.id)),
-      concerns: [...this.concerns.values()]
-        .sort((a, b) => {
-          if (a.status !== b.status) return a.status === "open" ? -1 : 1;
-          return b.priority - a.priority || a.id.localeCompare(b.id);
-        })
-        .slice(0, CONTEXT_CONCERN_LIMIT)
-        .map((value) => structuredClone(value)),
-      beliefs: [...this.beliefs.values()]
-        .sort((a, b) => b.updatedTick - a.updatedTick || a.id.localeCompare(b.id))
-        .slice(0, CONTEXT_BELIEF_LIMIT)
-        .map((value) => structuredClone(value)),
+      concerns: selectedConcerns.map((value) => structuredClone(value)),
+      beliefs: selectedBeliefs.map((value) => structuredClone(value)),
       knownActors: [...this.knownActors.values()]
         .sort((a, b) => b.touchedAtTick - a.touchedAtTick || a.id.localeCompare(b.id))
         .slice(0, CONTEXT_ACTOR_LIMIT)
@@ -155,8 +175,17 @@ export class ResidentMind {
           lastHeardTick: value.lastHeardTick,
         })),
       knownRegions: [...this.knownRegions.values()]
-        .sort((a, b) => b.lastVisitedTick - a.lastVisitedTick || a.id.localeCompare(b.id))
-        .map((value) => ({ id: value.id, label: value.label })),
+        .sort((a, b) => {
+          const aVisited = a.lastVisitedTick ?? Number.NEGATIVE_INFINITY;
+          const bVisited = b.lastVisitedTick ?? Number.NEGATIVE_INFINITY;
+          return bVisited - aVisited || b.familiarizedAtTick - a.familiarizedAtTick || a.id.localeCompare(b.id);
+        })
+        .map((value) => ({
+          id: value.id,
+          label: value.label,
+          knowledge: value.lastVisitedTick === null ? "familiar" as const : "visited" as const,
+          lastVisitedTick: value.lastVisitedTick,
+        })),
     };
   }
 
@@ -223,7 +252,7 @@ export class ResidentMind {
 
   private touchActor(id: string, tick: number): KnownActorRecord {
     const existing = this.knownActors.get(id);
-    const record: KnownActorRecord = existing ?? {
+    const actor: KnownActorRecord = existing ?? {
       id,
       label: id,
       lastKnownPosition: null,
@@ -233,9 +262,9 @@ export class ResidentMind {
       lastHeardTick: null,
       touchedAtTick: tick,
     };
-    record.touchedAtTick = tick;
-    this.knownActors.set(id, record);
-    return record;
+    actor.touchedAtTick = tick;
+    this.knownActors.set(id, actor);
+    return actor;
   }
 
   private rememberSeenActor(id: string, position: Vec2, tick: number): void {
@@ -254,6 +283,35 @@ export class ResidentMind {
   private trimKnownActors(): void {
     trimOldest(this.knownActors, this.limits.maxKnownActors, (record) => record.touchedAtTick);
   }
+
+  private trimKnownRegions(): void {
+    if (this.knownRegions.size <= this.limits.maxKnownRegions) return;
+    const removable = [...this.knownRegions.entries()].sort((a, b) => {
+      const aVisited = a[1].lastVisitedTick;
+      const bVisited = b[1].lastVisitedTick;
+      if ((aVisited === null) !== (bVisited === null)) return aVisited === null ? -1 : 1;
+      const aTouch = aVisited ?? a[1].familiarizedAtTick;
+      const bTouch = bVisited ?? b[1].familiarizedAtTick;
+      return aTouch - bTouch || a[0].localeCompare(b[0]);
+    });
+    while (this.knownRegions.size > this.limits.maxKnownRegions) {
+      const candidate = removable.shift();
+      if (!candidate) break;
+      this.knownRegions.delete(candidate[0]);
+    }
+  }
+}
+
+function uniqueLimited(values: readonly string[], limit: number): string[] {
+  const output: string[] = [];
+  const seen = new Set<string>();
+  for (const value of values) {
+    if (seen.has(value)) continue;
+    seen.add(value);
+    output.push(value);
+    if (output.length >= limit) break;
+  }
+  return output;
 }
 
 function trimOldest<T>(
