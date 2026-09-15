@@ -139,8 +139,8 @@ function validateFrame(
 
     if (typeof effect.text !== "string" || effect.text.trim().length === 0) return null;
     if (!Number.isFinite(effect.radius) || effect.radius < 0) return null;
-    const addressed = [...new Set(effect.addressedActorIds)];
-    if (addressed.some((id) => typeof id !== "string" || id.trim().length === 0 || !actorIds.has(id))) return null;
+    const addressed = [...new Set<string>(effect.addressedActorIds)];
+    if (addressed.some((id) => id.trim().length === 0 || !actorIds.has(id))) return null;
     effects.push({
       kind: "speech",
       text: effect.text.trim(),
