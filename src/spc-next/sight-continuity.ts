@@ -3,11 +3,13 @@ import { distanceSquared, type PerceptPhenomenon, type Vec2, type VisibleActor }
 export interface SightContinuityPolicy {
   reportDistance: number;
   maxUnreportedSeconds: number;
+  releaseMargin?: number;
 }
 
-export const DEFAULT_SIGHT_CONTINUITY_POLICY: SightContinuityPolicy = {
+export const DEFAULT_SIGHT_CONTINUITY_POLICY: Required<SightContinuityPolicy> = {
   reportDistance: 24,
   maxUnreportedSeconds: 1,
+  releaseMargin: 12,
 };
 
 export interface SightPerceptDraft {
@@ -28,19 +30,24 @@ const POSITION_EPSILON_SQ = 1e-12;
 
 export class SightContinuityTracker {
   private readonly tracks = new Map<string, SightTrack>();
+  readonly policy: Required<SightContinuityPolicy>;
 
   constructor(
     private readonly fixedDeltaSeconds: number,
-    readonly policy: SightContinuityPolicy = DEFAULT_SIGHT_CONTINUITY_POLICY,
+    policy: SightContinuityPolicy = DEFAULT_SIGHT_CONTINUITY_POLICY,
   ) {
+    this.policy = { ...DEFAULT_SIGHT_CONTINUITY_POLICY, ...policy };
     if (!Number.isFinite(fixedDeltaSeconds) || fixedDeltaSeconds <= 0) {
       throw new Error("fixedDeltaSeconds must be positive and finite");
     }
-    if (!Number.isFinite(policy.reportDistance) || policy.reportDistance <= 0) {
+    if (!Number.isFinite(this.policy.reportDistance) || this.policy.reportDistance <= 0) {
       throw new Error("sight reportDistance must be positive and finite");
     }
-    if (!Number.isFinite(policy.maxUnreportedSeconds) || policy.maxUnreportedSeconds <= 0) {
+    if (!Number.isFinite(this.policy.maxUnreportedSeconds) || this.policy.maxUnreportedSeconds <= 0) {
       throw new Error("sight maxUnreportedSeconds must be positive and finite");
+    }
+    if (!Number.isFinite(this.policy.releaseMargin) || this.policy.releaseMargin < 0) {
+      throw new Error("sight releaseMargin must be finite and non-negative");
     }
   }
 
