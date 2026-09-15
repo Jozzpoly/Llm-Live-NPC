@@ -1,6 +1,6 @@
 import { parseResidentCognitionProposal, type ResidentCognitionContext, type ResidentCognitionProposal } from "./cognition-contract";
 import { CognitionGrounder, type CognitionGroundingView } from "./cognition-grounder";
-import type { CognitionBatch } from "./contracts";
+import type { CognitionBatch, ResidentActivity } from "./contracts";
 import { ResidentRuntime, type ResidentCognitionRevision } from "./resident-runtime";
 
 export interface ResidentCognitionAttempt {
@@ -9,12 +9,15 @@ export interface ResidentCognitionAttempt {
   readonly batch: CognitionBatch;
   readonly context: ResidentCognitionContext;
   readonly revision: ResidentCognitionRevision;
-  readonly activityIdAtRequest: string;
 }
 
 export type CognitionSettlement =
-  | { status: "applied"; proposal: ResidentCognitionProposal; activityChanged: boolean }
-  | { status: "stale"; reason: "newer_addressed_attention" | "activity_changed_while_keep" }
+  | {
+      status: "applied";
+      proposal: ResidentCognitionProposal;
+      activityTransition: ResidentActivity | null;
+    }
+  | { status: "stale"; reason: "newer_addressed_attention" | "activity_changed_during_request" }
   | { status: "rejected"; reason: "unknown_attempt" | "proposal_invalid" | "grounding_rejected"; detail?: string };
 
 export class ResidentCognitionOwner {
@@ -36,7 +39,6 @@ export class ResidentCognitionOwner {
       batch: structuredClone(batch),
       context: structuredClone(context),
       revision: this.resident.cognitionRevision(),
-      activityIdAtRequest: context.currentActivity.id,
     };
     this.activeAttempt = attempt;
     return attempt;
@@ -65,15 +67,12 @@ export class ResidentCognitionOwner {
 
     const currentRevision = this.resident.cognitionRevision();
     if (currentRevision.attention !== attempt.revision.attention) {
+      this.resident.requeueCognitionBatch(attempt.batch);
       return { status: "stale", reason: "newer_addressed_attention" };
     }
-
-    const currentActivity = this.resident.publicState().activity;
-    if (currentRevision.activity !== attempt.revision.activity
-      && proposal.activityDirective.kind === "keep"
-      && currentActivity.id !== attempt.activityIdAtRequest) {
+    if (currentRevision.activity !== attempt.revision.activity) {
       this.resident.requeueCognitionBatch(attempt.batch);
-      return { status: "stale", reason: "activity_changed_while_keep" };
+      return { status: "stale", reason: "activity_changed_during_request" };
     }
 
     const grounded = this.grounder.ground(proposal, {
@@ -89,11 +88,11 @@ export class ResidentCognitionOwner {
     }
 
     this.resident.applySemanticUpdates(proposal, groundingView.tick);
-    if (grounded.kind === "set_activity") {
-      this.resident.setActivity(grounded.activity, groundingView.tick);
-      return { status: "applied", proposal, activityChanged: true };
-    }
-    return { status: "applied", proposal, activityChanged: false };
+    return {
+      status: "applied",
+      proposal,
+      activityTransition: grounded.kind === "set_activity" ? structuredClone(grounded.activity) : null,
+    };
   }
 
   state(): { activeAttemptId: string | null } {
