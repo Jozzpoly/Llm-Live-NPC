@@ -2,11 +2,12 @@ import { spawn, execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, resolve } from "node:path";
+import { basename, dirname, resolve } from "node:path";
 
 const BASE_URL = process.env.EVIDENCE_BASE_URL ?? "http://127.0.0.1:4173";
 const SOURCE_SHA = process.env.SOURCE_SHA ?? "local";
 const OUTPUT_FILE = resolve(process.env.MISSING_CRATE_OUTPUT ?? "evidence/browser/missing-crate.json");
+const OUTPUT_DIR = dirname(OUTPUT_FILE);
 const VIEWPORT = { width: 1400, height: 900, deviceScaleFactor: 1, mobile: false };
 const REPEAT_COUNT = 3;
 const MAX_RESIDENT_STEPS = 380;
@@ -15,8 +16,9 @@ const JANEK_ID = "resident.janek";
 const RELOCATOR_ID = "player.relocator";
 const RUN_ID = "run.janek.pickup-last-known-crate";
 const REMEMBERED_CRATE_POSITION = { x: 1_952, y: 720 };
+const PICKUP_ATTEMPT_DISTANCE = 56;
 
-mkdirSync(dirname(OUTPUT_FILE), { recursive: true });
+mkdirSync(OUTPUT_DIR, { recursive: true });
 const sleep = (ms) => new Promise((resolveSleep) => setTimeout(resolveSleep, ms));
 
 function chromeExecutable() {
@@ -126,13 +128,14 @@ async function run() {
 
   let cdp;
   const report = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     sourceSha: SOURCE_SHA,
     startedAt: new Date().toISOString(),
     chrome: null,
     assertions: [],
     runtimeExceptions: [],
     runs: [],
+    visualEvidence: null,
   };
 
   try {
@@ -160,6 +163,7 @@ async function run() {
       runs.push(await captureMissingCrateRun(cdp, runIndex));
     }
     report.runs = runs;
+    report.visualEvidence = runs[0]?.visualEvidence ?? null;
 
     const first = runs[0];
     assert(report, "missing-crate opens before the hidden perturbation with stale-able legal knowledge", Boolean(
@@ -212,6 +216,17 @@ async function run() {
     }
     const checkedTicks = runs.map((entry) => entry.checkedAbsence?.tick ?? null);
     assert(report, "checked-absence causal boundary occurs at the same World tick across reloads", checkedTicks.every((tick) => tick === checkedTicks[0]), checkedTicks);
+    assert(report, "participant causal-frame screenshots are non-empty and canonically frozen", Boolean(
+      first?.visualEvidence?.pre?.bytes > 10_000
+      && first.visualEvidence?.postRelocation?.bytes > 10_000
+      && first.visualEvidence?.beforeCheckedAbsence?.bytes > 10_000
+      && first.visualEvidence?.checkedAbsenceWorld?.bytes > 10_000
+      && first.visualEvidence?.checkedAbsenceResearch?.bytes > 10_000
+      && first.visualEvidence?.pre?.tick === first.pre.tick
+      && first.visualEvidence?.postRelocation?.tick === first.postRelocation.tick
+      && first.visualEvidence?.checkedAbsenceWorld?.tick === first.checkedAbsence.tick
+      && first.visualEvidence?.checkedAbsenceResearch?.tick === first.checkedAbsence.tick
+    ), first?.visualEvidence ?? null);
     assert(report, "missing-crate browser specimen has no uncaught runtime exceptions", report.runtimeExceptions.length === 0, report.runtimeExceptions);
 
     report.finishedAt = new Date().toISOString();
@@ -229,29 +244,67 @@ async function run() {
 
 async function captureMissingCrateRun(cdp, runIndex) {
   await navigateEvidence(cdp);
+  const visualEvidence = runIndex === 0 ? {} : null;
+  if (visualEvidence) {
+    await focusJanek(cdp);
+    await setWorldOnly(cdp, true);
+  }
+
   const preCanonical = await canonicalSnapshot(cdp);
   const preFrame = await evidenceSnapshot(cdp);
   const preHash = hashJson(preCanonical);
 
   await sleep(220);
   const frozenPre = await canonicalSnapshot(cdp);
+  if (visualEvidence) {
+    visualEvidence.pre = await captureCausalFrame(cdp, "missing-crate-01-pre-world.png", preCanonical.tick);
+  }
 
   const postFrame = await stepEvidence(cdp, 1);
   const postCanonical = await canonicalSnapshot(cdp);
   if (postCanonical.tick !== preCanonical.tick + 1 || postFrame.snapshot.tick !== postCanonical.tick) {
     throw new Error(`run ${runIndex}: hidden relocation did not occupy exactly one World tick`);
   }
+  if (visualEvidence) {
+    visualEvidence.postRelocation = await captureCausalFrame(cdp, "missing-crate-02-post-relocation-world.png", postCanonical.tick);
+  }
 
   let checkedCanonical = postCanonical;
   let checkedFrame = postFrame;
   let residentSteps = 0;
+  let beforeCheckedCaptured = false;
   while (!isCheckedAbsenceBoundary(checkedCanonical) && residentSteps < MAX_RESIDENT_STEPS) {
+    if (visualEvidence && !beforeCheckedCaptured && readyForStalePickupAttempt(checkedCanonical)) {
+      visualEvidence.beforeCheckedAbsence = await captureCausalFrame(
+        cdp,
+        "missing-crate-03-before-checked-absence-world.png",
+        checkedCanonical.tick,
+      );
+      beforeCheckedCaptured = true;
+    }
     checkedFrame = await stepEvidence(cdp, 1);
     checkedCanonical = await canonicalSnapshot(cdp);
     residentSteps += 1;
   }
   if (!isCheckedAbsenceBoundary(checkedCanonical)) {
     throw new Error(`run ${runIndex}: checked absence not reached within ${MAX_RESIDENT_STEPS} resident steps`);
+  }
+
+  if (visualEvidence) {
+    if (!beforeCheckedCaptured) {
+      throw new Error("visual evidence missed the pre-checked-absence causal boundary");
+    }
+    visualEvidence.checkedAbsenceWorld = await captureCausalFrame(
+      cdp,
+      "missing-crate-04-checked-absence-world.png",
+      checkedCanonical.tick,
+    );
+    await setWorldOnly(cdp, false);
+    visualEvidence.checkedAbsenceResearch = await captureCausalFrame(
+      cdp,
+      "missing-crate-05-checked-absence-research.png",
+      checkedCanonical.tick,
+    );
   }
 
   return {
@@ -264,6 +317,7 @@ async function captureMissingCrateRun(cdp, runIndex) {
     pre: canonicalSummary(preCanonical, preFrame),
     postRelocation: canonicalSummary(postCanonical, postFrame),
     checkedAbsence: canonicalSummary(checkedCanonical, checkedFrame),
+    visualEvidence,
   };
 }
 
@@ -272,6 +326,12 @@ function isCheckedAbsenceBoundary(snapshot) {
     && snapshot.continuity.matter.semanticRevision === 2
     && snapshot.continuity.matter.activeRunId === null
     && snapshot.continuity.semanticEvidence?.kind === "checked_absence";
+}
+
+function readyForStalePickupAttempt(snapshot) {
+  if (snapshot?.continuity?.matter?.semanticRevision !== 1 || snapshot.continuity.matter.activeRunId !== RUN_ID) return false;
+  const janek = snapshot.authoritativeWorld?.actors?.find((actor) => actor.id === JANEK_ID) ?? null;
+  return Boolean(janek && distance(janek.position, REMEMBERED_CRATE_POSITION) <= PICKUP_ATTEMPT_DISTANCE + 1e-6);
 }
 
 function canonicalSummary(snapshot, frame) {
@@ -310,6 +370,59 @@ function canonicalSummary(snapshot, frame) {
 async function navigateEvidence(cdp) {
   await cdp.send("Page.navigate", { url: `${BASE_URL}/?spc=1&evidence=1&scenario=missing-crate` });
   await waitUntil(async () => await evaluate(cdp, `Boolean(window.__SPC_EVIDENCE__?.ready?.() && document.querySelector("canvas"))`), 20_000, "missing-crate evidence scene");
+}
+
+async function focusJanek(cdp) {
+  const selected = await evaluate(cdp, `(() => {
+    const resident = document.querySelector('[data-resident="${JANEK_ID}"]');
+    if (!(resident instanceof HTMLElement)) return false;
+    resident.click();
+    const focus = document.querySelector('[data-action="focus"]');
+    if (!(focus instanceof HTMLElement)) return false;
+    focus.click();
+    return true;
+  })()`);
+  if (!selected) throw new Error("unable to focus Janek for participant visual evidence");
+  await sleep(80);
+}
+
+async function setWorldOnly(cdp, enabled) {
+  const result = await evaluate(cdp, `(() => {
+    const root = document.querySelector('#app');
+    const button = document.querySelector('.spc-world-mode-toggle');
+    if (!(root instanceof HTMLElement) || !(button instanceof HTMLButtonElement)) return null;
+    const current = root.classList.contains('spc-world-only');
+    if (current !== ${enabled ? "true" : "false"}) button.click();
+    return root.classList.contains('spc-world-only');
+  })()`);
+  if (result !== enabled) throw new Error(`unable to set world-only=${enabled}`);
+  await sleep(100);
+}
+
+async function captureCausalFrame(cdp, filename, tick) {
+  const canonicalBefore = await canonicalSnapshot(cdp);
+  if (canonicalBefore.tick !== tick) {
+    throw new Error(`screenshot ${filename} expected frozen t${tick}, got t${canonicalBefore.tick}`);
+  }
+  const capture = await cdp.send("Page.captureScreenshot", {
+    format: "png",
+    fromSurface: true,
+    captureBeyondViewport: false,
+  });
+  const bytes = Buffer.from(capture.data, "base64");
+  const path = resolve(OUTPUT_DIR, filename);
+  writeFileSync(path, bytes);
+  const canonicalAfter = await canonicalSnapshot(cdp);
+  if (stableJson(canonicalAfter) !== stableJson(canonicalBefore)) {
+    throw new Error(`screenshot ${filename} mutated canonical World state`);
+  }
+  return {
+    file: basename(path),
+    tick,
+    bytes: bytes.length,
+    sha256: createHash("sha256").update(bytes).digest("hex"),
+    canonicalHash: hashJson(canonicalBefore),
+  };
 }
 
 async function evidenceSnapshot(cdp) {
@@ -386,7 +499,7 @@ function assert(report, name, pass, detail) {
 
 run().catch((error) => {
   const failure = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     sourceSha: SOURCE_SHA,
     outcome: "HARNESS_ERROR",
     error: error instanceof Error ? { message: error.message, stack: error.stack } : { message: String(error) },
