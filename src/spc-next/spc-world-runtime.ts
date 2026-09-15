@@ -1,4 +1,4 @@
-import { ChunkSpatialIndex, type SpatialQueryStats } from "./chunk-spatial-index";
+import type { SpatialQueryStats } from "./chunk-spatial-index";
 import {
   DEFAULT_RESIDENT_PROFILE,
   distanceSquared,
@@ -18,15 +18,14 @@ import {
   type WorldPublicSnapshot,
   type WorldRegion,
 } from "./contracts";
+import { ActorWorldState } from "./actor-world-state";
 import { ResidentRuntime } from "./resident-runtime";
+import { residentExecutionPhase } from "./resident-phase";
 import { SightContinuityTracker } from "./sight-continuity";
 import { SightGeometry } from "./sight-geometry";
 import {
   assertFiniteNonNegative,
-  clampWorldPosition,
-  limitVelocity,
   resolveRegionAt,
-  validateActorState,
   validateResidentActivity,
   validateResidentProfile,
   validateWorldOptions,
@@ -62,16 +61,15 @@ export class SpcWorldRuntime {
   private tickValue = 0;
   private occurrenceSequence = 0;
   private perceptSequence = 0;
-  private readonly actors = new Map<string, ActorState>();
+  private readonly actorState: ActorWorldState;
   private readonly residents = new Map<string, RegisteredResident>();
-  private readonly spatial: ChunkSpatialIndex;
   private readonly sightGeometry: SightGeometry;
   private pendingOccurrences: PendingOccurrence[] = [];
   private readonly recentOccurrences: WorldOccurrence[] = [];
 
   constructor(readonly options: SpcWorldOptions) {
     validateWorldOptions(options);
-    this.spatial = new ChunkSpatialIndex(options.chunkSize);
+    this.actorState = new ActorWorldState(options.bounds, options.chunkSize);
     this.sightGeometry = new SightGeometry(options.sightBlockers ?? []);
   }
 
@@ -80,18 +78,16 @@ export class SpcWorldRuntime {
   }
 
   addPlayer(id: string, position: Vec2, overrides: Partial<Omit<ActorState, "id" | "kind" | "position">> = {}): void {
-    const actor: ActorState = {
+    this.actorState.add({
       id,
       kind: "player",
-      position: this.clampPosition(position),
+      position: { ...position },
       velocity: { x: 0, y: 0 },
       hearingRadius: 420,
       sightRadius: 520,
       maxSpeed: 140,
       ...overrides,
-    };
-    actor.velocity = limitVelocity(actor.velocity, actor.maxSpeed);
-    this.addActor(actor);
+    });
   }
 
   addResident(
@@ -107,24 +103,23 @@ export class SpcWorldRuntime {
       ...profileOverrides,
     };
     validateResidentProfile(profile);
-    const boundedPosition = this.clampPosition(position);
-    this.addActor({
+    const actor = this.actorState.add({
       id,
       kind: "resident",
-      position: boundedPosition,
+      position: { ...position },
       velocity: { x: 0, y: 0 },
       hearingRadius: profile.hearingRadius,
       sightRadius: profile.sightRadius,
       maxSpeed: profile.maxSpeed,
     });
     const runtime = new ResidentRuntime(profile);
-    const brainPhase = this.residents.size % profile.brainIntervalTicks;
+    const brainPhase = residentExecutionPhase(id, profile.brainIntervalTicks);
     this.residents.set(id, {
       runtime,
       brainPhase,
       sight: new SightContinuityTracker(this.options.fixedDeltaSeconds),
     });
-    const initialRegion = this.regionAt(boundedPosition);
+    const initialRegion = this.regionAt(actor.position);
     if (initialRegion) runtime.enterRegion(initialRegion, this.tickValue, true);
     return runtime;
   }
@@ -140,15 +135,13 @@ export class SpcWorldRuntime {
 
   setResidentActivity(residentId: string, activity: ResidentActivity): void {
     const resident = this.requireResident(residentId);
-    validateResidentActivity(activity, this.options.bounds, (id) => this.actors.has(id));
+    validateResidentActivity(activity, this.options.bounds, (id) => this.actorState.has(id));
     resident.runtime.setActivity(activity, this.tickValue);
-    const actor = this.requireActor(residentId);
-    actor.velocity = { x: 0, y: 0 };
+    this.actorState.setVelocity(residentId, { x: 0, y: 0 });
   }
 
   setActorVelocity(actorId: string, velocity: Vec2): void {
-    const actor = this.requireActor(actorId);
-    actor.velocity = limitVelocity(velocity, actor.maxSpeed);
+    this.actorState.setVelocity(actorId, velocity);
   }
 
   speak(
@@ -211,7 +204,7 @@ export class SpcWorldRuntime {
   publicSnapshot(): WorldPublicSnapshot {
     return {
       tick: this.tickValue,
-      actors: [...this.actors.values()].map((actor) => structuredClone(actor)),
+      actors: this.actorState.snapshots(),
       residents: [...this.residents.values()].map(({ runtime }) => runtime.publicState()),
     };
   }
@@ -228,7 +221,7 @@ export class SpcWorldRuntime {
   }
 
   spatialStats(): SpatialQueryStats {
-    return this.spatial.stats();
+    return this.actorState.spatialStats();
   }
 
   regionAt(position: Vec2): WorldRegion | null {
@@ -252,20 +245,15 @@ export class SpcWorldRuntime {
         selfPosition: { ...actor.position },
         visibleActors,
       });
-      this.applyResidentCommand(actor, command);
+      this.applyResidentCommand(residentId, command);
     }
 
-    for (const actor of this.actors.values()) {
-      actor.position = this.clampPosition({
-        x: actor.position.x + actor.velocity.x * this.options.fixedDeltaSeconds,
-        y: actor.position.y + actor.velocity.y * this.options.fixedDeltaSeconds,
-      });
-      this.spatial.upsert(actor.id, actor.position);
-      const resident = this.residents.get(actor.id);
-      if (resident) {
-        const region = this.regionAt(actor.position);
-        if (region) resident.runtime.enterRegion(region, this.tickValue);
-      }
+    const motion = this.actorState.integrate(this.options.fixedDeltaSeconds);
+    for (const sample of motion) {
+      const resident = this.residents.get(sample.id);
+      if (!resident) continue;
+      const region = this.regionAt(sample.after);
+      if (region) resident.runtime.enterRegion(region, this.tickValue);
     }
   }
 
@@ -339,7 +327,7 @@ export class SpcWorldRuntime {
   private visibleActorsForResident(observer: ActorState, registered: RegisteredResident): VisibleActor[] {
     const retained = new Set(registered.sight.currentlyVisibleActorIds());
     const releaseRadius = observer.sightRadius + registered.sight.policy.releaseMargin;
-    return this.spatial.queryRadius(observer.position, releaseRadius)
+    return this.actorState.queryRadiusIds(observer.position, releaseRadius)
       .filter((id) => id !== observer.id)
       .map((id) => this.requireActor(id))
       .filter((candidate) => {
@@ -354,20 +342,20 @@ export class SpcWorldRuntime {
       }));
   }
 
-  private applyResidentCommand(actor: ActorState, command: ReturnType<ResidentRuntime["fastStep"]>): void {
+  private applyResidentCommand(actorId: string, command: ReturnType<ResidentRuntime["fastStep"]>): void {
     if (command.kind === "none") return;
     if (command.kind === "move") {
-      this.setActorVelocity(actor.id, command.desiredVelocity);
+      this.actorState.setVelocity(actorId, command.desiredVelocity);
       return;
     }
-    actor.velocity = { x: 0, y: 0 };
-    this.speak(actor.id, command.text, command.radius, command.addressedActorIds);
+    this.actorState.setVelocity(actorId, { x: 0, y: 0 });
+    this.speak(actorId, command.text, command.radius, command.addressedActorIds);
   }
 
   private queueOccurrence(occurrence: WorldOccurrence): void {
     const stored = structuredClone(occurrence);
     const observers: OccurrenceObserverSnapshot[] = [];
-    for (const residentId of this.spatial.queryRadius(stored.position, stored.radius)) {
+    for (const residentId of this.actorState.queryRadiusIds(stored.position, stored.radius)) {
       if (residentId === stored.actorId) continue;
       if (!this.residents.has(residentId)) continue;
       const actor = this.requireActor(residentId);
@@ -383,29 +371,14 @@ export class SpcWorldRuntime {
     while (this.recentOccurrences.length > WORLD_OCCURRENCE_LIMIT) this.recentOccurrences.shift();
   }
 
-  private addActor(actor: ActorState): void {
-    validateActorState(actor);
-    if (this.actors.has(actor.id)) throw new Error(`actor already exists: ${actor.id}`);
-    const stored = structuredClone(actor);
-    stored.velocity = limitVelocity(stored.velocity, stored.maxSpeed);
-    this.actors.set(actor.id, stored);
-    this.spatial.upsert(actor.id, stored.position);
-  }
-
   private requireActor(id: string): ActorState {
-    const actor = this.actors.get(id);
-    if (!actor) throw new Error(`unknown actor: ${id}`);
-    return actor;
+    return this.actorState.require(id);
   }
 
   private requireResident(id: string): RegisteredResident {
     const resident = this.residents.get(id);
     if (!resident) throw new Error(`unknown resident: ${id}`);
     return resident;
-  }
-
-  private clampPosition(position: Vec2): Vec2 {
-    return clampWorldPosition(position, this.options.bounds);
   }
 }
 
