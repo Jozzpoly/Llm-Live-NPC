@@ -99,6 +99,11 @@ export class ResidentRuntime {
     return this.scheduler.diagnostics();
   }
 
+  /** Minimal read-only local-life seam; do not route local policy through model-facing context projection. */
+  knownRegionIds(): readonly string[] {
+    return [...this.mind.snapshot().knownRegionIds];
+  }
+
   scheduleAdaptiveReview(tick: number, reviewAfterSeconds: number, fixedDeltaSeconds: number): void {
     if (!Number.isFinite(reviewAfterSeconds) || reviewAfterSeconds <= 0) {
       throw new Error("reviewAfterSeconds must be positive");
