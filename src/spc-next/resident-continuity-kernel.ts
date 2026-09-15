@@ -89,7 +89,9 @@ const DEFAULT_REVOCATION_LIMIT = 64;
 export class ResidentContinuityKernel {
   private readonly recentEvidence = new Map<string, ResidentKernelEvidence>();
   private readonly matters = new Map<string, ResidentMatter>();
+  private readonly pinnedOriginEvidence = new Map<string, ResidentKernelEvidence>();
   private readonly pinnedSemanticEvidence = new Map<string, ResidentKernelEvidence>();
+  private readonly pinnedOutcomeEvidence = new Map<string, ResidentKernelEvidence>();
   private readonly runBindings = new Map<string, ResidentTaskRunBinding>();
   private readonly pendingProposals = new Map<string, ResidentSemanticProposalTicket>();
   private readonly recentRevocations: ResidentSemanticProposalRevocation[] = [];
@@ -138,6 +140,7 @@ export class ResidentContinuityKernel {
       lastOutcomeEvidenceId: null,
     };
     this.matters.set(matter.id, matter);
+    this.pinnedOriginEvidence.set(matter.id, structuredClone(evidence));
     this.pinnedSemanticEvidence.set(matter.id, structuredClone(evidence));
     return structuredClone(matter);
   }
@@ -147,8 +150,18 @@ export class ResidentContinuityKernel {
     return matter ? structuredClone(matter) : null;
   }
 
+  originEvidence(matterId: string): ResidentKernelEvidence | null {
+    const evidence = this.pinnedOriginEvidence.get(matterId);
+    return evidence ? structuredClone(evidence) : null;
+  }
+
   semanticEvidence(matterId: string): ResidentKernelEvidence | null {
     const evidence = this.pinnedSemanticEvidence.get(matterId);
+    return evidence ? structuredClone(evidence) : null;
+  }
+
+  lastOutcomeEvidence(matterId: string): ResidentKernelEvidence | null {
+    const evidence = this.pinnedOutcomeEvidence.get(matterId);
     return evidence ? structuredClone(evidence) : null;
   }
 
@@ -337,6 +350,9 @@ export class ResidentContinuityKernel {
     });
 
     matter.lastOutcomeEvidenceId = resultEvidence.id;
+    if (!isTerminal(matter.status)) {
+      this.pinnedOutcomeEvidence.set(matter.id, structuredClone(resultEvidence));
+    }
     matter.activeRunId = null;
     this.runBindings.delete(binding.runId);
 
@@ -366,7 +382,7 @@ export class ResidentContinuityKernel {
     this.revokePendingForMatter(matter.id, "matter_terminal");
     // Keep activeRunId until explicit mechanical retirement/reconciliation.
     // canRunMutateWorld() already denies authority immediately because the matter is terminal.
-    this.pinnedSemanticEvidence.delete(matter.id);
+    this.releaseLiveEvidencePins(matter.id);
     return structuredClone(matter);
   }
 
@@ -380,10 +396,22 @@ export class ResidentContinuityKernel {
   private requireEvidence(evidenceId: string): ResidentKernelEvidence {
     const recent = this.recentEvidence.get(evidenceId);
     if (recent) return recent;
-    for (const pinned of this.pinnedSemanticEvidence.values()) {
-      if (pinned.id === evidenceId) return pinned;
+    for (const pins of [
+      this.pinnedOriginEvidence,
+      this.pinnedSemanticEvidence,
+      this.pinnedOutcomeEvidence,
+    ]) {
+      for (const pinned of pins.values()) {
+        if (pinned.id === evidenceId) return pinned;
+      }
     }
     throw new Error(`unknown evidence: ${evidenceId}`);
+  }
+
+  private releaseLiveEvidencePins(matterId: string): void {
+    this.pinnedOriginEvidence.delete(matterId);
+    this.pinnedSemanticEvidence.delete(matterId);
+    this.pinnedOutcomeEvidence.delete(matterId);
   }
 
   private revokePendingForMatter(matterId: string, reason: ResidentSemanticProposalRevocationReason): void {
