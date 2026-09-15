@@ -1,4 +1,5 @@
 import { ResidentContinuityKernel, type RunOutcomeReconciliationResult } from "./resident-continuity-kernel";
+import { ResidentMaterialKnowledge } from "./resident-material-knowledge";
 import { ResidentMaterialPickupExecutor, type ResidentMaterialPickupStep } from "./resident-material-pickup-executor";
 import { ResidentMaterialPlaceExecutor, type ResidentMaterialPlaceStep } from "./resident-material-place-executor";
 import { ResidentWorldExecutionAuthority } from "./resident-world-execution-authority";
@@ -18,6 +19,7 @@ export type FiveResidentJanekDeliveryStep =
 export interface FiveResidentJanekDeliverySlice {
   world: SpcWorldRuntime;
   kernel: ResidentContinuityKernel;
+  materialKnowledge: ResidentMaterialKnowledge;
   authority: ResidentWorldExecutionAuthority;
   stepJanek(): FiveResidentJanekDeliveryStep;
   holdJanekExecution(reason: string): boolean;
@@ -28,9 +30,9 @@ export interface FiveResidentJanekDeliverySlice {
 }
 
 /**
- * Second Janek vertical slice: one durable matter survives multiple local runs and
- * a bounded execution hold. A hold pauses embodiment without pretending the matter
- * itself changed meaning or became semantically suspended.
+ * Janek vertical material slice: one durable matter survives multiple local runs
+ * and a bounded execution hold. Pickup is grounded in resident-acquired material
+ * position evidence; hidden World movement does not retarget the local executor.
  */
 export function createFiveResidentJanekDeliverySlice(): FiveResidentJanekDeliverySlice {
   const world = createFiveResidentRegionWorld();
@@ -52,10 +54,16 @@ export function createFiveResidentJanekDeliverySlice(): FiveResidentJanekDeliver
     runId: "run.janek.pickup-delivery-crate",
   });
 
+  const materialKnowledge = new ResidentMaterialKnowledge(
+    "resident.janek",
+    ["crate.workshop.01"],
+    world,
+  );
   const authority = new ResidentWorldExecutionAuthority("resident.janek", kernel, world);
   const pickup = new ResidentMaterialPickupExecutor(
     "run.janek.pickup-delivery-crate",
     "crate.workshop.01",
+    materialKnowledge,
     authority,
     world,
   );
@@ -83,9 +91,11 @@ export function createFiveResidentJanekDeliverySlice(): FiveResidentJanekDeliver
   return {
     world,
     kernel,
+    materialKnowledge,
     authority,
     stepJanek(): FiveResidentJanekDeliveryStep {
       if (!pickupReconciled) {
+        materialKnowledge.sample();
         const local = pickup.step();
         if (local.status === "succeeded") {
           pickupReconciled = kernel.reconcileRunOutcome({
