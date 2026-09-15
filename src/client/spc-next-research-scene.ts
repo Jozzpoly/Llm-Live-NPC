@@ -8,6 +8,10 @@ import type {
 } from "../spc-next/contracts";
 import { createFiveResidentJanekMaterialSlice } from "../spc-next/five-resident-material-slice";
 import {
+  captureSpcCanonicalEvidenceSnapshot,
+  type SpcCanonicalEvidenceSnapshotV1,
+} from "../evidence/spc-next-canonical-evidence-snapshot";
+import {
   projectEpistemicActors,
   projectMotionFeedback,
   projectRecentDirectionalHearing,
@@ -15,6 +19,9 @@ import {
 } from "./spc-next-research-projection";
 
 const PLAYER_ID = "player.jozz";
+const JANEK_ID = "resident.janek";
+const JANEK_DELIVERY_MATTER_ID = "matter.janek.crate-delivery";
+const JANEK_EVIDENCE_SCENARIO_ID = "browser-baseline-delivery";
 const FIXED_STEP_MS = 1000 / 60;
 const MAX_FRAME_DELTA_MS = 100;
 const SPEECH_LIFETIME_TICKS = 240;
@@ -198,6 +205,22 @@ export class SpcNextResearchScene extends Phaser.Scene {
 
   currentFrame(): SpcNextResearchFrame {
     return this.buildFrame();
+  }
+
+  currentCanonicalEvidenceSnapshot(): SpcCanonicalEvidenceSnapshotV1 {
+    if (!this.manualWorldControl) {
+      throw new Error("canonical evidence snapshot is available only in evidence control mode");
+    }
+    if (!this.created) throw new Error("SPC research scene is not ready for canonical evidence capture");
+    return captureSpcCanonicalEvidenceSnapshot({
+      scenarioId: JANEK_EVIDENCE_SCENARIO_ID,
+      residentId: JANEK_ID,
+      matterId: JANEK_DELIVERY_MATTER_ID,
+      world: this.world,
+      kernel: this.janekSlice.kernel,
+      materialKnowledge: this.janekSlice.materialKnowledge,
+      authority: this.janekSlice.authority,
+    });
   }
 
   evidenceReady(): boolean {
