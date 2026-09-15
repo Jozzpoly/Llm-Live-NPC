@@ -8,6 +8,8 @@ It is deliberately narrower than a roadmap. Its purpose is to prevent evidence d
 
 Canonical recovery contract: `docs/SPC_NEXT_ARCHITECTURE_RECOVERY_GATE.md`.
 
+Cross-project donor research is preserved separately in `docs/SPC_CROSS_PROJECT_DONOR_MAP_2026-09-15.md`. That document is research input, not architecture authority.
+
 ## Evidence language
 
 - **FULL GREEN** — repository `Check` passed for the exact commit: typecheck, full Vitest suite, Vite build, preview dry-run.
@@ -42,8 +44,9 @@ The ordering is not a promise that each phase is completed horizontally before t
 - `fc0e02bfea266a18849993e55ad449b29817fc90` — established `SPC_NEXT_ARCHITECTURE_RECOVERY_GATE.md` and stop-the-line status.
 - `735569554a7f298a0941a26c74ee47043b138f67` — made SPC Next recovery state the live README takeover authority; old P2 `PROJECT_STATE` is preserved as donor/history, not current branch authority.
 - PR #125 body starts with the recovery verdict rather than scaffold-success language.
+- `4c5a8890b1f4fed8be7066da05de41dd3ba9fdf7` — recorded the non-binding cross-project donor map so sibling-project discoveries do not disappear or silently become architecture authority.
 
-This solves orientation drift, not runtime architecture.
+This solves orientation/research-memory drift, not runtime architecture.
 
 ### K0 — scoped resident matter / execution authority skeleton
 
@@ -179,46 +182,92 @@ Re-earned on a **new bounded execution path** using the real `SpcWorldRuntime`:
 - suspension, same-matter semantic supersession and terminalization can revoke stale latched motion before further physical integration;
 - revocation of an older run cannot stop a newer run that legitimately owns motion.
 
-**Critical scope boundary:** K5a is **not** runtime-wide authority. Current `ResidentRuntime.fastStep() -> SpcWorldRuntime.applyResidentCommand()` and public World control APIs still exist as bypasses. K5b must close this dual-authority condition before any claim that resident execution is generally protected.
+K5a by itself did not close legacy runtime bypasses; K5b below is the qualification that closes the dual-controller condition for a recovered resident.
+
+### K5b — recovered resident execution ownership in real World phase
+
+**SCOPED PASS · FULL GREEN**
+
+- ownership integration: `e87bc290...`
+- run-scoped physical feedback correction / qualified head: `bb2c90465b0d84a44e5769bdc5155f15c47e74dc`
+- GitHub Check: run #707 PASS
+
+Re-earned for residents explicitly claimed by the recovered execution path:
+
+- legacy `fastStep -> applyResidentCommand` no longer concurrently controls a claimed recovered resident;
+- legacy activity/motion/speech bypasses cannot silently mutate that resident through the old controller path;
+- World knows only the narrow execution-authority question `canRunMutateWorld(runId)`, not resident matters or semantic revisions;
+- World itself owns application of authorized effect frames and the exact run owning latched motion;
+- stale latched motion is re-checked/revoked at the World phase boundary before authoritative physical integration;
+- physical motion outcome for a recovered resident is run-scoped rather than translated back into legacy `activity_blocked` cognition;
+- old run cleanup cannot revoke a newer run that legitimately owns motion.
+
+**Scope boundary:** current recovered material effects are still motion + speech. Attention/facing and manipulation/action are not yet qualified. K5b therefore does not claim complete embodied authority.
+
+### T0a — physical source identity vs resident-recognized identity boundary
+
+**SCOPED PASS · FULL GREEN**
+
+- qualification commit: `f67952889c903d5a475a66f3d0c006e4c2a84dea`
+- GitHub Check: run #709 PASS
+
+Re-earned:
+
+- World-side physical source identity can exist without automatically becoming resident-recognized identity;
+- resident-safe hearing may preserve speech/direction/distance evidence while withholding actor identity;
+- already-leaked identity in the ingress payload is rejected rather than trusted as resident knowledge;
+- the boundary is intentionally minimal and does not pretend to be a final face/voice/social recognition system.
+
+### T0b — real World → ResidentRuntime identity-safe hearing
+
+**SCOPED PASS · FULL GREEN**
+
+- integration/test corrections culminate at `f8c7bb5de964738d283942b42440a188bbba9a49`
+- GitHub Check: run #713 PASS
+
+Re-earned through the real SPC World/runtime path:
+
+- an unknown heard speaker remains anonymous in the resident percept;
+- speech content, addressed state and bounded directional evidence remain available;
+- raw physical actor identity does not enter resident known-actor state, local heard-contact state or cognition context merely because hearing occurred;
+- prior causally acquired visual recognition may allow a later voice from the same actor to be recognized;
+- test fixtures that previously relied on magical identity setup were corrected to acquire identity causally rather than weakening the boundary;
+- genuine visually acquired last-known position can then ground later semantic communication normally.
+
+**T0 is not yet fully closed:** Worker-side context validation/instruction still needs to accept and preserve epistemically honest anonymous speech. That is T0c below.
 
 ## Immediate recovery frontier
 
-### K5b — close dual resident execution authority
+### T0c — Worker accepts anonymous speech without reconstructing identity
 
-**OPEN — CURRENT FRONTIER**
-
-Target is not merely to call `canRunMutateWorld()` more often. The architecture must make the run-authorized path the owner of material resident effects used by the first life slice.
+**OPEN — CURRENT SMALL TRUTH BOUNDARY**
 
 Required properties:
 
-- private resident semantic state remains resident-owned; World must not inspect matters/semantic revisions;
-- World phase can ask a narrow execution authority/capability to revoke stale latched effects **before physical integration**;
-- current flat `ResidentRuntime.fastStep()` cannot silently bypass the authority for the recovered life path;
-- motion, attention/facing, action/manipulation and communication should grow as composable effect channels rather than a longer mutually-exclusive command union;
-- no new resident-owned physical effect is introduced outside the authority path;
-- any temporary legacy scaffold bypass remains explicitly labeled legacy and cannot be used as evidence for the recovered life slice.
+- worker sanitizer accepts `speech.actorId = null` as a valid heard-speech state;
+- text, addressed state and legal hearing geometry remain available;
+- exact coordinates remain illegal for hearing;
+- known-speaker cases retain their existing validation;
+- model instruction explicitly treats `actorId = null` as unrecognized identity and must not reconstruct a speaker identity from wording, direction or guesswork;
+- trust-boundary hardening must not weaken unrelated percept or known-actor checks.
 
-Do not promote K5b until an adversarial test proves that semantic authority can disappear between local-control updates and the next World integration without allowing the old effect to persist.
-
-### T0 — recognized identity must be distinct from physical source identity
-
-**FAIL — HIGH PRIORITY AFTER/ALONGSIDE K5b**
-
-Current hearing path can expose stable `actorId` from an unrecognized speaker. Fixing only `knownActors` is insufficient because raw percept and local contact maps also receive the ID.
-
-The recovery needs a boundary such as private physical source provenance vs resident-recognized identity, without prematurely building a face-recognition system.
+Prepared work exists, but no exact committed/CI-qualified T0c claim is recorded yet.
 
 ### T2 — orphan provenance in current `ResidentMind`
 
-**FAIL**
+**FAIL — HIGH PRIORITY BEFORE NEW MATTERS DEPEND ON CURRENT MIND STATE**
 
 Beliefs/concerns may preserve evidence IDs after bounded percept evidence eviction. The new continuity kernel has solved this for live matters, but the current cognition context still has this defect.
 
+Recovery should stay bounded: do not build a universal archival memory system. Ensure live semantic state cannot claim evidence that is no longer reconstructable, and separate recent working evidence from longer-lived evidence dependencies.
+
 ### T3 — fabricated authoritative-looking interaction occurrence
 
-**FAIL / UNSAFE API**
+**FAIL / UNSAFE API — EXPECTED TO BE PRESSURED BY FIRST MATERIAL LIFE SLICE**
 
-`emitInteraction()` can publish an interaction summary/subject without authoritative entity/action/outcome proof. Product/runtime interaction must eventually originate from World-resolved action authority; synthetic research stimuli must be impossible to confuse with physical truth.
+`emitInteraction()` can publish an interaction summary/subject without authoritative entity/action/outcome proof. Product/runtime interaction must originate from World-resolved action authority; synthetic research stimuli must be impossible to confuse with physical truth.
+
+The first real material object/action slice is expected to replace this class of fake interaction evidence with authoritative World actions/outcomes rather than adding more narrative occurrences.
 
 ### T4 — public/private projection mixing
 
@@ -226,11 +275,15 @@ Beliefs/concerns may preserve evidence IDs after bounded percept evidence evicti
 
 `ResidentPublicState.activity.reason` can expose private semantic reasoning through a public snapshot contract.
 
+Cross-project research strengthens the likely direction: authoritative truth, participant projection, research projection, persistence representation and eventual transport snapshot should remain distinct views rather than one universal DTO.
+
 ### T5 — participant-view omniscient speech
 
 **FAIL FOR OWNER EVIDENCE**
 
 Research scene speech bubbles use global World diagnostics rather than participant-bounded perception.
+
+Participant, spectator/research and selected-resident-private projections must eventually be explicitly distinct.
 
 ## Resident-life architecture still OPEN
 
@@ -243,15 +296,26 @@ Research scene speech bubbles use global World diagnostics rather than participa
 - collision/local obstacle navigation when first material life slice needs it;
 - bounded discrepancy/matter cognition pressure instead of historical event inbox;
 - causal trace joining evidence → matter → proposal attempt → exact run → World outcome;
+- detached research-witness/history semantics distinct from resident behavioral memory;
 - live SPC cognition host/worker browser integration;
 - real provider latency/failure/abandon/retry qualification;
 - participant / spectator / private-resident research projection split;
 - five materially divergent resident lives under concurrent interference;
 - persistence/offscreen/time-scaling/scaling architecture.
 
+Future seams intentionally preserved but not implemented now:
+
+- logical identity should not be tied to render/physics/provider handles;
+- World/resident/body/matter/run/provider-request lifetimes should remain separable;
+- future `LOD's World` should not be forced into one monolithic fidelity switch;
+- authored world definitions should eventually separate from runtime state when real content pressure justifies a schema/editor;
+- persistence/network snapshots should not be conflated with participant/debug projections.
+
+See `docs/SPC_CROSS_PROJECT_DONOR_MAP_2026-09-15.md` for donor evidence and nonclaims.
+
 ## First meaningful vertical promotion target
 
-Still unchanged:
+The core target remains:
 
 `Janek has an own continuing matter`
 → `real World-owned material progress`
@@ -262,5 +326,11 @@ Still unchanged:
 → `resume or abandon`
 → `factual visible World continuation/outcome`
 → `causal ledger explains the whole chain`.
+
+Cross-project research strengthens one experimental candidate for this target:
+
+> one stable logical crate/object, one workshop origin, one destination, one Janek matter, authoritative pickup/carry/place outcomes, and deliberate player interference.
+
+This remains a **research hypothesis**, not a frozen implementation specification. Its value is that a single tangible object can pressure identity, possession, private knowledge, affordances, interruption/resume, local search, real World outcomes and later offscreen/LOD continuity without inventing an economy.
 
 The scenario must eventually pass deterministic, live-provider, participant-readable and five-resident pressure gates. A scripted activity/timer/narrative occurrence is not sufficient.
