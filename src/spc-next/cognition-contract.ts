@@ -50,7 +50,7 @@ export interface ResidentCognitionContext {
   knownRegions: readonly KnownRegionContext[];
 }
 
-export type ProposedActivityKind = "idle" | "travel" | "follow" | "communicate" | "investigate" | "work";
+export type ProposedActivityKind = "idle" | "travel" | "follow" | "communicate" | "investigate";
 
 export interface ProposedActivity {
   kind: ProposedActivityKind;
@@ -90,7 +90,7 @@ export interface ResidentCognitionProposal {
 }
 
 const ACTIVITY_KINDS = new Set<ProposedActivityKind>([
-  "idle", "travel", "follow", "communicate", "investigate", "work",
+  "idle", "travel", "follow", "communicate", "investigate",
 ]);
 const CONCERN_STATUSES = new Set(["open", "resolved"] as const);
 const GROUNDED_POSITION_TOLERANCE = 4;
@@ -203,7 +203,7 @@ function parseProposedActivity(
   if (targetPosition !== null && !isGroundedPosition(targetPosition, context)) return null;
 
   const kind = value.kind as ProposedActivityKind;
-  if (kind === "idle" || kind === "work") {
+  if (kind === "idle") {
     if (targetActorId !== null || targetRegionId !== null || targetPosition !== null || text !== null) return null;
   }
   if (kind === "follow") {
