@@ -4,8 +4,8 @@ import { SpcWorldRuntime } from "./spc-world-runtime";
 export const FIVE_RESIDENT_REGIONS: readonly WorldRegion[] = [
   { id: "hearth", label: "Hearth", minX: 0, minY: 0, maxX: 1_400, maxY: 1_500 },
   { id: "workshop", label: "Workshop", minX: 1_400, minY: 0, maxX: 2_700, maxY: 1_500 },
-  { id: "crossroads", label: "Crossroads", minX: 2_700, minY: 0, maxX: 4_000, maxY: 1_900 },
-  { id: "fields", label: "Fields", minX: 900, minY: 1_500, maxX: 3_500, maxY: 3_500 },
+  { id: "crossroads", label: "Crossroads", minX: 2_700, minY: 0, maxX: 4_000, maxY: 1_900, priority: 10 },
+  { id: "fields", label: "Fields", minX: 900, minY: 1_500, maxX: 3_500, maxY: 3_500, priority: 0 },
   { id: "forest-edge", label: "Forest Edge", minX: 3_500, minY: 1_900, maxX: 5_300, maxY: 4_400 },
   { id: "old-road", label: "Old Road", minX: 4_000, minY: 0, maxX: 6_300, maxY: 1_900 },
   { id: "ruins", label: "Ruins", minX: 6_300, minY: 0, maxX: 8_192, maxY: 3_200 },
@@ -74,7 +74,7 @@ function activity(
     targetActorId: null,
     targetPosition,
     text: null,
-    speed: 95,
+    speed: kind === "idle" || kind === "work" ? null : 95,
     reason,
   };
 }
