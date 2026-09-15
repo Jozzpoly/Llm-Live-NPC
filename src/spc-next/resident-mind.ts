@@ -41,6 +41,8 @@ interface KnownActorRecord {
   label: string;
   lastKnownPosition: Vec2 | null;
   lastObservedTick: number | null;
+  currentlyVisible: boolean;
+  visibilityChangedTick: number | null;
   lastHeardDirection: Vec2 | null;
   lastHeardDistanceBand: PerceptDistanceBand | null;
   lastHeardTick: number | null;
@@ -75,8 +77,13 @@ export class ResidentMind {
       this.perceptEvidence.delete(percept.id);
       this.perceptEvidence.set(percept.id, structuredClone(percept));
       if (percept.actorId && percept.actorId !== this.resident.id) {
-        if (percept.spatial.kind === "exact") {
+        if (percept.phenomenon === "actor_sight_exit") {
+          this.markActorVisibility(percept.actorId, false, percept.tick);
+        } else if (percept.spatial.kind === "exact") {
           this.rememberSeenActor(percept.actorId, percept.spatial.position, percept.tick);
+          if (percept.phenomenon === "actor_sight_enter" || percept.phenomenon === "actor_sight_update") {
+            this.markActorVisibility(percept.actorId, true, percept.tick);
+          }
         } else if (percept.spatial.kind === "directional") {
           this.rememberHeardActor(
             percept.actorId,
@@ -170,6 +177,8 @@ export class ResidentMind {
           label: value.label,
           lastKnownPosition: value.lastKnownPosition ? { ...value.lastKnownPosition } : null,
           lastObservedTick: value.lastObservedTick,
+          currentlyVisible: value.currentlyVisible,
+          visibilityChangedTick: value.visibilityChangedTick,
           lastHeardDirection: value.lastHeardDirection ? { ...value.lastHeardDirection } : null,
           lastHeardDistanceBand: value.lastHeardDistanceBand,
           lastHeardTick: value.lastHeardTick,
@@ -257,6 +266,8 @@ export class ResidentMind {
       label: id,
       lastKnownPosition: null,
       lastObservedTick: null,
+      currentlyVisible: false,
+      visibilityChangedTick: null,
       lastHeardDirection: null,
       lastHeardDistanceBand: null,
       lastHeardTick: null,
@@ -271,6 +282,14 @@ export class ResidentMind {
     const actor = this.touchActor(id, tick);
     actor.lastKnownPosition = { ...position };
     actor.lastObservedTick = tick;
+  }
+
+  private markActorVisibility(id: string, visible: boolean, tick: number): void {
+    const actor = this.touchActor(id, tick);
+    if (actor.currentlyVisible !== visible || actor.visibilityChangedTick === null) {
+      actor.currentlyVisible = visible;
+      actor.visibilityChangedTick = tick;
+    }
   }
 
   private rememberHeardActor(id: string, direction: Vec2, distanceBand: PerceptDistanceBand, tick: number): void {
