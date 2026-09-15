@@ -33,6 +33,8 @@ export interface FiveResidentJanekMissingCrateOptions {
    * Janek's legally acquired history identical.
    */
   hiddenRelocationSpeed?: number;
+  /** Optional authored participant start for interaction/recovery specimens. */
+  playerStart?: Vec2;
 }
 
 export interface FiveResidentJanekHiddenRelocation {
@@ -74,7 +76,7 @@ export function createFiveResidentJanekMissingCrateStagedSlice(
     throw new Error("hiddenRelocationSpeed must be positive and finite");
   }
 
-  const world = createFiveResidentRegionWorld();
+  const world = createFiveResidentRegionWorld({ playerStart: options.playerStart });
   const materialKnowledge = new ResidentMaterialKnowledge(JANEK_ID, [CRATE_ID], world);
 
   // Legal acquisition happens while Janek is physically beside the familiar crate.
