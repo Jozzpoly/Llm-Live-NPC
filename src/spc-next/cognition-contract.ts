@@ -113,13 +113,10 @@ export function parseResidentCognitionProposal(
     return null;
   }
 
-  const evidenceIds = new Set<string>([
-    ...context.reasons.map((reason) => reason.id),
-    ...context.reasons.flatMap((reason) => reason.evidenceIds),
-    ...context.recentPercepts.map((percept) => percept.id),
-    ...context.concerns.flatMap((concern) => concern.evidenceIds),
-    ...context.beliefs.flatMap((belief) => belief.evidenceIds),
-  ]);
+  // Cognition reasons are scheduling/review triggers, not durable resident evidence.
+  // A belief or concern may persist only against private percepts that the resident
+  // actually acquired and that can therefore be retained/reconstructed later.
+  const evidenceIds = new Set<string>(context.recentPercepts.map((percept) => percept.id));
 
   const activityDirective = parseActivityDirective(value.activityDirective, context);
   if (!activityDirective) return null;
