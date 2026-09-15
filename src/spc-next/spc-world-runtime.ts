@@ -3,8 +3,11 @@ import {
   clamp,
   DEFAULT_RESIDENT_PROFILE,
   distanceSquared,
+  normalizedDirection,
   type ActorState,
   type CognitionBatch,
+  type PerceptDistanceBand,
+  type PerceptSpatialCue,
   type ResidentActivity,
   type ResidentDiagnostics,
   type ResidentPercept,
@@ -23,6 +26,13 @@ interface RegisteredResident {
   brainPhase: number;
 }
 
+export interface SpcWorldDiagnostics {
+  tick: number;
+  recentOccurrences: readonly WorldOccurrence[];
+}
+
+const WORLD_OCCURRENCE_LIMIT = 1_024;
+
 export class SpcWorldRuntime {
   private tickValue = 0;
   private occurrenceSequence = 0;
@@ -31,6 +41,7 @@ export class SpcWorldRuntime {
   private readonly residents = new Map<string, RegisteredResident>();
   private readonly spatial: ChunkSpatialIndex;
   private pendingOccurrences: WorldOccurrence[] = [];
+  private readonly recentOccurrences: WorldOccurrence[] = [];
   private readonly visibleByResident = new Map<string, Set<string>>();
 
   constructor(readonly options: SpcWorldOptions) {
@@ -112,6 +123,7 @@ export class SpcWorldRuntime {
     addressedActorIds: readonly string[] = [],
   ): WorldOccurrence {
     const actor = this.requireActor(actorId);
+    for (const addressedId of addressedActorIds) this.requireActor(addressedId);
     const occurrence: WorldOccurrence = {
       id: `occurrence:${this.tickValue}:${this.occurrenceSequence++}`,
       tick: this.tickValue,
@@ -124,7 +136,7 @@ export class SpcWorldRuntime {
       text,
       addressedActorIds: [...new Set(addressedActorIds)],
     };
-    this.pendingOccurrences.push(occurrence);
+    this.queueOccurrence(occurrence);
     return structuredClone(occurrence);
   }
 
@@ -142,7 +154,7 @@ export class SpcWorldRuntime {
       text: null,
       addressedActorIds: [],
     };
-    this.pendingOccurrences.push(occurrence);
+    this.queueOccurrence(occurrence);
     return structuredClone(occurrence);
   }
 
@@ -160,6 +172,13 @@ export class SpcWorldRuntime {
       tick: this.tickValue,
       actors: [...this.actors.values()].map((actor) => structuredClone(actor)),
       residents: [...this.residents.values()].map(({ runtime }) => runtime.publicState()),
+    };
+  }
+
+  diagnostics(): SpcWorldDiagnostics {
+    return {
+      tick: this.tickValue,
+      recentOccurrences: structuredClone(this.recentOccurrences),
     };
   }
 
@@ -224,12 +243,19 @@ export class SpcWorldRuntime {
       const distanceSq = distanceSquared(residentActor.position, occurrence.position);
 
       let modality: ResidentPercept["modality"] | null = null;
+      let spatial: PerceptSpatialCue = { kind: "none" };
       if (occurrence.kind === "speech") {
         const range = Math.min(occurrence.radius, residentActor.hearingRadius);
-        if (distanceSq <= range * range) modality = "hearing";
+        if (distanceSq <= range * range) {
+          modality = "hearing";
+          spatial = directionalHearingCue(residentActor.position, occurrence.position, range);
+        }
       } else {
         const range = Math.min(occurrence.radius, residentActor.sightRadius);
-        if (distanceSq <= range * range) modality = "sight";
+        if (distanceSq <= range * range) {
+          modality = "sight";
+          spatial = { kind: "exact", position: { ...occurrence.position } };
+        }
       }
       if (!modality) continue;
 
@@ -240,7 +266,7 @@ export class SpcWorldRuntime {
         modality,
         actorId: occurrence.actorId,
         subjectId: occurrence.subjectId,
-        position: { ...occurrence.position },
+        spatial,
         summary: occurrence.summary,
         text: occurrence.text,
         addressed: occurrence.addressedActorIds.includes(residentId),
@@ -265,7 +291,7 @@ export class SpcWorldRuntime {
           modality: "sight",
           actorId: candidate.id,
           subjectId: candidate.id,
-          position: { ...candidate.position },
+          spatial: { kind: "exact", position: { ...candidate.position } },
           summary: `actor ${candidate.id} entered sight`,
           text: null,
           addressed: false,
@@ -299,6 +325,13 @@ export class SpcWorldRuntime {
     this.speak(actor.id, command.text, command.radius, command.addressedActorIds);
   }
 
+  private queueOccurrence(occurrence: WorldOccurrence): void {
+    const stored = structuredClone(occurrence);
+    this.pendingOccurrences.push(stored);
+    this.recentOccurrences.push(structuredClone(stored));
+    while (this.recentOccurrences.length > WORLD_OCCURRENCE_LIMIT) this.recentOccurrences.shift();
+  }
+
   private addActor(actor: ActorState): void {
     if (this.actors.has(actor.id)) throw new Error(`actor already exists: ${actor.id}`);
     this.actors.set(actor.id, structuredClone(actor));
@@ -323,4 +356,15 @@ export class SpcWorldRuntime {
       y: clamp(position.y, this.options.bounds.minY, this.options.bounds.maxY),
     };
   }
+}
+
+function directionalHearingCue(observer: Vec2, source: Vec2, range: number): PerceptSpatialCue {
+  const distance = Math.sqrt(distanceSquared(observer, source));
+  const ratio = range <= 0 ? 0 : distance / range;
+  const distanceBand: PerceptDistanceBand = ratio <= 0.33 ? "near" : ratio <= 0.66 ? "mid" : "far";
+  return {
+    kind: "directional",
+    direction: normalizedDirection(observer, source),
+    distanceBand,
+  };
 }
