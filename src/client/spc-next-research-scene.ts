@@ -23,6 +23,7 @@ const MIN_ZOOM = 0.12;
 const MAX_ZOOM = 1.8;
 const PLAYER_SPEED = 150;
 const PLAYER_CALL_RADIUS = 420;
+const MATERIAL_PLACE_OFFSET = 42;
 
 interface ActorView {
   container: Phaser.GameObjects.Container;
@@ -38,7 +39,7 @@ interface SpeechView {
   expiresAtTick: number;
 }
 
-type MovementKeys = Record<"W" | "A" | "S" | "D" | "R" | "F" | "P" | "O" | "H" | "TAB", Phaser.Input.Keyboard.Key>;
+type MovementKeys = Record<"W" | "A" | "S" | "D" | "R" | "F" | "P" | "O" | "H" | "E" | "TAB", Phaser.Input.Keyboard.Key>;
 
 export interface SpcNextResearchFrame {
   snapshot: WorldPublicSnapshot;
@@ -58,8 +59,10 @@ export class SpcNextResearchScene extends Phaser.Scene {
   private snapshot: WorldPublicSnapshot = this.world.publicSnapshot();
   private readonly actorViews = new Map<string, ActorView>();
   private readonly speechViews = new Map<string, SpeechView>();
+  private readonly materialLabels = new Map<string, Phaser.GameObjects.Text>();
   private readonly seenOccurrenceIds = new Set<string>();
   private regionGraphics!: Phaser.GameObjects.Graphics;
+  private materialGraphics!: Phaser.GameObjects.Graphics;
   private overlayGraphics!: Phaser.GameObjects.Graphics;
   private cursors: Phaser.Types.Input.Keyboard.CursorKeys | null = null;
   private keys: MovementKeys | null = null;
@@ -74,13 +77,15 @@ export class SpcNextResearchScene extends Phaser.Scene {
 
   create(): void {
     this.regionGraphics = this.add.graphics().setDepth(-20);
+    this.materialGraphics = this.add.graphics().setDepth(6);
     this.overlayGraphics = this.add.graphics().setDepth(40);
     this.drawRegions();
     this.syncActorViews();
+    this.syncMaterialViews();
 
     if (this.input.keyboard) {
       this.cursors = this.input.keyboard.createCursorKeys();
-      this.keys = this.input.keyboard.addKeys("W,A,S,D,R,F,P,O,H,TAB") as MovementKeys;
+      this.keys = this.input.keyboard.addKeys("W,A,S,D,R,F,P,O,H,E,TAB") as MovementKeys;
     }
 
     this.input.on("wheel", (_pointer: Phaser.Input.Pointer, _objects: unknown, _dx: number, dy: number) => {
@@ -114,6 +119,7 @@ export class SpcNextResearchScene extends Phaser.Scene {
     }
 
     this.syncActorViews();
+    this.syncMaterialViews();
     this.syncSpeechViews();
     this.drawResearchOverlay();
 
@@ -208,7 +214,39 @@ export class SpcNextResearchScene extends Phaser.Scene {
     if (Phaser.Input.Keyboard.JustDown(this.keys.P)) this.followPlayer();
     if (Phaser.Input.Keyboard.JustDown(this.keys.O)) this.overview();
     if (Phaser.Input.Keyboard.JustDown(this.keys.H)) this.playerCall();
+    if (Phaser.Input.Keyboard.JustDown(this.keys.E)) this.playerMaterialAction();
     if (Phaser.Input.Keyboard.JustDown(this.keys.TAB)) this.cycleResidentSelection();
+  }
+
+  private playerMaterialAction(): void {
+    const player = this.snapshot.actors.find((actor) => actor.id === PLAYER_ID);
+    if (!player) return;
+    const objects = this.world.materialObjects();
+    const held = objects.find((object) => object.location.kind === "held" && object.location.actorId === PLAYER_ID);
+    if (held) {
+      this.world.attemptMaterialAction(PLAYER_ID, {
+        kind: "place",
+        objectId: held.id,
+        position: { x: player.position.x + MATERIAL_PLACE_OFFSET, y: player.position.y },
+      });
+      this.syncMaterialViews();
+      this.pushFrame(true);
+      return;
+    }
+
+    const nearest = objects
+      .filter((object) => object.location.kind === "free")
+      .map((object) => ({
+        object,
+        distance: object.location.kind === "free"
+          ? Phaser.Math.Distance.Between(player.position.x, player.position.y, object.location.position.x, object.location.position.y)
+          : Number.POSITIVE_INFINITY,
+      }))
+      .sort((a, b) => a.distance - b.distance || a.object.id.localeCompare(b.object.id))[0];
+    if (!nearest) return;
+    this.world.attemptMaterialAction(PLAYER_ID, { kind: "pickup", objectId: nearest.object.id });
+    this.syncMaterialViews();
+    this.pushFrame(true);
   }
 
   private cycleResidentSelection(): void {
@@ -289,6 +327,47 @@ export class SpcNextResearchScene extends Phaser.Scene {
       if (this.snapshot.actors.some((actor) => actor.id === id)) continue;
       view.container.destroy(true);
       this.actorViews.delete(id);
+    }
+  }
+
+  private syncMaterialViews(): void {
+    this.materialGraphics.clear();
+    const objects = this.world.materialObjects();
+    const presentIds = new Set(objects.map((object) => object.id));
+    for (const object of objects) {
+      const position = object.location.kind === "free"
+        ? object.location.position
+        : (() => {
+            const holder = this.snapshot.actors.find((actor) => actor.id === object.location.actorId);
+            return holder ? { x: holder.position.x + 23, y: holder.position.y + 5 } : null;
+          })();
+      if (!position) continue;
+
+      const half = Math.max(10, object.radius * 0.9);
+      this.materialGraphics.fillStyle(0xb78652, 0.96);
+      this.materialGraphics.fillRect(position.x - half, position.y - half * 0.72, half * 2, half * 1.44);
+      this.materialGraphics.lineStyle(2, 0xe4c08c, 0.9);
+      this.materialGraphics.strokeRect(position.x - half, position.y - half * 0.72, half * 2, half * 1.44);
+      this.materialGraphics.lineBetween(position.x, position.y - half * 0.72, position.x, position.y + half * 0.72);
+
+      let label = this.materialLabels.get(object.id);
+      if (!label) {
+        label = this.add.text(0, 0, object.label, {
+          fontFamily: "Inter, system-ui, sans-serif",
+          fontSize: "12px",
+          color: "#ead7be",
+          backgroundColor: "#17120ec7",
+          padding: { x: 4, y: 2 },
+        }).setOrigin(0.5, 1).setDepth(7);
+        this.materialLabels.set(object.id, label);
+      }
+      label.setPosition(position.x, position.y - half - 6).setVisible(true);
+    }
+
+    for (const [id, label] of this.materialLabels) {
+      if (presentIds.has(id)) continue;
+      label.destroy();
+      this.materialLabels.delete(id);
     }
   }
 
