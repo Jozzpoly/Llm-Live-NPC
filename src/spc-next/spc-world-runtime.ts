@@ -3,6 +3,7 @@ import {
   DEFAULT_RESIDENT_PROFILE,
   distanceSquared,
   normalizedDirection,
+  type ActorMotionOutcome,
   type ActorState,
   type CognitionBatch,
   type PerceptDistanceBand,
@@ -52,6 +53,7 @@ interface PendingOccurrence {
 export interface SpcWorldDiagnostics {
   tick: number;
   recentOccurrences: readonly WorldOccurrence[];
+  lastMotionOutcomes: readonly ActorMotionOutcome[];
 }
 
 const WORLD_OCCURRENCE_LIMIT = 1_024;
@@ -66,6 +68,7 @@ export class SpcWorldRuntime {
   private readonly sightGeometry: SightGeometry;
   private pendingOccurrences: PendingOccurrence[] = [];
   private readonly recentOccurrences: WorldOccurrence[] = [];
+  private lastMotionOutcomes: ActorMotionOutcome[] = [];
 
   constructor(readonly options: SpcWorldOptions) {
     validateWorldOptions(options);
@@ -137,11 +140,16 @@ export class SpcWorldRuntime {
     const resident = this.requireResident(residentId);
     validateResidentActivity(activity, this.options.bounds, (id) => this.actorState.has(id));
     resident.runtime.setActivity(activity, this.tickValue);
-    this.actorState.setVelocity(residentId, { x: 0, y: 0 });
+    this.actorState.setDesiredVelocity(residentId, { x: 0, y: 0 });
   }
 
-  setActorVelocity(actorId: string, velocity: Vec2): void {
-    this.actorState.setVelocity(actorId, velocity);
+  setActorMotionIntent(actorId: string, desiredVelocity: Vec2): void {
+    this.actorState.setDesiredVelocity(actorId, desiredVelocity);
+  }
+
+  /** @deprecated Use setActorMotionIntent(); this method sets controller desire, not physical velocity. */
+  setActorVelocity(actorId: string, desiredVelocity: Vec2): void {
+    this.setActorMotionIntent(actorId, desiredVelocity);
   }
 
   speak(
@@ -205,7 +213,7 @@ export class SpcWorldRuntime {
     return {
       tick: this.tickValue,
       actors: this.actorState.snapshots(),
-      residents: [...this.residents.values()].map(({ runtime }) => runtime.publicState()),
+      residents: this.residentEntries().map(([, { runtime }]) => runtime.publicState()),
     };
   }
 
@@ -213,6 +221,7 @@ export class SpcWorldRuntime {
     return {
       tick: this.tickValue,
       recentOccurrences: structuredClone(this.recentOccurrences),
+      lastMotionOutcomes: structuredClone(this.lastMotionOutcomes),
     };
   }
 
@@ -236,7 +245,7 @@ export class SpcWorldRuntime {
     for (const occurrence of occurrences) this.deliverOccurrence(occurrence);
     this.updateSightPercepts();
 
-    for (const [residentId, registered] of this.residents) {
+    for (const [residentId, registered] of this.residentEntries()) {
       if (this.tickValue % registered.runtime.profile.brainIntervalTicks !== registered.brainPhase) continue;
       const actor = this.requireActor(residentId);
       const visibleActors = this.visibleActorsForResident(actor, registered);
@@ -249,10 +258,17 @@ export class SpcWorldRuntime {
     }
 
     const motion = this.actorState.integrate(this.options.fixedDeltaSeconds);
-    for (const sample of motion) {
-      const resident = this.residents.get(sample.id);
+    this.lastMotionOutcomes = structuredClone(motion);
+    for (const outcome of motion) {
+      const resident = this.residents.get(outcome.actorId);
       if (!resident) continue;
-      const region = this.regionAt(sample.after);
+      if (outcome.resolution === "blocked" && Math.hypot(outcome.desiredVelocity.x, outcome.desiredVelocity.y) > 1e-9) {
+        resident.runtime.noteActivityBlocked(
+          this.tickValue,
+          `physical motion blocked by ${outcome.constraints.join("+") || "unknown constraint"}`,
+        );
+      }
+      const region = this.regionAt(outcome.after);
       if (region) resident.runtime.enterRegion(region, this.tickValue);
     }
   }
@@ -299,7 +315,7 @@ export class SpcWorldRuntime {
   }
 
   private updateSightPercepts(): void {
-    for (const [residentId, registered] of this.residents) {
+    for (const [residentId, registered] of this.residentEntries()) {
       const observer = this.requireActor(residentId);
       const visible = this.visibleActorsForResident(observer, registered);
       const drafts = registered.sight.update(this.tickValue, visible);
@@ -345,10 +361,10 @@ export class SpcWorldRuntime {
   private applyResidentCommand(actorId: string, command: ReturnType<ResidentRuntime["fastStep"]>): void {
     if (command.kind === "none") return;
     if (command.kind === "move") {
-      this.actorState.setVelocity(actorId, command.desiredVelocity);
+      this.actorState.setDesiredVelocity(actorId, command.desiredVelocity);
       return;
     }
-    this.actorState.setVelocity(actorId, { x: 0, y: 0 });
+    this.actorState.setDesiredVelocity(actorId, { x: 0, y: 0 });
     this.speak(actorId, command.text, command.radius, command.addressedActorIds);
   }
 
@@ -379,6 +395,10 @@ export class SpcWorldRuntime {
     const resident = this.residents.get(id);
     if (!resident) throw new Error(`unknown resident: ${id}`);
     return resident;
+  }
+
+  private residentEntries(): Array<[string, RegisteredResident]> {
+    return [...this.residents.entries()].sort((a, b) => a[0].localeCompare(b[0]));
   }
 }
 

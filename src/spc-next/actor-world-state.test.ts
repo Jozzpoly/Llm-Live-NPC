@@ -38,12 +38,12 @@ describe("SPC actor physical state authority", () => {
     });
     expect(actors.require("actor.a").position).toEqual({ x: 0, y: 1_000 });
 
-    actors.setVelocity("actor.a", { x: 500, y: -500 });
+    actors.setDesiredVelocity("actor.a", { x: 500, y: -500 });
     actors.integrate(10);
     expect(actors.require("actor.a").position).toEqual({ x: 1_000, y: 0 });
   });
 
-  it("limits velocity at the physical-state boundary rather than trusting callers", () => {
+  it("separates speed-limited controller intent from last resolved physical velocity", () => {
     const actors = state();
     actors.add({
       id: "actor.a",
@@ -55,9 +55,62 @@ describe("SPC actor physical state authority", () => {
       maxSpeed: 50,
     });
 
-    actors.setVelocity("actor.a", { x: 300, y: 400 });
+    actors.setDesiredVelocity("actor.a", { x: 300, y: 400 });
+    expect(actors.require("actor.a").velocity).toEqual({ x: 0, y: 0 });
+    expect(actors.desiredVelocity("actor.a").x).toBeCloseTo(30, 8);
+    expect(actors.desiredVelocity("actor.a").y).toBeCloseTo(40, 8);
+
+    actors.integrate(1);
     expect(actors.require("actor.a").velocity.x).toBeCloseTo(30, 8);
     expect(actors.require("actor.a").velocity.y).toBeCloseTo(40, 8);
+  });
+
+  it("reports fully blocked desired motion without lying about physical velocity", () => {
+    const actors = state();
+    actors.add({
+      id: "actor.a",
+      kind: "player",
+      position: { x: 1_000, y: 500 },
+      velocity: { x: 0, y: 0 },
+      hearingRadius: 100,
+      sightRadius: 100,
+      maxSpeed: 100,
+    });
+    actors.setDesiredVelocity("actor.a", { x: 100, y: 0 });
+
+    const outcome = actors.integrate(1)[0]!;
+    expect(outcome).toEqual({
+      actorId: "actor.a",
+      before: { x: 1_000, y: 500 },
+      desiredVelocity: { x: 100, y: 0 },
+      intendedAfter: { x: 1_100, y: 500 },
+      after: { x: 1_000, y: 500 },
+      resolvedVelocity: { x: 0, y: 0 },
+      resolution: "blocked",
+      constraints: ["world_bounds"],
+    });
+    expect(actors.require("actor.a").velocity).toEqual({ x: 0, y: 0 });
+    expect(actors.desiredVelocity("actor.a")).toEqual({ x: 100, y: 0 });
+  });
+
+  it("distinguishes partial constraint from zero-progress blockage", () => {
+    const actors = state();
+    actors.add({
+      id: "actor.a",
+      kind: "player",
+      position: { x: 1_000, y: 500 },
+      velocity: { x: 0, y: 0 },
+      hearingRadius: 100,
+      sightRadius: 100,
+      maxSpeed: 100,
+    });
+    actors.setDesiredVelocity("actor.a", { x: 60, y: 80 });
+
+    const outcome = actors.integrate(0.5)[0]!;
+    expect(outcome.resolution).toBe("constrained");
+    expect(outcome.constraints).toEqual(["world_bounds"]);
+    expect(outcome.after).toEqual({ x: 1_000, y: 540 });
+    expect(outcome.resolvedVelocity).toEqual({ x: 0, y: 80 });
   });
 
   it("updates spatial queries atomically with movement integration", () => {
@@ -82,16 +135,34 @@ describe("SPC actor physical state authority", () => {
     });
 
     expect(actors.queryRadiusIds({ x: 100, y: 100 }, 20)).toEqual(["actor.a"]);
-    actors.setVelocity("actor.a", { x: 600, y: 0 });
-    const samples = actors.integrate(1);
+    actors.setDesiredVelocity("actor.a", { x: 600, y: 0 });
+    const outcomes = actors.integrate(1);
+    const sample = outcomes.find((candidate) => candidate.actorId === "actor.a")!;
 
-    expect(samples.find((sample) => sample.id === "actor.a")).toEqual({
-      id: "actor.a",
-      before: { x: 100, y: 100 },
-      after: { x: 700, y: 100 },
-    });
+    expect(sample.before).toEqual({ x: 100, y: 100 });
+    expect(sample.after).toEqual({ x: 700, y: 100 });
+    expect(sample.resolution).toBe("full");
+    expect(sample.constraints).toEqual([]);
     expect(actors.queryRadiusIds({ x: 100, y: 100 }, 20)).toEqual([]);
     expect(actors.queryRadiusIds({ x: 700, y: 100 }, 20)).toEqual(["actor.a"]);
+  });
+
+  it("returns canonical actor ordering independent of registration order", () => {
+    const actors = state();
+    for (const id of ["actor.c", "actor.a", "actor.b"]) {
+      actors.add({
+        id,
+        kind: "resident",
+        position: { x: 100, y: 100 },
+        velocity: { x: 0, y: 0 },
+        hearingRadius: 100,
+        sightRadius: 100,
+        maxSpeed: 50,
+      });
+    }
+    expect(actors.ids()).toEqual(["actor.a", "actor.b", "actor.c"]);
+    expect(actors.snapshots().map((actor) => actor.id)).toEqual(["actor.a", "actor.b", "actor.c"]);
+    expect(actors.integrate(1).map((outcome) => outcome.actorId)).toEqual(["actor.a", "actor.b", "actor.c"]);
   });
 
   it("rejects duplicate and poisoned actor state before it enters authoritative storage", () => {

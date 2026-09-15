@@ -31,6 +31,10 @@ export interface SightBlocker {
 
 export type ActorKind = "player" | "resident";
 
+/**
+ * Public physical actor truth. `velocity` is the velocity actually resolved by the
+ * World during the latest integration step; controller desire is intentionally separate.
+ */
 export interface ActorState {
   id: string;
   kind: ActorKind;
@@ -39,6 +43,21 @@ export interface ActorState {
   hearingRadius: number;
   sightRadius: number;
   maxSpeed: number;
+}
+
+export type ActorMotionResolution = "full" | "constrained" | "blocked";
+export type ActorMotionConstraint = "world_bounds";
+
+/** Public physical causality for one actor in one World integration step. */
+export interface ActorMotionOutcome {
+  actorId: string;
+  before: Vec2;
+  desiredVelocity: Vec2;
+  intendedAfter: Vec2;
+  after: Vec2;
+  resolvedVelocity: Vec2;
+  resolution: ActorMotionResolution;
+  constraints: readonly ActorMotionConstraint[];
 }
 
 export type OccurrenceKind = "speech" | "movement" | "interaction" | "system";

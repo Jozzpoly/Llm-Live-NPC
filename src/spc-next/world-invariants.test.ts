@@ -105,15 +105,17 @@ describe("SPC World invariants", () => {
     expect(split.regionAt({ x: 1_000, y: 1_000 })?.id).toBe("east");
   });
 
-  it("rejects poisoned actor/profile values and never lets NaN enter the spatial state", () => {
+  it("rejects poisoned actor/profile values and keeps controller intent separate from physical state", () => {
     const runtime = world();
     expect(() => runtime.addPlayer("player.bad", { x: Number.NaN, y: 10 })).toThrow(/finite/);
     expect(() => runtime.addPlayer("player.bad", { x: 10, y: 10 }, { sightRadius: -1 })).toThrow(/non-negative/);
     expect(() => runtime.addResident("resident.bad", "Bad", { x: 10, y: 10 }, { memoryLimit: 0 })).toThrow(/positive integer/);
 
     runtime.addPlayer("player.good", { x: 100, y: 100 }, { maxSpeed: 50 });
-    expect(() => runtime.setActorVelocity("player.good", { x: Number.POSITIVE_INFINITY, y: 0 })).toThrow(/finite/);
-    runtime.setActorVelocity("player.good", { x: 100, y: 0 });
+    expect(() => runtime.setActorMotionIntent("player.good", { x: Number.POSITIVE_INFINITY, y: 0 })).toThrow(/finite/);
+    runtime.setActorMotionIntent("player.good", { x: 100, y: 0 });
+    expect(runtime.publicSnapshot().actors.find((actor) => actor.id === "player.good")?.velocity).toEqual({ x: 0, y: 0 });
+    runtime.step();
     expect(runtime.publicSnapshot().actors.find((actor) => actor.id === "player.good")?.velocity).toEqual({ x: 50, y: 0 });
   });
 
