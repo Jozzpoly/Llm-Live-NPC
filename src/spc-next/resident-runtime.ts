@@ -153,19 +153,34 @@ export class ResidentRuntime {
     this.mind.familiarizeRegion(region, tick);
   }
 
-  enterRegion(region: WorldRegion, tick: number, initial = false): void {
-    const changed = this.currentRegionId !== region.id;
-    this.currentRegionId = region.id;
-    this.mind.discoverRegion(region, tick);
+  /**
+   * Synchronize resident self-location from authoritative World region resolution.
+   * `null` is meaningful current truth: the actor is in valid World space but not
+   * inside any authored semantic region.
+   */
+  syncCurrentRegion(region: WorldRegion | null, tick: number, initial = false): void {
+    const previousRegionId = this.currentRegionId;
+    const nextRegionId = region?.id ?? null;
+    const changed = previousRegionId !== nextRegionId;
+    this.currentRegionId = nextRegionId;
+    if (region) this.mind.discoverRegion(region, tick);
     if (!changed || initial) return;
+
     this.noteCognitionReason({
-      id: `reason:${this.profile.id}:region:${region.id}:${tick}`,
+      id: `reason:${this.profile.id}:region:${nextRegionId ?? "none"}:${tick}`,
       tick,
       kind: "direct_world_change",
       salience: 0.35,
-      summary: `Entered region: ${region.label}`,
+      summary: region
+        ? `Entered region: ${region.label}`
+        : `Left authored region: ${previousRegionId ?? "none"}`,
       evidenceIds: [],
     });
+  }
+
+  /** Compatibility wrapper for existing callers that already resolved a concrete region. */
+  enterRegion(region: WorldRegion, tick: number, initial = false): void {
+    this.syncCurrentRegion(region, tick, initial);
   }
 
   setActivity(activity: ResidentActivity, tick: number): void {
