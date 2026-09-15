@@ -1,5 +1,5 @@
 import { ResidentContinuityKernel } from "./resident-continuity-kernel";
-import type { MaterialActionResult } from "./material-world-state";
+import type { MaterialActionResult, MaterialActionResultCode } from "./material-world-state";
 import type {
   ResidentWorldAction,
   ResidentWorldActionResolution,
@@ -10,6 +10,37 @@ import type {
   ResidentWorldExecutionResult,
 } from "./resident-world-execution-contract";
 import { SpcWorldRuntime } from "./spc-world-runtime";
+
+const RECENT_ACTION_FACT_LIMIT = 128;
+
+export type ResidentWorldActionFactResolution =
+  | {
+      status: "resolved";
+      actionSeq: number;
+      outcomeStatus: "succeeded" | "rejected";
+      code: MaterialActionResultCode;
+    }
+  | {
+      status: "rejected";
+      reason: "invalid_action" | "run_not_authorized";
+    };
+
+/**
+ * Non-omniscient causal provenance for one resident action attempt.
+ *
+ * This joins an exact resident run to the World action/result without copying raw
+ * rejected `before` / `after` material truth into the resident authority surface.
+ * Full hidden World state remains a separate research-plane observation.
+ */
+export interface ResidentWorldActionFact {
+  id: string;
+  sequence: number;
+  tick: number;
+  residentId: string;
+  runId: string;
+  action: ResidentWorldAction;
+  resolution: ResidentWorldActionFactResolution;
+}
 
 /**
  * Resident-owned facade over the World execution gate.
@@ -25,6 +56,9 @@ import { SpcWorldRuntime } from "./spc-world-runtime";
  * learned merely by probing an object id.
  */
 export class ResidentWorldExecutionAuthority {
+  private actionFactSequence = 0;
+  private readonly actionFacts: ResidentWorldActionFact[] = [];
+
   constructor(
     readonly residentId: string,
     private readonly kernel: ResidentContinuityKernel,
@@ -42,11 +76,16 @@ export class ResidentWorldExecutionAuthority {
 
   act(runId: string, action: ResidentWorldAction): ResidentWorldActionResolution {
     const resolution = this.world.applyResidentWorldAction(this.residentId, runId, action);
+    this.recordActionFact(runId, action, resolution);
     if (resolution.status !== "resolved") return resolution;
     return {
       ...resolution,
       materialOutcome: residentSafeMaterialOutcome(resolution.materialOutcome),
     };
+  }
+
+  recentActionFacts(): ResidentWorldActionFact[] {
+    return this.actionFacts.map((fact) => structuredClone(fact));
   }
 
   enforceMotionAuthority(): { status: "unchanged" } | { status: "revoked"; runId: string } {
@@ -59,6 +98,35 @@ export class ResidentWorldExecutionAuthority {
 
   lastMotionOutcome(): ResidentAuthorizedMotionOutcome | null {
     return this.world.residentAuthorizedMotionOutcome(this.residentId);
+  }
+
+  private recordActionFact(
+    runId: string,
+    action: ResidentWorldAction,
+    resolution: ResidentWorldActionResolution,
+  ): void {
+    const sequence = this.actionFactSequence++;
+    const fact: ResidentWorldActionFact = {
+      id: `resident-world-action:${this.residentId}:${sequence}`,
+      sequence,
+      tick: resolution.status === "resolved" ? resolution.materialOutcome.tick : this.world.tick,
+      residentId: this.residentId,
+      runId,
+      action: structuredClone(action),
+      resolution: resolution.status === "resolved"
+        ? {
+            status: "resolved",
+            actionSeq: resolution.materialOutcome.actionSeq,
+            outcomeStatus: resolution.materialOutcome.status,
+            code: resolution.materialOutcome.code,
+          }
+        : {
+            status: "rejected",
+            reason: resolution.reason,
+          },
+    };
+    this.actionFacts.push(fact);
+    while (this.actionFacts.length > RECENT_ACTION_FACT_LIMIT) this.actionFacts.shift();
   }
 }
 
