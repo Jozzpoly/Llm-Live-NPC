@@ -23,12 +23,18 @@ describe("hierarchical region navigation", () => {
       .toEqual(["hearth", "workshop", "crossroads", "old-road", "ruins"]);
   });
 
+  it("keeps routing destination points distinct from semantic World anchors", () => {
+    const graph = createFiveResidentNavigationGraph();
+    expect(graph.destinationPoint("workshop")).toEqual({ x: 1_950, y: 720 });
+    expect(graph.destinationPoint("missing")).toBeNull();
+  });
+
   it("chooses a cheaper alternate topology instead of assuming Euclidean straight-line travel", () => {
     const graph = new RegionNavigationGraph(
       [
-        { id: "a", anchor: { x: 0, y: 0 } },
-        { id: "b", anchor: { x: 100, y: 0 } },
-        { id: "c", anchor: { x: 50, y: 50 } },
+        { id: "a", destinationPoint: { x: 0, y: 0 } },
+        { id: "b", destinationPoint: { x: 100, y: 0 } },
+        { id: "c", destinationPoint: { x: 50, y: 50 } },
       ],
       [
         { from: "a", to: "b", cost: 10, waypoints: [] },
@@ -44,8 +50,8 @@ describe("hierarchical region navigation", () => {
   it("fails closed when no authored connection exists", () => {
     const graph = new RegionNavigationGraph(
       [
-        { id: "a", anchor: { x: 0, y: 0 } },
-        { id: "b", anchor: { x: 100, y: 0 } },
+        { id: "a", destinationPoint: { x: 0, y: 0 } },
+        { id: "b", destinationPoint: { x: 100, y: 0 } },
       ],
       [],
     );

@@ -62,8 +62,8 @@ export class CognitionGrounder {
 
     if (proposed.targetRegionId) {
       if (!view.currentRegionId) return { kind: "rejected", reason: "resident_has_no_current_region" };
-      const destination = this.navigation.anchor(proposed.targetRegionId);
-      if (!destination) return { kind: "rejected", reason: "target_region_has_no_navigation_anchor" };
+      const destination = this.navigation.destinationPoint(proposed.targetRegionId);
+      if (!destination) return { kind: "rejected", reason: "target_region_has_no_navigation_destination" };
       const physicalRoute = this.navigation.route(view.currentRegionId, proposed.targetRegionId);
       if (!physicalRoute) return { kind: "rejected", reason: "target_region_unreachable" };
       const knownRegionIds = new Set(view.context.knownRegions.map((region) => region.id));

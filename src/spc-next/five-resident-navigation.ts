@@ -2,14 +2,14 @@ import { RegionNavigationGraph, bidirectionalEdge } from "./region-navigation";
 
 export function createFiveResidentNavigationGraph(): RegionNavigationGraph {
   const nodes = [
-    { id: "hearth", anchor: { x: 780, y: 720 } },
-    { id: "workshop", anchor: { x: 1_950, y: 720 } },
-    { id: "crossroads", anchor: { x: 3_200, y: 920 } },
-    { id: "fields", anchor: { x: 2_250, y: 2_450 } },
-    { id: "forest-edge", anchor: { x: 4_550, y: 2_850 } },
-    { id: "old-road", anchor: { x: 5_050, y: 920 } },
-    { id: "ruins", anchor: { x: 7_050, y: 1_250 } },
-    { id: "deep-wilds", anchor: { x: 5_700, y: 5_650 } },
+    { id: "hearth", destinationPoint: { x: 780, y: 720 } },
+    { id: "workshop", destinationPoint: { x: 1_950, y: 720 } },
+    { id: "crossroads", destinationPoint: { x: 3_200, y: 920 } },
+    { id: "fields", destinationPoint: { x: 2_250, y: 2_450 } },
+    { id: "forest-edge", destinationPoint: { x: 4_550, y: 2_850 } },
+    { id: "old-road", destinationPoint: { x: 5_050, y: 920 } },
+    { id: "ruins", destinationPoint: { x: 7_050, y: 1_250 } },
+    { id: "deep-wilds", destinationPoint: { x: 5_700, y: 5_650 } },
   ] as const;
 
   const edges = [

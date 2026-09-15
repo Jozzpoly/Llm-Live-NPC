@@ -2,7 +2,7 @@ import type { Vec2 } from "./contracts";
 
 export interface RegionNavNode {
   id: string;
-  anchor: Vec2;
+  destinationPoint: Vec2;
 }
 
 export interface RegionNavEdge {
@@ -25,7 +25,7 @@ export class RegionNavigationGraph {
   constructor(nodes: readonly RegionNavNode[], edges: readonly RegionNavEdge[]) {
     for (const node of nodes) {
       if (this.nodes.has(node.id)) throw new Error(`duplicate nav node: ${node.id}`);
-      this.nodes.set(node.id, { id: node.id, anchor: { ...node.anchor } });
+      this.nodes.set(node.id, { id: node.id, destinationPoint: { ...node.destinationPoint } });
       this.outgoing.set(node.id, []);
     }
     for (const edge of edges) {
@@ -37,9 +37,9 @@ export class RegionNavigationGraph {
     }
   }
 
-  anchor(regionId: string): Vec2 | null {
+  destinationPoint(regionId: string): Vec2 | null {
     const node = this.nodes.get(regionId);
-    return node ? { ...node.anchor } : null;
+    return node ? { ...node.destinationPoint } : null;
   }
 
   route(from: string, to: string, allowedRegionIds?: ReadonlySet<string>): RegionRoute | null {
@@ -93,7 +93,7 @@ export class RegionNavigationGraph {
     const waypoints: Vec2[] = [];
     for (const edge of edges) {
       for (const point of edge.waypoints) waypoints.push({ ...point });
-      waypoints.push({ ...this.nodes.get(edge.to)!.anchor });
+      waypoints.push({ ...this.nodes.get(edge.to)!.destinationPoint });
     }
     return { regionIds, waypoints, totalCost };
   }
