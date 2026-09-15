@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { CognitionBatch } from "./contracts";
-import { CognitionCoordinator } from "./cognition-coordinator";
+import { CognitionCoordinator, MAX_FAIR_QUEUE_WAIT_TICKS } from "./cognition-coordinator";
 
 function batch(residentId: string, tick: number, salience: number, suffix = "a"): CognitionBatch {
   return {
@@ -43,9 +43,9 @@ describe("multi-resident cognition coordinator", () => {
     expect(next[0]!.batch.reasons[0]!.id).toBe("resident.mira:follow-up");
   });
 
-  it("prioritizes urgent work while bounded waiting contributes to fairness", () => {
+  it("prioritizes fresh urgent work before a young quiet request", () => {
     const coordinator = new CognitionCoordinator(1);
-    coordinator.enqueue(batch("resident.quiet", 0, 0.3));
+    coordinator.enqueue(batch("resident.quiet", 90, 0.3));
     coordinator.enqueue(batch("resident.urgent", 100, 0.95));
 
     const urgent = coordinator.startReady(100)[0]!;
@@ -53,6 +53,22 @@ describe("multi-resident cognition coordinator", () => {
     coordinator.settle(urgent.id);
 
     expect(coordinator.startReady(101)[0]!.residentId).toBe("resident.quiet");
+  });
+
+  it("cannot starve an old quiet resident behind an endless stream of fresh urgent residents", () => {
+    const coordinator = new CognitionCoordinator(1);
+    coordinator.enqueue(batch("resident.quiet", 0, 0.2));
+
+    for (let tick = 1; tick < MAX_FAIR_QUEUE_WAIT_TICKS; tick += 100) {
+      coordinator.enqueue(batch(`resident.urgent.${tick}`, tick, 1));
+      const dispatch = coordinator.startReady(tick)[0]!;
+      expect(dispatch.residentId).toContain("resident.urgent");
+      coordinator.settle(dispatch.id);
+    }
+
+    coordinator.enqueue(batch("resident.urgent.deadline", MAX_FAIR_QUEUE_WAIT_TICKS, 1));
+    const fair = coordinator.startReady(MAX_FAIR_QUEUE_WAIT_TICKS)[0]!;
+    expect(fair.residentId).toBe("resident.quiet");
   });
 
   it("coalesces queued reasons without duplicating causal evidence", () => {
