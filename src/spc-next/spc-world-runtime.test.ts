@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { ResidentActivity } from "./contracts";
+import type { ResidentActivity, ResidentPercept } from "./contracts";
 import { SpcWorldRuntime } from "./spc-world-runtime";
 
 const regions = [
@@ -37,6 +37,14 @@ function travel(id: string, x: number, y: number): ResidentActivity {
     speed: 100,
     reason: "qualification travel",
   };
+}
+
+function lastMatching(percepts: readonly ResidentPercept[], predicate: (percept: ResidentPercept) => boolean): ResidentPercept | undefined {
+  for (let index = percepts.length - 1; index >= 0; index -= 1) {
+    const percept = percepts[index]!;
+    if (predicate(percept)) return percept;
+  }
+  return undefined;
 }
 
 describe("SPC Next five-resident world foundation", () => {
@@ -163,10 +171,14 @@ describe("SPC Next five-resident world foundation", () => {
     world.speak("player.jozz", "Mira, tylko do ciebie", 420, ["resident.mira"]);
     world.step();
 
-    const miraPercept = world.residentDiagnostics("resident.mira").recentPercepts
-      .findLast((percept) => percept.text === "Mira, tylko do ciebie")!;
-    const janekPercept = world.residentDiagnostics("resident.janek").recentPercepts
-      .findLast((percept) => percept.text === "Mira, tylko do ciebie")!;
+    const miraPercept = lastMatching(
+      world.residentDiagnostics("resident.mira").recentPercepts,
+      (percept) => percept.text === "Mira, tylko do ciebie",
+    )!;
+    const janekPercept = lastMatching(
+      world.residentDiagnostics("resident.janek").recentPercepts,
+      (percept) => percept.text === "Mira, tylko do ciebie",
+    )!;
     expect(miraPercept.addressed).toBe(true);
     expect(janekPercept.addressed).toBe(false);
     expect(world.takeCognitionBatch("resident.mira")?.reasons[0]?.salience).toBe(1);
