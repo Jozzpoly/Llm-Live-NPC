@@ -137,6 +137,7 @@ describe("SPC Next research projection", () => {
         kind: "player",
         position: { x: 900, y: 700 },
         velocity: { x: 0, y: 0 },
+        facing: { x: 1, y: 0 },
         hearingRadius: 420,
         sightRadius: 520,
         maxSpeed: 140,
