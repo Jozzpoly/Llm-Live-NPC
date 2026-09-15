@@ -1,5 +1,10 @@
 export type ResidentMatterStatus = "active" | "suspended" | "resolved" | "cancelled";
 export type ResidentRunOutcomeStatus = "succeeded" | "failed" | "blocked";
+export type ResidentSemanticProposalRevocationReason =
+  | "semantic_dependency_changed"
+  | "matter_terminal"
+  | "sibling_committed"
+  | "abandoned";
 
 export interface ResidentKernelEvidence {
   id: string;
@@ -27,6 +32,13 @@ export interface ResidentSemanticProposalTicket {
   semanticEvidenceId: string;
 }
 
+export interface ResidentSemanticProposalRevocation {
+  ticket: ResidentSemanticProposalTicket;
+  reason: ResidentSemanticProposalRevocationReason;
+  matterStatus: ResidentMatterStatus | null;
+  currentSemanticRevision: number | null;
+}
+
 export interface ResidentTaskRunBinding {
   runId: string;
   taskId: string;
@@ -45,6 +57,10 @@ export type SemanticCommitResult =
   | { status: "applied"; matter: ResidentMatter }
   | { status: "rejected"; reason: "matter_missing" | "matter_terminal" | "semantic_authority_stale" };
 
+export type SemanticAbandonResult =
+  | { status: "abandoned"; ticket: ResidentSemanticProposalTicket }
+  | { status: "rejected"; reason: "proposal_not_pending" };
+
 export type RunOutcomeReconciliationResult =
   | {
       status: "recorded";
@@ -56,9 +72,11 @@ export type RunOutcomeReconciliationResult =
 
 export interface ResidentContinuityKernelOptions {
   recentEvidenceLimit?: number;
+  revocationLimit?: number;
 }
 
 const DEFAULT_RECENT_EVIDENCE_LIMIT = 64;
+const DEFAULT_REVOCATION_LIMIT = 64;
 
 /**
  * Small resident-owned semantic/execution authority kernel for SPC Next recovery.
@@ -73,13 +91,20 @@ export class ResidentContinuityKernel {
   private readonly matters = new Map<string, ResidentMatter>();
   private readonly pinnedSemanticEvidence = new Map<string, ResidentKernelEvidence>();
   private readonly runBindings = new Map<string, ResidentTaskRunBinding>();
+  private readonly pendingProposals = new Map<string, ResidentSemanticProposalTicket>();
+  private readonly recentRevocations: ResidentSemanticProposalRevocation[] = [];
   private proposalSequence = 0;
   private readonly recentEvidenceLimit: number;
+  private readonly revocationLimit: number;
 
   constructor(options: ResidentContinuityKernelOptions = {}) {
     this.recentEvidenceLimit = options.recentEvidenceLimit ?? DEFAULT_RECENT_EVIDENCE_LIMIT;
+    this.revocationLimit = options.revocationLimit ?? DEFAULT_REVOCATION_LIMIT;
     if (!Number.isInteger(this.recentEvidenceLimit) || this.recentEvidenceLimit < 1) {
       throw new Error("recentEvidenceLimit must be a positive integer");
+    }
+    if (!Number.isInteger(this.revocationLimit) || this.revocationLimit < 1) {
+      throw new Error("revocationLimit must be a positive integer");
     }
   }
 
@@ -131,23 +156,34 @@ export class ResidentContinuityKernel {
     return [...this.recentEvidence.values()].map((evidence) => structuredClone(evidence));
   }
 
+  pendingSemanticProposals(): ResidentSemanticProposalTicket[] {
+    return [...this.pendingProposals.values()].map((ticket) => structuredClone(ticket));
+  }
+
+  recentSemanticProposalRevocations(): ResidentSemanticProposalRevocation[] {
+    return this.recentRevocations.map((entry) => structuredClone(entry));
+  }
+
   advanceSemanticContext(matterId: string, evidenceId: string): ResidentMatter {
     const matter = this.requireNonTerminalMatter(matterId);
     const evidence = this.requireEvidence(evidenceId);
     matter.semanticRevision += 1;
     matter.semanticEvidenceId = evidence.id;
     this.pinnedSemanticEvidence.set(matter.id, structuredClone(evidence));
+    this.revokePendingForMatter(matter.id, "semantic_dependency_changed");
     return structuredClone(matter);
   }
 
   beginSemanticProposal(matterId: string): ResidentSemanticProposalTicket {
     const matter = this.requireNonTerminalMatter(matterId);
-    return {
+    const ticket: ResidentSemanticProposalTicket = {
       attemptId: `proposal:${matterId}:${this.proposalSequence++}`,
       matterId,
       semanticRevision: matter.semanticRevision,
       semanticEvidenceId: matter.semanticEvidenceId,
     };
+    this.pendingProposals.set(ticket.attemptId, ticket);
+    return structuredClone(ticket);
   }
 
   commitSemanticProposal(
@@ -155,21 +191,49 @@ export class ResidentContinuityKernel {
     decision: { semanticCourse: string },
   ): SemanticCommitResult {
     assertNonEmpty(decision.semanticCourse, "semantic course");
+    const pending = this.pendingProposals.get(ticket.attemptId);
+    if (!pending || !sameProposalTicket(pending, ticket)) {
+      const priorRevocation = this.findRecentRevocation(ticket);
+      if (priorRevocation?.reason === "matter_terminal") {
+        return { status: "rejected", reason: "matter_terminal" };
+      }
+      return { status: "rejected", reason: "semantic_authority_stale" };
+    }
+
     const matter = this.matters.get(ticket.matterId);
-    if (!matter) return { status: "rejected", reason: "matter_missing" };
-    if (isTerminal(matter.status)) return { status: "rejected", reason: "matter_terminal" };
+    if (!matter) {
+      this.pendingProposals.delete(ticket.attemptId);
+      return { status: "rejected", reason: "matter_missing" };
+    }
+    if (isTerminal(matter.status)) {
+      this.revokeProposal(pending, "matter_terminal");
+      return { status: "rejected", reason: "matter_terminal" };
+    }
     if (
       matter.semanticRevision !== ticket.semanticRevision
       || matter.semanticEvidenceId !== ticket.semanticEvidenceId
     ) {
+      this.revokeProposal(pending, "semantic_dependency_changed");
       return { status: "rejected", reason: "semantic_authority_stale" };
     }
 
-    // A successful semantic settlement creates a new authority revision. This
-    // simultaneously makes sibling provider attempts and older grounded runs stale.
+    // The winning attempt consumes its own pending authority. A successful
+    // semantic settlement creates a new authority revision, which also makes
+    // sibling provider attempts and older grounded runs stale.
+    this.pendingProposals.delete(ticket.attemptId);
     matter.semanticRevision += 1;
     matter.semanticCourse = decision.semanticCourse;
+    this.revokePendingForMatter(matter.id, "sibling_committed");
     return { status: "applied", matter: structuredClone(matter) };
+  }
+
+  abandonSemanticProposal(ticket: ResidentSemanticProposalTicket): SemanticAbandonResult {
+    const pending = this.pendingProposals.get(ticket.attemptId);
+    if (!pending || !sameProposalTicket(pending, ticket)) {
+      return { status: "rejected", reason: "proposal_not_pending" };
+    }
+    this.revokeProposal(pending, "abandoned");
+    return { status: "abandoned", ticket: structuredClone(ticket) };
   }
 
   suspendMatter(matterId: string, interruptingMatterId: string): ResidentMatter {
@@ -299,6 +363,7 @@ export class ResidentContinuityKernel {
     if (isTerminal(matter.status)) return structuredClone(matter);
     matter.status = status;
     matter.suspendedByMatterId = null;
+    this.revokePendingForMatter(matter.id, "matter_terminal");
     // Keep activeRunId until explicit mechanical retirement/reconciliation.
     // canRunMutateWorld() already denies authority immediately because the matter is terminal.
     this.pinnedSemanticEvidence.delete(matter.id);
@@ -319,6 +384,34 @@ export class ResidentContinuityKernel {
       if (pinned.id === evidenceId) return pinned;
     }
     throw new Error(`unknown evidence: ${evidenceId}`);
+  }
+
+  private revokePendingForMatter(matterId: string, reason: ResidentSemanticProposalRevocationReason): void {
+    for (const ticket of [...this.pendingProposals.values()]) {
+      if (ticket.matterId === matterId) this.revokeProposal(ticket, reason);
+    }
+  }
+
+  private revokeProposal(ticket: ResidentSemanticProposalTicket, reason: ResidentSemanticProposalRevocationReason): void {
+    const pending = this.pendingProposals.get(ticket.attemptId);
+    if (!pending || !sameProposalTicket(pending, ticket)) return;
+    this.pendingProposals.delete(ticket.attemptId);
+    const matter = this.matters.get(ticket.matterId);
+    this.recentRevocations.push({
+      ticket: structuredClone(ticket),
+      reason,
+      matterStatus: matter?.status ?? null,
+      currentSemanticRevision: matter?.semanticRevision ?? null,
+    });
+    while (this.recentRevocations.length > this.revocationLimit) this.recentRevocations.shift();
+  }
+
+  private findRecentRevocation(ticket: ResidentSemanticProposalTicket): ResidentSemanticProposalRevocation | null {
+    for (let index = this.recentRevocations.length - 1; index >= 0; index -= 1) {
+      const entry = this.recentRevocations[index]!;
+      if (sameProposalTicket(entry.ticket, ticket)) return entry;
+    }
+    return null;
   }
 
   private wouldCreateSuspensionCycle(matterId: string, interruptingMatterId: string): boolean {
@@ -345,6 +438,13 @@ export class ResidentContinuityKernel {
 
 function isTerminal(status: ResidentMatterStatus): status is "resolved" | "cancelled" {
   return status === "resolved" || status === "cancelled";
+}
+
+function sameProposalTicket(a: ResidentSemanticProposalTicket, b: ResidentSemanticProposalTicket): boolean {
+  return a.attemptId === b.attemptId
+    && a.matterId === b.matterId
+    && a.semanticRevision === b.semanticRevision
+    && a.semanticEvidenceId === b.semanticEvidenceId;
 }
 
 function validateEvidence(evidence: ResidentKernelEvidence): void {
