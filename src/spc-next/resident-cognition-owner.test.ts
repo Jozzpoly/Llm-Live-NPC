@@ -24,7 +24,7 @@ function speech(id: string, tick: number, addressed: boolean, text = "Mira, odpo
     modality: "hearing",
     actorId: "player.jozz",
     subjectId: null,
-    position: { x: 700, y: 700 },
+    spatial: { kind: "directional", direction: { x: 1, y: 0 }, distanceBand: "near" },
     summary: "speech",
     text,
     addressed,
@@ -85,11 +85,13 @@ describe("ResidentCognitionOwner", () => {
       currentRegionId: "hearth",
     })).toEqual({ status: "rejected", reason: "unknown_attempt" });
     expect(owner.state().activeAttemptId).toBe(attempt.id);
-    expect(owner.settle(attempt, keepProposal(), {
+    const applied = owner.settle(attempt, keepProposal(), {
       tick: 2,
       currentPosition: { x: 760, y: 650 },
       currentRegionId: "hearth",
-    }).status).toBe("applied");
+    });
+    expect(applied.status).toBe("applied");
+    if (applied.status === "applied") expect(applied.activityTransition).toBeNull();
   });
 
   it("does not stale cognition merely because unrelated nearby speech was overheard", () => {
@@ -104,9 +106,10 @@ describe("ResidentCognitionOwner", () => {
     }).status).toBe("applied");
   });
 
-  it("rejects a late response after newer speech is explicitly addressed to the resident", () => {
+  it("rejects and requeues a late response after newer speech is explicitly addressed to the resident", () => {
     const { resident, owner } = setup();
-    const attempt = owner.prepare(resident.takeCognitionBatch(1)!)!;
+    const original = resident.takeCognitionBatch(1)!;
+    const attempt = owner.prepare(original)!;
     resident.ingestPercepts([speech("newer", 2, true, "Mira, jednak zaczekaj")]);
 
     expect(owner.settle(attempt, communicateProposal(), {
@@ -114,44 +117,51 @@ describe("ResidentCognitionOwner", () => {
       currentPosition: { x: 760, y: 650 },
       currentRegionId: "hearth",
     })).toEqual({ status: "stale", reason: "newer_addressed_attention" });
+    expect(resident.publicState().pendingCognitionReasonCount).toBeGreaterThanOrEqual(2);
   });
 
-  it("allows a current replacement after local activity changed, but not a stale keep directive", () => {
-    const first = setup();
-    const replaceAttempt = first.owner.prepare(first.resident.takeCognitionBatch(1)!)!;
-    first.resident.setActivity({
-      id: "activity:local-completion-followup",
-      kind: "idle",
-      targetActorId: null,
-      targetPosition: null,
-      text: null,
-      speed: null,
-      reason: "local world changed activity",
-    }, 2);
-    const replacement = first.owner.settle(replaceAttempt, communicateProposal(), {
-      tick: 3,
+  it("rejects both keep and replacement decisions after the local activity materially changed", () => {
+    for (const rawProposal of [keepProposal(), communicateProposal()]) {
+      const { resident, owner } = setup();
+      const original = resident.takeCognitionBatch(1)!;
+      const attempt = owner.prepare(original)!;
+      resident.setActivity({
+        id: "activity:new-local-reality",
+        kind: "idle",
+        targetActorId: null,
+        targetPosition: null,
+        text: null,
+        speed: null,
+        reason: "local execution moved to a newer state",
+      }, 2);
+
+      expect(owner.settle(attempt, rawProposal, {
+        tick: 3,
+        currentPosition: { x: 760, y: 650 },
+        currentRegionId: "hearth",
+      })).toEqual({ status: "stale", reason: "activity_changed_during_request" });
+      expect(resident.publicState().activity.id).toBe("activity:new-local-reality");
+      expect(resident.publicState().pendingCognitionReasonCount).toBeGreaterThanOrEqual(1);
+    }
+  });
+
+  it("returns a grounded transition without mutating bodily activity outside World authority", () => {
+    const { resident, owner } = setup();
+    const attempt = owner.prepare(resident.takeCognitionBatch(1)!)!;
+    const before = resident.publicState().activity.id;
+    const result = owner.settle(attempt, communicateProposal(), {
+      tick: 2,
       currentPosition: { x: 760, y: 650 },
       currentRegionId: "hearth",
     });
-    expect(replacement.status).toBe("applied");
-    expect(first.resident.publicState().activity.kind).toBe("communicate");
 
-    const second = setup();
-    const keepAttempt = second.owner.prepare(second.resident.takeCognitionBatch(1)!)!;
-    second.resident.setActivity({
-      id: "activity:new-local-method",
-      kind: "work",
-      targetActorId: null,
-      targetPosition: null,
-      text: null,
-      speed: null,
-      reason: "method changed while request was pending",
-    }, 2);
-    expect(second.owner.settle(keepAttempt, keepProposal(), {
-      tick: 3,
-      currentPosition: { x: 760, y: 650 },
-      currentRegionId: "hearth",
-    })).toEqual({ status: "stale", reason: "activity_changed_while_keep" });
+    expect(result.status).toBe("applied");
+    if (result.status === "applied") {
+      expect(result.activityTransition?.kind).toBe("communicate");
+      expect(result.activityTransition?.targetActorId).toBe("player.jozz");
+      expect(result.activityTransition?.targetPosition).toBeNull();
+    }
+    expect(resident.publicState().activity.id).toBe(before);
   });
 
   it("requeues causal reasons when transport is abandoned or output is invalid", () => {
