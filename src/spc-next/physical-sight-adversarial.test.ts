@@ -94,7 +94,7 @@ describe("SPC physical point-sight adversarial qualification", () => {
     expect(sightLifecycle(world).filter((event) => event.phenomenon === "actor_sight_exit")).toHaveLength(1);
   });
 
-  it("keeps acoustic delivery independent: an opaque sight blocker does not silently become a sound model", () => {
+  it("keeps acoustic delivery independent: an opaque sight blocker does not silently become a sound or identity model", () => {
     const world = worldWith([{
       id: "wall",
       label: "Wall",
@@ -104,11 +104,12 @@ describe("SPC physical point-sight adversarial qualification", () => {
     world.speak("player.jozz", "Mira, słyszysz mnie?", 500, ["resident.mira"]);
     world.step();
 
-    const percepts = jozzPercepts(world);
-    const hearing = percepts.filter((percept) => percept.phenomenon === "speech");
+    const percepts = world.residentDiagnostics("resident.mira").recentPercepts;
+    const hearing = percepts.filter((percept) => percept.phenomenon === "speech" && percept.text === "Mira, słyszysz mnie?");
     expect(hearing).toHaveLength(1);
     expect(hearing[0]?.modality).toBe("hearing");
     expect(hearing[0]?.spatial.kind).not.toBe("exact");
+    expect(hearing[0]?.actorId).toBeNull();
     expect(percepts.filter((percept) => percept.phenomenon === "actor_sight_enter")).toEqual([]);
   });
 

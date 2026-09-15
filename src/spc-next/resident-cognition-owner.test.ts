@@ -32,9 +32,30 @@ function speech(id: string, tick: number, addressed: boolean, text = "Mira, odpo
   };
 }
 
+function recognizedSight(tick: number): ResidentPercept {
+  return {
+    id: `percept:recognized-player:${tick}`,
+    occurrenceId: `sight:update:player:${tick}`,
+    tick,
+    phenomenon: "actor_sight_update",
+    modality: "sight",
+    actorId: "player.jozz",
+    subjectId: "player.jozz",
+    spatial: { kind: "exact", position: { x: 720, y: 650 } },
+    summary: "known actor visible",
+    text: null,
+    addressed: false,
+  };
+}
+
 function setup(): { resident: ResidentRuntime; owner: ResidentCognitionOwner } {
   const resident = new ResidentRuntime(profile);
   resident.enterRegion({ id: "hearth", label: "Hearth", minX: 0, minY: 0, maxX: 1_400, maxY: 1_500 }, 0, true);
+  // This suite tests cognition ownership, not identity acquisition. Establish the
+  // target identity causally through sight before using a recognized voice.
+  // actor_sight_update updates private contact state without manufacturing an
+  // LLM review reason, keeping the original cognition-owner scenario focused.
+  resident.ingestPercepts([recognizedSight(0)]);
   resident.ingestPercepts([speech("initial", 1, true)]);
   return {
     resident,
