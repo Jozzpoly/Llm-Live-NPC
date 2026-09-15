@@ -7,6 +7,7 @@ function context(): ResidentCognitionContext {
     version: 1,
     resident: { id: "resident.mira", name: "Mira" },
     tick: 120,
+    currentRegionId: "hearth",
     reasons: [{
       id: "reason:1",
       tick: 120,
@@ -17,12 +18,12 @@ function context(): ResidentCognitionContext {
     }],
     currentActivity: {
       id: "activity:old",
-      kind: "work",
+      kind: "idle",
       targetActorId: null,
       targetPosition: null,
       text: null,
       speed: null,
-      reason: "workshop work",
+      reason: "between local activities",
     },
     recentPercepts: [{
       id: "percept:1",
@@ -48,14 +49,14 @@ function context(): ResidentCognitionContext {
       lastHeardTick: 120,
     }],
     knownRegions: [
-      { id: "hearth", label: "Hearth" },
-      { id: "ruins", label: "Ruins" },
+      { id: "hearth", label: "Hearth", knowledge: "visited", lastVisitedTick: 120 },
+      { id: "ruins", label: "Ruins", knowledge: "familiar", lastVisitedTick: null },
     ],
   };
 }
 
 describe("SPC Next cognition contract", () => {
-  it("accepts one unambiguous replacement directive grounded in known world references", () => {
+  it("accepts one unambiguous replacement directive grounded in resident-known geography", () => {
     const parsed = parseResidentCognitionProposal({
       version: 1,
       activityDirective: {
@@ -87,6 +88,22 @@ describe("SPC Next cognition contract", () => {
     }, context());
 
     expect(parsed?.activityDirective.kind).toBe("replace");
+  });
+
+  it("accepts the visible cognition reason itself as bounded semantic evidence", () => {
+    const parsed = parseResidentCognitionProposal({
+      version: 1,
+      activityDirective: { kind: "keep", reason: "keep listening" },
+      beliefs: [{
+        id: "belief:attention",
+        statement: "A direct request needs consideration.",
+        confidence: 0.8,
+        evidenceIds: ["reason:1"],
+      }],
+      concerns: [],
+      reviewAfterSeconds: 5,
+    }, context());
+    expect(parsed?.beliefs[0]?.evidenceIds).toEqual(["reason:1"]);
   });
 
   it("rejects unknown actors, unknown regions and fabricated evidence", () => {
@@ -180,6 +197,27 @@ describe("SPC Next cognition contract", () => {
       },
     ];
     expect(parseResidentCognitionProposal(investigate({ x: 500, y: 500 }), withSight)?.activityDirective.kind).toBe("replace");
+  });
+
+  it("does not expose fake generic work as a supported cognition activity", () => {
+    expect(parseResidentCognitionProposal({
+      version: 1,
+      activityDirective: {
+        kind: "replace",
+        reason: "pretend",
+        activity: {
+          kind: "work",
+          goal: "do unspecified work",
+          targetActorId: null,
+          targetRegionId: null,
+          targetPosition: null,
+          text: null,
+        },
+      },
+      beliefs: [],
+      concerns: [],
+      reviewAfterSeconds: 30,
+    }, context())).toBeNull();
   });
 
   it("does not reproduce the old continue-plus-plan ambiguity: keep cannot carry a replacement activity", () => {
