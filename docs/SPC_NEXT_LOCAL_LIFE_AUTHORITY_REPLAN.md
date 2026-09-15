@@ -1,6 +1,6 @@
 # SPC Next — local-life authority replan
 
-Status: **planning only · no runtime authority · post-physical-outcome audit**  
+Status: **planning only · no runtime authority · adversarially revised**  
 Parent checkpoint: `f10553900a1662cec21aabfd5bee706a6864897f`  
 Purpose: address the demonstrated all-idle collapse without turning LLM cognition, scripted fixtures or fake activity labels into the source of life.
 
@@ -29,7 +29,7 @@ Today there are three useful but incomplete layers:
 
 What is missing is the layer between semantic state and one concrete activity:
 
-> a resident-owned continuing purpose that can survive completion/interruption of a concrete activity and locally select the next bounded method when the World supplies enough grounded truth.
+> a resident-owned continuing purpose that can survive completion/interruption of a concrete activity and locally select the next bounded method when current grounded truth makes that method unambiguous.
 
 The current `concern` is not this authority. It is semantic memory written through cognition and no local executor consumes it.
 
@@ -50,39 +50,31 @@ A local purpose means:
 - revisable, suspendable or replaceable by higher cognition;
 - incapable of manufacturing World outcomes or new semantic facts.
 
-Examples of shape, not selected content:
-
-- maintain a small World-owned resource condition;
-- make a known delivery whose source and destination are grounded;
-- patrol/check a known set of authored places under an explicit existing purpose;
-- return to a known work/social place after a bounded interruption.
-
 A local purpose must **not** mean “pretend to work”, “wander forever”, or “invent another quest because idle looks bad”.
 
 ## 4. Authority split to defend
 
 ### World owns
 
-- existence and state of anchors/places/resources/actors;
-- whether an interaction is physically/legal mechanically possible;
-- actual movement, contact and interaction outcomes;
-- resource transfer or other factual consequences;
-- causal occurrence/evidence emitted from those consequences.
+- existence and state of places/resources/actors;
+- actual movement and interaction outcomes;
+- whether a physical/action request is legal and succeeds;
+- causal occurrences/evidence emitted from factual consequences.
 
 ### Resident mind owns
 
 - private knowledge and evidence provenance;
 - beliefs and semantic concerns;
-- which authored places/actors/resources it actually knows about;
+- which regions/actors/places it actually knows about;
 - higher-level interpretation of why something matters.
 
 ### Local-life owner may own
 
-- one bounded continuing local purpose already admitted from trusted seed or cognition;
+- one bounded continuing purpose already admitted from a trusted seed or cognition;
 - phase/method state needed to continue that purpose;
-- choosing the next **locally permitted method** from grounded resident knowledge and factual World outcomes;
+- choosing the next **locally permitted method** from grounded resident knowledge and factual outcomes;
 - suspend/resume state around interruptions;
-- escalation when local methods are exhausted or ambiguous.
+- bounded escalation when local methods are exhausted or ambiguous.
 
 ### Current activity owns only execution intent
 
@@ -90,7 +82,7 @@ A local purpose must **not** mean “pretend to work”, “wander forever”, o
 - approach this actor;
 - communicate this message;
 - investigate this grounded location;
-- invoke a future World-owned interaction capability.
+- later, invoke a separately-qualified World interaction capability.
 
 Completion of one activity must not automatically resolve the continuing purpose.
 
@@ -102,57 +94,83 @@ The model may:
 - react to surprising failure or changing evidence;
 - choose among genuinely ambiguous goals.
 
-It should not need to be called merely because a resident reached a known waypoint or finished one obvious method in an already-understood routine.
+It should not need to be called merely because a resident reached a known waypoint or finished one obvious method in an already-understood purpose.
 
-## 5. The anti-theater rule
+## 5. Important knowledge boundary discovered during review
 
-The first local-life experiment must contain at least one **real World-owned consequence**.
+Authored `WorldAnchor`s are now real World truth, but they are **not yet resident-private knowledge**.
 
-Anchors alone are not mechanics. A resident walking to `Workshop Bench` and changing its activity label to `work` would be theater, not evidence of embodied life.
+Current cognition/mind contracts expose known actors and known regions; they do not expose `KnownAnchor`. The grounder can route to a known region or exact position grounded by perception, but it cannot safely grant a resident an authored anchor merely because the World contains it.
 
-Likewise, incrementing an arbitrary debug counter called `workDone` solely so the test turns green would not be enough.
+Therefore the first local-purpose experiment must **not** silently inject anchor omniscience.
 
-The specimen needs a small causal loop in which:
+Anchor familiarity/discovery should be designed separately when a later specimen genuinely needs it.
 
-1. a factual World state creates/maintains a bounded reason for action;
-2. the resident knows enough to act but does not receive hidden World truth;
-3. local purpose selects a sequence of ordinary concrete methods;
-4. the World adjudicates the actual result;
-5. the factual result enters private experience;
-6. the purpose continues, changes phase, becomes satisfied or escalates because of that result.
+## 6. Anti-theater rule, refined
 
-## 6. Current-best first specimen
+The eventual living-life loop must contain real World consequences. However, adversarial review found that forcing a resource/inventory mechanic into the **first** purpose experiment would confound two questions:
 
-Do **not** build a generic economy, jobs framework or utility-AI planner.
+1. can a resident retain local purpose across multiple concrete activities without the LLM acting as a metronome?
+2. can the World support a new factual interaction/resource mechanic?
 
-The current-best bounded candidate is a tiny **resource transfer loop between two authored anchors**, because it requires real World consequences while staying small enough to falsify.
+Those should be separated.
 
-A concrete candidate for planning/falsification:
+### L0-A may reuse already-qualified World causality
 
-- one source anchor exposes a finite/renewable World-owned resource;
-- one destination anchor exposes a World-owned local need/store;
-- one resident has a pre-existing grounded local purpose to maintain/fulfil that condition;
-- the resident can locally choose only a very small method vocabulary such as:
-  `go to known source -> acquire if World permits -> go to known destination -> deposit if World permits -> reassess factual condition`;
-- acquire/deposit are World actions with explicit success/failure outcomes;
-- no model request is required between mechanically obvious phases;
-- an unexpected absence/blockage/interruption can trigger cognition rather than being solved by an expanding local planner.
+The first executable purpose specimen may use only existing factual mechanisms:
 
-The exact fiction (`water`, materials, supplies, etc.) is intentionally not selected by this document. The experiment should choose the smallest content that exercises the authority structure without accidentally canonizing an economy.
+- authoritative movement outcome;
+- factual region entry/current region;
+- real speech/occurrence delivery where useful;
+- already-qualified private knowledge and region routing.
 
-## 7. Why not start with generic routines
+That is enough to falsify purpose/activity ownership without first inventing an economy.
 
-A scheduler such as `home -> work -> social -> home` would make the map look alive very quickly but would answer the wrong question.
+**This does not qualify “living work” or a general living-world mechanic.** It qualifies only continuity of local purpose.
+
+### L0-B then introduces the first new World-owned interaction consequence
+
+Only after purpose continuity is defended should the project select the smallest honest interaction/resource action needed to prove:
+
+`purpose -> method -> World action result -> private evidence -> purpose continuation/satisfaction`.
+
+Do not call travel-to-an-anchor `work` and do not add a decorative debug counter merely to claim a consequence.
+
+## 7. Current-best L0-A specimen
+
+Use one resident and one explicitly seeded bounded purpose over **already-known regions**, not anchors.
+
+Candidate shape:
+
+> inspect/check a short ordered set of familiar regions, where each leg is a separate ordinary `travel`/`investigate` activity and the purpose advances only after factual arrival/current-region truth.
+
+Why this is useful despite being intentionally simple:
+
+- the purpose survives completion of activity 1 and creates activity 2 locally;
+- no model response is required between mechanically obvious legs;
+- route authority stays inside the existing region-navigation substrate;
+- resident cannot target a region outside its known-region set;
+- physical movement failure does not count as arrival;
+- the finite purpose can become satisfied rather than looping forever;
+- the test isolates the missing authority layer without adding item/resource semantics.
+
+The initial purpose is an explicit **research seed**, not evidence that final resident roles should be hard-coded route lists.
+
+A finite region round will still eventually end in legitimate idle. That is acceptable for L0-A: the claim is continuity across activities, not yet indefinite life.
+
+## 8. Why not start with generic routines
+
+A scheduler such as `home -> work -> social -> home` would make the map look alive very quickly but answer the wrong question.
 
 It would prove only that scripted motion can continue indefinitely.
 
-The desired evidence is stronger:
+The desired first evidence is narrower and stronger:
 
-> a resident can keep pursuing a persistent, grounded local purpose through changing factual World state, without requiring the LLM to issue every next action and without taking outcome authority away from the World.
+> one admitted purpose can outlive an individual activity and locally choose the next grounded method without model assistance or outcome fabrication.
 
-Routine/schedule semantics may later become one source of purpose activation, after this causal split is defended.
+Later activation/scheduling of purposes should be a separate question informed by real World state, resident history and gameplay needs.
 
-## 8. Why not make `concerns` executable directly
+## 9. Why not make `concerns` executable directly
 
 Directly converting every open concern into activity authority would collapse semantic interpretation into motor policy.
 
@@ -164,101 +182,140 @@ Problems:
 - resolving a concern and completing an activity are different facts;
 - local fast-brain code would become coupled to LLM vocabulary.
 
-A purpose may reference a concern/provenance source, but the executable contract should remain narrower and explicitly admitted.
+A purpose may later reference a concern/provenance source, but its executable contract should remain narrower and explicitly admitted.
 
-## 9. Interruption contract to test early
+## 10. First Hearth donor boundary
+
+First Hearth already demonstrated useful continuity concepts:
+
+- concern may outlive a concrete realization;
+- realization can continue/replace/stop/suspend/resume;
+- interruption need not erase ongoing work.
+
+Do not transplant that architecture wholesale.
+
+It solves **realization continuity under cognition**, but local purpose in SPC Next must additionally answer a different problem: obvious next physical methods should continue even when no provider response occurs.
+
+Use First Hearth as causal donor evidence for interruption/resumption semantics, not as the local-life implementation.
+
+## 11. Interruption contract to test after L0-A
 
 The purpose layer is valuable only if it survives interruption cleanly.
 
 Minimum intended semantics:
 
 - `ACTIVE` purpose may own one current activity;
-- addressed/urgent evidence may interrupt or replace the current activity without deleting the purpose;
-- explicit higher cognition may `suspend`, `replace` or `resolve` the purpose;
-- when interruption ends, local logic may resume/re-ground the purpose from **current** World/resident evidence rather than replaying a stale activity;
-- obsolete activity identity must never regain authority merely because a purpose still exists.
+- addressed/urgent evidence may interrupt or replace current activity without deleting the purpose;
+- explicit higher cognition may suspend, replace or resolve the purpose;
+- when interruption ends, local logic re-grounds the purpose from **current** resident/World truth rather than replaying a stale activity;
+- obsolete activity identity must never regain authority merely because the purpose still exists.
 
-First Hearth's realization suspend/resume evidence is a donor for this boundary, not an implementation to transplant wholesale.
-
-## 10. Physical-outcome integration
+## 12. Physical-outcome integration
 
 The local-life stage should consume the physical causality being qualified separately rather than bypass it.
 
-PR #126 currently qualifies a candidate seam where materially constrained/blocked World motion becomes bounded resident-private self evidence and exact blockage cognition provenance.
+PR #126 qualifies, against its pinned merge-ref, a candidate seam where materially constrained/blocked World motion becomes bounded resident-private self evidence and exact blockage cognition provenance.
 
-Do not make this local-life plan depend on PR #126 merging unchanged, but preserve the architectural rule:
+Do not make this plan depend on PR #126 merging unchanged, but preserve the architectural rule:
 
 `local purpose -> current activity/method -> World physical/action resolution -> resident evidence -> local continuation or cognition escalation`.
 
 The local-life owner must never infer success merely because it issued a command.
 
-## 11. First falsifiers
+## 13. L0-A falsifiers
 
-Before authority promotion, encode failures that the design must survive:
+Before purpose authority promotion, encode at least:
 
-1. **All-idle baseline** — preserve the current tick-900 collapse as control evidence.
-2. **No-provider continuity** — after purpose admission, several phase transitions occur with zero model responses.
-3. **No fake success** — withholding the required World result prevents purpose advancement even if the resident reached the anchor.
-4. **World refusal** — an acquire/deposit/action rejection produces evidence and does not silently advance phase.
-5. **Interruption/resume** — an addressed interruption changes current activity; the purpose survives and later re-grounds from current truth.
-6. **Stale method invalidation** — if source/destination truth changes while interrupted, the old activity is not blindly resumed.
-7. **Knowledge boundary** — resident cannot choose an anchor/resource it has not learned/been explicitly familiarized with.
-8. **No LLM metronome** — ordinary successful local transitions do not create mandatory cognition requests.
-9. **Bounded failure escalation** — repeated locally unresolvable failure escalates once/boundedly rather than spinning or flooding cognition.
-10. **Independent residents** — one resident's purpose/phase does not become shared mutable state or synchronize unrelated residents.
+1. **All-idle control** — preserve the current tick-900 collapse on the unmodified five-resident specimen.
+2. **Purpose survives activity completion** — completing leg A does not erase the purpose; local authority produces leg B.
+3. **No-provider transition** — A→B happens with zero cognition/provider settlement.
+4. **No fake arrival** — issuing movement or being near an old target cannot advance the purpose without current factual region/arrival truth.
+5. **Knowledge boundary** — a purpose cannot authorize a region outside the resident's known/familiar set.
+6. **Finite satisfaction** — final leg satisfies the bounded purpose instead of becoming an infinite route loop.
+7. **No LLM metronome** — successful leg transitions do not manufacture mandatory cognition calls.
+8. **Independent state** — another resident's activity/purpose does not mutate this resident's phase.
+9. **Bounded failure escalation** — locally unresolved failure produces bounded escalation, not per-tick churn.
 
-## 12. Owner-visible evidence
+L0-A does not need to prove interaction mechanics or indefinite daily life.
 
-A future playable gate should make these distinctions visible without turning debug into gameplay UI:
+## 14. L0-B falsifiers for the first real interaction mechanic
+
+When a concrete mechanic is selected later, additionally require:
+
+1. reaching the place does not equal successful action;
+2. World refusal/failure prevents purpose advancement;
+3. successful World result is captured as private grounded evidence;
+4. purpose changes phase/satisfies only from that factual result;
+5. resident cannot act on unknown place/resource truth;
+6. ordinary successful local phase transitions do not require model calls.
+
+If the smallest honest mechanic requires a general inventory/economy/jobs framework, redesign the specimen instead of expanding scope by inertia.
+
+## 15. Owner-visible evidence
+
+A future playable gate should expose, in research UI:
 
 - current purpose (if any);
 - current method/activity;
 - why this method is locally authorized;
-- latest factual World outcome used to advance/hold/escalate;
+- latest factual outcome used to advance/hold/escalate;
 - suspended/interrupted state;
-- whether the last transition was local or cognition-authored.
+- whether the transition was local, World-caused or cognition-authored.
 
-The desired visual story is not “NPC is busy”. It is:
+The desired story is not “NPC is busy”. It is:
 
-> “I can tell what this person is trying to maintain, what they are doing about it right now, what actually happened, and why they continued or changed course.”
+> “I can tell what this person is trying to continue, what they are doing about it now, what actually happened, and why they continued or changed course.”
 
-## 13. Stage sequence
+## 16. Stage sequence
 
-### L0 — characterization / authority contract
+### L0-A — purpose/activity authority only
 
-- keep existing all-idle characterization;
-- select one bounded purpose specimen and one tiny World mechanic;
-- prove which layer owns purpose, method and outcome;
-- no broad feature architecture.
+- preserve all-idle control;
+- one resident;
+- one finite seeded purpose over known regions;
+- multiple concrete activities;
+- no-provider local continuation;
+- no new resource/economy system.
 
-### L1 — one resident, one purpose, real consequence
+### L0-B — first World-owned action consequence
 
-- explicit seeded/admitted purpose;
-- local multi-step continuation without provider;
-- World-owned action result;
-- evidence-driven completion/repetition/escalation;
-- deterministic tests before browser polish.
+- select one minimal interaction mechanic;
+- factual success/failure;
+- private outcome evidence;
+- purpose progression depends on result.
 
-### L2 — interruption and stale-state re-grounding
+### L1 — interruption and stale-state re-grounding
 
 - addressed interruption;
-- suspend/resume/replan from fresh World truth;
+- suspend/resume/replan from fresh truth;
 - bounded blocked/failure escalation;
 - prove no stale activity resurrection.
 
+### L2 — purpose activation / ongoing life
+
+Only now ask what causes purposes to become active over longer time:
+
+- authored role/routine pressure;
+- World state;
+- resident concerns/history;
+- cognition judgement;
+- combinations of the above.
+
+Do not answer this with a global clock scheduler by default.
+
 ### L3 — five-resident pressure
 
-- several independent purposes/routines with different phases;
-- long soak no longer collapses trivially to all idle;
+- several independent purposes at different phases;
+- long soak no longer collapses trivially because every one-shot script exhausted;
 - no global synchronized cadence;
-- bounded state/memory/cognition pressure;
-- residents may still legitimately idle when their purpose/world state gives them nothing to do.
+- bounded memory/cognition/state;
+- legitimate idling remains allowed.
 
 ### L4 — Owner living-world gate
 
 Only after causal qualification ask whether the result actually reads as ongoing life rather than loops and debug machinery.
 
-## 14. Explicit non-goals
+## 17. Explicit non-goals
 
 Do not introduce during this stage unless evidence forces it:
 
@@ -271,14 +328,15 @@ Do not introduce during this stage unless evidence forces it:
 - LLM call on every phase transition;
 - fake `work` completion without World consequences;
 - collision/pathfinding rewrite unrelated to the selected specimen;
-- final save/load persistence design.
+- final save/load persistence design;
+- automatic resident knowledge of authored anchors.
 
-## 15. Decision rule after planning
+## 18. Decision rule
 
 Do not implement the whole stage from this document by inertia.
 
-The next executable slice should be **L0 only**: choose the smallest real World mechanic + purpose specimen, encode red falsifiers around authority/continuity, and use those failures to decide the actual representation.
+The next executable slice is **L0-A only**. Its job is to force the missing purpose/activity boundary into the open with the smallest current substrate and deterministic falsifiers.
 
-If the smallest honest mechanic already requires a large generic system, stop and redesign the specimen rather than expanding scope to justify the abstraction.
+Only after L0-A survives critical review should L0-B choose the first new interaction mechanic.
 
 The project goal remains stronger than constant motion: **residents should have continuity of situated purpose in a shared causal world.** Idling is valid when earned; universal idle caused by exhausted one-shot scripts is not.
