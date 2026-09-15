@@ -1,22 +1,30 @@
 import { describe, expect, it } from "vitest";
-import type { ResidentCognitionContext, ResidentCognitionProposal } from "./cognition-contract";
+import type { KnownRegionContext, ResidentCognitionContext, ResidentCognitionProposal } from "./cognition-contract";
 import { CognitionGrounder } from "./cognition-grounder";
 import { createFiveResidentNavigationGraph } from "./five-resident-navigation";
+
+const familiar = (id: string, label: string): KnownRegionContext => ({
+  id,
+  label,
+  knowledge: "familiar",
+  lastVisitedTick: null,
+});
 
 function context(): ResidentCognitionContext {
   return {
     version: 1,
     resident: { id: "resident.mira", name: "Mira" },
     tick: 50,
+    currentRegionId: "hearth",
     reasons: [],
     currentActivity: {
       id: "activity:old",
-      kind: "work",
+      kind: "idle",
       targetActorId: null,
       targetPosition: null,
       text: null,
       speed: null,
-      reason: "working",
+      reason: "between activities",
     },
     recentPercepts: [],
     concerns: [],
@@ -31,11 +39,11 @@ function context(): ResidentCognitionContext {
       lastHeardTick: null,
     }],
     knownRegions: [
-      { id: "hearth", label: "Hearth" },
-      { id: "workshop", label: "Workshop" },
-      { id: "crossroads", label: "Crossroads" },
-      { id: "old-road", label: "Old Road" },
-      { id: "ruins", label: "Ruins" },
+      { id: "hearth", label: "Hearth", knowledge: "visited", lastVisitedTick: 50 },
+      familiar("workshop", "Workshop"),
+      familiar("crossroads", "Crossroads"),
+      familiar("old-road", "Old Road"),
+      familiar("ruins", "Ruins"),
     ],
   };
 }
@@ -51,7 +59,7 @@ function proposal(activity: Extract<ResidentCognitionProposal["activityDirective
 }
 
 describe("CognitionGrounder", () => {
-  it("turns a known semantic region target into hierarchical local route waypoints", () => {
+  it("turns familiar semantic geography into hierarchical local route waypoints", () => {
     const grounder = new CognitionGrounder(createFiveResidentNavigationGraph());
     const result = grounder.ground(proposal({
       kind: "investigate",
@@ -76,12 +84,12 @@ describe("CognitionGrounder", () => {
     }
   });
 
-  it("does not reveal unknown intermediate topology merely because the destination name is known", () => {
+  it("does not reveal unknown intermediate topology merely because the destination name is familiar", () => {
     const grounder = new CognitionGrounder(createFiveResidentNavigationGraph());
     const partial = context();
     partial.knownRegions = [
-      { id: "hearth", label: "Hearth" },
-      { id: "ruins", label: "Ruins" },
+      { id: "hearth", label: "Hearth", knowledge: "visited", lastVisitedTick: 50 },
+      familiar("ruins", "Ruins"),
     ];
 
     const result = grounder.ground(proposal({
