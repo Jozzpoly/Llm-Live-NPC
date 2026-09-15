@@ -6,7 +6,7 @@ import { ResidentWorldExecutionAuthority } from "./resident-world-execution-auth
 import { SpcWorldRuntime } from "./spc-world-runtime";
 
 describe("resident material stale-target causality", () => {
-  it("walks to last-known position and fails honestly instead of tracking hidden object truth", () => {
+  it("walks to the last-known position, physically inspects it, and fails honestly without probing hidden truth", () => {
     const world = new SpcWorldRuntime({
       bounds: { minX: 0, minY: 0, maxX: 1_000, maxY: 1_000 },
       regions: [],
@@ -73,22 +73,23 @@ describe("resident material stale-target causality", () => {
 
     let state = executor.step();
     let guard = 0;
-    while (state.status === "running" && guard < 120) {
+    let sawInspect = state.status === "running" && state.phase === "inspect";
+    while (state.status === "running" && guard < 240) {
       world.step();
       knowledge.sample();
       state = executor.step();
+      sawInspect ||= state.status === "running" && state.phase === "inspect";
       guard += 1;
     }
 
+    expect(guard).toBeLessThan(240);
+    expect(sawInspect).toBe(true);
     expect(state.status).toBe("blocked");
     if (state.status !== "blocked") throw new Error(`unexpected state: ${state.status}`);
-    expect(state.reason).toContain("last-known position");
-    expect(state.materialOutcome).toMatchObject({
-      status: "rejected",
-      code: "out_of_range",
-      before: null,
-      after: null,
-    });
+    expect(state.reason).toContain("bounded local inspection");
+    expect(state.materialOutcome).toBeNull();
+    expect(authority.recentActionFacts()).toEqual([]);
+
     const janek = world.publicSnapshot().actors.find((actor) => actor.id === "resident.janek")!;
     expect(janek.position.x).toBeLessThan(360);
     expect(knowledge.lastKnownPosition("crate.workshop.01")).toEqual({ x: 300, y: 100 });
