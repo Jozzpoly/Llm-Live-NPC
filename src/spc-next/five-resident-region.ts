@@ -1,4 +1,5 @@
 import type { ResidentActivity, WorldAnchor, WorldRegion } from "./contracts";
+import type { MaterialObjectState } from "./material-world-state";
 import { SpcWorldRuntime } from "./spc-world-runtime";
 
 export const FIVE_RESIDENT_REGIONS: readonly WorldRegion[] = [
@@ -20,6 +21,16 @@ export const FIVE_RESIDENT_ANCHORS: readonly WorldAnchor[] = [
   { id: "anchor.forest.cache", label: "Forest Cache", kind: "resource", position: { x: 4_760, y: 2_760 }, radius: 44 },
   { id: "anchor.ruins.threshold", label: "Ruins Threshold", kind: "exploration", position: { x: 7_150, y: 1_360 }, radius: 72 },
   { id: "anchor.wilds.lookout", label: "Wilds Lookout", kind: "exploration", position: { x: 5_250, y: 5_250 }, radius: 68 },
+];
+
+/** First factual material specimen for Janek pressure. It is World truth, not an anchor or activity label. */
+export const FIVE_RESIDENT_MATERIAL_OBJECTS: readonly MaterialObjectState[] = [
+  {
+    id: "crate.workshop.01",
+    label: "Workshop Crate",
+    radius: 18,
+    location: { kind: "free", position: { x: 1_952, y: 720 } },
+  },
 ];
 
 export interface FiveResidentRolePressure {
@@ -59,6 +70,7 @@ export function createFiveResidentRegionWorld(): SpcWorldRuntime {
   world.addResident("resident.ida", "Ida", { x: 3_050, y: 880 });
   world.addResident("resident.oren", "Oren", { x: 4_650, y: 2_650 });
   world.addResident("resident.nela", "Nela", { x: 6_950, y: 1_100 });
+  for (const object of FIVE_RESIDENT_MATERIAL_OBJECTS) world.addMaterialObject(object);
 
   for (const [residentId, familiarRegions] of Object.entries(FIVE_RESIDENT_FAMILIARITY)) {
     world.familiarizeResidentWithRegions(residentId, familiarRegions);
