@@ -32,7 +32,7 @@ export class CognitionGrounder {
 
     const proposed = directive.activity;
     const reason = `${directive.reason} · ${proposed.goal}`;
-    if (proposed.kind === "idle" || proposed.kind === "work") {
+    if (proposed.kind === "idle") {
       return {
         kind: "set_activity",
         activity: this.activity(view, proposed.kind, reason, null, null, null),
