@@ -231,7 +231,7 @@ export class ResidentRuntime {
     return batch;
   }
 
-  noteActivityBlocked(tick: number, summary: string): void {
+  noteActivityBlocked(tick: number, summary: string, evidenceIds: readonly string[] = []): void {
     const signature = `${this.activity.id}:${summary}`;
     if (signature === this.lastBlockedSignature) return;
     this.lastBlockedSignature = signature;
@@ -241,7 +241,7 @@ export class ResidentRuntime {
       kind: "activity_blocked",
       salience: 0.9,
       summary,
-      evidenceIds: [this.activity.id],
+      evidenceIds: [this.activity.id, ...evidenceIds],
     });
   }
 
