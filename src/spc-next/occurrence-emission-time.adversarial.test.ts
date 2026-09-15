@@ -75,12 +75,21 @@ describe("SPC occurrence witness snapshots — adversarial qualification", () =>
       hearingRadius: 120,
       sightRadius: 500,
       maxSpeed: 6_000,
-      brainIntervalTicks: 100,
+      brainIntervalTicks: 1,
     });
     world.addResident("resident.speaker", "Speaker", { x: 380, y: 500 }, {
       hearingRadius: 120,
       sightRadius: 500,
       brainIntervalTicks: 1,
+    });
+    world.setResidentActivity("resident.listener", {
+      id: "activity:listener:depart",
+      kind: "travel",
+      targetActorId: null,
+      targetPosition: { x: 0, y: 500 },
+      text: null,
+      speed: 6_000,
+      reason: "move away after the speech is emitted",
     });
     world.setResidentActivity("resident.speaker", {
       id: "activity:speaker:communicate",
@@ -91,7 +100,6 @@ describe("SPC occurrence witness snapshots — adversarial qualification", () =>
       speed: null,
       reason: "adversarial event-time test",
     });
-    world.setActorVelocity("resident.listener", { x: -6_000, y: 0 });
 
     world.step();
     const emitted = world.diagnostics().recentOccurrences.find((occurrence) => occurrence.text === "snapshot me once")!;
