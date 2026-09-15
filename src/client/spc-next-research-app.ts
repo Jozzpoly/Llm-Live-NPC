@@ -1,0 +1,222 @@
+import * as Phaser from "phaser";
+import "./style.css";
+import "./spc-next-research-style.css";
+import { FIVE_RESIDENT_ROLE_PRESSURES } from "../spc-next/five-resident-region";
+import type { ResidentPercept, ResidentTraceEvent } from "../spc-next/contracts";
+import { SpcNextResearchScene, type SpcNextResearchFrame } from "./spc-next-research-scene";
+
+const appRoot = document.querySelector<HTMLElement>("#app");
+const debugRoot = document.querySelector<HTMLElement>("#debug");
+const gameRoot = document.querySelector<HTMLElement>("#game");
+const stageChip = document.querySelector<HTMLElement>("#e1-stage-chip");
+const heading = document.querySelector<HTMLElement>("h1");
+const eyebrow = document.querySelector<HTMLElement>(".game-shell .eyebrow");
+const footer = document.querySelector<HTMLElement>(".game-shell footer");
+
+if (!appRoot || !debugRoot || !gameRoot || !stageChip || !heading || !eyebrow || !footer) {
+  throw new Error("SPC Next research shell is missing required DOM roots.");
+}
+
+const appNode: HTMLElement = appRoot;
+const debugNode: HTMLElement = debugRoot;
+const gameNode: HTMLElement = gameRoot;
+const stageNode: HTMLElement = stageChip;
+
+appNode.classList.add("spc-next-mode");
+debugNode.hidden = false;
+debugNode.className = "debug-shell spc-next-research-panel";
+document.documentElement.lang = "pl";
+document.title = "SPC Next — Living World Research";
+heading.textContent = "SPC Next";
+eyebrow.textContent = "Living world · embodied cognition research";
+stageNode.textContent = "WORLD / EPISTEMIC LAB";
+stageNode.classList.add("is-active");
+gameNode.setAttribute("aria-label", "SPC Next living-world research scene");
+footer.innerHTML = [
+  "<span>Ruch: WASD / strzałki</span>",
+  "<span>Wybór SPC: klik / Tab</span>",
+  "<span>Mikroskop: R · śledź SPC: F · gracz: P · cały świat: O</span>",
+  "<span>Zoom: kółko myszy</span>",
+].join("");
+
+let latestFrame: SpcNextResearchFrame | null = null;
+let scene: SpcNextResearchScene;
+
+function renderPanel(frame: SpcNextResearchFrame): void {
+  latestFrame = frame;
+  const selected = frame.selectedDiagnostics;
+  const selectedActor = frame.selectedResidentId
+    ? frame.snapshot.actors.find((actor) => actor.id === frame.selectedResidentId) ?? null
+    : null;
+  const role = frame.selectedResidentId
+    ? FIVE_RESIDENT_ROLE_PRESSURES.find((candidate) => candidate.residentId === frame.selectedResidentId) ?? null
+    : null;
+
+  const residentButtons = frame.snapshot.residents.map((resident) => {
+    const active = resident.id === frame.selectedResidentId ? " is-active" : "";
+    return `<button class="spc-resident-button${active}" data-resident="${escapeHtml(resident.id)}">
+      <span>${escapeHtml(resident.name)}</span>
+      <small>${escapeHtml(resident.activity.kind)} · C${resident.pendingCognitionReasonCount}</small>
+    </button>`;
+  }).join("");
+
+  const percepts = selected?.recentPercepts.slice(-9).reverse().map(renderPercept).join("")
+    ?? '<li class="spc-empty">Wybierz residenta, aby zobaczyć jego prywatny strumień percepcji.</li>';
+  const trace = selected?.trace.slice(-8).reverse().map(renderTrace).join("")
+    ?? '<li class="spc-empty">Brak wybranego residenta.</li>';
+  const occurrences = frame.recentOccurrences.slice(-7).reverse().map((occurrence) => `
+    <li>
+      <span class="spc-log-main">t${occurrence.tick} · ${escapeHtml(occurrence.kind)} · ${escapeHtml(occurrence.actorId ?? "world")}</span>
+      <span class="spc-log-sub">${escapeHtml(occurrence.text ?? occurrence.summary)}</span>
+    </li>`).join("") || '<li class="spc-empty">Brak publicznych occurrences.</li>';
+
+  const speed = selectedActor ? Math.hypot(selectedActor.velocity.x, selectedActor.velocity.y) : 0;
+  const activity = selected?.publicState.activity ?? null;
+
+  debugNode.innerHTML = `
+    <div class="workspace-header spc-research-header">
+      <div class="workspace-title-block">
+        <div class="workspace-kicker">SPC Next</div>
+        <h2 class="workspace-title">Causal research lens</h2>
+      </div>
+      <span class="spc-tick">t${frame.snapshot.tick}</span>
+    </div>
+    <div class="debug-content spc-research-content">
+      <section class="spc-control-grid">
+        <button class="debug-toggle${frame.overlayEnabled ? " is-active" : ""}" data-action="overlay">
+          <span class="debug-toggle-label">Epistemic overlay</span><span class="debug-shortcut">R</span>
+        </button>
+        <button class="debug-toggle" data-action="focus"><span class="debug-toggle-label">Śledź SPC</span><span class="debug-shortcut">F</span></button>
+        <button class="debug-toggle" data-action="player"><span class="debug-toggle-label">Śledź gracza</span><span class="debug-shortcut">P</span></button>
+        <button class="debug-toggle" data-action="overview"><span class="debug-toggle-label">Cały świat</span><span class="debug-shortcut">O</span></button>
+      </section>
+
+      <section class="debug-section">
+        <h3 class="debug-section-title">Residents</h3>
+        <div class="spc-resident-list">${residentButtons}</div>
+      </section>
+
+      <section class="debug-section">
+        <h3 class="debug-section-title">Selected truth</h3>
+        ${selected && selectedActor ? `
+          <div class="spc-selected-name">${escapeHtml(selected.publicState.name)}</div>
+          <p class="spc-role">${escapeHtml(role?.pressure ?? "resident world participant")}</p>
+          <dl class="spc-facts">
+            <div><dt>region</dt><dd>${escapeHtml(frame.selectedRegionId ?? "—")}</dd></div>
+            <div><dt>activity</dt><dd>${escapeHtml(activity?.kind ?? "—")}</dd></div>
+            <div><dt>velocity</dt><dd>${speed.toFixed(1)}</dd></div>
+            <div><dt>cognition queue</dt><dd>${selected.publicState.pendingCognitionReasonCount}</dd></div>
+            <div><dt>camera zoom</dt><dd>${frame.cameraZoom.toFixed(2)}×</dd></div>
+          </dl>
+          <p class="spc-activity-reason">${escapeHtml(activity?.reason ?? "")}</p>
+        ` : '<p class="spc-empty">Kliknij residenta w świecie albo wybierz go z listy.</p>'}
+      </section>
+
+      <section class="debug-section spc-legend">
+        <h3 class="debug-section-title">Jak czytać mikroskop</h3>
+        <p><i class="legend-dot sight"></i> sight reach / dokładny ślad wzrokowy</p>
+        <p><i class="legend-dot hearing"></i> hearing reach / kierunkowy ślad dźwięku</p>
+        <p><i class="legend-dot target"></i> public activity target</p>
+        <p class="debug-note">Szara linia od epistemicznego śladu do prawdziwego aktora pokazuje rozjazd wiedzy NPC z aktualnym stanem świata. Overlay jest narzędziem badawczym; nie jest gameplay UI.</p>
+      </section>
+
+      <section class="debug-section">
+        <h3 class="debug-section-title">Private perception</h3>
+        <ol class="spc-log">${percepts}</ol>
+      </section>
+
+      <section class="debug-section">
+        <h3 class="debug-section-title">Resident causal trace</h3>
+        <ol class="spc-log">${trace}</ol>
+      </section>
+
+      <section class="debug-section">
+        <h3 class="debug-section-title">Public world occurrences</h3>
+        <ol class="spc-log">${occurrences}</ol>
+      </section>
+    </div>`;
+}
+
+function renderPercept(percept: ResidentPercept): string {
+  return `<li>
+    <span class="spc-log-main">t${percept.tick} · ${escapeHtml(percept.phenomenon)} / ${escapeHtml(percept.modality)}</span>
+    <span class="spc-log-sub">${escapeHtml(percept.actorId ?? "world")} · ${escapeHtml(spatialLabel(percept))}${percept.addressed ? " · addressed" : ""}</span>
+  </li>`;
+}
+
+function renderTrace(event: ResidentTraceEvent): string {
+  return `<li>
+    <span class="spc-log-main">t${event.tick} · ${escapeHtml(event.kind)}</span>
+    <span class="spc-log-sub">${escapeHtml(event.summary)}</span>
+  </li>`;
+}
+
+function spatialLabel(percept: ResidentPercept): string {
+  if (percept.spatial.kind === "exact") {
+    return `exact (${percept.spatial.position.x.toFixed(0)}, ${percept.spatial.position.y.toFixed(0)})`;
+  }
+  if (percept.spatial.kind === "directional") {
+    return `${percept.spatial.distanceBand} direction (${percept.spatial.direction.x.toFixed(2)}, ${percept.spatial.direction.y.toFixed(2)})`;
+  }
+  return "no spatial cue";
+}
+
+function escapeHtml(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+scene = new SpcNextResearchScene(renderPanel);
+const game = new Phaser.Game({
+  type: Phaser.AUTO,
+  parent: gameNode,
+  width: 960,
+  height: 640,
+  backgroundColor: "#10161a",
+  scene: [scene],
+  render: { antialias: true, pixelArt: false },
+  scale: {
+    mode: Phaser.Scale.RESIZE,
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+    width: 960,
+    height: 640,
+  },
+});
+
+debugNode.addEventListener("click", (event) => {
+  const target = event.target instanceof Element ? event.target.closest<HTMLElement>("[data-action], [data-resident]") : null;
+  if (!target) return;
+  const residentId = target.dataset.resident;
+  if (residentId) {
+    scene.selectResident(residentId);
+    return;
+  }
+  switch (target.dataset.action) {
+    case "overlay":
+      scene.toggleResearchOverlay();
+      break;
+    case "focus":
+      scene.focusSelected();
+      break;
+    case "player":
+      scene.followPlayer();
+      break;
+    case "overview":
+      scene.overview();
+      break;
+  }
+});
+
+const resizeObserver = new ResizeObserver(() => game.scale.refresh());
+resizeObserver.observe(gameNode);
+game.events.once("destroy", () => resizeObserver.disconnect());
+if (import.meta.hot) import.meta.hot.dispose(() => game.destroy(true));
+
+queueMicrotask(() => {
+  latestFrame = scene.currentFrame();
+  renderPanel(latestFrame);
+});
