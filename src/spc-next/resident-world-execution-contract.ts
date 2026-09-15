@@ -2,6 +2,7 @@ import type { ActorMotionOutcome, Vec2, WorldOccurrence } from "./contracts";
 
 export type ResidentWorldEffect =
   | { kind: "motion"; desiredVelocity: Vec2 }
+  | { kind: "look"; direction: Vec2 }
   | { kind: "speech"; text: string; radius: number; addressedActorIds: readonly string[] };
 
 export interface ResidentWorldExecutionFrame {

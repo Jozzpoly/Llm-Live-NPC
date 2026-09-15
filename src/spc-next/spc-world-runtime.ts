@@ -303,6 +303,8 @@ export class SpcWorldRuntime {
       if (effect.kind === "motion") {
         this.actorState.setDesiredVelocity(residentId, effect.desiredVelocity);
         registered.motionOwnerRunId = validated.runId;
+      } else if (effect.kind === "look") {
+        this.actorState.setFacing(residentId, effect.direction);
       } else {
         occurrences.push(this.emitSpeech(
           residentId,
@@ -723,6 +725,12 @@ function validateResidentWorldExecutionFrame(
     if (effect.kind === "motion") {
       if (!isFiniteVec2(effect.desiredVelocity)) return null;
       effects.push({ kind: "motion", desiredVelocity: { ...effect.desiredVelocity } });
+      continue;
+    }
+
+    if (effect.kind === "look") {
+      if (!isFiniteVec2(effect.direction) || Math.hypot(effect.direction.x, effect.direction.y) <= MOTION_EPSILON) return null;
+      effects.push({ kind: "look", direction: { ...effect.direction } });
       continue;
     }
 

@@ -1,4 +1,4 @@
-import type { ResidentPercept, WorldOccurrence } from "./contracts";
+import type { ResidentPercept, Vec2, WorldOccurrence } from "./contracts";
 import {
   createFiveResidentJanekMissingCrateRecoverySlice,
   type FiveResidentJanekMissingCrateRecoveryStep,
@@ -18,6 +18,7 @@ export type MissingCrateInterruptionStatus = "none" | "active" | "completed";
 export interface MissingCrateInterruptionSnapshot {
   status: MissingCrateInterruptionStatus;
   addressedPerceptId: string | null;
+  addressedDirection: Vec2 | null;
   interruptMatterId: string | null;
   interruptRunId: string | null;
   mainRunId: string | null;
@@ -37,6 +38,7 @@ export type FiveResidentJanekMissingCrateInterruptionStep =
 
 interface ActiveInterruption {
   addressedPerceptId: string;
+  addressedDirection: Vec2 | null;
   interruptMatterId: string;
   interruptRunId: string;
   mainRunId: string;
@@ -56,9 +58,10 @@ interface ActiveInterruption {
  * search matter. The same search run binding survives the bounded response and
  * regains authority after the interrupt matter terminates.
  *
- * The short "Tak?" response is deliberately a local-brain routine, not an LLM
- * claim. Higher cognition may later decide richer social meaning; this specimen
- * qualifies continuity and embodied interruption ownership first.
+ * The short "Tak?" response and turn toward the heard direction are deliberately
+ * local-brain routines, not LLM claims. Facing is derived only from Janek's private
+ * directional hearing cue; this slice never asks World for the speaker's true
+ * position in order to rotate the body.
  */
 export function createFiveResidentJanekMissingCrateInterruptionSlice() {
   const base = createFiveResidentJanekMissingCrateRecoverySlice({
@@ -113,6 +116,10 @@ export function createFiveResidentJanekMissingCrateInterruptionSlice() {
 
     active = {
       addressedPerceptId: percept.id,
+      addressedDirection: percept.spatial.kind === "directional"
+        && Math.hypot(percept.spatial.direction.x, percept.spatial.direction.y) > 1e-9
+        ? { ...percept.spatial.direction }
+        : null,
       interruptMatterId,
       interruptRunId,
       mainRunId: SEARCH_RUN_ID,
@@ -131,17 +138,29 @@ export function createFiveResidentJanekMissingCrateInterruptionSlice() {
     if (!active) throw new Error("no active interruption");
 
     if (!active.responded) {
+      const effects = active.addressedDirection
+        ? [
+            { kind: "motion" as const, desiredVelocity: { x: 0, y: 0 } },
+            { kind: "look" as const, direction: { ...active.addressedDirection } },
+            {
+              kind: "speech" as const,
+              text: INTERRUPTION_RESPONSE,
+              radius: PLAYER_CALL_RADIUS,
+              addressedActorIds: [PLAYER_ID],
+            },
+          ]
+        : [
+            { kind: "motion" as const, desiredVelocity: { x: 0, y: 0 } },
+            {
+              kind: "speech" as const,
+              text: INTERRUPTION_RESPONSE,
+              radius: PLAYER_CALL_RADIUS,
+              addressedActorIds: [PLAYER_ID],
+            },
+          ];
       const applied = base.authority.apply({
         runId: active.interruptRunId,
-        effects: [
-          { kind: "motion", desiredVelocity: { x: 0, y: 0 } },
-          {
-            kind: "speech",
-            text: INTERRUPTION_RESPONSE,
-            radius: PLAYER_CALL_RADIUS,
-            addressedActorIds: [PLAYER_ID],
-          },
-        ],
+        effects,
       });
       if (applied.status !== "applied") throw new Error(`interrupt response execution failed: ${applied.status}`);
       const response = applied.occurrences.find((occurrence) => occurrence.kind === "speech") ?? null;
@@ -238,6 +257,7 @@ function emptySnapshot(): MissingCrateInterruptionSnapshot {
   return {
     status: "none",
     addressedPerceptId: null,
+    addressedDirection: null,
     interruptMatterId: null,
     interruptRunId: null,
     mainRunId: null,
@@ -256,6 +276,7 @@ function snapshotActive(
   return {
     status,
     addressedPerceptId: active.addressedPerceptId,
+    addressedDirection: active.addressedDirection ? { ...active.addressedDirection } : null,
     interruptMatterId: active.interruptMatterId,
     interruptRunId: active.interruptRunId,
     mainRunId: active.mainRunId,

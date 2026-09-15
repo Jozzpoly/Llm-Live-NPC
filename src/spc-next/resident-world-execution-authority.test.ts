@@ -31,18 +31,25 @@ function setup() {
   return { world, kernel, authority };
 }
 
+function mira(world: SpcWorldRuntime) {
+  const actor = world.publicSnapshot().actors.find((candidate) => candidate.id === "resident.mira");
+  if (!actor) throw new Error("Mira missing from World snapshot");
+  return actor;
+}
+
 function miraX(world: SpcWorldRuntime): number {
-  return world.publicSnapshot().actors.find((actor) => actor.id === "resident.mira")!.position.x;
+  return mira(world).position.x;
 }
 
 describe("ResidentWorldExecutionAuthority K5a", () => {
-  it("applies composable motion + speech effects only for an exact live run", () => {
+  it("applies composable motion + look + speech effects only for an exact live run", () => {
     const { world, authority } = setup();
 
     const result = authority.apply({
       runId: "run.work",
       effects: [
-        { kind: "motion", desiredVelocity: { x: 60, y: 0 } },
+        { kind: "motion", desiredVelocity: { x: 0, y: 0 } },
+        { kind: "look", direction: { x: 0, y: -8 } },
         { kind: "speech", text: "pracuję dalej", radius: 200, addressedActorIds: ["resident.janek"] },
       ],
     });
@@ -50,24 +57,34 @@ describe("ResidentWorldExecutionAuthority K5a", () => {
     expect(result).toMatchObject({
       status: "applied",
       runId: "run.work",
-      appliedEffects: ["motion", "speech"],
+      appliedEffects: ["motion", "look", "speech"],
     });
     expect(result.status === "applied" ? result.occurrences : []).toHaveLength(1);
+    expect(mira(world)).toMatchObject({
+      position: { x: 500, y: 500 },
+      velocity: { x: 0, y: 0 },
+      facing: { x: 0, y: -1 },
+    });
 
-    const before = miraX(world);
     world.step();
-    expect(miraX(world)).toBeGreaterThan(before);
+    expect(mira(world)).toMatchObject({
+      position: { x: 500, y: 500 },
+      velocity: { x: 0, y: 0 },
+      facing: { x: 0, y: -1 },
+    });
     expect(world.residentDiagnostics("resident.janek").recentPercepts.some((p) => p.text === "pracuję dalej")).toBe(true);
   });
 
-  it("rejects unknown or semantically stale runs before they can create a World effect", () => {
+  it("rejects unknown or semantically stale runs before they can rotate the body or create another World effect", () => {
     const { world, kernel, authority } = setup();
     const beforeOccurrences = world.diagnostics().recentOccurrences.length;
+    const beforeFacing = mira(world).facing;
 
     expect(authority.apply({
       runId: "run.forged",
-      effects: [{ kind: "speech", text: "forged", radius: 200, addressedActorIds: ["resident.janek"] }],
+      effects: [{ kind: "look", direction: { x: -1, y: 0 } }],
     })).toEqual({ status: "rejected", runId: "run.forged", reason: "run_not_authorized" });
+    expect(mira(world).facing).toEqual(beforeFacing);
 
     const revision = kernel.recordEvidence({
       id: "evidence:changed",
@@ -79,8 +96,12 @@ describe("ResidentWorldExecutionAuthority K5a", () => {
 
     expect(authority.apply({
       runId: "run.work",
-      effects: [{ kind: "speech", text: "stale", radius: 200, addressedActorIds: ["resident.janek"] }],
+      effects: [
+        { kind: "look", direction: { x: -1, y: 0 } },
+        { kind: "speech", text: "stale", radius: 200, addressedActorIds: ["resident.janek"] },
+      ],
     })).toEqual({ status: "rejected", runId: "run.work", reason: "run_not_authorized" });
+    expect(mira(world).facing).toEqual(beforeFacing);
     expect(world.diagnostics().recentOccurrences).toHaveLength(beforeOccurrences);
   });
 
@@ -158,18 +179,22 @@ describe("ResidentWorldExecutionAuthority K5a", () => {
 
   it("validates the whole frame before mutating World so an invalid companion effect cannot cause a partial action", () => {
     const { world, authority } = setup();
-    const before = miraX(world);
+    const before = mira(world);
 
     expect(authority.apply({
       runId: "run.work",
       effects: [
         { kind: "motion", desiredVelocity: { x: 120, y: 0 } },
-        { kind: "speech", text: "bad target", radius: 200, addressedActorIds: ["missing.actor"] },
+        { kind: "look", direction: { x: 0, y: 0 } },
+        { kind: "speech", text: "bad target", radius: 200, addressedActorIds: ["resident.janek"] },
       ],
     })).toEqual({ status: "rejected", runId: "run.work", reason: "invalid_frame" });
 
     world.step(5);
-    expect(miraX(world)).toBe(before);
+    expect(mira(world)).toMatchObject({
+      position: before.position,
+      facing: before.facing,
+    });
     expect(world.diagnostics().recentOccurrences).toHaveLength(0);
   });
 

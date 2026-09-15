@@ -9,10 +9,14 @@ const CRATE_ID = "crate.workshop.01";
 const MAX_TO_SEARCH = 900;
 const MAX_TO_RESOLVED = 1_500;
 
+function actor(slice: ReturnType<typeof createFiveResidentJanekMissingCrateInterruptionSlice>) {
+  const result = slice.world.publicSnapshot().actors.find((candidate) => candidate.id === JANEK_ID);
+  if (!result) throw new Error("Janek missing from interruption specimen");
+  return result;
+}
+
 function actorPosition(slice: ReturnType<typeof createFiveResidentJanekMissingCrateInterruptionSlice>) {
-  const actor = slice.world.publicSnapshot().actors.find((candidate) => candidate.id === JANEK_ID);
-  if (!actor) throw new Error("Janek missing from interruption specimen");
-  return actor.position;
+  return actor(slice).position;
 }
 
 function advanceToSearch(slice: ReturnType<typeof createFiveResidentJanekMissingCrateInterruptionSlice>) {
@@ -38,7 +42,7 @@ function advanceToSearch(slice: ReturnType<typeof createFiveResidentJanekMissing
 }
 
 describe("five-resident missing-crate player interruption and return", () => {
-  it("suspends the exact search run from a legal addressed percept, answers in World, then resumes the same run and finishes its own matter", () => {
+  it("suspends the exact search run from a legal addressed percept, turns toward its private hearing cue, answers in World, then resumes the same run and finishes its own matter", () => {
     const slice = createFiveResidentJanekMissingCrateInterruptionSlice();
     const bindingBefore = advanceToSearch(slice);
 
@@ -48,6 +52,8 @@ describe("five-resident missing-crate player interruption and return", () => {
     const afterSearchMotion = actorPosition(slice);
     expect(afterSearchMotion).not.toEqual(beforeSearchMotion);
     expect(slice.authority.motionOwner()).toBe(SEARCH_RUN_ID);
+    const searchFacingBeforeCall = actor(slice).facing;
+    expect(searchFacingBeforeCall.x).toBeGreaterThan(0.9);
 
     const call = slice.playerAddressJanek("Janek, chwila!");
     expect(call).toMatchObject({
@@ -65,6 +71,7 @@ describe("five-resident missing-crate player interruption and return", () => {
     expect(interrupt).toMatchObject({
       status: "active",
       mainRunId: SEARCH_RUN_ID,
+      addressedDirection: { x: -1, y: 0 },
       responseTick: null,
       resumedAtTick: null,
     });
@@ -83,6 +90,7 @@ describe("five-resident missing-crate player interruption and return", () => {
       actorId: PLAYER_ID,
       text: "Janek, chwila!",
       addressed: true,
+      spatial: { kind: "directional", direction: { x: -1, y: 0 }, distanceBand: "far" },
     }));
     expect(slice.kernel.matter(MAIN_MATTER_ID)).toMatchObject({
       status: "suspended",
@@ -105,6 +113,11 @@ describe("five-resident missing-crate player interruption and return", () => {
     expect(responded.status).toBe("interruption_responded");
     if (responded.status !== "interruption_responded") throw new Error(`unexpected response boundary: ${responded.status}`);
     expect(actorPosition(slice)).toEqual(heldPosition);
+    expect(actor(slice)).toMatchObject({
+      velocity: { x: 0, y: 0 },
+      facing: { x: -1, y: 0 },
+    });
+    expect(responded.interruption.addressedDirection).toEqual({ x: -1, y: 0 });
     expect(responded.interruption.responseTick).not.toBeNull();
     expect(responded.interruption.responseOccurrenceId).not.toBeNull();
 
@@ -124,6 +137,7 @@ describe("five-resident missing-crate player interruption and return", () => {
     while (!resumed && holdSteps < 80) {
       const step = slice.advanceOneWorldTick();
       expect(actorPosition(slice)).toEqual(heldPosition);
+      expect(actor(slice).facing).toEqual({ x: -1, y: 0 });
       expect(slice.kernel.runBinding(SEARCH_RUN_ID)).toEqual(bindingBefore);
       if (step.status === "interruption_resumed") {
         resumed = true;
@@ -147,10 +161,12 @@ describe("five-resident missing-crate player interruption and return", () => {
     });
     expect(slice.kernel.runBinding(SEARCH_RUN_ID)).toEqual(bindingBefore);
     expect(slice.kernel.canRunMutateWorld(SEARCH_RUN_ID)).toBe(true);
+    expect(actor(slice).facing).toEqual({ x: -1, y: 0 });
 
     const resumePosition = actorPosition(slice);
     slice.advanceOneWorldTick();
     expect(actorPosition(slice)).not.toEqual(resumePosition);
+    expect(actor(slice).facing.x).toBeGreaterThan(0.9);
     expect(slice.authority.motionOwner()).toBe(SEARCH_RUN_ID);
 
     let guard = 0;
@@ -174,9 +190,11 @@ describe("five-resident missing-crate player interruption and return", () => {
     });
   });
 
-  it("does not interrupt the search merely because nearby player speech is audible but not addressed to Janek", () => {
+  it("does not interrupt or redirect attention merely because nearby player speech is audible but not addressed to Janek", () => {
     const slice = createFiveResidentJanekMissingCrateInterruptionSlice();
     const bindingBefore = advanceToSearch(slice);
+    slice.advanceOneWorldTick();
+    const facingBefore = actor(slice).facing;
 
     const overheard = slice.world.speak(PLAYER_ID, "Mówię sobie pod nosem.", 420, []);
     expect(overheard.addressedActorIds).toEqual([]);
@@ -200,5 +218,6 @@ describe("five-resident missing-crate player interruption and return", () => {
     });
     expect(slice.kernel.runBinding(SEARCH_RUN_ID)).toEqual(bindingBefore);
     expect(slice.kernel.canRunMutateWorld(SEARCH_RUN_ID)).toBe(true);
+    expect(actor(slice).facing).toEqual(facingBefore);
   });
 });
