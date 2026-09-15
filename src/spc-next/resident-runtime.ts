@@ -22,6 +22,10 @@ import {
   type CognitionScheduler,
 } from "./cognition-scheduler";
 import { ResidentMind } from "./resident-mind";
+import {
+  resolveResidentPerceptIdentity,
+  type ResidentPerceptIngress,
+} from "./resident-percept-identity";
 
 const ARRIVAL_DISTANCE = 18;
 const COMMUNICATION_DISTANCE = 80;
@@ -49,6 +53,7 @@ export class ResidentRuntime {
   private readonly trace: ResidentTraceEvent[] = [];
   private readonly lastKnownActorContacts = new Map<string, ExactActorContact>();
   private readonly lastHeardActorCues = new Map<string, HeardActorCue>();
+  private readonly recognizedActorIds = new Set<string>();
   private readonly mind: ResidentMind;
   private cognitionSequence = 0;
   private routeWaypointIndex = 0;
@@ -110,7 +115,55 @@ export class ResidentRuntime {
     this.scheduler.scheduleQuietReviewAfter(tick, delayTicks);
   }
 
+  /**
+   * World ingress keeps physical source identity separate until this resident's
+   * private recognition state permits it. Raw World actor IDs never enter the
+   * ordinary percept/memory/cognition path merely because World knows them.
+   */
+  ingestWorldPercepts(
+    ingressPercepts: readonly ResidentPerceptIngress[],
+    observerPosition: Vec2 | null = null,
+  ): void {
+    const safePercepts: ResidentPercept[] = [];
+    for (const ingress of ingressPercepts) {
+      const percept = resolveResidentPerceptIdentity(
+        ingress,
+        (actorId) => this.recognizedActorIds.has(actorId),
+      );
+      if (percept.modality === "sight" && percept.actorId) {
+        this.recognizedActorIds.add(percept.actorId);
+      }
+      safePercepts.push(percept);
+    }
+    this.ingestSafePercepts(safePercepts, observerPosition);
+  }
+
+  /**
+   * Compatibility ingress for the current World scaffold. Existing World code
+   * still supplies physical source ids in ResidentPercept.actorId. Treat that
+   * field only as World provenance, strip it immediately, and resolve private
+   * recognition before any resident memory/local-contact/cognition state sees it.
+   *
+   * New World code should prefer ingestWorldPercepts() and never pre-populate
+   * resident identity on the percept itself.
+   */
   ingestPercepts(percepts: readonly ResidentPercept[], observerPosition: Vec2 | null = null): void {
+    const ingressPercepts: ResidentPerceptIngress[] = percepts.map((raw) => {
+      const sourceActorId = raw.actorId;
+      const percept = structuredClone(raw);
+      percept.actorId = null;
+      if (isActorSightPhenomenon(percept.phenomenon) && sourceActorId !== null) {
+        percept.subjectId = null;
+      }
+      return { percept, sourceActorId };
+    });
+    this.ingestWorldPercepts(ingressPercepts, observerPosition);
+  }
+
+  private ingestSafePercepts(
+    percepts: readonly ResidentPercept[],
+    observerPosition: Vec2 | null = null,
+  ): void {
     this.mind.observe(percepts);
     for (const percept of percepts) {
       if (percept.phenomenon === "speech" && percept.modality === "hearing" && percept.addressed) {
@@ -487,4 +540,10 @@ export class ResidentRuntime {
     this.trace.push(event);
     while (this.trace.length > this.profile.traceLimit) this.trace.shift();
   }
+}
+
+function isActorSightPhenomenon(phenomenon: ResidentPercept["phenomenon"]): boolean {
+  return phenomenon === "actor_sight_enter"
+    || phenomenon === "actor_sight_update"
+    || phenomenon === "actor_sight_exit";
 }
