@@ -8,6 +8,7 @@ import {
 import { ResidentSemanticProviderMembrane } from "./resident-semantic-provider-membrane";
 import {
   createFiveResidentJanekMissingCrateStagedSlice,
+  type FiveResidentJanekMissingCrateOptions,
   type FiveResidentJanekMissingCrateStep,
 } from "./five-resident-missing-crate-slice";
 
@@ -50,8 +51,10 @@ export type FiveResidentJanekMissingCrateRecoveryStep =
  * action deterministically. This is NOT LIVE_PROVIDER evidence and must never be
  * promoted as proof that the external LLM/provider path is connected.
  */
-export function createFiveResidentJanekMissingCrateRecoverySlice() {
-  const base = createFiveResidentJanekMissingCrateStagedSlice();
+export function createFiveResidentJanekMissingCrateRecoverySlice(
+  options: FiveResidentJanekMissingCrateOptions = {},
+) {
+  const base = createFiveResidentJanekMissingCrateStagedSlice(options);
   const provider = new ResidentSemanticProviderMembrane();
   let phase: MissingCrateRecoveryPhase = "awaiting_hidden_relocation";
   let search: ResidentMaterialSearchExecutor | null = null;
