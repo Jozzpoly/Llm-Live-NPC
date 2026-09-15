@@ -42,10 +42,11 @@ describe("SPC perception continuity adversarial gate", () => {
 
     for (let cycle = 0; cycle < 12; cycle += 1) {
       world.setActorVelocity("player.jozz", { x: 120, y: 0 });
-      world.step(); // 599 -> 601; still a continuing contact, not a semantic disappearance.
+      world.step(); // sense 599, integrate to 601.
       world.setActorVelocity("player.jozz", { x: -120, y: 0 });
-      world.step(); // observe 601, then return to 599.
-      world.step(); // observe 599.
+      world.step(); // sense 601, integrate back to 599.
+      world.setActorVelocity("player.jozz", { x: 0, y: 0 });
+      world.step(); // explicitly sense the returned 599 without cumulative drift.
     }
 
     const duringJitter = actorSight(world, "player.jozz");
@@ -54,7 +55,7 @@ describe("SPC perception continuity adversarial gate", () => {
     expect(privateContext(resident, world.tick).knownActors.find((a) => a.id === "player.jozz")?.currentlyVisible).toBe(true);
 
     world.setActorVelocity("player.jozz", { x: 120, y: 0 });
-    world.step(12); // move decisively beyond any small continuity margin.
+    world.step(12); // 24 units of real departure: well beyond the 12-unit release margin.
     const afterDeparture = actorSight(world, "player.jozz");
     expect(afterDeparture.filter((p) => p.phenomenon === "actor_sight_exit")).toHaveLength(1);
     expect(privateContext(resident, world.tick).knownActors.find((a) => a.id === "player.jozz")?.currentlyVisible).toBe(false);
