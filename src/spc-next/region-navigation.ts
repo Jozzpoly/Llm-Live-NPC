@@ -42,13 +42,16 @@ export class RegionNavigationGraph {
     return node ? { ...node.anchor } : null;
   }
 
-  route(from: string, to: string): RegionRoute | null {
+  route(from: string, to: string, allowedRegionIds?: ReadonlySet<string>): RegionRoute | null {
     if (!this.nodes.has(from) || !this.nodes.has(to)) return null;
+    if (allowedRegionIds && (!allowedRegionIds.has(from) || !allowedRegionIds.has(to))) return null;
     if (from === to) return { regionIds: [from], waypoints: [], totalCost: 0 };
 
     const distance = new Map<string, number>([[from, 0]]);
     const previous = new Map<string, RegionNavEdge>();
-    const open = new Set<string>(this.nodes.keys());
+    const open = new Set<string>(
+      [...this.nodes.keys()].filter((id) => !allowedRegionIds || allowedRegionIds.has(id)),
+    );
 
     while (open.size > 0) {
       let current: string | null = null;
