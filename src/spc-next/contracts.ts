@@ -113,6 +113,8 @@ export interface ResidentPercept {
   summary: string;
   text: string | null;
   addressed: boolean;
+  /** Present only for grounded proprioceptive/self evidence emitted from World motion resolution. */
+  selfMotionOutcome?: ActorMotionOutcome;
 }
 
 export type ActivityKind =
