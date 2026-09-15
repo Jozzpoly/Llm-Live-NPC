@@ -62,6 +62,7 @@ export class ResidentMind {
   private readonly knownActors = new Map<string, KnownActorRecord>();
   private readonly knownRegions = new Map<string, KnownRegionRecord>();
   private readonly perceptEvidence = new Map<string, ResidentPercept>();
+  private readonly semanticEvidencePins = new Map<string, ResidentPercept>();
   private readonly limits: Required<ResidentMindLimits>;
 
   constructor(
@@ -146,7 +147,7 @@ export class ResidentMind {
     ], CONTEXT_REQUIRED_EVIDENCE_LIMIT);
     const selectedPercepts = new Map<string, ResidentPercept>();
     for (const evidenceId of requiredEvidenceIds) {
-      const percept = this.perceptEvidence.get(evidenceId);
+      const percept = this.perceptEvidence.get(evidenceId) ?? this.semanticEvidencePins.get(evidenceId);
       if (percept) selectedPercepts.set(percept.id, structuredClone(percept));
     }
 
@@ -198,7 +199,25 @@ export class ResidentMind {
     };
   }
 
-  applySemanticUpdates(proposal: ResidentCognitionProposal, tick: number): void {
+  applySemanticUpdates(
+    proposal: ResidentCognitionProposal,
+    tick: number,
+    supportingPercepts: readonly ResidentPercept[] = [],
+  ): void {
+    const availableEvidence = new Map<string, ResidentPercept>();
+    for (const [id, percept] of this.semanticEvidencePins) availableEvidence.set(id, structuredClone(percept));
+    for (const [id, percept] of this.perceptEvidence) availableEvidence.set(id, structuredClone(percept));
+    for (const percept of supportingPercepts) availableEvidence.set(percept.id, structuredClone(percept));
+
+    for (const evidenceId of [
+      ...proposal.beliefs.flatMap((belief) => belief.evidenceIds),
+      ...proposal.concerns.flatMap((concern) => concern.evidenceIds),
+    ]) {
+      if (!availableEvidence.has(evidenceId)) {
+        throw new Error(`semantic update references unavailable resident percept evidence: ${evidenceId}`);
+      }
+    }
+
     for (const update of proposal.beliefs) {
       this.beliefs.set(update.id, {
         id: update.id,
@@ -244,6 +263,17 @@ export class ResidentMind {
         if (!candidate) break;
         this.concerns.delete(candidate.id);
       }
+    }
+
+    const retainedEvidenceIds = new Set<string>([
+      ...[...this.beliefs.values()].flatMap((belief) => belief.evidenceIds),
+      ...[...this.concerns.values()].flatMap((concern) => concern.evidenceIds),
+    ]);
+    this.semanticEvidencePins.clear();
+    for (const evidenceId of retainedEvidenceIds) {
+      const percept = availableEvidence.get(evidenceId);
+      if (!percept) throw new Error(`retained semantic state lost resident percept evidence: ${evidenceId}`);
+      this.semanticEvidencePins.set(evidenceId, structuredClone(percept));
     }
   }
 
