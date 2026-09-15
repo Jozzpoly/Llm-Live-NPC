@@ -62,12 +62,14 @@ export class SpcCognitionHost {
     const requests: SpcCognitionRequest[] = [];
     for (const dispatch of dispatches) {
       const owner = this.owners.get(dispatch.residentId);
-      if (!owner) {
+      const resident = this.residents.get(dispatch.residentId);
+      if (!owner || !resident) {
         this.coordinator.settle(dispatch.id);
         continue;
       }
       const residentAttempt = owner.prepare(dispatch.batch);
       if (!residentAttempt) {
+        resident.requeueCognitionBatch(dispatch.batch);
         this.coordinator.settle(dispatch.id);
         continue;
       }
@@ -89,17 +91,30 @@ export class SpcCognitionHost {
     this.activeRequests.delete(request);
     this.coordinator.settle(local.dispatch.id);
 
+    const resident = this.residents.get(request.residentId);
     const actor = this.world.publicSnapshot().actors.find((candidate) => candidate.id === request.residentId);
-    if (!actor) {
+    if (!resident || !actor) {
       local.owner.abandon(local.residentAttempt);
       return { status: "rejected", reason: "grounding_rejected", detail: "resident_actor_missing" };
     }
     const region = this.world.regionAt(actor.position);
-    return local.owner.settle(local.residentAttempt, rawProposal, {
+    const result = local.owner.settle(local.residentAttempt, rawProposal, {
       tick: this.world.tick,
       currentPosition: actor.position,
       currentRegionId: region?.id ?? null,
     });
+
+    if (result.status === "applied") {
+      if (result.activityTransition) {
+        this.world.setResidentActivity(request.residentId, result.activityTransition);
+      }
+      resident.scheduleAdaptiveReview(
+        this.world.tick,
+        result.proposal.reviewAfterSeconds,
+        this.world.options.fixedDeltaSeconds,
+      );
+    }
+    return result;
   }
 
   abandon(request: SpcCognitionRequest): boolean {
