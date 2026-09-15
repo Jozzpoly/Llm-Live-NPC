@@ -29,7 +29,7 @@ describe("SPC authored World anchor authority", () => {
     expect(() => new SpcWorldRuntime(options([{ ...anchor(), position: { x: 990, y: 500 }, radius: 40 }]))).toThrow(/outside world bounds/);
   });
 
-  it("snapshots authored options and never exposes mutable anchor truth", () => {
+  it("snapshots all authored options and exposes only defensive compatibility reads", () => {
     const source = anchor();
     const authored = [source];
     const worldOptions = options(authored);
@@ -37,11 +37,23 @@ describe("SPC authored World anchor authority", () => {
 
     source.position.x = 700;
     authored.push({ ...anchor(), id: "anchor.late", position: { x: 700, y: 500 } });
+    worldOptions.bounds.maxX = 800;
+    worldOptions.regions[0]!.label = "Mutated Plain";
+
     expect(world.anchor("anchor.workbench")?.position).toEqual({ x: 400, y: 500 });
     expect(world.anchor("anchor.late")).toBeNull();
+    expect(world.regionAt({ x: 900, y: 500 })?.label).toBe("Plain");
 
-    const exposed = world.anchors();
-    exposed[0]!.position.x = 999;
+    const exposedAnchors = world.anchors();
+    exposedAnchors[0]!.position.x = 999;
+    expect(world.anchor("anchor.workbench")?.position.x).toBe(400);
+
+    const exposedOptions = world.options;
+    exposedOptions.bounds.maxX = 200;
+    exposedOptions.regions[0]!.label = "Tampered read";
+    exposedOptions.anchors?.[0] && (exposedOptions.anchors[0].position.x = 999);
+    expect(world.options.bounds.maxX).toBe(1_000);
+    expect(world.regions()[0]?.label).toBe("Plain");
     expect(world.anchor("anchor.workbench")?.position.x).toBe(400);
   });
 

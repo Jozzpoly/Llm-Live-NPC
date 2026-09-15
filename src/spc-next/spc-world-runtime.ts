@@ -62,7 +62,7 @@ const HEARING_DIRECTION_SECTORS = 8;
 const MOTION_EPSILON = 1e-9;
 
 export class SpcWorldRuntime {
-  readonly options: SpcWorldOptions;
+  private readonly authoredOptions: SpcWorldOptions;
   private tickValue = 0;
   private occurrenceSequence = 0;
   private perceptSequence = 0;
@@ -76,21 +76,30 @@ export class SpcWorldRuntime {
 
   constructor(options: SpcWorldOptions) {
     validateWorldOptions(options);
-    this.options = structuredClone(options);
-    this.actorState = new ActorWorldState(this.options.bounds, this.options.chunkSize);
-    this.sightGeometry = new SightGeometry(this.options.sightBlockers ?? []);
+    this.authoredOptions = structuredClone(options);
+    this.actorState = new ActorWorldState(this.authoredOptions.bounds, this.authoredOptions.chunkSize);
+    this.sightGeometry = new SightGeometry(this.authoredOptions.sightBlockers ?? []);
   }
 
   get tick(): number {
     return this.tickValue;
   }
 
+  /** Compatibility read only: every access returns a defensive authored-world snapshot. */
+  get options(): SpcWorldOptions {
+    return structuredClone(this.authoredOptions);
+  }
+
+  regions(): WorldRegion[] {
+    return structuredClone(this.authoredOptions.regions);
+  }
+
   anchors(): WorldAnchor[] {
-    return structuredClone(this.options.anchors ?? []).sort((a, b) => a.id.localeCompare(b.id));
+    return structuredClone(this.authoredOptions.anchors ?? []).sort((a, b) => a.id.localeCompare(b.id));
   }
 
   anchor(id: string): WorldAnchor | null {
-    const anchor = (this.options.anchors ?? []).find((candidate) => candidate.id === id);
+    const anchor = (this.authoredOptions.anchors ?? []).find((candidate) => candidate.id === id);
     return anchor ? structuredClone(anchor) : null;
   }
 
@@ -134,7 +143,7 @@ export class SpcWorldRuntime {
     this.residents.set(id, {
       runtime,
       brainPhase,
-      sight: new SightContinuityTracker(this.options.fixedDeltaSeconds),
+      sight: new SightContinuityTracker(this.authoredOptions.fixedDeltaSeconds),
     });
     const initialRegion = this.regionAt(actor.position);
     if (initialRegion) runtime.enterRegion(initialRegion, this.tickValue, true);
@@ -144,7 +153,7 @@ export class SpcWorldRuntime {
   familiarizeResidentWithRegions(residentId: string, regionIds: readonly string[]): void {
     const resident = this.requireResident(residentId).runtime;
     for (const regionId of [...new Set(regionIds)]) {
-      const region = this.options.regions.find((candidate) => candidate.id === regionId);
+      const region = this.authoredOptions.regions.find((candidate) => candidate.id === regionId);
       if (!region) throw new Error(`unknown region: ${regionId}`);
       resident.familiarizeRegion(region, this.tickValue);
     }
@@ -152,7 +161,7 @@ export class SpcWorldRuntime {
 
   setResidentActivity(residentId: string, activity: ResidentActivity): void {
     const resident = this.requireResident(residentId);
-    validateResidentActivity(activity, this.options.bounds, (id) => this.actorState.has(id));
+    validateResidentActivity(activity, this.authoredOptions.bounds, (id) => this.actorState.has(id));
     resident.runtime.setActivity(activity, this.tickValue);
     this.actorState.setDesiredVelocity(residentId, { x: 0, y: 0 });
     this.activeMotionBlockages.delete(residentId);
@@ -249,7 +258,7 @@ export class SpcWorldRuntime {
   }
 
   regionAt(position: Vec2): WorldRegion | null {
-    return resolveRegionAt(this.options, position);
+    return resolveRegionAt(this.authoredOptions, position);
   }
 
   private stepOnce(): void {
@@ -272,7 +281,7 @@ export class SpcWorldRuntime {
       this.applyResidentCommand(residentId, command);
     }
 
-    const motion = this.actorState.integrate(this.options.fixedDeltaSeconds);
+    const motion = this.actorState.integrate(this.authoredOptions.fixedDeltaSeconds);
     this.lastMotionOutcomes = structuredClone(motion);
     for (const outcome of motion) {
       const resident = this.residents.get(outcome.actorId);
