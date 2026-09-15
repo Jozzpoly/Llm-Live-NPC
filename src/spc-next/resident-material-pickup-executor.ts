@@ -1,5 +1,6 @@
 import { distanceSquared, normalizedDirection, type Vec2 } from "./contracts";
 import type { MaterialActionResult } from "./material-world-state";
+import type { ResidentMaterialKnowledge } from "./resident-material-knowledge";
 import { ResidentWorldExecutionAuthority } from "./resident-world-execution-authority";
 import { SpcWorldRuntime } from "./spc-world-runtime";
 
@@ -15,13 +16,10 @@ const DEFAULT_APPROACH_SPEED = 90;
 /**
  * First recovered local-brain material executor.
  *
- * It deliberately owns no resident meaning. The semantic layer has already bound
- * an exact run to a matter; this executor only turns that run into embodied local
- * work: approach the current World position of one object, stop, attempt pickup,
- * and report the factual World result.
- *
- * It never receives caller-supplied actor position/LOS and never mutates material
- * truth directly. Those remain World authority.
+ * It deliberately owns no resident meaning and no hidden World object location.
+ * The semantic layer binds the run; resident-private material knowledge supplies
+ * the last actually observed target position; World alone resolves whether pickup
+ * is still possible at action time.
  */
 export class ResidentMaterialPickupExecutor {
   private terminal: ResidentMaterialPickupStep | null = null;
@@ -29,6 +27,7 @@ export class ResidentMaterialPickupExecutor {
   constructor(
     readonly runId: string,
     readonly objectId: string,
+    private readonly knowledge: ResidentMaterialKnowledge,
     private readonly authority: ResidentWorldExecutionAuthority,
     private readonly world: SpcWorldRuntime,
     private readonly approachSpeed = DEFAULT_APPROACH_SPEED,
@@ -46,28 +45,12 @@ export class ResidentMaterialPickupExecutor {
     const actor = this.world.publicSnapshot().actors.find((candidate) => candidate.id === this.authority.residentId);
     if (!actor) return this.finishBlocked("resident actor missing", null);
 
-    const object = this.world.materialObject(this.objectId);
-    if (!object) return this.finishBlocked("material object missing", null);
+    const targetPosition = this.knowledge.lastKnownPosition(this.objectId);
+    if (!targetPosition) return this.finishBlocked("material object has no acquired position evidence", null);
 
-    if (object.location.kind === "held") {
-      if (object.location.actorId === this.authority.residentId) {
-        const outcome = this.world.diagnostics().recentMaterialActions
-          .slice()
-          .reverse()
-          .find((entry) => entry.actorId === this.authority.residentId
-            && entry.objectId === this.objectId
-            && entry.status === "succeeded"
-            && entry.code === "picked_up") ?? null;
-        if (!outcome) return this.finishBlocked("object already held without this executor's factual pickup outcome", null);
-        this.terminal = { status: "succeeded", runId: this.runId, materialOutcome: structuredClone(outcome) };
-        return structuredClone(this.terminal);
-      }
-      return this.finishBlocked(`material object held by ${object.location.actorId}`, null);
-    }
-
-    const distanceSq = distanceSquared(actor.position, object.location.position);
+    const distanceSq = distanceSquared(actor.position, targetPosition);
     if (distanceSq > PICKUP_ATTEMPT_DISTANCE ** 2) {
-      const direction = normalizedDirection(actor.position, object.location.position);
+      const direction = normalizedDirection(actor.position, targetPosition);
       const speed = Math.min(actor.maxSpeed, this.approachSpeed);
       const applied = this.authority.apply({
         runId: this.runId,
@@ -104,8 +87,8 @@ export class ResidentMaterialPickupExecutor {
       return structuredClone(this.terminal);
     }
 
-    if (outcome.code === "out_of_range") {
-      return { status: "running", runId: this.runId, phase: "pickup" };
+    if (outcome.code === "out_of_range" || outcome.code === "object_unavailable") {
+      return this.finishBlocked("material object is not available at the resident's last-known position", outcome);
     }
 
     return this.finishBlocked(`material pickup ${outcome.code}`, outcome);
