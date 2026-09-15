@@ -1,0 +1,115 @@
+name: Browser Evidence
+
+on:
+  pull_request:
+    paths:
+      - "src/**"
+      - "worker/**"
+      - "scripts/spc-browser-evidence.mjs"
+      - "index.html"
+      - "package.json"
+      - "package-lock.json"
+      - "vite.config.ts"
+      - ".github/workflows/browser-evidence.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  spc-browser-evidence:
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Use Node 22
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Build browser candidate
+        run: npm run build
+
+      - name: Locate runner Chrome
+        shell: bash
+        run: |
+          set -euo pipefail
+          CHROME_PATH="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)"
+          test -n "$CHROME_PATH"
+          echo "CHROME_PATH=$CHROME_PATH" >> "$GITHUB_ENV"
+          "$CHROME_PATH" --version
+
+      - name: Start Vite preview
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm exec -- vite preview --host 127.0.0.1 --port 4173 > /tmp/spc-vite.log 2>&1 &
+          echo $! > /tmp/spc-vite.pid
+          for attempt in $(seq 1 80); do
+            if curl --fail --silent --show-error http://127.0.0.1:4173/?spc=1 > /dev/null; then
+              exit 0
+            fi
+            sleep 0.25
+          done
+          cat /tmp/spc-vite.log
+          exit 1
+
+      - name: Collect SPC browser evidence
+        env:
+          EVIDENCE_BASE_URL: http://127.0.0.1:4173
+          EVIDENCE_OUTPUT_DIR: evidence/browser
+          SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: node scripts/spc-browser-evidence.mjs
+
+      - name: Print evidence summary
+        if: always()
+        shell: bash
+        run: |
+          echo "--- Vite preview ---"
+          cat /tmp/spc-vite.log || true
+          echo "--- Evidence ---"
+          if [ -f evidence/browser/evidence.json ]; then
+            node -e 'const r=require("./evidence/browser/evidence.json"); console.log(JSON.stringify({sourceSha:r.sourceSha,outcome:r.outcome,chrome:r.chrome,assertions:r.assertions,checkpoints:r.checkpoints?.map(c=>({name:c.name,tick:c.snapshot?.tick,selected:c.snapshot?.selectedName,worldOnly:c.worldOnly,bytes:c.bytes})),runtimeExceptions:r.runtimeExceptions?.length,logErrors:r.logErrors?.length,networkFailures:r.networkFailures?.length,httpErrors:r.httpErrors?.length},null,2))'
+          else
+            cat evidence/browser/harness-error.json || true
+          fi
+
+      - name: Upload browser evidence artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: spc-browser-evidence-${{ github.event.pull_request.head.sha || github.sha }}
+          path: evidence/browser
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Publish latest evidence snapshot
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          PUBLISH_DIR="$(mktemp -d)"
+          cp -R evidence/browser/. "$PUBLISH_DIR/"
+          printf '%s\n' "$SOURCE_SHA" > "$PUBLISH_DIR/source-sha.txt"
+          touch "$PUBLISH_DIR/.nojekyll"
+          cd "$PUBLISH_DIR"
+          git init
+          git checkout -b evidence-snapshot
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "SPC browser evidence for $SOURCE_SHA"
+          git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git push --force origin HEAD:refs/heads/evidence/spc-browser-latest
