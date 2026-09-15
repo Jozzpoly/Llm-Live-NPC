@@ -1,4 +1,4 @@
-import type { ResidentActivity, WorldAnchor, WorldRegion } from "./contracts";
+import type { ResidentActivity, Vec2, WorldAnchor, WorldRegion } from "./contracts";
 import type { MaterialObjectState } from "./material-world-state";
 import { SpcWorldRuntime } from "./spc-world-runtime";
 
@@ -55,7 +55,12 @@ export const FIVE_RESIDENT_FAMILIARITY: Readonly<Record<string, readonly string[
   "resident.nela": ["ruins", "old-road", "crossroads", "deep-wilds"],
 };
 
-export function createFiveResidentRegionWorld(): SpcWorldRuntime {
+export interface FiveResidentRegionWorldOptions {
+  /** Authored participant start for bounded research specimens. Default preserves the baseline hearth start. */
+  playerStart?: Vec2;
+}
+
+export function createFiveResidentRegionWorld(options: FiveResidentRegionWorldOptions = {}): SpcWorldRuntime {
   const world = new SpcWorldRuntime({
     bounds: { minX: 0, minY: 0, maxX: 8_192, maxY: 8_192 },
     regions: FIVE_RESIDENT_REGIONS,
@@ -64,7 +69,7 @@ export function createFiveResidentRegionWorld(): SpcWorldRuntime {
     fixedDeltaSeconds: 1 / 60,
   });
 
-  world.addPlayer("player.jozz", { x: 620, y: 620 }, { maxSpeed: 150 });
+  world.addPlayer("player.jozz", options.playerStart ?? { x: 620, y: 620 }, { maxSpeed: 150 });
   world.addResident("resident.mira", "Mira", { x: 760, y: 650 });
   world.addResident("resident.janek", "Janek", { x: 1_900, y: 720 });
   world.addResident("resident.ida", "Ida", { x: 3_050, y: 880 });
