@@ -36,7 +36,9 @@ describe("epistemic non-interference", () => {
       expect(nearerHiddenTruth.materialKnowledge.snapshot()).toEqual(fartherHiddenTruth.materialKnowledge.snapshot());
       expect(nearerHiddenTruth.kernel.matter(MATTER_ID)).toEqual(fartherHiddenTruth.kernel.matter(MATTER_ID));
 
-      if (stepA.status === "running" && stepA.local.phase === "inspect") sawInspect = true;
+      if (stepA.status === "running" && stepA.local.status === "running" && stepA.local.phase === "inspect") {
+        sawInspect = true;
+      }
       if (stepA.status !== "running" || stepB.status !== "running") break;
 
       nearerHiddenTruth.world.step();
