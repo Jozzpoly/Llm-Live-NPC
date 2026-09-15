@@ -65,6 +65,27 @@ describe("SPC actor physical state authority", () => {
     expect(actors.require("actor.a").velocity.y).toBeCloseTo(40, 8);
   });
 
+  it("stops current kinematic physical velocity immediately when controller intent becomes zero", () => {
+    const actors = state();
+    actors.add({
+      id: "actor.a",
+      kind: "resident",
+      position: { x: 100, y: 100 },
+      velocity: { x: 0, y: 0 },
+      hearingRadius: 100,
+      sightRadius: 100,
+      maxSpeed: 100,
+    });
+
+    actors.setDesiredVelocity("actor.a", { x: 80, y: 0 });
+    actors.integrate(1);
+    expect(actors.require("actor.a").velocity.x).toBeCloseTo(80, 8);
+
+    actors.setDesiredVelocity("actor.a", { x: 0, y: 0 });
+    expect(actors.desiredVelocity("actor.a")).toEqual({ x: 0, y: 0 });
+    expect(actors.require("actor.a").velocity).toEqual({ x: 0, y: 0 });
+  });
+
   it("reports fully blocked desired motion without lying about physical velocity", () => {
     const actors = state();
     actors.add({

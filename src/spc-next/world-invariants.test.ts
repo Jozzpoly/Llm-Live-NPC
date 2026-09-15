@@ -116,7 +116,9 @@ describe("SPC World invariants", () => {
     runtime.setActorMotionIntent("player.good", { x: 100, y: 0 });
     expect(runtime.publicSnapshot().actors.find((actor) => actor.id === "player.good")?.velocity).toEqual({ x: 0, y: 0 });
     runtime.step();
-    expect(runtime.publicSnapshot().actors.find((actor) => actor.id === "player.good")?.velocity).toEqual({ x: 50, y: 0 });
+    const physical = runtime.publicSnapshot().actors.find((actor) => actor.id === "player.good")!.velocity;
+    expect(physical.x).toBeCloseTo(50, 8);
+    expect(physical.y).toBeCloseTo(0, 8);
   });
 
   it("rejects malformed World occurrences at the authority boundary", () => {

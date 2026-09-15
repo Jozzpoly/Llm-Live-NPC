@@ -65,7 +65,15 @@ export class ActorWorldState {
   setDesiredVelocity(id: string, desiredVelocity: Vec2): void {
     const actor = this.actors.get(id);
     if (!actor) throw new Error(`unknown actor: ${id}`);
-    this.desiredVelocities.set(id, limitVelocity(desiredVelocity, actor.maxSpeed));
+    const limited = limitVelocity(desiredVelocity, actor.maxSpeed);
+    this.desiredVelocities.set(id, limited);
+
+    // SPC Next actors are currently kinematic, not inertial bodies. A controller-level stop is
+    // therefore an immediate physical stop. Non-zero intent still requires World integration
+    // before it may become public physical velocity.
+    if (Math.hypot(limited.x, limited.y) <= MOTION_EPSILON) {
+      actor.velocity = { x: 0, y: 0 };
+    }
   }
 
   desiredVelocity(id: string): Vec2 {

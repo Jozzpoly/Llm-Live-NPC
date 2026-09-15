@@ -42,6 +42,21 @@ describe("SPC World motion intent -> physical outcome seam", () => {
     expect(trace.some((event) => event.kind === "cognition_reason" && event.summary.includes("physical motion blocked"))).toBe(true);
   });
 
+  it("deduplicates one continuous zero-progress blockage episode instead of producing cognition pressure every tick", () => {
+    const runtime = world();
+    runtime.addResident("resident.mira", "Mira", { x: 1_000, y: 500 }, {
+      maxSpeed: 100,
+      brainIntervalTicks: 1_000,
+    });
+    runtime.setActorMotionIntent("resident.mira", { x: 100, y: 0 });
+    runtime.step(60);
+
+    const blockedReasons = runtime.residentDiagnostics("resident.mira").trace.filter((event) =>
+      event.kind === "cognition_reason" && event.summary.includes("physical motion blocked")
+    );
+    expect(blockedReasons).toHaveLength(1);
+  });
+
   it("reports partial movement as constrained while preserving the physically realized component", () => {
     const runtime = world();
     runtime.addPlayer("player.jozz", { x: 1_000, y: 500 }, { maxSpeed: 100 });
