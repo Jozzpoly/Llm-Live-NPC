@@ -1,10 +1,19 @@
-import type { CognitionReason, ResidentActivity, ResidentPercept, Vec2 } from "./contracts";
+import type {
+  CognitionReason,
+  PerceptDistanceBand,
+  ResidentActivity,
+  ResidentPercept,
+  Vec2,
+} from "./contracts";
 
 export interface KnownActorContext {
   id: string;
   label: string;
   lastKnownPosition: Vec2 | null;
   lastObservedTick: number | null;
+  lastHeardDirection: Vec2 | null;
+  lastHeardDistanceBand: PerceptDistanceBand | null;
+  lastHeardTick: number | null;
 }
 
 export interface KnownRegionContext {
@@ -221,7 +230,8 @@ function parseProposedActivity(
 
 function isGroundedPosition(position: Vec2, context: ResidentCognitionContext): boolean {
   const sources: Vec2[] = [
-    ...context.recentPercepts.map((percept) => percept.position),
+    ...context.recentPercepts.flatMap((percept) =>
+      percept.spatial.kind === "exact" ? [percept.spatial.position] : []),
     ...context.knownActors.flatMap((actor) => actor.lastKnownPosition ? [actor.lastKnownPosition] : []),
   ];
   return sources.some((source) => (
