@@ -68,12 +68,15 @@ describe("five-resident missing-crate player interruption and return", () => {
       responseTick: null,
       resumedAtTick: null,
     });
-    expect(interrupt.addressedPerceptId).toContain(call.id);
+    expect(interrupt.addressedPerceptId).not.toBeNull();
     expect(interrupt.interruptMatterId).not.toBeNull();
     expect(interrupt.interruptRunId).not.toBeNull();
-    if (!interrupt.interruptMatterId || !interrupt.interruptRunId) throw new Error("interrupt authority ids missing");
+    if (!interrupt.addressedPerceptId || !interrupt.interruptMatterId || !interrupt.interruptRunId) {
+      throw new Error("interrupt evidence/authority ids missing");
+    }
 
     expect(slice.world.residentDiagnostics(JANEK_ID).recentPercepts).toContainEqual(expect.objectContaining({
+      id: interrupt.addressedPerceptId,
       occurrenceId: call.id,
       phenomenon: "speech",
       modality: "hearing",
