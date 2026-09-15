@@ -16,6 +16,10 @@ import type {
   ResidentKnownMaterialObject,
   ResidentMaterialKnowledge,
 } from "../spc-next/resident-material-knowledge";
+import type {
+  ResidentWorldActionFact,
+  ResidentWorldExecutionAuthority,
+} from "../spc-next/resident-world-execution-authority";
 import type { SpcWorldRuntime } from "../spc-next/spc-world-runtime";
 
 export interface SpcCanonicalEvidenceSnapshotV1 {
@@ -43,6 +47,9 @@ export interface SpcCanonicalEvidenceSnapshotV1 {
     pendingSemanticProposals: readonly ResidentSemanticProposalTicket[];
     recentSemanticProposalRevocations: readonly ResidentSemanticProposalRevocation[];
   };
+  causalProvenance: {
+    residentWorldActionFacts: readonly ResidentWorldActionFact[];
+  };
 }
 
 export interface SpcCanonicalEvidenceSnapshotInput {
@@ -52,6 +59,7 @@ export interface SpcCanonicalEvidenceSnapshotInput {
   world: SpcWorldRuntime;
   kernel: ResidentContinuityKernel;
   materialKnowledge: ResidentMaterialKnowledge;
+  authority: ResidentWorldExecutionAuthority;
 }
 
 /**
@@ -70,6 +78,9 @@ export function captureSpcCanonicalEvidenceSnapshot(
   assertId(input.matterId, "matterId");
   if (input.materialKnowledge.residentId !== input.residentId) {
     throw new Error("materialKnowledge resident does not match evidence residentId");
+  }
+  if (input.authority.residentId !== input.residentId) {
+    throw new Error("execution authority resident does not match evidence residentId");
   }
 
   const publicWorld = input.world.publicSnapshot();
@@ -104,6 +115,9 @@ export function captureSpcCanonicalEvidenceSnapshot(
         .filter((ticket) => ticket.matterId === input.matterId),
       recentSemanticProposalRevocations: input.kernel.recentSemanticProposalRevocations()
         .filter((entry) => entry.ticket.matterId === input.matterId),
+    },
+    causalProvenance: {
+      residentWorldActionFacts: input.authority.recentActionFacts(),
     },
   };
 }
