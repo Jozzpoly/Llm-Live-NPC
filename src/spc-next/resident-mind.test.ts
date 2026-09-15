@@ -21,6 +21,7 @@ function heardPercept(id = "percept:heard:1", tick = 20): ResidentPercept {
     id,
     occurrenceId: `occurrence:${id}`,
     tick,
+    phenomenon: "speech",
     modality: "hearing",
     actorId: "player.jozz",
     subjectId: null,
@@ -31,16 +32,38 @@ function heardPercept(id = "percept:heard:1", tick = 20): ResidentPercept {
   };
 }
 
-function sightPercept(id = "percept:sight:1", tick = 21): ResidentPercept {
+function sightPercept(
+  id = "percept:sight:1",
+  tick = 21,
+  phenomenon: "actor_sight_enter" | "actor_sight_update" = "actor_sight_enter",
+  x = 100,
+): ResidentPercept {
   return {
     id,
-    occurrenceId: `sight-entry:${id}`,
+    occurrenceId: `${phenomenon}:${id}`,
     tick,
+    phenomenon,
     modality: "sight",
     actorId: "player.jozz",
     subjectId: "player.jozz",
-    spatial: { kind: "exact", position: { x: 100, y: 100 } },
-    summary: "actor player.jozz entered sight",
+    spatial: { kind: "exact", position: { x, y: 100 } },
+    summary: `actor player.jozz ${phenomenon}`,
+    text: null,
+    addressed: false,
+  };
+}
+
+function sightExit(id = "percept:sight:exit", tick = 30): ResidentPercept {
+  return {
+    id,
+    occurrenceId: `actor_sight_exit:${id}`,
+    tick,
+    phenomenon: "actor_sight_exit",
+    modality: "sight",
+    actorId: "player.jozz",
+    subjectId: "player.jozz",
+    spatial: { kind: "none" },
+    summary: "actor player.jozz left sight",
     text: null,
     addressed: false,
   };
@@ -59,6 +82,8 @@ describe("ResidentMind", () => {
       label: "player.jozz",
       lastKnownPosition: null,
       lastObservedTick: null,
+      currentlyVisible: false,
+      visibilityChangedTick: null,
       lastHeardDirection: { x: 1, y: 0 },
       lastHeardDistanceBand: "mid",
       lastHeardTick: 20,
@@ -99,7 +124,27 @@ describe("ResidentMind", () => {
 
     expect(actor.lastKnownPosition).toEqual({ x: 100, y: 100 });
     expect(actor.lastObservedTick).toBe(21);
+    expect(actor.currentlyVisible).toBe(true);
+    expect(actor.visibilityChangedTick).toBe(21);
     expect(actor.lastHeardDirection).toEqual({ x: 1, y: 0 });
+  });
+
+  it("keeps last exact location while sight visibility transitions enter -> update -> exit", () => {
+    const mind = new ResidentMind({ id: "resident.mira", name: "Mira" });
+    mind.observe([sightPercept("enter", 10, "actor_sight_enter", 100)]);
+    mind.observe([sightPercept("update", 20, "actor_sight_update", 140)]);
+    let actor = mind.context(20, null, [], idle, []).knownActors[0]!;
+    expect(actor.lastKnownPosition).toEqual({ x: 140, y: 100 });
+    expect(actor.lastObservedTick).toBe(20);
+    expect(actor.currentlyVisible).toBe(true);
+    expect(actor.visibilityChangedTick).toBe(10);
+
+    mind.observe([sightExit("exit", 30)]);
+    actor = mind.context(30, null, [], idle, []).knownActors[0]!;
+    expect(actor.lastKnownPosition).toEqual({ x: 140, y: 100 });
+    expect(actor.lastObservedTick).toBe(20);
+    expect(actor.currentlyVisible).toBe(false);
+    expect(actor.visibilityChangedTick).toBe(30);
   });
 
   it("does not fabricate a subject location from an interaction source position", () => {
@@ -108,6 +153,7 @@ describe("ResidentMind", () => {
       id: "percept:interaction",
       occurrenceId: "occurrence:interaction",
       tick: 30,
+      phenomenon: "interaction",
       modality: "sight",
       actorId: "resident.janek",
       subjectId: "item.hammer",
@@ -131,7 +177,7 @@ describe("ResidentMind", () => {
     mind.observe([source]);
     for (let tick = 2; tick <= 40; tick += 1) {
       mind.observe([{
-        ...sightPercept(`percept:filler:${tick}`, tick),
+        ...sightPercept(`percept:filler:${tick}`, tick, "actor_sight_update", 100 + tick),
         actorId: `resident.filler${tick % 3}`,
         subjectId: `resident.filler${tick % 3}`,
       }]);
