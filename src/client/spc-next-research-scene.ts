@@ -52,6 +52,11 @@ export interface SpcNextResearchFrame {
   cameraZoom: number;
 }
 
+export interface SpcNextResearchSceneOptions {
+  /** Evidence-only control: Phaser may render, but World advances only through stepEvidenceWorld(). */
+  manualWorldControl?: boolean;
+}
+
 type FrameSink = (frame: SpcNextResearchFrame) => void;
 
 export class SpcNextResearchScene extends Phaser.Scene {
@@ -62,6 +67,7 @@ export class SpcNextResearchScene extends Phaser.Scene {
   private readonly speechViews = new Map<string, SpeechView>();
   private readonly materialLabels = new Map<string, Phaser.GameObjects.Text>();
   private readonly seenOccurrenceIds = new Set<string>();
+  private readonly manualWorldControl: boolean;
   private regionGraphics!: Phaser.GameObjects.Graphics;
   private materialGraphics!: Phaser.GameObjects.Graphics;
   private overlayGraphics!: Phaser.GameObjects.Graphics;
@@ -71,9 +77,14 @@ export class SpcNextResearchScene extends Phaser.Scene {
   private stateAccumulatorMs = 0;
   private selectedResidentId: string | null = "resident.mira";
   private overlayEnabled = false;
+  private created = false;
 
-  constructor(private readonly frameSink: FrameSink) {
+  constructor(
+    private readonly frameSink: FrameSink,
+    options: SpcNextResearchSceneOptions = {},
+  ) {
     super({ key: "spc-next-research" });
+    this.manualWorldControl = options.manualWorldControl ?? false;
   }
 
   create(): void {
@@ -106,17 +117,20 @@ export class SpcNextResearchScene extends Phaser.Scene {
     this.followPlayer();
     this.cameras.main.setZoom(0.72);
     this.captureNewSpeechOccurrences();
+    this.created = true;
     this.pushFrame(true);
   }
 
   update(_time: number, delta: number): void {
     this.handleResearchShortcuts();
-    this.accumulatorMs += Math.min(delta, MAX_FRAME_DELTA_MS);
     this.stateAccumulatorMs += delta;
 
-    while (this.accumulatorMs >= FIXED_STEP_MS) {
-      this.stepWorld();
-      this.accumulatorMs -= FIXED_STEP_MS;
+    if (!this.manualWorldControl) {
+      this.accumulatorMs += Math.min(delta, MAX_FRAME_DELTA_MS);
+      while (this.accumulatorMs >= FIXED_STEP_MS) {
+        this.stepWorld();
+        this.accumulatorMs -= FIXED_STEP_MS;
+      }
     }
 
     this.syncActorViews();
@@ -183,6 +197,32 @@ export class SpcNextResearchScene extends Phaser.Scene {
   }
 
   currentFrame(): SpcNextResearchFrame {
+    return this.buildFrame();
+  }
+
+  evidenceReady(): boolean {
+    return this.created;
+  }
+
+  evidenceUsesManualWorldControl(): boolean {
+    return this.manualWorldControl;
+  }
+
+  stepEvidenceWorld(steps = 1): SpcNextResearchFrame {
+    if (!this.manualWorldControl) {
+      throw new Error("manual World stepping is available only in evidence control mode");
+    }
+    if (!this.created) throw new Error("SPC research scene is not ready for evidence stepping");
+    if (!Number.isSafeInteger(steps) || steps < 1) {
+      throw new Error("evidence World steps must be a positive safe integer");
+    }
+
+    for (let index = 0; index < steps; index += 1) this.stepWorld();
+    this.syncActorViews();
+    this.syncMaterialViews();
+    this.syncSpeechViews();
+    this.drawResearchOverlay();
+    this.pushFrame(true);
     return this.buildFrame();
   }
 
