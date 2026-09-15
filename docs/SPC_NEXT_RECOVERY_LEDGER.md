@@ -41,7 +41,7 @@ The ordering is not a promise that each phase is completed horizontally before t
 
 - `fc0e02bfea266a18849993e55ad449b29817fc90` — established `SPC_NEXT_ARCHITECTURE_RECOVERY_GATE.md` and stop-the-line status.
 - `735569554a7f298a0941a26c74ee47043b138f67` — made SPC Next recovery state the live README takeover authority; old P2 `PROJECT_STATE` is preserved as donor/history, not current branch authority.
-- PR #125 body now starts with the recovery verdict rather than scaffold-success language.
+- PR #125 body starts with the recovery verdict rather than scaffold-success language.
 
 This solves orientation drift, not runtime architecture.
 
@@ -53,24 +53,21 @@ This solves orientation drift, not runtime architecture.
 - qualification tests: `9dab35b8d42c01059627d443acf8f2863f221702`
 - GitHub Check: run #687 PASS
 
-Executable invariants re-earned in `src/spc-next/resident-continuity-kernel.ts`:
+Re-earned:
 
-- a continuing matter has stable identity independent of a cognition request;
-- semantic proposal authority is scoped to exact matter + semantic revision + evidence dependency;
-- unrelated matter changes do not stale another matter's semantic decision;
-- same-matter semantic supersession does stale older decisions;
-- exactly one same-revision proposal may win;
-- run binding carries exact matter + semantic revision provenance;
-- suspension removes World-mutation authority from the bound run without deleting the run;
-- activity-only resume can restore the same run when semantics did not change;
-- semantic change while suspended prevents the old run from silently regaining authority;
-- terminal status is monotonic;
-- terminal semantic state removes run authority immediately even before mechanical retirement;
-- neutral retirement does not invent a World/task outcome;
-- current semantic evidence of a live matter survives ordinary recent-evidence churn;
+- continuing matter identity independent of cognition-request lifetime;
+- matter-scoped semantic revisions and evidence dependency;
+- unrelated-matter changes do not stale another matter;
+- same-matter supersession does stale older meaning;
+- exactly one same-revision proposal can win;
+- run binding retains exact matter + semantic revision;
+- suspension removes World-mutation authority without deleting mechanical run identity;
+- unchanged semantics may resume the same run;
+- revised semantics cannot silently revive an old run;
+- terminal state is monotonic;
+- terminal semantics revoke run authority before later mechanical cleanup;
+- neutral retirement does not invent outcome;
 - suspension cycles are refused.
-
-This kernel is still isolated recovery substrate. It is **not yet wired into `ResidentRuntime` or World execution**.
 
 ### K1 — factual run outcome reconciliation
 
@@ -82,90 +79,146 @@ This kernel is still isolated recovery substrate. It is **not yet wired into `Re
 
 Re-earned:
 
-- a factual mechanical/World outcome joins back to the exact resident run binding;
+- factual mechanical/World outcome joins to the exact resident run binding;
 - outcome becomes resident evidence;
-- factual mechanical success does **not** automatically resolve semantic matter;
-- one run outcome is reconciled once;
-- neutral retirement remains distinct from factual success/failure;
+- mechanical success does **not** automatically resolve semantic matter;
+- one factual outcome is reconciled once;
+- neutral retirement remains distinct from success/failure;
 - run ownership is released only through explicit reconciliation/retirement.
 
-Still OPEN: integrated executor/World ordering gate preventing reuse of an exclusive execution resource before factual reconciliation.
+Still OPEN: integrated exclusive-execution ordering preventing a new incompatible run before factual reconciliation.
 
 ### K2 — resident-owned pending cognition authority
 
-**IMPLEMENTED · QUALIFICATION PENDING**
+**SCOPED PASS · FULL GREEN**
 
 - source: `d9e5db94e1b7e0ec86425d3167d25d210282107b`
-- qualification tests: `e414e13b3c95aa79fcfeaf24126aeddea98ded1c`
+- qualification tests/fix: `e414e13b3c95aa79fcfeaf24126aeddea98ded1c`
+- GitHub Check: run #692 PASS
 
-Targeted invariants:
+Re-earned:
 
 - live pending proposal authority is explicit resident state;
 - semantic revision revokes only same-matter attempts;
 - suspension alone does not revoke a semantically current clarification;
 - winning same-revision proposal revokes siblings;
-- terminalization revokes only the owning matter's pending cognition;
+- terminalization revokes only owning-matter attempts;
 - exact provider attempt may be abandoned one-shot without changing matter semantics;
 - recent revocation provenance is bounded;
-- once bounded provenance is evicted, system reports only stale authority rather than fabricating an exact historical cause.
-
-Do not promote to PASS until exact-head CI is green.
-
-## Immediate recovery frontier
+- once exact old provenance is evicted, the system reports only stale authority instead of fabricating a precise historical cause.
 
 ### K3 — live-matter evidence reconstructability
 
-**OPEN — NEXT KERNEL ATOM**
+**SCOPED PASS · FULL GREEN**
 
-The new kernel currently pins current semantic evidence, but a living matter also exposes `originEvidenceId` and `lastOutcomeEvidenceId`. Those references must not become orphan IDs after recent-evidence eviction.
+- source: `e400d7923b2a36aac06b9694cc6ef11e91855259`
+- qualification tests: `5e746adcd7dbeaaf3f11c0e6a5123f0e66bd03e6`
+- GitHub Check: run #695 PASS
 
-Target:
+Re-earned:
 
-- while a matter is live, reconstruct current origin, semantic dependency and latest factual outcome evidence;
-- bounded by live matters, not an unbounded archive;
-- terminalization releases live pins; later historical persistence/archival remains a separate future problem.
+- while a matter is live, its origin evidence remains reconstructable;
+- current semantic dependency remains reconstructable;
+- latest factual run outcome remains reconstructable;
+- ordinary recent-memory churn cannot orphan these live references;
+- latest outcome replaces the previous live outcome pin rather than creating history;
+- terminalization releases live pins;
+- late factual outcome after terminalization cannot resurrect live-matter evidence authority.
 
-### K4 — provider membrane / exact attempt transport lifecycle
+This remains bounded live continuity, not persistence or long-term archival memory.
 
-**OPEN**
+### K4 — provider authority membrane
 
-Separate from resident kernel. It should carry semantic content but no resident mutation authority, bind to an exact resident proposal attempt, support measured timeout/abandon/retry, and fail closed on late returns.
+**SCOPED PASS · FULL GREEN**
 
-### K5 — executor/World authority adapter
+- source: `b05b0cf8219c0fa864f85b8d0cec437da4686433`
+- qualification tests: `ab84d06392ff2701c8184c847ba2ea7d7fe9cc98`
+- GitHub Check: run #697 PASS
 
-**OPEN**
+Re-earned:
 
-The kernel's `canRunMutateWorld(runId)` must become an actual mandatory gate on the execution path before a bound run can create a World fact.
+- model/provider-visible payload carries semantic content and correlation only;
+- exact resident proposal authority remains in a local private sidecar;
+- serialized/cloned provider input cannot recreate resident mutation authority;
+- forged/replayed provider run IDs fail closed;
+- malformed output may retry only while exact resident authority is still live;
+- same-matter supersession and terminalization reject late provider returns;
+- exact provider attempt can be abandoned without changing matter meaning or killing an unrelated/sibling attempt;
+- dead authority does not retain a meaningless formatting retry path.
 
-This is where P2-E9/E16-style latency safety becomes real rather than theoretical.
+HTTP/model transport itself remains outside this seam and is still OPEN for live-provider qualification.
 
-## Current hard truth defects outside the new kernel
+### T1 — explicit unregioned resident self-location
 
-These remain blockers even while K-series work progresses.
+**SCOPED PASS · FULL GREEN**
 
-### T0 — unknown voice identity leak
+- qualification commit: `154895bae61fc2c172293c23d2dd5c3ecd256025`
+- GitHub Check: run #700 PASS
 
-**FAIL**
+Fixed:
 
-Current `ResidentPercept.actorId` / `ResidentMind.observe()` can turn a heard but unrecognized speaker into a known actor. Raw percept/cognition/local-contact paths must all stop receiving recognized identity unless an explicit acquisition rule permits it.
+- `SpcWorldRuntime` synchronizes resident self-region after every authoritative movement, including `null` when no authored region contains the resident;
+- leaving an authored region no longer leaves stale private `currentRegionId`;
+- re-entering a region re-establishes the authored self-location normally.
 
-### T1 — stale current region in unregioned World space
+### K5a — scoped run authority over real World effects
 
-**FAIL**
+**SCOPED PASS · FULL GREEN**
 
-Current `SpcWorldRuntime` only updates resident region when `regionAt(after)` is non-null. Leaving all authored regions can leave stale self-location.
+- initial source/tests: `14281a0306c7614341e66a9a904f7731302fca3b`, `4fc437e71bdfac2217ffa14e82f2cf76a8370532`
+- type-only qualification fix: `9dbb7eaa63316c0f8adb984ec4738309f6904fa6`
+- GitHub Check: run #703 PASS
+
+Re-earned on a **new bounded execution path** using the real `SpcWorldRuntime`:
+
+- exact live run authority is required before resident-owned motion or speech effects are emitted;
+- one execution frame may compose motion + speech instead of forcing them to be mutually exclusive;
+- forged/stale/terminal runs cannot create effects on this path;
+- the complete effect frame is validated before any mutation, preventing partial application from a later invalid effect;
+- latched motion records the exact run that owns it;
+- suspension, same-matter semantic supersession and terminalization can revoke stale latched motion before further physical integration;
+- revocation of an older run cannot stop a newer run that legitimately owns motion.
+
+**Critical scope boundary:** K5a is **not** runtime-wide authority. Current `ResidentRuntime.fastStep() -> SpcWorldRuntime.applyResidentCommand()` and public World control APIs still exist as bypasses. K5b must close this dual-authority condition before any claim that resident execution is generally protected.
+
+## Immediate recovery frontier
+
+### K5b — close dual resident execution authority
+
+**OPEN — CURRENT FRONTIER**
+
+Target is not merely to call `canRunMutateWorld()` more often. The architecture must make the run-authorized path the owner of material resident effects used by the first life slice.
+
+Required properties:
+
+- private resident semantic state remains resident-owned; World must not inspect matters/semantic revisions;
+- World phase can ask a narrow execution authority/capability to revoke stale latched effects **before physical integration**;
+- current flat `ResidentRuntime.fastStep()` cannot silently bypass the authority for the recovered life path;
+- motion, attention/facing, action/manipulation and communication should grow as composable effect channels rather than a longer mutually-exclusive command union;
+- no new resident-owned physical effect is introduced outside the authority path;
+- any temporary legacy scaffold bypass remains explicitly labeled legacy and cannot be used as evidence for the recovered life slice.
+
+Do not promote K5b until an adversarial test proves that semantic authority can disappear between local-control updates and the next World integration without allowing the old effect to persist.
+
+### T0 — recognized identity must be distinct from physical source identity
+
+**FAIL — HIGH PRIORITY AFTER/ALONGSIDE K5b**
+
+Current hearing path can expose stable `actorId` from an unrecognized speaker. Fixing only `knownActors` is insufficient because raw percept and local contact maps also receive the ID.
+
+The recovery needs a boundary such as private physical source provenance vs resident-recognized identity, without prematurely building a face-recognition system.
 
 ### T2 — orphan provenance in current `ResidentMind`
 
 **FAIL**
 
-Beliefs/concerns may preserve evidence IDs after the bounded percept-evidence store has evicted their records.
+Beliefs/concerns may preserve evidence IDs after bounded percept evidence eviction. The new continuity kernel has solved this for live matters, but the current cognition context still has this defect.
 
 ### T3 — fabricated authoritative-looking interaction occurrence
 
 **FAIL / UNSAFE API**
 
-`emitInteraction()` can publish an interaction summary/subject without authoritative entity/action/outcome proof. Product path must be replaced by World-resolved action outcomes; synthetic research stimuli must be explicitly typed as synthetic.
+`emitInteraction()` can publish an interaction summary/subject without authoritative entity/action/outcome proof. Product/runtime interaction must eventually originate from World-resolved action authority; synthetic research stimuli must be impossible to confuse with physical truth.
 
 ### T4 — public/private projection mixing
 
@@ -191,7 +244,7 @@ Research scene speech bubbles use global World diagnostics rather than participa
 - bounded discrepancy/matter cognition pressure instead of historical event inbox;
 - causal trace joining evidence → matter → proposal attempt → exact run → World outcome;
 - live SPC cognition host/worker browser integration;
-- provider latency/failure/abandon/retry qualification;
+- real provider latency/failure/abandon/retry qualification;
 - participant / spectator / private-resident research projection split;
 - five materially divergent resident lives under concurrent interference;
 - persistence/offscreen/time-scaling/scaling architecture.
