@@ -10,6 +10,7 @@ export const JANEK_CRATE_DELIVERY_DESTINATION = Object.freeze({ x: 2_980, y: 1_0
 export type FiveResidentJanekDeliveryStep =
   | { status: "running"; phase: "pickup"; local: ResidentMaterialPickupStep }
   | { status: "running"; phase: "delivery"; local: ResidentMaterialPlaceStep }
+  | { status: "execution_held"; phase: "delivery"; runId: string; reason: string }
   | { status: "succeeded"; phase: "delivered"; local: ResidentMaterialPlaceStep }
   | { status: "blocked"; phase: "pickup" | "delivery"; local: ResidentMaterialPickupStep | ResidentMaterialPlaceStep }
   | { status: "authority_lost"; phase: "pickup" | "delivery"; local: ResidentMaterialPickupStep | ResidentMaterialPlaceStep };
@@ -19,16 +20,17 @@ export interface FiveResidentJanekDeliverySlice {
   kernel: ResidentContinuityKernel;
   authority: ResidentWorldExecutionAuthority;
   stepJanek(): FiveResidentJanekDeliveryStep;
+  holdJanekExecution(reason: string): boolean;
+  resumeJanekExecution(): boolean;
+  executionHold(): { runId: string; reason: string } | null;
   pickupReconciliation(): RunOutcomeReconciliationResult | null;
   deliveryReconciliation(): RunOutcomeReconciliationResult | null;
 }
 
 /**
- * Second Janek vertical slice: one durable matter survives two distinct material runs.
- *
- * The matter means "deliver this crate". Pickup and placement are separate local
- * executions. Mechanical completion of pickup does not semantically resolve the
- * matter; it merely creates new World possession truth and factual resident evidence.
+ * Second Janek vertical slice: one durable matter survives multiple local runs and
+ * a bounded execution hold. A hold pauses embodiment without pretending the matter
+ * itself changed meaning or became semantically suspended.
  */
 export function createFiveResidentJanekDeliverySlice(): FiveResidentJanekDeliverySlice {
   const world = createFiveResidentRegionWorld();
@@ -61,6 +63,7 @@ export function createFiveResidentJanekDeliverySlice(): FiveResidentJanekDeliver
   let place: ResidentMaterialPlaceExecutor | null = null;
   let pickupReconciled: RunOutcomeReconciliationResult | null = null;
   let deliveryReconciled: RunOutcomeReconciliationResult | null = null;
+  let executionHold: { runId: string; reason: string } | null = null;
 
   function startDeliveryRun(): void {
     kernel.bindRun({
@@ -103,6 +106,17 @@ export function createFiveResidentJanekDeliverySlice(): FiveResidentJanekDeliver
       }
 
       if (!place) throw new Error("delivery run missing after pickup reconciliation");
+      if (executionHold) {
+        if (!kernel.canRunMutateWorld(executionHold.runId)) {
+          return {
+            status: "authority_lost",
+            phase: "delivery",
+            local: { status: "authority_lost", runId: executionHold.runId },
+          };
+        }
+        return { status: "execution_held", phase: "delivery", ...executionHold };
+      }
+
       const local = place.step();
       if (local.status === "succeeded" && !deliveryReconciled) {
         deliveryReconciled = kernel.reconcileRunOutcome({
@@ -119,6 +133,29 @@ export function createFiveResidentJanekDeliverySlice(): FiveResidentJanekDeliver
       if (local.status === "blocked") return { status: "blocked", phase: "delivery", local };
       if (local.status === "authority_lost") return { status: "authority_lost", phase: "delivery", local };
       return { status: "running", phase: "delivery", local };
+    },
+    holdJanekExecution(reason: string): boolean {
+      const trimmedReason = reason.trim();
+      if (!trimmedReason || !pickupReconciled || !place || deliveryReconciled || executionHold) return false;
+      const matter = kernel.matter("matter.janek.crate-delivery");
+      const runId = matter?.activeRunId;
+      if (!runId || !kernel.canRunMutateWorld(runId)) return false;
+      const stopped = authority.apply({
+        runId,
+        effects: [{ kind: "motion", desiredVelocity: { x: 0, y: 0 } }],
+      });
+      if (stopped.status !== "applied") return false;
+      executionHold = { runId, reason: trimmedReason };
+      return true;
+    },
+    resumeJanekExecution(): boolean {
+      if (!executionHold) return false;
+      if (!kernel.canRunMutateWorld(executionHold.runId)) return false;
+      executionHold = null;
+      return true;
+    },
+    executionHold(): { runId: string; reason: string } | null {
+      return executionHold ? structuredClone(executionHold) : null;
     },
     pickupReconciliation(): RunOutcomeReconciliationResult | null {
       return pickupReconciled ? structuredClone(pickupReconciled) : null;
