@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { createFiveResidentJanekMissingCrateSlice } from "./five-resident-missing-crate-slice";
 
 describe("five resident Janek missing-crate semantic pressure", () => {
-  it("turns exhausted local execution into checked-absence semantic evidence without resolving the matter", () => {
+  it("turns bounded local inspection into checked-absence semantic evidence without probing hidden material truth", () => {
     const slice = createFiveResidentJanekMissingCrateSlice();
     const initial = slice.kernel.matter("matter.janek.missing-crate");
     expect(initial).toMatchObject({
@@ -13,23 +13,24 @@ describe("five resident Janek missing-crate semantic pressure", () => {
 
     let state = slice.stepJanek();
     let guard = 0;
-    while (state.status === "running" && guard < 360) {
+    let sawInspect = state.status === "running" && state.local.status === "running" && state.local.phase === "inspect";
+    while (state.status === "running" && guard < 560) {
       slice.world.step();
       state = slice.stepJanek();
+      if (state.status === "running" && state.local.status === "running" && state.local.phase === "inspect") {
+        sawInspect = true;
+      }
       guard += 1;
     }
 
+    expect(sawInspect).toBe(true);
     expect(state.status).toBe("semantic_pressure");
     if (state.status !== "semantic_pressure") throw new Error(`unexpected state: ${state.status}`);
     expect(state.local).toMatchObject({
       status: "blocked",
       runId: "run.janek.pickup-last-known-crate",
-      materialOutcome: {
-        status: "rejected",
-        code: "out_of_range",
-        before: null,
-        after: null,
-      },
+      reason: "material object is not visible after bounded local inspection",
+      materialOutcome: null,
     });
     expect(state.checkedAbsenceEvidence).toMatchObject({
       kind: "checked_absence",
@@ -64,6 +65,7 @@ describe("five resident Janek missing-crate semantic pressure", () => {
     if (!actualCrate || actualCrate.location.kind !== "free") throw new Error("crate did not remain in World");
     expect(actualCrate.location.position.x).toBeGreaterThan(2_500);
     expect(slice.materialKnowledge.lastKnownPosition("crate.workshop.01")).toEqual({ x: 1_952, y: 720 });
+    expect(slice.authority.recentActionFacts()).toHaveLength(0);
 
     // This is the exact pre-provider frontier: resident meaning is still alive,
     // local execution has no current run, and new evidence says the old course
