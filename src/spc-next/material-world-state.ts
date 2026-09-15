@@ -1,8 +1,8 @@
 import type { Vec2, WorldBounds } from "./contracts";
 
 export type MaterialObjectLocation =
-  | { kind: "free"; position: Vec2 }
-  | { kind: "held"; actorId: string };
+  | { kind: "free"; position: Vec2; actorId?: never }
+  | { kind: "held"; actorId: string; position?: never };
 
 export interface MaterialObjectState {
   id: string;
