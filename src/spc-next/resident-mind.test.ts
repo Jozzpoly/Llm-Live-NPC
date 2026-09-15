@@ -69,6 +69,19 @@ function sightExit(id = "percept:sight:exit", tick = 30): ResidentPercept {
   };
 }
 
+function keepProposal(
+  beliefs: ResidentCognitionProposal["beliefs"],
+  concerns: ResidentCognitionProposal["concerns"] = [],
+): ResidentCognitionProposal {
+  return {
+    version: 1,
+    activityDirective: { kind: "keep", reason: "continue" },
+    beliefs,
+    concerns,
+    reviewAfterSeconds: 10,
+  };
+}
+
 describe("ResidentMind", () => {
   it("learns direction but not hidden exact position from hearing alone", () => {
     const mind = new ResidentMind({ id: "resident.mira", name: "Mira" });
@@ -193,6 +206,61 @@ describe("ResidentMind", () => {
 
     const context = mind.context(40, null, [reason], idle, []);
     expect(context.recentPercepts.some((percept) => percept.id === source.id)).toBe(true);
+  });
+
+  it("pins resident percept provenance while retained beliefs or concerns still cite it", () => {
+    const mind = new ResidentMind(
+      { id: "resident.mira", name: "Mira" },
+      { maxBeliefs: 2, maxConcerns: 2, maxKnownActors: 8, maxKnownRegions: 4, maxPerceptEvidence: 2 },
+    );
+    const source = heardPercept("percept:semantic-source", 1);
+    mind.observe([source]);
+    mind.applySemanticUpdates(keepProposal(
+      [{ id: "belief:source", statement: "Jozz asked something of me.", confidence: 0.8, evidenceIds: [source.id] }],
+      [{ id: "concern:source", summary: "Consider Jozz's request.", priority: 0.7, status: "open", evidenceIds: [source.id] }],
+    ), 2, [source]);
+
+    mind.observe([sightPercept("filler:3", 3, "actor_sight_update", 103)]);
+    mind.observe([sightPercept("filler:4", 4, "actor_sight_update", 104)]);
+    mind.observe([sightPercept("filler:5", 5, "actor_sight_update", 105)]);
+
+    const context = mind.context(5, null, [], idle, []);
+    expect(context.beliefs[0]?.evidenceIds).toEqual([source.id]);
+    expect(context.concerns[0]?.evidenceIds).toEqual([source.id]);
+    expect(context.recentPercepts.some((percept) => percept.id === source.id)).toBe(true);
+  });
+
+  it("releases semantic evidence pins after no retained semantic state references them", () => {
+    const mind = new ResidentMind(
+      { id: "resident.mira", name: "Mira" },
+      { maxBeliefs: 1, maxConcerns: 1, maxKnownActors: 8, maxKnownRegions: 4, maxPerceptEvidence: 2 },
+    );
+    const first = heardPercept("percept:first", 1);
+    const second = heardPercept("percept:second", 2);
+    mind.observe([first, second]);
+    mind.applySemanticUpdates(keepProposal([
+      { id: "belief:first", statement: "first", confidence: 0.5, evidenceIds: [first.id] },
+    ]), 2, [first, second]);
+    mind.applySemanticUpdates(keepProposal([
+      { id: "belief:second", statement: "second", confidence: 0.5, evidenceIds: [second.id] },
+    ]), 3, [first, second]);
+
+    mind.observe([sightPercept("filler:4", 4, "actor_sight_update", 104)]);
+    mind.observe([sightPercept("filler:5", 5, "actor_sight_update", 105)]);
+    mind.observe([sightPercept("filler:6", 6, "actor_sight_update", 106)]);
+
+    const staleReason: CognitionReason = {
+      id: "reason:first",
+      tick: 1,
+      kind: "heard_speech",
+      salience: 0.5,
+      summary: "old evidence should no longer be pinned",
+      evidenceIds: [first.id],
+    };
+    const context = mind.context(6, null, [staleReason], idle, []);
+    expect(context.beliefs.map((belief) => belief.id)).toEqual(["belief:second"]);
+    expect(context.recentPercepts.some((percept) => percept.id === first.id)).toBe(false);
+    expect(context.recentPercepts.some((percept) => percept.id === second.id)).toBe(true);
   });
 
   it("keeps semantic beliefs and concerns private and bounded instead of turning them into World truth", () => {
