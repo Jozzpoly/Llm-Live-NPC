@@ -16,7 +16,7 @@ const CRATE_Y = 720;
 describe("epistemic history sensitivity", () => {
   it("lets different legally acquired histories drive different local behavior in the same current physical World", () => {
     const leftHistory = createHistoryVariant(1_500);
-    const rightHistory = createHistoryVariant(1_952);
+    const rightHistory = createHistoryVariant(2_300);
 
     // Current physical truth is intentionally the same. Only Janek's acquired
     // material history differs.
@@ -24,7 +24,7 @@ describe("epistemic history sensitivity", () => {
     expect(leftHistory.kernel.matter(MATTER_ID)).toEqual(rightHistory.kernel.matter(MATTER_ID));
 
     expect(leftHistory.knowledge.lastKnownPosition(CRATE_ID)).toEqual({ x: 1_500, y: CRATE_Y });
-    expect(rightHistory.knowledge.lastKnownPosition(CRATE_ID)).toEqual({ x: 1_952, y: CRATE_Y });
+    expect(rightHistory.knowledge.lastKnownPosition(CRATE_ID)).toEqual({ x: 2_300, y: CRATE_Y });
 
     const leftStep = leftHistory.executor.step();
     const rightStep = rightHistory.executor.step();
@@ -52,11 +52,8 @@ describe("epistemic history sensitivity", () => {
 function createHistoryVariant(observedCrateX: number) {
   const world = createFiveResidentRegionWorld();
 
-  // Put Janek at the same observation origin in both variants.
-  world.setActorMotionIntent(JANEK_ID, { x: -120, y: 0 });
-  world.step(90);
-  world.setActorMotionIntent(JANEK_ID, { x: 0, y: 0 });
-
+  // Both variants keep Janek at the same observation origin. The fixture moves the
+  // recognized crate to one of two visible but genuinely approach-distance positions.
   const dt = world.options.fixedDeltaSeconds;
   world.addPlayer(FIXTURE_ID, { x: 1_952, y: CRATE_Y }, { maxSpeed: 100_000 });
 
