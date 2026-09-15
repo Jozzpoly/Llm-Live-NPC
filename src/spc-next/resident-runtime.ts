@@ -113,7 +113,9 @@ export class ResidentRuntime {
   ingestPercepts(percepts: readonly ResidentPercept[], observerPosition: Vec2 | null = null): void {
     this.mind.observe(percepts);
     for (const percept of percepts) {
-      if (percept.modality === "hearing" && percept.addressed) this.attentionRevisionValue += 1;
+      if (percept.phenomenon === "speech" && percept.modality === "hearing" && percept.addressed) {
+        this.attentionRevisionValue += 1;
+      }
       this.recentPercepts.push(structuredClone(percept));
       if (percept.actorId) {
         if (percept.spatial.kind === "exact") {
@@ -138,7 +140,7 @@ export class ResidentRuntime {
         tick: percept.tick,
         residentId: this.profile.id,
         kind: "perception",
-        summary: `${percept.modality}${percept.addressed ? " addressed" : ""}: ${percept.summary}`,
+        summary: `${percept.phenomenon}/${percept.modality}${percept.addressed ? " addressed" : ""}: ${percept.summary}`,
         refIds: [percept.id, percept.occurrenceId],
       });
 
@@ -202,13 +204,6 @@ export class ResidentRuntime {
   }
 
   fastStep(view: ResidentExecutionView): ResidentCommand {
-    for (const actor of view.visibleActors) {
-      this.lastKnownActorContacts.set(actor.id, {
-        position: { ...actor.position },
-        tick: view.tick,
-      });
-    }
-
     switch (this.activity.kind) {
       case "idle":
       case "work":
@@ -430,7 +425,7 @@ export class ResidentRuntime {
   }
 
   private reasonFromPercept(percept: ResidentPercept): CognitionReason | null {
-    if (percept.modality === "hearing" && percept.text) {
+    if (percept.phenomenon === "speech" && percept.modality === "hearing" && percept.text) {
       return {
         id: `reason:${this.profile.id}:speech:${percept.occurrenceId}`,
         tick: percept.tick,
@@ -442,7 +437,8 @@ export class ResidentRuntime {
         evidenceIds: [percept.id],
       };
     }
-    if (percept.modality === "sight" && percept.summary !== "movement") {
+
+    if (percept.phenomenon === "interaction" || percept.phenomenon === "system") {
       return {
         id: `reason:${this.profile.id}:world:${percept.occurrenceId}`,
         tick: percept.tick,
@@ -452,6 +448,19 @@ export class ResidentRuntime {
         evidenceIds: [percept.id],
       };
     }
+
+    if (percept.phenomenon === "actor_sight_enter" || percept.phenomenon === "actor_sight_exit") {
+      return {
+        id: `reason:${this.profile.id}:sight:${percept.occurrenceId}`,
+        tick: percept.tick,
+        kind: "direct_world_change",
+        salience: percept.phenomenon === "actor_sight_enter" ? 0.2 : 0.3,
+        summary: percept.summary,
+        evidenceIds: [percept.id],
+      };
+    }
+
+    // Routine sight samples and movement evidence update causal memory but do not manufacture LLM traffic.
     return null;
   }
 
