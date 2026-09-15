@@ -21,6 +21,12 @@ import {
   type WorldRegion,
 } from "./contracts";
 import { ActorWorldState } from "./actor-world-state";
+import type {
+  ResidentRunAuthority,
+  ResidentWorldEffect,
+  ResidentWorldExecutionFrame,
+  ResidentWorldExecutionResult,
+} from "./resident-world-execution-contract";
 import { ResidentRuntime } from "./resident-runtime";
 import { residentExecutionPhase } from "./resident-phase";
 import { SightContinuityTracker } from "./sight-continuity";
@@ -37,6 +43,11 @@ interface RegisteredResident {
   runtime: ResidentRuntime;
   brainPhase: number;
   sight: SightContinuityTracker;
+}
+
+interface RegisteredExecutionAuthority {
+  authority: ResidentRunAuthority;
+  motionOwnerRunId: string | null;
 }
 
 interface OccurrenceObserverSnapshot {
@@ -68,6 +79,7 @@ export class SpcWorldRuntime {
   private perceptSequence = 0;
   private readonly actorState: ActorWorldState;
   private readonly residents = new Map<string, RegisteredResident>();
+  private readonly residentExecutionAuthorities = new Map<string, RegisteredExecutionAuthority>();
   private readonly sightGeometry: SightGeometry;
   private pendingOccurrences: PendingOccurrence[] = [];
   private readonly recentOccurrences: WorldOccurrence[] = [];
@@ -151,6 +163,83 @@ export class SpcWorldRuntime {
     return runtime;
   }
 
+  claimResidentExecutionAuthority(residentId: string, authority: ResidentRunAuthority): void {
+    this.requireResident(residentId);
+    if (!authority || typeof authority.canRunMutateWorld !== "function") {
+      throw new Error("resident execution authority must provide canRunMutateWorld");
+    }
+    if (this.residentExecutionAuthorities.has(residentId)) {
+      throw new Error(`resident execution authority already claimed: ${residentId}`);
+    }
+    this.residentExecutionAuthorities.set(residentId, { authority, motionOwnerRunId: null });
+    // Claiming the recovered path is a hard ownership transition. Any latched
+    // legacy controller desire is removed before the next World integration.
+    this.actorState.setDesiredVelocity(residentId, { x: 0, y: 0 });
+    this.activeMotionBlockages.delete(residentId);
+  }
+
+  residentMotionOwner(residentId: string): string | null {
+    const registered = this.requireResidentExecutionAuthority(residentId);
+    return registered.motionOwnerRunId;
+  }
+
+  applyResidentExecutionFrame(
+    residentId: string,
+    frame: ResidentWorldExecutionFrame,
+  ): ResidentWorldExecutionResult {
+    this.requireResident(residentId);
+    const registered = this.requireResidentExecutionAuthority(residentId);
+    const validated = validateResidentWorldExecutionFrame(frame, this.actorState.ids());
+    if (!validated) return { status: "rejected", runId: frame.runId, reason: "invalid_frame" };
+    if (!registered.authority.canRunMutateWorld(validated.runId)) {
+      return { status: "rejected", runId: validated.runId, reason: "run_not_authorized" };
+    }
+
+    const appliedEffects: ResidentWorldEffect["kind"][] = [];
+    const occurrences: WorldOccurrence[] = [];
+    for (const effect of validated.effects) {
+      if (!registered.authority.canRunMutateWorld(validated.runId)) {
+        this.enforceResidentMotionAuthority(residentId);
+        return {
+          status: "interrupted",
+          runId: validated.runId,
+          appliedEffects,
+          reason: "run_authority_lost",
+          occurrences,
+        };
+      }
+
+      if (effect.kind === "motion") {
+        this.actorState.setDesiredVelocity(residentId, effect.desiredVelocity);
+        registered.motionOwnerRunId = validated.runId;
+      } else {
+        occurrences.push(this.emitSpeech(
+          residentId,
+          effect.text,
+          effect.radius,
+          effect.addressedActorIds,
+        ));
+      }
+      appliedEffects.push(effect.kind);
+    }
+
+    return {
+      status: "applied",
+      runId: validated.runId,
+      appliedEffects,
+      occurrences,
+    };
+  }
+
+  enforceResidentMotionAuthority(residentId: string): { status: "unchanged" } | { status: "revoked"; runId: string } {
+    const registered = this.requireResidentExecutionAuthority(residentId);
+    const runId = registered.motionOwnerRunId;
+    if (!runId || registered.authority.canRunMutateWorld(runId)) return { status: "unchanged" };
+    this.actorState.setDesiredVelocity(residentId, { x: 0, y: 0 });
+    registered.motionOwnerRunId = null;
+    return { status: "revoked", runId };
+  }
+
   familiarizeResidentWithRegions(residentId: string, regionIds: readonly string[]): void {
     const resident = this.requireResident(residentId).runtime;
     for (const regionId of [...new Set(regionIds)]) {
@@ -161,6 +250,9 @@ export class SpcWorldRuntime {
   }
 
   setResidentActivity(residentId: string, activity: ResidentActivity): void {
+    if (this.residentExecutionAuthorities.has(residentId)) {
+      throw new Error(`legacy resident activity is disabled after execution authority claim: ${residentId}`);
+    }
     const resident = this.requireResident(residentId);
     validateResidentActivity(activity, this.authoredOptions.bounds, (id) => this.actorState.has(id));
     resident.runtime.setActivity(activity, this.tickValue);
@@ -169,6 +261,9 @@ export class SpcWorldRuntime {
   }
 
   setActorMotionIntent(actorId: string, desiredVelocity: Vec2): void {
+    if (this.residentExecutionAuthorities.has(actorId)) {
+      throw new Error(`direct motion bypass is disabled for recovered resident: ${actorId}`);
+    }
     this.actorState.setDesiredVelocity(actorId, desiredVelocity);
   }
 
@@ -183,28 +278,16 @@ export class SpcWorldRuntime {
     radius?: number,
     addressedActorIds: readonly string[] = [],
   ): WorldOccurrence {
-    const actor = this.requireActor(actorId);
-    assertNonEmptyWorldText(text, "speech text");
-    const effectiveRadius = radius ?? actor.hearingRadius;
-    assertFiniteNonNegative(effectiveRadius, "speech radius");
-    for (const addressedId of addressedActorIds) this.requireActor(addressedId);
-    const occurrence: WorldOccurrence = {
-      id: `occurrence:${this.tickValue}:${this.occurrenceSequence++}`,
-      tick: this.tickValue,
-      kind: "speech",
-      actorId,
-      subjectId: null,
-      position: { ...actor.position },
-      radius: effectiveRadius,
-      summary: "speech",
-      text,
-      addressedActorIds: [...new Set(addressedActorIds)],
-    };
-    this.queueOccurrence(occurrence);
-    return structuredClone(occurrence);
+    if (this.residentExecutionAuthorities.has(actorId)) {
+      throw new Error(`direct speech bypass is disabled for recovered resident: ${actorId}`);
+    }
+    return this.emitSpeech(actorId, text, radius, addressedActorIds);
   }
 
   emitInteraction(actorId: string, subjectId: string | null, summary: string, radius = 520): WorldOccurrence {
+    if (this.residentExecutionAuthorities.has(actorId)) {
+      throw new Error(`synthetic interaction bypass is disabled for recovered resident: ${actorId}`);
+    }
     const actor = this.requireActor(actorId);
     if (subjectId !== null) assertNonEmptyWorldText(subjectId, "interaction subjectId");
     assertNonEmptyWorldText(summary, "interaction summary");
@@ -271,6 +354,9 @@ export class SpcWorldRuntime {
     this.updateSightPercepts();
 
     for (const [residentId, registered] of this.residentEntries()) {
+      // A recovered resident has exactly one execution authority. Its legacy
+      // activity automaton is not allowed to compete for bodily control.
+      if (this.residentExecutionAuthorities.has(residentId)) continue;
       if (this.tickValue % registered.runtime.profile.brainIntervalTicks !== registered.brainPhase) continue;
       const actor = this.requireActor(residentId);
       const visibleActors = this.visibleActorsForResident(actor, registered);
@@ -282,6 +368,13 @@ export class SpcWorldRuntime {
       this.applyResidentCommand(residentId, command);
     }
 
+    // Authority is checked at the last responsible moment before physical
+    // integration so a stale latched intent cannot move a resident for one
+    // extra World step while semantic/provider state changes asynchronously.
+    for (const residentId of [...this.residentExecutionAuthorities.keys()].sort((a, b) => a.localeCompare(b))) {
+      this.enforceResidentMotionAuthority(residentId);
+    }
+
     const motion = this.actorState.integrate(this.authoredOptions.fixedDeltaSeconds);
     this.lastMotionOutcomes = structuredClone(motion);
     for (const outcome of motion) {
@@ -290,6 +383,33 @@ export class SpcWorldRuntime {
       this.updateResidentMotionBlockage(resident.runtime, outcome);
       resident.runtime.syncCurrentRegion(this.regionAt(outcome.after), this.tickValue);
     }
+  }
+
+  private emitSpeech(
+    actorId: string,
+    text: string,
+    radius?: number,
+    addressedActorIds: readonly string[] = [],
+  ): WorldOccurrence {
+    const actor = this.requireActor(actorId);
+    assertNonEmptyWorldText(text, "speech text");
+    const effectiveRadius = radius ?? actor.hearingRadius;
+    assertFiniteNonNegative(effectiveRadius, "speech radius");
+    for (const addressedId of addressedActorIds) this.requireActor(addressedId);
+    const occurrence: WorldOccurrence = {
+      id: `occurrence:${this.tickValue}:${this.occurrenceSequence++}`,
+      tick: this.tickValue,
+      kind: "speech",
+      actorId,
+      subjectId: null,
+      position: { ...actor.position },
+      radius: effectiveRadius,
+      summary: "speech",
+      text,
+      addressedActorIds: [...new Set(addressedActorIds)],
+    };
+    this.queueOccurrence(occurrence);
+    return structuredClone(occurrence);
   }
 
   private updateResidentMotionBlockage(runtime: ResidentRuntime, outcome: ActorMotionOutcome): void {
@@ -403,7 +523,7 @@ export class SpcWorldRuntime {
       return;
     }
     this.actorState.setDesiredVelocity(actorId, { x: 0, y: 0 });
-    this.speak(actorId, command.text, command.radius, command.addressedActorIds);
+    this.emitSpeech(actorId, command.text, command.radius, command.addressedActorIds);
   }
 
   private queueOccurrence(occurrence: WorldOccurrence): void {
@@ -435,9 +555,55 @@ export class SpcWorldRuntime {
     return resident;
   }
 
+  private requireResidentExecutionAuthority(id: string): RegisteredExecutionAuthority {
+    const authority = this.residentExecutionAuthorities.get(id);
+    if (!authority) throw new Error(`resident execution authority is not claimed: ${id}`);
+    return authority;
+  }
+
   private residentEntries(): Array<[string, RegisteredResident]> {
     return [...this.residents.entries()].sort((a, b) => a[0].localeCompare(b[0]));
   }
+}
+
+function validateResidentWorldExecutionFrame(
+  frame: ResidentWorldExecutionFrame,
+  actorIds: readonly string[],
+): ResidentWorldExecutionFrame | null {
+  if (typeof frame.runId !== "string" || frame.runId.trim().length === 0) return null;
+  if (!Array.isArray(frame.effects) || frame.effects.length === 0) return null;
+
+  const knownActors = new Set(actorIds);
+  const seenKinds = new Set<ResidentWorldEffect["kind"]>();
+  const effects: ResidentWorldEffect[] = [];
+
+  for (const effect of frame.effects) {
+    if (seenKinds.has(effect.kind)) return null;
+    seenKinds.add(effect.kind);
+
+    if (effect.kind === "motion") {
+      if (!isFiniteVec2(effect.desiredVelocity)) return null;
+      effects.push({ kind: "motion", desiredVelocity: { ...effect.desiredVelocity } });
+      continue;
+    }
+
+    if (typeof effect.text !== "string" || effect.text.trim().length === 0) return null;
+    if (!Number.isFinite(effect.radius) || effect.radius < 0) return null;
+    const addressed = [...new Set<string>(effect.addressedActorIds)];
+    if (addressed.some((id) => id.trim().length === 0 || !knownActors.has(id))) return null;
+    effects.push({
+      kind: "speech",
+      text: effect.text.trim(),
+      radius: effect.radius,
+      addressedActorIds: addressed,
+    });
+  }
+
+  return { runId: frame.runId, effects };
+}
+
+function isFiniteVec2(value: Vec2): boolean {
+  return Number.isFinite(value.x) && Number.isFinite(value.y);
 }
 
 function directionalHearingCue(observer: Vec2, source: Vec2, range: number): PerceptSpatialCue {
