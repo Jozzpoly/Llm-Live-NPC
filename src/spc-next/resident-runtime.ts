@@ -262,8 +262,12 @@ export class ResidentRuntime {
     );
   }
 
-  applySemanticUpdates(proposal: ResidentCognitionProposal, tick: number): void {
-    this.mind.applySemanticUpdates(proposal, tick);
+  applySemanticUpdates(
+    proposal: ResidentCognitionProposal,
+    tick: number,
+    supportingPercepts: readonly ResidentPercept[] = [],
+  ): void {
+    this.mind.applySemanticUpdates(proposal, tick, supportingPercepts);
   }
 
   requeueCognitionBatch(batch: CognitionBatch): void {
