@@ -1,6 +1,5 @@
 import { ChunkSpatialIndex, type SpatialQueryStats } from "./chunk-spatial-index";
 import {
-  clamp,
   DEFAULT_RESIDENT_PROFILE,
   distanceSquared,
   normalizedDirection,
@@ -20,6 +19,16 @@ import {
   type WorldRegion,
 } from "./contracts";
 import { ResidentRuntime } from "./resident-runtime";
+import {
+  assertFiniteNonNegative,
+  clampWorldPosition,
+  limitVelocity,
+  resolveRegionAt,
+  validateActorState,
+  validateResidentActivity,
+  validateResidentProfile,
+  validateWorldOptions,
+} from "./world-invariants";
 
 interface RegisteredResident {
   runtime: ResidentRuntime;
@@ -46,12 +55,7 @@ export class SpcWorldRuntime {
   private readonly visibleByResident = new Map<string, Set<string>>();
 
   constructor(readonly options: SpcWorldOptions) {
-    if (options.fixedDeltaSeconds <= 0) throw new Error("fixedDeltaSeconds must be positive");
-    const regionIds = new Set<string>();
-    for (const region of options.regions) {
-      if (regionIds.has(region.id)) throw new Error(`duplicate region id: ${region.id}`);
-      regionIds.add(region.id);
-    }
+    validateWorldOptions(options);
     this.spatial = new ChunkSpatialIndex(options.chunkSize);
   }
 
@@ -60,7 +64,7 @@ export class SpcWorldRuntime {
   }
 
   addPlayer(id: string, position: Vec2, overrides: Partial<Omit<ActorState, "id" | "kind" | "position">> = {}): void {
-    this.addActor({
+    const actor: ActorState = {
       id,
       kind: "player",
       position: this.clampPosition(position),
@@ -69,7 +73,9 @@ export class SpcWorldRuntime {
       sightRadius: 520,
       maxSpeed: 140,
       ...overrides,
-    });
+    };
+    actor.velocity = limitVelocity(actor.velocity, actor.maxSpeed);
+    this.addActor(actor);
   }
 
   addResident(
@@ -84,7 +90,7 @@ export class SpcWorldRuntime {
       ...DEFAULT_RESIDENT_PROFILE,
       ...profileOverrides,
     };
-    if (profile.brainIntervalTicks < 1) throw new Error("brainIntervalTicks must be positive");
+    validateResidentProfile(profile);
     const boundedPosition = this.clampPosition(position);
     this.addActor({
       id,
@@ -115,6 +121,7 @@ export class SpcWorldRuntime {
 
   setResidentActivity(residentId: string, activity: ResidentActivity): void {
     const resident = this.requireResident(residentId);
+    validateResidentActivity(activity, this.options.bounds, (id) => this.actors.has(id));
     resident.runtime.setActivity(activity, this.tickValue);
     const actor = this.requireActor(residentId);
     actor.velocity = { x: 0, y: 0 };
@@ -122,13 +129,7 @@ export class SpcWorldRuntime {
 
   setActorVelocity(actorId: string, velocity: Vec2): void {
     const actor = this.requireActor(actorId);
-    const speed = Math.hypot(velocity.x, velocity.y);
-    if (speed > actor.maxSpeed && speed > 0) {
-      const scale = actor.maxSpeed / speed;
-      actor.velocity = { x: velocity.x * scale, y: velocity.y * scale };
-    } else {
-      actor.velocity = { ...velocity };
-    }
+    actor.velocity = limitVelocity(velocity, actor.maxSpeed);
   }
 
   speak(
@@ -138,6 +139,9 @@ export class SpcWorldRuntime {
     addressedActorIds: readonly string[] = [],
   ): WorldOccurrence {
     const actor = this.requireActor(actorId);
+    assertNonEmptyWorldText(text, "speech text");
+    const effectiveRadius = radius ?? actor.hearingRadius;
+    assertFiniteNonNegative(effectiveRadius, "speech radius");
     for (const addressedId of addressedActorIds) this.requireActor(addressedId);
     const occurrence: WorldOccurrence = {
       id: `occurrence:${this.tickValue}:${this.occurrenceSequence++}`,
@@ -146,7 +150,7 @@ export class SpcWorldRuntime {
       actorId,
       subjectId: null,
       position: { ...actor.position },
-      radius: radius ?? actor.hearingRadius,
+      radius: effectiveRadius,
       summary: "speech",
       text,
       addressedActorIds: [...new Set(addressedActorIds)],
@@ -157,6 +161,9 @@ export class SpcWorldRuntime {
 
   emitInteraction(actorId: string, subjectId: string | null, summary: string, radius = 520): WorldOccurrence {
     const actor = this.requireActor(actorId);
+    if (subjectId !== null) assertNonEmptyWorldText(subjectId, "interaction subjectId");
+    assertNonEmptyWorldText(summary, "interaction summary");
+    assertFiniteNonNegative(radius, "interaction radius");
     const occurrence: WorldOccurrence = {
       id: `occurrence:${this.tickValue}:${this.occurrenceSequence++}`,
       tick: this.tickValue,
@@ -174,7 +181,7 @@ export class SpcWorldRuntime {
   }
 
   step(steps = 1): void {
-    if (!Number.isInteger(steps) || steps < 1) throw new Error("steps must be a positive integer");
+    if (!Number.isSafeInteger(steps) || steps < 1) throw new Error("steps must be a positive safe integer");
     for (let i = 0; i < steps; i += 1) this.stepOnce();
   }
 
@@ -206,12 +213,7 @@ export class SpcWorldRuntime {
   }
 
   regionAt(position: Vec2): WorldRegion | null {
-    return this.options.regions.find((region) => (
-      position.x >= region.minX
-      && position.x <= region.maxX
-      && position.y >= region.minY
-      && position.y <= region.maxY
-    )) ?? null;
+    return resolveRegionAt(this.options, position);
   }
 
   private stepOnce(): void {
@@ -348,9 +350,12 @@ export class SpcWorldRuntime {
   }
 
   private addActor(actor: ActorState): void {
+    validateActorState(actor);
     if (this.actors.has(actor.id)) throw new Error(`actor already exists: ${actor.id}`);
-    this.actors.set(actor.id, structuredClone(actor));
-    this.spatial.upsert(actor.id, actor.position);
+    const stored = structuredClone(actor);
+    stored.velocity = limitVelocity(stored.velocity, stored.maxSpeed);
+    this.actors.set(actor.id, stored);
+    this.spatial.upsert(actor.id, stored.position);
   }
 
   private requireActor(id: string): ActorState {
@@ -366,15 +371,13 @@ export class SpcWorldRuntime {
   }
 
   private clampPosition(position: Vec2): Vec2 {
-    return {
-      x: clamp(position.x, this.options.bounds.minX, this.options.bounds.maxX),
-      y: clamp(position.y, this.options.bounds.minY, this.options.bounds.maxY),
-    };
+    return clampWorldPosition(position, this.options.bounds);
   }
 }
 
 function directionalHearingCue(observer: Vec2, source: Vec2, range: number): PerceptSpatialCue {
   const distance = Math.sqrt(distanceSquared(observer, source));
+  if (distance <= 1e-9) return { kind: "none" };
   const ratio = range <= 0 ? 0 : distance / range;
   const distanceBand: PerceptDistanceBand = ratio <= 0.33 ? "near" : ratio <= 0.66 ? "mid" : "far";
   const exactDirection = normalizedDirection(observer, source);
@@ -390,4 +393,8 @@ function quantizeDirection(direction: Vec2, sectors: number): Vec2 {
     x: Math.abs(Math.cos(quantized)) < 1e-12 ? 0 : Math.cos(quantized),
     y: Math.abs(Math.sin(quantized)) < 1e-12 ? 0 : Math.sin(quantized),
   };
+}
+
+function assertNonEmptyWorldText(value: string, label: string): void {
+  if (typeof value !== "string" || value.trim().length === 0) throw new Error(`${label} must be non-empty`);
 }
