@@ -18,13 +18,13 @@ function setupMatter(id = "matter.work") {
   return kernel;
 }
 
-function successFetch(course: string): SemanticFetch {
+function successFetch(course: string, localCapabilityId: string | null = null): SemanticFetch {
   return async (_input, init) => {
     const run = JSON.parse(String(init?.body ?? "{}")) as { providerRunId?: string };
     return new Response(JSON.stringify({
       ok: true,
       providerRunId: run.providerRunId,
-      decision: { semanticCourse: course },
+      decision: { semanticCourse: course, localCapabilityId },
     }), {
       status: 200,
       headers: { "content-type": "application/json" },
@@ -36,7 +36,7 @@ function mismatchFetch(): SemanticFetch {
   return async () => new Response(JSON.stringify({
     ok: true,
     providerRunId: "semantic-provider:forged",
-    decision: { semanticCourse: "forged answer" },
+    decision: { semanticCourse: "forged answer", localCapabilityId: null },
   }), { status: 200 });
 }
 
@@ -55,11 +55,11 @@ describe("ResidentSemanticLiveHost transport/admission boundary", () => {
     const arrival = decisionArrival(await host.requestMatter("matter.work"));
 
     expect(arrival).toMatchObject({
-      version: 1,
+      version: 2,
       arrivalId: "semantic-arrival:0",
       providerRunId: "semantic-provider:0",
       status: "decision",
-      decision: { semanticCourse: "search north workshop" },
+      decision: { semanticCourse: "search north workshop", localCapabilityId: null },
     });
     expect(kernel.matter("matter.work")).toEqual(before);
     expect(kernel.pendingSemanticProposals()).toHaveLength(1);
@@ -76,6 +76,7 @@ describe("ResidentSemanticLiveHost transport/admission boundary", () => {
           semanticCourse: "search north workshop",
           semanticRevision: before.semanticRevision + 1,
         },
+        localCapabilityId: null,
       },
     });
     expect(host.pendingProviderAttempts()).toBe(0);
@@ -88,6 +89,64 @@ describe("ResidentSemanticLiveHost transport/admission boundary", () => {
       arrivalStatus: "decision",
       outcomeStatus: "applied",
     })]);
+  });
+
+  it("carries an exact resident-offered local capability through arrival and admission without starting execution", async () => {
+    const kernel = setupMatter();
+    const capability = {
+      id: "local.search.remembered-area",
+      summary: "Search a remembered area using local embodied perception.",
+    } as const;
+    const host = new ResidentSemanticLiveHost(
+      kernel,
+      undefined,
+      "/semantic",
+      successFetch("search the remembered workshop area", capability.id),
+    );
+
+    const arrival = decisionArrival(await host.requestMatter("matter.work", {
+      localCapabilities: [capability],
+    }));
+    expect(arrival.decision.localCapabilityId).toBe(capability.id);
+    expect(kernel.matter("matter.work")?.activeRunId).toBeNull();
+
+    const admission = host.admit(arrival, 43);
+    expect(admission).toMatchObject({
+      status: "applied",
+      settlement: {
+        localCapabilityId: capability.id,
+        matter: {
+          semanticCourse: "search the remembered workshop area",
+          activeRunId: null,
+        },
+      },
+    });
+    expect(kernel.matter("matter.work")?.activeRunId).toBeNull();
+  });
+
+  it("fails closed when transport returns a capability the resident never offered", async () => {
+    const kernel = setupMatter();
+    const host = new ResidentSemanticLiveHost(
+      kernel,
+      undefined,
+      "/semantic",
+      successFetch("teleport to it", "local.teleport.hidden-object"),
+    );
+    const arrival = decisionArrival(await host.requestMatter("matter.work", {
+      localCapabilities: [{
+        id: "local.search.remembered-area",
+        summary: "Search a remembered area using local embodied perception.",
+      }],
+    }));
+
+    expect(kernel.matter("matter.work")?.semanticCourse).toBe("inspect workshop");
+    expect(host.admit(arrival, 44)).toMatchObject({
+      status: "provider_error",
+      code: "invalid_response",
+      abandonment: { status: "abandoned" },
+    });
+    expect(kernel.matter("matter.work")?.semanticCourse).toBe("inspect workshop");
+    expect(kernel.matter("matter.work")?.activeRunId).toBeNull();
   });
 
   it("evaluates staleness at admission, so new resident evidence after arrival defeats the old answer", async () => {

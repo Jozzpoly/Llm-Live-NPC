@@ -6,8 +6,9 @@ import {
   type SpcNextSemanticEnv,
 } from "./spc-next-semantic";
 
+const SEARCH_CAPABILITY_ID = "local.search.remembered-workshop-area";
 const run = {
-  version: 1,
+  version: 2,
   providerRunId: "semantic-provider:7",
   matter: {
     id: "matter.janek.missing-crate",
@@ -19,9 +20,13 @@ const run = {
     kind: "checked_absence",
     summary: "Checked the old workshop position; the familiar crate is not visible there now.",
   },
+  localCapabilities: [{
+    id: SEARCH_CAPABILITY_ID,
+    summary: "Search the remembered workshop area using local embodied movement and perception; this does not imply the crate is there.",
+  }],
 } as const;
 
-function responseBody(semanticCourse: string) {
+function responseBody(semanticCourse: string, localCapabilityId: string | null = null) {
   return {
     id: "resp_semantic_1",
     status: "completed",
@@ -31,7 +36,7 @@ function responseBody(semanticCourse: string) {
         type: "message",
         role: "assistant",
         status: "completed",
-        content: [{ type: "output_text", text: JSON.stringify({ semanticCourse }) }],
+        content: [{ type: "output_text", text: JSON.stringify({ semanticCourse, localCapabilityId }) }],
       },
     ],
     usage: { input_tokens: 42, output_tokens: 17, total_tokens: 59 },
@@ -43,7 +48,7 @@ afterEach(() => {
 });
 
 describe("SPC Next recovered semantic Worker", () => {
-  it("sanitizes the narrow resident matter run and rejects malformed evidence", () => {
+  it("sanitizes matter evidence plus bounded resident-offered capabilities and rejects malformed capability offers", () => {
     expect(sanitizeSpcNextSemanticRun(run)).toEqual(run);
     expect(sanitizeSpcNextSemanticRun({
       ...run,
@@ -53,21 +58,46 @@ describe("SPC Next recovered semantic Worker", () => {
       ...run,
       matter: { ...run.matter, semanticCourse: "" },
     })).toBeNull();
+    expect(sanitizeSpcNextSemanticRun({
+      ...run,
+      localCapabilities: [...run.localCapabilities, { ...run.localCapabilities[0] }],
+    })).toBeNull();
+    expect(sanitizeSpcNextSemanticRun({
+      ...run,
+      localCapabilities: [{ id: "bad capability id", summary: "invalid id" }],
+    })).toBeNull();
   });
 
-  it("extracts exactly one structured semantic course and rejects extra authority-shaped fields", () => {
-    expect(extractSpcNextSemanticDecision(responseBody("search the nearby workshop area"))).toEqual({
+  it("extracts one semantic course plus only an offered local capability and rejects extra authority-shaped fields", () => {
+    expect(extractSpcNextSemanticDecision(
+      responseBody("search the nearby workshop area", SEARCH_CAPABILITY_ID),
+      [SEARCH_CAPABILITY_ID],
+    )).toEqual({
       semanticCourse: "search the nearby workshop area",
+      localCapabilityId: SEARCH_CAPABILITY_ID,
     });
-    const extra = responseBody("search nearby");
+    expect(extractSpcNextSemanticDecision(
+      responseBody("wait and reconsider", null),
+      [SEARCH_CAPABILITY_ID],
+    )).toEqual({
+      semanticCourse: "wait and reconsider",
+      localCapabilityId: null,
+    });
+    expect(extractSpcNextSemanticDecision(
+      responseBody("teleport there", "local.teleport.hidden-object"),
+      [SEARCH_CAPABILITY_ID],
+    )).toBeNull();
+
+    const extra = responseBody("search nearby", SEARCH_CAPABILITY_ID);
     (extra.output[1] as { content: Array<{ type: string; text: string }> }).content[0]!.text = JSON.stringify({
       semanticCourse: "search nearby",
+      localCapabilityId: SEARCH_CAPABILITY_ID,
       activity: { kind: "travel" },
     });
-    expect(extractSpcNextSemanticDecision(extra)).toBeNull();
+    expect(extractSpcNextSemanticDecision(extra, [SEARCH_CAPABILITY_ID])).toBeNull();
   });
 
-  it("sends only matter plus semantic evidence upstream and returns the model decision with usage", async () => {
+  it("sends only matter, semantic evidence and resident-offered capabilities upstream and returns the selected offer with usage", async () => {
     const fetchMock = vi.fn(async (_url: string, init?: RequestInit) => {
       expect(init?.method).toBe("POST");
       const body = JSON.parse(String(init?.body));
@@ -83,12 +113,24 @@ describe("SPC Next recovered semantic Worker", () => {
         },
       });
       const modelInput = JSON.parse(body.input[0].content);
-      expect(modelInput).toEqual({ matter: run.matter, semanticEvidence: run.semanticEvidence });
+      expect(modelInput).toEqual({
+        matter: run.matter,
+        semanticEvidence: run.semanticEvidence,
+        localCapabilities: run.localCapabilities,
+      });
       expect(JSON.stringify(modelInput)).not.toContain(run.providerRunId);
       expect(body.text.format.schema.properties).toEqual({
         semanticCourse: { type: "string", minLength: 1, maxLength: 2_000 },
+        localCapabilityId: {
+          type: ["string", "null"],
+          enum: [SEARCH_CAPABILITY_ID, null],
+        },
       });
-      return new Response(JSON.stringify(responseBody("search the nearby workshop area before escalating")), {
+      expect(body.text.format.schema.required).toEqual(["semanticCourse", "localCapabilityId"]);
+      return new Response(JSON.stringify(responseBody(
+        "search the nearby workshop area before escalating",
+        SEARCH_CAPABILITY_ID,
+      )), {
         status: 200,
         headers: { "content-type": "application/json" },
       });
@@ -111,7 +153,10 @@ describe("SPC Next recovered semantic Worker", () => {
     await expect(response.json()).resolves.toMatchObject({
       ok: true,
       providerRunId: run.providerRunId,
-      decision: { semanticCourse: "search the nearby workshop area before escalating" },
+      decision: {
+        semanticCourse: "search the nearby workshop area before escalating",
+        localCapabilityId: SEARCH_CAPABILITY_ID,
+      },
       usage: {
         model: "gpt-5.6-luna",
         inputTokens: 42,

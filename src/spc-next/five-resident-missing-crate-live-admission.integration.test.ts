@@ -78,14 +78,20 @@ describe("missing-crate live semantic arrival/admission timing", () => {
     transportGate.resolve(new Response(JSON.stringify({
       ok: true,
       providerRunId,
-      decision: { semanticCourse: "search the nearby workshop area for the familiar crate" },
+      decision: {
+        semanticCourse: "search the nearby workshop area for the familiar crate",
+        localCapabilityId: null,
+      },
     }), { status: 200 }));
     const arrival = await transport;
 
     expect(arrival).toMatchObject({
       status: "decision",
       providerRunId,
-      decision: { semanticCourse: "search the nearby workshop area for the familiar crate" },
+      decision: {
+        semanticCourse: "search the nearby workshop area for the familiar crate",
+        localCapabilityId: null,
+      },
     });
     expect(host.pendingArrivals()).toBe(1);
     expect(host.pendingProviderAttempts()).toBe(1);
@@ -102,6 +108,7 @@ describe("missing-crate live semantic arrival/admission timing", () => {
       status: "applied",
       admissionTick,
       settlement: {
+        localCapabilityId: null,
         matter: {
           id: MATTER_ID,
           status: "active",

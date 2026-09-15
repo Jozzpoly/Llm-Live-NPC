@@ -15,25 +15,58 @@ function setupMatter(id = "matter.work") {
 }
 
 describe("ResidentSemanticProviderMembrane", () => {
-  it("serializes semantic content without serializing resident mutation authority", () => {
+  it("serializes semantic content and resident-offered capabilities without serializing mutation authority", () => {
     const kernel = setupMatter();
     const membrane = new ResidentSemanticProviderMembrane();
-    const run = membrane.prepare(kernel, "matter.work");
+    const run = membrane.prepare(kernel, "matter.work", [{
+      id: "local.search.remembered-area",
+      summary: "Search a remembered area using local embodied perception.",
+    }]);
     const cloned = structuredClone(run) as unknown as Record<string, unknown>;
 
     expect(cloned).toMatchObject({
-      version: 1,
+      version: 2,
       providerRunId: "semantic-provider:0",
       matter: { id: "matter.work", semanticCourse: "inspect workshop" },
       semanticEvidence: { id: "evidence:matter.work" },
+      localCapabilities: [{ id: "local.search.remembered-area" }],
     });
     expect(cloned).not.toHaveProperty("ticket");
     expect(cloned).not.toHaveProperty("semanticRevision");
     expect(JSON.stringify(cloned)).not.toContain("proposal:matter.work");
 
-    expect(membrane.settle(kernel, run.providerRunId, { semanticCourse: "inspect the north station" })).toMatchObject({
+    expect(membrane.settle(kernel, run.providerRunId, {
+      semanticCourse: "inspect the north station",
+      localCapabilityId: "local.search.remembered-area",
+    })).toMatchObject({
       status: "applied",
       matter: { semanticCourse: "inspect the north station" },
+      localCapabilityId: "local.search.remembered-area",
+    });
+  });
+
+  it("accepts only an exact resident-offered local capability and keeps invalid selection retryable", () => {
+    const kernel = setupMatter();
+    const membrane = new ResidentSemanticProviderMembrane();
+    const run = membrane.prepare(kernel, "matter.work", [{
+      id: "local.search.remembered-area",
+      summary: "Search a remembered area using local embodied perception.",
+    }]);
+
+    expect(membrane.settle(kernel, run.providerRunId, {
+      semanticCourse: "search elsewhere",
+      localCapabilityId: "local.teleport.to-hidden-object",
+    })).toEqual({ status: "invalid_output", canRetry: true });
+    expect(kernel.matter("matter.work")?.semanticCourse).toBe("inspect workshop");
+    expect(membrane.activeLocalRunCount()).toBe(1);
+
+    expect(membrane.settle(kernel, run.providerRunId, {
+      semanticCourse: "wait and reconsider",
+      localCapabilityId: null,
+    })).toMatchObject({
+      status: "applied",
+      localCapabilityId: null,
+      matter: { semanticCourse: "wait and reconsider" },
     });
   });
 
@@ -69,6 +102,7 @@ describe("ResidentSemanticProviderMembrane", () => {
     expect(membrane.settle(kernel, run.providerRunId, { semanticCourse: "valid retry" })).toMatchObject({
       status: "applied",
       matter: { semanticCourse: "valid retry" },
+      localCapabilityId: null,
     });
     expect(membrane.activeLocalRunCount()).toBe(0);
   });
