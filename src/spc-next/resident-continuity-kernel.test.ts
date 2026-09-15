@@ -242,4 +242,121 @@ describe("ResidentContinuityKernel recovery authority", () => {
     });
     expect(kernel.recentEvidenceSnapshot().filter((item) => item.id.includes("run.b"))).toEqual([]);
   });
+
+  it("keeps pending cognition authority explicit and scoped while unrelated matter changes happen", () => {
+    const kernel = new ResidentContinuityKernel();
+    openMatter(kernel, "matter.a", "evidence.a");
+    openMatter(kernel, "matter.b", "evidence.b");
+    const a = kernel.beginSemanticProposal("matter.a");
+    const b = kernel.beginSemanticProposal("matter.b");
+
+    kernel.recordEvidence(evidence("evidence.b.new", 5));
+    kernel.advanceSemanticContext("matter.b", "evidence.b.new");
+
+    expect(kernel.pendingSemanticProposals()).toEqual([a]);
+    expect(kernel.recentSemanticProposalRevocations()).toContainEqual(
+      expect.objectContaining({
+        ticket: b,
+        reason: "semantic_dependency_changed",
+        currentSemanticRevision: 2,
+      }),
+    );
+    expect(kernel.commitSemanticProposal(a, { semanticCourse: "a remains current" })).toMatchObject({
+      status: "applied",
+    });
+  });
+
+  it("does not revoke a same-revision semantic clarification merely because its matter is suspended", () => {
+    const kernel = new ResidentContinuityKernel();
+    openMatter(kernel, "matter.a", "evidence.a");
+    openMatter(kernel, "matter.interrupt", "evidence.interrupt");
+    const pending = kernel.beginSemanticProposal("matter.a");
+
+    kernel.suspendMatter("matter.a", "matter.interrupt");
+    expect(kernel.pendingSemanticProposals()).toEqual([pending]);
+    expect(kernel.commitSemanticProposal(pending, { semanticCourse: "clarified while waiting" })).toMatchObject({
+      status: "applied",
+      matter: { status: "suspended", semanticCourse: "clarified while waiting" },
+    });
+  });
+
+  it("revokes all same-matter siblings after one proposal wins while preserving the exact stale cause", () => {
+    const kernel = new ResidentContinuityKernel();
+    openMatter(kernel, "matter.a", "evidence.a");
+    const winner = kernel.beginSemanticProposal("matter.a");
+    const sibling = kernel.beginSemanticProposal("matter.a");
+
+    expect(kernel.commitSemanticProposal(winner, { semanticCourse: "winner" })).toMatchObject({ status: "applied" });
+    expect(kernel.pendingSemanticProposals()).toEqual([]);
+    expect(kernel.recentSemanticProposalRevocations()).toContainEqual(
+      expect.objectContaining({ ticket: sibling, reason: "sibling_committed" }),
+    );
+    expect(kernel.commitSemanticProposal(sibling, { semanticCourse: "too late" })).toEqual({
+      status: "rejected",
+      reason: "semantic_authority_stale",
+    });
+  });
+
+  it("terminalizes proposal authority for only the owning matter and preserves unrelated pending cognition", () => {
+    const kernel = new ResidentContinuityKernel();
+    openMatter(kernel, "matter.a", "evidence.a");
+    openMatter(kernel, "matter.b", "evidence.b");
+    const a = kernel.beginSemanticProposal("matter.a");
+    const b = kernel.beginSemanticProposal("matter.b");
+
+    kernel.cancelMatter("matter.a");
+
+    expect(kernel.pendingSemanticProposals()).toEqual([b]);
+    expect(kernel.recentSemanticProposalRevocations()).toContainEqual(
+      expect.objectContaining({ ticket: a, reason: "matter_terminal", matterStatus: "cancelled" }),
+    );
+    expect(kernel.commitSemanticProposal(a, { semanticCourse: "resurrect" })).toEqual({
+      status: "rejected",
+      reason: "matter_terminal",
+    });
+    expect(kernel.commitSemanticProposal(b, { semanticCourse: "still alive" })).toMatchObject({ status: "applied" });
+  });
+
+  it("abandons one exact provider attempt without changing matter meaning or disturbing a sibling", () => {
+    const kernel = new ResidentContinuityKernel();
+    const matter = openMatter(kernel, "matter.a", "evidence.a");
+    const abandoned = kernel.beginSemanticProposal("matter.a");
+    const sibling = kernel.beginSemanticProposal("matter.a");
+
+    expect(kernel.abandonSemanticProposal(abandoned)).toEqual({ status: "abandoned", ticket: abandoned });
+    expect(kernel.matter("matter.a")).toEqual(matter);
+    expect(kernel.pendingSemanticProposals()).toEqual([sibling]);
+    expect(kernel.recentSemanticProposalRevocations()).toContainEqual(
+      expect.objectContaining({ ticket: abandoned, reason: "abandoned" }),
+    );
+    expect(kernel.abandonSemanticProposal(abandoned)).toEqual({
+      status: "rejected",
+      reason: "proposal_not_pending",
+    });
+
+    expect(kernel.commitSemanticProposal(sibling, { semanticCourse: "sibling survives" })).toMatchObject({
+      status: "applied",
+    });
+  });
+
+  it("keeps proposal revocation history bounded without turning dead attempts back into live authority", () => {
+    const kernel = new ResidentContinuityKernel({ revocationLimit: 2 });
+    const tickets = [];
+    for (let index = 0; index < 3; index += 1) {
+      openMatter(kernel, `matter.${index}`, `evidence.${index}`);
+      const ticket = kernel.beginSemanticProposal(`matter.${index}`);
+      tickets.push(ticket);
+      kernel.cancelMatter(`matter.${index}`);
+    }
+
+    expect(kernel.pendingSemanticProposals()).toEqual([]);
+    expect(kernel.recentSemanticProposalRevocations().map((entry) => entry.ticket.attemptId)).toEqual([
+      tickets[1]!.attemptId,
+      tickets[2]!.attemptId,
+    ]);
+    expect(kernel.commitSemanticProposal(tickets[0]!, { semanticCourse: "too late" })).toEqual({
+      status: "rejected",
+      reason: "matter_terminal",
+    });
+  });
 });
