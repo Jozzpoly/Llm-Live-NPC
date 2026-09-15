@@ -93,8 +93,8 @@ describe("SPC Next cognition contract", () => {
     expect(parsed?.activityDirective.kind).toBe("replace");
   });
 
-  it("accepts the visible cognition reason itself as bounded semantic evidence", () => {
-    const parsed = parseResidentCognitionProposal({
+  it("treats cognition reasons as review triggers, not durable semantic evidence", () => {
+    const reasonOnly = parseResidentCognitionProposal({
       version: 1,
       activityDirective: { kind: "keep", reason: "keep listening" },
       beliefs: [{
@@ -106,7 +106,21 @@ describe("SPC Next cognition contract", () => {
       concerns: [],
       reviewAfterSeconds: 5,
     }, context());
-    expect(parsed?.beliefs[0]?.evidenceIds).toEqual(["reason:1"]);
+    expect(reasonOnly).toBeNull();
+
+    const grounded = parseResidentCognitionProposal({
+      version: 1,
+      activityDirective: { kind: "keep", reason: "keep listening" },
+      beliefs: [{
+        id: "belief:attention",
+        statement: "A direct request needs consideration.",
+        confidence: 0.8,
+        evidenceIds: ["percept:1"],
+      }],
+      concerns: [],
+      reviewAfterSeconds: 5,
+    }, context());
+    expect(grounded?.beliefs[0]?.evidenceIds).toEqual(["percept:1"]);
   });
 
   it("rejects unknown actors, unknown regions and fabricated evidence", () => {
