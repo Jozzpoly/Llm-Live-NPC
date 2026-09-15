@@ -3,7 +3,10 @@ import type { CognitionBatch } from "./contracts";
 import type { ResidentRuntime } from "./resident-runtime";
 import { SpcWorldRuntime } from "./spc-world-runtime";
 
-function worldWithResident(brainIntervalTicks = 1): { world: SpcWorldRuntime; resident: ResidentRuntime } {
+function worldWithResident(
+  brainIntervalTicks = 1,
+  limits: { memoryLimit?: number; traceLimit?: number } = {},
+): { world: SpcWorldRuntime; resident: ResidentRuntime } {
   const world = new SpcWorldRuntime({
     bounds: { minX: 0, minY: 0, maxX: 1_500, maxY: 1_000 },
     regions: [{ id: "plain", label: "Plain", minX: 0, minY: 0, maxX: 1_500, maxY: 1_000 }],
@@ -13,6 +16,7 @@ function worldWithResident(brainIntervalTicks = 1): { world: SpcWorldRuntime; re
   const resident = world.addResident("resident.mira", "Mira", { x: 500, y: 500 }, {
     sightRadius: 100,
     brainIntervalTicks,
+    ...limits,
   });
   return { world, resident };
 }
@@ -29,6 +33,24 @@ function sightPercepts(world: SpcWorldRuntime) {
 
 function actorSight(world: SpcWorldRuntime, actorId: string) {
   return sightPercepts(world).filter((percept) => percept.actorId === actorId);
+}
+
+function actorVisible(resident: ResidentRuntime, tick: number, actorId: string): boolean {
+  return privateContext(resident, tick).knownActors.find((actor) => actor.id === actorId)?.currentlyVisible ?? false;
+}
+
+function stepUntilVisibility(
+  world: SpcWorldRuntime,
+  resident: ResidentRuntime,
+  actorId: string,
+  expected: boolean,
+  maxSteps = 40,
+): void {
+  for (let step = 0; step < maxSteps; step += 1) {
+    if (actorVisible(resident, world.tick, actorId) === expected) return;
+    world.step();
+  }
+  expect(actorVisible(resident, world.tick, actorId), `visibility should become ${expected}`).toBe(expected);
 }
 
 describe("SPC perception continuity adversarial gate", () => {
@@ -100,5 +122,60 @@ describe("SPC perception continuity adversarial gate", () => {
     };
 
     expect(run(7)).toEqual(run(1));
+  });
+
+  it("keeps many real sight episodes monotonic and emits exactly one enter/exit boundary per episode", () => {
+    const { world, resident } = worldWithResident(3, { memoryLimit: 256, traceLimit: 512 });
+    world.addPlayer("player.jozz", { x: 590, y: 500 }, { maxSpeed: 300 });
+    world.step();
+    expect(actorVisible(resident, world.tick, "player.jozz")).toBe(true);
+
+    const episodes = 12;
+    for (let episode = 0; episode < episodes; episode += 1) {
+      world.setActorVelocity("player.jozz", { x: 300, y: 0 });
+      stepUntilVisibility(world, resident, "player.jozz", false, 12);
+      world.setActorVelocity("player.jozz", { x: 0, y: 0 });
+      world.step();
+
+      world.setActorVelocity("player.jozz", { x: -300, y: 0 });
+      stepUntilVisibility(world, resident, "player.jozz", true, 20);
+      world.setActorVelocity("player.jozz", { x: 0, y: 0 });
+      world.step();
+    }
+
+    const boundaries = actorSight(world, "player.jozz")
+      .filter((percept) => percept.phenomenon === "actor_sight_enter" || percept.phenomenon === "actor_sight_exit");
+    expect(boundaries.filter((p) => p.phenomenon === "actor_sight_enter")).toHaveLength(episodes + 1);
+    expect(boundaries.filter((p) => p.phenomenon === "actor_sight_exit")).toHaveLength(episodes);
+    expect(boundaries.map((p) => p.phenomenon)).toEqual(Array.from({ length: episodes * 2 + 1 }, (_, index) =>
+      index % 2 === 0 ? "actor_sight_enter" : "actor_sight_exit"));
+    for (let index = 1; index < boundaries.length; index += 1) {
+      expect(boundaries[index]!.tick).toBeGreaterThan(boundaries[index - 1]!.tick);
+    }
+    expect(actorVisible(resident, world.tick, "player.jozz")).toBe(true);
+  });
+
+  it("keeps resident percept memory and causal trace bounded under prolonged sight churn", () => {
+    const memoryLimit = 16;
+    const traceLimit = 24;
+    const { world, resident } = worldWithResident(5, { memoryLimit, traceLimit });
+    world.addPlayer("player.jozz", { x: 590, y: 500 }, { maxSpeed: 300 });
+    world.step();
+
+    for (let episode = 0; episode < 40; episode += 1) {
+      world.setActorVelocity("player.jozz", { x: 300, y: 0 });
+      stepUntilVisibility(world, resident, "player.jozz", false, 12);
+      world.setActorVelocity("player.jozz", { x: -300, y: 0 });
+      stepUntilVisibility(world, resident, "player.jozz", true, 20);
+    }
+
+    const diagnostics = world.residentDiagnostics("resident.mira");
+    expect(diagnostics.recentPercepts.length).toBeLessThanOrEqual(memoryLimit);
+    expect(diagnostics.trace.length).toBeLessThanOrEqual(traceLimit);
+    const actor = privateContext(resident, world.tick).knownActors.find((candidate) => candidate.id === "player.jozz")!;
+    expect(actor.currentlyVisible).toBe(true);
+    expect(actor.lastKnownPosition).not.toBeNull();
+    expect(Number.isFinite(actor.lastKnownPosition!.x)).toBe(true);
+    expect(Number.isFinite(actor.lastKnownPosition!.y)).toBe(true);
   });
 });
