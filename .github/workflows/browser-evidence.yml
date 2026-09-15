@@ -6,6 +6,7 @@ on:
       - "src/**"
       - "worker/**"
       - "scripts/spc-browser-evidence.mjs"
+      - "scripts/spc-browser-manual-control-evidence.mjs"
       - "scripts/analyze-spc-browser-evidence.mjs"
       - "index.html"
       - "package.json"
@@ -77,6 +78,14 @@ jobs:
           EVIDENCE_OUTPUT_DIR: evidence/browser
         run: node scripts/analyze-spc-browser-evidence.mjs
 
+      - name: Qualify manual World control
+        if: success()
+        env:
+          EVIDENCE_BASE_URL: http://127.0.0.1:4173
+          MANUAL_CONTROL_OUTPUT: evidence/browser/manual-control.json
+          SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: node scripts/spc-browser-manual-control-evidence.mjs
+
       - name: Print evidence summary
         if: always()
         shell: bash
@@ -91,6 +100,12 @@ jobs:
           fi
           echo "--- Derived analysis ---"
           cat evidence/browser/analysis.md 2>/dev/null || true
+          echo "--- Manual World control ---"
+          if [ -f evidence/browser/manual-control.json ]; then
+            cat evidence/browser/manual-control.json
+          else
+            echo "manual-control.json missing"
+          fi
 
       - name: Upload browser evidence artifact
         if: always()
