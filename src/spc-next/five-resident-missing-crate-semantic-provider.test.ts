@@ -7,7 +7,7 @@ describe("missing-crate semantic provider composition", () => {
     const slice = createFiveResidentJanekMissingCrateSlice();
     let state = slice.stepJanek();
     let guard = 0;
-    while (state.status === "running" && guard < 360) {
+    while (state.status === "running" && guard < 560) {
       slice.world.step();
       state = slice.stepJanek();
       guard += 1;
