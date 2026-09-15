@@ -93,4 +93,29 @@ describe("SightContinuityTracker", () => {
     expect(() => tracker.update(1, [actor(0), actor(1)])).toThrow(/duplicate/);
     expect(() => tracker.update(Number.NaN, [])).toThrow(/safe integer/);
   });
+
+  it("treats sight hysteresis policy as validated sensor configuration rather than unchecked tuning", () => {
+    expect(() => new SightContinuityTracker(1 / 60, {
+      reportDistance: 24,
+      maxUnreportedSeconds: 1,
+      releaseMargin: -1,
+    })).toThrow(/releaseMargin/);
+    expect(() => new SightContinuityTracker(1 / 60, {
+      reportDistance: 24,
+      maxUnreportedSeconds: 1,
+      releaseMargin: Number.NaN,
+    })).toThrow(/releaseMargin/);
+    expect(() => new SightContinuityTracker(1 / 60, {
+      reportDistance: 24,
+      maxUnreportedSeconds: 1,
+      releaseMargin: Number.POSITIVE_INFINITY,
+    })).toThrow(/releaseMargin/);
+
+    const exactBoundaryPolicy = new SightContinuityTracker(1 / 60, {
+      reportDistance: 24,
+      maxUnreportedSeconds: 1,
+      releaseMargin: 0,
+    });
+    expect(exactBoundaryPolicy.policy.releaseMargin).toBe(0);
+  });
 });
