@@ -20,6 +20,7 @@ import {
 } from "./contracts";
 import { ResidentRuntime } from "./resident-runtime";
 import { SightContinuityTracker } from "./sight-continuity";
+import { SightGeometry } from "./sight-geometry";
 import {
   assertFiniteNonNegative,
   clampWorldPosition,
@@ -52,12 +53,14 @@ export class SpcWorldRuntime {
   private readonly actors = new Map<string, ActorState>();
   private readonly residents = new Map<string, RegisteredResident>();
   private readonly spatial: ChunkSpatialIndex;
+  private readonly sightGeometry: SightGeometry;
   private pendingOccurrences: WorldOccurrence[] = [];
   private readonly recentOccurrences: WorldOccurrence[] = [];
 
   constructor(readonly options: SpcWorldOptions) {
     validateWorldOptions(options);
     this.spatial = new ChunkSpatialIndex(options.chunkSize);
+    this.sightGeometry = new SightGeometry(options.sightBlockers ?? []);
   }
 
   get tick(): number {
@@ -273,7 +276,8 @@ export class SpcWorldRuntime {
         }
       } else {
         const range = Math.min(occurrence.radius, residentActor.sightRadius);
-        if (distanceSq <= range * range) {
+        if (distanceSq <= range * range
+          && this.sightGeometry.hasLineOfSight(residentActor.position, occurrence.position)) {
           modality = "sight";
           spatial = { kind: "exact", position: { ...occurrence.position } };
         }
@@ -330,7 +334,8 @@ export class SpcWorldRuntime {
       .map((id) => this.requireActor(id))
       .filter((candidate) => {
         const radius = retained.has(candidate.id) ? releaseRadius : observer.sightRadius;
-        return distanceSquared(observer.position, candidate.position) <= radius ** 2;
+        if (distanceSquared(observer.position, candidate.position) > radius ** 2) return false;
+        return this.sightGeometry.hasLineOfSight(observer.position, candidate.position);
       })
       .map((candidate) => ({
         id: candidate.id,
