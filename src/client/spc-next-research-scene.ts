@@ -6,11 +6,16 @@ import type {
   WorldOccurrence,
   WorldPublicSnapshot,
 } from "../spc-next/contracts";
-import { createFiveResidentJanekMaterialSlice } from "../spc-next/five-resident-material-slice";
 import {
   captureSpcCanonicalEvidenceSnapshot,
   type SpcCanonicalEvidenceSnapshotV1,
 } from "../evidence/spc-next-canonical-evidence-snapshot";
+import {
+  createSpcNextResearchScenario,
+  researchScenarioKindFromSearch,
+  type SpcNextResearchScenario,
+  type SpcNextResearchScenarioKind,
+} from "./spc-next-research-scenario";
 import {
   projectEpistemicActors,
   projectMotionFeedback,
@@ -19,9 +24,6 @@ import {
 } from "./spc-next-research-projection";
 
 const PLAYER_ID = "player.jozz";
-const JANEK_ID = "resident.janek";
-const JANEK_DELIVERY_MATTER_ID = "matter.janek.crate-delivery";
-const JANEK_EVIDENCE_SCENARIO_ID = "browser-baseline-delivery";
 const FIXED_STEP_MS = 1000 / 60;
 const MAX_FRAME_DELTA_MS = 100;
 const SPEECH_LIFETIME_TICKS = 240;
@@ -62,14 +64,16 @@ export interface SpcNextResearchFrame {
 export interface SpcNextResearchSceneOptions {
   /** Evidence-only control: Phaser may render, but World advances only through stepEvidenceWorld(). */
   manualWorldControl?: boolean;
+  /** Explicit override for tests/hosts; evidence browser may otherwise select through ?scenario=. */
+  scenarioKind?: SpcNextResearchScenarioKind;
 }
 
 type FrameSink = (frame: SpcNextResearchFrame) => void;
 
 export class SpcNextResearchScene extends Phaser.Scene {
-  private readonly janekSlice = createFiveResidentJanekMaterialSlice();
-  private readonly world = this.janekSlice.world;
-  private snapshot: WorldPublicSnapshot = this.world.publicSnapshot();
+  private readonly scenario: SpcNextResearchScenario;
+  private readonly world: SpcNextResearchScenario["world"];
+  private snapshot: WorldPublicSnapshot;
   private readonly actorViews = new Map<string, ActorView>();
   private readonly speechViews = new Map<string, SpeechView>();
   private readonly materialLabels = new Map<string, Phaser.GameObjects.Text>();
@@ -92,6 +96,11 @@ export class SpcNextResearchScene extends Phaser.Scene {
   ) {
     super({ key: "spc-next-research" });
     this.manualWorldControl = options.manualWorldControl ?? false;
+    const scenarioKind = options.scenarioKind
+      ?? (this.manualWorldControl ? researchScenarioKindFromSearch(location.search) : "baseline-delivery");
+    this.scenario = createSpcNextResearchScenario(scenarioKind);
+    this.world = this.scenario.world;
+    this.snapshot = this.world.publicSnapshot();
   }
 
   create(): void {
@@ -213,13 +222,13 @@ export class SpcNextResearchScene extends Phaser.Scene {
     }
     if (!this.created) throw new Error("SPC research scene is not ready for canonical evidence capture");
     return captureSpcCanonicalEvidenceSnapshot({
-      scenarioId: JANEK_EVIDENCE_SCENARIO_ID,
-      residentId: JANEK_ID,
-      matterId: JANEK_DELIVERY_MATTER_ID,
+      scenarioId: this.scenario.evidenceScenarioId,
+      residentId: this.scenario.residentId,
+      matterId: this.scenario.matterId,
       world: this.world,
-      kernel: this.janekSlice.kernel,
-      materialKnowledge: this.janekSlice.materialKnowledge,
-      authority: this.janekSlice.authority,
+      kernel: this.scenario.kernel,
+      materialKnowledge: this.scenario.materialKnowledge,
+      authority: this.scenario.authority,
     });
   }
 
@@ -251,8 +260,7 @@ export class SpcNextResearchScene extends Phaser.Scene {
 
   private stepWorld(): void {
     this.applyPlayerControl();
-    this.janekSlice.stepJanek();
-    this.world.step();
+    this.scenario.advanceOneWorldTick();
     this.snapshot = this.world.publicSnapshot();
     this.captureNewSpeechOccurrences();
   }
