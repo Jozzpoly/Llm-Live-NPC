@@ -20,11 +20,13 @@ export class ChunkSpatialIndex {
 
   constructor(readonly chunkSize: number) {
     if (!Number.isFinite(chunkSize) || chunkSize <= 0) {
-      throw new Error("chunkSize must be positive");
+      throw new Error("chunkSize must be positive and finite");
     }
   }
 
   upsert(id: string, position: Vec2): void {
+    assertIndexId(id);
+    assertFinitePosition(position);
     const cellKey = this.cellKey(position);
     const previous = this.indexed.get(id);
     if (previous?.cellKey === cellKey) {
@@ -48,6 +50,7 @@ export class ChunkSpatialIndex {
   }
 
   remove(id: string): void {
+    assertIndexId(id);
     const previous = this.indexed.get(id);
     if (!previous) return;
     const cell = this.cells.get(previous.cellKey);
@@ -57,7 +60,8 @@ export class ChunkSpatialIndex {
   }
 
   queryRadius(center: Vec2, radius: number): string[] {
-    if (!Number.isFinite(radius) || radius < 0) throw new Error("radius must be non-negative");
+    assertFinitePosition(center);
+    if (!Number.isFinite(radius) || radius < 0) throw new Error("radius must be finite and non-negative");
 
     const minX = Math.floor((center.x - radius) / this.chunkSize);
     const maxX = Math.floor((center.x + radius) / this.chunkSize);
@@ -87,6 +91,7 @@ export class ChunkSpatialIndex {
     this.totalQueries += 1;
     this.lastVisitedCellCount = visitedCellCount;
     this.lastCandidateCount = candidateCount;
+    result.sort((a, b) => a.localeCompare(b));
     return result;
   }
 
@@ -100,5 +105,15 @@ export class ChunkSpatialIndex {
 
   private cellKey(position: Vec2): string {
     return `${Math.floor(position.x / this.chunkSize)}:${Math.floor(position.y / this.chunkSize)}`;
+  }
+}
+
+function assertIndexId(id: string): void {
+  if (typeof id !== "string" || id.trim().length === 0) throw new Error("spatial id must be non-empty");
+}
+
+function assertFinitePosition(position: Vec2): void {
+  if (!Number.isFinite(position.x) || !Number.isFinite(position.y)) {
+    throw new Error("spatial position must be finite");
   }
 }
