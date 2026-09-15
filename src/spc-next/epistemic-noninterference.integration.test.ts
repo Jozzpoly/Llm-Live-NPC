@@ -8,6 +8,7 @@ import {
 const MATTER_ID = "matter.janek.missing-crate";
 const CRATE_ID = "crate.workshop.01";
 const JANEK_ID = "resident.janek";
+const MAX_RESIDENT_STEPS = 520;
 
 describe("epistemic non-interference", () => {
   it("keeps Janek causally equivalent while hidden crate truth differs but his acquired history is identical", () => {
@@ -27,13 +28,15 @@ describe("epistemic non-interference", () => {
     let stepA = nearerHiddenTruth.stepJanek();
     let stepB = fartherHiddenTruth.stepJanek();
     let guard = 0;
+    let sawInspect = false;
 
-    while (guard < 360) {
+    while (guard < MAX_RESIDENT_STEPS) {
       expect(stepA).toEqual(stepB);
       expect(janekState(nearerHiddenTruth)).toEqual(janekState(fartherHiddenTruth));
       expect(nearerHiddenTruth.materialKnowledge.snapshot()).toEqual(fartherHiddenTruth.materialKnowledge.snapshot());
       expect(nearerHiddenTruth.kernel.matter(MATTER_ID)).toEqual(fartherHiddenTruth.kernel.matter(MATTER_ID));
 
+      if (stepA.status === "running" && stepA.local.phase === "inspect") sawInspect = true;
       if (stepA.status !== "running" || stepB.status !== "running") break;
 
       nearerHiddenTruth.world.step();
@@ -43,16 +46,17 @@ describe("epistemic non-interference", () => {
       guard += 1;
     }
 
-    expect(guard).toBeLessThan(360);
+    expect(guard).toBeLessThan(MAX_RESIDENT_STEPS);
+    expect(sawInspect).toBe(true);
     expect(stepA.status).toBe("semantic_pressure");
     expect(stepB.status).toBe("semantic_pressure");
     expect(stepA).toEqual(stepB);
 
     // Hidden truth remains different even though the resident-side causal chain is
-    // the same. If a future implementation starts steering toward either hidden
-    // position, this relational property will fail without needing to know where
-    // the bug entered the pipeline.
+    // the same. Local inspection must not become a disguised object-id oracle.
     expect(freeCratePosition(nearerHiddenTruth)).not.toEqual(freeCratePosition(fartherHiddenTruth));
+    expect(nearerHiddenTruth.authority.recentActionFacts()).toEqual([]);
+    expect(fartherHiddenTruth.authority.recentActionFacts()).toEqual([]);
     expect(nearerHiddenTruth.semanticPressureEvidence()).toEqual(fartherHiddenTruth.semanticPressureEvidence());
     expect(nearerHiddenTruth.blockedRunReconciliation()).toEqual(fartherHiddenTruth.blockedRunReconciliation());
   });
