@@ -71,6 +71,36 @@ describe("SPC Next cognition private-context trust boundary", () => {
     expect(parsed?.currentActivity).not.toHaveProperty("routeWaypoints");
   });
 
+  it("accepts anonymous heard speech without reconstructing a speaker identity", () => {
+    const context = validContext();
+    const percept = (context.recentPercepts as Array<Record<string, unknown>>)[0]!;
+    percept.actorId = null;
+    percept.text = "Mira, chodź tutaj";
+    context.knownActors = [];
+
+    const parsed = sanitizeSpcNextContext(context);
+    expect(parsed).not.toBeNull();
+    expect(parsed?.recentPercepts[0]).toMatchObject({
+      phenomenon: "speech",
+      modality: "hearing",
+      actorId: null,
+      subjectId: null,
+      text: "Mira, chodź tutaj",
+      addressed: true,
+      spatial: { kind: "directional", direction: { x: 1, y: 0 }, distanceBand: "near" },
+    });
+    expect(parsed?.knownActors).toEqual([]);
+  });
+
+  it("does not let anonymous speech smuggle a subject identity", () => {
+    const context = validContext();
+    const percept = (context.recentPercepts as Array<Record<string, unknown>>)[0]!;
+    percept.actorId = null;
+    percept.subjectId = "player.jozz";
+    context.knownActors = [];
+    expect(sanitizeSpcNextContext(context)).toBeNull();
+  });
+
   it("rejects exact coordinates smuggled through hearing", () => {
     const context = validContext();
     const percept = (context.recentPercepts as Array<Record<string, unknown>>)[0]!;
