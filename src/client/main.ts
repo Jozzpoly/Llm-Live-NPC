@@ -1,3 +1,5 @@
+export {};
+
 const params = new URLSearchParams(location.search);
 
 if (params.get("spc") === "1") {
