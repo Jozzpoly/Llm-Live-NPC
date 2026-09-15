@@ -178,4 +178,68 @@ describe("ResidentContinuityKernel recovery authority", () => {
     kernel.cancelMatter("matter.b");
     expect(kernel.resumeMatter("matter.a")).toBe(true);
   });
+
+  it("joins a factual task outcome back to the exact matter without pretending that semantic meaning is resolved", () => {
+    const kernel = new ResidentContinuityKernel();
+    openMatter(kernel, "matter.work", "evidence.work", "inspect the workshop station");
+    const binding = kernel.bindRun({ matterId: "matter.work", taskId: "task.inspect", runId: "run.inspect" });
+
+    const result = kernel.reconcileRunOutcome({
+      runId: binding.runId,
+      tick: 20,
+      status: "succeeded",
+      summary: "station inspection completed physically",
+    });
+
+    expect(result).toMatchObject({
+      status: "recorded",
+      binding,
+      evidence: {
+        id: "task-outcome:run.inspect:20",
+        kind: "task_outcome",
+        summary: "succeeded: station inspection completed physically",
+      },
+      matter: {
+        id: "matter.work",
+        status: "active",
+        semanticCourse: "inspect the workshop station",
+        activeRunId: null,
+        lastOutcomeEvidenceId: "task-outcome:run.inspect:20",
+      },
+    });
+    expect(kernel.runBinding(binding.runId)).toBeNull();
+    expect(kernel.matter("matter.work")?.status).toBe("active");
+  });
+
+  it("records one factual outcome exactly once and does not manufacture outcomes during neutral retirement", () => {
+    const kernel = new ResidentContinuityKernel();
+    openMatter(kernel, "matter.a", "evidence.a");
+    kernel.bindRun({ matterId: "matter.a", taskId: "task.a", runId: "run.a" });
+
+    expect(kernel.reconcileRunOutcome({
+      runId: "run.a",
+      tick: 10,
+      status: "blocked",
+      summary: "authoritative World action was blocked",
+    }).status).toBe("recorded");
+
+    expect(kernel.reconcileRunOutcome({
+      runId: "run.a",
+      tick: 11,
+      status: "succeeded",
+      summary: "duplicate late claim",
+    })).toEqual({ status: "rejected", reason: "run_missing" });
+
+    openMatter(kernel, "matter.b", "evidence.b");
+    kernel.bindRun({ matterId: "matter.b", taskId: "task.b", runId: "run.b" });
+    kernel.cancelMatter("matter.b");
+    kernel.retireRun("run.b");
+
+    expect(kernel.matter("matter.b")).toMatchObject({
+      status: "cancelled",
+      activeRunId: null,
+      lastOutcomeEvidenceId: null,
+    });
+    expect(kernel.recentEvidenceSnapshot().filter((item) => item.id.includes("run.b"))).toEqual([]);
+  });
 });
