@@ -1,5 +1,6 @@
 import * as Phaser from "phaser";
 import type {
+  ActorMotionOutcome,
   ActorState,
   ResidentDiagnostics,
   WorldOccurrence,
@@ -11,6 +12,7 @@ import {
 } from "../spc-next/five-resident-region";
 import {
   projectEpistemicActors,
+  projectMotionFeedback,
   projectRecentDirectionalHearing,
   resolveActivityTarget,
 } from "./spc-next-research-projection";
@@ -44,6 +46,7 @@ type MovementKeys = Record<"W" | "A" | "S" | "D" | "R" | "F" | "P" | "O" | "H" |
 export interface SpcNextResearchFrame {
   snapshot: WorldPublicSnapshot;
   recentOccurrences: readonly WorldOccurrence[];
+  motionOutcomes: readonly ActorMotionOutcome[];
   selectedResidentId: string | null;
   selectedDiagnostics: ResidentDiagnostics | null;
   selectedRegionId: string | null;
@@ -198,7 +201,7 @@ export class SpcNextResearchScene extends Phaser.Scene {
       x /= length;
       y /= length;
     }
-    this.world.setActorVelocity(PLAYER_ID, { x: x * PLAYER_SPEED, y: y * PLAYER_SPEED });
+    this.world.setActorMotionIntent(PLAYER_ID, { x: x * PLAYER_SPEED, y: y * PLAYER_SPEED });
   }
 
   private handleResearchShortcuts(): void {
@@ -378,18 +381,41 @@ export class SpcNextResearchScene extends Phaser.Scene {
       this.overlayGraphics.fillCircle(target.x, target.y, 7 / zoom);
     }
 
-    const velocityLength = Math.hypot(actor.velocity.x, actor.velocity.y);
-    if (velocityLength > 1e-6) {
-      const scale = 0.5;
-      drawArrow(
-        this.overlayGraphics,
-        actor.position.x,
-        actor.position.y,
-        actor.position.x + actor.velocity.x * scale,
-        actor.position.y + actor.velocity.y * scale,
-        0xa6e3a1,
-        zoom,
-      );
+    const worldDiagnostics = this.world.diagnostics();
+    const motion = projectMotionFeedback(worldDiagnostics.lastMotionOutcomes, actor.id);
+    if (motion) {
+      const intentSpeed = Math.hypot(motion.desiredVelocity.x, motion.desiredVelocity.y);
+      const resolvedSpeed = Math.hypot(motion.resolvedVelocity.x, motion.resolvedVelocity.y);
+      const scale = 0.55;
+      if (intentSpeed > 1e-6) {
+        drawArrow(
+          this.overlayGraphics,
+          actor.position.x,
+          actor.position.y,
+          actor.position.x + motion.desiredVelocity.x * scale,
+          actor.position.y + motion.desiredVelocity.y * scale,
+          0xb98be8,
+          zoom,
+          0.78,
+        );
+      }
+      if (resolvedSpeed > 1e-6) {
+        drawArrow(
+          this.overlayGraphics,
+          actor.position.x,
+          actor.position.y,
+          actor.position.x + motion.resolvedVelocity.x * scale,
+          actor.position.y + motion.resolvedVelocity.y * scale,
+          0xa6e3a1,
+          zoom,
+          0.96,
+        );
+      }
+      if (motion.resolution !== "full") {
+        const color = motion.resolution === "blocked" ? 0xef7d6d : 0xe7b36a;
+        this.overlayGraphics.lineStyle(3 / zoom, color, 0.92);
+        this.overlayGraphics.strokeCircle(actor.position.x, actor.position.y, 27 / zoom);
+      }
     }
 
     const diagnostics = this.world.residentDiagnostics(this.selectedResidentId);
@@ -423,6 +449,7 @@ export class SpcNextResearchScene extends Phaser.Scene {
         actor.position.y + marker.direction.y * length,
         0xe0a96e,
         zoom,
+        0.82,
       );
     }
   }
@@ -439,9 +466,11 @@ export class SpcNextResearchScene extends Phaser.Scene {
     const selectedActor = this.selectedResidentId
       ? this.snapshot.actors.find((actor) => actor.id === this.selectedResidentId) ?? null
       : null;
+    const diagnostics = this.world.diagnostics();
     return {
       snapshot: structuredClone(this.snapshot),
-      recentOccurrences: this.world.diagnostics().recentOccurrences.slice(-12),
+      recentOccurrences: diagnostics.recentOccurrences.slice(-12),
+      motionOutcomes: diagnostics.lastMotionOutcomes,
       selectedResidentId: this.selectedResidentId,
       selectedDiagnostics,
       selectedRegionId: selectedActor ? this.world.regionAt(selectedActor.position)?.id ?? null : null,
@@ -469,8 +498,9 @@ function drawArrow(
   toY: number,
   color: number,
   zoom: number,
+  alpha: number,
 ): void {
-  graphics.lineStyle(2 / zoom, color, 0.82);
+  graphics.lineStyle(2 / zoom, color, alpha);
   graphics.lineBetween(fromX, fromY, toX, toY);
   const angle = Math.atan2(toY - fromY, toX - fromX);
   const head = 11 / zoom;

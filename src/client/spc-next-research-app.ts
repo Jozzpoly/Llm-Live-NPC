@@ -71,6 +71,9 @@ function renderPanel(frame: SpcNextResearchFrame): void {
   const role = frame.selectedResidentId
     ? FIVE_RESIDENT_ROLE_PRESSURES.find((candidate) => candidate.residentId === frame.selectedResidentId) ?? null
     : null;
+  const motion = frame.selectedResidentId
+    ? frame.motionOutcomes.find((candidate) => candidate.actorId === frame.selectedResidentId) ?? null
+    : null;
 
   const residentButtons = frame.snapshot.residents.map((resident) => {
     const active = resident.id === frame.selectedResidentId ? " is-active" : "";
@@ -90,8 +93,10 @@ function renderPanel(frame: SpcNextResearchFrame): void {
       <span class="spc-log-sub">${escapeHtml(occurrence.text ?? occurrence.summary)}</span>
     </li>`).join("") || '<li class="spc-empty">Brak publicznych occurrences.</li>';
 
-  const speed = selectedActor ? Math.hypot(selectedActor.velocity.x, selectedActor.velocity.y) : 0;
+  const resolvedSpeed = selectedActor ? Math.hypot(selectedActor.velocity.x, selectedActor.velocity.y) : 0;
+  const intentSpeed = motion ? Math.hypot(motion.desiredVelocity.x, motion.desiredVelocity.y) : 0;
   const activity = selected?.publicState.activity ?? null;
+  const constraintLabel = motion?.constraints.length ? motion.constraints.join(" + ") : "—";
 
   debugNode.innerHTML = `
     <div class="workspace-header spc-research-header">
@@ -125,7 +130,10 @@ function renderPanel(frame: SpcNextResearchFrame): void {
           <dl class="spc-facts">
             <div><dt>region</dt><dd>${escapeHtml(frame.selectedRegionId ?? "—")}</dd></div>
             <div><dt>activity</dt><dd>${escapeHtml(activity?.kind ?? "—")}</dd></div>
-            <div><dt>physical velocity</dt><dd>${speed.toFixed(1)}</dd></div>
+            <div><dt>motion intent</dt><dd>${intentSpeed.toFixed(1)}</dd></div>
+            <div><dt>resolved velocity</dt><dd>${resolvedSpeed.toFixed(1)}</dd></div>
+            <div><dt>resolution</dt><dd class="motion-${motion?.resolution ?? "none"}">${escapeHtml(motion?.resolution ?? "—")}</dd></div>
+            <div><dt>constraint</dt><dd>${escapeHtml(constraintLabel)}</dd></div>
             <div><dt>cognition queue</dt><dd>${selected.publicState.pendingCognitionReasonCount}</dd></div>
             <div><dt>camera zoom</dt><dd>${frame.cameraZoom.toFixed(2)}×</dd></div>
           </dl>
@@ -138,6 +146,9 @@ function renderPanel(frame: SpcNextResearchFrame): void {
         <p><i class="legend-dot sight"></i> sight reach / dokładny ślad wzrokowy</p>
         <p><i class="legend-dot hearing"></i> hearing reach / kierunkowy ślad dźwięku</p>
         <p><i class="legend-dot target"></i> public activity target</p>
+        <p><i class="legend-dot intent"></i> motion intent — czego controller próbuje</p>
+        <p><i class="legend-dot resolved"></i> resolved motion — co ciało faktycznie zrobiło</p>
+        <p><i class="legend-dot constraint"></i> constrained / blocked physical outcome</p>
         <p class="debug-note">Szara linia od epistemicznego śladu do prawdziwego aktora pokazuje rozjazd wiedzy NPC z aktualnym stanem świata. Overlay jest narzędziem badawczym; nie jest gameplay UI.</p>
       </section>
 
@@ -208,11 +219,17 @@ const game = new Phaser.Game({
   },
 });
 
-worldModeButton.addEventListener("click", () => setWorldOnly(!worldOnly));
+worldModeButton.addEventListener("click", () => {
+  setWorldOnly(!worldOnly);
+  game.scale.refresh();
+});
 window.addEventListener("keydown", (event) => {
   const target = event.target;
   if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement) return;
-  if (event.key.toLowerCase() === "g") setWorldOnly(!worldOnly);
+  if (event.key.toLowerCase() === "g") {
+    setWorldOnly(!worldOnly);
+    game.scale.refresh();
+  }
 });
 
 debugNode.addEventListener("click", (event) => {
