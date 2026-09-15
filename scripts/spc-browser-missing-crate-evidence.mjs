@@ -78,6 +78,12 @@ class CdpSession {
     for (const listener of this.listeners.get(message.method) ?? []) listener(message.params ?? {});
   }
 
+  on(method, listener) {
+    const current = this.listeners.get(method) ?? [];
+    current.push(listener);
+    this.listeners.set(method, current);
+  }
+
   send(method, params = {}, timeoutMs = 30_000) {
     const id = this.nextId++;
     return new Promise((resolveSend, rejectSend) => {
