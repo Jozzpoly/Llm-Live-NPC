@@ -1,5 +1,9 @@
 import { ResidentContinuityKernel } from "./resident-continuity-kernel";
 import type {
+  ResidentWorldAction,
+  ResidentWorldActionResolution,
+} from "./resident-world-action-contract";
+import type {
   ResidentAuthorizedMotionOutcome,
   ResidentWorldExecutionFrame,
   ResidentWorldExecutionResult,
@@ -13,7 +17,7 @@ import { SpcWorldRuntime } from "./spc-world-runtime";
  * semantic revision, evidence and provider lifecycle remain private to the resident
  * continuity kernel. Once this facade claims a resident, SpcWorldRuntime disables
  * that resident's legacy fastStep/control path and becomes the phase-time enforcer
- * for latched effects.
+ * for latched effects and atomic World actions.
  */
 export class ResidentWorldExecutionAuthority {
   constructor(
@@ -31,6 +35,10 @@ export class ResidentWorldExecutionAuthority {
     return this.world.applyResidentExecutionFrame(this.residentId, frame);
   }
 
+  act(runId: string, action: ResidentWorldAction): ResidentWorldActionResolution {
+    return this.world.applyResidentWorldAction(this.residentId, runId, action);
+  }
+
   enforceMotionAuthority(): { status: "unchanged" } | { status: "revoked"; runId: string } {
     return this.world.enforceResidentMotionAuthority(this.residentId);
   }
@@ -44,6 +52,10 @@ export class ResidentWorldExecutionAuthority {
   }
 }
 
+export type {
+  ResidentWorldAction,
+  ResidentWorldActionResolution,
+} from "./resident-world-action-contract";
 export type {
   ResidentAuthorizedMotionOutcome,
   ResidentWorldEffect,
