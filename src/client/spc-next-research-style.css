@@ -27,6 +27,43 @@
     #0d1418;
 }
 
+.spc-header-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.spc-world-mode-toggle {
+  padding: 6px 9px;
+  border: 1px solid #34434c;
+  border-radius: 999px;
+  background: #10181d;
+  color: #aab8c0;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.spc-world-mode-toggle:hover,
+.spc-world-mode-toggle:focus-visible {
+  border-color: #5a7480;
+  color: #e5edf1;
+}
+
+#app.spc-next-mode.spc-world-only {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  gap: 0;
+}
+
+#app.spc-next-mode.spc-world-only .spc-next-research-panel {
+  display: none;
+}
+
+#app.spc-next-mode.spc-world-only .game-shell {
+  grid-column: 1 / -1;
+}
+
 .spc-next-research-panel {
   background: #10171b;
 }
@@ -211,13 +248,13 @@
 }
 
 @media (max-width: 1080px) {
-  #app.spc-next-mode {
+  #app.spc-next-mode:not(.spc-world-only) {
     grid-template-columns: minmax(0, 1fr) 330px;
   }
 }
 
 @media (max-width: 820px) {
-  #app.spc-next-mode {
+  #app.spc-next-mode:not(.spc-world-only) {
     grid-template-columns: 1fr;
     grid-template-rows: minmax(0, 1.6fr) minmax(260px, .8fr);
     padding: 8px;

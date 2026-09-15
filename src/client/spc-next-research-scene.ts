@@ -23,6 +23,7 @@ const STATE_PUSH_INTERVAL_MS = 100;
 const MIN_ZOOM = 0.12;
 const MAX_ZOOM = 1.8;
 const PLAYER_SPEED = 150;
+const PLAYER_CALL_RADIUS = 420;
 
 interface ActorView {
   container: Phaser.GameObjects.Container;
@@ -38,7 +39,7 @@ interface SpeechView {
   expiresAtTick: number;
 }
 
-type MovementKeys = Record<"W" | "A" | "S" | "D" | "R" | "F" | "P" | "O" | "TAB", Phaser.Input.Keyboard.Key>;
+type MovementKeys = Record<"W" | "A" | "S" | "D" | "R" | "F" | "P" | "O" | "H" | "TAB", Phaser.Input.Keyboard.Key>;
 
 export interface SpcNextResearchFrame {
   snapshot: WorldPublicSnapshot;
@@ -79,7 +80,7 @@ export class SpcNextResearchScene extends Phaser.Scene {
 
     if (this.input.keyboard) {
       this.cursors = this.input.keyboard.createCursorKeys();
-      this.keys = this.input.keyboard.addKeys("W,A,S,D,R,F,P,O,TAB") as MovementKeys;
+      this.keys = this.input.keyboard.addKeys("W,A,S,D,R,F,P,O,H,TAB") as MovementKeys;
     }
 
     this.input.on("wheel", (_pointer: Phaser.Input.Pointer, _objects: unknown, _dx: number, dy: number) => {
@@ -129,6 +130,12 @@ export class SpcNextResearchScene extends Phaser.Scene {
 
   setResearchOverlay(enabled: boolean): void {
     this.overlayEnabled = enabled;
+    this.pushFrame(true);
+  }
+
+  playerCall(text = "Hej!"): void {
+    this.world.speak(PLAYER_ID, text, PLAYER_CALL_RADIUS);
+    this.captureNewSpeechOccurrences();
     this.pushFrame(true);
   }
 
@@ -200,6 +207,7 @@ export class SpcNextResearchScene extends Phaser.Scene {
     if (Phaser.Input.Keyboard.JustDown(this.keys.F)) this.focusSelected();
     if (Phaser.Input.Keyboard.JustDown(this.keys.P)) this.followPlayer();
     if (Phaser.Input.Keyboard.JustDown(this.keys.O)) this.overview();
+    if (Phaser.Input.Keyboard.JustDown(this.keys.H)) this.playerCall();
     if (Phaser.Input.Keyboard.JustDown(this.keys.TAB)) this.cycleResidentSelection();
   }
 

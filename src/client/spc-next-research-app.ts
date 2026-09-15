@@ -12,8 +12,9 @@ const stageChip = document.querySelector<HTMLElement>("#e1-stage-chip");
 const heading = document.querySelector<HTMLElement>("h1");
 const eyebrow = document.querySelector<HTMLElement>(".game-shell .eyebrow");
 const footer = document.querySelector<HTMLElement>(".game-shell footer");
+const header = document.querySelector<HTMLElement>(".game-shell header");
 
-if (!appRoot || !debugRoot || !gameRoot || !stageChip || !heading || !eyebrow || !footer) {
+if (!appRoot || !debugRoot || !gameRoot || !stageChip || !heading || !eyebrow || !footer || !header) {
   throw new Error("SPC Next research shell is missing required DOM roots.");
 }
 
@@ -35,11 +36,32 @@ gameNode.setAttribute("aria-label", "SPC Next living-world research scene");
 footer.innerHTML = [
   "<span>Ruch: WASD / strzałki</span>",
   "<span>Wybór SPC: klik / Tab</span>",
-  "<span>Mikroskop: R · śledź SPC: F · gracz: P · cały świat: O</span>",
-  "<span>Zoom: kółko myszy</span>",
+  "<span>Zawołaj: H · mikroskop: R</span>",
+  "<span>Śledź SPC: F · gracz: P · cały świat: O</span>",
+  "<span>Tylko świat / badania: G · zoom: kółko</span>",
 ].join("");
 
+const worldModeButton = document.createElement("button");
+worldModeButton.type = "button";
+worldModeButton.className = "spc-world-mode-toggle";
+worldModeButton.textContent = "Tylko świat";
+worldModeButton.setAttribute("aria-pressed", "false");
+const headerActions = document.createElement("div");
+headerActions.className = "spc-header-actions";
+headerActions.append(stageNode, worldModeButton);
+header.append(headerActions);
+
 let scene: SpcNextResearchScene;
+let worldOnly = false;
+
+function setWorldOnly(enabled: boolean): void {
+  worldOnly = enabled;
+  appNode.classList.toggle("spc-world-only", enabled);
+  worldModeButton.textContent = enabled ? "Otwórz badania" : "Tylko świat";
+  worldModeButton.setAttribute("aria-pressed", String(enabled));
+  stageNode.textContent = enabled ? "WORLD VIEW · NO TELEMETRY" : "WORLD / EPISTEMIC LAB";
+  if (enabled) scene.setResearchOverlay(false);
+}
 
 function renderPanel(frame: SpcNextResearchFrame): void {
   const selected = frame.selectedDiagnostics;
@@ -84,6 +106,7 @@ function renderPanel(frame: SpcNextResearchFrame): void {
         <button class="debug-toggle${frame.overlayEnabled ? " is-active" : ""}" data-action="overlay">
           <span class="debug-toggle-label">Epistemic overlay</span><span class="debug-shortcut">R</span>
         </button>
+        <button class="debug-toggle" data-action="call"><span class="debug-toggle-label">Zawołaj w świecie</span><span class="debug-shortcut">H</span></button>
         <button class="debug-toggle" data-action="focus"><span class="debug-toggle-label">Śledź SPC</span><span class="debug-shortcut">F</span></button>
         <button class="debug-toggle" data-action="player"><span class="debug-toggle-label">Śledź gracza</span><span class="debug-shortcut">P</span></button>
         <button class="debug-toggle" data-action="overview"><span class="debug-toggle-label">Cały świat</span><span class="debug-shortcut">O</span></button>
@@ -102,7 +125,7 @@ function renderPanel(frame: SpcNextResearchFrame): void {
           <dl class="spc-facts">
             <div><dt>region</dt><dd>${escapeHtml(frame.selectedRegionId ?? "—")}</dd></div>
             <div><dt>activity</dt><dd>${escapeHtml(activity?.kind ?? "—")}</dd></div>
-            <div><dt>velocity</dt><dd>${speed.toFixed(1)}</dd></div>
+            <div><dt>physical velocity</dt><dd>${speed.toFixed(1)}</dd></div>
             <div><dt>cognition queue</dt><dd>${selected.publicState.pendingCognitionReasonCount}</dd></div>
             <div><dt>camera zoom</dt><dd>${frame.cameraZoom.toFixed(2)}×</dd></div>
           </dl>
@@ -185,6 +208,13 @@ const game = new Phaser.Game({
   },
 });
 
+worldModeButton.addEventListener("click", () => setWorldOnly(!worldOnly));
+window.addEventListener("keydown", (event) => {
+  const target = event.target;
+  if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement) return;
+  if (event.key.toLowerCase() === "g") setWorldOnly(!worldOnly);
+});
+
 debugNode.addEventListener("click", (event) => {
   const target = event.target instanceof Element ? event.target.closest<HTMLElement>("[data-action], [data-resident]") : null;
   if (!target) return;
@@ -196,6 +226,9 @@ debugNode.addEventListener("click", (event) => {
   switch (target.dataset.action) {
     case "overlay":
       scene.toggleResearchOverlay();
+      break;
+    case "call":
+      scene.playerCall();
       break;
     case "focus":
       scene.focusSelected();
