@@ -3,7 +3,7 @@ import {
   type ResidentKernelEvidence,
   type RunOutcomeReconciliationResult,
 } from "./resident-continuity-kernel";
-import { distanceSquared, type Vec2 } from "./contracts";
+import { distanceSquared, type ResidentActivity, type Vec2 } from "./contracts";
 import { ResidentMaterialKnowledge } from "./resident-material-knowledge";
 import { ResidentMaterialPickupExecutor, type ResidentMaterialPickupStep } from "./resident-material-pickup-executor";
 import { ResidentWorldExecutionAuthority } from "./resident-world-execution-authority";
@@ -13,8 +13,8 @@ import { SpcWorldRuntime } from "./spc-world-runtime";
 const JANEK_ID = "resident.janek";
 const CRATE_ID = "crate.workshop.01";
 const HIDDEN_RELOCATOR_ID = "player.relocator";
-const PREHISTORY_RETREAT_TICKS = 240;
-const PREHISTORY_RETREAT_SPEED = 120;
+const PREHISTORY_RETREAT_TARGET = { x: 1_380, y: 720 } as const;
+const PREHISTORY_RETREAT_GUARD = 420;
 
 export type FiveResidentJanekMissingCrateStep =
   | { status: "running"; local: ResidentMaterialPickupStep }
@@ -82,21 +82,36 @@ export function createFiveResidentJanekMissingCrateStagedSlice(
   const acquired = materialKnowledge.observation(CRATE_ID);
   if (!acquired?.currentlyVisible) throw new Error("Janek failed to acquire initial crate evidence");
 
-  // Retreat under legacy fixture control before recovered execution claims the body.
-  // 240 ticks at 120 u/s puts Janek at x=1420, 532 units from the crate: outside
-  // the 520-unit default sight radius but still close enough for the bounded pickup
-  // executor to reach the remembered point within the existing 360-step guard.
-  world.setActorMotionIntent(JANEK_ID, { x: -PREHISTORY_RETREAT_SPEED, y: 0 });
-  world.step(PREHISTORY_RETREAT_TICKS);
-  world.setActorMotionIntent(JANEK_ID, { x: 0, y: 0 });
+  // Use the existing resident controller for prehistory instead of writing a long
+  // direct motion intent that legacy fastStep is entitled to overwrite. This keeps
+  // the fixture honest: Janek really travels away under the same World integration
+  // contract, then the legacy activity is stopped before recovered run authority is
+  // claimed. We stop at the first tick outside material sight range so the later
+  // stale-target approach remains bounded by the existing 360-step life-slice guard.
+  world.setResidentActivity(JANEK_ID, prehistoryRetreatActivity());
+  const crateAtAcquisition = world.materialObject(CRATE_ID);
+  if (!crateAtAcquisition || crateAtAcquisition.location.kind !== "free") {
+    throw new Error("missing-crate prehistory lost the free crate before retreat");
+  }
+
+  let retreatGuard = 0;
+  let janek = world.publicSnapshot().actors.find((actor) => actor.id === JANEK_ID) ?? null;
+  while (janek
+    && distanceSquared(janek.position, crateAtAcquisition.location.position) <= janek.sightRadius ** 2
+    && retreatGuard < PREHISTORY_RETREAT_GUARD) {
+    world.step();
+    retreatGuard += 1;
+    janek = world.publicSnapshot().actors.find((actor) => actor.id === JANEK_ID) ?? null;
+  }
+  world.setResidentActivity(JANEK_ID, prehistoryIdleActivity());
   materialKnowledge.sample();
 
-  const janek = world.publicSnapshot().actors.find((actor) => actor.id === JANEK_ID);
   const crateBefore = world.materialObject(CRATE_ID);
   if (!janek || !crateBefore || crateBefore.location.kind !== "free") {
     throw new Error("missing-crate staged prehistory did not preserve Janek/crate World truth");
   }
-  if (distanceSquared(janek.position, crateBefore.location.position) <= janek.sightRadius ** 2) {
+  if (retreatGuard >= PREHISTORY_RETREAT_GUARD
+    || distanceSquared(janek.position, crateBefore.location.position) <= janek.sightRadius ** 2) {
     throw new Error("missing-crate staged prehistory did not move Janek outside crate sight range");
   }
 
@@ -250,4 +265,28 @@ export function createFiveResidentJanekMissingCrateSlice(
   const staged = createFiveResidentJanekMissingCrateStagedSlice(options);
   staged.relocateCrateHidden();
   return staged;
+}
+
+function prehistoryRetreatActivity(): ResidentActivity {
+  return {
+    id: "activity:janek:missing-crate-prehistory-retreat",
+    kind: "travel",
+    targetActorId: null,
+    targetPosition: { ...PREHISTORY_RETREAT_TARGET },
+    text: null,
+    speed: 115,
+    reason: "fixture-only retreat after legally seeing the familiar crate",
+  };
+}
+
+function prehistoryIdleActivity(): ResidentActivity {
+  return {
+    id: "activity:janek:missing-crate-prehistory-complete",
+    kind: "idle",
+    targetActorId: null,
+    targetPosition: null,
+    text: null,
+    speed: null,
+    reason: "fixture prehistory complete; waiting for recovered missing-crate run",
+  };
 }
