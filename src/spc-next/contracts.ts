@@ -47,12 +47,14 @@ export type ActorKind = "player" | "resident";
 /**
  * Public physical actor truth. `velocity` is the velocity actually resolved by the
  * World during the latest integration step; controller desire is intentionally separate.
+ * `facing` is persistent body orientation and remains meaningful while velocity is zero.
  */
 export interface ActorState {
   id: string;
   kind: ActorKind;
   position: Vec2;
   velocity: Vec2;
+  facing: Vec2;
   hearingRadius: number;
   sightRadius: number;
   maxSpeed: number;
