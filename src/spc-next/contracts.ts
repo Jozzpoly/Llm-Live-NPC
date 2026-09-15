@@ -22,6 +22,19 @@ export interface WorldRegion {
   priority?: number;
 }
 
+/**
+ * Addressable authored place inside the World. An anchor is semantic/spatial truth,
+ * not physical collision geometry and not automatically known by a resident.
+ */
+export type WorldAnchorKind = "home" | "work" | "social" | "resource" | "service" | "exploration";
+export interface WorldAnchor {
+  id: string;
+  label: string;
+  kind: WorldAnchorKind;
+  position: Vec2;
+  radius: number;
+}
+
 /** Authored opaque geometry. This contract says nothing about movement collision. */
 export interface SightBlocker {
   id: string;
@@ -208,6 +221,8 @@ export interface WorldPublicSnapshot {
 export interface SpcWorldOptions {
   bounds: WorldBounds;
   regions: readonly WorldRegion[];
+  /** Static addressable authored places; not physical objects or automatic resident knowledge. */
+  anchors?: readonly WorldAnchor[];
   /** Optional until authored physical sight geometry is introduced into a specimen. */
   sightBlockers?: readonly SightBlocker[];
   chunkSize: number;

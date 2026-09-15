@@ -15,6 +15,7 @@ import {
   type SpcWorldOptions,
   type Vec2,
   type VisibleActor,
+  type WorldAnchor,
   type WorldOccurrence,
   type WorldPublicSnapshot,
   type WorldRegion,
@@ -61,6 +62,7 @@ const HEARING_DIRECTION_SECTORS = 8;
 const MOTION_EPSILON = 1e-9;
 
 export class SpcWorldRuntime {
+  readonly options: SpcWorldOptions;
   private tickValue = 0;
   private occurrenceSequence = 0;
   private perceptSequence = 0;
@@ -70,17 +72,26 @@ export class SpcWorldRuntime {
   private pendingOccurrences: PendingOccurrence[] = [];
   private readonly recentOccurrences: WorldOccurrence[] = [];
   private lastMotionOutcomes: ActorMotionOutcome[] = [];
-  /** Active zero-progress blockage episode keyed by actor. Progress clears it. */
   private readonly activeMotionBlockages = new Map<string, string>();
 
-  constructor(readonly options: SpcWorldOptions) {
+  constructor(options: SpcWorldOptions) {
     validateWorldOptions(options);
-    this.actorState = new ActorWorldState(options.bounds, options.chunkSize);
-    this.sightGeometry = new SightGeometry(options.sightBlockers ?? []);
+    this.options = structuredClone(options);
+    this.actorState = new ActorWorldState(this.options.bounds, this.options.chunkSize);
+    this.sightGeometry = new SightGeometry(this.options.sightBlockers ?? []);
   }
 
   get tick(): number {
     return this.tickValue;
+  }
+
+  anchors(): WorldAnchor[] {
+    return structuredClone(this.options.anchors ?? []).sort((a, b) => a.id.localeCompare(b.id));
+  }
+
+  anchor(id: string): WorldAnchor | null {
+    const anchor = (this.options.anchors ?? []).find((candidate) => candidate.id === id);
+    return anchor ? structuredClone(anchor) : null;
   }
 
   addPlayer(id: string, position: Vec2, overrides: Partial<Omit<ActorState, "id" | "kind" | "position">> = {}): void {

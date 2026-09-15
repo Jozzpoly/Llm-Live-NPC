@@ -6,6 +6,7 @@ import {
   type SightBlocker,
   type SpcWorldOptions,
   type Vec2,
+  type WorldAnchor,
   type WorldBounds,
   type WorldRegion,
 } from "./contracts";
@@ -39,11 +40,33 @@ export function validateWorldOptions(options: SpcWorldOptions): void {
     }
   }
 
+  const anchorIds = new Set<string>();
+  for (const anchor of options.anchors ?? []) {
+    validateWorldAnchor(anchor, options.bounds);
+    if (anchorIds.has(anchor.id)) throw new Error(`duplicate world anchor id: ${anchor.id}`);
+    anchorIds.add(anchor.id);
+  }
+
   const sightBlockerIds = new Set<string>();
   for (const blocker of options.sightBlockers ?? []) {
     validateSightBlocker(blocker, options.bounds);
     if (sightBlockerIds.has(blocker.id)) throw new Error(`duplicate sight blocker id: ${blocker.id}`);
     sightBlockerIds.add(blocker.id);
+  }
+}
+
+export function validateWorldAnchor(anchor: WorldAnchor, worldBounds: WorldBounds): void {
+  assertNonEmpty(anchor.id, "world anchor id");
+  assertNonEmpty(anchor.label, `world anchor ${anchor.id} label`);
+  assertFiniteVec2(anchor.position, `world anchor ${anchor.id} position`);
+  if (!Number.isFinite(anchor.radius) || anchor.radius <= 0) {
+    throw new Error(`world anchor radius must be positive and finite: ${anchor.id}`);
+  }
+  if (anchor.position.x - anchor.radius < worldBounds.minX
+    || anchor.position.x + anchor.radius > worldBounds.maxX
+    || anchor.position.y - anchor.radius < worldBounds.minY
+    || anchor.position.y + anchor.radius > worldBounds.maxY) {
+    throw new Error(`world anchor outside world bounds: ${anchor.id}`);
   }
 }
 

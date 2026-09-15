@@ -1,4 +1,4 @@
-import type { ResidentActivity, WorldRegion } from "./contracts";
+import type { ResidentActivity, WorldAnchor, WorldRegion } from "./contracts";
 import { SpcWorldRuntime } from "./spc-world-runtime";
 
 export const FIVE_RESIDENT_REGIONS: readonly WorldRegion[] = [
@@ -10,6 +10,16 @@ export const FIVE_RESIDENT_REGIONS: readonly WorldRegion[] = [
   { id: "old-road", label: "Old Road", minX: 4_000, minY: 0, maxX: 6_300, maxY: 1_900 },
   { id: "ruins", label: "Ruins", minX: 6_300, minY: 0, maxX: 8_192, maxY: 3_200 },
   { id: "deep-wilds", label: "Deep Wilds", minX: 3_500, minY: 4_400, maxX: 8_192, maxY: 8_192 },
+];
+
+export const FIVE_RESIDENT_ANCHORS: readonly WorldAnchor[] = [
+  { id: "anchor.hearth.fire", label: "Common Fire", kind: "social", position: { x: 820, y: 760 }, radius: 52 },
+  { id: "anchor.workshop.bench", label: "Workshop Bench", kind: "work", position: { x: 1_900, y: 760 }, radius: 58 },
+  { id: "anchor.crossroads.board", label: "Crossroads Board", kind: "service", position: { x: 3_180, y: 980 }, radius: 42 },
+  { id: "anchor.fields.well", label: "Field Well", kind: "resource", position: { x: 2_200, y: 2_350 }, radius: 54 },
+  { id: "anchor.forest.cache", label: "Forest Cache", kind: "resource", position: { x: 4_760, y: 2_760 }, radius: 44 },
+  { id: "anchor.ruins.threshold", label: "Ruins Threshold", kind: "exploration", position: { x: 7_150, y: 1_360 }, radius: 72 },
+  { id: "anchor.wilds.lookout", label: "Wilds Lookout", kind: "exploration", position: { x: 5_250, y: 5_250 }, radius: 68 },
 ];
 
 export interface FiveResidentRolePressure {
@@ -38,6 +48,7 @@ export function createFiveResidentRegionWorld(): SpcWorldRuntime {
   const world = new SpcWorldRuntime({
     bounds: { minX: 0, minY: 0, maxX: 8_192, maxY: 8_192 },
     regions: FIVE_RESIDENT_REGIONS,
+    anchors: FIVE_RESIDENT_ANCHORS,
     chunkSize: 256,
     fixedDeltaSeconds: 1 / 60,
   });
