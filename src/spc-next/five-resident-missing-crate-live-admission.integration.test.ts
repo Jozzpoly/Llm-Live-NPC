@@ -20,6 +20,14 @@ function advanceToSemanticPressure(slice: ReturnType<typeof createFiveResidentJa
   return state;
 }
 
+function deferred<T>() {
+  let resolve!: (value: T | PromiseLike<T>) => void;
+  const promise = new Promise<T>((resolvePromise) => {
+    resolve = resolvePromise;
+  });
+  return { promise, resolve };
+}
+
 describe("missing-crate live semantic arrival/admission timing", () => {
   it("lets World and private perception continue while provider is in flight and after arrival, then changes meaning only at explicit World-tick admission", async () => {
     const slice = createFiveResidentJanekMissingCrateSlice({ playerStart: { x: 1_900, y: 720 } });
@@ -33,19 +41,17 @@ describe("missing-crate live semantic arrival/admission timing", () => {
       semanticCourse: "go to the last-known workshop crate position and pick it up",
     });
 
-    let resolveTransport: ((response: Response) => void) | null = null;
-    let providerRunId: string | null = null;
+    const transportGate = deferred<Response>();
+    const transportObservation: { providerRunId: string | null } = { providerRunId: null };
     const fetcher: SemanticFetch = async (_input, init) => {
       const run = JSON.parse(String(init?.body ?? "{}")) as { providerRunId?: string };
-      providerRunId = run.providerRunId ?? null;
-      return await new Promise<Response>((resolve) => {
-        resolveTransport = resolve;
-      });
+      transportObservation.providerRunId = run.providerRunId ?? null;
+      return await transportGate.promise;
     };
     const host = new ResidentSemanticLiveHost(slice.kernel, undefined, "/semantic", fetcher);
 
     const transport = host.requestMatter(MATTER_ID);
-    expect(providerRunId).toBe("semantic-provider:0");
+    expect(transportObservation.providerRunId).toBe("semantic-provider:0");
     expect(host.pendingProviderAttempts()).toBe(1);
     expect(host.pendingArrivals()).toBe(0);
     expect(slice.kernel.pendingSemanticProposals()).toHaveLength(1);
@@ -67,8 +73,9 @@ describe("missing-crate live semantic arrival/admission timing", () => {
       addressed: true,
     }));
 
-    if (!resolveTransport || !providerRunId) throw new Error("deferred provider transport was not captured");
-    resolveTransport(new Response(JSON.stringify({
+    const providerRunId = transportObservation.providerRunId;
+    if (!providerRunId) throw new Error("deferred provider transport did not capture correlation id");
+    transportGate.resolve(new Response(JSON.stringify({
       ok: true,
       providerRunId,
       decision: { semanticCourse: "search the nearby workshop area for the familiar crate" },
