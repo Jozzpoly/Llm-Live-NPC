@@ -21,6 +21,11 @@ import {
   type WorldRegion,
 } from "./contracts";
 import { ActorWorldState } from "./actor-world-state";
+import {
+  MaterialWorldState,
+  type MaterialActionResult,
+  type MaterialObjectState,
+} from "./material-world-state";
 import type {
   ResidentAuthorizedMotionOutcome,
   ResidentRunAuthority,
@@ -64,13 +69,20 @@ interface PendingOccurrence {
   observers: readonly OccurrenceObserverSnapshot[];
 }
 
+export type SpcMaterialActionIntent =
+  | { kind: "pickup"; objectId: string }
+  | { kind: "place"; objectId: string; position: Vec2 };
+
 export interface SpcWorldDiagnostics {
   tick: number;
   recentOccurrences: readonly WorldOccurrence[];
   lastMotionOutcomes: readonly ActorMotionOutcome[];
+  recentMaterialActions: readonly MaterialActionResult[];
 }
 
 const WORLD_OCCURRENCE_LIMIT = 1_024;
+const MATERIAL_ACTION_LIMIT = 256;
+const MATERIAL_INTERACTION_RANGE = 64;
 const HEARING_DIRECTION_SECTORS = 8;
 const MOTION_EPSILON = 1e-9;
 
@@ -80,11 +92,13 @@ export class SpcWorldRuntime {
   private occurrenceSequence = 0;
   private perceptSequence = 0;
   private readonly actorState: ActorWorldState;
+  private readonly materialState: MaterialWorldState;
   private readonly residents = new Map<string, RegisteredResident>();
   private readonly residentExecutionAuthorities = new Map<string, RegisteredExecutionAuthority>();
   private readonly sightGeometry: SightGeometry;
   private pendingOccurrences: PendingOccurrence[] = [];
   private readonly recentOccurrences: WorldOccurrence[] = [];
+  private readonly recentMaterialActions: MaterialActionResult[] = [];
   private lastMotionOutcomes: ActorMotionOutcome[] = [];
   private readonly activeMotionBlockages = new Map<string, string>();
 
@@ -92,6 +106,10 @@ export class SpcWorldRuntime {
     validateWorldOptions(options);
     this.authoredOptions = structuredClone(options);
     this.actorState = new ActorWorldState(this.authoredOptions.bounds, this.authoredOptions.chunkSize);
+    this.materialState = new MaterialWorldState({
+      bounds: this.authoredOptions.bounds,
+      interactionRange: MATERIAL_INTERACTION_RANGE,
+    });
     this.sightGeometry = new SightGeometry(this.authoredOptions.sightBlockers ?? []);
   }
 
@@ -117,6 +135,66 @@ export class SpcWorldRuntime {
   anchor(id: string): WorldAnchor | null {
     const anchor = (this.authoredOptions.anchors ?? []).find((candidate) => candidate.id === id);
     return anchor ? structuredClone(anchor) : null;
+  }
+
+  addMaterialObject(object: MaterialObjectState): MaterialObjectState {
+    return this.materialState.addObject(object);
+  }
+
+  materialObject(id: string): MaterialObjectState | null {
+    return this.materialState.object(id);
+  }
+
+  materialObjects(): MaterialObjectState[] {
+    return this.materialState.objects();
+  }
+
+  /**
+   * Direct participant/control-source material action path for the current J0 World
+   * experiment. Resident bodies are intentionally forbidden here: recovered SPC
+   * manipulation must enter through exact run authority in J1 rather than acquire
+   * a third mutation bypass beside legacy activity and K5 execution.
+   *
+   * Callers provide semantic action intent only. World derives actor position and
+   * line-of-sight from authoritative state and never trusts caller-supplied geometry.
+   */
+  attemptMaterialAction(actorId: string, intent: SpcMaterialActionIntent): MaterialActionResult {
+    if (this.residents.has(actorId)) {
+      throw new Error(`resident material action requires recovered execution authority: ${actorId}`);
+    }
+    const actor = this.requireActor(actorId);
+    const object = this.materialState.object(intent.objectId);
+    let result: MaterialActionResult;
+
+    if (intent.kind === "pickup") {
+      const targetPosition = object?.location.kind === "free" ? object.location.position : null;
+      const lineOfSight = targetPosition
+        ? this.sightGeometry.hasLineOfSight(actor.position, targetPosition)
+        : false;
+      result = this.materialState.attempt({
+        kind: "pickup",
+        actorId,
+        objectId: intent.objectId,
+        actorPosition: actor.position,
+        lineOfSight,
+      }, this.tickValue);
+    } else {
+      const lineOfSight = isFiniteVec2(intent.position)
+        ? this.sightGeometry.hasLineOfSight(actor.position, intent.position)
+        : false;
+      result = this.materialState.attempt({
+        kind: "place",
+        actorId,
+        objectId: intent.objectId,
+        actorPosition: actor.position,
+        position: { ...intent.position },
+        lineOfSight,
+      }, this.tickValue);
+    }
+
+    this.recentMaterialActions.push(structuredClone(result));
+    while (this.recentMaterialActions.length > MATERIAL_ACTION_LIMIT) this.recentMaterialActions.shift();
+    return structuredClone(result);
   }
 
   addPlayer(id: string, position: Vec2, overrides: Partial<Omit<ActorState, "id" | "kind" | "position">> = {}): void {
@@ -338,6 +416,7 @@ export class SpcWorldRuntime {
       tick: this.tickValue,
       recentOccurrences: structuredClone(this.recentOccurrences),
       lastMotionOutcomes: structuredClone(this.lastMotionOutcomes),
+      recentMaterialActions: structuredClone(this.recentMaterialActions),
     };
   }
 
