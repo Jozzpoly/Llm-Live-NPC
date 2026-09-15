@@ -6,7 +6,7 @@ import type {
   WorldOccurrence,
   WorldPublicSnapshot,
 } from "../spc-next/contracts";
-import { createFiveResidentRegionWorld } from "../spc-next/five-resident-region";
+import { createFiveResidentJanekMaterialSlice } from "../spc-next/five-resident-material-slice";
 import {
   projectEpistemicActors,
   projectMotionFeedback,
@@ -55,7 +55,8 @@ export interface SpcNextResearchFrame {
 type FrameSink = (frame: SpcNextResearchFrame) => void;
 
 export class SpcNextResearchScene extends Phaser.Scene {
-  private readonly world = createFiveResidentRegionWorld();
+  private readonly janekSlice = createFiveResidentJanekMaterialSlice();
+  private readonly world = this.janekSlice.world;
   private snapshot: WorldPublicSnapshot = this.world.publicSnapshot();
   private readonly actorViews = new Map<string, ActorView>();
   private readonly speechViews = new Map<string, SpeechView>();
@@ -187,6 +188,7 @@ export class SpcNextResearchScene extends Phaser.Scene {
 
   private stepWorld(): void {
     this.applyPlayerControl();
+    this.janekSlice.stepJanek();
     this.world.step();
     this.snapshot = this.world.publicSnapshot();
     this.captureNewSpeechOccurrences();
