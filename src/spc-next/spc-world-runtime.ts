@@ -19,6 +19,7 @@ import {
   type WorldRegion,
 } from "./contracts";
 import { ResidentRuntime } from "./resident-runtime";
+import { SightContinuityTracker } from "./sight-continuity";
 import {
   assertFiniteNonNegative,
   clampWorldPosition,
@@ -33,6 +34,7 @@ import {
 interface RegisteredResident {
   runtime: ResidentRuntime;
   brainPhase: number;
+  sight: SightContinuityTracker;
 }
 
 export interface SpcWorldDiagnostics {
@@ -52,7 +54,6 @@ export class SpcWorldRuntime {
   private readonly spatial: ChunkSpatialIndex;
   private pendingOccurrences: WorldOccurrence[] = [];
   private readonly recentOccurrences: WorldOccurrence[] = [];
-  private readonly visibleByResident = new Map<string, Set<string>>();
 
   constructor(readonly options: SpcWorldOptions) {
     validateWorldOptions(options);
@@ -103,8 +104,11 @@ export class SpcWorldRuntime {
     });
     const runtime = new ResidentRuntime(profile);
     const brainPhase = this.residents.size % profile.brainIntervalTicks;
-    this.residents.set(id, { runtime, brainPhase });
-    this.visibleByResident.set(id, new Set());
+    this.residents.set(id, {
+      runtime,
+      brainPhase,
+      sight: new SightContinuityTracker(this.options.fixedDeltaSeconds),
+    });
     const initialRegion = this.regionAt(boundedPosition);
     if (initialRegion) runtime.enterRegion(initialRegion, this.tickValue, true);
     return runtime;
@@ -222,7 +226,7 @@ export class SpcWorldRuntime {
     this.pendingOccurrences = [];
 
     for (const occurrence of occurrences) this.deliverOccurrence(occurrence);
-    this.updateSightEntryPercepts();
+    this.updateSightPercepts();
 
     for (const [residentId, registered] of this.residents) {
       if (this.tickValue % registered.runtime.profile.brainIntervalTicks !== registered.brainPhase) continue;
@@ -280,6 +284,7 @@ export class SpcWorldRuntime {
         id: `percept:${residentId}:${this.tickValue}:${this.perceptSequence++}`,
         occurrenceId: occurrence.id,
         tick: this.tickValue,
+        phenomenon: occurrence.kind,
         modality,
         actorId: occurrence.actorId,
         subjectId: occurrence.subjectId,
@@ -291,32 +296,29 @@ export class SpcWorldRuntime {
     }
   }
 
-  private updateSightEntryPercepts(): void {
+  private updateSightPercepts(): void {
     for (const [residentId, registered] of this.residents) {
-      const actor = this.requireActor(residentId);
-      const previous = this.visibleByResident.get(residentId) ?? new Set<string>();
-      const visible = this.visibleActorsFor(actor);
-      const current = new Set(visible.map((candidate) => candidate.id));
-      const newPercepts: ResidentPercept[] = [];
+      const observer = this.requireActor(residentId);
+      const visible = this.visibleActorsFor(observer);
+      const drafts = registered.sight.update(this.tickValue, visible);
+      if (drafts.length === 0) continue;
 
-      for (const candidate of visible) {
-        if (previous.has(candidate.id)) continue;
-        newPercepts.push({
-          id: `percept:${residentId}:${this.tickValue}:${this.perceptSequence++}`,
-          occurrenceId: `sight-entry:${residentId}:${candidate.id}:${this.tickValue}`,
-          tick: this.tickValue,
-          modality: "sight",
-          actorId: candidate.id,
-          subjectId: candidate.id,
-          spatial: { kind: "exact", position: { ...candidate.position } },
-          summary: `actor ${candidate.id} entered sight`,
-          text: null,
-          addressed: false,
-        });
-      }
-
-      if (newPercepts.length > 0) registered.runtime.ingestPercepts(newPercepts, actor.position);
-      this.visibleByResident.set(residentId, current);
+      const percepts: ResidentPercept[] = drafts.map((draft) => ({
+        id: `percept:${residentId}:${this.tickValue}:${this.perceptSequence++}`,
+        occurrenceId: `sight:${draft.phenomenon}:${residentId}:${draft.actorId}:${draft.observedAtTick}`,
+        tick: draft.observedAtTick,
+        phenomenon: draft.phenomenon,
+        modality: "sight",
+        actorId: draft.actorId,
+        subjectId: draft.actorId,
+        spatial: draft.position
+          ? { kind: "exact" as const, position: { ...draft.position } }
+          : { kind: "none" as const },
+        summary: sightSummary(draft.phenomenon, draft.actorId),
+        text: null,
+        addressed: false,
+      }));
+      registered.runtime.ingestPercepts(percepts, observer.position);
     }
   }
 
@@ -393,6 +395,15 @@ function quantizeDirection(direction: Vec2, sectors: number): Vec2 {
     x: Math.abs(Math.cos(quantized)) < 1e-12 ? 0 : Math.cos(quantized),
     y: Math.abs(Math.sin(quantized)) < 1e-12 ? 0 : Math.sin(quantized),
   };
+}
+
+function sightSummary(
+  phenomenon: "actor_sight_enter" | "actor_sight_update" | "actor_sight_exit",
+  actorId: string,
+): string {
+  if (phenomenon === "actor_sight_enter") return `actor ${actorId} entered sight`;
+  if (phenomenon === "actor_sight_update") return `actor ${actorId} moved while visible`;
+  return `actor ${actorId} left sight`;
 }
 
 function assertNonEmptyWorldText(value: string, label: string): void {
