@@ -14,6 +14,15 @@ describe("hierarchical region navigation", () => {
     expect(route!.totalCost).toBeGreaterThan(4);
   });
 
+  it("does not route through an authored region outside the resident's allowed navigation knowledge", () => {
+    const graph = createFiveResidentNavigationGraph();
+    expect(graph.route("hearth", "ruins", new Set(["hearth", "ruins"]))).toBeNull();
+
+    const knownPath = new Set(["hearth", "workshop", "crossroads", "old-road", "ruins"]);
+    expect(graph.route("hearth", "ruins", knownPath)?.regionIds)
+      .toEqual(["hearth", "workshop", "crossroads", "old-road", "ruins"]);
+  });
+
   it("chooses a cheaper alternate topology instead of assuming Euclidean straight-line travel", () => {
     const graph = new RegionNavigationGraph(
       [
@@ -29,6 +38,7 @@ describe("hierarchical region navigation", () => {
     );
 
     expect(graph.route("a", "b")?.regionIds).toEqual(["a", "c", "b"]);
+    expect(graph.route("a", "b", new Set(["a", "b"]))?.regionIds).toEqual(["a", "b"]);
   });
 
   it("fails closed when no authored connection exists", () => {
