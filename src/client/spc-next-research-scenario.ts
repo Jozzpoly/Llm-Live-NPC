@@ -4,8 +4,9 @@ import type { ResidentWorldExecutionAuthority } from "../spc-next/resident-world
 import type { SpcWorldRuntime } from "../spc-next/spc-world-runtime";
 import { createFiveResidentJanekMaterialSlice } from "../spc-next/five-resident-material-slice";
 import { createFiveResidentJanekMissingCrateStagedSlice } from "../spc-next/five-resident-missing-crate-slice";
+import { createFiveResidentJanekMissingCrateRecoverySlice } from "../spc-next/five-resident-missing-crate-recovery-slice";
 
-export type SpcNextResearchScenarioKind = "baseline-delivery" | "missing-crate";
+export type SpcNextResearchScenarioKind = "baseline-delivery" | "missing-crate" | "missing-crate-recovery";
 
 export interface SpcNextResearchScenario {
   readonly kind: SpcNextResearchScenarioKind;
@@ -22,6 +23,7 @@ export interface SpcNextResearchScenario {
 
 export function createSpcNextResearchScenario(kind: SpcNextResearchScenarioKind): SpcNextResearchScenario {
   if (kind === "missing-crate") return createMissingCrateScenario();
+  if (kind === "missing-crate-recovery") return createMissingCrateRecoveryScenario();
   return createBaselineDeliveryScenario();
 }
 
@@ -29,6 +31,7 @@ export function researchScenarioKindFromSearch(search: string): SpcNextResearchS
   const requested = new URLSearchParams(search).get("scenario");
   if (requested === null || requested === "" || requested === "baseline-delivery") return "baseline-delivery";
   if (requested === "missing-crate") return "missing-crate";
+  if (requested === "missing-crate-recovery") return "missing-crate-recovery";
   throw new Error(`unknown SPC Next research scenario: ${requested}`);
 }
 
@@ -71,6 +74,26 @@ function createMissingCrateScenario(): SpcNextResearchScenario {
       }
       slice.stepJanek();
       slice.world.step();
+    },
+  };
+}
+
+function createMissingCrateRecoveryScenario(): SpcNextResearchScenario {
+  const slice = createFiveResidentJanekMissingCrateRecoverySlice();
+  return {
+    kind: "missing-crate-recovery",
+    evidenceScenarioId: "browser-missing-crate-recovery",
+    residentId: "resident.janek",
+    matterId: "matter.janek.missing-crate",
+    world: slice.world,
+    kernel: slice.kernel,
+    materialKnowledge: slice.materialKnowledge,
+    authority: slice.authority,
+    advanceOneWorldTick(): void {
+      // The recovery slice itself owns the deterministic one-tick state machine.
+      // Scripted semantic choices exercise the real authority membrane but remain
+      // research-fixture decisions; this scenario is not LIVE_PROVIDER evidence.
+      slice.advanceOneWorldTick();
     },
   };
 }
