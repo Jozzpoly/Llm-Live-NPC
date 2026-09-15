@@ -1,6 +1,7 @@
 import * as Phaser from "phaser";
 import "./style.css";
 import "./spc-next-research-style.css";
+import type { SpcCanonicalEvidenceSnapshotV1 } from "../evidence/spc-next-canonical-evidence-snapshot";
 import { FIVE_RESIDENT_ROLE_PRESSURES } from "../spc-next/five-resident-region";
 import type { ResidentPercept, ResidentTraceEvent } from "../spc-next/contracts";
 import { SpcNextResearchScene, type SpcNextResearchFrame } from "./spc-next-research-scene";
@@ -233,10 +234,11 @@ const game = new Phaser.Game({
 if (evidenceMode) {
   const evidenceWindow = window as Window & {
     __SPC_EVIDENCE__?: Readonly<{
-      version: 2;
+      version: 3;
       control: "manual-world";
       ready(): boolean;
       snapshot(): SpcNextResearchFrame;
+      canonicalSnapshot(): SpcCanonicalEvidenceSnapshotV1;
       stepWorld(steps?: number): SpcNextResearchFrame;
     }>;
   };
@@ -244,10 +246,11 @@ if (evidenceMode) {
     configurable: true,
     enumerable: false,
     value: Object.freeze({
-      version: 2 as const,
+      version: 3 as const,
       control: "manual-world" as const,
       ready: () => scene.evidenceReady(),
       snapshot: () => scene.currentFrame(),
+      canonicalSnapshot: () => scene.currentCanonicalEvidenceSnapshot(),
       stepWorld: (steps = 1) => scene.stepEvidenceWorld(steps),
     }),
   });
