@@ -6,10 +6,7 @@ import type {
   WorldOccurrence,
   WorldPublicSnapshot,
 } from "../spc-next/contracts";
-import {
-  createFiveResidentRegionWorld,
-  FIVE_RESIDENT_REGIONS,
-} from "../spc-next/five-resident-region";
+import { createFiveResidentRegionWorld } from "../spc-next/five-resident-region";
 import {
   projectEpistemicActors,
   projectMotionFeedback,
@@ -241,7 +238,7 @@ export class SpcNextResearchScene extends Phaser.Scene {
   private drawRegions(): void {
     const palette = [0x253a33, 0x303845, 0x41392d, 0x2d3d46, 0x2c4137, 0x40372e, 0x383145, 0x273841];
     this.regionGraphics.clear();
-    FIVE_RESIDENT_REGIONS.forEach((region, index) => {
+    this.world.regions().forEach((region, index) => {
       const width = region.maxX - region.minX;
       const height = region.maxY - region.minY;
       const color = palette[index % palette.length]!;
