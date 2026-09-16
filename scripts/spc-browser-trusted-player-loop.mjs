@@ -188,6 +188,16 @@ function latestPlayerSight(state) {
   return [...state.recentPercepts].reverse().find((percept) => percept.actorId === PLAYER_ID && percept.modality === "sight") ?? null;
 }
 
+async function stopChrome(chrome) {
+  if (chrome.exitCode !== null) return;
+  const waitForExit = () => new Promise((resolveExit) => chrome.once("exit", resolveExit));
+  chrome.kill("SIGTERM");
+  await Promise.race([waitForExit(), sleep(1_000)]);
+  if (chrome.exitCode !== null) return;
+  chrome.kill("SIGKILL");
+  await Promise.race([waitForExit(), sleep(1_000)]);
+}
+
 async function main() {
   const profile = mkdtempSync(`${tmpdir()}/spc-trusted-player-`);
   const port = 12800 + Math.floor(Math.random() * 300);
@@ -242,6 +252,7 @@ async function main() {
 
     const priorOccurrenceIds = (await evaluate(cdp, "window.__SPC_EVIDENCE__.snapshot().recentOccurrences.map(o=>o.id)")) ?? [];
     await pressShortcut(cdp, "h", "KeyH", 72);
+    await evaluate(cdp, "window.__SPC_EVIDENCE__.stepWorld(1)");
     const nearSpeech = await until(() => latestPlayerSpeech(cdp, priorOccurrenceIds), 2_000, "near trusted player speech");
     report.checkpoints.nearSpeech = {
       occurrence: nearSpeech,
@@ -255,6 +266,7 @@ async function main() {
 
     const priorFarIds = (await evaluate(cdp, "window.__SPC_EVIDENCE__.snapshot().recentOccurrences.map(o=>o.id)")) ?? [];
     await pressShortcut(cdp, "h", "KeyH", 72);
+    await evaluate(cdp, "window.__SPC_EVIDENCE__.stepWorld(1)");
     const farSpeech = await until(() => latestPlayerSpeech(cdp, priorFarIds), 2_000, "far trusted player speech");
     report.checkpoints.farSpeech = {
       occurrence: farSpeech,
@@ -268,6 +280,7 @@ async function main() {
 
     const priorReturnIds = (await evaluate(cdp, "window.__SPC_EVIDENCE__.snapshot().recentOccurrences.map(o=>o.id)")) ?? [];
     await pressShortcut(cdp, "h", "KeyH", 72);
+    await evaluate(cdp, "window.__SPC_EVIDENCE__.stepWorld(1)");
     const returnSpeech = await until(() => latestPlayerSpeech(cdp, priorReturnIds), 2_000, "returned trusted player speech");
     report.checkpoints.returnSpeech = {
       occurrence: returnSpeech,
@@ -276,7 +289,6 @@ async function main() {
 
     report.keyEvents = await evaluate(cdp, "window.__TRUSTED_PLAYER_KEYS");
 
-    const initialSight = latestPlayerSight(report.checkpoints.initial);
     const farSight = latestPlayerSight(report.checkpoints.far);
     const returnedSight = latestPlayerSight(report.checkpoints.returned);
     const nearPercept = perceptForOccurrence(report.checkpoints.nearSpeech.mira, nearSpeech.id);
@@ -292,13 +304,13 @@ async function main() {
       distance: report.checkpoints.far.distance,
     });
     assert("Mira's private sight stream records factual loss of the player after trusted movement", farSight?.phenomenon === "actor_sight_exit" && farSight.actorId === PLAYER_ID, farSight);
-    assert("trusted near H creates one factual World speech occurrence that enters Mira's private hearing", nearSpeech.actorId === PLAYER_ID && nearSpeech.text === "Hej!" && nearPercept?.modality === "hearing" && nearPercept.occurrenceId === nearSpeech.id, {
+    assert("trusted near H creates one factual World speech occurrence that enters Mira's private hearing on the next World tick", nearSpeech.actorId === PLAYER_ID && nearSpeech.text === "Hej!" && nearPercept?.modality === "hearing" && nearPercept.occurrenceId === nearSpeech.id, {
       speechEvents,
       occurrence: nearSpeech,
       percept: nearPercept,
       distance: report.checkpoints.nearSpeech.mira.distance,
     });
-    assert("the same trusted H outside Mira hearing range stays absent from Mira private perception", report.checkpoints.farSpeech.mira.distance > 420 && farPercept === null, {
+    assert("the same trusted H outside Mira hearing range stays absent from Mira private perception after the next World tick", report.checkpoints.farSpeech.mira.distance > 420 && farPercept === null, {
       occurrence: farSpeech,
       percept: farPercept,
       distance: report.checkpoints.farSpeech.mira.distance,
@@ -308,7 +320,7 @@ async function main() {
       distance: report.checkpoints.returned.distance,
       sight: returnedSight,
     });
-    assert("trusted H after reacquisition again joins the factual speech occurrence to Mira private hearing", report.checkpoints.returnSpeech.mira.distance < 420 && returnPercept?.modality === "hearing" && returnPercept.occurrenceId === returnSpeech.id, {
+    assert("trusted H after reacquisition again joins the factual speech occurrence to Mira private hearing on the next World tick", report.checkpoints.returnSpeech.mira.distance < 420 && returnPercept?.modality === "hearing" && returnPercept.occurrenceId === returnSpeech.id, {
       occurrence: returnSpeech,
       percept: returnPercept,
       distance: report.checkpoints.returnSpeech.mira.distance,
@@ -322,9 +334,7 @@ async function main() {
     if (report.outcome !== "PASS") process.exitCode = 1;
   } finally {
     cdp?.close();
-    chrome.kill("SIGTERM");
-    await sleep(120);
-    if (!chrome.killed) chrome.kill("SIGKILL");
+    await stopChrome(chrome);
     rmSync(profile, { recursive: true, force: true });
   }
 }
