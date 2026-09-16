@@ -4,6 +4,13 @@ import { createFiveResidentJanekMissingCrateStagedSlice } from "./five-resident-
 const CRATE_ID = "crate.workshop.01";
 const MATTER_ID = "matter.janek.missing-crate";
 const RELOCATOR_ID = "player.relocator";
+const RESIDENT_IDS = [
+  "resident.mira",
+  "resident.janek",
+  "resident.ida",
+  "resident.oren",
+  "resident.nela",
+] as const;
 
 describe("staged missing-crate causal boundary", () => {
   it("keeps legally acquired history stable until an explicit hidden World relocation", () => {
@@ -38,8 +45,13 @@ describe("staged missing-crate causal boundary", () => {
       location: { kind: "free", position: relocation.to },
     });
     expect(slice.materialKnowledge.snapshot()).toEqual(beforeKnowledge);
-    expect(slice.world.residentDiagnostics("resident.janek").recentPercepts
-      .some((percept) => percept.actorId === RELOCATOR_ID)).toBe(false);
+    for (const residentId of RESIDENT_IDS) {
+      expect(
+        slice.world.residentDiagnostics(residentId).recentPercepts
+          .some((percept) => percept.actorId === RELOCATOR_ID),
+        `${residentId} must not acquire the research relocator as resident experience`,
+      ).toBe(false);
+    }
     expect(slice.kernel.matter(MATTER_ID)).toMatchObject({
       status: "active",
       semanticRevision: 1,
