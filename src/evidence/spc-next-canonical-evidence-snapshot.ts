@@ -35,6 +35,7 @@ export interface SpcCanonicalEvidenceSnapshotV1 {
   residentPrivate: {
     residentId: string;
     diagnostics: ResidentDiagnostics;
+    /** Empty when the scenario does not install a resident material-knowledge extension. */
     materialKnowledge: readonly ResidentKnownMaterialObject[];
   };
   continuity: {
@@ -58,17 +59,19 @@ export interface SpcCanonicalEvidenceSnapshotInput {
   matterId: string;
   world: SpcWorldRuntime;
   kernel: ResidentContinuityKernel;
-  materialKnowledge: ResidentMaterialKnowledge;
+  /** Optional resident-specific material extension; generic social slices need none. */
+  materialKnowledge?: ResidentMaterialKnowledge | null;
   authority: ResidentWorldExecutionAuthority;
 }
 
 /**
- * Minimal E2 evidence projection for baseline delivery + missing-crate evidence.
+ * Minimal E2 evidence projection for SPC Next vertical slices.
  *
  * This is deliberately not a savegame, participant DTO or complete final game
  * state. It composes existing authoritative/private owners without creating a
- * second mutable truth. Every field is a defensive snapshot from an existing
- * authority surface.
+ * second mutable truth. Material knowledge is one optional resident-specific
+ * extension; generic World, private diagnostics, continuity and causal provenance
+ * remain valid for non-material residents such as Ida.
  */
 export function captureSpcCanonicalEvidenceSnapshot(
   input: SpcCanonicalEvidenceSnapshotInput,
@@ -76,7 +79,7 @@ export function captureSpcCanonicalEvidenceSnapshot(
   assertId(input.scenarioId, "scenarioId");
   assertId(input.residentId, "residentId");
   assertId(input.matterId, "matterId");
-  if (input.materialKnowledge.residentId !== input.residentId) {
+  if (input.materialKnowledge && input.materialKnowledge.residentId !== input.residentId) {
     throw new Error("materialKnowledge resident does not match evidence residentId");
   }
   if (input.authority.residentId !== input.residentId) {
@@ -102,7 +105,7 @@ export function captureSpcCanonicalEvidenceSnapshot(
     residentPrivate: {
       residentId: input.residentId,
       diagnostics: input.world.residentDiagnostics(input.residentId),
-      materialKnowledge: input.materialKnowledge.snapshot(),
+      materialKnowledge: input.materialKnowledge?.snapshot() ?? [],
     },
     continuity: {
       matter,
