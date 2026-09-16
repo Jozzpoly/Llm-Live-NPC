@@ -108,10 +108,10 @@ jobs:
           LIVE_PROVIDER_PREFLIGHT_OUTPUT: evidence/live-provider/preflight.json
         run: node scripts/spc-browser-live-provider-preflight.mjs
 
-      - name: Qualify real Luna through recovered resident authority
+      - name: Qualify real Luna search interruption and exact return
         env:
-          LIVE_PROVIDER_OUTPUT: evidence/live-provider/live-provider.json
-        run: node scripts/spc-browser-live-provider-evidence.mjs
+          LIVE_PROVIDER_OUTPUT: evidence/live-provider/live-provider-interruption.json
+        run: node scripts/spc-browser-live-provider-interruption-evidence.mjs
 
       - name: Print live-provider evidence summary
         if: always()
@@ -121,8 +121,8 @@ jobs:
           cat /tmp/live-provider-candidate-url.txt 2>/dev/null || true
           echo "--- Spend-free preflight ---"
           cat evidence/live-provider/preflight.json 2>/dev/null || true
-          echo "--- Live provider evidence ---"
-          cat evidence/live-provider/live-provider.json 2>/dev/null || true
+          echo "--- Live provider interruption evidence ---"
+          cat evidence/live-provider/live-provider-interruption.json 2>/dev/null || true
 
       - name: Upload live-provider evidence artifact
         if: always()
