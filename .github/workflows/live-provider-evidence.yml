@@ -26,6 +26,24 @@ jobs:
         with:
           node-version: 22
 
+      - name: Resolve requested qualifiers
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE' >> "$GITHUB_ENV"
+          const request = require('./evidence/live-provider-request.json');
+          const qualifiers = Array.isArray(request.qualifiers)
+            ? request.qualifiers
+            : ['lifecycle', 'interruption'];
+          const allowed = new Set(['lifecycle', 'interruption']);
+          if (qualifiers.length === 0 || qualifiers.some((value) => !allowed.has(value))) {
+            throw new Error(`invalid live-provider qualifiers: ${JSON.stringify(qualifiers)}`);
+          }
+          process.stdout.write(`RUN_LIFECYCLE=${qualifiers.includes('lifecycle') ? '1' : '0'}\n`);
+          process.stdout.write(`RUN_INTERRUPTION=${qualifiers.includes('interruption') ? '1' : '0'}\n`);
+          process.stdout.write(`REQUESTED_QUALIFIERS=${qualifiers.join(',')}\n`);
+          NODE
+
       - name: Locate runner Chrome
         shell: bash
         run: |
@@ -45,6 +63,7 @@ jobs:
           TARGET_SHORT_SHA="${GITHUB_SHA:0:8}"
           export TARGET_SHORT_SHA
           echo "Waiting for Cloudflare preview bound to ${GITHUB_SHA} (PR #${PR_NUMBER})"
+          echo "Requested qualifiers: ${REQUESTED_QUALIFIERS}"
 
           CANDIDATE_URL=""
           for attempt in $(seq 1 72); do
@@ -109,11 +128,13 @@ jobs:
         run: node scripts/spc-browser-live-provider-preflight.mjs
 
       - name: Qualify real Luna continuing material lifecycle
+        if: env.RUN_LIFECYCLE == '1'
         env:
           LIVE_PROVIDER_OUTPUT: evidence/live-provider/live-provider-lifecycle.json
         run: node scripts/spc-browser-live-provider-evidence.mjs
 
       - name: Qualify real Luna search interruption and exact return
+        if: env.RUN_INTERRUPTION == '1'
         env:
           LIVE_PROVIDER_OUTPUT: evidence/live-provider/live-provider-interruption.json
         run: node scripts/spc-browser-live-provider-interruption-evidence-v3.mjs
@@ -124,12 +145,22 @@ jobs:
         run: |
           echo "--- Candidate ---"
           cat /tmp/live-provider-candidate-url.txt 2>/dev/null || true
+          echo "--- Requested qualifiers ---"
+          echo "${REQUESTED_QUALIFIERS:-unresolved}"
           echo "--- Spend-free preflight ---"
           cat evidence/live-provider/preflight.json 2>/dev/null || true
           echo "--- Two-burst material lifecycle ---"
-          cat evidence/live-provider/live-provider-lifecycle.json 2>/dev/null || true
+          if [ "${RUN_LIFECYCLE:-0}" = "1" ]; then
+            cat evidence/live-provider/live-provider-lifecycle.json 2>/dev/null || true
+          else
+            echo "not requested in this run"
+          fi
           echo "--- Live provider interruption evidence ---"
-          cat evidence/live-provider/live-provider-interruption.json 2>/dev/null || true
+          if [ "${RUN_INTERRUPTION:-0}" = "1" ]; then
+            cat evidence/live-provider/live-provider-interruption.json 2>/dev/null || true
+          else
+            echo "not requested in this run"
+          fi
 
       - name: Upload live-provider evidence artifact
         if: always()
