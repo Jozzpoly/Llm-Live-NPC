@@ -8,11 +8,17 @@ import {
 
 const SEARCH_CAPABILITY_ID = "local.search.remembered-workshop-area";
 const run = {
-  version: 2,
+  version: 3,
   providerRunId: "semantic-provider:7",
   matter: {
     id: "matter.janek.missing-crate",
-    semanticCourse: "go to the last-known workshop crate position and pick it up",
+    semanticCourse: "search the remembered workshop area for the familiar crate",
+  },
+  originEvidence: {
+    id: "evidence:janek:missing-crate:origin",
+    tick: 20,
+    kind: "life_context",
+    summary: "Janek needs the familiar workshop crate and last saw it near the workshop bench.",
   },
   semanticEvidence: {
     id: "evidence:janek:checked-absence:crate.workshop.01:120",
@@ -48,8 +54,12 @@ afterEach(() => {
 });
 
 describe("SPC Next recovered semantic Worker", () => {
-  it("sanitizes matter evidence plus bounded resident-offered capabilities and rejects malformed capability offers", () => {
+  it("sanitizes stable origin, current semantic evidence and bounded resident-offered capabilities", () => {
     expect(sanitizeSpcNextSemanticRun(run)).toEqual(run);
+    expect(sanitizeSpcNextSemanticRun({
+      ...run,
+      originEvidence: { ...run.originEvidence, tick: -1 },
+    })).toBeNull();
     expect(sanitizeSpcNextSemanticRun({
       ...run,
       semanticEvidence: { ...run.semanticEvidence, tick: -1 },
@@ -66,6 +76,7 @@ describe("SPC Next recovered semantic Worker", () => {
       ...run,
       localCapabilities: [{ id: "bad capability id", summary: "invalid id" }],
     })).toBeNull();
+    expect(sanitizeSpcNextSemanticRun({ ...run, version: 2 })).toBeNull();
   });
 
   it("extracts one semantic course plus only an offered local capability and rejects extra authority-shaped fields", () => {
@@ -97,7 +108,7 @@ describe("SPC Next recovered semantic Worker", () => {
     expect(extractSpcNextSemanticDecision(extra, [SEARCH_CAPABILITY_ID])).toBeNull();
   });
 
-  it("sends only matter, semantic evidence and resident-offered capabilities upstream and returns the selected offer with usage", async () => {
+  it("sends stable origin separately from current evidence and resident-offered capabilities upstream", async () => {
     const fetchMock = vi.fn(async (_url: string, init?: RequestInit) => {
       expect(init?.method).toBe("POST");
       const body = JSON.parse(String(init?.body));
@@ -115,9 +126,11 @@ describe("SPC Next recovered semantic Worker", () => {
       const modelInput = JSON.parse(body.input[0].content);
       expect(modelInput).toEqual({
         matter: run.matter,
+        originEvidence: run.originEvidence,
         semanticEvidence: run.semanticEvidence,
         localCapabilities: run.localCapabilities,
       });
+      expect(modelInput.originEvidence.id).not.toBe(modelInput.semanticEvidence.id);
       expect(JSON.stringify(modelInput)).not.toContain(run.providerRunId);
       expect(body.text.format.schema.properties).toEqual({
         semanticCourse: { type: "string", minLength: 1, maxLength: 2_000 },
@@ -128,7 +141,7 @@ describe("SPC Next recovered semantic Worker", () => {
       });
       expect(body.text.format.schema.required).toEqual(["semanticCourse", "localCapabilityId"]);
       return new Response(JSON.stringify(responseBody(
-        "search the nearby workshop area before escalating",
+        "continue pursuing the familiar workshop crate",
         SEARCH_CAPABILITY_ID,
       )), {
         status: 200,
@@ -154,7 +167,7 @@ describe("SPC Next recovered semantic Worker", () => {
       ok: true,
       providerRunId: run.providerRunId,
       decision: {
-        semanticCourse: "search the nearby workshop area before escalating",
+        semanticCourse: "continue pursuing the familiar workshop crate",
         localCapabilityId: SEARCH_CAPABILITY_ID,
       },
       usage: {
