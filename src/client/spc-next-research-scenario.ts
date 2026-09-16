@@ -8,6 +8,10 @@ import { createFiveResidentJanekMissingCrateRecoverySlice } from "../spc-next/fi
 import { createFiveResidentJanekMissingCrateInterruptionSlice } from "../spc-next/five-resident-missing-crate-interruption-slice";
 import { createFiveResidentJanekMissingCrateLiveProviderSlice } from "../spc-next/five-resident-missing-crate-live-provider-slice";
 import { createFiveResidentJanekMissingCrateLiveProviderInterruptionSlice } from "../spc-next/five-resident-missing-crate-live-provider-interruption-slice";
+import {
+  IDA_MESSAGE_MATTER_ID,
+  createFiveResidentIdaMessageDeliverySlice,
+} from "../spc-next/five-resident-ida-message-delivery-slice";
 
 export type SpcNextResearchScenarioKind =
   | "baseline-delivery"
@@ -15,7 +19,8 @@ export type SpcNextResearchScenarioKind =
   | "missing-crate-recovery"
   | "missing-crate-interruption"
   | "missing-crate-live-provider"
-  | "missing-crate-live-provider-interruption";
+  | "missing-crate-live-provider-interruption"
+  | "ida-message-delivery";
 
 export interface SpcNextResearchScenario {
   readonly kind: SpcNextResearchScenarioKind;
@@ -24,7 +29,8 @@ export interface SpcNextResearchScenario {
   readonly matterId: string;
   readonly world: SpcWorldRuntime;
   readonly kernel: ResidentContinuityKernel;
-  readonly materialKnowledge: ResidentMaterialKnowledge;
+  /** Optional resident-specific evidence extension; social slices do not invent material knowledge. */
+  readonly materialKnowledge?: ResidentMaterialKnowledge | null;
   readonly authority: ResidentWorldExecutionAuthority;
   /** Advances exactly one authoritative World tick. */
   advanceOneWorldTick(): void;
@@ -36,6 +42,7 @@ export function createSpcNextResearchScenario(kind: SpcNextResearchScenarioKind)
   if (kind === "missing-crate-interruption") return createMissingCrateInterruptionScenario();
   if (kind === "missing-crate-live-provider") return createMissingCrateLiveProviderScenario();
   if (kind === "missing-crate-live-provider-interruption") return createMissingCrateLiveProviderInterruptionScenario();
+  if (kind === "ida-message-delivery") return createIdaMessageDeliveryScenario();
   return createBaselineDeliveryScenario();
 }
 
@@ -47,6 +54,7 @@ export function researchScenarioKindFromSearch(search: string): SpcNextResearchS
   if (requested === "missing-crate-interruption") return "missing-crate-interruption";
   if (requested === "missing-crate-live-provider") return "missing-crate-live-provider";
   if (requested === "missing-crate-live-provider-interruption") return "missing-crate-live-provider-interruption";
+  if (requested === "ida-message-delivery") return "ida-message-delivery";
   throw new Error(`unknown SPC Next research scenario: ${requested}`);
 }
 
@@ -168,6 +176,26 @@ function createMissingCrateLiveProviderInterruptionScenario(): SpcNextResearchSc
       // The participant interruption is not injected here. Browser evidence must
       // enter through __SPC_EVIDENCE__.addressResident() -> World.speak(), after a
       // real provider choice has grounded the live search run.
+      slice.advanceOneWorldTick();
+    },
+  };
+}
+
+function createIdaMessageDeliveryScenario(): SpcNextResearchScenario {
+  const slice = createFiveResidentIdaMessageDeliverySlice();
+  return {
+    kind: "ida-message-delivery",
+    evidenceScenarioId: "browser-ida-message-delivery",
+    residentId: "resident.ida",
+    matterId: IDA_MESSAGE_MATTER_ID,
+    world: slice.world,
+    kernel: slice.kernel,
+    materialKnowledge: null,
+    authority: slice.authority,
+    advanceOneWorldTick(): void {
+      // I1 begins after legally acquired authored prehistory. The browser adapter
+      // advances only the resident-owned social commitment execution; it does not
+      // inject delivery, recipient identity or recipient position into the slice.
       slice.advanceOneWorldTick();
     },
   };
