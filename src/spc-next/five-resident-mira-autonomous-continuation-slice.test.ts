@@ -12,28 +12,27 @@ describe("five-resident Mira post-authored autonomous continuation", () => {
   it("turns real completion pressure into a private-grounded continuing matter and exact body run without replacing legacy activity", () => {
     const slice = createFiveResidentMiraAutonomousContinuationSlice();
 
-    let start = slice.advanceOneWorldTick();
-    let startGuard = 1;
-    while (start.status !== "continuation_started" && startGuard < MAX_START_STEPS) {
-      start = slice.advanceOneWorldTick();
-      startGuard += 1;
-    }
+    const requested = advanceUntilCognitionRequested(slice);
+    expect(requested.batch.reasons.some((reason) => reason.kind === "activity_completed")).toBe(true);
+    expect(requested.context.currentRegionId).toBe("hearth");
+    expect(requested.context.knownRegions.some((region) => region.id === "workshop")).toBe(true);
+    expect(slice.cognitionAttemptId()).toBe(requested.attemptId);
+    expect(slice.kernel.matter(MATTER_ID)).toBeNull();
+    expect(slice.kernel.runBinding(RUN_ID)).toBeNull();
 
-    expect(startGuard).toBeLessThan(MAX_START_STEPS);
-    expect(start.status).toBe("continuation_started");
-    if (start.status !== "continuation_started") throw new Error(`continuation did not start: ${start.status}`);
+    const started = slice.settleDeterministicCognition();
+    expect(started.status).toBe("continuation_started");
+    if (started.status !== "continuation_started") throw new Error(`continuation settlement failed: ${started.status}`);
 
-    expect(start.batch.reasons.some((reason) => reason.kind === "activity_completed")).toBe(true);
-    expect(start.context.currentRegionId).toBe("hearth");
-    expect(start.context.knownRegions.some((region) => region.id === "workshop")).toBe(true);
-    expect(start.routeRegionIds).toEqual(["hearth", "workshop"]);
-    expect(start.proposal.activityDirective).toMatchObject({
+    expect(started.routeRegionIds).toEqual(["hearth", "workshop"]);
+    expect(started.proposal.activityDirective).toMatchObject({
       kind: "replace",
       activity: {
         kind: "travel",
         targetRegionId: "workshop",
       },
     });
+    expect(slice.cognitionAttemptId()).toBeNull();
 
     const legacyAtStart = miraPublicActivity(slice);
     expect(legacyAtStart).toMatchObject({
@@ -49,8 +48,8 @@ describe("five-resident Mira post-authored autonomous continuation", () => {
 
     const positionAtContinuationStart = miraPosition(slice);
     const scheduled = slice.miraScheduleDiagnostics();
-    expect(scheduled.lastRequestTick).toBe(start.tick);
-    expect(scheduled.nextQuietReviewTick).toBeGreaterThan(start.tick);
+    expect(scheduled.lastRequestTick).toBe(requested.tick);
+    expect(scheduled.nextQuietReviewTick).toBeGreaterThan(started.tick);
 
     let step = slice.advanceOneWorldTick();
     let travelGuard = 1;
@@ -93,7 +92,76 @@ describe("five-resident Mira post-authored autonomous continuation", () => {
     )).toBeLessThanOrEqual(18);
     expect(slice.world.diagnostics().recentMaterialActions).toEqual([]);
   });
+
+  it("rejects the old post-walk answer when real addressed player speech arrives while cognition is in flight", () => {
+    const slice = createFiveResidentMiraAutonomousContinuationSlice();
+    const requested = advanceUntilCognitionRequested(slice);
+    const legacyAtRequest = miraPublicActivity(slice);
+    const positionAtRequest = miraPosition(slice);
+
+    const speech = slice.playerAddressMira("Mira, chwila!");
+    expect(speech).toMatchObject({
+      kind: "speech",
+      actorId: "player.jozz",
+      text: "Mira, chwila!",
+      addressedActorIds: [MIRA_ID],
+    });
+
+    const pending = slice.advanceOneWorldTick();
+    expect(pending).toEqual({
+      status: "cognition_pending",
+      tick: requested.tick + 1,
+      attemptId: requested.attemptId,
+    });
+
+    const privateSpeech = slice.world.residentDiagnostics(MIRA_ID).recentPercepts.find(
+      (percept) => percept.occurrenceId === speech.id,
+    );
+    expect(privateSpeech).toMatchObject({
+      phenomenon: "speech",
+      modality: "hearing",
+      addressed: true,
+      text: "Mira, chwila!",
+    });
+
+    const settlement = slice.settleDeterministicCognition();
+    expect(settlement).toEqual({
+      status: "cognition_stale",
+      tick: requested.tick + 1,
+      reason: "newer_addressed_attention",
+    });
+    expect(slice.phase()).toBe("cognition_stale");
+    expect(slice.cognitionAttemptId()).toBeNull();
+
+    // The late answer never gains semantic/body authority: no matter, no exact run,
+    // no legacy activity replacement, no movement chapter sneaking in after stale.
+    expect(slice.kernel.matter(MATTER_ID)).toBeNull();
+    expect(slice.kernel.runBinding(RUN_ID)).toBeNull();
+    expect(miraPublicActivity(slice)).toEqual(legacyAtRequest);
+    expect(miraPosition(slice)).toEqual(positionAtRequest);
+    expect(slice.cognitionProposal()).toBeNull();
+    expect(slice.world.residentDiagnostics(MIRA_ID).publicState.pendingCognitionReasonCount).toBeGreaterThanOrEqual(2);
+
+    const terminal = slice.advanceOneWorldTick();
+    expect(terminal).toEqual(settlement);
+    expect(miraPosition(slice)).toEqual(positionAtRequest);
+  });
 });
+
+function advanceUntilCognitionRequested(
+  slice: ReturnType<typeof createFiveResidentMiraAutonomousContinuationSlice>,
+) {
+  let step = slice.advanceOneWorldTick();
+  let guard = 1;
+  while (step.status !== "cognition_requested" && guard < MAX_START_STEPS) {
+    step = slice.advanceOneWorldTick();
+    guard += 1;
+  }
+  expect(guard).toBeLessThan(MAX_START_STEPS);
+  expect(step.status).toBe("cognition_requested");
+  if (step.status !== "cognition_requested") throw new Error(`cognition request did not start: ${step.status}`);
+  return step;
+}
 
 function miraActor(slice: ReturnType<typeof createFiveResidentMiraAutonomousContinuationSlice>) {
   const actor = slice.world.publicSnapshot().actors.find((candidate) => candidate.id === MIRA_ID);
