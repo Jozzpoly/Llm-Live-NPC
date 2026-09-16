@@ -1,1 +1,1 @@
-import "./spc-browser-geometry-convergence-ack-canary.mjs";
+import "./spc-browser-geometry-convergence-diagnostic.mjs";
