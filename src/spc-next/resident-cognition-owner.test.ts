@@ -186,6 +186,68 @@ describe("ResidentCognitionOwner", () => {
     expect(resident.publicState().activity.id).toBe(before);
   });
 
+  it("admits a bounded semantic intent through the same attempt authority without creating a legacy activity transition", () => {
+    const { resident, owner } = setup();
+    const attempt = owner.prepare(resident.takeCognitionBatch(1)!)!;
+    const before = resident.publicState().activity;
+    const result = owner.settleIntent(attempt, communicateProposal(), 2, (proposal, context) => {
+      if (proposal.activityDirective.kind !== "replace") return { status: "rejected", detail: "replacement required" };
+      const targetActorId = proposal.activityDirective.activity.targetActorId;
+      if (!targetActorId || !context.knownActors.some((actor) => actor.id === targetActorId)) {
+        return { status: "rejected", detail: "target not privately known" };
+      }
+      return {
+        status: "accepted",
+        intent: {
+          kind: "deliver_message" as const,
+          targetActorId,
+          text: proposal.activityDirective.activity.text,
+        },
+      };
+    });
+
+    expect(result).toMatchObject({
+      status: "applied",
+      intent: { kind: "deliver_message", targetActorId: "player.jozz", text: "Jasne." },
+    });
+    expect(resident.publicState().activity).toEqual(before);
+    expect(owner.state().activeAttemptId).toBeNull();
+  });
+
+  it("never calls matter-intent grounding or applies it when addressed attention changes while the request is in flight", () => {
+    const { resident, owner } = setup();
+    const original = resident.takeCognitionBatch(1)!;
+    const attempt = owner.prepare(original)!;
+    resident.ingestPercepts([speech("interrupt", 2, true, "Mira, chwila")]);
+    let groundingCalls = 0;
+
+    const result = owner.settleIntent(attempt, communicateProposal(), 3, () => {
+      groundingCalls += 1;
+      return { status: "accepted", intent: { kind: "should_not_exist" as const } };
+    });
+
+    expect(result).toEqual({ status: "stale", reason: "newer_addressed_attention" });
+    expect(groundingCalls).toBe(0);
+    expect(owner.state().activeAttemptId).toBeNull();
+    expect(resident.publicState().pendingCognitionReasonCount).toBeGreaterThanOrEqual(2);
+  });
+
+  it("requeues the causal batch when matter-intent grounding rejects the otherwise valid proposal", () => {
+    const { resident, owner } = setup();
+    const original = resident.takeCognitionBatch(1)!;
+    const attempt = owner.prepare(original)!;
+
+    expect(owner.settleIntent(attempt, communicateProposal(), 2, () => ({
+      status: "rejected",
+      detail: "no legal continuing-matter route",
+    }))).toEqual({
+      status: "rejected",
+      reason: "intent_rejected",
+      detail: "no legal continuing-matter route",
+    });
+    expect(resident.takeCognitionBatch(61)?.reasons[0]?.id).toBe(original.reasons[0]!.id);
+  });
+
   it("requeues causal reasons when transport is abandoned or output is invalid", () => {
     const abandoned = setup();
     const firstBatch = abandoned.resident.takeCognitionBatch(1)!;
