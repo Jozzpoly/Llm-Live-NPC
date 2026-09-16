@@ -4,6 +4,8 @@ import { createFiveResidentMiraAutonomousContinuationSlice } from "./five-reside
 const MIRA_ID = "resident.mira";
 const MATTER_ID = "matter.mira.post-walk-continuation";
 const RUN_ID = "run.mira.post-walk-continuation.travel";
+const COMPETING_MATTER_ID = "matter.mira.background-pressure";
+const COMPETING_RUN_ID = "run.mira.background-pressure";
 const WORKSHOP_DESTINATION = { x: 1_950, y: 720 } as const;
 const MAX_START_STEPS = 1_200;
 const MAX_TRAVEL_STEPS = 1_200;
@@ -45,6 +47,7 @@ describe("five-resident Mira post-authored autonomous continuation", () => {
       activeRunId: RUN_ID,
     });
     expect(slice.kernel.canRunMutateWorld(RUN_ID)).toBe(true);
+    expect(slice.executionFocus.focusedRun()).toBe(RUN_ID);
 
     const positionAtContinuationStart = miraPosition(slice);
     const scheduled = slice.miraScheduleDiagnostics();
@@ -82,6 +85,7 @@ describe("five-resident Mira post-authored autonomous continuation", () => {
       activeRunId: null,
     });
     expect(slice.kernel.canRunMutateWorld(RUN_ID)).toBe(false);
+    expect(slice.executionFocus.focusedRun()).toBeNull();
     expect(miraPublicActivity(slice)).toEqual(legacyAtStart);
 
     const finalPosition = miraPosition(slice);
@@ -137,6 +141,7 @@ describe("five-resident Mira post-authored autonomous continuation", () => {
     // no legacy activity replacement, no movement chapter sneaking in after stale.
     expect(slice.kernel.matter(MATTER_ID)).toBeNull();
     expect(slice.kernel.runBinding(RUN_ID)).toBeNull();
+    expect(slice.executionFocus.focusedRun()).toBeNull();
     expect(miraPublicActivity(slice)).toEqual(legacyAtRequest);
     expect(miraPosition(slice)).toEqual(positionAtRequest);
     expect(slice.cognitionProposal()).toBeNull();
@@ -145,6 +150,74 @@ describe("five-resident Mira post-authored autonomous continuation", () => {
     const terminal = slice.advanceOneWorldTick();
     expect(terminal).toEqual(settlement);
     expect(miraPosition(slice)).toEqual(positionAtRequest);
+  });
+
+  it("keeps a concurrent matter alive without letting its exact run steal Mira's body, then allows it to take focus after the first matter resolves", () => {
+    const slice = createFiveResidentMiraAutonomousContinuationSlice();
+    advanceUntilCognitionRequested(slice);
+    const started = slice.settleDeterministicCognition();
+    expect(started.status).toBe("continuation_started");
+    expect(slice.executionFocus.focusedRun()).toBe(RUN_ID);
+
+    slice.kernel.recordEvidence({
+      id: "evidence:mira:background-pressure",
+      tick: slice.world.tick,
+      kind: "life_context",
+      summary: "A second legitimate resident matter exists while Mira is traveling.",
+    });
+    slice.kernel.openMatter({
+      id: COMPETING_MATTER_ID,
+      originEvidenceId: "evidence:mira:background-pressure",
+      semanticCourse: "keep this concern open without preempting the current body task",
+    });
+    slice.kernel.bindRun({
+      matterId: COMPETING_MATTER_ID,
+      taskId: "task.mira.background-pressure",
+      runId: COMPETING_RUN_ID,
+    });
+
+    expect(slice.kernel.canRunMutateWorld(COMPETING_RUN_ID)).toBe(true);
+    expect(slice.executionFocus.claim(COMPETING_RUN_ID)).toEqual({
+      status: "busy",
+      runId: COMPETING_RUN_ID,
+      focusedRunId: RUN_ID,
+    });
+    expect(slice.world.applyResidentExecutionFrame(MIRA_ID, {
+      runId: COMPETING_RUN_ID,
+      effects: [{ kind: "motion", desiredVelocity: { x: -95, y: 0 } }],
+    })).toEqual({ status: "rejected", runId: COMPETING_RUN_ID, reason: "run_not_authorized" });
+
+    let step = slice.advanceOneWorldTick();
+    let guard = 1;
+    while (step.status === "traveling" && guard < MAX_TRAVEL_STEPS) {
+      expect(slice.executionFocus.focusedRun()).toBe(RUN_ID);
+      expect(slice.kernel.matter(COMPETING_MATTER_ID)).toMatchObject({
+        status: "active",
+        activeRunId: COMPETING_RUN_ID,
+      });
+      step = slice.advanceOneWorldTick();
+      guard += 1;
+    }
+
+    expect(guard).toBeLessThan(MAX_TRAVEL_STEPS);
+    expect(step.status).toBe("resolved");
+    expect(slice.executionFocus.focusedRun()).toBeNull();
+    expect(slice.kernel.matter(COMPETING_MATTER_ID)).toMatchObject({
+      status: "active",
+      activeRunId: COMPETING_RUN_ID,
+    });
+    expect(slice.kernel.canRunMutateWorld(COMPETING_RUN_ID)).toBe(true);
+
+    expect(slice.executionFocus.claim(COMPETING_RUN_ID)).toEqual({
+      status: "acquired",
+      runId: COMPETING_RUN_ID,
+    });
+    expect(slice.world.applyResidentExecutionFrame(MIRA_ID, {
+      runId: COMPETING_RUN_ID,
+      effects: [{ kind: "motion", desiredVelocity: { x: -60, y: 0 } }],
+    }).status).toBe("applied");
+    slice.world.step();
+    expect(miraActor(slice).velocity.x).toBeLessThan(0);
   });
 });
 
