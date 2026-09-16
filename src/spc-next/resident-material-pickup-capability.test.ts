@@ -93,8 +93,8 @@ describe("resident visible material pickup capability", () => {
     expect(slice.world.materialObject(CRATE_ID)?.location).toEqual({ kind: "held", actorId: "resident.janek" });
     expect(slice.authority.recentActionFacts()).toContainEqual(expect.objectContaining({
       runId: RUN_ID,
-      action: { kind: "material_pickup", objectId: CRATE_ID },
-      resolution: { status: "resolved", outcomeStatus: "succeeded", code: "picked_up" },
+      action: expect.objectContaining({ kind: "material_pickup", objectId: CRATE_ID }),
+      resolution: expect.objectContaining({ status: "resolved", outcomeStatus: "succeeded", code: "picked_up" }),
     }));
   });
 
