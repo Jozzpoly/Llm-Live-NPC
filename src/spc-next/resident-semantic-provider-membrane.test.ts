@@ -15,8 +15,16 @@ function setupMatter(id = "matter.work") {
 }
 
 describe("ResidentSemanticProviderMembrane", () => {
-  it("serializes semantic content and resident-offered capabilities without serializing mutation authority", () => {
+  it("serializes stable origin, current semantic content and resident-offered capabilities without serializing mutation authority", () => {
     const kernel = setupMatter();
+    const current = kernel.recordEvidence({
+      id: "evidence:matter.work:changed",
+      tick: 2,
+      kind: "checked_absence",
+      summary: "the expected thing is not at the inspected place",
+    });
+    kernel.advanceSemanticContext("matter.work", current.id);
+
     const membrane = new ResidentSemanticProviderMembrane();
     const run = membrane.prepare(kernel, "matter.work", [{
       id: "local.search.remembered-area",
@@ -25,10 +33,20 @@ describe("ResidentSemanticProviderMembrane", () => {
     const cloned = structuredClone(run) as unknown as Record<string, unknown>;
 
     expect(cloned).toMatchObject({
-      version: 2,
+      version: 3,
       providerRunId: "semantic-provider:0",
       matter: { id: "matter.work", semanticCourse: "inspect workshop" },
-      semanticEvidence: { id: "evidence:matter.work" },
+      originEvidence: {
+        id: "evidence:matter.work",
+        tick: 1,
+        kind: "heard",
+        summary: "origin for matter.work",
+      },
+      semanticEvidence: {
+        id: "evidence:matter.work:changed",
+        tick: 2,
+        kind: "checked_absence",
+      },
       localCapabilities: [{ id: "local.search.remembered-area" }],
     });
     expect(cloned).not.toHaveProperty("ticket");
@@ -43,6 +61,31 @@ describe("ResidentSemanticProviderMembrane", () => {
       matter: { semanticCourse: "inspect the north station" },
       localCapabilityId: "local.search.remembered-area",
     });
+  });
+
+  it("keeps origin evidence stable across later semantic revisions", () => {
+    const kernel = setupMatter("matter.continuing");
+    const firstPressure = kernel.recordEvidence({
+      id: "evidence:pressure:1",
+      tick: 2,
+      kind: "blocked",
+      summary: "first tactic failed",
+    });
+    kernel.advanceSemanticContext("matter.continuing", firstPressure.id);
+    const first = new ResidentSemanticProviderMembrane().prepare(kernel, "matter.continuing");
+
+    const secondPressure = kernel.recordEvidence({
+      id: "evidence:pressure:2",
+      tick: 3,
+      kind: "material_reacquired",
+      summary: "the sought material is visible again",
+    });
+    kernel.advanceSemanticContext("matter.continuing", secondPressure.id);
+    const second = new ResidentSemanticProviderMembrane().prepare(kernel, "matter.continuing");
+
+    expect(second.originEvidence).toEqual(first.originEvidence);
+    expect(second.semanticEvidence).toEqual(secondPressure);
+    expect(second.originEvidence.id).not.toBe(second.semanticEvidence.id);
   });
 
   it("accepts only an exact resident-offered local capability and keeps invalid selection retryable", () => {
