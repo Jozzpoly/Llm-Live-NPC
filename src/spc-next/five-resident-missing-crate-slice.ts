@@ -174,7 +174,9 @@ export function createFiveResidentJanekMissingCrateStagedSlice(
       });
       if (pickupByRelocator.status !== "succeeded") throw new Error("failed to prepare hidden crate relocation");
 
-      world.setActorMotionIntent(HIDDEN_RELOCATOR_ID, { x: hiddenRelocationSpeed, y: 0 });
+      // Move south rather than toward Ida/crossroads. The one relocation tick stays
+      // physically real, while all five residents remain outside actor/material sight.
+      world.setActorMotionIntent(HIDDEN_RELOCATOR_ID, { x: 0, y: hiddenRelocationSpeed });
       world.step();
       world.setActorMotionIntent(HIDDEN_RELOCATOR_ID, { x: 0, y: 0 });
       const relocator = world.publicSnapshot().actors.find((actor) => actor.id === HIDDEN_RELOCATOR_ID);
@@ -185,6 +187,12 @@ export function createFiveResidentJanekMissingCrateStagedSlice(
         position: relocator.position,
       });
       if (placedByRelocator.status !== "succeeded") throw new Error("failed to finish hidden crate relocation");
+
+      // The research actor must not remain colocated with the later reacquisition
+      // target. Preserve the explicit one-tick relocation boundary, but arm a real
+      // physical departure so the very next World integration carries the fixture
+      // away before Janek can approach/search the relocated crate.
+      world.setActorMotionIntent(HIDDEN_RELOCATOR_ID, { x: 0, y: hiddenRelocationSpeed });
 
       materialKnowledge.sample();
       const privateAfter = materialKnowledge.snapshot();
