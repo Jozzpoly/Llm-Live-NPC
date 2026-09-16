@@ -13,6 +13,7 @@ const JANEK_ID = "resident.janek";
 const CRATE_ID = "crate.workshop.01";
 const MATTER_ID = "matter.janek.missing-crate";
 const CAPABILITY_ID = "local.material.search.remembered-workshop-area";
+const ORIGIN_EVIDENCE_ID = "evidence:janek:missing-crate:origin";
 
 if (!BASE_URL) throw new Error("LIVE_PROVIDER_BASE_URL is required");
 if (!SOURCE_SHA) throw new Error("SOURCE_SHA is required");
@@ -20,13 +21,7 @@ mkdirSync(OUTPUT_DIR, { recursive: true });
 const sleep = (ms) => new Promise((resolveSleep) => setTimeout(resolveSleep, ms));
 
 function chromeExecutable() {
-  const candidates = [
-    process.env.CHROME_PATH,
-    "/usr/bin/google-chrome",
-    "/usr/bin/google-chrome-stable",
-    "/usr/bin/chromium",
-    "/usr/bin/chromium-browser",
-  ].filter(Boolean);
+  const candidates = [process.env.CHROME_PATH, "/usr/bin/google-chrome", "/usr/bin/google-chrome-stable", "/usr/bin/chromium", "/usr/bin/chromium-browser"].filter(Boolean);
   for (const candidate of candidates) if (existsSync(candidate)) return candidate;
   for (const binary of ["google-chrome", "google-chrome-stable", "chromium", "chromium-browser"]) {
     try {
@@ -38,13 +33,7 @@ function chromeExecutable() {
 }
 
 class CdpSession {
-  constructor(webSocketUrl) {
-    this.webSocketUrl = webSocketUrl;
-    this.nextId = 1;
-    this.pending = new Map();
-    this.listeners = new Map();
-  }
-
+  constructor(webSocketUrl) { this.webSocketUrl = webSocketUrl; this.nextId = 1; this.pending = new Map(); this.listeners = new Map(); }
   async connect() {
     this.ws = new WebSocket(this.webSocketUrl);
     await new Promise((resolveOpen, rejectOpen) => {
@@ -58,7 +47,6 @@ class CdpSession {
       this.pending.clear();
     });
   }
-
   handleMessage(raw) {
     const message = JSON.parse(String(raw));
     if (message.id) {
@@ -71,20 +59,11 @@ class CdpSession {
     }
     for (const listener of this.listeners.get(message.method) ?? []) listener(message.params ?? {});
   }
-
-  on(method, listener) {
-    const current = this.listeners.get(method) ?? [];
-    current.push(listener);
-    this.listeners.set(method, current);
-  }
-
+  on(method, listener) { const current = this.listeners.get(method) ?? []; current.push(listener); this.listeners.set(method, current); }
   send(method, params = {}, timeoutMs = 30_000) {
     const id = this.nextId++;
     return new Promise((resolveSend, rejectSend) => {
-      const timer = setTimeout(() => {
-        this.pending.delete(id);
-        rejectSend(new Error(`CDP timeout: ${method}`));
-      }, timeoutMs);
+      const timer = setTimeout(() => { this.pending.delete(id); rejectSend(new Error(`CDP timeout: ${method}`)); }, timeoutMs);
       this.pending.set(id, {
         method,
         resolve: (result) => { clearTimeout(timer); resolveSend(result); },
@@ -93,7 +72,6 @@ class CdpSession {
       this.ws.send(JSON.stringify({ id, method, params }));
     });
   }
-
   close() { this.ws?.close(); }
 }
 
@@ -102,25 +80,17 @@ async function run() {
   const userDataDir = mkdtempSync(`${tmpdir()}/spc-live-provider-preflight-`);
   const port = 12_000 + Math.floor(Math.random() * 300);
   const chrome = spawn(chromePath, [
-    "--headless=new",
-    "--no-sandbox",
-    "--disable-dev-shm-usage",
-    "--disable-component-update",
-    "--disable-default-apps",
-    "--disable-extensions",
-    `--remote-debugging-port=${port}`,
-    "--remote-debugging-address=127.0.0.1",
-    `--user-data-dir=${userDataDir}`,
-    `--window-size=${VIEWPORT.width},${VIEWPORT.height}`,
-    "about:blank",
+    "--headless=new", "--no-sandbox", "--disable-dev-shm-usage", "--disable-component-update", "--disable-default-apps", "--disable-extensions",
+    `--remote-debugging-port=${port}`, "--remote-debugging-address=127.0.0.1", `--user-data-dir=${userDataDir}`,
+    `--window-size=${VIEWPORT.width},${VIEWPORT.height}`, "about:blank",
   ], { stdio: ["ignore", "pipe", "pipe"] });
 
   let cdp;
   const report = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     sourceSha: SOURCE_SHA,
     candidateBaseUrl: BASE_URL,
-    purpose: "prove exact-preview browser reaches semantic request boundary without allowing provider spend",
+    purpose: "prove exact-preview browser reaches origin-aware semantic request boundary without allowing provider spend",
     startedAt: new Date().toISOString(),
     chrome: null,
     pageUrl: null,
@@ -142,10 +112,7 @@ async function run() {
     await cdp.connect();
 
     cdp.on("Runtime.exceptionThrown", ({ exceptionDetails }) => {
-      report.runtimeExceptions.push({
-        text: exceptionDetails?.text ?? null,
-        description: exceptionDetails?.exception?.description ?? null,
-      });
+      report.runtimeExceptions.push({ text: exceptionDetails?.text ?? null, description: exceptionDetails?.exception?.description ?? null });
     });
     cdp.on("Fetch.requestPaused", (event) => {
       if (intercepted || event.request?.method !== "POST" || !event.request?.url?.includes("/api/spc-next/semantic")) return;
@@ -156,16 +123,13 @@ async function run() {
         method: event.request.method,
         postData: event.request.postData ?? null,
       };
-      // Keep the request paused. Browser is destroyed after the boundary is recorded,
-      // so the Worker/OpenAI provider cannot receive this preflight request.
+      // Intentionally leave paused. The browser is destroyed after evidence capture,
+      // so this spend-free preflight cannot reach Worker/OpenAI.
     });
 
     await Promise.all([
-      cdp.send("Page.enable"),
-      cdp.send("Runtime.enable"),
-      cdp.send("Fetch.enable", {
-        patterns: [{ urlPattern: "*/api/spc-next/semantic", requestStage: "Request" }],
-      }),
+      cdp.send("Page.enable"), cdp.send("Runtime.enable"),
+      cdp.send("Fetch.enable", { patterns: [{ urlPattern: "*/api/spc-next/semantic", requestStage: "Request" }] }),
       cdp.send("Emulation.setDeviceMetricsOverride", VIEWPORT),
     ]);
 
@@ -200,10 +164,7 @@ async function run() {
     } : null;
 
     const body = report.interceptedRequest?.body ?? null;
-    assert(report, "browser reaches semantic request boundary within bounded World steps", Boolean(intercepted), {
-      worldSteps: guard,
-      finalCanonical: report.finalCanonical,
-    });
+    assert(report, "browser reaches semantic request boundary within bounded World steps", Boolean(intercepted), { worldSteps: guard, finalCanonical: report.finalCanonical });
     if (intercepted) {
       assert(report, "semantic request is emitted only after checked absence and before new execution authority", Boolean(
         report.finalCanonical?.matterStatus === "active"
@@ -211,11 +172,18 @@ async function run() {
         && report.finalCanonical?.activeRunId === null
         && report.finalCanonical?.semanticEvidenceKind === "checked_absence"
       ), report.finalCanonical);
-      assert(report, "preflight request carries exactly the resident-owned search offer and no hidden relocated truth", Boolean(
-        body?.version === 2
+      assert(report, "v3 request preserves stable resident matter origin separately from current checked-absence evidence", Boolean(
+        body?.version === 3
         && body?.matter?.id === MATTER_ID
+        && body?.originEvidence?.id === ORIGIN_EVIDENCE_ID
+        && body?.originEvidence?.kind === "life_context"
+        && typeof body?.originEvidence?.summary === "string"
+        && body.originEvidence.summary.includes("needs the familiar workshop crate")
         && body?.semanticEvidence?.kind === "checked_absence"
-        && Array.isArray(body?.localCapabilities)
+        && body.originEvidence.id !== body.semanticEvidence?.id
+      ), report.interceptedRequest);
+      assert(report, "preflight request carries exactly the resident-owned search offer and no hidden relocated truth", Boolean(
+        Array.isArray(body?.localCapabilities)
         && body.localCapabilities.length === 1
         && body.localCapabilities[0]?.id === CAPABILITY_ID
         && !String(intercepted.postData ?? "").includes("2752")
@@ -262,55 +230,37 @@ async function navigateEvidence(cdp) {
   await cdp.send("Page.navigate", { url });
   await waitUntil(async () => await evaluate(cdp, `Boolean(window.__SPC_EVIDENCE__?.ready?.() && document.querySelector("canvas"))`), 25_000, "live-provider preflight scene");
 }
-
-async function canonicalSnapshot(cdp) {
-  return await evaluate(cdp, "window.__SPC_EVIDENCE__.canonicalSnapshot()");
-}
-
-async function stepEvidence(cdp, steps) {
-  return await evaluate(cdp, `window.__SPC_EVIDENCE__.stepWorld(${JSON.stringify(steps)})`);
-}
-
+async function canonicalSnapshot(cdp) { return await evaluate(cdp, "window.__SPC_EVIDENCE__.canonicalSnapshot()"); }
+async function stepEvidence(cdp, steps) { return await evaluate(cdp, `window.__SPC_EVIDENCE__.stepWorld(${JSON.stringify(steps)})`); }
 async function evaluate(cdp, expression) {
   const result = await cdp.send("Runtime.evaluate", { expression, awaitPromise: true, returnByValue: true });
   if (result.exceptionDetails) throw new Error(result.exceptionDetails.exception?.description ?? result.exceptionDetails.text ?? "Runtime.evaluate failed");
   return result.result?.value;
 }
-
 async function waitForJson(url, timeoutMs = 15_000) {
   const deadline = Date.now() + timeoutMs;
   let lastError = null;
   while (Date.now() < deadline) {
-    try {
-      const response = await fetch(url);
-      if (response.ok) return await response.json();
-    } catch (error) { lastError = error; }
+    try { const response = await fetch(url); if (response.ok) return await response.json(); }
+    catch (error) { lastError = error; }
     await sleep(100);
   }
   throw lastError instanceof Error ? lastError : new Error(`timeout waiting for ${url}`);
 }
-
 async function waitUntil(predicate, timeoutMs, label) {
   const deadline = Date.now() + timeoutMs;
-  while (Date.now() < deadline) {
-    if (await predicate()) return;
-    await sleep(50);
-  }
+  while (Date.now() < deadline) { if (await predicate()) return; await sleep(50); }
   throw new Error(`timeout waiting for ${label}`);
 }
-
 function parseJson(text, label) {
   try { return JSON.parse(String(text ?? "")); }
   catch (error) { throw new Error(`${label} is not valid JSON: ${error instanceof Error ? error.message : String(error)}`); }
 }
-
-function assert(report, name, pass, detail) {
-  report.assertions.push({ name, pass: Boolean(pass), detail });
-}
+function assert(report, name, pass, detail) { report.assertions.push({ name, pass: Boolean(pass), detail }); }
 
 run().catch((error) => {
   const fallback = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     sourceSha: SOURCE_SHA ?? null,
     candidateBaseUrl: BASE_URL ?? null,
     outcome: "HARNESS_ERROR",
