@@ -103,6 +103,11 @@ jobs:
           cat /tmp/live-provider-candidate.html >&2 || true
           exit 1
 
+      - name: Preflight exact browser boundary without provider spend
+        env:
+          LIVE_PROVIDER_PREFLIGHT_OUTPUT: evidence/live-provider/preflight.json
+        run: node scripts/spc-browser-live-provider-preflight.mjs
+
       - name: Qualify real Luna through recovered resident authority
         env:
           LIVE_PROVIDER_OUTPUT: evidence/live-provider/live-provider.json
@@ -114,6 +119,8 @@ jobs:
         run: |
           echo "--- Candidate ---"
           cat /tmp/live-provider-candidate-url.txt 2>/dev/null || true
+          echo "--- Spend-free preflight ---"
+          cat evidence/live-provider/preflight.json 2>/dev/null || true
           echo "--- Live provider evidence ---"
           cat evidence/live-provider/live-provider.json 2>/dev/null || true
 
