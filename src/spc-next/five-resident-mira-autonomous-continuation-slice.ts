@@ -7,6 +7,12 @@ import {
 } from "./five-resident-region";
 import { createFiveResidentNavigationGraph } from "./five-resident-navigation";
 import {
+  ResidentCognitionLiveHost,
+  type CognitionFetch,
+  type ResidentCognitionLiveArrival,
+  type ResidentCognitionProviderErrorCode,
+} from "./resident-cognition-live-host";
+import {
   ResidentCognitionOwner,
   type CognitionIntentSettlement,
   type ResidentCognitionAttempt,
@@ -37,6 +43,11 @@ interface MiraGroundedContinuationIntent {
   routeRegionIds: readonly string[];
   semanticCourse: string;
   reviewAfterSeconds: number;
+}
+
+export interface FiveResidentMiraAutonomousContinuationOptions {
+  cognitionEndpoint?: string;
+  cognitionFetcher?: CognitionFetch;
 }
 
 export type MiraAutonomousContinuationPhase =
@@ -89,6 +100,20 @@ export type MiraDeterministicCognitionSettlement =
   | Extract<MiraAutonomousContinuationStep, { status: "cognition_stale" }>
   | Extract<MiraAutonomousContinuationStep, { status: "cognition_rejected" }>;
 
+export type MiraLiveCognitionSettlement =
+  | MiraDeterministicCognitionSettlement
+  | {
+      status: "provider_error";
+      tick: number;
+      code: ResidentCognitionProviderErrorCode;
+      abandonment: "abandoned" | "attempt_not_active";
+    }
+  | {
+      status: "arrival_rejected";
+      tick: number;
+      reason: "unknown_arrival" | "already_admitted";
+    };
+
 export interface FiveResidentMiraAutonomousContinuationSlice {
   world: FiveResidentRegionComposition["world"];
   kernel: ResidentContinuityKernel;
@@ -96,6 +121,9 @@ export interface FiveResidentMiraAutonomousContinuationSlice {
   phase(): MiraAutonomousContinuationPhase;
   advanceOneWorldTick(): MiraAutonomousContinuationStep;
   settleDeterministicCognition(): MiraDeterministicCognitionSettlement;
+  requestLiveCognition(): Promise<ResidentCognitionLiveArrival>;
+  admitLiveCognition(arrival: ResidentCognitionLiveArrival): MiraLiveCognitionSettlement;
+  liveCognitionAdmissions(): ReturnType<ResidentCognitionLiveHost["recentAdmissions"]>;
   playerAddressMira(text?: string): WorldOccurrence;
   cognitionBatch(): CognitionBatch | null;
   cognitionContext(): ResidentCognitionContext | null;
@@ -108,11 +136,11 @@ export interface FiveResidentMiraAutonomousContinuationSlice {
 /**
  * First bounded closure of the baseline's post-authored cognition gap.
  *
- * This is intentionally a deterministic research fixture, NOT LIVE_PROVIDER evidence.
- * It uses Mira's real scheduler batch and private cognition context. The cognition
- * request is a real in-flight ResidentCognitionOwner attempt: World may advance after
- * request creation and before settlement, and newer addressed attention/activity
- * invalidates the late answer before matter grounding can run.
+ * Mira's real scheduler batch and private cognition context are always owned by the
+ * same ResidentCognitionOwner attempt. Tests may settle that attempt deterministically,
+ * while the live bridge routes it through ResidentCognitionLiveHost. Provider/network
+ * completion remains inert: only explicit admission at a later World tick may ground
+ * the same private proposal into a continuing matter + exact run.
  *
  * The existing `activityDirective` is temporarily treated as a semantic-intent
  * envelope. It is never installed as a legacy ResidentActivity. An admitted intent
@@ -121,7 +149,9 @@ export interface FiveResidentMiraAutonomousContinuationSlice {
  * may act through ResidentWorldExecutionAuthority. The focus is a safety stop-line,
  * not a final replacement for future orthogonal locomotion/look/action/speech channels.
  */
-export function createFiveResidentMiraAutonomousContinuationSlice(): FiveResidentMiraAutonomousContinuationSlice {
+export function createFiveResidentMiraAutonomousContinuationSlice(
+  options: FiveResidentMiraAutonomousContinuationOptions = {},
+): FiveResidentMiraAutonomousContinuationSlice {
   // Keep the participant physically within Mira's authored hearing radius at the
   // post-walk cognition boundary. This is fixture geometry, not an enlarged hearing
   // oracle: World still clamps speech by Mira's real 420-unit hearing radius.
@@ -130,6 +160,9 @@ export function createFiveResidentMiraAutonomousContinuationSlice(): FiveResiden
   const mira = composition.runtimes[MIRA_ID];
   const navigation = createFiveResidentNavigationGraph();
   const cognitionOwner = new ResidentCognitionOwner(mira, new CognitionGrounder(navigation));
+  const liveHost = options.cognitionFetcher
+    ? new ResidentCognitionLiveHost(cognitionOwner, options.cognitionEndpoint ?? "/api/spc-next/cognition", options.cognitionFetcher)
+    : new ResidentCognitionLiveHost(cognitionOwner, options.cognitionEndpoint ?? "/api/spc-next/cognition");
   const kernel = new ResidentContinuityKernel();
   const executionFocus = new ResidentExecutionFocusAuthority(kernel);
 
@@ -138,10 +171,71 @@ export function createFiveResidentMiraAutonomousContinuationSlice(): FiveResiden
   let context: ResidentCognitionContext | null = null;
   let proposal: ResidentCognitionProposal | null = null;
   let cognitionAttempt: ResidentCognitionAttempt | null = null;
+  let liveRequestAttemptId: string | null = null;
   let terminalCognition: Extract<MiraDeterministicCognitionSettlement, { status: "cognition_stale" | "cognition_rejected" }> | null = null;
   let authority: ResidentWorldExecutionAuthority | null = null;
   let executor: ResidentGroundedTravelExecutor | null = null;
   let reconciled: RunOutcomeReconciliationResult | null = null;
+
+  const finishCognitionSettlement = (
+    settlement: CognitionIntentSettlement<MiraGroundedContinuationIntent>,
+  ): MiraDeterministicCognitionSettlement => {
+    cognitionAttempt = null;
+    liveRequestAttemptId = null;
+
+    if (settlement.status === "stale") {
+      currentPhase = "cognition_stale";
+      terminalCognition = {
+        status: "cognition_stale",
+        tick: world.tick,
+        reason: settlement.reason,
+      };
+      return structuredClone(terminalCognition);
+    }
+    if (settlement.status === "rejected") {
+      currentPhase = "cognition_rejected";
+      terminalCognition = {
+        status: "cognition_rejected",
+        tick: world.tick,
+        reason: settlement.reason,
+        ...(settlement.detail ? { detail: settlement.detail } : {}),
+      };
+      return structuredClone(terminalCognition);
+    }
+    if (!batch || !context) throw new Error("applied Mira cognition lost its originating batch/context");
+
+    proposal = structuredClone(settlement.proposal);
+    mira.scheduleAdaptiveReview(world.tick, settlement.intent.reviewAfterSeconds, FIXED_DELTA_SECONDS);
+
+    const origin = kernel.recordEvidence({
+      id: `evidence:mira:post-walk-cognition:${world.tick}`,
+      tick: world.tick,
+      kind: "life_context",
+      summary: `After completing her settlement walk, Mira's admitted cognition selected: ${settlement.proposal.activityDirective.reason}`,
+    });
+    kernel.openMatter({
+      id: MATTER_ID,
+      originEvidenceId: origin.id,
+      semanticCourse: settlement.intent.semanticCourse,
+    });
+    kernel.bindRun({ matterId: MATTER_ID, taskId: TASK_ID, runId: RUN_ID });
+    const focusClaim = executionFocus.claim(RUN_ID);
+    if (focusClaim.status !== "acquired" && focusClaim.status !== "already_focused") {
+      throw new Error(`Mira continuation could not acquire body focus: ${focusClaim.status}`);
+    }
+
+    authority = new ResidentWorldExecutionAuthority(MIRA_ID, executionFocus, world);
+    executor = new ResidentGroundedTravelExecutor(RUN_ID, settlement.intent.destination, authority, world);
+    currentPhase = "traveling";
+    return {
+      status: "continuation_started",
+      tick: world.tick,
+      batch: structuredClone(batch),
+      context: structuredClone(context),
+      proposal: structuredClone(settlement.proposal),
+      routeRegionIds: [...settlement.intent.routeRegionIds],
+    };
+  };
 
   return {
     world,
@@ -197,6 +291,7 @@ export function createFiveResidentMiraAutonomousContinuationSlice(): FiveResiden
         const attempt = cognitionOwner.prepare(ready);
         if (!attempt) throw new Error("Mira cognition owner refused the first post-authored request");
         cognitionAttempt = attempt;
+        liveRequestAttemptId = null;
         batch = structuredClone(ready);
         context = structuredClone(attempt.context);
         currentPhase = "cognition_pending";
@@ -258,67 +353,63 @@ export function createFiveResidentMiraAutonomousContinuationSlice(): FiveResiden
       if (currentPhase !== "cognition_pending" || !cognitionAttempt || !batch || !context) {
         throw new Error("Mira deterministic cognition may settle only while an exact request is pending");
       }
-      const attempt = cognitionAttempt;
-      const settlement: CognitionIntentSettlement<MiraGroundedContinuationIntent> = cognitionOwner.settleIntent(
-        attempt,
+      if (liveRequestAttemptId !== null) {
+        throw new Error("Mira deterministic cognition cannot bypass an active live request");
+      }
+      const settlement = cognitionOwner.settleIntent(
+        cognitionAttempt,
         deterministicContinuationProposal(),
         world.tick,
         (parsed, privateContext) => groundContinuationIntent(parsed, privateContext, navigation),
       );
-      cognitionAttempt = null;
-
-      if (settlement.status === "stale") {
-        currentPhase = "cognition_stale";
-        terminalCognition = {
-          status: "cognition_stale",
-          tick: world.tick,
-          reason: settlement.reason,
-        };
-        return structuredClone(terminalCognition);
-      }
-      if (settlement.status === "rejected") {
-        currentPhase = "cognition_rejected";
-        terminalCognition = {
-          status: "cognition_rejected",
-          tick: world.tick,
-          reason: settlement.reason,
-          ...(settlement.detail ? { detail: settlement.detail } : {}),
-        };
-        return structuredClone(terminalCognition);
-      }
-
-      proposal = structuredClone(settlement.proposal);
-      mira.scheduleAdaptiveReview(world.tick, settlement.intent.reviewAfterSeconds, FIXED_DELTA_SECONDS);
-
-      const origin = kernel.recordEvidence({
-        id: `evidence:mira:post-walk-cognition:${world.tick}`,
-        tick: world.tick,
-        kind: "life_context",
-        summary: `After completing her settlement walk, Mira's admitted cognition selected: ${settlement.proposal.activityDirective.reason}`,
-      });
-      kernel.openMatter({
-        id: MATTER_ID,
-        originEvidenceId: origin.id,
-        semanticCourse: settlement.intent.semanticCourse,
-      });
-      kernel.bindRun({ matterId: MATTER_ID, taskId: TASK_ID, runId: RUN_ID });
-      const focusClaim = executionFocus.claim(RUN_ID);
-      if (focusClaim.status !== "acquired" && focusClaim.status !== "already_focused") {
-        throw new Error(`Mira continuation could not acquire body focus: ${focusClaim.status}`);
-      }
-
-      authority = new ResidentWorldExecutionAuthority(MIRA_ID, executionFocus, world);
-      executor = new ResidentGroundedTravelExecutor(RUN_ID, settlement.intent.destination, authority, world);
-      currentPhase = "traveling";
-      return {
-        status: "continuation_started",
-        tick: world.tick,
-        batch: structuredClone(batch),
-        context: structuredClone(context),
-        proposal: structuredClone(settlement.proposal),
-        routeRegionIds: [...settlement.intent.routeRegionIds],
-      };
+      return finishCognitionSettlement(settlement);
     },
+    async requestLiveCognition(): Promise<ResidentCognitionLiveArrival> {
+      if (currentPhase !== "cognition_pending" || !cognitionAttempt) {
+        throw new Error("Mira live cognition may request only while an exact cognition attempt is pending");
+      }
+      if (liveRequestAttemptId !== null) {
+        throw new Error(`Mira live cognition request already owns attempt: ${liveRequestAttemptId}`);
+      }
+      const attempt = cognitionAttempt;
+      liveRequestAttemptId = attempt.id;
+      try {
+        return await liveHost.request(attempt);
+      } catch (error) {
+        liveRequestAttemptId = null;
+        throw error;
+      }
+    },
+    admitLiveCognition(arrival: ResidentCognitionLiveArrival): MiraLiveCognitionSettlement {
+      if (currentPhase !== "cognition_pending" || !cognitionAttempt) {
+        throw new Error("Mira live cognition may admit only while an exact cognition attempt is pending");
+      }
+      const admission = liveHost.admit(
+        arrival,
+        world.tick,
+        (parsed, privateContext) => groundContinuationIntent(parsed, privateContext, navigation),
+      );
+      if (admission.status === "arrival_rejected") {
+        return {
+          status: "arrival_rejected",
+          tick: world.tick,
+          reason: admission.reason,
+        };
+      }
+      if (admission.status === "provider_error") {
+        cognitionAttempt = null;
+        liveRequestAttemptId = null;
+        currentPhase = "awaiting_cognition";
+        return {
+          status: "provider_error",
+          tick: admission.admissionTick,
+          code: admission.code,
+          abandonment: admission.abandonment,
+        };
+      }
+      return finishCognitionSettlement(admission.settlement);
+    },
+    liveCognitionAdmissions: () => liveHost.recentAdmissions(),
     playerAddressMira(text = "Mira, chwila!"): WorldOccurrence {
       return world.speak(PLAYER_ID, text, PLAYER_ADDRESS_RADIUS, [MIRA_ID]);
     },
@@ -341,7 +432,7 @@ function groundContinuationIntent(
     return { status: "rejected" as const, detail: "post-walk continuation requires a travel intent" };
   }
   if (directive.activity.targetRegionId !== TARGET_REGION_ID) {
-    return { status: "rejected" as const, detail: "deterministic fixture selected an unexpected target region" };
+    return { status: "rejected" as const, detail: "Mira cognition selected an unexpected target region" };
   }
   if (!context.currentRegionId) {
     return { status: "rejected" as const, detail: "Mira has no private current region at continuation boundary" };
