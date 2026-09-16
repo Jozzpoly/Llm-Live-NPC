@@ -62,11 +62,31 @@ jobs:
           exit 1
 
       - name: Probe trusted participant input through factual World and private resident perception
+        shell: bash
         env:
           EVIDENCE_BASE_URL: http://127.0.0.1:4173
           TRUSTED_PLAYER_LOOP_OUTPUT: evidence/browser/trusted-player-loop.json
           SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-        run: node scripts/spc-browser-trusted-player-loop.mjs
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3; do
+            echo "trusted-player probe attempt $attempt"
+            set +e
+            node scripts/spc-browser-trusted-player-loop.mjs
+            status=$?
+            set -e
+            if [ "$status" -eq 0 ]; then
+              exit 0
+            fi
+            if jq -e '.outcome == "HARNESS_ERROR" and (.error.message | contains("ENOTEMPTY: directory not empty"))' evidence/browser/trusted-player-loop.json >/dev/null 2>&1; then
+              echo "Chrome profile cleanup raced after the probe; retrying the unchanged experiment."
+              sleep 1
+              continue
+            fi
+            exit "$status"
+          done
+          echo "Chrome profile cleanup race persisted across all attempts."
+          exit 1
 
       - name: Print trusted-player causal-loop report
         if: always()
