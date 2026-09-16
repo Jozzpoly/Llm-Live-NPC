@@ -2,7 +2,7 @@ import * as Phaser from "phaser";
 
 const wallNow = (): number => performance.timeOrigin + performance.now();
 const GEOMETRY_TOLERANCE_PX = 1.25;
-const RELEVANT_TRANSITIONS = new Set(["grid-template-columns", "gap"]);
+const RELEVANT_TRANSITION_KEYS = new Set(["grid-template-columns", "gap"]);
 
 const colorForGeneration = (generation: number): readonly [number, number, number] => [
   32 + (generation * 53) % 192,
@@ -11,6 +11,12 @@ const colorForGeneration = (generation: number): readonly [number, number, numbe
 ];
 
 const closeEnough = (left: number, right: number): boolean => Math.abs(left - right) <= GEOMETRY_TOLERANCE_PX;
+
+function transitionKey(propertyName: string): string | null {
+  if (propertyName === "grid-template-columns") return propertyName;
+  if (propertyName === "gap" || propertyName === "row-gap" || propertyName === "column-gap") return "gap";
+  return null;
+}
 
 function parseTimeMs(value: string): number {
   const text = value.trim();
@@ -35,9 +41,10 @@ function expectedLayoutTransitions(app: HTMLElement): string[] {
     const activeMs = listValue(durations, index) + listValue(delays, index);
     if (activeMs <= 0) continue;
     if (property === "all") {
-      for (const relevant of RELEVANT_TRANSITIONS) expected.add(relevant);
-    } else if (RELEVANT_TRANSITIONS.has(property)) {
-      expected.add(property);
+      for (const relevant of RELEVANT_TRANSITION_KEYS) expected.add(relevant);
+    } else {
+      const key = transitionKey(property);
+      if (key) expected.add(key);
     }
   }
   return [...expected].sort();
@@ -60,6 +67,7 @@ type PostRenderSample = {
   transitionComplete: boolean;
   expectedTransitions: string[];
   completedTransitions: string[];
+  activeTransitionProperties: string[];
   sceneRenderedSameFrame: boolean;
   geometry: GeometrySnapshot;
   eligible: boolean;
@@ -73,6 +81,7 @@ type PendingGeneration = {
   expectedTransitions: string[];
   startedTransitions: Set<string>;
   completedTransitions: Set<string>;
+  activeTransitionProperties: Set<string>;
   transitionCompletionWallMs: number | null;
   scaleResizeCount: number;
   lastScaleResizeWallMs: number | null;
@@ -170,7 +179,8 @@ function geometrySnapshot(candidate: Phaser.Game): GeometrySnapshot {
 }
 
 function transitionComplete(current: PendingGeneration): boolean {
-  return current.expectedTransitions.every((property) => current.completedTransitions.has(property));
+  return current.expectedTransitions.every((property) => current.completedTransitions.has(property))
+    && current.activeTransitionProperties.size === 0;
 }
 
 function publicPending(current: PendingGeneration | null): Record<string, unknown> | null {
@@ -183,6 +193,7 @@ function publicPending(current: PendingGeneration | null): Record<string, unknow
     expectedTransitions: [...current.expectedTransitions],
     startedTransitions: [...current.startedTransitions].sort(),
     completedTransitions: [...current.completedTransitions].sort(),
+    activeTransitionProperties: [...current.activeTransitionProperties].sort(),
     transitionComplete: transitionComplete(current),
     transitionCompletionWallMs: current.transitionCompletionWallMs,
     scaleResizeCount: current.scaleResizeCount,
@@ -195,13 +206,20 @@ function publicPending(current: PendingGeneration | null): Record<string, unknow
 
 for (const type of ["transitionrun", "transitionstart", "transitionend", "transitioncancel"] as const) {
   app.addEventListener(type, (event: TransitionEvent) => {
-    if (event.target !== app || !RELEVANT_TRANSITIONS.has(event.propertyName)) return;
+    if (event.target !== app) return;
+    const key = transitionKey(event.propertyName);
+    if (!key) return;
     const now = wallNow();
-    transitionEvents.push({ type, propertyName: event.propertyName, elapsedTime: event.elapsedTime, wallMs: now, generation: pending?.generation ?? null });
-    if (!pending || !pending.expectedTransitions.includes(event.propertyName)) return;
-    if (type === "transitionrun" || type === "transitionstart") pending.startedTransitions.add(event.propertyName);
+    transitionEvents.push({ type, rawPropertyName: event.propertyName, transitionKey: key, elapsedTime: event.elapsedTime, wallMs: now, generation: pending?.generation ?? null });
+    if (!pending || !pending.expectedTransitions.includes(key)) return;
+    if (type === "transitionrun" || type === "transitionstart") {
+      pending.startedTransitions.add(key);
+      pending.activeTransitionProperties.add(event.propertyName);
+    }
     if (type === "transitionend" || type === "transitioncancel") {
-      pending.completedTransitions.add(event.propertyName);
+      pending.activeTransitionProperties.delete(event.propertyName);
+      const keyStillActive = [...pending.activeTransitionProperties].some((property) => transitionKey(property) === key);
+      if (!keyStillActive) pending.completedTransitions.add(key);
       if (transitionComplete(pending)) pending.transitionCompletionWallMs = now;
     }
   });
@@ -256,6 +274,7 @@ function captureGame(candidate: Phaser.Game): void {
       transitionComplete: didTransitionComplete,
       expectedTransitions: [...current.expectedTransitions],
       completedTransitions: [...current.completedTransitions].sort(),
+      activeTransitionProperties: [...current.activeTransitionProperties].sort(),
       sceneRenderedSameFrame,
       geometry,
       eligible,
@@ -312,6 +331,7 @@ document.addEventListener("click", (event) => {
     expectedTransitions,
     startedTransitions: new Set(),
     completedTransitions: new Set(),
+    activeTransitionProperties: new Set(),
     transitionCompletionWallMs: expectedTransitions.length === 0 ? wallNow() : null,
     scaleResizeCount: 0,
     lastScaleResizeWallMs: null,
