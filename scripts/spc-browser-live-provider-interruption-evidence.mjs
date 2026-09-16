@@ -12,6 +12,7 @@ const JANEK_ID = "resident.janek";
 const PLAYER_ID = "player.jozz";
 const CRATE_ID = "crate.workshop.01";
 const MATTER_ID = "matter.janek.missing-crate";
+const ORIGIN_EVIDENCE_ID = "evidence:janek:missing-crate:origin";
 const CAPABILITY_ID = "local.material.search.remembered-workshop-area";
 const SEARCH_RUN_ID = "run.janek.search-nearby-workshop.live-provider";
 const MAX_TO_PROVIDER = 700;
@@ -25,13 +26,7 @@ mkdirSync(OUTPUT_DIR, { recursive: true });
 const sleep = (ms) => new Promise((resolveSleep) => setTimeout(resolveSleep, ms));
 
 function chromeExecutable() {
-  const candidates = [
-    process.env.CHROME_PATH,
-    "/usr/bin/google-chrome",
-    "/usr/bin/google-chrome-stable",
-    "/usr/bin/chromium",
-    "/usr/bin/chromium-browser",
-  ].filter(Boolean);
+  const candidates = [process.env.CHROME_PATH, "/usr/bin/google-chrome", "/usr/bin/google-chrome-stable", "/usr/bin/chromium", "/usr/bin/chromium-browser"].filter(Boolean);
   for (const candidate of candidates) if (existsSync(candidate)) return candidate;
   for (const binary of ["google-chrome", "google-chrome-stable", "chromium", "chromium-browser"]) {
     try {
@@ -43,13 +38,7 @@ function chromeExecutable() {
 }
 
 class CdpSession {
-  constructor(webSocketUrl) {
-    this.webSocketUrl = webSocketUrl;
-    this.nextId = 1;
-    this.pending = new Map();
-    this.listeners = new Map();
-  }
-
+  constructor(webSocketUrl) { this.webSocketUrl = webSocketUrl; this.nextId = 1; this.pending = new Map(); this.listeners = new Map(); }
   async connect() {
     this.ws = new WebSocket(this.webSocketUrl);
     await new Promise((resolveOpen, rejectOpen) => {
@@ -63,7 +52,6 @@ class CdpSession {
       this.pending.clear();
     });
   }
-
   handleMessage(raw) {
     const message = JSON.parse(String(raw));
     if (message.id) {
@@ -76,20 +64,11 @@ class CdpSession {
     }
     for (const listener of this.listeners.get(message.method) ?? []) listener(message.params ?? {});
   }
-
-  on(method, listener) {
-    const current = this.listeners.get(method) ?? [];
-    current.push(listener);
-    this.listeners.set(method, current);
-  }
-
+  on(method, listener) { const current = this.listeners.get(method) ?? []; current.push(listener); this.listeners.set(method, current); }
   send(method, params = {}, timeoutMs = 30_000) {
     const id = this.nextId++;
     return new Promise((resolveSend, rejectSend) => {
-      const timer = setTimeout(() => {
-        this.pending.delete(id);
-        rejectSend(new Error(`CDP timeout: ${method}`));
-      }, timeoutMs);
+      const timer = setTimeout(() => { this.pending.delete(id); rejectSend(new Error(`CDP timeout: ${method}`)); }, timeoutMs);
       this.pending.set(id, {
         method,
         resolve: (result) => { clearTimeout(timer); resolveSend(result); },
@@ -98,7 +77,6 @@ class CdpSession {
       this.ws.send(JSON.stringify({ id, method, params }));
     });
   }
-
   close() { this.ws?.close(); }
 }
 
@@ -107,22 +85,14 @@ async function run() {
   const userDataDir = mkdtempSync(`${tmpdir()}/spc-live-provider-interruption-`);
   const port = 12_100 + Math.floor(Math.random() * 300);
   const chrome = spawn(chromePath, [
-    "--headless=new",
-    "--no-sandbox",
-    "--disable-dev-shm-usage",
-    "--disable-component-update",
-    "--disable-default-apps",
-    "--disable-extensions",
-    `--remote-debugging-port=${port}`,
-    "--remote-debugging-address=127.0.0.1",
-    `--user-data-dir=${userDataDir}`,
-    `--window-size=${VIEWPORT.width},${VIEWPORT.height}`,
-    "about:blank",
+    "--headless=new", "--no-sandbox", "--disable-dev-shm-usage", "--disable-component-update", "--disable-default-apps", "--disable-extensions",
+    `--remote-debugging-port=${port}`, "--remote-debugging-address=127.0.0.1", `--user-data-dir=${userDataDir}`,
+    `--window-size=${VIEWPORT.width},${VIEWPORT.height}`, "about:blank",
   ], { stdio: ["ignore", "pipe", "pipe"] });
 
   let cdp;
   const report = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     qualification: null,
     sourceSha: SOURCE_SHA,
     candidateBaseUrl: BASE_URL,
@@ -132,19 +102,10 @@ async function run() {
     assertions: [],
     runtimeExceptions: [],
     networkFailures: [],
-    provider: {
-      requestCount: 0,
-      request: null,
-      response: null,
-      worldTicksWhileInFlight: 0,
-    },
-    participant: {
-      addressedOccurrence: null,
-      responseOccurrence: null,
-    },
+    provider: { requestCount: 0, request: null, response: null, worldTicksWhileInFlight: 0 },
+    participant: { addressedOccurrence: null, responseOccurrence: null },
     checkpoints: {},
   };
-
   let semanticRequest = null;
   let semanticResponse = null;
   let semanticLoadingFinished = false;
@@ -159,10 +120,7 @@ async function run() {
     await cdp.connect();
 
     cdp.on("Runtime.exceptionThrown", ({ exceptionDetails }) => {
-      report.runtimeExceptions.push({
-        text: exceptionDetails?.text ?? null,
-        description: exceptionDetails?.exception?.description ?? null,
-      });
+      report.runtimeExceptions.push({ text: exceptionDetails?.text ?? null, description: exceptionDetails?.exception?.description ?? null });
     });
     cdp.on("Network.requestWillBeSent", (event) => {
       if (event.request?.method !== "POST" || !event.request?.url?.includes("/api/spc-next/semantic")) return;
@@ -185,25 +143,16 @@ async function run() {
         mimeType: event.response?.mimeType ?? null,
       };
     });
-    cdp.on("Network.loadingFinished", (event) => {
-      if (semanticRequest && event.requestId === semanticRequest.requestId) semanticLoadingFinished = true;
-    });
+    cdp.on("Network.loadingFinished", (event) => { if (semanticRequest && event.requestId === semanticRequest.requestId) semanticLoadingFinished = true; });
     cdp.on("Network.loadingFailed", (event) => {
       if (!semanticRequest || event.requestId !== semanticRequest.requestId) return;
-      report.networkFailures.push({
-        requestId: event.requestId,
-        errorText: event.errorText ?? null,
-        canceled: event.canceled ?? false,
-      });
+      report.networkFailures.push({ requestId: event.requestId, errorText: event.errorText ?? null, canceled: event.canceled ?? false });
     });
 
     await Promise.all([
-      cdp.send("Page.enable"),
-      cdp.send("Runtime.enable"),
-      cdp.send("Network.enable"),
+      cdp.send("Page.enable"), cdp.send("Runtime.enable"), cdp.send("Network.enable"),
       cdp.send("Emulation.setDeviceMetricsOverride", VIEWPORT),
     ]);
-
     await navigateEvidence(cdp);
 
     let guard = 0;
@@ -220,6 +169,7 @@ async function run() {
       providerRunId: outbound.providerRunId ?? null,
       version: outbound.version ?? null,
       matter: outbound.matter ?? null,
+      originEvidence: outbound.originEvidence ?? null,
       semanticEvidence: outbound.semanticEvidence ?? null,
       localCapabilities: outbound.localCapabilities ?? null,
     };
@@ -233,10 +183,15 @@ async function run() {
       && requestBoundary.activeRunId === null
       && requestBoundary.semanticEvidenceKind === "checked_absence"
     ), requestBoundary);
-    assertReport(report, "provider request exposes one resident-owned bounded search capability and no hidden relocated truth", Boolean(
-      outbound.version === 2
+    assertReport(report, "provider v3 preserves stable matter origin while exposing one resident-owned bounded search capability and no hidden relocated truth", Boolean(
+      outbound.version === 3
       && outbound.matter?.id === MATTER_ID
+      && outbound.originEvidence?.id === ORIGIN_EVIDENCE_ID
+      && outbound.originEvidence?.kind === "life_context"
+      && typeof outbound.originEvidence?.summary === "string"
+      && outbound.originEvidence.summary.includes("needs the familiar workshop crate")
       && outbound.semanticEvidence?.kind === "checked_absence"
+      && outbound.originEvidence.id !== outbound.semanticEvidence?.id
       && Array.isArray(outbound.localCapabilities)
       && outbound.localCapabilities.length === 1
       && outbound.localCapabilities[0]?.id === CAPABILITY_ID
@@ -257,9 +212,7 @@ async function run() {
       }
       await sleep(25);
     }
-    if (!semanticLoadingFinished || !semanticResponse) {
-      throw new Error(`provider response did not complete within ${PROVIDER_TIMEOUT_MS}ms`);
-    }
+    if (!semanticLoadingFinished || !semanticResponse) throw new Error(`provider response did not complete within ${PROVIDER_TIMEOUT_MS}ms`);
 
     const responsePayload = await responseBody(cdp, semanticRequest.requestId);
     const responseJson = parseJson(responsePayload, "semantic response body");
@@ -270,7 +223,6 @@ async function run() {
       decision: responseJson.decision ?? null,
       usage: responseJson.usage ?? null,
     };
-
     assertReport(report, "exact Cloudflare candidate returns a measured Luna semantic decision", Boolean(
       semanticResponse.status === 200
       && responseJson.ok === true
@@ -285,31 +237,23 @@ async function run() {
       && Number.isFinite(responseJson.usage?.elapsedMs)
       && responseJson.usage.elapsedMs >= 0
     ), report.provider.response);
-    assertReport(report, "World advances independently while real provider is in flight", report.provider.worldTicksWhileInFlight > 0, {
-      worldTicksWhileInFlight: report.provider.worldTicksWhileInFlight,
-    });
+    assertReport(report, "World advances independently while real provider is in flight", report.provider.worldTicksWhileInFlight > 0, { worldTicksWhileInFlight: report.provider.worldTicksWhileInFlight });
 
     if (responseJson.decision?.localCapabilityId !== CAPABILITY_ID) {
-      assertReport(report, "interruption qualifier requires Luna to select the offered embodied search capability", false, {
-        selectedCapabilityId: responseJson.decision?.localCapabilityId ?? null,
-      });
+      assertReport(report, "interruption qualifier requires Luna to select the offered embodied search capability", false, { selectedCapabilityId: responseJson.decision?.localCapabilityId ?? null });
       report.qualification = "LIVE_PROVIDER_INTERRUPTION_NOT_EXERCISED";
       report.finishedAt = new Date().toISOString();
       report.outcome = "FAIL";
       process.exitCode = 1;
       return;
     }
-    assertReport(report, "Luna selects the offered embodied search capability for the interruption pressure test", true, {
-      selectedCapabilityId: responseJson.decision.localCapabilityId,
-    });
+    assertReport(report, "Luna selects the offered embodied search capability for the interruption pressure test", true, { selectedCapabilityId: responseJson.decision.localCapabilityId });
 
     await sleep(50);
     const arrived = canonicalSummary(await canonicalSnapshot(cdp));
     report.checkpoints.arrivedButNotAdmitted = arrived;
     assertReport(report, "provider arrival is inert until a later resident/World tick admits it", Boolean(
-      arrived.semanticRevision === 2
-      && arrived.activeRunId === null
-      && arrived.semanticEvidenceKind === "checked_absence"
+      arrived.semanticRevision === 2 && arrived.activeRunId === null && arrived.semanticEvidenceKind === "checked_absence"
     ), arrived);
 
     await stepEvidence(cdp, 1);
@@ -333,23 +277,16 @@ async function run() {
     const movingJanek = actorState(movingFull, JANEK_ID);
     report.checkpoints.searchingBeforeInterruption = moving;
     assertReport(report, "provider-grounded search owns actual body motion before interruption", Boolean(
-      beforeSearch && movingJanek
-      && !samePosition(beforeSearch.position, movingJanek.position)
-      && moving.activeRunId === SEARCH_RUN_ID
-      && moving.activeRunCanMutateWorld === true
+      beforeSearch && movingJanek && !samePosition(beforeSearch.position, movingJanek.position)
+      && moving.activeRunId === SEARCH_RUN_ID && moving.activeRunCanMutateWorld === true
     ), { before: beforeSearch, after: movingJanek, moving });
 
     const addressed = await addressResident(cdp, JANEK_ID, "Janek, chwila!");
     report.participant.addressedOccurrence = addressed;
-    const calledFull = await canonicalSnapshot(cdp);
-    report.checkpoints.playerCalled = canonicalSummary(calledFull);
+    report.checkpoints.playerCalled = canonicalSummary(await canonicalSnapshot(cdp));
     assertReport(report, "participant interruption enters through an addressed World speech occurrence", Boolean(
-      addressed?.kind === "speech"
-      && addressed?.actorId === PLAYER_ID
-      && addressed?.text === "Janek, chwila!"
-      && Array.isArray(addressed?.addressedActorIds)
-      && addressed.addressedActorIds.length === 1
-      && addressed.addressedActorIds[0] === JANEK_ID
+      addressed?.kind === "speech" && addressed?.actorId === PLAYER_ID && addressed?.text === "Janek, chwila!"
+      && Array.isArray(addressed?.addressedActorIds) && addressed.addressedActorIds.length === 1 && addressed.addressedActorIds[0] === JANEK_ID
     ), addressed);
 
     await stepEvidence(cdp, 1);
@@ -358,14 +295,10 @@ async function run() {
     report.checkpoints.suspended = suspended;
     const addressedPercept = newestAddressedSpeechPercept(suspendedFull, PLAYER_ID, "Janek, chwila!");
     assertReport(report, "legal private hearing suspends the exact live search without replacing its binding", Boolean(
-      suspended.matterStatus === "suspended"
-      && suspended.semanticRevision === 3
-      && suspended.activeRunId === SEARCH_RUN_ID
+      suspended.matterStatus === "suspended" && suspended.semanticRevision === 3 && suspended.activeRunId === SEARCH_RUN_ID
       && suspended.activeRunCanMutateWorld === false
       && sameJson(suspendedFull.continuity?.activeRunBinding ?? null, bindingBeforeInterruption)
-      && addressedPercept?.phenomenon === "speech"
-      && addressedPercept?.modality === "hearing"
-      && addressedPercept?.addressed === true
+      && addressedPercept?.phenomenon === "speech" && addressedPercept?.modality === "hearing" && addressedPercept?.addressed === true
     ), { suspended, activeRunBinding: suspendedFull.continuity?.activeRunBinding ?? null, addressedPercept });
 
     await stepEvidence(cdp, 1);
@@ -375,12 +308,8 @@ async function run() {
     report.participant.responseOccurrence = responseOccurrence;
     report.checkpoints.responded = responded;
     assertReport(report, "Janek locally stops, turns through resident authority and answers the addressed player while own matter stays suspended", Boolean(
-      responded.matterStatus === "suspended"
-      && responded.activeRunId === SEARCH_RUN_ID
-      && responded.activeRunCanMutateWorld === false
-      && responseOccurrence?.kind === "speech"
-      && responseOccurrence?.actorId === JANEK_ID
-      && responseOccurrence?.text === "Tak?"
+      responded.matterStatus === "suspended" && responded.activeRunId === SEARCH_RUN_ID && responded.activeRunCanMutateWorld === false
+      && responseOccurrence?.kind === "speech" && responseOccurrence?.actorId === JANEK_ID && responseOccurrence?.text === "Tak?"
       && responseOccurrence?.addressedActorIds?.includes(PLAYER_ID)
       && Math.hypot(actorState(respondedFull, JANEK_ID)?.velocity?.x ?? 0, actorState(respondedFull, JANEK_ID)?.velocity?.y ?? 0) < 1e-9
     ), { responded, responseOccurrence, actor: actorState(respondedFull, JANEK_ID) });
@@ -402,9 +331,7 @@ async function run() {
     report.checkpoints.resumed = resumed;
     assertReport(report, "same provider-grounded search binding regains World authority after bounded player contact", Boolean(
       sameJson(resumedFull.continuity?.activeRunBinding ?? null, bindingBeforeInterruption)
-      && resumed.activeRunId === SEARCH_RUN_ID
-      && resumed.activeRunCanMutateWorld === true
-      && resumed.semanticRevision === 3
+      && resumed.activeRunId === SEARCH_RUN_ID && resumed.activeRunCanMutateWorld === true && resumed.semanticRevision === 3
     ), { resumed, activeRunBinding: resumedFull.continuity?.activeRunBinding ?? null });
 
     const resumeActor = actorState(resumedFull, JANEK_ID);
@@ -413,8 +340,7 @@ async function run() {
     const afterResumeActor = actorState(afterResumeFull, JANEK_ID);
     report.checkpoints.movingAfterResume = canonicalSummary(afterResumeFull);
     assertReport(report, "the resumed exact run returns Janek's body to its own search rather than manufacturing a replacement plan", Boolean(
-      resumeActor && afterResumeActor
-      && !samePosition(resumeActor.position, afterResumeActor.position)
+      resumeActor && afterResumeActor && !samePosition(resumeActor.position, afterResumeActor.position)
       && afterResumeFull.continuity?.matter?.activeRunId === SEARCH_RUN_ID
       && sameJson(afterResumeFull.continuity?.activeRunBinding ?? null, bindingBeforeInterruption)
     ), { before: resumeActor, after: afterResumeActor, binding: afterResumeFull.continuity?.activeRunBinding ?? null });
@@ -438,9 +364,7 @@ async function run() {
       && samePosition(reacquired.materialKnowledge?.[0]?.lastKnownPosition, reacquired.crateLocation?.position)
       && reacquired.actionFacts.length === 0
     ), reacquired);
-    assertReport(report, "one participant interruption does not cause a second semantic provider request", report.provider.requestCount === 1, {
-      requestCount: report.provider.requestCount,
-    });
+    assertReport(report, "one participant interruption does not cause a second semantic provider request", report.provider.requestCount === 1, { requestCount: report.provider.requestCount });
     assertReport(report, "live-provider interruption specimen has no uncaught runtime exceptions or semantic network failures", Boolean(
       report.runtimeExceptions.length === 0 && report.networkFailures.length === 0
     ), { runtimeExceptions: report.runtimeExceptions, networkFailures: report.networkFailures });
@@ -484,11 +408,7 @@ function canonicalSummary(snapshot) {
     actionFacts: snapshot.causalProvenance?.residentWorldActionFacts ?? [],
   };
 }
-
-function actorState(snapshot, actorId) {
-  return snapshot.authoritativeWorld?.actors?.find((actor) => actor.id === actorId) ?? null;
-}
-
+function actorState(snapshot, actorId) { return snapshot.authoritativeWorld?.actors?.find((actor) => actor.id === actorId) ?? null; }
 function newestAddressedSpeechPercept(snapshot, actorId, text) {
   const percepts = snapshot.residentPrivate?.diagnostics?.recentPercepts ?? [];
   for (let index = percepts.length - 1; index >= 0; index -= 1) {
@@ -497,7 +417,6 @@ function newestAddressedSpeechPercept(snapshot, actorId, text) {
   }
   return null;
 }
-
 function newestSpeechOccurrence(snapshot, actorId, text) {
   const occurrences = snapshot.authoritativeWorld?.recentOccurrences ?? [];
   for (let index = occurrences.length - 1; index >= 0; index -= 1) {
@@ -506,105 +425,58 @@ function newestSpeechOccurrence(snapshot, actorId, text) {
   }
   return null;
 }
-
 async function navigateEvidence(cdp) {
   const url = `${BASE_URL.replace(/\/$/u, "")}/?spc=1&evidence=1&scenario=missing-crate-live-provider-interruption`;
   await cdp.send("Page.navigate", { url });
   await waitUntil(async () => await evaluate(cdp, `Boolean(window.__SPC_EVIDENCE__?.ready?.() && document.querySelector("canvas"))`), 25_000, "live-provider interruption evidence scene");
 }
-
-async function canonicalSnapshot(cdp) {
-  return await evaluate(cdp, `window.__SPC_EVIDENCE__.canonicalSnapshot()`);
-}
-
-async function stepEvidence(cdp, steps) {
-  return await evaluate(cdp, `window.__SPC_EVIDENCE__.stepWorld(${JSON.stringify(steps)})`);
-}
-
-async function addressResident(cdp, residentId, text) {
-  return await evaluate(cdp, `window.__SPC_EVIDENCE__.addressResident(${JSON.stringify(residentId)}, ${JSON.stringify(text)})`);
-}
-
+async function canonicalSnapshot(cdp) { return await evaluate(cdp, `window.__SPC_EVIDENCE__.canonicalSnapshot()`); }
+async function stepEvidence(cdp, steps) { return await evaluate(cdp, `window.__SPC_EVIDENCE__.stepWorld(${JSON.stringify(steps)})`); }
+async function addressResident(cdp, residentId, text) { return await evaluate(cdp, `window.__SPC_EVIDENCE__.addressResident(${JSON.stringify(residentId)}, ${JSON.stringify(text)})`); }
 async function responseBody(cdp, requestId) {
   await waitUntil(async () => semanticBodyAvailable(cdp, requestId), 10_000, "semantic response body");
   const result = await cdp.send("Network.getResponseBody", { requestId });
   return result.base64Encoded ? Buffer.from(result.body, "base64").toString("utf8") : result.body;
 }
-
 async function semanticBodyAvailable(cdp, requestId) {
-  try {
-    await cdp.send("Network.getResponseBody", { requestId }, 2_000);
-    return true;
-  } catch {
-    return false;
-  }
+  try { await cdp.send("Network.getResponseBody", { requestId }, 2_000); return true; }
+  catch { return false; }
 }
-
 async function captureScreenshot(cdp, file) {
   const result = await cdp.send("Page.captureScreenshot", { format: "png", captureBeyondViewport: false });
   writeFileSync(file, Buffer.from(result.data, "base64"));
 }
-
 async function evaluate(cdp, expression) {
-  const response = await cdp.send("Runtime.evaluate", {
-    expression,
-    awaitPromise: true,
-    returnByValue: true,
-  });
-  if (response.exceptionDetails) {
-    throw new Error(response.exceptionDetails.exception?.description ?? response.exceptionDetails.text ?? "Runtime.evaluate failed");
-  }
+  const response = await cdp.send("Runtime.evaluate", { expression, awaitPromise: true, returnByValue: true });
+  if (response.exceptionDetails) throw new Error(response.exceptionDetails.exception?.description ?? response.exceptionDetails.text ?? "Runtime.evaluate failed");
   return response.result?.value;
 }
-
 async function waitForJson(url, timeoutMs = 15_000) {
   const deadline = Date.now() + timeoutMs;
   let lastError = null;
   while (Date.now() < deadline) {
-    try {
-      const response = await fetch(url);
-      if (response.ok) return await response.json();
-    } catch (error) {
-      lastError = error;
-    }
+    try { const response = await fetch(url); if (response.ok) return await response.json(); }
+    catch (error) { lastError = error; }
     await sleep(100);
   }
   throw new Error(`Timed out waiting for ${url}${lastError ? `: ${lastError}` : ""}`);
 }
-
 async function waitUntil(predicate, timeoutMs, label) {
   const deadline = Date.now() + timeoutMs;
   let lastError = null;
   while (Date.now() < deadline) {
-    try {
-      if (await predicate()) return;
-    } catch (error) {
-      lastError = error;
-    }
+    try { if (await predicate()) return; } catch (error) { lastError = error; }
     await sleep(100);
   }
   throw new Error(`Timed out waiting for ${label}${lastError ? `: ${lastError}` : ""}`);
 }
-
 function parseJson(value, label) {
   if (typeof value !== "string" || value.length === 0) throw new Error(`${label} missing`);
-  try {
-    return JSON.parse(value);
-  } catch (error) {
-    throw new Error(`${label} is not valid JSON: ${error instanceof Error ? error.message : String(error)}`);
-  }
+  try { return JSON.parse(value); }
+  catch (error) { throw new Error(`${label} is not valid JSON: ${error instanceof Error ? error.message : String(error)}`); }
 }
-
-function assertReport(report, label, pass, details) {
-  report.assertions.push({ label, pass: Boolean(pass), details });
-}
-
-function samePosition(a, b, tolerance = 1e-6) {
-  return Boolean(a && b && Math.abs(a.x - b.x) <= tolerance && Math.abs(a.y - b.y) <= tolerance);
-}
-
-function sameJson(a, b) {
-  return JSON.stringify(a) === JSON.stringify(b);
-}
+function assertReport(report, label, pass, details) { report.assertions.push({ label, pass: Boolean(pass), details }); }
+function samePosition(a, b, tolerance = 1e-6) { return Boolean(a && b && Math.abs(a.x - b.x) <= tolerance && Math.abs(a.y - b.y) <= tolerance); }
+function sameJson(a, b) { return JSON.stringify(a) === JSON.stringify(b); }
 
 await run();
