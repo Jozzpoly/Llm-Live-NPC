@@ -1,5 +1,6 @@
 import type { ResidentActivity, Vec2, WorldAnchor, WorldRegion } from "./contracts";
 import type { MaterialObjectState } from "./material-world-state";
+import type { ResidentRuntime } from "./resident-runtime";
 import { SpcWorldRuntime } from "./spc-world-runtime";
 
 export const FIVE_RESIDENT_REGIONS: readonly WorldRegion[] = [
@@ -55,12 +56,32 @@ export const FIVE_RESIDENT_FAMILIARITY: Readonly<Record<string, readonly string[
   "resident.nela": ["ruins", "old-road", "crossroads", "deep-wilds"],
 };
 
+export type FiveResidentId =
+  | "resident.mira"
+  | "resident.janek"
+  | "resident.ida"
+  | "resident.oren"
+  | "resident.nela";
+
+export type FiveResidentRuntimes = Readonly<Record<FiveResidentId, ResidentRuntime>>;
+
 export interface FiveResidentRegionWorldOptions {
   /** Authored participant start for bounded research specimens. Default preserves the baseline hearth start. */
   playerStart?: Vec2;
 }
 
-export function createFiveResidentRegionWorld(options: FiveResidentRegionWorldOptions = {}): SpcWorldRuntime {
+export interface FiveResidentRegionComposition {
+  world: SpcWorldRuntime;
+  /**
+   * Private resident runtimes retained by the composition owner for cognition hosts
+   * and bounded research slices. They are intentionally not exposed through World.
+   */
+  runtimes: FiveResidentRuntimes;
+}
+
+export function createFiveResidentRegionComposition(
+  options: FiveResidentRegionWorldOptions = {},
+): FiveResidentRegionComposition {
   const world = new SpcWorldRuntime({
     bounds: { minX: 0, minY: 0, maxX: 8_192, maxY: 8_192 },
     regions: FIVE_RESIDENT_REGIONS,
@@ -70,11 +91,13 @@ export function createFiveResidentRegionWorld(options: FiveResidentRegionWorldOp
   });
 
   world.addPlayer("player.jozz", options.playerStart ?? { x: 620, y: 620 }, { maxSpeed: 150 });
-  world.addResident("resident.mira", "Mira", { x: 760, y: 650 });
-  world.addResident("resident.janek", "Janek", { x: 1_900, y: 720 });
-  world.addResident("resident.ida", "Ida", { x: 3_050, y: 880 });
-  world.addResident("resident.oren", "Oren", { x: 4_650, y: 2_650 });
-  world.addResident("resident.nela", "Nela", { x: 6_950, y: 1_100 });
+  const runtimes: FiveResidentRuntimes = {
+    "resident.mira": world.addResident("resident.mira", "Mira", { x: 760, y: 650 }),
+    "resident.janek": world.addResident("resident.janek", "Janek", { x: 1_900, y: 720 }),
+    "resident.ida": world.addResident("resident.ida", "Ida", { x: 3_050, y: 880 }),
+    "resident.oren": world.addResident("resident.oren", "Oren", { x: 4_650, y: 2_650 }),
+    "resident.nela": world.addResident("resident.nela", "Nela", { x: 6_950, y: 1_100 }),
+  };
   for (const object of FIVE_RESIDENT_MATERIAL_OBJECTS) world.addMaterialObject(object);
 
   for (const [residentId, familiarRegions] of Object.entries(FIVE_RESIDENT_FAMILIARITY)) {
@@ -87,7 +110,11 @@ export function createFiveResidentRegionWorld(options: FiveResidentRegionWorldOp
   world.setResidentActivity("resident.oren", activity("oren", "travel", { x: 5_100, y: 3_300 }, "head deeper along the forest edge"));
   world.setResidentActivity("resident.nela", activity("nela", "investigate", { x: 7_650, y: 1_700 }, "inspect the remote ruins"));
 
-  return world;
+  return { world, runtimes };
+}
+
+export function createFiveResidentRegionWorld(options: FiveResidentRegionWorldOptions = {}): SpcWorldRuntime {
+  return createFiveResidentRegionComposition(options).world;
 }
 
 function activity(
