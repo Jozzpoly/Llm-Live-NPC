@@ -16,12 +16,15 @@ export interface ResidentSemanticDecision {
 }
 
 export interface ResidentSemanticProviderRun {
-  version: 2;
+  version: 3;
   providerRunId: string;
   matter: {
     id: string;
     semanticCourse: string;
   };
+  /** Stable, pinned reason/context that opened the continuing matter. */
+  originEvidence: ResidentKernelEvidence;
+  /** Latest evidence that currently pressures/revises the matter. */
   semanticEvidence: ResidentKernelEvidence;
   localCapabilities: readonly ResidentLocalCapabilityOffer[];
 }
@@ -48,14 +51,20 @@ const LOCAL_CAPABILITY_ID = /^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$/u;
 
 /**
  * Local authority membrane between resident cognition state and an external
- * semantic provider. The serializable run contains semantic content, locally
- * offered capabilities and a correlation id only; resident mutation authority
- * remains in this private map.
+ * semantic provider. The serializable run contains semantic content, stable matter
+ * origin, current semantic evidence, locally offered capabilities and a correlation
+ * id only; resident mutation authority remains in this private map.
+ *
+ * Keeping originEvidence separate from semanticEvidence matters for multi-burst
+ * cognition: a temporary strategy (for example "search nearby") may replace the
+ * current semantic course without erasing why the resident still has the matter.
+ * The origin remains resident-owned evidence, not an LLM-authored goal claim.
  *
  * A local capability is an affordance offered by the resident/local brain, not a
  * provider-created command. The provider may select one exact offered id or null.
  * Selection does not itself bind a task/run or mutate World; the caller must still
- * re-ground the admitted choice against current local preconditions.
+ * re-ground the selected capability against current local preconditions before
+ * execution authority can exist.
  */
 export class ResidentSemanticProviderMembrane {
   private readonly privateAuthority = new Map<string, PrivateProviderAuthority>();
@@ -68,6 +77,8 @@ export class ResidentSemanticProviderMembrane {
   ): ResidentSemanticProviderRun {
     const matter = kernel.matter(matterId);
     if (!matter) throw new Error(`unknown matter: ${matterId}`);
+    const originEvidence = kernel.originEvidence(matterId);
+    if (!originEvidence) throw new Error(`matter has no pinned origin evidence: ${matterId}`);
     const semanticEvidence = kernel.semanticEvidence(matterId);
     if (!semanticEvidence) throw new Error(`matter has no live semantic evidence: ${matterId}`);
     const capabilities = validateLocalCapabilities(localCapabilities);
@@ -80,12 +91,13 @@ export class ResidentSemanticProviderMembrane {
     });
 
     return {
-      version: 2,
+      version: 3,
       providerRunId,
       matter: {
         id: matter.id,
         semanticCourse: matter.semanticCourse,
       },
+      originEvidence: structuredClone(originEvidence),
       semanticEvidence: structuredClone(semanticEvidence),
       localCapabilities: capabilities,
     };
@@ -186,8 +198,6 @@ function parseProviderOutput(
   const semanticCourse = typeof record.semanticCourse === "string" ? record.semanticCourse.trim() : "";
   if (!semanticCourse) return null;
 
-  // Internal deterministic callers from the pre-capability recovery campaign may
-  // omit the field; that is equivalent to explicitly choosing no local capability.
   const localCapabilityId = Object.hasOwn(record, "localCapabilityId")
     ? record.localCapabilityId
     : null;
