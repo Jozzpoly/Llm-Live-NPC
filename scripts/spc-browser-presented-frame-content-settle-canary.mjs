@@ -14,6 +14,7 @@ const BLACK_LIMIT = 0.90;
 const STABLE_MAD_LIMIT = 2.0;
 mkdirSync(OUT_DIR, { recursive: true });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+let liveReport = null;
 
 function chromeExecutable() {
   for (const p of [process.env.CHROME_PATH,"/usr/bin/google-chrome","/usr/bin/google-chrome-stable","/usr/bin/chromium","/usr/bin/chromium-browser"].filter(Boolean)) if (existsSync(p)) return p;
@@ -40,6 +41,7 @@ async function main(){
   const proc=spawn(chromeExecutable(),["--headless=new","--no-sandbox","--disable-dev-shm-usage",`--remote-debugging-port=${port}`,"--remote-debugging-address=127.0.0.1",`--user-data-dir=${profile}`,"--window-size=1400,900","about:blank"],{stdio:["ignore","pipe","pipe"]});
   let c,cast=false; const frames=[];
   const rep={schemaVersion:1,experiment:"spc-presented-frame-content-settle-p1",sourceSha:SOURCE_SHA,startedAt:new Date().toISOString(),assertions:[],runtimeExceptions:[],cycles:[],rejections:[]};
+  liveReport = rep;
   const check=(name,pass,detail)=>rep.assertions.push({name,pass:Boolean(pass),detail});
   try{
     const ver=await pollJson(`http://127.0.0.1:${port}/json/version`); rep.chrome=ver.Browser??null;
@@ -59,7 +61,8 @@ async function main(){
       const g=cycle; const col=color(g); const eventCount=await evalv(c,"window.__CS_EVENTS.length"); const sendMs=Date.now();
       await evalv(c,'document.querySelector(".spc-world-mode-toggle").click()');
       const ev=await until(()=>evalv(c,`window.__CS_EVENTS.length>${eventCount}?window.__CS_EVENTS[window.__CS_EVENTS.length-1]:null`),TIMEOUT,`semantic event ${cycle}`);
-      const afterWorldOnly=await until(()=>evalv(c,`(()=>{const x=document.querySelector("#app")?.classList.contains("spc-world-only")??null;return x!==${beforeWorldOnly}?x:null})()`),TIMEOUT,`projection ${cycle}`);
+      const projection=await until(()=>evalv(c,`(()=>{const x=document.querySelector("#app")?.classList.contains("spc-world-only")??null;return x!==${beforeWorldOnly}?{worldOnly:x}:null})()`),TIMEOUT,`projection ${cycle}`);
+      const afterWorldOnly=projection.worldOnly;
       await evalv(c,`(()=>{const m=document.querySelector("#content-settle-marker");m.style.background="rgb(${col.join(",")})";m.dataset.generation=${JSON.stringify(String(g))};return true})()`);
       const ack=await waitContentSettledFrame(c,frames,col,ev.wallMs,cycle,rep.rejections);
       if(!ack)throw new Error(`cycle ${cycle}: no content-settled frame`);
@@ -100,4 +103,4 @@ async function inspectFrame(c,data,expectedColor){
 async function frameMad(c,a,b){
   return evalv(c,`(async()=>{async function dec(s){const raw=atob(s),u=new Uint8Array(raw.length);for(let i=0;i<raw.length;i++)u[i]=raw.charCodeAt(i);return createImageBitmap(new Blob([u],{type:"image/png"}))}const A=await dec(${JSON.stringify(a)}),B=await dec(${JSON.stringify(b)});const w=Math.min(A.width,B.width),h=Math.min(A.height,B.height),sx=Math.floor(w*.04),sy=Math.floor(h*.18),sw=Math.floor(w*.74),sh=Math.floor(h*.77);const cv=document.createElement("canvas");cv.width=w;cv.height=h;const x=cv.getContext("2d",{willReadFrequently:true});x.drawImage(A,0,0);const da=x.getImageData(sx,sy,sw,sh).data;x.clearRect(0,0,w,h);x.drawImage(B,0,0);const db=x.getImageData(sx,sy,sw,sh).data;let sum=0,n=0;for(let i=0;i<da.length;i+=4){sum+=Math.abs(da[i]-db[i])+Math.abs(da[i+1]-db[i+1])+Math.abs(da[i+2]-db[i+2]);n+=3;}A.close();B.close();return sum/n})()`);
 }
-main().catch(e=>{writeFileSync(OUTPUT,JSON.stringify({schemaVersion:1,experiment:"spc-presented-frame-content-settle-p1",sourceSha:SOURCE_SHA,outcome:"HARNESS_ERROR",error:{message:e?.message??String(e),stack:e?.stack??null},finishedAt:new Date().toISOString()},null,2)+"\n");console.error(e);process.exitCode=1});
+main().catch(e=>{const partial=liveReport??{schemaVersion:1,experiment:"spc-presented-frame-content-settle-p1",sourceSha:SOURCE_SHA,assertions:[],runtimeExceptions:[],cycles:[],rejections:[]};writeFileSync(OUTPUT,JSON.stringify({...partial,outcome:"HARNESS_ERROR",error:{message:e?.message??String(e),stack:e?.stack??null},finishedAt:new Date().toISOString()},null,2)+"\n");console.error(e);process.exitCode=1});
