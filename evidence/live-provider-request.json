@@ -1,6 +1,6 @@
 {
-  "version": 2,
+  "version": 3,
   "pr": 125,
-  "purpose": "Retry the exact SPC Next live-provider qualification only after the new spend-free Cloudflare-preview browser preflight proves the semantic request boundary. If preflight fails, do not call GPT-5.6 Luna.",
-  "requestedAtUtc": "2026-09-16T00:19:00Z"
+  "purpose": "Qualify the exact SPC Next live-provider path after fixing the browser-native fetch receiver bug. Spend-free preflight must first intercept the semantic POST; only then may the workflow call GPT-5.6 Luna.",
+  "requestedAtUtc": "2026-09-16T00:34:00Z"
 }
