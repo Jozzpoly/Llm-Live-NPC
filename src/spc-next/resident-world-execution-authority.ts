@@ -1,4 +1,3 @@
-import { ResidentContinuityKernel } from "./resident-continuity-kernel";
 import type { MaterialActionResult, MaterialActionResultCode } from "./material-world-state";
 import type {
   ResidentWorldAction,
@@ -6,6 +5,7 @@ import type {
 } from "./resident-world-action-contract";
 import type {
   ResidentAuthorizedMotionOutcome,
+  ResidentRunAuthority,
   ResidentWorldExecutionFrame,
   ResidentWorldExecutionResult,
 } from "./resident-world-execution-contract";
@@ -46,10 +46,13 @@ export interface ResidentWorldActionFact {
  * Resident-owned facade over the World execution gate.
  *
  * World knows only the narrow question "may run X still mutate World?". Matter,
- * semantic revision, evidence and provider lifecycle remain private to the resident
- * continuity kernel. Once this facade claims a resident, SpcWorldRuntime disables
- * that resident's legacy fastStep/control path and becomes the phase-time enforcer
- * for latched effects and atomic World actions.
+ * semantic revision, evidence, focus policy and provider lifecycle remain outside
+ * World. The supplied ResidentRunAuthority may therefore be the continuity kernel
+ * directly or a stricter resident-scoped focus/lease gate layered above it.
+ *
+ * Once this facade claims a resident, SpcWorldRuntime disables that resident's
+ * legacy fastStep/control path and becomes the phase-time enforcer for latched
+ * effects and atomic World actions.
  *
  * Raw material outcomes stay World truth. Rejected actions are projected before
  * returning to the resident so hidden current position / holder identity cannot be
@@ -61,12 +64,12 @@ export class ResidentWorldExecutionAuthority {
 
   constructor(
     readonly residentId: string,
-    private readonly kernel: ResidentContinuityKernel,
+    private readonly runAuthority: ResidentRunAuthority,
     private readonly world: SpcWorldRuntime,
   ) {
     if (residentId.trim().length === 0) throw new Error("residentId must be non-empty");
     this.world.claimResidentExecutionAuthority(residentId, {
-      canRunMutateWorld: (runId) => this.kernel.canRunMutateWorld(runId),
+      canRunMutateWorld: (runId) => this.runAuthority.canRunMutateWorld(runId),
     });
   }
 
