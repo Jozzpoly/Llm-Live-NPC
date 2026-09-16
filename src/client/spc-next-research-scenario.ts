@@ -7,13 +7,15 @@ import { createFiveResidentJanekMissingCrateStagedSlice } from "../spc-next/five
 import { createFiveResidentJanekMissingCrateRecoverySlice } from "../spc-next/five-resident-missing-crate-recovery-slice";
 import { createFiveResidentJanekMissingCrateInterruptionSlice } from "../spc-next/five-resident-missing-crate-interruption-slice";
 import { createFiveResidentJanekMissingCrateLiveProviderSlice } from "../spc-next/five-resident-missing-crate-live-provider-slice";
+import { createFiveResidentJanekMissingCrateLiveProviderInterruptionSlice } from "../spc-next/five-resident-missing-crate-live-provider-interruption-slice";
 
 export type SpcNextResearchScenarioKind =
   | "baseline-delivery"
   | "missing-crate"
   | "missing-crate-recovery"
   | "missing-crate-interruption"
-  | "missing-crate-live-provider";
+  | "missing-crate-live-provider"
+  | "missing-crate-live-provider-interruption";
 
 export interface SpcNextResearchScenario {
   readonly kind: SpcNextResearchScenarioKind;
@@ -33,6 +35,7 @@ export function createSpcNextResearchScenario(kind: SpcNextResearchScenarioKind)
   if (kind === "missing-crate-recovery") return createMissingCrateRecoveryScenario();
   if (kind === "missing-crate-interruption") return createMissingCrateInterruptionScenario();
   if (kind === "missing-crate-live-provider") return createMissingCrateLiveProviderScenario();
+  if (kind === "missing-crate-live-provider-interruption") return createMissingCrateLiveProviderInterruptionScenario();
   return createBaselineDeliveryScenario();
 }
 
@@ -43,6 +46,7 @@ export function researchScenarioKindFromSearch(search: string): SpcNextResearchS
   if (requested === "missing-crate-recovery") return "missing-crate-recovery";
   if (requested === "missing-crate-interruption") return "missing-crate-interruption";
   if (requested === "missing-crate-live-provider") return "missing-crate-live-provider";
+  if (requested === "missing-crate-live-provider-interruption") return "missing-crate-live-provider-interruption";
   throw new Error(`unknown SPC Next research scenario: ${requested}`);
 }
 
@@ -144,6 +148,26 @@ function createMissingCrateLiveProviderScenario(): SpcNextResearchScenario {
       // Unlike deterministic recovery, this path really calls the same-origin
       // Worker endpoint. Transport completion can only fill the slice's inert
       // arrival inbox; admission and grounding remain resident/World-tick owned.
+      slice.advanceOneWorldTick();
+    },
+  };
+}
+
+function createMissingCrateLiveProviderInterruptionScenario(): SpcNextResearchScenario {
+  const slice = createFiveResidentJanekMissingCrateLiveProviderInterruptionSlice();
+  return {
+    kind: "missing-crate-live-provider-interruption",
+    evidenceScenarioId: "browser-missing-crate-live-provider-interruption",
+    residentId: "resident.janek",
+    matterId: "matter.janek.missing-crate",
+    world: slice.world,
+    kernel: slice.kernel,
+    materialKnowledge: slice.materialKnowledge,
+    authority: slice.authority,
+    advanceOneWorldTick(): void {
+      // The participant interruption is not injected here. Browser evidence must
+      // enter through __SPC_EVIDENCE__.addressResident() -> World.speak(), after a
+      // real provider choice has grounded the live search run.
       slice.advanceOneWorldTick();
     },
   };
