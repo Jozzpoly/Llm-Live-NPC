@@ -110,8 +110,9 @@ const anomalies: Array<Record<string, unknown>> = [];
 const transitionEvents: Array<Record<string, unknown>> = [];
 const scaleResizeEvents: Array<Record<string, unknown>> = [];
 
-const app = document.querySelector<HTMLElement>("#app");
-if (!app) throw new Error("#app missing before presentation instrumentation");
+const appCandidate = document.querySelector<HTMLElement>("#app");
+if (!appCandidate) throw new Error("#app missing before presentation instrumentation");
+const app: HTMLElement = appCandidate;
 
 const marker = document.createElement("div");
 marker.id = "spc-presentation-geometry-ack-marker";
