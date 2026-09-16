@@ -28,7 +28,8 @@ const TASK_ID = "task.mira.post-walk-continuation.travel";
 const RUN_ID = "run.mira.post-walk-continuation.travel";
 const TARGET_REGION_ID = "workshop";
 const FIXED_DELTA_SECONDS = 1 / 60;
-const PLAYER_ADDRESS_RADIUS = 520;
+const PLAYER_ADDRESS_RADIUS = 420;
+const RESEARCH_PLAYER_START = { x: 700, y: 700 } as const;
 
 interface MiraGroundedContinuationIntent {
   destination: Vec2;
@@ -117,7 +118,10 @@ export interface FiveResidentMiraAutonomousContinuationSlice {
  * ResidentGroundedTravelExecutor through recovered ResidentWorldExecutionAuthority.
  */
 export function createFiveResidentMiraAutonomousContinuationSlice(): FiveResidentMiraAutonomousContinuationSlice {
-  const composition = createFiveResidentRegionComposition();
+  // Keep the participant physically within Mira's authored hearing radius at the
+  // post-walk cognition boundary. This is fixture geometry, not an enlarged hearing
+  // oracle: World still clamps speech by Mira's real 420-unit hearing radius.
+  const composition = createFiveResidentRegionComposition({ playerStart: RESEARCH_PLAYER_START });
   const { world } = composition;
   const mira = composition.runtimes[MIRA_ID];
   const navigation = createFiveResidentNavigationGraph();
