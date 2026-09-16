@@ -116,7 +116,7 @@ jobs:
       - name: Qualify real Luna search interruption and exact return
         env:
           LIVE_PROVIDER_OUTPUT: evidence/live-provider/live-provider-interruption.json
-        run: node scripts/spc-browser-live-provider-interruption-evidence.mjs
+        run: node scripts/spc-browser-live-provider-interruption-evidence-v3.mjs
 
       - name: Print live-provider evidence summary
         if: always()
