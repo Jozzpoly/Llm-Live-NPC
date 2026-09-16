@@ -3,6 +3,11 @@ import {
   type FiveResidentJanekMissingCrateOptions,
 } from "./five-resident-missing-crate-slice";
 import {
+  ResidentMaterialPickupCapability,
+  type ResidentMaterialPickupCapabilityGroundingRecord,
+} from "./resident-material-pickup-capability";
+import type { ResidentMaterialPickupExecutor } from "./resident-material-pickup-executor";
+import {
   ResidentMaterialSearchCapability,
   type ResidentMaterialSearchCapabilityGroundingRecord,
 } from "./resident-material-search-capability";
@@ -18,7 +23,10 @@ const MATTER_ID = "matter.janek.missing-crate";
 const CRATE_ID = "crate.workshop.01";
 const SEARCH_TASK_ID = "task.janek.search-nearby-workshop";
 const SEARCH_RUN_ID = "run.janek.search-nearby-workshop.live-provider";
+const PICKUP_TASK_ID = "task.janek.pickup-reacquired-crate.live-provider";
+export const MISSING_CRATE_LIVE_PICKUP_RUN_ID = "run.janek.pickup-reacquired-crate.live-provider";
 export const MISSING_CRATE_LIVE_SEARCH_CAPABILITY_ID = "local.material.search.remembered-workshop-area";
+export const MISSING_CRATE_LIVE_PICKUP_CAPABILITY_ID = "local.material.pickup.visible-familiar-crate";
 
 export type MissingCrateLiveProviderPhase =
   | "awaiting_hidden_relocation"
@@ -26,10 +34,19 @@ export type MissingCrateLiveProviderPhase =
   | "provider_in_flight"
   | "searching"
   | "reacquired"
+  | "pickup_provider_in_flight"
+  | "picking_up"
+  | "resolved"
   | "semantic_only"
+  | "pickup_semantic_only"
   | "provider_error"
+  | "pickup_provider_error"
   | "provider_stale"
+  | "pickup_provider_stale"
   | "grounding_rejected"
+  | "pickup_grounding_rejected"
+  | "pickup_offer_unavailable"
+  | "pickup_blocked"
   | "search_exhausted"
   | "authority_lost";
 
@@ -40,29 +57,31 @@ export interface FiveResidentJanekMissingCrateLiveProviderOptions extends FiveRe
 
 export interface MissingCrateLiveProviderDiagnostics {
   phase: MissingCrateLiveProviderPhase;
+  providerStage: "search" | "pickup" | null;
   providerRequestStartedAtTick: number | null;
+  providerRequestCount: number;
   arrivalPending: boolean;
   arrivalStatus: ResidentSemanticLiveArrival["status"] | null;
   admissionTick: number | null;
   admissionStatus: ResidentSemanticLiveAdmission["status"] | null;
   selectedCapabilityId: string | null;
   grounding: ResidentMaterialSearchCapabilityGroundingRecord | null;
+  pickupGrounding: ResidentMaterialPickupCapabilityGroundingRecord | null;
+  pickupOfferFailureReason: string | null;
   providerAttempts: number;
   providerArrivals: number;
   providerAdmissions: ReturnType<ResidentSemanticLiveHost["recentAdmissions"]>;
 }
 
 /**
- * First live-provider vertical slice for recovered SPC Next authority.
+ * Live-provider vertical slice for one continuing resident material matter.
  *
- * This composition deliberately keeps asynchronous transport outside simulation
- * authority. requestMatter() may resolve at any wall-clock moment, but its Promise
- * continuation can only put an inert arrival into a local inbox. The first later
- * resident/World tick that observes that inbox performs semantic admission; only
- * then may resident-local capability grounding create an exact search run.
- *
- * No `await` exists in advanceOneWorldTick(). World therefore remains free to keep
- * advancing while the provider is in flight.
+ * Provider transport never owns simulation time or execution authority. Each high-
+ * level decision has the same sequence: resident-owned evidence/capabilities -> async
+ * provider arrival -> later resident/World-tick admission -> fresh local grounding ->
+ * exact embodied run. Reacquisition is not matter completion: it creates new semantic
+ * evidence, then a second provider burst may select a separately offered visible-
+ * pickup competence. The matter resolves only after the World confirms pickup.
  */
 export function createFiveResidentJanekMissingCrateLiveProviderSlice(
   options: FiveResidentJanekMissingCrateLiveProviderOptions = {},
@@ -77,14 +96,20 @@ export function createFiveResidentJanekMissingCrateLiveProviderSlice(
     : new ResidentSemanticLiveHost(base.kernel, undefined, endpoint);
 
   let phase: MissingCrateLiveProviderPhase = "awaiting_hidden_relocation";
-  let capability: ResidentMaterialSearchCapability | null = null;
+  let searchCapability: ResidentMaterialSearchCapability | null = null;
+  let pickupCapability: ResidentMaterialPickupCapability | null = null;
   let search: ResidentMaterialSearchExecutor | null = null;
+  let pickup: ResidentMaterialPickupExecutor | null = null;
   let providerPromise: Promise<ResidentSemanticLiveArrival> | null = null;
+  let providerStage: "search" | "pickup" | null = null;
   let arrivalInbox: ResidentSemanticLiveArrival | null = null;
   let providerRequestStartedAtTick: number | null = null;
+  let providerRequestCount = 0;
   let arrivalStatus: ResidentSemanticLiveArrival["status"] | null = null;
   let admission: ResidentSemanticLiveAdmission | null = null;
-  let grounding: ResidentMaterialSearchCapabilityGroundingRecord | null = null;
+  let searchGrounding: ResidentMaterialSearchCapabilityGroundingRecord | null = null;
+  let pickupGrounding: ResidentMaterialPickupCapabilityGroundingRecord | null = null;
+  let pickupOfferFailureReason: string | null = null;
   let selectedCapabilityId: string | null = null;
 
   function offerSearchCapability(): ResidentMaterialSearchCapability {
@@ -106,27 +131,73 @@ export function createFiveResidentJanekMissingCrateLiveProviderSlice(
     return offered.capability;
   }
 
-  function startProviderRequest(): void {
-    if (providerPromise) throw new Error("missing-crate live provider request already started");
-    capability = offerSearchCapability();
-    providerRequestStartedAtTick = base.world.tick;
-    providerPromise = host.requestMatter(MATTER_ID, {
-      localCapabilities: [capability.offer()],
+  function offerPickupCapability(): ResidentMaterialPickupCapability | null {
+    const offered = ResidentMaterialPickupCapability.offer({
+      capabilityId: MISSING_CRATE_LIVE_PICKUP_CAPABILITY_ID,
+      summary: "Approach and pick up the familiar workshop crate that is currently visible, using local embodied movement and World material authority.",
+      matterId: MATTER_ID,
+      taskId: PICKUP_TASK_ID,
+      runId: MISSING_CRATE_LIVE_PICKUP_RUN_ID,
+      objectId: CRATE_ID,
+      kernel: base.kernel,
+      knowledge: base.materialKnowledge,
+      authority: base.authority,
+      world: base.world,
     });
+    if (offered.status !== "offered") {
+      pickupOfferFailureReason = offered.reason;
+      return null;
+    }
+    pickupOfferFailureReason = null;
+    return offered.capability;
+  }
+
+  function startProviderRequest(
+    stage: "search" | "pickup",
+    localCapabilities: readonly [{ id: string; summary: string }],
+  ): void {
+    if (providerPromise || arrivalInbox || providerStage) {
+      throw new Error("missing-crate live provider request already active");
+    }
+    providerStage = stage;
+    providerRequestStartedAtTick = base.world.tick;
+    providerRequestCount += 1;
+    arrivalStatus = null;
+    admission = null;
+    selectedCapabilityId = null;
+    providerPromise = host.requestMatter(MATTER_ID, { localCapabilities });
     void providerPromise.then((arrival) => {
       // Transport completion is intentionally inert. Do not read or mutate World,
-      // kernel, capability grounding or execution authority in this continuation.
+      // kernel, grounding or execution authority in this continuation.
       arrivalInbox = arrival;
       arrivalStatus = arrival.status;
     });
   }
 
-  function admitInboxOnResidentTick(): void {
-    if (!arrivalInbox || !capability) throw new Error("missing-crate live provider inbox/capability missing");
-    const arrival = arrivalInbox;
-    arrivalInbox = null;
-    admission = host.admit(arrival, base.world.tick);
+  function startSearchProviderRequest(): void {
+    searchCapability = offerSearchCapability();
+    startProviderRequest("search", [searchCapability.offer()]);
+  }
 
+  function startPickupProviderRequest(): boolean {
+    pickupCapability = offerPickupCapability();
+    if (!pickupCapability) return false;
+    startProviderRequest("pickup", [pickupCapability.offer()]);
+    return true;
+  }
+
+  function consumeArrival(): { stage: "search" | "pickup"; arrival: ResidentSemanticLiveArrival } {
+    if (!arrivalInbox || !providerStage) throw new Error("missing-crate live provider inbox/stage missing");
+    const result = { stage: providerStage, arrival: arrivalInbox };
+    arrivalInbox = null;
+    providerPromise = null;
+    providerStage = null;
+    return result;
+  }
+
+  function admitSearchInboxOnResidentTick(arrival: ResidentSemanticLiveArrival): void {
+    if (!searchCapability) throw new Error("missing-crate live search capability missing");
+    admission = host.admit(arrival, base.world.tick);
     if (admission.status === "provider_error") {
       phase = "provider_error";
       return;
@@ -141,7 +212,7 @@ export function createFiveResidentJanekMissingCrateLiveProviderSlice(
     }
 
     selectedCapabilityId = admission.settlement.localCapabilityId;
-    const grounded = capability.ground(
+    const grounded = searchCapability.ground(
       selectedCapabilityId,
       admission.settlement.matter.semanticRevision,
     );
@@ -149,9 +220,45 @@ export function createFiveResidentJanekMissingCrateLiveProviderSlice(
       phase = selectedCapabilityId === null ? "semantic_only" : "grounding_rejected";
       return;
     }
-    grounding = structuredClone(grounded.record);
+    searchGrounding = structuredClone(grounded.record);
     search = grounded.executor;
     phase = "searching";
+  }
+
+  function admitPickupInboxOnResidentTick(arrival: ResidentSemanticLiveArrival): void {
+    if (!pickupCapability) throw new Error("missing-crate live pickup capability missing");
+    admission = host.admit(arrival, base.world.tick);
+    if (admission.status === "provider_error") {
+      phase = "pickup_provider_error";
+      return;
+    }
+    if (admission.status === "stale") {
+      phase = "pickup_provider_stale";
+      return;
+    }
+    if (admission.status !== "applied") {
+      phase = "pickup_grounding_rejected";
+      return;
+    }
+
+    selectedCapabilityId = admission.settlement.localCapabilityId;
+    const grounded = pickupCapability.ground(
+      selectedCapabilityId,
+      admission.settlement.matter.semanticRevision,
+    );
+    if (grounded.status !== "grounded") {
+      phase = selectedCapabilityId === null ? "pickup_semantic_only" : "pickup_grounding_rejected";
+      return;
+    }
+    pickupGrounding = structuredClone(grounded.record);
+    pickup = grounded.executor;
+    phase = "picking_up";
+  }
+
+  function admitInboxOnResidentTick(): void {
+    const { stage, arrival } = consumeArrival();
+    if (stage === "search") admitSearchInboxOnResidentTick(arrival);
+    else admitPickupInboxOnResidentTick(arrival);
   }
 
   return {
@@ -165,13 +272,17 @@ export function createFiveResidentJanekMissingCrateLiveProviderSlice(
     diagnostics(): MissingCrateLiveProviderDiagnostics {
       return {
         phase,
+        providerStage,
         providerRequestStartedAtTick,
+        providerRequestCount,
         arrivalPending: arrivalInbox !== null,
         arrivalStatus,
         admissionTick: admission && admission.status !== "arrival_rejected" ? admission.admissionTick : null,
         admissionStatus: admission?.status ?? null,
         selectedCapabilityId,
-        grounding: grounding ? structuredClone(grounding) : null,
+        grounding: searchGrounding ? structuredClone(searchGrounding) : null,
+        pickupGrounding: pickupGrounding ? structuredClone(pickupGrounding) : null,
+        pickupOfferFailureReason,
         providerAttempts: host.pendingProviderAttempts(),
         providerArrivals: host.pendingArrivals(),
         providerAdmissions: host.recentAdmissions(),
@@ -194,7 +305,7 @@ export function createFiveResidentJanekMissingCrateLiveProviderSlice(
       if (phase === "checking_last_known") {
         const local = base.stepJanek();
         if (local.status === "semantic_pressure") {
-          startProviderRequest();
+          startSearchProviderRequest();
           phase = "provider_in_flight";
         } else if (local.status === "authority_lost") {
           phase = "authority_lost";
@@ -203,7 +314,7 @@ export function createFiveResidentJanekMissingCrateLiveProviderSlice(
         return;
       }
 
-      if (phase === "provider_in_flight") {
+      if (phase === "provider_in_flight" || phase === "pickup_provider_in_flight") {
         if (arrivalInbox) admitInboxOnResidentTick();
         base.world.step();
         return;
@@ -246,9 +357,49 @@ export function createFiveResidentJanekMissingCrateLiveProviderSlice(
         return;
       }
 
-      // Terminal-for-this-slice phases remain physically live. A later vertical
-      // slice may add another semantic decision (for example pickup) without making
-      // this first live-provider bridge pretend the continuing matter is resolved.
+      if (phase === "reacquired") {
+        if (startPickupProviderRequest()) phase = "pickup_provider_in_flight";
+        else phase = "pickup_offer_unavailable";
+        base.world.step();
+        return;
+      }
+
+      if (phase === "picking_up") {
+        if (!pickup) throw new Error("missing-crate live provider pickup executor missing");
+        base.materialKnowledge.sample();
+        const local = pickup.step();
+        if (local.status === "succeeded") {
+          const reconciled = base.kernel.reconcileRunOutcome({
+            runId: MISSING_CRATE_LIVE_PICKUP_RUN_ID,
+            tick: local.materialOutcome.tick,
+            status: "succeeded",
+            summary: `picked up live-provider-guided reacquired ${CRATE_ID}`,
+          });
+          if (reconciled.status !== "recorded") {
+            throw new Error("missing-crate live provider pickup reconciliation failed");
+          }
+          base.kernel.resolveMatter(MATTER_ID);
+          phase = "resolved";
+        } else if (local.status === "blocked") {
+          const reconciled = base.kernel.reconcileRunOutcome({
+            runId: MISSING_CRATE_LIVE_PICKUP_RUN_ID,
+            tick: base.world.tick,
+            status: "blocked",
+            summary: local.reason,
+          });
+          if (reconciled.status !== "recorded") {
+            throw new Error("missing-crate live provider blocked pickup reconciliation failed");
+          }
+          phase = "pickup_blocked";
+        } else if (local.status === "authority_lost") {
+          phase = "authority_lost";
+        }
+        base.world.step();
+        return;
+      }
+
+      // Bounded terminal/reconsideration phases remain physically live. They do not
+      // manufacture another semantic request without an explicit next life question.
       base.world.step();
     },
   };
