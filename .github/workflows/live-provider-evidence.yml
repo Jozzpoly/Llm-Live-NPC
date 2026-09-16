@@ -1,0 +1,127 @@
+name: Live Provider Evidence
+
+on:
+  push:
+    branches:
+      - refoundation/spc-next-five-resident-world
+    paths:
+      - "evidence/live-provider-request.json"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: read
+
+jobs:
+  spc-live-provider-evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+
+    steps:
+      - name: Checkout exact request commit
+        uses: actions/checkout@v6
+
+      - name: Use Node 22
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Locate runner Chrome
+        shell: bash
+        run: |
+          set -euo pipefail
+          CHROME_PATH="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)"
+          test -n "$CHROME_PATH"
+          echo "CHROME_PATH=$CHROME_PATH" >> "$GITHUB_ENV"
+          "$CHROME_PATH" --version
+
+      - name: Resolve exact Cloudflare commit preview
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          PR_NUMBER="$(node -e 'const r=require("./evidence/live-provider-request.json"); if(!Number.isInteger(r.pr)||r.pr<1) process.exit(2); process.stdout.write(String(r.pr))')"
+          TARGET_SHORT_SHA="${GITHUB_SHA:0:8}"
+          export TARGET_SHORT_SHA
+          echo "Waiting for Cloudflare preview bound to ${GITHUB_SHA} (PR #${PR_NUMBER})"
+
+          CANDIDATE_URL=""
+          for attempt in $(seq 1 72); do
+            curl --fail --silent --show-error \
+              -H "Authorization: Bearer ${GH_TOKEN}" \
+              -H "Accept: application/vnd.github+json" \
+              "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments?per_page=100" \
+              > /tmp/pr-comments.json
+
+            CANDIDATE_URL="$(node <<'NODE'
+          const fs = require('fs');
+          const comments = JSON.parse(fs.readFileSync('/tmp/pr-comments.json', 'utf8'));
+          const short = process.env.TARGET_SHORT_SHA;
+          for (const comment of [...comments].reverse()) {
+            if (comment?.user?.login !== 'cloudflare-workers-and-pages[bot]') continue;
+            const body = String(comment.body ?? '');
+            if (!body.includes(short)) continue;
+            const match = body.match(/href='(https:\/\/[^']+\.workers\.dev)'>Commit Preview URL<\/a>/u);
+            if (match) {
+              process.stdout.write(match[1]);
+              break;
+            }
+          }
+          NODE
+            )"
+            if [ -n "$CANDIDATE_URL" ]; then
+              break
+            fi
+            sleep 5
+          done
+
+          if [ -z "$CANDIDATE_URL" ]; then
+            echo "Cloudflare bot did not publish an exact-commit preview for ${GITHUB_SHA}" >&2
+            cat /tmp/pr-comments.json >&2 || true
+            exit 1
+          fi
+
+          echo "LIVE_PROVIDER_BASE_URL=$CANDIDATE_URL" >> "$GITHUB_ENV"
+          echo "SOURCE_SHA=$GITHUB_SHA" >> "$GITHUB_ENV"
+          printf '%s\n' "$CANDIDATE_URL" > /tmp/live-provider-candidate-url.txt
+          echo "Exact candidate: $CANDIDATE_URL"
+
+      - name: Wait for exact candidate to serve the SPC client
+        shell: bash
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 80); do
+            if curl --fail --silent --show-error "${LIVE_PROVIDER_BASE_URL}/?spc=1" > /tmp/live-provider-candidate.html; then
+              if grep -q '<div id="game"' /tmp/live-provider-candidate.html; then
+                exit 0
+              fi
+            fi
+            sleep 2
+          done
+          echo "Exact Cloudflare candidate never became ready" >&2
+          cat /tmp/live-provider-candidate.html >&2 || true
+          exit 1
+
+      - name: Qualify real Luna through recovered resident authority
+        env:
+          LIVE_PROVIDER_OUTPUT: evidence/live-provider/live-provider.json
+        run: node scripts/spc-browser-live-provider-evidence.mjs
+
+      - name: Print live-provider evidence summary
+        if: always()
+        shell: bash
+        run: |
+          echo "--- Candidate ---"
+          cat /tmp/live-provider-candidate-url.txt 2>/dev/null || true
+          echo "--- Live provider evidence ---"
+          cat evidence/live-provider/live-provider.json 2>/dev/null || true
+
+      - name: Upload live-provider evidence artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: spc-live-provider-evidence-${{ github.sha }}
+          path: evidence/live-provider
+          if-no-files-found: error
+          retention-days: 30

@@ -6,12 +6,14 @@ import { createFiveResidentJanekMaterialSlice } from "../spc-next/five-resident-
 import { createFiveResidentJanekMissingCrateStagedSlice } from "../spc-next/five-resident-missing-crate-slice";
 import { createFiveResidentJanekMissingCrateRecoverySlice } from "../spc-next/five-resident-missing-crate-recovery-slice";
 import { createFiveResidentJanekMissingCrateInterruptionSlice } from "../spc-next/five-resident-missing-crate-interruption-slice";
+import { createFiveResidentJanekMissingCrateLiveProviderSlice } from "../spc-next/five-resident-missing-crate-live-provider-slice";
 
 export type SpcNextResearchScenarioKind =
   | "baseline-delivery"
   | "missing-crate"
   | "missing-crate-recovery"
-  | "missing-crate-interruption";
+  | "missing-crate-interruption"
+  | "missing-crate-live-provider";
 
 export interface SpcNextResearchScenario {
   readonly kind: SpcNextResearchScenarioKind;
@@ -30,6 +32,7 @@ export function createSpcNextResearchScenario(kind: SpcNextResearchScenarioKind)
   if (kind === "missing-crate") return createMissingCrateScenario();
   if (kind === "missing-crate-recovery") return createMissingCrateRecoveryScenario();
   if (kind === "missing-crate-interruption") return createMissingCrateInterruptionScenario();
+  if (kind === "missing-crate-live-provider") return createMissingCrateLiveProviderScenario();
   return createBaselineDeliveryScenario();
 }
 
@@ -39,6 +42,7 @@ export function researchScenarioKindFromSearch(search: string): SpcNextResearchS
   if (requested === "missing-crate") return "missing-crate";
   if (requested === "missing-crate-recovery") return "missing-crate-recovery";
   if (requested === "missing-crate-interruption") return "missing-crate-interruption";
+  if (requested === "missing-crate-live-provider") return "missing-crate-live-provider";
   throw new Error(`unknown SPC Next research scenario: ${requested}`);
 }
 
@@ -120,6 +124,26 @@ function createMissingCrateInterruptionScenario(): SpcNextResearchScenario {
       // Addressed participant speech still enters through World.speak() and private
       // perception. This adapter only advances the already-qualified interruption
       // state machine; it does not inject an interruption directly.
+      slice.advanceOneWorldTick();
+    },
+  };
+}
+
+function createMissingCrateLiveProviderScenario(): SpcNextResearchScenario {
+  const slice = createFiveResidentJanekMissingCrateLiveProviderSlice();
+  return {
+    kind: "missing-crate-live-provider",
+    evidenceScenarioId: "browser-missing-crate-live-provider",
+    residentId: "resident.janek",
+    matterId: "matter.janek.missing-crate",
+    world: slice.world,
+    kernel: slice.kernel,
+    materialKnowledge: slice.materialKnowledge,
+    authority: slice.authority,
+    advanceOneWorldTick(): void {
+      // Unlike deterministic recovery, this path really calls the same-origin
+      // Worker endpoint. Transport completion can only fill the slice's inert
+      // arrival inbox; admission and grounding remain resident/World-tick owned.
       slice.advanceOneWorldTick();
     },
   };
