@@ -125,7 +125,12 @@ export class ResidentSemanticLiveHost {
     );
     let response: Response;
     try {
-      response = await this.fetcher(this.endpoint, {
+      // Browser-native Window.fetch is receiver-sensitive. Calling a stored native
+      // fetch as `this.fetcher(...)` makes ResidentSemanticLiveHost the receiver and
+      // Chrome rejects it with `Illegal invocation` before any HTTP request exists.
+      // Invoke transport with the actual global object so native browser/worker fetch
+      // and injected deterministic fetchers share the same correct call boundary.
+      response = await this.fetcher.call(globalThis, this.endpoint, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify(run),
