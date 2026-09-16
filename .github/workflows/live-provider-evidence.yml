@@ -108,6 +108,11 @@ jobs:
           LIVE_PROVIDER_PREFLIGHT_OUTPUT: evidence/live-provider/preflight.json
         run: node scripts/spc-browser-live-provider-preflight.mjs
 
+      - name: Qualify real Luna continuing material lifecycle
+        env:
+          LIVE_PROVIDER_OUTPUT: evidence/live-provider/live-provider-lifecycle.json
+        run: node scripts/spc-browser-live-provider-evidence.mjs
+
       - name: Qualify real Luna search interruption and exact return
         env:
           LIVE_PROVIDER_OUTPUT: evidence/live-provider/live-provider-interruption.json
@@ -121,6 +126,8 @@ jobs:
           cat /tmp/live-provider-candidate-url.txt 2>/dev/null || true
           echo "--- Spend-free preflight ---"
           cat evidence/live-provider/preflight.json 2>/dev/null || true
+          echo "--- Two-burst material lifecycle ---"
+          cat evidence/live-provider/live-provider-lifecycle.json 2>/dev/null || true
           echo "--- Live provider interruption evidence ---"
           cat evidence/live-provider/live-provider-interruption.json 2>/dev/null || true
 
