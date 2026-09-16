@@ -15,6 +15,7 @@ import {
   ResidentContinuityKernel,
   type RunOutcomeReconciliationResult,
 } from "./resident-continuity-kernel";
+import { ResidentExecutionFocusAuthority } from "./resident-execution-focus-authority";
 import {
   ResidentGroundedTravelExecutor,
   type ResidentGroundedTravelStep,
@@ -91,6 +92,7 @@ export type MiraDeterministicCognitionSettlement =
 export interface FiveResidentMiraAutonomousContinuationSlice {
   world: FiveResidentRegionComposition["world"];
   kernel: ResidentContinuityKernel;
+  executionFocus: ResidentExecutionFocusAuthority;
   phase(): MiraAutonomousContinuationPhase;
   advanceOneWorldTick(): MiraAutonomousContinuationStep;
   settleDeterministicCognition(): MiraDeterministicCognitionSettlement;
@@ -114,8 +116,10 @@ export interface FiveResidentMiraAutonomousContinuationSlice {
  *
  * The existing `activityDirective` is temporarily treated as a semantic-intent
  * envelope. It is never installed as a legacy ResidentActivity. An admitted intent
- * becomes a continuing matter + exact run; body execution then belongs to
- * ResidentGroundedTravelExecutor through recovered ResidentWorldExecutionAuthority.
+ * becomes a continuing matter + exact run. A resident-scoped coarse execution focus
+ * then grants that exact run the current body frame before ResidentGroundedTravelExecutor
+ * may act through ResidentWorldExecutionAuthority. The focus is a safety stop-line,
+ * not a final replacement for future orthogonal locomotion/look/action/speech channels.
  */
 export function createFiveResidentMiraAutonomousContinuationSlice(): FiveResidentMiraAutonomousContinuationSlice {
   // Keep the participant physically within Mira's authored hearing radius at the
@@ -127,6 +131,7 @@ export function createFiveResidentMiraAutonomousContinuationSlice(): FiveResiden
   const navigation = createFiveResidentNavigationGraph();
   const cognitionOwner = new ResidentCognitionOwner(mira, new CognitionGrounder(navigation));
   const kernel = new ResidentContinuityKernel();
+  const executionFocus = new ResidentExecutionFocusAuthority(kernel);
 
   let currentPhase: MiraAutonomousContinuationPhase = "awaiting_authored_completion";
   let batch: CognitionBatch | null = null;
@@ -141,6 +146,7 @@ export function createFiveResidentMiraAutonomousContinuationSlice(): FiveResiden
   return {
     world,
     kernel,
+    executionFocus,
     phase: () => currentPhase,
     advanceOneWorldTick(): MiraAutonomousContinuationStep {
       if (currentPhase === "resolved") {
@@ -227,6 +233,7 @@ export function createFiveResidentMiraAutonomousContinuationSlice(): FiveResiden
           summary: "Mira's continuation body run was physically blocked and now requires reconsideration.",
         });
         kernel.advanceSemanticContext(MATTER_ID, evidence.id);
+        executionFocus.sync();
         authority.enforceMotionAuthority();
         currentPhase = "blocked";
         return { status: "blocked", local, reconciliation: structuredClone(reconciled) };
@@ -242,6 +249,7 @@ export function createFiveResidentMiraAutonomousContinuationSlice(): FiveResiden
         throw new Error("Mira continuation could not reconcile factual arrival");
       }
       kernel.resolveMatter(MATTER_ID);
+      executionFocus.sync();
       authority.enforceMotionAuthority();
       currentPhase = "resolved";
       return { status: "resolved", local, reconciliation: structuredClone(reconciled) };
@@ -294,8 +302,12 @@ export function createFiveResidentMiraAutonomousContinuationSlice(): FiveResiden
         semanticCourse: settlement.intent.semanticCourse,
       });
       kernel.bindRun({ matterId: MATTER_ID, taskId: TASK_ID, runId: RUN_ID });
+      const focusClaim = executionFocus.claim(RUN_ID);
+      if (focusClaim.status !== "acquired" && focusClaim.status !== "already_focused") {
+        throw new Error(`Mira continuation could not acquire body focus: ${focusClaim.status}`);
+      }
 
-      authority = new ResidentWorldExecutionAuthority(MIRA_ID, kernel, world);
+      authority = new ResidentWorldExecutionAuthority(MIRA_ID, executionFocus, world);
       executor = new ResidentGroundedTravelExecutor(RUN_ID, settlement.intent.destination, authority, world);
       currentPhase = "traveling";
       return {
