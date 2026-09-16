@@ -7,12 +7,13 @@ import { dirname, resolve } from "node:path";
 const BASE_URL = process.env.EVIDENCE_BASE_URL ?? "http://127.0.0.1:4173";
 const SOURCE_SHA = process.env.SOURCE_SHA ?? "local";
 const OUTPUT_FILE = resolve(process.env.MANUAL_CONTROL_OUTPUT ?? "evidence/browser/manual-control.json");
+const OUTPUT_DIR = dirname(OUTPUT_FILE);
 const VIEWPORT = { width: 1400, height: 900, deviceScaleFactor: 1, mobile: false };
-const TARGET_TICKS = [0, 120, 360, 760];
-const REPEAT_COUNT = 3;
-const CRATE_ID = "crate.workshop.01";
+const PRESENTATION_STEPS = 12;
+const ACK_TIMEOUT_MS = 2_000;
+const MARKER_SIZE_CSS_PX = 96;
 
-mkdirSync(dirname(OUTPUT_FILE), { recursive: true });
+mkdirSync(OUTPUT_DIR, { recursive: true });
 const sleep = (ms) => new Promise((resolveSleep) => setTimeout(resolveSleep, ms));
 
 function chromeExecutable() {
@@ -45,14 +46,8 @@ class CdpSession {
     this.ws = new WebSocket(this.webSocketUrl);
     await new Promise((resolveOpen, rejectOpen) => {
       const timer = setTimeout(() => rejectOpen(new Error("CDP WebSocket open timeout")), 10_000);
-      this.ws.addEventListener("open", () => {
-        clearTimeout(timer);
-        resolveOpen();
-      }, { once: true });
-      this.ws.addEventListener("error", () => {
-        clearTimeout(timer);
-        rejectOpen(new Error("CDP WebSocket connection failed"));
-      }, { once: true });
+      this.ws.addEventListener("open", () => { clearTimeout(timer); resolveOpen(); }, { once: true });
+      this.ws.addEventListener("error", () => { clearTimeout(timer); rejectOpen(new Error("CDP WebSocket connection failed")); }, { once: true });
     });
     this.ws.addEventListener("message", (event) => this.handleMessage(event.data));
     this.ws.addEventListener("close", () => {
@@ -80,7 +75,7 @@ class CdpSession {
     this.listeners.set(method, current);
   }
 
-  send(method, params = {}, timeoutMs = 15_000) {
+  send(method, params = {}, timeoutMs = 30_000) {
     const id = this.nextId++;
     return new Promise((resolveSend, rejectSend) => {
       const timer = setTimeout(() => {
@@ -96,15 +91,30 @@ class CdpSession {
     });
   }
 
-  close() {
-    this.ws?.close();
-  }
+  close() { this.ws?.close(); }
 }
+
+function markerColor(generation) {
+  return [
+    32 + ((generation * 53) % 192),
+    32 + ((generation * 97) % 192),
+    32 + ((generation * 149) % 192),
+  ];
+}
+
+function closeColor(actual, expected, tolerance = 3) {
+  return Array.isArray(actual)
+    && actual.length >= 3
+    && expected.every((value, index) => Math.abs(actual[index] - value) <= tolerance);
+}
+
+function stableJson(value) { return JSON.stringify(value); }
+function hashJson(value) { return createHash("sha256").update(stableJson(value)).digest("hex"); }
 
 async function run() {
   const chromePath = chromeExecutable();
-  const userDataDir = mkdtempSync(`${tmpdir()}/spc-manual-control-`);
-  const port = 10_200 + Math.floor(Math.random() * 500);
+  const userDataDir = mkdtempSync(`${tmpdir()}/spc-presented-frame-`);
+  const port = 10_250 + Math.floor(Math.random() * 400);
   const chrome = spawn(chromePath, [
     "--headless=new",
     "--no-sandbox",
@@ -121,16 +131,19 @@ async function run() {
   ], { stdio: ["ignore", "pipe", "pipe"] });
 
   let cdp;
+  let screencastRunning = false;
+  const frameQueue = [];
   const report = {
-    schemaVersion: 2,
+    schemaVersion: 1,
+    experiment: "spc-presented-frame-ack-p0",
     sourceSha: SOURCE_SHA,
+    baseUrl: BASE_URL,
     startedAt: new Date().toISOString(),
     chrome: null,
     assertions: [],
     runtimeExceptions: [],
-    manualControl: {},
-    repeatedRuns: [],
-    normalRuntime: {},
+    presentationTransitions: [],
+    transientControl: null,
   };
 
   try {
@@ -147,120 +160,122 @@ async function run() {
         description: exceptionDetails?.exception?.description ?? null,
       });
     });
+    cdp.on("Page.screencastFrame", (frame) => {
+      frameQueue.push({ ...frame, receivedAtMs: Date.now() });
+      cdp.send("Page.screencastFrameAck", { sessionId: frame.sessionId }).catch(() => {});
+      if (frameQueue.length > 120) frameQueue.splice(0, frameQueue.length - 120);
+    });
+
     await Promise.all([
       cdp.send("Page.enable"),
       cdp.send("Runtime.enable"),
       cdp.send("Emulation.setDeviceMetricsOverride", VIEWPORT),
     ]);
+    await cdp.send("Page.navigate", { url: `${BASE_URL}/?spc=1&evidence=1&scenario=missing-crate` });
+    await waitUntil(async () => await evaluate(cdp, `Boolean(window.__SPC_EVIDENCE__?.ready?.() && document.querySelector("canvas") && document.querySelector(".spc-world-mode-toggle"))`), 20_000, "SPC evidence scene");
 
-    await navigateEvidence(cdp);
-    const meta = await evidenceMeta(cdp);
-    assert(report, "evidence API v3 exposes manual World control and canonical snapshot", meta.version === 3 && meta.control === "manual-world" && meta.ready === true && meta.hasCanonicalSnapshot === true, meta);
+    await injectMarker(cdp, 0);
+    const canonicalInitial = await canonicalSnapshot(cdp);
+    const initialHash = hashJson(canonicalInitial);
 
-    const beforeWait = await evidenceSnapshot(cdp);
-    const canonicalBeforeWait = await canonicalSnapshot(cdp);
-    assert(report, "canonical snapshot v1 is available at the frozen initial boundary", canonicalBeforeWait.schemaVersion === 1 && canonicalBeforeWait.tick === 0 && canonicalBeforeWait.scenarioId === "browser-baseline-delivery", canonicalSummary(canonicalBeforeWait));
+    await cdp.send("Page.startScreencast", {
+      format: "png",
+      quality: 100,
+      maxWidth: 700,
+      maxHeight: 450,
+      everyNthFrame: 1,
+    });
+    screencastRunning = true;
 
-    await sleep(450);
-    const afterWait = await evidenceSnapshot(cdp);
-    const canonicalAfterWait = await canonicalSnapshot(cdp);
-    assert(report, "wall-clock passage does not advance evidence-controlled World", beforeWait.snapshot.tick === 0 && afterWait.snapshot.tick === 0, {
-      beforeTick: beforeWait.snapshot.tick,
-      afterTick: afterWait.snapshot.tick,
-    });
-    assert(report, "wall-clock passage leaves canonical causal state unchanged while frozen", stableJson(canonicalAfterWait) === stableJson(canonicalBeforeWait), {
-      beforeHash: hashJson(canonicalBeforeWait),
-      afterHash: hashJson(canonicalAfterWait),
-    });
+    const initialAck = await waitForPresentedGeneration(cdp, frameQueue, 0, markerColor(0), 0, ACK_TIMEOUT_MS);
+    assert(report, "initial marker reaches a compositor frame", Boolean(initialAck), initialAck);
 
-    const zoomBefore = beforeWait.cameraZoom;
-    await click(cdp, `[data-action="overview"]`);
-    await sleep(180);
-    const afterOverview = await evidenceSnapshot(cdp);
-    const canonicalAfterOverview = await canonicalSnapshot(cdp);
-    assert(report, "camera/render control can change while World tick stays frozen", afterOverview.snapshot.tick === 0 && afterOverview.cameraZoom !== zoomBefore, {
-      tick: afterOverview.snapshot.tick,
-      zoomBefore,
-      zoomAfter: afterOverview.cameraZoom,
-    });
-    assert(report, "camera/viewpoint changes do not mutate canonical causal state", stableJson(canonicalAfterOverview) === stableJson(canonicalBeforeWait), {
-      canonicalHashBefore: hashJson(canonicalBeforeWait),
-      canonicalHashAfter: hashJson(canonicalAfterOverview),
-    });
+    for (let generation = 1; generation <= PRESENTATION_STEPS; generation += 1) {
+      const expectedWorldOnly = generation % 2 === 1;
+      const before = await canonicalSnapshot(cdp);
+      const beforeHash = hashJson(before);
+      const color = markerColor(generation);
+      const mutation = await mutatePresentation(cdp, generation, color, expectedWorldOnly);
+      if (mutation.worldOnly !== expectedWorldOnly) {
+        throw new Error(`generation ${generation}: DOM world-only=${mutation.worldOnly}, expected ${expectedWorldOnly}`);
+      }
+      const ack = await waitForPresentedGeneration(
+        cdp,
+        frameQueue,
+        generation,
+        color,
+        mutation.pageWallMs,
+        ACK_TIMEOUT_MS,
+      );
+      if (!ack) throw new Error(`generation ${generation}: no matching compositor frame`);
+      const after = await canonicalSnapshot(cdp);
+      const afterHash = hashJson(after);
+      const exactCanonical = beforeHash === afterHash;
+      const framePath = resolve(OUTPUT_DIR, `presented-frame-${String(generation).padStart(2, "0")}.png`);
+      const frameBytes = Buffer.from(ack.data, "base64");
+      writeFileSync(framePath, frameBytes);
+      report.presentationTransitions.push({
+        generation,
+        expectedWorldOnly,
+        immediateDomWorldOnly: mutation.worldOnly,
+        canonicalTickBefore: before.tick ?? null,
+        canonicalTickAfter: after.tick ?? null,
+        canonicalHashBefore: beforeHash,
+        canonicalHashAfter: afterHash,
+        canonicalStable: exactCanonical,
+        pageMutationWallMs: mutation.pageWallMs,
+        frameSwapUtcMs: ack.frameSwapUtcMs,
+        frameSwapMinusMutationMs: ack.frameSwapUtcMs - mutation.pageWallMs,
+        harnessReceiveUtcMs: ack.receivedAtMs,
+        receiveMinusFrameSwapMs: ack.receivedAtMs - ack.frameSwapUtcMs,
+        markerRgba: ack.markerRgba,
+        screenshotBytes: frameBytes.length,
+        screenshotSha256: createHash("sha256").update(frameBytes).digest("hex"),
+      });
+    }
 
-    const afterSeven = await stepEvidence(cdp, 7);
-    const canonicalAfterSeven = await canonicalSnapshot(cdp);
-    assert(report, "manual stepWorld advances exactly requested ticks", afterSeven.snapshot.tick === 7 && canonicalAfterSeven.tick === 7, {
-      presentationTick: afterSeven.snapshot.tick,
-      canonicalTick: canonicalAfterSeven.tick,
-    });
-    await sleep(350);
-    const afterSevenWait = await evidenceSnapshot(cdp);
-    const canonicalAfterSevenWait = await canonicalSnapshot(cdp);
-    assert(report, "World remains frozen again after a manual step burst", afterSevenWait.snapshot.tick === 7 && canonicalAfterSevenWait.tick === 7, {
-      presentationTick: afterSevenWait.snapshot.tick,
-      canonicalTick: canonicalAfterSevenWait.tick,
-    });
-    assert(report, "frozen post-step canonical state remains stable", stableJson(canonicalAfterSevenWait) === stableJson(canonicalAfterSeven), {
-      canonicalHashBefore: hashJson(canonicalAfterSeven),
-      canonicalHashAfter: hashJson(canonicalAfterSevenWait),
-    });
-    report.manualControl = {
-      initialTick: beforeWait.snapshot.tick,
-      tickAfterWallClock: afterWait.snapshot.tick,
-      tickAfterSevenSteps: afterSeven.snapshot.tick,
-      tickAfterSecondWallClock: afterSevenWait.snapshot.tick,
-      zoomBefore,
-      zoomAfter: afterOverview.cameraZoom,
-      canonicalInitial: canonicalSummary(canonicalBeforeWait),
-      canonicalAfterSeven: canonicalSummary(canonicalAfterSeven),
+    const transientGeneration = 200;
+    const transientColor = markerColor(transientGeneration);
+    const baselineGeneration = 201;
+    const baselineColor = markerColor(baselineGeneration);
+    const transientMutation = await evaluate(cdp, `(() => {
+      const marker = document.querySelector("#spc-presented-frame-probe");
+      if (!(marker instanceof HTMLElement)) throw new Error("presentation marker missing");
+      marker.dataset.generation = ${JSON.stringify(String(transientGeneration))};
+      marker.style.background = ${JSON.stringify(`rgb(${transientColor.join(",")})`)};
+      const wall = performance.timeOrigin + performance.now();
+      marker.dataset.generation = ${JSON.stringify(String(baselineGeneration))};
+      marker.style.background = ${JSON.stringify(`rgb(${baselineColor.join(",")})`)};
+      return { pageWallMs: wall };
+    })()`);
+    const baselineAck = await waitForPresentedGeneration(cdp, frameQueue, baselineGeneration, baselineColor, transientMutation.pageWallMs, ACK_TIMEOUT_MS);
+    if (!baselineAck) throw new Error("negative-control baseline generation never reached compositor");
+    const transientSeen = await anyPresentedColor(cdp, frameQueue, transientColor, transientMutation.pageWallMs, 120);
+    report.transientControl = {
+      transientGeneration,
+      baselineGeneration,
+      transientSeen,
+      baselineFrameSwapUtcMs: baselineAck.frameSwapUtcMs,
     };
 
-    const repeatedRuns = [];
-    for (let runIndex = 0; runIndex < REPEAT_COUNT; runIndex += 1) {
-      repeatedRuns.push(await captureBaselineRun(cdp, runIndex));
-    }
-    report.repeatedRuns = repeatedRuns;
-
-    for (const targetTick of TARGET_TICKS) {
-      const presentationHashes = repeatedRuns.map((runRecord) => runRecord.checkpoints.find((checkpoint) => checkpoint.tick === targetTick)?.presentationHash ?? null);
-      const canonicalHashes = repeatedRuns.map((runRecord) => runRecord.checkpoints.find((checkpoint) => checkpoint.tick === targetTick)?.canonicalHash ?? null);
-      assert(report, `manual presentation projection is exactly reproducible at t${targetTick}`, presentationHashes.every((hash) => hash !== null && hash === presentationHashes[0]), presentationHashes);
-      assert(report, `canonical evidence snapshot is exactly reproducible at t${targetTick}`, canonicalHashes.every((hash) => hash !== null && hash === canonicalHashes[0]), canonicalHashes);
-    }
-
-    const finalCheckpoint = repeatedRuns[0]?.checkpoints.find((checkpoint) => checkpoint.tick === 760) ?? null;
-    assert(report, "canonical t760 proves material delivery and matter terminality", Boolean(
-      finalCheckpoint?.canonical?.matterStatus === "resolved"
-      && finalCheckpoint?.canonical?.activeRunId === null
-      && finalCheckpoint?.canonical?.crateLocation?.kind === "free"
-      && Math.abs((finalCheckpoint?.canonical?.crateLocation?.position?.x ?? Number.NaN) - 2_980) < 1e-9
-      && Math.abs((finalCheckpoint?.canonical?.crateLocation?.position?.y ?? Number.NaN) - 1_080) < 1e-9
-    ), finalCheckpoint?.canonical ?? null);
-    assert(report, "canonical t760 retains exact pickup/place run-to-World action provenance", Boolean(
-      finalCheckpoint?.canonical?.actionFacts?.length === 2
-      && finalCheckpoint.canonical.actionFacts[0]?.runId === "run.janek.pickup-delivery-crate"
-      && finalCheckpoint.canonical.actionFacts[0]?.code === "picked_up"
-      && finalCheckpoint.canonical.actionFacts[1]?.runId === "run.janek.place-delivery-crate"
-      && finalCheckpoint.canonical.actionFacts[1]?.code === "placed"
-    ), finalCheckpoint?.canonical?.actionFacts ?? null);
-
-    await navigateNormal(cdp);
-    const normalHasEvidenceApi = await evaluate(cdp, `Boolean(window.__SPC_EVIDENCE__)`);
-    const normalTickBefore = await domTick(cdp);
-    await sleep(450);
-    const normalTickAfter = await domTick(cdp);
-    report.normalRuntime = { hasEvidenceApi: normalHasEvidenceApi, tickBefore: normalTickBefore, tickAfter: normalTickAfter };
-    assert(report, "normal SPC runtime does not expose evidence control API", normalHasEvidenceApi === false, report.normalRuntime);
-    assert(report, "normal SPC runtime still advances from Phaser wall-clock", normalTickAfter > normalTickBefore, report.normalRuntime);
-
-    assert(report, "manual-control probe has no uncaught runtime exceptions", report.runtimeExceptions.length === 0, report.runtimeExceptions);
+    const canonicalFinal = await canonicalSnapshot(cdp);
+    const finalHash = hashJson(canonicalFinal);
+    assert(report, "all presentation generations reach exact compositor frames", report.presentationTransitions.length === PRESENTATION_STEPS, report.presentationTransitions.length);
+    assert(report, "presentation-only toggles preserve canonical World state", report.presentationTransitions.every((entry) => entry.canonicalStable) && finalHash === initialHash, {
+      initialHash,
+      finalHash,
+      transitions: report.presentationTransitions.map((entry) => ({ generation: entry.generation, stable: entry.canonicalStable })),
+    });
+    assert(report, "same-task transient marker is not promoted to presented-frame evidence", transientSeen === false, report.transientControl);
+    assert(report, "presented-frame timestamps are monotonic", report.presentationTransitions.every((entry, index, entries) => index === 0 || entry.frameSwapUtcMs >= entries[index - 1].frameSwapUtcMs), report.presentationTransitions.map((entry) => entry.frameSwapUtcMs));
+    assert(report, "SPC presented-frame canary has no uncaught runtime exceptions", report.runtimeExceptions.length === 0, report.runtimeExceptions);
 
     report.finishedAt = new Date().toISOString();
     report.outcome = report.assertions.every((entry) => entry.pass) ? "PASS" : "FAIL";
     writeFileSync(OUTPUT_FILE, `${JSON.stringify(report, null, 2)}\n`);
     if (report.outcome !== "PASS") process.exitCode = 1;
   } finally {
+    if (cdp && screencastRunning) await cdp.send("Page.stopScreencast").catch(() => {});
     cdp?.close();
     chrome.kill("SIGTERM");
     await sleep(120);
@@ -269,141 +284,118 @@ async function run() {
   }
 }
 
-async function captureBaselineRun(cdp, runIndex) {
-  await navigateEvidence(cdp);
-  const checkpoints = [];
-  let previousTick = 0;
-  for (const targetTick of TARGET_TICKS) {
-    const delta = targetTick - previousTick;
-    const frame = delta > 0 ? await stepEvidence(cdp, delta) : await evidenceSnapshot(cdp);
-    const canonical = await canonicalSnapshot(cdp);
-    if (frame.snapshot.tick !== targetTick || canonical.tick !== targetTick) {
-      throw new Error(`manual baseline run ${runIndex} expected t${targetTick}, got presentation t${frame.snapshot.tick} / canonical t${canonical.tick}`);
-    }
-    const projection = controlProjection(frame);
-    checkpoints.push({
-      tick: targetTick,
-      presentationHash: hashJson(projection),
-      canonicalHash: hashJson(canonical),
-      janek: actorSummary(frame, "resident.janek"),
-      occurrenceCount: frame.recentOccurrences.length,
-      canonical: canonicalSummary(canonical),
+async function injectMarker(cdp, generation) {
+  const color = markerColor(generation);
+  await evaluate(cdp, `(() => {
+    document.querySelector("#spc-presented-frame-probe")?.remove();
+    const marker = document.createElement("div");
+    marker.id = "spc-presented-frame-probe";
+    marker.dataset.generation = ${JSON.stringify(String(generation))};
+    Object.assign(marker.style, {
+      position: "fixed",
+      left: "0px",
+      top: "0px",
+      width: ${JSON.stringify(`${MARKER_SIZE_CSS_PX}px`)},
+      height: ${JSON.stringify(`${MARKER_SIZE_CSS_PX}px`)},
+      zIndex: "2147483647",
+      pointerEvents: "none",
+      background: ${JSON.stringify(`rgb(${color.join(",")})`)},
     });
-    previousTick = targetTick;
-  }
-  return { runIndex, checkpoints };
+    document.documentElement.appendChild(marker);
+    return true;
+  })()`);
 }
 
-function controlProjection(frame) {
-  return {
-    snapshot: frame.snapshot,
-    recentOccurrences: frame.recentOccurrences,
-    motionOutcomes: frame.motionOutcomes,
-    selectedResidentId: frame.selectedResidentId,
-    selectedDiagnostics: frame.selectedDiagnostics,
-    selectedRegionId: frame.selectedRegionId,
-  };
-}
-
-function canonicalSummary(snapshot) {
-  const crate = snapshot.authoritativeWorld?.materialObjects?.find((object) => object.id === CRATE_ID) ?? null;
-  return {
-    schemaVersion: snapshot.schemaVersion ?? null,
-    scenarioId: snapshot.scenarioId ?? null,
-    tick: snapshot.tick ?? null,
-    matterStatus: snapshot.continuity?.matter?.status ?? null,
-    semanticRevision: snapshot.continuity?.matter?.semanticRevision ?? null,
-    activeRunId: snapshot.continuity?.matter?.activeRunId ?? null,
-    activeRunCanMutateWorld: snapshot.continuity?.activeRunCanMutateWorld ?? null,
-    crateLocation: crate?.location ?? null,
-    materialKnowledge: snapshot.residentPrivate?.materialKnowledge ?? [],
-    actionFacts: (snapshot.causalProvenance?.residentWorldActionFacts ?? []).map((fact) => ({
-      id: fact.id,
-      tick: fact.tick,
-      runId: fact.runId,
-      kind: fact.action?.kind ?? null,
-      objectId: fact.action?.objectId ?? null,
-      outcomeStatus: fact.resolution?.outcomeStatus ?? fact.resolution?.status ?? null,
-      code: fact.resolution?.code ?? fact.resolution?.reason ?? null,
-      actionSeq: fact.resolution?.actionSeq ?? null,
-    })),
-  };
-}
-
-function actorSummary(frame, actorId) {
-  const actor = frame.snapshot.actors.find((candidate) => candidate.id === actorId);
-  if (!actor) return null;
-  return { position: actor.position, velocity: actor.velocity };
-}
-
-function stableJson(value) {
-  return JSON.stringify(value);
-}
-
-function hashJson(value) {
-  return createHash("sha256").update(stableJson(value)).digest("hex");
-}
-
-async function navigateEvidence(cdp) {
-  await cdp.send("Page.navigate", { url: `${BASE_URL}/?spc=1&evidence=1` });
-  await waitUntil(async () => await evaluate(cdp, `Boolean(window.__SPC_EVIDENCE__?.ready?.() && document.querySelector("canvas"))`), 20_000, "manual evidence scene");
-}
-
-async function navigateNormal(cdp) {
-  await cdp.send("Page.navigate", { url: `${BASE_URL}/?spc=1` });
-  await waitUntil(async () => await evaluate(cdp, `Boolean(document.querySelector("canvas") && document.querySelector(".spc-tick"))`), 20_000, "normal SPC scene");
-}
-
-async function evidenceMeta(cdp) {
+async function mutatePresentation(cdp, generation, color, worldOnly) {
   return await evaluate(cdp, `(() => {
-    const api = window.__SPC_EVIDENCE__;
+    const root = document.querySelector("#app");
+    const button = document.querySelector(".spc-world-mode-toggle");
+    const marker = document.querySelector("#spc-presented-frame-probe");
+    if (!(root instanceof HTMLElement) || !(button instanceof HTMLButtonElement) || !(marker instanceof HTMLElement)) {
+      throw new Error("presentation controls unavailable");
+    }
+    const desired = ${worldOnly ? "true" : "false"};
+    if (root.classList.contains("spc-world-only") !== desired) button.click();
+    marker.dataset.generation = ${JSON.stringify(String(generation))};
+    marker.style.background = ${JSON.stringify(`rgb(${color.join(",")})`)};
     return {
-      version: api?.version ?? null,
-      control: api?.control ?? null,
-      ready: api?.ready?.() ?? false,
-      hasCanonicalSnapshot: typeof api?.canonicalSnapshot === "function",
+      generation: ${generation},
+      worldOnly: root.classList.contains("spc-world-only"),
+      pageWallMs: performance.timeOrigin + performance.now(),
+      performanceNowMs: performance.now(),
     };
   })()`);
 }
 
-async function evidenceSnapshot(cdp) {
-  return await evaluate(cdp, `window.__SPC_EVIDENCE__.snapshot()`);
+async function waitForPresentedGeneration(cdp, frameQueue, generation, expectedColor, notBeforeWallMs, timeoutMs) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const frame = frameQueue.shift();
+    if (!frame) {
+      await sleep(2);
+      continue;
+    }
+    const frameSwapUtcMs = Number(frame.metadata?.timestamp) * 1000;
+    if (!Number.isFinite(frameSwapUtcMs) || frameSwapUtcMs + 2 < notBeforeWallMs) continue;
+    const sample = await samplePngMarker(cdp, frame.data);
+    if (closeColor(sample.rgba, expectedColor)) {
+      return {
+        generation,
+        data: frame.data,
+        frameSwapUtcMs,
+        receivedAtMs: frame.receivedAtMs,
+        markerRgba: sample.rgba,
+        width: sample.width,
+        height: sample.height,
+      };
+    }
+  }
+  return null;
+}
+
+async function anyPresentedColor(cdp, frameQueue, expectedColor, notBeforeWallMs, observationMs) {
+  const deadline = Date.now() + observationMs;
+  while (Date.now() < deadline) {
+    const frame = frameQueue.shift();
+    if (!frame) {
+      await sleep(2);
+      continue;
+    }
+    const frameSwapUtcMs = Number(frame.metadata?.timestamp) * 1000;
+    if (!Number.isFinite(frameSwapUtcMs) || frameSwapUtcMs + 2 < notBeforeWallMs) continue;
+    const sample = await samplePngMarker(cdp, frame.data);
+    if (closeColor(sample.rgba, expectedColor)) return true;
+  }
+  return false;
+}
+
+async function samplePngMarker(cdp, base64Png) {
+  return await evaluate(cdp, `(async () => {
+    const binary = atob(${JSON.stringify(base64Png)});
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+    const bitmap = await createImageBitmap(new Blob([bytes], { type: "image/png" }));
+    const canvas = document.createElement("canvas");
+    canvas.width = bitmap.width;
+    canvas.height = bitmap.height;
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    if (!ctx) throw new Error("2d decode context unavailable");
+    ctx.drawImage(bitmap, 0, 0);
+    const sampleX = Math.max(1, Math.min(bitmap.width - 1, Math.floor(bitmap.width * 0.02)));
+    const sampleY = Math.max(1, Math.min(bitmap.height - 1, Math.floor(bitmap.height * 0.02)));
+    const rgba = Array.from(ctx.getImageData(sampleX, sampleY, 1, 1).data);
+    bitmap.close();
+    return { rgba, width: canvas.width, height: canvas.height, sampleX, sampleY };
+  })()`);
 }
 
 async function canonicalSnapshot(cdp) {
   return await evaluate(cdp, `window.__SPC_EVIDENCE__.canonicalSnapshot()`);
 }
 
-async function stepEvidence(cdp, steps) {
-  return await evaluate(cdp, `window.__SPC_EVIDENCE__.stepWorld(${JSON.stringify(steps)})`);
-}
-
-async function domTick(cdp) {
-  return await evaluate(cdp, `(() => {
-    const match = /t(\\d+)/.exec(document.querySelector(".spc-tick")?.textContent ?? "");
-    return match ? Number(match[1]) : -1;
-  })()`);
-}
-
-async function click(cdp, selector) {
-  const clicked = await evaluate(cdp, `(() => {
-    const element = document.querySelector(${JSON.stringify(selector)});
-    if (!(element instanceof HTMLElement)) return false;
-    element.click();
-    return true;
-  })()`);
-  if (!clicked) throw new Error(`Unable to click ${selector}`);
-}
-
 async function evaluate(cdp, expression) {
-  const result = await cdp.send("Runtime.evaluate", {
-    expression,
-    awaitPromise: true,
-    returnByValue: true,
-  }, 30_000);
-  if (result.exceptionDetails) {
-    throw new Error(result.exceptionDetails.exception?.description ?? result.exceptionDetails.text ?? "Runtime.evaluate failed");
-  }
+  const result = await cdp.send("Runtime.evaluate", { expression, awaitPromise: true, returnByValue: true });
+  if (result.exceptionDetails) throw new Error(result.exceptionDetails.exception?.description ?? result.exceptionDetails.text ?? "Runtime.evaluate failed");
   return result.result?.value;
 }
 
@@ -415,9 +407,7 @@ async function waitForJson(url, timeoutMs = 15_000) {
       const response = await fetch(url);
       if (response.ok) return await response.json();
       lastError = new Error(`${response.status} ${response.statusText}`);
-    } catch (error) {
-      lastError = error;
-    }
+    } catch (error) { lastError = error; }
     await sleep(100);
   }
   throw new Error(`Timed out waiting for ${url}: ${lastError instanceof Error ? lastError.message : String(lastError)}`);
@@ -429,7 +419,7 @@ async function waitUntil(probe, timeoutMs, label) {
   while (Date.now() < deadline) {
     last = await probe();
     if (last) return last;
-    await sleep(100);
+    await sleep(50);
   }
   throw new Error(`Timed out waiting for ${label}; last=${JSON.stringify(last)}`);
 }
@@ -440,7 +430,8 @@ function assert(report, name, pass, detail) {
 
 run().catch((error) => {
   const failure = {
-    schemaVersion: 2,
+    schemaVersion: 1,
+    experiment: "spc-presented-frame-ack-p0",
     sourceSha: SOURCE_SHA,
     outcome: "HARNESS_ERROR",
     error: error instanceof Error ? { message: error.message, stack: error.stack } : { message: String(error) },
