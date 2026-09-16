@@ -3,7 +3,7 @@ import { createFiveResidentJanekMissingCrateSlice } from "./five-resident-missin
 import { ResidentSemanticProviderMembrane } from "./resident-semantic-provider-membrane";
 
 describe("missing-crate semantic provider composition", () => {
-  it("revises resident meaning after checked absence without acquiring body or World authority", () => {
+  it("revises resident meaning after checked absence while preserving stable matter origin and without acquiring body or World authority", () => {
     const slice = createFiveResidentJanekMissingCrateSlice();
     let state = slice.stepJanek();
     let guard = 0;
@@ -20,16 +20,22 @@ describe("missing-crate semantic provider composition", () => {
     const providerRun = membrane.prepare(slice.kernel, "matter.janek.missing-crate");
 
     expect(providerRun).toMatchObject({
-      version: 2,
+      version: 3,
       matter: {
         id: "matter.janek.missing-crate",
         semanticCourse: "go to the last-known workshop crate position and pick it up",
+      },
+      originEvidence: {
+        id: "evidence:janek:missing-crate:origin",
+        kind: "life_context",
+        summary: "Janek needs the familiar workshop crate and last saw it near the workshop bench.",
       },
       semanticEvidence: {
         kind: "checked_absence",
       },
       localCapabilities: [],
     });
+    expect(providerRun.originEvidence.id).not.toBe(providerRun.semanticEvidence.id);
     expect(providerRun).not.toHaveProperty("runId");
     expect(providerRun).not.toHaveProperty("activity");
     expect(providerRun).not.toHaveProperty("world");
