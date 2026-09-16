@@ -24,6 +24,7 @@ const MATTER_ID = "matter.mira.post-walk-continuation";
 const TASK_ID = "task.mira.post-walk-continuation.travel";
 const RUN_ID = "run.mira.post-walk-continuation.travel";
 const TARGET_REGION_ID = "workshop";
+const FIXED_DELTA_SECONDS = 1 / 60;
 
 export type MiraAutonomousContinuationPhase =
   | "awaiting_authored_completion"
@@ -162,7 +163,7 @@ export function createFiveResidentMiraAutonomousContinuationSlice(): FiveResiden
         // Semantic updates remain private. There are none in this fixture today,
         // but using the real seam prevents the slice from becoming a parallel brain.
         mira.applySemanticUpdates(parsed, world.tick, privateContext.recentPercepts);
-        mira.scheduleAdaptiveReview(world.tick, parsed.reviewAfterSeconds, world.options.fixedDeltaSeconds);
+        mira.scheduleAdaptiveReview(world.tick, parsed.reviewAfterSeconds, FIXED_DELTA_SECONDS);
 
         const origin = kernel.recordEvidence({
           id: `evidence:mira:post-walk-cognition:${world.tick}`,
