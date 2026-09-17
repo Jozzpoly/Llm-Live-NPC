@@ -96,10 +96,10 @@ const context = {
 };
 
 const report = {
-  schemaVersion: 1,
+  schemaVersion: 2,
   sourceSha: SOURCE_SHA,
   candidateBaseUrl: BASE_URL,
-  purpose: "bounded real-provider qualification of resident life-intent transport while recovered life already owns the body; not a matter-materialization, execution, judgement-quality or sustained-life claim",
+  purpose: "bounded real-provider qualification of the commitment-native resident life-intent contract while recovered life already owns the body; any legal accept/decline/defer/clarify is contract evidence, not a judgement-quality, matter-materialization, execution or sustained-life claim",
   startedAt: new Date().toISOString(),
   assertions: [],
   spendFreePreflight: {},
@@ -120,28 +120,37 @@ async function request(url, init = {}) {
   }
 }
 
+function legalBoundedAcceptedIntent(intent) {
+  if (!intent || typeof intent !== "object") return false;
+  if (!["idle", "travel", "follow", "communicate", "investigate"].includes(intent.kind)) return false;
+  if (typeof intent.goal !== "string" || !intent.goal.trim()) return false;
+  if (intent.targetRegionId !== null && !KNOWN_REGION_IDS.has(intent.targetRegionId)) return false;
+  if (intent.targetActorId !== null && !KNOWN_ACTOR_IDS.has(intent.targetActorId)) return false;
+  if (intent.targetPosition !== null) {
+    if (typeof intent.targetPosition !== "object"
+      || !Number.isFinite(intent.targetPosition.x)
+      || !Number.isFinite(intent.targetPosition.y)) return false;
+  }
+  if (intent.text !== null && (typeof intent.text !== "string" || !intent.text.trim())) return false;
+  return true;
+}
+
 function legalBoundedProposal(proposal) {
   if (!proposal || proposal.version !== 1) return false;
   if (!Array.isArray(proposal.beliefs) || !Array.isArray(proposal.concerns)) return false;
   if (!Number.isFinite(proposal.reviewAfterSeconds)
     || proposal.reviewAfterSeconds < 0.25
     || proposal.reviewAfterSeconds > 600) return false;
+  if (Object.hasOwn(proposal, "activityDirective")) return false;
 
-  const directive = proposal.activityDirective;
-  if (!directive || typeof directive.reason !== "string" || !directive.reason.trim()) return false;
-  if (directive.kind === "keep" || directive.kind === "stop") return true;
-  if (directive.kind !== "replace" || !directive.activity) return false;
-
-  const activity = directive.activity;
-  if (!["idle", "travel", "follow", "communicate", "investigate"].includes(activity.kind)) return false;
-  if (activity.targetRegionId !== null && !KNOWN_REGION_IDS.has(activity.targetRegionId)) return false;
-  if (activity.targetActorId !== null && !KNOWN_ACTOR_IDS.has(activity.targetActorId)) return false;
-  if (activity.targetPosition !== null) {
-    if (typeof activity.targetPosition !== "object"
-      || !Number.isFinite(activity.targetPosition.x)
-      || !Number.isFinite(activity.targetPosition.y)) return false;
+  const decision = proposal.commitmentDecision;
+  if (!decision || typeof decision.reason !== "string" || !decision.reason.trim()) return false;
+  if (decision.kind === "accept") return legalBoundedAcceptedIntent(decision.intent);
+  if (decision.kind === "decline" || decision.kind === "defer") return true;
+  if (decision.kind === "clarify") {
+    return typeof decision.question === "string" && decision.question.trim().length > 0;
   }
-  return typeof activity.goal === "string" && activity.goal.trim().length > 0;
+  return false;
 }
 
 const FORBIDDEN_AUTHORITY_KEYS = new Set([
@@ -154,6 +163,8 @@ const FORBIDDEN_AUTHORITY_KEYS = new Set([
   "outcome",
   "completed",
   "worldMutation",
+  "routeRegionIds",
+  "destination",
 ]);
 
 function containsForbiddenAuthorityClaim(value) {
@@ -222,17 +233,17 @@ async function run() {
   };
 
   assert(
-    "one real provider request completes through the exact life-intent endpoint",
+    "one real provider request completes through the exact commitment-native life-intent endpoint",
     providerResponse.ok && providerBody?.ok === true,
     report.provider,
   );
   assert(
-    "provider output remains one bounded semantic proposal over private resident-life context",
+    "provider output is one bounded commitment decision over private resident-life context",
     legalBoundedProposal(providerBody?.proposal),
     providerBody?.proposal ?? null,
   );
   assert(
-    "provider output claims no matter, run, body, World or factual-outcome authority",
+    "provider output claims no matter, run, route, body, World or factual-outcome authority",
     !containsForbiddenAuthorityClaim(providerBody?.proposal),
     providerBody?.proposal ?? null,
   );
