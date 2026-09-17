@@ -100,6 +100,48 @@ describe("resident life cognition truth projection", () => {
     expect(view.body.deferredRunIds).toEqual([]);
   });
 
+  it("keeps a just-completed factual outcome visible through bounded recent evidence after terminal pins are released", () => {
+    const fixture = setupTwoMatters();
+    expect(fixture.arbitrator.request(RUN_A)).toEqual({ status: "acquired", runId: RUN_A });
+
+    const reconciled = fixture.kernel.reconcileRunOutcome({
+      runId: RUN_A,
+      tick: 20,
+      status: "succeeded",
+      summary: "physically reached the workshop",
+    });
+    expect(reconciled.status).toBe("recorded");
+    if (reconciled.status !== "recorded") return;
+
+    fixture.kernel.resolveMatter(MATTER_A);
+
+    // Terminal matters deliberately release live evidence pins.
+    expect(fixture.kernel.lastOutcomeEvidence(MATTER_A)).toBeNull();
+    expect(fixture.kernel.recentEvidenceSnapshot()).toContainEqual(reconciled.evidence);
+
+    const view = captureResidentLifeCognitionView({
+      kernel: fixture.kernel,
+      focus: fixture.focus,
+      arbitrator: fixture.arbitrator,
+      matterIds: [MATTER_A],
+    });
+
+    expect(view.matters[0]).toMatchObject({
+      id: MATTER_A,
+      status: "resolved",
+      activeRun: null,
+      lastOutcomeEvidence: {
+        id: reconciled.evidence.id,
+        tick: 20,
+        kind: "task_outcome",
+        summary: "succeeded: physically reached the workshop",
+      },
+    });
+
+    // Projection is observational only; it must not recreate a live evidence pin.
+    expect(fixture.kernel.lastOutcomeEvidence(MATTER_A)).toBeNull();
+  });
+
   it("is read-only over resident continuity state", () => {
     const fixture = setupTwoMatters();
     expect(fixture.arbitrator.request(RUN_A).status).toBe("acquired");
