@@ -82,6 +82,9 @@ export function captureResidentLifeCognitionView(
   const focusedRunId = input.focus.focusedRun();
   const deferredRunIds = input.arbitrator?.deferredRunIds() ?? [];
   const deferred = new Set(deferredRunIds);
+  const recentEvidenceById = new Map(
+    input.kernel.recentEvidenceSnapshot().map((evidence) => [evidence.id, evidence] as const),
+  );
 
   const matters = matterIds.map((matterId) => {
     const matter = input.kernel.matter(matterId);
@@ -93,6 +96,7 @@ export function captureResidentLifeCognitionView(
       binding,
       focusedRunId,
       deferred,
+      recentEvidenceById,
     );
   });
 
@@ -112,6 +116,7 @@ function projectMatter(
   binding: ResidentTaskRunBinding | null,
   focusedRunId: string | null,
   deferredRunIds: ReadonlySet<string>,
+  recentEvidenceById: ReadonlyMap<string, ResidentKernelEvidence>,
 ): ResidentLifeMatterView {
   const activeRun = binding ? {
     runId: binding.runId,
@@ -134,7 +139,10 @@ function projectMatter(
     suspendedByMatterId: matter.suspendedByMatterId,
     originEvidence: projectEvidence(kernel.originEvidence(matter.id)),
     semanticEvidence: projectEvidence(kernel.semanticEvidence(matter.id)),
-    lastOutcomeEvidence: projectEvidence(kernel.lastOutcomeEvidence(matter.id)),
+    lastOutcomeEvidence: projectEvidence(
+      kernel.lastOutcomeEvidence(matter.id)
+      ?? (matter.lastOutcomeEvidenceId ? recentEvidenceById.get(matter.lastOutcomeEvidenceId) ?? null : null),
+    ),
     activeRun,
   };
 }
