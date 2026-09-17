@@ -113,7 +113,7 @@ describe("ResidentLifeIntentOwner commitment decision contract", () => {
     expect(attempt).not.toBeNull();
     if (!attempt) return;
 
-    const settlement = owner.settleIntent(
+    const settlement = owner.settleCommitmentIntent(
       attempt,
       acceptedFieldsProposal(),
       life,
