@@ -256,7 +256,6 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
       proposal,
       providerContext,
       currentGroundingContext(prepared.batch),
-      spec,
       originPercept.id,
       navigation,
     );
@@ -519,14 +518,13 @@ function groundCommitment(
   proposal: ResidentCognitionProposal,
   providerContext: ResidentLifeCognitionContext,
   groundingContext: ResidentCognitionContext,
-  spec: MiraCausalCommitmentSpec,
   originPerceptId: string,
   navigation: ReturnType<typeof createFiveResidentNavigationGraph>,
 ): ResidentLifeIntentAdmission<GroundedCausalCommitmentIntent> {
   const directive = proposal.activityDirective;
   if (directive.kind !== "replace"
     || directive.activity.kind !== "travel"
-    || directive.activity.targetRegionId !== spec.targetRegionId) {
+    || directive.activity.targetRegionId === null) {
     return { status: "rejected", detail: "expected known-region travel commitment" };
   }
   if (!providerContext.recentPercepts.some((percept) => (
