@@ -1,4 +1,8 @@
-import type { ResidentCognitionContext, ResidentCognitionProposal } from "./cognition-contract";
+import type {
+  ProposedActivity,
+  ResidentCognitionContext,
+  ResidentCognitionProposal,
+} from "./cognition-contract";
 import type { CognitionBatch, Vec2, WorldOccurrence } from "./contracts";
 import { createFiveResidentNavigationGraph } from "./five-resident-navigation";
 import { createFiveResidentRegionComposition } from "./five-resident-region";
@@ -19,6 +23,7 @@ import {
   ResidentLifeChoiceReviewBridge,
   type ResidentLifeChoiceReviewObservation,
 } from "./resident-life-choice-review-bridge";
+import type { ResidentLifeIntentProposal } from "./resident-life-intent-contract";
 import type { ResidentLifeCognitionContext } from "./resident-life-cognition-context";
 import {
   captureResidentLifeCognitionView,
@@ -86,11 +91,13 @@ export interface GroundedCausalCommitmentIntent {
   semanticIntent: ResidentMatterIntent;
 }
 
+type CausalCommitmentProposal = ResidentCognitionProposal | ResidentLifeIntentProposal;
+
 interface GroundedCommitmentAuthority {
   attempt: ResidentLifeIntentAttempt;
   occurrenceId: string;
   matterId: string;
-  proposal: ResidentCognitionProposal;
+  proposal: CausalCommitmentProposal;
 }
 
 export interface PreparedCausalLifeIntent {
@@ -137,6 +144,12 @@ export type IncrementalCausalCommitmentStep =
  * attempt and settling it are separate boundaries so body execution may continue while
  * higher cognition is in flight. Neither boundary grants provider/network completion
  * direct matter/run/body/World authority.
+ *
+ * Resident-life-native commitment proposals are interpreted independently from body
+ * activity directives: `accept` selects only a bounded semantic intent. The older
+ * activityDirective path remains solely as compatibility for deterministic fixtures.
+ * Both paths converge only after extracting semantic travel meaning, before one shared
+ * current-region/known-route grounding boundary and one exact capability materializer.
  *
  * Provider meaning and local execution grounding deliberately have different lifetimes:
  * a semantic target may remain valid across model latency while body/region state moves.
@@ -247,6 +260,47 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
     proposal: ResidentCognitionProposal,
     providerContext: ResidentLifeCognitionContext,
   ): ResidentLifeIntentAdmission<GroundedCausalCommitmentIntent> {
+    return groundPreparedPlayerProposal(
+      prepared,
+      occurrence,
+      spec,
+      proposal,
+      providerContext,
+      groundLegacyCommitment,
+    );
+  }
+
+  function groundPreparedPlayerCommitmentRequest(
+    prepared: PreparedCausalLifeIntent,
+    occurrence: WorldOccurrence,
+    spec: MiraCausalCommitmentSpec,
+    proposal: ResidentLifeIntentProposal,
+    providerContext: ResidentLifeCognitionContext,
+  ): ResidentLifeIntentAdmission<GroundedCausalCommitmentIntent> {
+    return groundPreparedPlayerProposal(
+      prepared,
+      occurrence,
+      spec,
+      proposal,
+      providerContext,
+      groundLifeCommitment,
+    );
+  }
+
+  function groundPreparedPlayerProposal<Proposal extends CausalCommitmentProposal>(
+    prepared: PreparedCausalLifeIntent,
+    occurrence: WorldOccurrence,
+    spec: MiraCausalCommitmentSpec,
+    proposal: Proposal,
+    providerContext: ResidentLifeCognitionContext,
+    ground: (
+      proposal: Proposal,
+      providerContext: ResidentLifeCognitionContext,
+      groundingContext: ResidentCognitionContext,
+      originPerceptId: string,
+      navigation: ReturnType<typeof createFiveResidentNavigationGraph>,
+    ) => ResidentLifeIntentAdmission<GroundedCausalCommitmentIntent>,
+  ): ResidentLifeIntentAdmission<GroundedCausalCommitmentIntent> {
     if (acceptedMatterIds.has(spec.matterId)) {
       return { status: "rejected", detail: `commitment already accepted: ${spec.matterId}` };
     }
@@ -255,7 +309,7 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
       return { status: "rejected", detail: "prepared commitment lost its exact addressed private speech percept" };
     }
 
-    const grounded = groundCommitment(
+    const grounded = ground(
       proposal,
       providerContext,
       currentGroundingContext(prepared.batch),
@@ -285,6 +339,26 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
     occurrence: WorldOccurrence,
     spec: MiraCausalCommitmentSpec,
     proposal: ResidentCognitionProposal,
+    intent: GroundedCausalCommitmentIntent,
+  ): AcceptedCausalCommitment {
+    return materializeAdmittedPlayerProposal(prepared, occurrence, spec, proposal, intent);
+  }
+
+  function materializeAdmittedPlayerCommitmentRequest(
+    prepared: PreparedCausalLifeIntent,
+    occurrence: WorldOccurrence,
+    spec: MiraCausalCommitmentSpec,
+    proposal: ResidentLifeIntentProposal,
+    intent: GroundedCausalCommitmentIntent,
+  ): AcceptedCausalCommitment {
+    return materializeAdmittedPlayerProposal(prepared, occurrence, spec, proposal, intent);
+  }
+
+  function materializeAdmittedPlayerProposal(
+    prepared: PreparedCausalLifeIntent,
+    occurrence: WorldOccurrence,
+    spec: MiraCausalCommitmentSpec,
+    proposal: CausalCommitmentProposal,
     intent: GroundedCausalCommitmentIntent,
   ): AcceptedCausalCommitment {
     const groundingAuthority = groundedCommitmentAuthority.get(intent);
@@ -397,7 +471,7 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
     const occurrence = world.speak(PLAYER_ID, spec.requestText, REQUEST_RADIUS, [MIRA_ID]);
     world.step();
     const prepared = waitForPreparedAddressedSpeech();
-    return settlePreparedPlayerRequest(prepared, occurrence, spec, commitmentProposal(spec));
+    return settlePreparedPlayerRequest(prepared, occurrence, spec, legacyCommitmentProposal(spec));
   }
 
   function finishArrivedMatter(spec: MiraCausalCommitmentSpec): CompletedCausalCommitment {
@@ -481,7 +555,9 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
     currentLifeView,
     takeReadyLifeIntentAttempt,
     groundPreparedPlayerRequest,
+    groundPreparedPlayerCommitmentRequest,
     materializeAdmittedPlayerRequest,
+    materializeAdmittedPlayerCommitmentRequest,
     settlePreparedPlayerRequest,
     acceptPlayerRequest,
     advanceFocusedMatterOneWorldTick,
@@ -503,7 +579,7 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
   };
 }
 
-function commitmentProposal(spec: MiraCausalCommitmentSpec): ResidentCognitionProposal {
+function legacyCommitmentProposal(spec: MiraCausalCommitmentSpec): ResidentCognitionProposal {
   return {
     version: 1,
     activityDirective: {
@@ -524,7 +600,7 @@ function commitmentProposal(spec: MiraCausalCommitmentSpec): ResidentCognitionPr
   };
 }
 
-function groundCommitment(
+function groundLegacyCommitment(
   proposal: ResidentCognitionProposal,
   providerContext: ResidentLifeCognitionContext,
   groundingContext: ResidentCognitionContext,
@@ -532,9 +608,49 @@ function groundCommitment(
   navigation: ReturnType<typeof createFiveResidentNavigationGraph>,
 ): ResidentLifeIntentAdmission<GroundedCausalCommitmentIntent> {
   const directive = proposal.activityDirective;
-  if (directive.kind !== "replace"
-    || directive.activity.kind !== "travel"
-    || directive.activity.targetRegionId === null) {
+  if (directive.kind !== "replace") {
+    return { status: "rejected", detail: "expected legacy replacement travel commitment" };
+  }
+  return groundAcceptedTravelCommitment(
+    directive.activity,
+    directive.reason,
+    providerContext,
+    groundingContext,
+    originPerceptId,
+    navigation,
+  );
+}
+
+function groundLifeCommitment(
+  proposal: ResidentLifeIntentProposal,
+  providerContext: ResidentLifeCognitionContext,
+  groundingContext: ResidentCognitionContext,
+  originPerceptId: string,
+  navigation: ReturnType<typeof createFiveResidentNavigationGraph>,
+): ResidentLifeIntentAdmission<GroundedCausalCommitmentIntent> {
+  const decision = proposal.commitmentDecision;
+  if (decision.kind !== "accept") {
+    return { status: "rejected", detail: `commitment decision is ${decision.kind}, not accept` };
+  }
+  return groundAcceptedTravelCommitment(
+    decision.intent,
+    decision.reason,
+    providerContext,
+    groundingContext,
+    originPerceptId,
+    navigation,
+  );
+}
+
+function groundAcceptedTravelCommitment(
+  activity: ProposedActivity,
+  reason: string,
+  providerContext: ResidentLifeCognitionContext,
+  groundingContext: ResidentCognitionContext,
+  originPerceptId: string,
+  navigation: ReturnType<typeof createFiveResidentNavigationGraph>,
+): ResidentLifeIntentAdmission<GroundedCausalCommitmentIntent> {
+  if (activity.kind !== "travel" || activity.targetRegionId === null) {
     return { status: "rejected", detail: "expected known-region travel commitment" };
   }
   if (!providerContext.recentPercepts.some((percept) => (
@@ -549,7 +665,7 @@ function groundCommitment(
   if (!currentRegionId) {
     return { status: "rejected", detail: "current resident region is unavailable at admission" };
   }
-  const targetRegionId = directive.activity.targetRegionId;
+  const targetRegionId = activity.targetRegionId;
   const known = new Set(groundingContext.knownRegions.map((region) => region.id));
   known.add(currentRegionId);
   const route = navigation.route(currentRegionId, targetRegionId, known);
@@ -564,10 +680,10 @@ function groundCommitment(
       originPerceptId,
       destination,
       routeRegionIds: [...route.regionIds],
-      semanticCourse: `${directive.reason} · ${directive.activity.goal}`,
+      semanticCourse: `${reason} · ${activity.goal}`,
       semanticIntent: {
         kind: "travel_region",
-        goal: directive.activity.goal,
+        goal: activity.goal,
         targetRegionId,
       },
     },
