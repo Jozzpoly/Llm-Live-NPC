@@ -9,6 +9,8 @@ const MATTER_C = "matter.mira.c";
 const RUN_A = "run.mira.a";
 const RUN_B = "run.mira.b";
 const RUN_C = "run.mira.c";
+const MATTER_D = "matter.mira.d";
+const RUN_D = "run.mira.d";
 
 describe("ResidentExecutionArbitrator", () => {
   it("preserves one busy run and acquires it when the prior body owner finishes", () => {
@@ -88,6 +90,47 @@ describe("ResidentExecutionArbitrator", () => {
     });
     expect(fixture.focus.focusedRun()).toBe(RUN_A);
     expect(fixture.kernel.canRunMutateWorld(RUN_B)).toBe(true);
+  });
+
+  it("does not let a newly admitted run leapfrog an unresolved free-body choice", () => {
+    const fixture = setupRuns([RUN_A, RUN_B, RUN_C]);
+
+    expect(fixture.arbitrator.request(RUN_A).status).toBe("acquired");
+    expect(fixture.arbitrator.request(RUN_B).status).toBe("busy");
+    expect(fixture.arbitrator.request(RUN_C).status).toBe("busy");
+
+    finishRun(fixture.kernel, MATTER_A, RUN_A, 1);
+    expect(fixture.arbitrator.reconcile()).toEqual({
+      status: "choice_required",
+      candidateRunIds: [RUN_B, RUN_C],
+    });
+    expect(fixture.focus.focusedRun()).toBeNull();
+
+    fixture.kernel.recordEvidence({
+      id: "evidence.d",
+      tick: 2,
+      kind: "test",
+      summary: "a newer continuing matter was accepted while B/C still need a choice",
+    });
+    fixture.kernel.openMatter({
+      id: MATTER_D,
+      originEvidenceId: "evidence.d",
+      semanticCourse: "continue matter d",
+    });
+    fixture.kernel.bindRun({ matterId: MATTER_D, taskId: "task.mira.d", runId: RUN_D });
+
+    expect(fixture.arbitrator.request(RUN_D)).toEqual({
+      status: "deferred",
+      runId: RUN_D,
+    });
+    expect(fixture.focus.focusedRun()).toBeNull();
+    expect(fixture.arbitrator.deferredRunIds()).toEqual([RUN_B, RUN_C, RUN_D]);
+
+    expect(fixture.arbitrator.reconcile()).toEqual({
+      status: "choice_required",
+      candidateRunIds: [RUN_B, RUN_C, RUN_D],
+    });
+    expect(fixture.focus.focusedRun()).toBeNull();
   });
 });
 
