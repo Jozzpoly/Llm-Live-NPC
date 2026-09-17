@@ -95,7 +95,7 @@ describe("Mira resident-origin matter from overheard social pressure", () => {
       residentChosenProposal,
       slice.currentLifeView(),
       slice.world.tick,
-      (proposal, providerContext) => slice.groundPreparedPlayerCommitmentRequest(
+      (proposal, providerContext) => slice.groundPreparedPrivateSpeechCommitment(
         prepared,
         occurrence,
         proposal,
@@ -105,7 +105,7 @@ describe("Mira resident-origin matter from overheard social pressure", () => {
     expect(settlement.status).toBe("applied");
     if (settlement.status !== "applied") return;
 
-    const accepted = slice.materializeAdmittedPlayerCommitmentRequest(
+    const accepted = slice.materializeAdmittedPrivateSpeechCommitment(
       prepared,
       occurrence,
       settlement.proposal,
@@ -156,7 +156,7 @@ function acceptCausalSpeech(
     proposal,
     slice.currentLifeView(),
     slice.world.tick,
-    (admittedProposal, providerContext) => slice.groundPreparedPlayerCommitmentRequest(
+    (admittedProposal, providerContext) => slice.groundPreparedPrivateSpeechCommitment(
       prepared,
       occurrence,
       admittedProposal,
@@ -166,7 +166,7 @@ function acceptCausalSpeech(
   if (settlement.status !== "applied") {
     throw new Error(`causal speech commitment settlement failed: ${settlement.status}`);
   }
-  return slice.materializeAdmittedPlayerCommitmentRequest(
+  return slice.materializeAdmittedPrivateSpeechCommitment(
     prepared,
     occurrence,
     settlement.proposal,
