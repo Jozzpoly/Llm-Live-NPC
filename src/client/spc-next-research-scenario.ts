@@ -12,6 +12,7 @@ import {
   IDA_MESSAGE_MATTER_ID,
   createFiveResidentIdaMessageDeliverySlice,
 } from "../spc-next/five-resident-ida-message-delivery-slice";
+import { createFiveResidentMiraSustainedLifeSlice } from "../spc-next/five-resident-mira-sustained-life-slice";
 
 export type SpcNextResearchScenarioKind =
   | "baseline-delivery"
@@ -20,7 +21,8 @@ export type SpcNextResearchScenarioKind =
   | "missing-crate-interruption"
   | "missing-crate-live-provider"
   | "missing-crate-live-provider-interruption"
-  | "ida-message-delivery";
+  | "ida-message-delivery"
+  | "mira-sustained-life";
 
 export interface SpcNextResearchScenario {
   readonly kind: SpcNextResearchScenarioKind;
@@ -29,9 +31,10 @@ export interface SpcNextResearchScenario {
   readonly matterId: string;
   readonly world: SpcWorldRuntime;
   readonly kernel: ResidentContinuityKernel;
-  /** Optional resident-specific evidence extension; social slices do not invent material knowledge. */
+  /** Optional resident-specific evidence extension; social/travel slices do not invent material knowledge. */
   readonly materialKnowledge?: ResidentMaterialKnowledge | null;
-  readonly authority: ResidentWorldExecutionAuthority;
+  /** Optional existing action-fact source. Observation must never create execution authority. */
+  readonly authority: ResidentWorldExecutionAuthority | null;
   /** Advances exactly one authoritative World tick. */
   advanceOneWorldTick(): void;
 }
@@ -43,6 +46,7 @@ export function createSpcNextResearchScenario(kind: SpcNextResearchScenarioKind)
   if (kind === "missing-crate-live-provider") return createMissingCrateLiveProviderScenario();
   if (kind === "missing-crate-live-provider-interruption") return createMissingCrateLiveProviderInterruptionScenario();
   if (kind === "ida-message-delivery") return createIdaMessageDeliveryScenario();
+  if (kind === "mira-sustained-life") return createMiraSustainedLifeScenario();
   return createBaselineDeliveryScenario();
 }
 
@@ -55,6 +59,7 @@ export function researchScenarioKindFromSearch(search: string): SpcNextResearchS
   if (requested === "missing-crate-live-provider") return "missing-crate-live-provider";
   if (requested === "missing-crate-live-provider-interruption") return "missing-crate-live-provider-interruption";
   if (requested === "ida-message-delivery") return "ida-message-delivery";
+  if (requested === "mira-sustained-life") return "mira-sustained-life";
   throw new Error(`unknown SPC Next research scenario: ${requested}`);
 }
 
@@ -88,9 +93,6 @@ function createMissingCrateScenario(): SpcNextResearchScenario {
     materialKnowledge: slice.materialKnowledge,
     authority: slice.authority,
     advanceOneWorldTick(): void {
-      // The first browser-controlled tick is the variable under test: World truth
-      // changes while Janek is outside sight range. Resident execution starts only
-      // on the following tick, so evidence can capture the exact pre/post boundary.
       if (!slice.hiddenRelocationApplied()) {
         slice.relocateCrateHidden();
         return;
@@ -113,9 +115,6 @@ function createMissingCrateRecoveryScenario(): SpcNextResearchScenario {
     materialKnowledge: slice.materialKnowledge,
     authority: slice.authority,
     advanceOneWorldTick(): void {
-      // The recovery slice itself owns the deterministic one-tick state machine.
-      // Scripted semantic choices exercise the real authority membrane but remain
-      // research-fixture decisions; this scenario is not LIVE_PROVIDER evidence.
       slice.advanceOneWorldTick();
     },
   };
@@ -133,9 +132,6 @@ function createMissingCrateInterruptionScenario(): SpcNextResearchScenario {
     materialKnowledge: slice.materialKnowledge,
     authority: slice.authority,
     advanceOneWorldTick(): void {
-      // Addressed participant speech still enters through World.speak() and private
-      // perception. This adapter only advances the already-qualified interruption
-      // state machine; it does not inject an interruption directly.
       slice.advanceOneWorldTick();
     },
   };
@@ -153,9 +149,6 @@ function createMissingCrateLiveProviderScenario(): SpcNextResearchScenario {
     materialKnowledge: slice.materialKnowledge,
     authority: slice.authority,
     advanceOneWorldTick(): void {
-      // Unlike deterministic recovery, this path really calls the same-origin
-      // Worker endpoint. Transport completion can only fill the slice's inert
-      // arrival inbox; admission and grounding remain resident/World-tick owned.
       slice.advanceOneWorldTick();
     },
   };
@@ -173,9 +166,6 @@ function createMissingCrateLiveProviderInterruptionScenario(): SpcNextResearchSc
     materialKnowledge: slice.materialKnowledge,
     authority: slice.authority,
     advanceOneWorldTick(): void {
-      // The participant interruption is not injected here. Browser evidence must
-      // enter through __SPC_EVIDENCE__.addressResident() -> World.speak(), after a
-      // real provider choice has grounded the live search run.
       slice.advanceOneWorldTick();
     },
   };
@@ -193,10 +183,31 @@ function createIdaMessageDeliveryScenario(): SpcNextResearchScenario {
     materialKnowledge: null,
     authority: slice.authority,
     advanceOneWorldTick(): void {
-      // I1 begins after legally acquired authored prehistory. The browser adapter
-      // advances only the resident-owned social commitment execution; it does not
-      // inject delivery, recipient identity or recipient position into the slice.
       slice.advanceOneWorldTick();
+    },
+  };
+}
+
+function createMiraSustainedLifeScenario(): SpcNextResearchScenario {
+  const slice = createFiveResidentMiraSustainedLifeSlice();
+  let focusMatterId = "matter.mira.sustained.1.workshop";
+
+  return {
+    kind: "mira-sustained-life",
+    evidenceScenarioId: "browser-mira-sustained-life",
+    residentId: "resident.mira",
+    get matterId(): string {
+      return focusMatterId;
+    },
+    world: slice.world,
+    kernel: slice.kernel,
+    materialKnowledge: null,
+    authority: null,
+    advanceOneWorldTick(): void {
+      const step = slice.advanceOneWorldTick();
+      if (step.status === "chapter_started" || step.status === "chapter_resolved") {
+        focusMatterId = step.matterId;
+      }
     },
   };
 }
