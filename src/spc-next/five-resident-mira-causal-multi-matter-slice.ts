@@ -308,6 +308,34 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
     return originPercept;
   }
 
+  function exactLifeOutcomeEvidence(
+    context: ResidentLifeCognitionContext,
+    sourceMatterId: string,
+  ): ResidentKernelEvidence | null {
+    const projectedMatter = context.life.matters.find((matter) => matter.id === sourceMatterId);
+    const projectedOutcome = projectedMatter?.lastOutcomeEvidence ?? null;
+    const kernelMatter = kernel.matter(sourceMatterId);
+    if (!projectedMatter
+      || projectedMatter.status !== "resolved"
+      || !projectedOutcome
+      || !kernelMatter
+      || kernelMatter.status !== "resolved"
+      || kernelMatter.lastOutcomeEvidenceId !== projectedOutcome.id) {
+      return null;
+    }
+
+    const recentOutcome = kernel.recentEvidenceSnapshot().find(
+      (evidence) => evidence.id === projectedOutcome.id,
+    );
+    if (!recentOutcome
+      || recentOutcome.tick !== projectedOutcome.tick
+      || recentOutcome.kind !== projectedOutcome.kind
+      || recentOutcome.summary !== projectedOutcome.summary) {
+      return null;
+    }
+    return recentOutcome;
+  }
+
   function takeReadyLifeIntentAttempt(): PreparedCausalLifeIntent | null {
     // Do not consume another scheduler batch while an exact cognition attempt owns
     // the current admission authority. The existing batch must settle or abandon first.
@@ -365,6 +393,48 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
     providerContext: ResidentLifeCognitionContext,
   ): ResidentLifeIntentAdmission<GroundedCausalCommitmentIntent> {
     return groundPreparedPrivateSpeechCommitment(prepared, occurrence, proposal, providerContext);
+  }
+
+  function groundPreparedLifeOutcomeCommitment(
+    prepared: PreparedCausalLifeIntent,
+    sourceMatterId: string,
+    proposal: ResidentLifeIntentProposal,
+    providerContext: ResidentLifeCognitionContext,
+  ): ResidentLifeIntentAdmission<GroundedCausalOutcomeCommitmentIntent> {
+    const outcomeEvidence = exactLifeOutcomeEvidence(providerContext, sourceMatterId);
+    if (!outcomeEvidence) {
+      return { status: "rejected", detail: "life follow-up lost its exact resident factual outcome" };
+    }
+    const identity = causalOutcomeCommitmentIdentity(outcomeEvidence.id);
+    if (acceptedMatterIds.has(identity.matterId)) {
+      return { status: "rejected", detail: `commitment already accepted: ${identity.matterId}` };
+    }
+
+    const grounded = groundLifeOutcomeFollowup(
+      proposal,
+      currentGroundingContext(prepared.batch),
+      sourceMatterId,
+      outcomeEvidence.id,
+      navigation,
+    );
+    if (grounded.status !== "accepted") return grounded;
+
+    const intent = Object.freeze({
+      sourceMatterId: grounded.intent.sourceMatterId,
+      originOutcomeEvidenceId: grounded.intent.originOutcomeEvidenceId,
+      destination: Object.freeze({ ...grounded.intent.destination }),
+      routeRegionIds: Object.freeze([...grounded.intent.routeRegionIds]),
+      semanticCourse: grounded.intent.semanticCourse,
+      semanticIntent: Object.freeze({ ...grounded.intent.semanticIntent }),
+    }) satisfies GroundedCausalOutcomeCommitmentIntent;
+    groundedOutcomeCommitmentAuthority.set(intent, {
+      attempt: prepared.attempt,
+      sourceMatterId,
+      outcomeEvidenceId: outcomeEvidence.id,
+      identity: { ...identity },
+      proposal,
+    });
+    return { status: "accepted", intent };
   }
 
   function groundPreparedPlayerProposal<Proposal extends CausalCommitmentProposal>(
