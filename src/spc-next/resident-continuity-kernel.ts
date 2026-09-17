@@ -511,13 +511,8 @@ function sameProposalTicket(a: ResidentSemanticProposalTicket, b: ResidentSemant
 }
 
 function validateMatterIntent(intent: ResidentMatterIntent): void {
-  if (intent.kind === "travel_region") {
-    assertNonEmpty(intent.goal, "matter intent goal");
-    assertNonEmpty(intent.targetRegionId, "matter intent target region id");
-    return;
-  }
-  const unreachable: never = intent;
-  throw new Error(`unsupported matter intent: ${String(unreachable)}`);
+  assertNonEmpty(intent.goal, "matter intent goal");
+  assertNonEmpty(intent.targetRegionId, "matter intent target region id");
 }
 
 function validateEvidence(evidence: ResidentKernelEvidence): void {
