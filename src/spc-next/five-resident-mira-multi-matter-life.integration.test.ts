@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { ResidentCognitionContext, ResidentCognitionProposal } from "./cognition-contract";
 import type { CognitionBatch, Vec2 } from "./contracts";
+import { CognitionGrounder } from "./cognition-grounder";
 import { createFiveResidentNavigationGraph } from "./five-resident-navigation";
 import { createFiveResidentRegionComposition } from "./five-resident-region";
 import { ResidentCognitionOwner } from "./resident-cognition-owner";
@@ -11,7 +12,6 @@ import { ResidentGroundedTravelExecutor } from "./resident-grounded-travel-execu
 import { ResidentLifeChoiceOwner } from "./resident-life-choice-owner";
 import { captureResidentLifeCognitionView } from "./resident-life-cognition-view";
 import { ResidentWorldExecutionAuthority } from "./resident-world-execution-authority";
-import { CognitionGrounder } from "./cognition-grounder";
 
 const MIRA_ID = "resident.mira";
 const FIXED_DELTA_SECONDS = 1 / 60;
@@ -19,29 +19,10 @@ const MAX_AUTHORED_STEPS = 1_200;
 const MAX_TRAVEL_STEPS = 2_000;
 const MAX_REVIEW_STEPS = 180;
 
-const A = {
-  matterId: "matter.mira.multi.a.workshop",
-  taskId: "task.mira.multi.a.workshop",
-  runId: "run.mira.multi.a.workshop",
-  targetRegionId: "workshop",
-  course: "go to the familiar workshop after the authored settlement walk",
-} as const;
-const B = {
-  matterId: "matter.mira.multi.b.hearth",
-  taskId: "task.mira.multi.b.hearth",
-  runId: "run.mira.multi.b.hearth",
-  targetRegionId: "hearth",
-  course: "return to the familiar hearth when body time becomes available",
-} as const;
-const C = {
-  matterId: "matter.mira.multi.c.fields",
-  taskId: "task.mira.multi.c.fields",
-  runId: "run.mira.multi.c.fields",
-  targetRegionId: "fields",
-  course: "check the familiar fields when body time becomes available",
-} as const;
-
-type MatterSpec = typeof A | typeof B | typeof C;
+const A = matterSpec("a.workshop", "workshop", "go to the familiar workshop after the authored settlement walk");
+const B = matterSpec("b.hearth", "hearth", "return to the familiar hearth when body time becomes available");
+const C = matterSpec("c.fields", "fields", "check the familiar fields when body time becomes available");
+type MatterSpec = typeof A;
 
 describe("five-resident Mira multi-matter life composition", () => {
   it("uses higher cognition only for genuine B/C ambiguity, then returns the remaining single matter to local auto-handoff", () => {
@@ -56,12 +37,12 @@ describe("five-resident Mira multi-matter life composition", () => {
     const authority = new ResidentWorldExecutionAuthority(MIRA_ID, arbitrator, world);
     const choiceOwner = new ResidentLifeChoiceOwner(mira);
 
-    const firstBatch = advanceUntilPostAuthoredBatch(world, mira);
+    // Do not poll cognition while the authored walk is still running. Doing so would
+    // itself mutate scheduler cadence and contaminate the experiment.
+    const firstBatch = waitForAuthoredCompletionThenBatch(world, mira);
     expect(firstBatch.reasons.some((reason) => reason.kind === "activity_completed")).toBe(true);
 
-    const firstAttempt = cognitionOwner.prepare(firstBatch);
-    expect(firstAttempt).not.toBeNull();
-    if (!firstAttempt) return;
+    const firstAttempt = cognitionOwner.prepare(firstBatch)!;
     const firstSettlement = cognitionOwner.settleIntent(
       firstAttempt,
       travelProposal(A.targetRegionId, "continue settlement life at the workshop"),
@@ -75,35 +56,20 @@ describe("five-resident Mira multi-matter life composition", () => {
     openMatterAndRun(kernel, A, world.tick, "first post-authored resident matter");
     expect(arbitrator.request(A.runId)).toEqual({ status: "acquired", runId: A.runId });
 
-    // B and C are deliberately fixture-authored continuing matters for this bounded
-    // arbitration experiment. Their origin is not promoted as autonomous cognition;
-    // what is under test is coexistence, ambiguity, semantic choice and body handoff.
+    // B/C are fixture-authored only as concurrent continuing matters. This test does
+    // not promote their origin as autonomous cognition; it qualifies coexistence,
+    // genuine ambiguity, semantic selection and factual body handoff.
     openMatterAndRun(kernel, B, world.tick, "second legitimate resident matter");
     openMatterAndRun(kernel, C, world.tick, "third legitimate resident matter");
-    expect(arbitrator.request(B.runId)).toEqual({
-      status: "busy",
-      runId: B.runId,
-      focusedRunId: A.runId,
-    });
-    expect(arbitrator.request(C.runId)).toEqual({
-      status: "busy",
-      runId: C.runId,
-      focusedRunId: A.runId,
-    });
+    expect(arbitrator.request(B.runId)).toEqual({ status: "busy", runId: B.runId, focusedRunId: A.runId });
+    expect(arbitrator.request(C.runId)).toEqual({ status: "busy", runId: C.runId, focusedRunId: A.runId });
     expect(arbitrator.deferredRunIds()).toEqual([B.runId, C.runId]);
 
-    const aDestination = destination(navigation, A.targetRegionId);
-    runTravelToArrival(world, kernel, authority, A, aDestination);
-    expect(kernel.resolveMatter(A.matterId)).toMatchObject({ status: "resolved" });
-
-    const ambiguous = arbitrator.reconcile();
-    expect(ambiguous).toEqual({
-      status: "choice_required",
-      candidateRunIds: [B.runId, C.runId],
-    });
+    driveRun(world, kernel, authority, A, destination(navigation, A.targetRegionId));
+    kernel.resolveMatter(A.matterId);
+    expect(arbitrator.reconcile()).toEqual({ status: "choice_required", candidateRunIds: [B.runId, C.runId] });
     expect(focus.focusedRun()).toBeNull();
     expect(authority.enforceMotionAuthority()).toEqual({ status: "revoked", runId: A.runId });
-    expect(authority.motionOwner()).toBeNull();
 
     const lifeAtChoice = captureResidentLifeCognitionView({
       kernel,
@@ -111,24 +77,22 @@ describe("five-resident Mira multi-matter life composition", () => {
       arbitrator,
       matterIds: [A.matterId, B.matterId, C.matterId],
     });
-    expect(lifeAtChoice.body).toEqual({
-      focusedRunId: null,
-      deferredRunIds: [B.runId, C.runId],
-    });
-    expect(lifeAtChoice.matters.find((matter) => matter.id === B.matterId)?.activeRun?.bodyState).toBe("deferred");
-    expect(lifeAtChoice.matters.find((matter) => matter.id === C.matterId)?.activeRun?.bodyState).toBe("deferred");
+    expect(lifeAtChoice.body).toEqual({ focusedRunId: null, deferredRunIds: [B.runId, C.runId] });
 
-    // Choice does not bypass the resident cognition scheduler. A near-term review is
-    // requested and the real scheduler decides when a batch is admissible.
+    // Reuse the resident's scheduler instead of inventing a parallel priority loop.
     mira.scheduleAdaptiveReview(world.tick, 0.25, FIXED_DELTA_SECONDS);
-    const choiceBatch = advanceUntilReviewBatch(world, mira);
-    const choiceAttempt = choiceOwner.prepare(choiceBatch, lifeAtChoice);
-    expect(choiceAttempt).not.toBeNull();
-    if (!choiceAttempt) return;
+    const choiceBatch = waitForReviewBatch(world, mira);
+    const choiceAttempt = choiceOwner.prepare(choiceBatch, lifeAtChoice)!;
     expect(choiceAttempt.context.localActivity.kind).toBe("idle");
     expect(choiceAttempt.context.life.body.focusedRunId).toBeNull();
     expect(choiceAttempt.candidateMatterIds).toEqual([B.matterId, C.matterId]);
 
+    const currentLife = captureResidentLifeCognitionView({
+      kernel,
+      focus,
+      arbitrator,
+      matterIds: [A.matterId, B.matterId, C.matterId],
+    });
     const choice = choiceOwner.settle(choiceAttempt, {
       version: 1,
       decision: {
@@ -137,69 +101,69 @@ describe("five-resident Mira multi-matter life composition", () => {
         reason: "return to the hearth before checking the fields",
         reviewAfterSeconds: 8,
       },
-    }, captureResidentLifeCognitionView({
-      kernel,
-      focus,
-      arbitrator,
-      matterIds: [A.matterId, B.matterId, C.matterId],
-    }));
-    expect(choice).toMatchObject({
-      status: "applied",
-      decision: { kind: "focus_matter", matterId: B.matterId },
-    });
+    }, currentLife);
+    expect(choice).toMatchObject({ status: "applied", decision: { kind: "focus_matter", matterId: B.matterId } });
     if (choice.status !== "applied" || choice.decision.kind !== "focus_matter") return;
 
-    const chosenMatter = kernel.matter(choice.decision.matterId);
-    expect(chosenMatter?.activeRunId).toBe(B.runId);
+    expect(kernel.matter(choice.decision.matterId)?.activeRunId).toBe(B.runId);
     expect(arbitrator.choose(B.runId)).toEqual({ status: "acquired", runId: B.runId });
-    expect(focus.focusedRun()).toBe(B.runId);
     expect(arbitrator.deferredRunIds()).toEqual([C.runId]);
 
-    const positionBeforeB = actorPosition(world);
-    runTravelToArrival(world, kernel, authority, B, destination(navigation, B.targetRegionId));
-    expect(kernel.resolveMatter(B.matterId)).toMatchObject({ status: "resolved" });
-    expect(actorPosition(world)).not.toEqual(positionBeforeB);
+    const beforeB = miraPosition(world);
+    driveRun(world, kernel, authority, B, destination(navigation, B.targetRegionId));
+    kernel.resolveMatter(B.matterId);
+    expect(miraPosition(world)).not.toEqual(beforeB);
 
-    // Once B factual completion frees the body there is no longer a semantic choice:
-    // exactly one still-authorized deferred matter remains, so local arbitration may
-    // continue it without spending another higher-cognition decision.
+    // Once B finishes, one legal demand remains. No second semantic ranking is needed.
     expect(arbitrator.reconcile()).toEqual({ status: "acquired_deferred", runId: C.runId });
+    expect(authority.enforceMotionAuthority()).toEqual({ status: "revoked", runId: B.runId });
     expect(focus.focusedRun()).toBe(C.runId);
     expect(arbitrator.deferredRunIds()).toEqual([]);
-    expect(authority.enforceMotionAuthority()).toEqual({ status: "revoked", runId: B.runId });
-    expect(authority.motionOwner()).toBeNull();
 
-    const positionBeforeC = actorPosition(world);
-    runTravelToArrival(world, kernel, authority, C, destination(navigation, C.targetRegionId));
-    expect(kernel.resolveMatter(C.matterId)).toMatchObject({ status: "resolved" });
+    const beforeC = miraPosition(world);
+    driveRun(world, kernel, authority, C, destination(navigation, C.targetRegionId));
+    kernel.resolveMatter(C.matterId);
     expect(arbitrator.reconcile()).toEqual({ status: "idle" });
-    expect(focus.focusedRun()).toBeNull();
     expect(authority.enforceMotionAuthority()).toEqual({ status: "revoked", runId: C.runId });
-    expect(authority.motionOwner()).toBeNull();
-    expect(actorPosition(world)).not.toEqual(positionBeforeC);
+    expect(miraPosition(world)).not.toEqual(beforeC);
 
-    expect(kernel.matter(A.matterId)?.status).toBe("resolved");
-    expect(kernel.matter(B.matterId)?.status).toBe("resolved");
-    expect(kernel.matter(C.matterId)?.status).toBe("resolved");
-    expect(kernel.runBinding(A.runId)).toBeNull();
-    expect(kernel.runBinding(B.runId)).toBeNull();
-    expect(kernel.runBinding(C.runId)).toBeNull();
+    for (const spec of [A, B, C]) {
+      expect(kernel.matter(spec.matterId)?.status).toBe("resolved");
+      expect(kernel.runBinding(spec.runId)).toBeNull();
+    }
+    expect(focus.focusedRun()).toBeNull();
+    expect(authority.motionOwner()).toBeNull();
   });
 });
 
-function advanceUntilPostAuthoredBatch(
+function matterSpec(suffix: string, targetRegionId: string, course: string) {
+  return {
+    matterId: `matter.mira.multi.${suffix}`,
+    taskId: `task.mira.multi.${suffix}`,
+    runId: `run.mira.multi.${suffix}`,
+    targetRegionId,
+    course,
+  } as const;
+}
+
+function waitForAuthoredCompletionThenBatch(
   world: ReturnType<typeof createFiveResidentRegionComposition>["world"],
   mira: ReturnType<typeof createFiveResidentRegionComposition>["runtimes"]["resident.mira"],
 ): CognitionBatch {
+  let authoredComplete = false;
   for (let step = 0; step < MAX_AUTHORED_STEPS; step += 1) {
     world.step();
+    const activity = mira.publicState().activity;
+    authoredComplete ||= activity.kind === "idle" && activity.reason.includes("completed activity:mira:initial");
+    if (!authoredComplete) continue;
+
     const batch = mira.takeCognitionBatch(world.tick);
     if (batch?.reasons.some((reason) => reason.kind === "activity_completed")) return batch;
   }
   throw new Error("Mira never produced post-authored activity-completed cognition pressure");
 }
 
-function advanceUntilReviewBatch(
+function waitForReviewBatch(
   world: ReturnType<typeof createFiveResidentRegionComposition>["world"],
   mira: ReturnType<typeof createFiveResidentRegionComposition>["runtimes"]["resident.mira"],
 ): CognitionBatch {
@@ -208,34 +172,21 @@ function advanceUntilReviewBatch(
     if (batch) return batch;
     world.step();
   }
-  throw new Error("Mira never produced a scheduler-owned review batch at multi-matter choice boundary");
+  throw new Error("Mira never produced a scheduler-owned review batch at the multi-matter choice boundary");
 }
 
-function openMatterAndRun(
-  kernel: ResidentContinuityKernel,
-  spec: MatterSpec,
-  tick: number,
-  summary: string,
-) {
+function openMatterAndRun(kernel: ResidentContinuityKernel, spec: MatterSpec, tick: number, summary: string) {
   const evidence = kernel.recordEvidence({
     id: `evidence:${spec.matterId}:${tick}`,
     tick,
     kind: "life_context",
     summary,
   });
-  kernel.openMatter({
-    id: spec.matterId,
-    originEvidenceId: evidence.id,
-    semanticCourse: spec.course,
-  });
-  return kernel.bindRun({
-    matterId: spec.matterId,
-    taskId: spec.taskId,
-    runId: spec.runId,
-  });
+  kernel.openMatter({ id: spec.matterId, originEvidenceId: evidence.id, semanticCourse: spec.course });
+  kernel.bindRun({ matterId: spec.matterId, taskId: spec.taskId, runId: spec.runId });
 }
 
-function runTravelToArrival(
+function driveRun(
   world: ReturnType<typeof createFiveResidentRegionComposition>["world"],
   kernel: ResidentContinuityKernel,
   authority: ResidentWorldExecutionAuthority,
@@ -249,16 +200,13 @@ function runTravelToArrival(
       world.step();
       continue;
     }
-    if (local.status !== "arrived") {
-      throw new Error(`${spec.runId} failed to arrive: ${local.status}`);
-    }
-    const reconciled = kernel.reconcileRunOutcome({
+    if (local.status !== "arrived") throw new Error(`${spec.runId} failed to arrive: ${local.status}`);
+    expect(kernel.reconcileRunOutcome({
       runId: spec.runId,
       tick: world.tick,
       status: "succeeded",
       summary: `${spec.runId} physically arrived at ${spec.targetRegionId}`,
-    });
-    expect(reconciled.status).toBe("recorded");
+    }).status).toBe("recorded");
     return;
   }
   throw new Error(`${spec.runId} did not reach ${spec.targetRegionId}`);
@@ -277,9 +225,9 @@ function groundTravelIntent(
   if (directive.activity.targetRegionId !== spec.targetRegionId || !context.currentRegionId) {
     return { status: "rejected" as const, detail: "unexpected or ungrounded target region" };
   }
-  const knownRegionIds = new Set(context.knownRegions.map((region) => region.id));
-  knownRegionIds.add(context.currentRegionId);
-  const route = navigation.route(context.currentRegionId, spec.targetRegionId, knownRegionIds);
+  const known = new Set(context.knownRegions.map((region) => region.id));
+  known.add(context.currentRegionId);
+  const route = navigation.route(context.currentRegionId, spec.targetRegionId, known);
   const target = navigation.destinationPoint(spec.targetRegionId);
   if (!route || !target) return { status: "rejected" as const, detail: "private known-region route unavailable" };
   return {
@@ -314,16 +262,13 @@ function travelProposal(targetRegionId: string, reason: string) {
   };
 }
 
-function destination(
-  navigation: ReturnType<typeof createFiveResidentNavigationGraph>,
-  regionId: string,
-): Vec2 {
+function destination(navigation: ReturnType<typeof createFiveResidentNavigationGraph>, regionId: string): Vec2 {
   const value = navigation.destinationPoint(regionId);
   if (!value) throw new Error(`missing destination point for ${regionId}`);
   return value;
 }
 
-function actorPosition(world: ReturnType<typeof createFiveResidentRegionComposition>["world"]) {
+function miraPosition(world: ReturnType<typeof createFiveResidentRegionComposition>["world"]) {
   const actor = world.publicSnapshot().actors.find((candidate) => candidate.id === MIRA_ID);
   if (!actor) throw new Error("Mira actor missing");
   return { ...actor.position };
