@@ -71,13 +71,34 @@ const context = {
   },
 } as const;
 
-function proposal(targetRegionId = "fields") {
+function legacyProposal(targetRegionId = "fields") {
   return {
     version: 1,
     activityDirective: {
       kind: "replace",
-      reason: "accept the addressed request as a possible continuing commitment",
+      reason: "legacy compatibility proposal",
       activity: {
+        kind: "travel",
+        goal: "check the fields later without erasing the current matter",
+        targetActorId: null,
+        targetRegionId,
+        targetPosition: null,
+        text: null,
+      },
+    },
+    beliefs: [],
+    concerns: [],
+    reviewAfterSeconds: 30,
+  };
+}
+
+function commitmentProposal(targetRegionId = "fields") {
+  return {
+    version: 1,
+    commitmentDecision: {
+      kind: "accept",
+      reason: "accept the addressed request as a later commitment without taking body authority",
+      intent: {
         kind: "travel",
         goal: "check the fields later without erasing the current matter",
         targetActorId: null,
@@ -137,10 +158,10 @@ describe("SPC Next resident-life intent Worker", () => {
     expect(sanitized?.life.body).toEqual({ focusedRunId: "run.mira.a", deferredRunIds: [] });
   });
 
-  it("extracts only proposals grounded in the same frozen private evidence and knowledge", () => {
-    expect(extractSpcNextLifeIntentProposal(responseBody(proposal()), context)).toEqual(proposal());
-    expect(extractSpcNextLifeIntentProposal(responseBody(proposal("hidden-global-region")), context)).toBeNull();
-    expect(extractSpcNextLifeIntentProposal(responseBody({ ...proposal(), completed: true }), context)).toBeNull();
+  it("keeps the legacy proposal extractor bounded for compatibility callers", () => {
+    expect(extractSpcNextLifeIntentProposal(responseBody(legacyProposal()), context)).toEqual(legacyProposal());
+    expect(extractSpcNextLifeIntentProposal(responseBody(legacyProposal("hidden-global-region")), context)).toBeNull();
+    expect(extractSpcNextLifeIntentProposal(responseBody({ ...legacyProposal(), completed: true }), context)).toBeNull();
   });
 
   it("sends full resident-life truth upstream without granting execution semantics to the transport", async () => {
@@ -149,16 +170,17 @@ describe("SPC Next resident-life intent Worker", () => {
       expect(body).toMatchObject({
         model: "gpt-5.6-luna",
         store: false,
-        text: { format: { type: "json_schema", name: "spc_next_resident_life_intent", strict: true } },
+        text: { format: { type: "json_schema", name: "spc_next_resident_life_commitment", strict: true } },
       });
       const modelInput = JSON.parse(body.input[0].content);
       expect(modelInput.contract).toBe("resident_life_cognition_v1");
       expect(modelInput.localActivity.kind).toBe("idle");
       expect(modelInput).not.toHaveProperty("currentActivity");
       expect(modelInput.life.body.focusedRunId).toBe("run.mira.a");
-      expect(body.instructions).toContain("does not cancel, replace or complete any recovered matter");
+      expect(body.instructions).toContain("commitmentDecision");
+      expect(body.instructions).toContain("does not seize the body");
       expect(body.instructions).toContain("local admission");
-      return new Response(JSON.stringify(responseBody(proposal())), {
+      return new Response(JSON.stringify(responseBody(commitmentProposal())), {
         status: 200,
         headers: { "content-type": "application/json" },
       });
@@ -169,7 +191,7 @@ describe("SPC Next resident-life intent Worker", () => {
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toMatchObject({
       ok: true,
-      proposal: proposal(),
+      proposal: commitmentProposal(),
       usage: {
         model: "gpt-5.6-luna",
         inputTokens: 180,
@@ -198,7 +220,7 @@ describe("SPC Next resident-life intent Worker", () => {
       });
       expect(modelInput.life.matters[0]).not.toHaveProperty("routeRegionIds");
       expect(modelInput.life.matters[0]).not.toHaveProperty("destination");
-      return new Response(JSON.stringify(responseBody(proposal())), {
+      return new Response(JSON.stringify(responseBody(commitmentProposal())), {
         status: 200,
         headers: { "content-type": "application/json" },
       });
@@ -211,7 +233,7 @@ describe("SPC Next resident-life intent Worker", () => {
   });
 
   it("reports semantic grounding rejection without exposing raw provider output", async () => {
-    const invalid = proposal("hidden-global-region");
+    const invalid = commitmentProposal("hidden-global-region");
     vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify(responseBody(invalid)), {
       status: 200,
       headers: { "content-type": "application/json" },
@@ -231,8 +253,8 @@ describe("SPC Next resident-life intent Worker", () => {
     expect(JSON.stringify(body)).not.toContain("hidden-global-region");
   });
 
-  it("distinguishes the stricter life-intent envelope from shared semantic validation", async () => {
-    const strictOnlyFailure = { ...proposal(), completed: true };
+  it("distinguishes the stricter commitment envelope from semantic grounding validation", async () => {
+    const strictOnlyFailure = { ...commitmentProposal(), completed: true };
     vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify(responseBody(strictOnlyFailure)), {
       status: 200,
       headers: { "content-type": "application/json" },
