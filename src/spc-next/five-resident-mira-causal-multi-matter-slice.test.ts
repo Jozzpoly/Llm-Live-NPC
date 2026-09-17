@@ -21,11 +21,14 @@ describe("five-resident Mira causal multi-matter acquisition", () => {
       id: HEARTH!.matterId,
       status: "active",
       activeRunId: null,
+      semanticCourse: admittedSemanticCourse(HEARTH!),
+      semanticIntent: admittedSemanticIntent(HEARTH!),
     });
     expect(slice.kernel.matter(HEARTH!.matterId)).toMatchObject({
       status: "active",
       activeRunId: HEARTH!.runId,
-      semanticCourse: HEARTH!.semanticCourse,
+      semanticCourse: admittedSemanticCourse(HEARTH!),
+      semanticIntent: admittedSemanticIntent(HEARTH!),
     });
 
     const acceptedB = slice.acceptPlayerRequest(WORKSHOP!);
@@ -46,9 +49,19 @@ describe("five-resident Mira causal multi-matter acquisition", () => {
       acceptedB.originPerceptId,
       acceptedC.originPerceptId,
     ]).size).toBe(3);
-    for (const accepted of [acceptedA, acceptedB, acceptedC]) {
+    for (const [accepted, spec] of [
+      [acceptedA, HEARTH!],
+      [acceptedB, WORKSHOP!],
+      [acceptedC, FIELDS!],
+    ] as const) {
       expect(accepted.batch.reasons.some((reason) => reason.kind === "heard_speech")).toBe(true);
       expect(accepted.matter.originEvidenceId).toContain("evidence:mira:accepted-request:");
+      expect(accepted.matter).toMatchObject({
+        semanticCourse: admittedSemanticCourse(spec),
+        semanticIntent: admittedSemanticIntent(spec),
+      });
+      expect(accepted.matter.semanticIntent).not.toHaveProperty("routeRegionIds");
+      expect(accepted.matter.semanticIntent).not.toHaveProperty("destination");
       const origin = slice.kernel.originEvidence(accepted.matter.id);
       expect(origin).toMatchObject({ kind: "accepted_cognition_commitment" });
       expect(origin?.summary).toContain("origin occurrence occurrence:");
@@ -60,7 +73,12 @@ describe("five-resident Mira causal multi-matter acquisition", () => {
     // resolution and become a competing semantic truth store.
     expect(privateContext.concerns).toEqual([]);
     for (const spec of MIRA_CAUSAL_COMMITMENTS) {
-      expect(slice.kernel.matter(spec.matterId)).toMatchObject({ status: "active", activeRunId: spec.runId });
+      expect(slice.kernel.matter(spec.matterId)).toMatchObject({
+        status: "active",
+        activeRunId: spec.runId,
+        semanticCourse: admittedSemanticCourse(spec),
+        semanticIntent: admittedSemanticIntent(spec),
+      });
       expect(slice.kernel.canRunMutateWorld(spec.runId)).toBe(true);
     }
     expect(slice.focus.focusedRun()).toBe(HEARTH!.runId);
@@ -101,3 +119,15 @@ describe("five-resident Mira causal multi-matter acquisition", () => {
     ].sort((a, b) => a.localeCompare(b)));
   });
 });
+
+function admittedSemanticCourse(spec: (typeof MIRA_CAUSAL_COMMITMENTS)[number]): string {
+  return `accept the addressed ${spec.key} request as a continuing commitment · ${spec.semanticCourse}`;
+}
+
+function admittedSemanticIntent(spec: (typeof MIRA_CAUSAL_COMMITMENTS)[number]) {
+  return {
+    kind: "travel_region",
+    goal: spec.semanticCourse,
+    targetRegionId: spec.targetRegionId,
+  } as const;
+}
