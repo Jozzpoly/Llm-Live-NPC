@@ -120,6 +120,12 @@ export type IncrementalCausalCommitmentStep =
  * higher cognition is in flight. Neither boundary grants provider/network completion
  * direct matter/run/body/World authority.
  *
+ * Provider meaning and local execution grounding deliberately have different lifetimes:
+ * a semantic target may remain valid across model latency while body/region state moves.
+ * Immediately before a run is admitted, the selected target is therefore re-grounded
+ * against current resident-local region knowledge rather than reusing an old route from
+ * the provider frame.
+ *
  * A `ResidentMind` concern is intentionally NOT created as a second copy of the same
  * commitment. Once admitted, continuity `matter` is the durable semantic authority;
  * concerns remain a separate private uncertainty/problem representation.
@@ -163,6 +169,14 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
     });
   }
 
+  function currentGroundingContext(batch: CognitionBatch): ResidentCognitionContext {
+    return mira.cognitionContext({
+      residentId: MIRA_ID,
+      requestedAtTick: world.tick,
+      reasons: structuredClone(batch.reasons),
+    });
+  }
+
   function takeReadyLifeIntentAttempt(): PreparedCausalLifeIntent | null {
     // Do not consume another scheduler batch while an exact cognition attempt owns
     // the current admission authority. The existing batch must settle or abandon first.
@@ -198,12 +212,23 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
       throw new Error("prepared commitment lost its exact addressed private speech percept");
     }
 
+    // The provider chose meaning from its frozen truthful frame. Grounding is a local
+    // admission responsibility and must use current resident state, because the body
+    // and current region are allowed to keep changing while the provider is in flight.
+    const groundingContext = currentGroundingContext(prepared.batch);
     const settlement = lifeIntentOwner.settleIntent(
       prepared.attempt,
       rawProposal,
       currentLife(),
       world.tick,
-      (proposal, context) => groundCommitment(proposal, context, spec, originPercept.id, navigation),
+      (proposal, providerContext) => groundCommitment(
+        proposal,
+        providerContext,
+        groundingContext,
+        spec,
+        originPercept.id,
+        navigation,
+      ),
     );
     if (settlement.status !== "applied") {
       throw new Error(`commitment cognition did not apply: ${settlement.status}`);
@@ -385,7 +410,8 @@ function commitmentProposal(spec: MiraCausalCommitmentSpec): ResidentCognitionPr
 
 function groundCommitment(
   proposal: ResidentCognitionProposal,
-  context: ResidentLifeCognitionContext,
+  providerContext: ResidentLifeCognitionContext,
+  groundingContext: ResidentCognitionContext,
   spec: MiraCausalCommitmentSpec,
   originPerceptId: string,
   navigation: ReturnType<typeof createFiveResidentNavigationGraph>,
@@ -393,11 +419,10 @@ function groundCommitment(
   const directive = proposal.activityDirective;
   if (directive.kind !== "replace"
     || directive.activity.kind !== "travel"
-    || directive.activity.targetRegionId !== spec.targetRegionId
-    || !context.currentRegionId) {
+    || directive.activity.targetRegionId !== spec.targetRegionId) {
     return { status: "rejected" as const, detail: "expected known-region travel commitment" };
   }
-  if (!context.recentPercepts.some((percept) => (
+  if (!providerContext.recentPercepts.some((percept) => (
     percept.id === originPerceptId
     && percept.phenomenon === "speech"
     && percept.addressed
@@ -405,12 +430,16 @@ function groundCommitment(
     return { status: "rejected" as const, detail: "commitment origin is not the exact addressed private speech percept" };
   }
 
-  const known = new Set(context.knownRegions.map((region) => region.id));
-  known.add(context.currentRegionId);
-  const route = navigation.route(context.currentRegionId, spec.targetRegionId, known);
+  const currentRegionId = groundingContext.currentRegionId;
+  if (!currentRegionId) {
+    return { status: "rejected" as const, detail: "current resident region is unavailable at admission" };
+  }
+  const known = new Set(groundingContext.knownRegions.map((region) => region.id));
+  known.add(currentRegionId);
+  const route = navigation.route(currentRegionId, spec.targetRegionId, known);
   const destination = navigation.destinationPoint(spec.targetRegionId);
   if (!route || !destination) {
-    return { status: "rejected" as const, detail: "commitment target lacks resident-known route/destination" };
+    return { status: "rejected" as const, detail: "commitment target lacks current resident-known route/destination" };
   }
 
   return {
