@@ -5,6 +5,7 @@ import type {
   ResidentLifeMatterView,
   ResidentLifeRunView,
 } from "../src/spc-next/resident-life-cognition-view";
+import type { ResidentMatterIntent } from "../src/spc-next/resident-continuity-kernel";
 import { sanitizeSpcNextContext } from "./spc-next-cognition";
 
 const MAX_MATTERS = 32;
@@ -118,10 +119,11 @@ function sanitizeLife(value: unknown, contextTick: number): ResidentLifeCognitio
 }
 
 function sanitizeMatter(value: unknown, contextTick: number): ResidentLifeMatterView | null {
-  if (!record(value) || !hasOnlyKeys(value, [
+  const required = [
     "id", "status", "semanticRevision", "semanticCourse", "suspendedByMatterId",
     "originEvidence", "semanticEvidence", "lastOutcomeEvidence", "activeRun",
-  ])) return null;
+  ] as const;
+  if (!record(value) || !hasRequiredAndOptionalKeys(value, required, ["semanticIntent"])) return null;
 
   const id = identifier(value.id);
   const status = ["active", "suspended", "resolved", "cancelled"].includes(String(value.status))
@@ -132,6 +134,11 @@ function sanitizeMatter(value: unknown, contextTick: number): ResidentLifeMatter
     || (suspendedByMatterId === null && value.suspendedByMatterId !== null)) return null;
   if (status === "suspended" && suspendedByMatterId === null) return null;
   if (status !== "suspended" && suspendedByMatterId !== null) return null;
+
+  const semanticIntent = !Object.hasOwn(value, "semanticIntent") || value.semanticIntent === null
+    ? null
+    : sanitizeMatterIntent(value.semanticIntent);
+  if (semanticIntent === null && Object.hasOwn(value, "semanticIntent") && value.semanticIntent !== null) return null;
 
   const originEvidence = value.originEvidence === null ? null : sanitizeEvidence(value.originEvidence, contextTick);
   const semanticEvidence = value.semanticEvidence === null ? null : sanitizeEvidence(value.semanticEvidence, contextTick);
@@ -148,12 +155,22 @@ function sanitizeMatter(value: unknown, contextTick: number): ResidentLifeMatter
     status,
     semanticRevision: value.semanticRevision,
     semanticCourse,
+    semanticIntent,
     suspendedByMatterId,
     originEvidence,
     semanticEvidence,
     lastOutcomeEvidence,
     activeRun,
   };
+}
+
+function sanitizeMatterIntent(value: unknown): ResidentMatterIntent | null {
+  if (!record(value) || !hasOnlyKeys(value, ["kind", "goal", "targetRegionId"])) return null;
+  if (value.kind !== "travel_region") return null;
+  const goal = boundedText(value.goal, 1_200);
+  const targetRegionId = identifier(value.targetRegionId);
+  if (!goal || !targetRegionId) return null;
+  return { kind: "travel_region", goal, targetRegionId };
 }
 
 function sanitizeEvidence(value: unknown, contextTick: number): ResidentLifeEvidenceView | null {
@@ -178,4 +195,14 @@ function sanitizeRun(value: unknown): ResidentLifeRunView | null {
 function hasOnlyKeys(value: Record<string, unknown>, keys: readonly string[]): boolean {
   const allowed = new Set(keys);
   return Object.keys(value).every((key) => allowed.has(key)) && keys.every((key) => Object.hasOwn(value, key));
+}
+
+function hasRequiredAndOptionalKeys(
+  value: Record<string, unknown>,
+  required: readonly string[],
+  optional: readonly string[],
+): boolean {
+  const allowed = new Set([...required, ...optional]);
+  return Object.keys(value).every((key) => allowed.has(key))
+    && required.every((key) => Object.hasOwn(value, key));
 }
