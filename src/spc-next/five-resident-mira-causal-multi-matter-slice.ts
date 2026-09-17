@@ -452,6 +452,12 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
     if (focusClaim.status === "rejected") {
       throw new Error(`accepted commitment run was not authorized: ${focusClaim.reason}`);
     }
+    if (focusClaim.status === "deferred") {
+      // The body can be free while older legal demands remain deliberately unresolved.
+      // Joining that ambiguity changes higher-life choice pressure even though no run
+      // gains execution focus yet.
+      choiceReviewBridge.observe(arbitrator.reconcile(), world.tick);
+    }
 
     executors.set(
       identity.runId,
