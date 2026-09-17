@@ -119,11 +119,11 @@ function configuredEnv(): SpcNextLifeIntentEnv {
   };
 }
 
-function requestForContext() {
+function requestForContext(value: unknown = context) {
   return new Request("https://example.test/api/spc-next/life-intent", {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify(context),
+    body: JSON.stringify(value),
   });
 }
 
@@ -177,6 +177,36 @@ describe("SPC Next resident-life intent Worker", () => {
         totalTokens: 224,
       },
     });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("preserves durable structured matter meaning in model input without leaking a concrete execution method", async () => {
+    const structured = structuredClone(context) as any;
+    structured.life.matters[0].semanticIntent = {
+      kind: "travel_region",
+      goal: "return to the familiar hearth after the current obligation",
+      targetRegionId: "hearth",
+    };
+
+    const fetchMock = vi.fn(async (_url: string, init?: RequestInit) => {
+      const body = JSON.parse(String(init?.body));
+      const modelInput = JSON.parse(body.input[0].content);
+      expect(modelInput.life.matters[0].semanticIntent).toEqual({
+        kind: "travel_region",
+        goal: "return to the familiar hearth after the current obligation",
+        targetRegionId: "hearth",
+      });
+      expect(modelInput.life.matters[0]).not.toHaveProperty("routeRegionIds");
+      expect(modelInput.life.matters[0]).not.toHaveProperty("destination");
+      return new Response(JSON.stringify(responseBody(proposal())), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const response = await handleSpcNextLifeIntent(requestForContext(structured), configuredEnv());
+    expect(response.status).toBe(200);
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
