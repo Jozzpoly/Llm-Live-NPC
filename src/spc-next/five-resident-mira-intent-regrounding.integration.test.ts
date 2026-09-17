@@ -66,11 +66,12 @@ describe("Mira life intent admission re-grounding", () => {
     expect(slice.focus.focusedRun()).toBe(WORKSHOP.runId);
     expect(slice.kernel.canRunMutateWorld(WORKSHOP.runId)).toBe(true);
 
+    const proposal = commitmentProposal(FIELDS);
     const accepted = slice.settlePreparedPlayerRequest(
       prepared,
       occurrence,
       FIELDS,
-      commitmentProposal(FIELDS),
+      proposal,
     );
     expect(accepted.focusClaim).toEqual({
       status: "busy",
@@ -86,8 +87,15 @@ describe("Mira life intent admission re-grounding", () => {
     expect(slice.kernel.matter(FIELDS.matterId)).toMatchObject({
       status: "active",
       activeRunId: FIELDS.runId,
-      semanticCourse: FIELDS.semanticCourse,
+      semanticCourse: `${proposal.activityDirective.kind === "replace" ? proposal.activityDirective.reason : ""} · ${FIELDS.semanticCourse}`,
+      semanticIntent: {
+        kind: "travel_region",
+        goal: FIELDS.semanticCourse,
+        targetRegionId: FIELDS.targetRegionId,
+      },
     });
+    expect(slice.kernel.matter(FIELDS.matterId)?.semanticIntent).not.toHaveProperty("routeRegionIds");
+    expect(slice.kernel.matter(FIELDS.matterId)?.semanticIntent).not.toHaveProperty("destination");
   });
 });
 
