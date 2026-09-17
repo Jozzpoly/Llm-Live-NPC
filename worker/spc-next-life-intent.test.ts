@@ -109,6 +109,24 @@ function responseBody(value: unknown) {
   };
 }
 
+function configuredEnv(): SpcNextLifeIntentEnv {
+  return {
+    OPENAI_API_KEY: "test-key",
+    SPC_NEXT_LIFE_INTENT_MODEL: "gpt-5.6-luna",
+    SPC_NEXT_LIFE_INTENT_REASONING: "low",
+    SPC_NEXT_LIFE_INTENT_MAX_OUTPUT_TOKENS: "1024",
+    HEARTH_COGNITION_LIMITER: { limit: vi.fn(async () => ({ success: true })) },
+  };
+}
+
+function requestForContext() {
+  return new Request("https://example.test/api/spc-next/life-intent", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(context),
+  });
+}
+
 afterEach(() => vi.unstubAllGlobals());
 
 describe("SPC Next resident-life intent Worker", () => {
@@ -146,19 +164,8 @@ describe("SPC Next resident-life intent Worker", () => {
       });
     });
     vi.stubGlobal("fetch", fetchMock);
-    const env: SpcNextLifeIntentEnv = {
-      OPENAI_API_KEY: "test-key",
-      SPC_NEXT_LIFE_INTENT_MODEL: "gpt-5.6-luna",
-      SPC_NEXT_LIFE_INTENT_REASONING: "low",
-      SPC_NEXT_LIFE_INTENT_MAX_OUTPUT_TOKENS: "1024",
-      HEARTH_COGNITION_LIMITER: { limit: vi.fn(async () => ({ success: true })) },
-    };
 
-    const response = await handleSpcNextLifeIntent(new Request("https://example.test/api/spc-next/life-intent", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(context),
-    }), env);
+    const response = await handleSpcNextLifeIntent(requestForContext(), configuredEnv());
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toMatchObject({
       ok: true,
@@ -171,6 +178,43 @@ describe("SPC Next resident-life intent Worker", () => {
       },
     });
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("reports semantic grounding rejection without exposing raw provider output", async () => {
+    const invalid = proposal("hidden-global-region");
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify(responseBody(invalid)), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    })));
+
+    const response = await handleSpcNextLifeIntent(requestForContext(), configuredEnv());
+    expect(response.status).toBe(502);
+    const body = await response.json() as any;
+    expect(body).toMatchObject({
+      ok: false,
+      code: "invalid_life_intent_output",
+      diagnostic: { stage: "proposal_validation", code: "schema_or_grounding" },
+      usage: { model: "gpt-5.6-luna", inputTokens: 180, outputTokens: 44, totalTokens: 224 },
+    });
+    expect(body).not.toHaveProperty("output");
+    expect(body).not.toHaveProperty("raw");
+    expect(JSON.stringify(body)).not.toContain("hidden-global-region");
+  });
+
+  it("distinguishes the stricter life-intent envelope from shared semantic validation", async () => {
+    const strictOnlyFailure = { ...proposal(), completed: true };
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify(responseBody(strictOnlyFailure)), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    })));
+
+    const response = await handleSpcNextLifeIntent(requestForContext(), configuredEnv());
+    expect(response.status).toBe(502);
+    await expect(response.json()).resolves.toMatchObject({
+      ok: false,
+      code: "invalid_life_intent_output",
+      diagnostic: { stage: "proposal_validation", code: "strict_shape" },
+    });
   });
 
   it("fails closed before upstream inference for malformed or unconfigured life context", async () => {
