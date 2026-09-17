@@ -87,7 +87,8 @@ describe("Mira resident-life live intent vertical", () => {
     expect(host.pendingArrivals()).toBe(0);
     expect(slice.kernel.matter(FIELDS.matterId)).toBeNull();
 
-    releaseProvider(openAiResponse(commitmentProposal(FIELDS)));
+    const providerProposal = commitmentProposal(FIELDS);
+    releaseProvider(openAiResponse(providerProposal));
     const arrival = await requestPromise;
     expect(arrival).toMatchObject({
       status: "proposal",
@@ -119,6 +120,11 @@ describe("Mira resident-life live intent vertical", () => {
 
     // Explicit provider admission is still semantic only: no continuity mutation yet.
     expect(admission.settlement.intent.routeRegionIds).toEqual(["workshop", "fields"]);
+    expect(admission.settlement.intent.semanticIntent).toEqual({
+      kind: "travel_region",
+      goal: FIELDS.semanticCourse,
+      targetRegionId: FIELDS.targetRegionId,
+    });
     expect(slice.kernel.matter(FIELDS.matterId)).toBeNull();
     expect(slice.focus.focusedRun()).toBe(WORKSHOP.runId);
 
@@ -146,11 +152,19 @@ describe("Mira resident-life live intent vertical", () => {
       runId: FIELDS.runId,
       focusedRunId: WORKSHOP.runId,
     });
-    expect(slice.kernel.matter(FIELDS.matterId)).toMatchObject({
+    const matter = slice.kernel.matter(FIELDS.matterId);
+    expect(matter).toMatchObject({
       status: "active",
       activeRunId: FIELDS.runId,
-      semanticCourse: FIELDS.semanticCourse,
+      semanticCourse: admittedSemanticCourse(providerProposal),
+      semanticIntent: {
+        kind: "travel_region",
+        goal: FIELDS.semanticCourse,
+        targetRegionId: FIELDS.targetRegionId,
+      },
     });
+    expect(matter?.semanticIntent).not.toHaveProperty("routeRegionIds");
+    expect(matter?.semanticIntent).not.toHaveProperty("destination");
     expect(slice.arbitrator.deferredRunIds()).toEqual([FIELDS.runId]);
     expect(slice.focus.focusedRun()).toBe(WORKSHOP.runId);
 
@@ -184,6 +198,11 @@ function commitmentProposal(spec: typeof FIELDS): ResidentCognitionProposal {
     concerns: [],
     reviewAfterSeconds: 30,
   };
+}
+
+function admittedSemanticCourse(proposal: ResidentCognitionProposal): string {
+  if (proposal.activityDirective.kind !== "replace") throw new Error("expected replacement proposal");
+  return `${proposal.activityDirective.reason} · ${proposal.activityDirective.activity.goal}`;
 }
 
 function openAiResponse(proposal: ResidentCognitionProposal): Response {
