@@ -2,7 +2,11 @@ import type { ResidentCognitionContext, ResidentCognitionProposal } from "./cogn
 import type { CognitionBatch, Vec2, WorldOccurrence } from "./contracts";
 import { createFiveResidentNavigationGraph } from "./five-resident-navigation";
 import { createFiveResidentRegionComposition } from "./five-resident-region";
-import { ResidentContinuityKernel, type ResidentMatter } from "./resident-continuity-kernel";
+import {
+  ResidentContinuityKernel,
+  type ResidentMatter,
+  type ResidentMatterIntent,
+} from "./resident-continuity-kernel";
 import {
   ResidentExecutionArbitrator,
   type ResidentExecutionArbitration,
@@ -78,6 +82,7 @@ export interface GroundedCausalCommitmentIntent {
   destination: Vec2;
   routeRegionIds: readonly string[];
   semanticCourse: string;
+  semanticIntent: ResidentMatterIntent;
 }
 
 interface GroundedCommitmentAuthority {
@@ -141,6 +146,10 @@ export type IncrementalCausalCommitmentStep =
  * grounded intent is an exact one-shot capability: cloning the object cannot open a
  * matter or bind a run. This lets async provider admission remain semantic while the
  * local composition alone owns the later transition into durable resident life.
+ *
+ * Durable resident meaning is copied from the admitted semantic proposal, while route
+ * and destination remain local execution-method details. A later review can therefore
+ * recover what the resident committed to without preserving one stale route.
  *
  * A `ResidentMind` concern is intentionally NOT created as a second copy of the same
  * commitment. Once admitted, continuity `matter` is the durable semantic authority;
@@ -258,6 +267,7 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
       destination: Object.freeze({ ...grounded.intent.destination }),
       routeRegionIds: Object.freeze([...grounded.intent.routeRegionIds]),
       semanticCourse: grounded.intent.semanticCourse,
+      semanticIntent: Object.freeze({ ...grounded.intent.semanticIntent }),
     }) satisfies GroundedCausalCommitmentIntent;
     groundedCommitmentAuthority.set(intent, {
       attempt: prepared.attempt,
@@ -304,6 +314,7 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
       id: spec.matterId,
       originEvidenceId: origin.id,
       semanticCourse: intent.semanticCourse,
+      semanticIntent: intent.semanticIntent,
     });
     kernel.bindRun({ matterId: spec.matterId, taskId: spec.taskId, runId: spec.runId });
     const focusClaim = arbitrator.request(spec.runId);
@@ -530,10 +541,11 @@ function groundCommitment(
   if (!currentRegionId) {
     return { status: "rejected", detail: "current resident region is unavailable at admission" };
   }
+  const targetRegionId = directive.activity.targetRegionId;
   const known = new Set(groundingContext.knownRegions.map((region) => region.id));
   known.add(currentRegionId);
-  const route = navigation.route(currentRegionId, spec.targetRegionId, known);
-  const destination = navigation.destinationPoint(spec.targetRegionId);
+  const route = navigation.route(currentRegionId, targetRegionId, known);
+  const destination = navigation.destinationPoint(targetRegionId);
   if (!route || !destination) {
     return { status: "rejected", detail: "commitment target lacks current resident-known route/destination" };
   }
@@ -544,7 +556,12 @@ function groundCommitment(
       originPerceptId,
       destination,
       routeRegionIds: [...route.regionIds],
-      semanticCourse: spec.semanticCourse,
+      semanticCourse: `${directive.reason} · ${directive.activity.goal}`,
+      semanticIntent: {
+        kind: "travel_region",
+        goal: directive.activity.goal,
+        targetRegionId,
+      },
     },
   };
 }
