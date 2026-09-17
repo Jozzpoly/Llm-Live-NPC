@@ -13,6 +13,20 @@ export interface ResidentKernelEvidence {
   summary: string;
 }
 
+/**
+ * Resident-owned structured meaning that may outlive any one provider response or
+ * concrete execution method. Keep this deliberately narrower than provider-facing
+ * cognition proposals: continuity owns durable semantic commitment, not transport,
+ * prompting or executor details.
+ */
+export interface ResidentTravelRegionMatterIntent {
+  kind: "travel_region";
+  goal: string;
+  targetRegionId: string;
+}
+
+export type ResidentMatterIntent = ResidentTravelRegionMatterIntent;
+
 export interface ResidentMatter {
   id: string;
   status: ResidentMatterStatus;
@@ -20,6 +34,7 @@ export interface ResidentMatter {
   semanticEvidenceId: string;
   semanticRevision: number;
   semanticCourse: string;
+  semanticIntent: ResidentMatterIntent | null;
   suspendedByMatterId: string | null;
   activeRunId: string | null;
   lastOutcomeEvidenceId: string | null;
@@ -129,9 +144,12 @@ export class ResidentContinuityKernel {
     id: string;
     originEvidenceId: string;
     semanticCourse: string;
+    /** Legacy text-only callers may omit this while they migrate. */
+    semanticIntent?: ResidentMatterIntent | null;
   }): ResidentMatter {
     assertNonEmpty(input.id, "matter id");
     assertNonEmpty(input.semanticCourse, "semantic course");
+    if (input.semanticIntent) validateMatterIntent(input.semanticIntent);
     if (this.matters.has(input.id)) throw new Error(`matter already exists: ${input.id}`);
     const evidence = this.requireEvidence(input.originEvidenceId);
     const matter: ResidentMatter = {
@@ -141,6 +159,7 @@ export class ResidentContinuityKernel {
       semanticEvidenceId: evidence.id,
       semanticRevision: 1,
       semanticCourse: input.semanticCourse,
+      semanticIntent: input.semanticIntent ? structuredClone(input.semanticIntent) : null,
       suspendedByMatterId: null,
       activeRunId: null,
       lastOutcomeEvidenceId: null,
@@ -207,9 +226,14 @@ export class ResidentContinuityKernel {
 
   commitSemanticProposal(
     ticket: ResidentSemanticProposalTicket,
-    decision: { semanticCourse: string },
+    decision: {
+      semanticCourse: string;
+      /** Omitted only for legacy text-only callers; structured matters should replace this atomically. */
+      semanticIntent?: ResidentMatterIntent | null;
+    },
   ): SemanticCommitResult {
     assertNonEmpty(decision.semanticCourse, "semantic course");
+    if (decision.semanticIntent) validateMatterIntent(decision.semanticIntent);
     const pending = this.pendingProposals.get(ticket.attemptId);
     if (!pending || !sameProposalTicket(pending, ticket)) {
       const priorRevocation = this.findRecentRevocation(ticket);
@@ -242,6 +266,9 @@ export class ResidentContinuityKernel {
     this.pendingProposals.delete(ticket.attemptId);
     matter.semanticRevision += 1;
     matter.semanticCourse = decision.semanticCourse;
+    if (decision.semanticIntent !== undefined) {
+      matter.semanticIntent = decision.semanticIntent ? structuredClone(decision.semanticIntent) : null;
+    }
     this.revokePendingForMatter(matter.id, "sibling_committed");
     return { status: "applied", matter: structuredClone(matter) };
   }
@@ -481,6 +508,16 @@ function sameProposalTicket(a: ResidentSemanticProposalTicket, b: ResidentSemant
     && a.matterId === b.matterId
     && a.semanticRevision === b.semanticRevision
     && a.semanticEvidenceId === b.semanticEvidenceId;
+}
+
+function validateMatterIntent(intent: ResidentMatterIntent): void {
+  if (intent.kind === "travel_region") {
+    assertNonEmpty(intent.goal, "matter intent goal");
+    assertNonEmpty(intent.targetRegionId, "matter intent target region id");
+    return;
+  }
+  const unreachable: never = intent;
+  throw new Error(`unsupported matter intent: ${String(unreachable)}`);
 }
 
 function validateEvidence(evidence: ResidentKernelEvidence): void {
