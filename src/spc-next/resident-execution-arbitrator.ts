@@ -10,6 +10,10 @@ export type ResidentExecutionArbitration =
   | { status: "acquired_deferred"; runId: string }
   | { status: "choice_required"; candidateRunIds: readonly string[] };
 
+export type ResidentExecutionArbitrationRequest =
+  | ResidentExecutionFocusClaim
+  | { status: "deferred"; runId: string };
+
 export type ResidentExecutionArbitrationChoice =
   | { status: "acquired"; runId: string }
   | { status: "already_focused"; runId: string }
@@ -48,7 +52,24 @@ export class ResidentExecutionArbitrator implements ResidentRunAuthority {
     }
   }
 
-  request(runId: string): ResidentExecutionFocusClaim {
+  request(runId: string): ResidentExecutionArbitrationRequest {
+    assertRunId(runId);
+    this.focus.sync();
+    this.pruneStaleDeferred();
+
+    if (!this.runAuthority.canRunMutateWorld(runId)) {
+      this.deferred.delete(runId);
+      return { status: "rejected", runId, reason: "run_not_authorized" };
+    }
+
+    // A free body is not equivalent to an unclaimed body. Existing deferred demands
+    // represent unresolved resident continuity. A newly admitted ordinary matter must
+    // join that ambiguity rather than winning merely because it arrived later.
+    if (this.focus.focusedRun() === null && this.deferred.size > 0) {
+      this.deferred.add(runId);
+      return { status: "deferred", runId };
+    }
+
     const claim = this.focus.claim(runId);
     if (claim.status === "busy") {
       this.deferred.add(runId);
@@ -56,6 +77,23 @@ export class ResidentExecutionArbitrator implements ResidentRunAuthority {
       this.deferred.delete(runId);
     }
     return claim;
+  }
+
+  /**
+   * Explicit preemption seam for a separately justified interruption.
+   * This intentionally bypasses ordinary deferred-choice fairness; callers must first
+   * establish interruption authority in their continuity layer.
+   */
+  claimInterruption(runId: string): ResidentExecutionFocusClaim {
+    return this.claimContinuityOverride(runId);
+  }
+
+  /**
+   * Exact-return seam after a terminal interruption. This is not a priority policy:
+   * the caller is restoring the same previously focused run, not selecting a new matter.
+   */
+  restoreInterrupted(runId: string): ResidentExecutionFocusClaim {
+    return this.claimContinuityOverride(runId);
   }
 
   reconcile(): ResidentExecutionArbitration {
@@ -132,6 +170,17 @@ export class ResidentExecutionArbitrator implements ResidentRunAuthority {
 
   canRunMutateWorld(runId: string): boolean {
     return this.focus.canRunMutateWorld(runId);
+  }
+
+  private claimContinuityOverride(runId: string): ResidentExecutionFocusClaim {
+    assertRunId(runId);
+    this.focus.sync();
+    this.pruneStaleDeferred();
+    const claim = this.focus.claim(runId);
+    if (claim.status === "acquired" || claim.status === "already_focused") {
+      this.deferred.delete(runId);
+    }
+    return claim;
   }
 
   private pruneStaleDeferred(): void {
