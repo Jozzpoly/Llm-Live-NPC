@@ -55,11 +55,11 @@ describe("five-resident Mira causal multi-matter acquisition", () => {
     }
 
     const privateContext = slice.privateContext();
+    // Commitment persistence lives in the continuity kernel. Do not duplicate the
+    // same obligations as ResidentMind concerns that could remain open after matter
+    // resolution and become a competing semantic truth store.
+    expect(privateContext.concerns).toEqual([]);
     for (const spec of MIRA_CAUSAL_COMMITMENTS) {
-      expect(privateContext.concerns).toContainEqual(expect.objectContaining({
-        id: spec.concernId,
-        status: "open",
-      }));
       expect(slice.kernel.matter(spec.matterId)).toMatchObject({ status: "active", activeRunId: spec.runId });
       expect(slice.kernel.canRunMutateWorld(spec.runId)).toBe(true);
     }
