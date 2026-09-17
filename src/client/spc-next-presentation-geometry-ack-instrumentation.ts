@@ -2,7 +2,6 @@ import * as Phaser from "phaser";
 
 const wallNow = (): number => performance.timeOrigin + performance.now();
 const GEOMETRY_TOLERANCE_PX = 1.25;
-const RELEVANT_TRANSITION_KEYS = new Set(["grid-template-columns", "gap"]);
 
 const colorForGeneration = (generation: number): readonly [number, number, number] => [
   32 + (generation * 53) % 192,
@@ -16,38 +15,6 @@ function transitionKey(propertyName: string): string | null {
   if (propertyName === "grid-template-columns") return propertyName;
   if (propertyName === "gap" || propertyName === "row-gap" || propertyName === "column-gap") return "gap";
   return null;
-}
-
-function parseTimeMs(value: string): number {
-  const text = value.trim();
-  if (text.endsWith("ms")) return Number.parseFloat(text);
-  if (text.endsWith("s")) return Number.parseFloat(text) * 1000;
-  return Number.parseFloat(text) || 0;
-}
-
-function listValue<T>(values: readonly T[], index: number): T {
-  return values[index % values.length]!;
-}
-
-function expectedLayoutTransitions(app: HTMLElement): string[] {
-  const style = getComputedStyle(app);
-  const properties = style.transitionProperty.split(",").map((value) => value.trim());
-  const durations = style.transitionDuration.split(",").map(parseTimeMs);
-  const delays = style.transitionDelay.split(",").map(parseTimeMs);
-  const expected = new Set<string>();
-
-  for (let index = 0; index < properties.length; index += 1) {
-    const property = properties[index]!;
-    const activeMs = listValue(durations, index) + listValue(delays, index);
-    if (activeMs <= 0) continue;
-    if (property === "all") {
-      for (const relevant of RELEVANT_TRANSITION_KEYS) expected.add(relevant);
-    } else {
-      const key = transitionKey(property);
-      if (key) expected.add(key);
-    }
-  }
-  return [...expected].sort();
 }
 
 type GeometrySnapshot = {
@@ -64,6 +31,7 @@ type GeometrySnapshot = {
 type PostRenderSample = {
   wallMs: number;
   gameFrame: number;
+  transitionDiscoverySealed: boolean;
   transitionComplete: boolean;
   expectedTransitions: string[];
   completedTransitions: string[];
@@ -78,7 +46,15 @@ type PendingGeneration = {
   targetWorldOnly: boolean;
   requestWallMs: number;
   eventIsTrusted: boolean;
-  expectedTransitions: string[];
+  /**
+   * Browser-observed transition keys for this exact projection generation.
+   * The public field remains named expectedTransitions for canary compatibility,
+   * but it is no longer inferred from transition-property declarations.
+   */
+  expectedTransitions: Set<string>;
+  transitionDiscoverySealed: boolean;
+  transitionDiscoveryFrameCount: number;
+  transitionDiscoverySealWallMs: number | null;
   startedTransitions: Set<string>;
   completedTransitions: Set<string>;
   activeTransitionProperties: Set<string>;
@@ -95,6 +71,7 @@ type ApplicationRenderAck = {
   targetWorldOnly: boolean;
   observedWorldOnly: boolean;
   requestWallMs: number;
+  transitionDiscoverySealWallMs: number;
   transitionCompletionWallMs: number;
   expectedTransitions: string[];
   completedTransitions: string[];
@@ -178,9 +155,46 @@ function geometrySnapshot(candidate: Phaser.Game): GeometrySnapshot {
   };
 }
 
+function collectBrowserTransitions(current: PendingGeneration): void {
+  if (pending !== current) return;
+  for (const animation of app.getAnimations({ subtree: false })) {
+    if (!(animation instanceof CSSTransition)) continue;
+    const rawProperty = animation.transitionProperty;
+    const key = transitionKey(rawProperty);
+    if (!key) continue;
+    current.expectedTransitions.add(key);
+    if (animation.playState === "running" || animation.pending) {
+      current.activeTransitionProperties.add(rawProperty);
+    }
+  }
+}
+
 function transitionComplete(current: PendingGeneration): boolean {
-  return current.expectedTransitions.every((property) => current.completedTransitions.has(property))
+  return current.transitionDiscoverySealed
+    && [...current.expectedTransitions].every((property) => current.completedTransitions.has(property))
     && current.activeTransitionProperties.size === 0;
+}
+
+function markTransitionCompletionIfReady(current: PendingGeneration, now = wallNow()): void {
+  if (!transitionComplete(current)) return;
+  if (current.transitionCompletionWallMs === null) current.transitionCompletionWallMs = now;
+}
+
+function scheduleTransitionDiscovery(current: PendingGeneration): void {
+  requestAnimationFrame(() => {
+    if (pending !== current) return;
+    current.transitionDiscoveryFrameCount = 1;
+    collectBrowserTransitions(current);
+
+    requestAnimationFrame(() => {
+      if (pending !== current) return;
+      current.transitionDiscoveryFrameCount = 2;
+      collectBrowserTransitions(current);
+      current.transitionDiscoverySealed = true;
+      current.transitionDiscoverySealWallMs = wallNow();
+      markTransitionCompletionIfReady(current, current.transitionDiscoverySealWallMs);
+    });
+  });
 }
 
 function publicPending(current: PendingGeneration | null): Record<string, unknown> | null {
@@ -190,7 +204,10 @@ function publicPending(current: PendingGeneration | null): Record<string, unknow
     targetWorldOnly: current.targetWorldOnly,
     requestWallMs: current.requestWallMs,
     eventIsTrusted: current.eventIsTrusted,
-    expectedTransitions: [...current.expectedTransitions],
+    expectedTransitions: [...current.expectedTransitions].sort(),
+    transitionDiscoverySealed: current.transitionDiscoverySealed,
+    transitionDiscoveryFrameCount: current.transitionDiscoveryFrameCount,
+    transitionDiscoverySealWallMs: current.transitionDiscoverySealWallMs,
     startedTransitions: [...current.startedTransitions].sort(),
     completedTransitions: [...current.completedTransitions].sort(),
     activeTransitionProperties: [...current.activeTransitionProperties].sort(),
@@ -211,16 +228,21 @@ for (const type of ["transitionrun", "transitionstart", "transitionend", "transi
     if (!key) return;
     const now = wallNow();
     transitionEvents.push({ type, rawPropertyName: event.propertyName, transitionKey: key, elapsedTime: event.elapsedTime, wallMs: now, generation: pending?.generation ?? null });
-    if (!pending || !pending.expectedTransitions.includes(key)) return;
+    if (!pending) return;
+
     if (type === "transitionrun" || type === "transitionstart") {
+      pending.expectedTransitions.add(key);
       pending.startedTransitions.add(key);
       pending.activeTransitionProperties.add(event.propertyName);
+      // A transition observed after an earlier empty-set completion invalidates that
+      // completion until this actual browser-owned transition reaches terminal state.
+      pending.transitionCompletionWallMs = null;
     }
     if (type === "transitionend" || type === "transitioncancel") {
       pending.activeTransitionProperties.delete(event.propertyName);
       const keyStillActive = [...pending.activeTransitionProperties].some((property) => transitionKey(property) === key);
-      if (!keyStillActive) pending.completedTransitions.add(key);
-      if (transitionComplete(pending)) pending.transitionCompletionWallMs = now;
+      if (!keyStillActive && pending.expectedTransitions.has(key)) pending.completedTransitions.add(key);
+      markTransitionCompletionIfReady(pending, now);
     }
   });
 }
@@ -271,8 +293,9 @@ function captureGame(candidate: Phaser.Game): void {
     const sample: PostRenderSample = {
       wallMs: now,
       gameFrame: candidate.getFrame(),
+      transitionDiscoverySealed: current.transitionDiscoverySealed,
       transitionComplete: didTransitionComplete,
-      expectedTransitions: [...current.expectedTransitions],
+      expectedTransitions: [...current.expectedTransitions].sort(),
       completedTransitions: [...current.completedTransitions].sort(),
       activeTransitionProperties: [...current.activeTransitionProperties].sort(),
       sceneRenderedSameFrame,
@@ -283,15 +306,20 @@ function captureGame(candidate: Phaser.Game): void {
     if (current.postRenderSamples.length > 80) current.postRenderSamples.splice(0, current.postRenderSamples.length - 80);
     if (!eligible) return;
 
-    if (current.transitionCompletionWallMs === null) current.transitionCompletionWallMs = current.requestWallMs;
+    if (current.transitionCompletionWallMs === null) current.transitionCompletionWallMs = now;
+    if (current.transitionDiscoverySealWallMs === null) {
+      anomalies.push({ kind: "ack_without_transition_discovery_seal", generation: current.generation, wallMs: now });
+      return;
+    }
     const markerRgb = colorForGeneration(current.generation);
     const ack: ApplicationRenderAck = Object.freeze({
       generation: current.generation,
       targetWorldOnly: current.targetWorldOnly,
       observedWorldOnly,
       requestWallMs: current.requestWallMs,
+      transitionDiscoverySealWallMs: current.transitionDiscoverySealWallMs,
       transitionCompletionWallMs: current.transitionCompletionWallMs,
-      expectedTransitions: [...current.expectedTransitions],
+      expectedTransitions: [...current.expectedTransitions].sort(),
       completedTransitions: [...current.completedTransitions].sort(),
       scaleResizeCount: current.scaleResizeCount,
       lastScaleResizeWallMs: current.lastScaleResizeWallMs,
@@ -322,17 +350,19 @@ document.addEventListener("click", (event) => {
   if (!target) return;
   if (pending) anomalies.push({ kind: "superseded_pending_request", previousGeneration: pending.generation, wallMs: wallNow() });
 
-  const expectedTransitions = expectedLayoutTransitions(app);
   const request: PendingGeneration = {
     generation: ++generation,
     targetWorldOnly: !projectionIsWorldOnly(),
     requestWallMs: wallNow(),
     eventIsTrusted: event.isTrusted,
-    expectedTransitions,
+    expectedTransitions: new Set(),
+    transitionDiscoverySealed: false,
+    transitionDiscoveryFrameCount: 0,
+    transitionDiscoverySealWallMs: null,
     startedTransitions: new Set(),
     completedTransitions: new Set(),
     activeTransitionProperties: new Set(),
-    transitionCompletionWallMs: expectedTransitions.length === 0 ? wallNow() : null,
+    transitionCompletionWallMs: null,
     scaleResizeCount: 0,
     lastScaleResizeWallMs: null,
     lastSceneRenderWallMs: null,
@@ -345,13 +375,14 @@ document.addEventListener("click", (event) => {
     targetWorldOnly: request.targetWorldOnly,
     requestWallMs: request.requestWallMs,
     eventIsTrusted: request.eventIsTrusted,
-    expectedTransitions: [...expectedTransitions],
+    transitionDiscovery: "browser-observed-two-frame",
   });
+  scheduleTransitionDiscovery(request);
 }, true);
 
 const presentationWindow = window as Window & {
   __SPC_PRESENTATION_GEOMETRY_ACK__?: Readonly<{
-    version: 1;
+    version: 2;
     ready(): boolean;
     state(): Record<string, unknown>;
     sleepLoop(): void;
@@ -363,10 +394,10 @@ Object.defineProperty(presentationWindow, "__SPC_PRESENTATION_GEOMETRY_ACK__", {
   configurable: true,
   enumerable: false,
   value: Object.freeze({
-    version: 1 as const,
+    version: 2 as const,
     ready: () => Boolean(game && sceneRenderHooked && document.querySelector(".spc-world-mode-toggle")),
     state: () => ({
-      version: 1,
+      version: 2,
       ready: Boolean(game && sceneRenderHooked && document.querySelector(".spc-world-mode-toggle")),
       gameCaptured: game !== null,
       sceneRenderHooked,
