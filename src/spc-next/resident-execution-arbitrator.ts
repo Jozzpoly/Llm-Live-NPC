@@ -119,9 +119,15 @@ export class ResidentExecutionArbitrator implements ResidentRunAuthority {
     return { status: "rejected", runId, reason: "run_not_authorized" };
   }
 
+  /**
+   * Observational snapshot: report only still-authorized demand without mutating
+   * deferred bookkeeping. Explicit lifecycle operations (`reconcile` / `choose`)
+   * own cleanup of stale entries.
+   */
   deferredRunIds(): string[] {
-    this.pruneStaleDeferred();
-    return [...this.deferred].sort((a, b) => a.localeCompare(b));
+    return [...this.deferred]
+      .filter((runId) => this.runAuthority.canRunMutateWorld(runId))
+      .sort((a, b) => a.localeCompare(b));
   }
 
   canRunMutateWorld(runId: string): boolean {
