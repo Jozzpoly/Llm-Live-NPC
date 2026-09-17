@@ -81,13 +81,18 @@ describe("five-resident Mira causal life choice composition", () => {
     expect(slice.kernel.matter(FIELDS!.matterId)).toMatchObject({ status: "active", activeRunId: FIELDS!.runId });
     expect(slice.focus.focusedRun()).toBe(FIELDS!.runId);
 
-    // Preserve the next research boundary as evidence rather than silently claiming
-    // it solved: C was grounded while Mira was still in Hearth, but after executing B
-    // the same deferred run now owns the body from Workshop. The current executor uses
-    // a static grounded destination, so this is legal today; whether deferred methods
-    // need fresh grounding when body context changes remains a separate falsifier.
+    // C was grounded while Mira was in Hearth, but the executor owns only a stable
+    // destination and recomputes locomotion from the current body position. Moving
+    // through Workshop alone must therefore not be treated as stale grounding.
     expect(acceptedFields.routeRegionIds[0]).toBe("hearth");
     expect(slice.privateContext().currentRegionId).toBe("workshop");
+
+    const completedFields = slice.completeFocusedMatter(FIELDS!.matterId);
+    expect(completedFields.arbitration).toEqual({ status: "idle" });
+    expect(completedFields.choiceReview).toEqual({ status: "not_required" });
+    expect(slice.kernel.matter(FIELDS!.matterId)).toMatchObject({ status: "resolved", activeRunId: null });
+    expect(slice.focus.focusedRun()).toBeNull();
+    expect(slice.privateContext().currentRegionId).toBe("fields");
   });
 });
 
