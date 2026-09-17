@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - refoundation/spc-next-five-resident-world
+      - research/i2-mira-live-cognition-bridge
     paths:
       - "evidence/live-provider-request.json"
   workflow_dispatch:
@@ -35,16 +36,18 @@ jobs:
           const qualifiers = Array.isArray(request.qualifiers)
             ? request.qualifiers
             : ['lifecycle', 'interruption'];
-          const allowed = new Set(['lifecycle', 'interruption']);
+          const allowed = new Set(['lifecycle', 'interruption', 'life-choice']);
           if (qualifiers.length === 0 || qualifiers.some((value) => !allowed.has(value))) {
             throw new Error(`invalid live-provider qualifiers: ${JSON.stringify(qualifiers)}`);
           }
           process.stdout.write(`RUN_LIFECYCLE=${qualifiers.includes('lifecycle') ? '1' : '0'}\n`);
           process.stdout.write(`RUN_INTERRUPTION=${qualifiers.includes('interruption') ? '1' : '0'}\n`);
+          process.stdout.write(`RUN_LIFE_CHOICE=${qualifiers.includes('life-choice') ? '1' : '0'}\n`);
           process.stdout.write(`REQUESTED_QUALIFIERS=${qualifiers.join(',')}\n`);
           NODE
 
       - name: Locate runner Chrome
+        if: env.RUN_LIFECYCLE == '1' || env.RUN_INTERRUPTION == '1'
         shell: bash
         run: |
           set -euo pipefail
@@ -123,6 +126,7 @@ jobs:
           exit 1
 
       - name: Preflight exact browser boundary without provider spend
+        if: env.RUN_LIFECYCLE == '1' || env.RUN_INTERRUPTION == '1'
         env:
           LIVE_PROVIDER_PREFLIGHT_OUTPUT: evidence/live-provider/preflight.json
         run: node scripts/spc-browser-live-provider-preflight.mjs
@@ -139,6 +143,12 @@ jobs:
           LIVE_PROVIDER_OUTPUT: evidence/live-provider/live-provider-interruption.json
         run: node scripts/spc-browser-live-provider-interruption-evidence-v3.mjs
 
+      - name: Qualify real Luna resident life choice contract
+        if: env.RUN_LIFE_CHOICE == '1'
+        env:
+          LIVE_PROVIDER_OUTPUT: evidence/live-provider/live-provider-life-choice.json
+        run: node scripts/spc-live-provider-life-choice-evidence.mjs
+
       - name: Print live-provider evidence summary
         if: always()
         shell: bash
@@ -147,8 +157,12 @@ jobs:
           cat /tmp/live-provider-candidate-url.txt 2>/dev/null || true
           echo "--- Requested qualifiers ---"
           echo "${REQUESTED_QUALIFIERS:-unresolved}"
-          echo "--- Spend-free preflight ---"
-          cat evidence/live-provider/preflight.json 2>/dev/null || true
+          echo "--- Spend-free browser preflight ---"
+          if [ "${RUN_LIFECYCLE:-0}" = "1" ] || [ "${RUN_INTERRUPTION:-0}" = "1" ]; then
+            cat evidence/live-provider/preflight.json 2>/dev/null || true
+          else
+            echo "not requested in this run"
+          fi
           echo "--- Two-burst material lifecycle ---"
           if [ "${RUN_LIFECYCLE:-0}" = "1" ]; then
             cat evidence/live-provider/live-provider-lifecycle.json 2>/dev/null || true
@@ -158,6 +172,12 @@ jobs:
           echo "--- Live provider interruption evidence ---"
           if [ "${RUN_INTERRUPTION:-0}" = "1" ]; then
             cat evidence/live-provider/live-provider-interruption.json 2>/dev/null || true
+          else
+            echo "not requested in this run"
+          fi
+          echo "--- Resident life choice provider evidence ---"
+          if [ "${RUN_LIFE_CHOICE:-0}" = "1" ]; then
+            cat evidence/live-provider/live-provider-life-choice.json 2>/dev/null || true
           else
             echo "not requested in this run"
           fi
