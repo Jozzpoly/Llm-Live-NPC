@@ -4,6 +4,7 @@ import { createFiveResidentNavigationGraph } from "./five-resident-navigation";
 import { createFiveResidentRegionComposition } from "./five-resident-region";
 import {
   ResidentContinuityKernel,
+  type ResidentKernelEvidence,
   type ResidentMatter,
   type ResidentMatterIntent,
 } from "./resident-continuity-kernel";
@@ -113,6 +114,7 @@ export interface CompletedCausalCommitment {
   matterId: string;
   runId: string;
   worldTick: number;
+  outcomeEvidence: ResidentKernelEvidence;
   arbitration: ResidentExecutionArbitration;
   choiceReview: ResidentLifeChoiceReviewObservation;
 }
@@ -183,6 +185,7 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
 
   const authority = new ResidentWorldExecutionAuthority(MIRA_ID, arbitrator, world);
   const executors = new Map<string, ResidentGroundedTravelExecutor>();
+  const groundedTargetRegionIds = new Map<string, string>();
   const acceptedMatterIds = new Set<string>();
   const groundedCommitmentAuthority = new WeakMap<GroundedCausalCommitmentIntent, GroundedCommitmentAuthority>();
 
@@ -325,6 +328,7 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
       spec.runId,
       new ResidentGroundedTravelExecutor(spec.runId, intent.destination, authority, world),
     );
+    groundedTargetRegionIds.set(spec.runId, intent.semanticIntent.targetRegionId);
     acceptedMatterIds.add(spec.matterId);
     groundedCommitmentAuthority.delete(intent);
 
@@ -397,13 +401,18 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
   }
 
   function finishArrivedMatter(spec: MiraCausalCommitmentSpec): CompletedCausalCommitment {
+    const groundedTargetRegionId = groundedTargetRegionIds.get(spec.runId);
+    if (!groundedTargetRegionId) {
+      throw new Error(`missing run-bound grounded target for ${spec.runId}`);
+    }
     const reconciled = kernel.reconcileRunOutcome({
       runId: spec.runId,
       tick: world.tick,
       status: "succeeded",
-      summary: `${spec.runId} physically reached its cognition-grounded ${spec.targetRegionId} destination`,
+      summary: `${spec.runId} physically reached its cognition-grounded ${groundedTargetRegionId} destination`,
     });
     if (reconciled.status !== "recorded") throw new Error(`failed to reconcile ${spec.runId}`);
+    groundedTargetRegionIds.delete(spec.runId);
     kernel.resolveMatter(spec.matterId);
     const arbitration = arbitrator.reconcile();
     const choiceReview = choiceReviewBridge.observe(arbitration, world.tick);
@@ -412,6 +421,7 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
       matterId: spec.matterId,
       runId: spec.runId,
       worldTick: world.tick,
+      outcomeEvidence: structuredClone(reconciled.evidence),
       arbitration: structuredClone(arbitration),
       choiceReview: structuredClone(choiceReview),
     };
