@@ -23,7 +23,7 @@ describe("Mira self-origin follow-up from factual outcome", () => {
       "workshop",
       "inspect the familiar workshop",
       "accept the workshop visit",
-      0.05,
+      1,
     );
     const settlementA = slice.lifeIntentOwner.settleCommitmentIntent(
       preparedA.attempt,
