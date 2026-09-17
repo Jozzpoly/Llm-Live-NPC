@@ -129,6 +129,32 @@ describe("SPC Next resident-life choice Worker", () => {
     expect(sanitizeSpcNextLifeChoiceContext({ ...context, currentRegionId: "hidden-global-region" })).toBeNull();
   });
 
+  it("preserves shared structured matter intent and rejects execution-method leakage instead of maintaining a second life schema", () => {
+    const structured = structuredClone(context) as any;
+    structured.life.matters[0].semanticIntent = {
+      kind: "travel_region",
+      goal: "return to the familiar hearth before evening",
+      targetRegionId: "hearth",
+    };
+    structured.life.matters[1].semanticIntent = {
+      kind: "travel_region",
+      goal: "check the familiar fields after the current work",
+      targetRegionId: "fields",
+    };
+
+    const sanitized = sanitizeSpcNextLifeChoiceContext(structured);
+    expect(sanitized).not.toBeNull();
+    expect(sanitized?.candidateMatterIds).toEqual([B, C]);
+    expect(sanitized?.context.life.matters.map((matter) => matter.semanticIntent)).toEqual([
+      { kind: "travel_region", goal: "return to the familiar hearth before evening", targetRegionId: "hearth" },
+      { kind: "travel_region", goal: "check the familiar fields after the current work", targetRegionId: "fields" },
+    ]);
+
+    const leakedMethod = structuredClone(structured);
+    leakedMethod.life.matters[1].semanticIntent.routeRegionIds = ["hearth", "fields"];
+    expect(sanitizeSpcNextLifeChoiceContext(leakedMethod)).toBeNull();
+  });
+
   it("extracts only a bounded choice among supplied matters or an explicit defer-all", () => {
     expect(extractSpcNextLifeChoiceDecision(responseBody(focusB()), [B, C])).toEqual(focusB());
     expect(extractSpcNextLifeChoiceDecision(responseBody({
