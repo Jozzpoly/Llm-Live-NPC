@@ -15,9 +15,13 @@ import {
   type ResidentLifeChoiceReviewObservation,
 } from "./resident-life-choice-review-bridge";
 import type { ResidentLifeCognitionContext } from "./resident-life-cognition-context";
-import { captureResidentLifeCognitionView } from "./resident-life-cognition-view";
+import {
+  captureResidentLifeCognitionView,
+  type ResidentLifeCognitionView,
+} from "./resident-life-cognition-view";
 import {
   ResidentLifeIntentOwner,
+  type ResidentLifeIntentAdmission,
   type ResidentLifeIntentAttempt,
 } from "./resident-life-intent-owner";
 import { ResidentWorldExecutionAuthority } from "./resident-world-execution-authority";
@@ -69,11 +73,18 @@ export const MIRA_CAUSAL_COMMITMENTS: readonly MiraCausalCommitmentSpec[] = [
   },
 ] as const;
 
-interface GroundedCommitmentIntent {
+export interface GroundedCausalCommitmentIntent {
   originPerceptId: string;
   destination: Vec2;
   routeRegionIds: readonly string[];
   semanticCourse: string;
+}
+
+interface GroundedCommitmentAuthority {
+  attempt: ResidentLifeIntentAttempt;
+  occurrenceId: string;
+  matterId: string;
+  proposal: ResidentCognitionProposal;
 }
 
 export interface PreparedCausalLifeIntent {
@@ -126,6 +137,11 @@ export type IncrementalCausalCommitmentStep =
  * against current resident-local region knowledge rather than reusing an old route from
  * the provider frame.
  *
+ * Grounding and continuity materialization are separate authority steps. A successfully
+ * grounded intent is an exact one-shot capability: cloning the object cannot open a
+ * matter or bind a run. This lets async provider admission remain semantic while the
+ * local composition alone owns the later transition into durable resident life.
+ *
  * A `ResidentMind` concern is intentionally NOT created as a second copy of the same
  * commitment. Once admitted, continuity `matter` is the durable semantic authority;
  * concerns remain a separate private uncertainty/problem representation.
@@ -159,6 +175,7 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
   const authority = new ResidentWorldExecutionAuthority(MIRA_ID, arbitrator, world);
   const executors = new Map<string, ResidentGroundedTravelExecutor>();
   const acceptedMatterIds = new Set<string>();
+  const groundedCommitmentAuthority = new WeakMap<GroundedCausalCommitmentIntent, GroundedCommitmentAuthority>();
 
   function currentLife() {
     return captureResidentLifeCognitionView({
@@ -169,12 +186,29 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
     });
   }
 
+  function currentLifeView(): ResidentLifeCognitionView {
+    return structuredClone(currentLife());
+  }
+
   function currentGroundingContext(batch: CognitionBatch): ResidentCognitionContext {
     return mira.cognitionContext({
       residentId: MIRA_ID,
       requestedAtTick: world.tick,
       reasons: structuredClone(batch.reasons),
     });
+  }
+
+  function exactOriginPercept(prepared: PreparedCausalLifeIntent, occurrence: WorldOccurrence) {
+    const originPercept = prepared.attempt.context.recentPercepts.find(
+      (percept) => percept.occurrenceId === occurrence.id,
+    );
+    if (!originPercept
+      || originPercept.phenomenon !== "speech"
+      || !originPercept.addressed
+      || originPercept.text !== occurrence.text) {
+      return null;
+    }
+    return originPercept;
   }
 
   function takeReadyLifeIntentAttempt(): PreparedCausalLifeIntent | null {
@@ -194,57 +228,82 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
     };
   }
 
-  function settlePreparedPlayerRequest(
+  function groundPreparedPlayerRequest(
     prepared: PreparedCausalLifeIntent,
     occurrence: WorldOccurrence,
     spec: MiraCausalCommitmentSpec,
-    rawProposal: unknown,
+    proposal: ResidentCognitionProposal,
+    providerContext: ResidentLifeCognitionContext,
+  ): ResidentLifeIntentAdmission<GroundedCausalCommitmentIntent> {
+    if (acceptedMatterIds.has(spec.matterId)) {
+      return { status: "rejected", detail: `commitment already accepted: ${spec.matterId}` };
+    }
+    const originPercept = exactOriginPercept(prepared, occurrence);
+    if (!originPercept) {
+      return { status: "rejected", detail: "prepared commitment lost its exact addressed private speech percept" };
+    }
+
+    const grounded = groundCommitment(
+      proposal,
+      providerContext,
+      currentGroundingContext(prepared.batch),
+      spec,
+      originPercept.id,
+      navigation,
+    );
+    if (grounded.status !== "accepted") return grounded;
+
+    const intent = Object.freeze({
+      originPerceptId: grounded.intent.originPerceptId,
+      destination: Object.freeze({ ...grounded.intent.destination }),
+      routeRegionIds: Object.freeze([...grounded.intent.routeRegionIds]),
+      semanticCourse: grounded.intent.semanticCourse,
+    }) satisfies GroundedCausalCommitmentIntent;
+    groundedCommitmentAuthority.set(intent, {
+      attempt: prepared.attempt,
+      occurrenceId: occurrence.id,
+      matterId: spec.matterId,
+      proposal,
+    });
+    return { status: "accepted", intent };
+  }
+
+  function materializeAdmittedPlayerRequest(
+    prepared: PreparedCausalLifeIntent,
+    occurrence: WorldOccurrence,
+    spec: MiraCausalCommitmentSpec,
+    proposal: ResidentCognitionProposal,
+    intent: GroundedCausalCommitmentIntent,
   ): AcceptedCausalCommitment {
-    if (acceptedMatterIds.has(spec.matterId)) throw new Error(`commitment already accepted: ${spec.matterId}`);
-
-    const originPercept = prepared.attempt.context.recentPercepts.find(
-      (percept) => percept.occurrenceId === occurrence.id,
-    );
-    if (!originPercept
-      || originPercept.phenomenon !== "speech"
-      || !originPercept.addressed
-      || originPercept.text !== occurrence.text) {
-      throw new Error("prepared commitment lost its exact addressed private speech percept");
+    const groundingAuthority = groundedCommitmentAuthority.get(intent);
+    if (!groundingAuthority
+      || groundingAuthority.attempt !== prepared.attempt
+      || groundingAuthority.occurrenceId !== occurrence.id
+      || groundingAuthority.matterId !== spec.matterId
+      || groundingAuthority.proposal !== proposal) {
+      throw new Error("grounded commitment intent lacks exact admitted grounding authority");
+    }
+    if (acceptedMatterIds.has(spec.matterId)) {
+      groundedCommitmentAuthority.delete(intent);
+      throw new Error(`commitment already accepted: ${spec.matterId}`);
+    }
+    const originPercept = exactOriginPercept(prepared, occurrence);
+    if (!originPercept || originPercept.id !== intent.originPerceptId) {
+      groundedCommitmentAuthority.delete(intent);
+      throw new Error("grounded commitment intent lost its exact causal origin");
     }
 
-    // The provider chose meaning from its frozen truthful frame. Grounding is a local
-    // admission responsibility and must use current resident state, because the body
-    // and current region are allowed to keep changing while the provider is in flight.
-    const groundingContext = currentGroundingContext(prepared.batch);
-    const settlement = lifeIntentOwner.settleIntent(
-      prepared.attempt,
-      rawProposal,
-      currentLife(),
-      world.tick,
-      (proposal, providerContext) => groundCommitment(
-        proposal,
-        providerContext,
-        groundingContext,
-        spec,
-        originPercept.id,
-        navigation,
-      ),
-    );
-    if (settlement.status !== "applied") {
-      throw new Error(`commitment cognition did not apply: ${settlement.status}`);
-    }
-    mira.scheduleAdaptiveReview(world.tick, settlement.proposal.reviewAfterSeconds, FIXED_DELTA_SECONDS);
-
+    mira.scheduleAdaptiveReview(world.tick, proposal.reviewAfterSeconds, FIXED_DELTA_SECONDS);
     const origin = kernel.recordEvidence({
       id: `evidence:mira:accepted-request:${spec.key}:${originPercept.tick}`,
       tick: originPercept.tick,
       kind: "accepted_cognition_commitment",
-      summary: `${settlement.intent.semanticCourse}; origin occurrence ${originPercept.occurrenceId}`,
+      summary: `${intent.semanticCourse}; origin occurrence ${originPercept.occurrenceId}`,
     });
     const matter = kernel.openMatter({
       id: spec.matterId,
       originEvidenceId: origin.id,
-      semanticCourse: settlement.intent.semanticCourse,
+      semanticCourse: intent.semanticCourse,
     });
     kernel.bindRun({ matterId: spec.matterId, taskId: spec.taskId, runId: spec.runId });
     const focusClaim = arbitrator.request(spec.runId);
@@ -254,9 +313,10 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
 
     executors.set(
       spec.runId,
-      new ResidentGroundedTravelExecutor(spec.runId, settlement.intent.destination, authority, world),
+      new ResidentGroundedTravelExecutor(spec.runId, intent.destination, authority, world),
     );
     acceptedMatterIds.add(spec.matterId);
+    groundedCommitmentAuthority.delete(intent);
 
     return {
       occurrence: structuredClone(occurrence),
@@ -265,9 +325,42 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
       originPerceptId: originPercept.id,
       matter: structuredClone(matter),
       runId: spec.runId,
-      routeRegionIds: [...settlement.intent.routeRegionIds],
+      routeRegionIds: [...intent.routeRegionIds],
       focusClaim: structuredClone(focusClaim),
     };
+  }
+
+  function settlePreparedPlayerRequest(
+    prepared: PreparedCausalLifeIntent,
+    occurrence: WorldOccurrence,
+    spec: MiraCausalCommitmentSpec,
+    rawProposal: unknown,
+  ): AcceptedCausalCommitment {
+    if (acceptedMatterIds.has(spec.matterId)) throw new Error(`commitment already accepted: ${spec.matterId}`);
+
+    const settlement = lifeIntentOwner.settleIntent(
+      prepared.attempt,
+      rawProposal,
+      currentLife(),
+      world.tick,
+      (proposal, providerContext) => groundPreparedPlayerRequest(
+        prepared,
+        occurrence,
+        spec,
+        proposal,
+        providerContext,
+      ),
+    );
+    if (settlement.status !== "applied") {
+      throw new Error(`commitment cognition did not apply: ${settlement.status}`);
+    }
+    return materializeAdmittedPlayerRequest(
+      prepared,
+      occurrence,
+      spec,
+      settlement.proposal,
+      settlement.intent,
+    );
   }
 
   function waitForPreparedAddressedSpeech(): PreparedCausalLifeIntent {
@@ -365,7 +458,10 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
     authority,
     choiceReviewBridge,
     lifeIntentOwner,
+    currentLifeView,
     takeReadyLifeIntentAttempt,
+    groundPreparedPlayerRequest,
+    materializeAdmittedPlayerRequest,
     settlePreparedPlayerRequest,
     acceptPlayerRequest,
     advanceFocusedMatterOneWorldTick,
@@ -415,40 +511,40 @@ function groundCommitment(
   spec: MiraCausalCommitmentSpec,
   originPerceptId: string,
   navigation: ReturnType<typeof createFiveResidentNavigationGraph>,
-) {
+): ResidentLifeIntentAdmission<GroundedCausalCommitmentIntent> {
   const directive = proposal.activityDirective;
   if (directive.kind !== "replace"
     || directive.activity.kind !== "travel"
     || directive.activity.targetRegionId !== spec.targetRegionId) {
-    return { status: "rejected" as const, detail: "expected known-region travel commitment" };
+    return { status: "rejected", detail: "expected known-region travel commitment" };
   }
   if (!providerContext.recentPercepts.some((percept) => (
     percept.id === originPerceptId
     && percept.phenomenon === "speech"
     && percept.addressed
   ))) {
-    return { status: "rejected" as const, detail: "commitment origin is not the exact addressed private speech percept" };
+    return { status: "rejected", detail: "commitment origin is not the exact addressed private speech percept" };
   }
 
   const currentRegionId = groundingContext.currentRegionId;
   if (!currentRegionId) {
-    return { status: "rejected" as const, detail: "current resident region is unavailable at admission" };
+    return { status: "rejected", detail: "current resident region is unavailable at admission" };
   }
   const known = new Set(groundingContext.knownRegions.map((region) => region.id));
   known.add(currentRegionId);
   const route = navigation.route(currentRegionId, spec.targetRegionId, known);
   const destination = navigation.destinationPoint(spec.targetRegionId);
   if (!route || !destination) {
-    return { status: "rejected" as const, detail: "commitment target lacks current resident-known route/destination" };
+    return { status: "rejected", detail: "commitment target lacks current resident-known route/destination" };
   }
 
   return {
-    status: "accepted" as const,
+    status: "accepted",
     intent: {
       originPerceptId,
       destination,
       routeRegionIds: [...route.regionIds],
       semanticCourse: spec.semanticCourse,
-    } satisfies GroundedCommitmentIntent,
+    },
   };
 }
