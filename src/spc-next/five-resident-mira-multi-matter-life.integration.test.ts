@@ -102,6 +102,8 @@ describe("five-resident Mira multi-matter life composition", () => {
       candidateRunIds: [B.runId, C.runId],
     });
     expect(focus.focusedRun()).toBeNull();
+    expect(authority.enforceMotionAuthority()).toEqual({ status: "revoked", runId: A.runId });
+    expect(authority.motionOwner()).toBeNull();
 
     const lifeAtChoice = captureResidentLifeCognitionView({
       kernel,
@@ -164,12 +166,16 @@ describe("five-resident Mira multi-matter life composition", () => {
     expect(arbitrator.reconcile()).toEqual({ status: "acquired_deferred", runId: C.runId });
     expect(focus.focusedRun()).toBe(C.runId);
     expect(arbitrator.deferredRunIds()).toEqual([]);
+    expect(authority.enforceMotionAuthority()).toEqual({ status: "revoked", runId: B.runId });
+    expect(authority.motionOwner()).toBeNull();
 
     const positionBeforeC = actorPosition(world);
     runTravelToArrival(world, kernel, authority, C, destination(navigation, C.targetRegionId));
     expect(kernel.resolveMatter(C.matterId)).toMatchObject({ status: "resolved" });
     expect(arbitrator.reconcile()).toEqual({ status: "idle" });
     expect(focus.focusedRun()).toBeNull();
+    expect(authority.enforceMotionAuthority()).toEqual({ status: "revoked", runId: C.runId });
+    expect(authority.motionOwner()).toBeNull();
     expect(actorPosition(world)).not.toEqual(positionBeforeC);
 
     expect(kernel.matter(A.matterId)?.status).toBe("resolved");
