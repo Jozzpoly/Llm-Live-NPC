@@ -1,7 +1,7 @@
 {
-  "version": 11,
+  "version": 12,
   "pr": 137,
   "qualifiers": ["life-intent"],
-  "purpose": "Repeat the bounded resident-life intent qualifier exactly once after adding fail-closed rejection diagnostics. This is a diagnostic rerun, not retry-until-green: require spend-free exact-preview health, exact gpt-5.6-luna model and method-boundary gates first; then make exactly one real provider request using the same resident_life_cognition_v1 scenario. If the provider proposal is rejected again, preserve the safe stage/code diagnostic so we can distinguish extraction/strict-envelope failure from semantic schema_or_grounding failure without exposing raw provider output. Do not run lifecycle, interruption or life-choice. Do not weaken validation based on this run.",
-  "requestedAtUtc": "2026-09-17T20:04:30Z"
+  "purpose": "Qualify the materially changed commitment-native resident life-intent contract exactly once. Deterministic and browser gates are green before this trigger. Require exact-commit Cloudflare preview, spend-free endpoint/model/key/method preflight, then make exactly one real gpt-5.6-luna request over resident_life_cognition_v1 while an existing Workshop run owns the body. Any legal bounded commitmentDecision (accept, decline, defer or clarify) is a transport/contract PASS; do not retry for a preferred semantic choice. Provider output must contain no matter/run/task/body/route/World/outcome authority. This run does not prove judgement quality, matter materialization, execution, sustained autonomy or best-choice behavior.",
+  "requestedAtUtc": "2026-09-17T21:42:00Z"
 }
