@@ -3,7 +3,7 @@ import type {
   ResidentCognitionContext,
   ResidentCognitionProposal,
 } from "./cognition-contract";
-import type { CognitionBatch, Vec2, WorldOccurrence } from "./contracts";
+import type { CognitionBatch, ResidentPercept, Vec2, WorldOccurrence } from "./contracts";
 import { createFiveResidentNavigationGraph } from "./five-resident-navigation";
 import { createFiveResidentRegionComposition } from "./five-resident-region";
 import {
@@ -42,6 +42,8 @@ const REQUEST_RADIUS = 420;
 const FIXED_DELTA_SECONDS = 1 / 60;
 const MAX_BATCH_STEPS = 180;
 const MAX_TRAVEL_STEPS = 2_000;
+const INTERRUPTION_HOLD_TICKS = 12;
+const INTERRUPTION_RESPONSE = "Tak?";
 
 export interface MiraCausalCommitmentSpec {
   key: "hearth" | "workshop" | "fields";
@@ -137,6 +139,35 @@ export type IncrementalCausalCommitmentStep =
   | { status: "running"; matterId: string; runId: string; worldTick: number }
   | { status: "completed"; completion: CompletedCausalCommitment };
 
+export interface MiraCausalInterruptionSnapshot {
+  status: "active" | "completed";
+  originPerceptId: string;
+  interruptMatterId: string;
+  interruptRunId: string;
+  mainMatterId: string;
+  mainRunId: string;
+  responseOccurrenceId: string | null;
+  remainingHoldTicks: number;
+}
+
+export type MiraCausalInterruptionStep =
+  | { status: "responded"; interruption: MiraCausalInterruptionSnapshot }
+  | { status: "holding"; interruption: MiraCausalInterruptionSnapshot }
+  | { status: "resumed"; interruption: MiraCausalInterruptionSnapshot };
+
+interface ActiveMiraCausalInterruption {
+  originPerceptId: string;
+  addressedDirection: Vec2 | null;
+  interruptMatterId: string;
+  interruptRunId: string;
+  mainMatterId: string;
+  mainRunId: string;
+  mainRunBinding: NonNullable<ReturnType<ResidentContinuityKernel["runBinding"]>>;
+  responseOccurrenceId: string | null;
+  remainingHoldTicks: number;
+  responded: boolean;
+}
+
 /**
  * Bounded research composition for the first non-fixture multi-matter origin pressure.
  *
@@ -209,6 +240,7 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
   const runMatterIds = new Map<string, string>();
   const acceptedMatterIds = new Set<string>();
   const groundedCommitmentAuthority = new WeakMap<GroundedCausalCommitmentIntent, GroundedCommitmentAuthority>();
+  let activeInterruption: ActiveMiraCausalInterruption | null = null;
 
   function currentLife() {
     return captureResidentLifeCognitionView({
@@ -499,6 +531,170 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
     return settlePreparedPlayerRequest(prepared, occurrence, spec, legacyCommitmentProposal(spec));
   }
 
+  function exactAddressedSpeechPercept(occurrence: WorldOccurrence): ResidentPercept | null {
+    if (occurrence.kind !== "speech" || !occurrence.addressedActorIds.includes(MIRA_ID)) return null;
+    const percepts = world.residentDiagnostics(MIRA_ID).recentPercepts;
+    return percepts.find((percept) => (
+      percept.occurrenceId === occurrence.id
+      && percept.phenomenon === "speech"
+      && percept.addressed
+    )) ?? null;
+  }
+
+  function interruptionSnapshot(
+    active: ActiveMiraCausalInterruption,
+    status: MiraCausalInterruptionSnapshot["status"],
+  ): MiraCausalInterruptionSnapshot {
+    return {
+      status,
+      originPerceptId: active.originPerceptId,
+      interruptMatterId: active.interruptMatterId,
+      interruptRunId: active.interruptRunId,
+      mainMatterId: active.mainMatterId,
+      mainRunId: active.mainRunId,
+      responseOccurrenceId: active.responseOccurrenceId,
+      remainingHoldTicks: active.remainingHoldTicks,
+    };
+  }
+
+  function beginAddressedInterruption(occurrence: WorldOccurrence): MiraCausalInterruptionSnapshot {
+    if (activeInterruption) throw new Error("Mira already has an active addressed interruption");
+
+    const percept = exactAddressedSpeechPercept(occurrence);
+    if (!percept) {
+      throw new Error("addressed interruption requires an exact private addressed speech percept");
+    }
+    const mainRunId = focus.focusedRun();
+    if (!mainRunId) throw new Error("addressed interruption requires a focused resident run");
+    const mainMatterId = runMatterIds.get(mainRunId);
+    if (!mainMatterId) throw new Error("addressed interruption requires a causal commitment run");
+    const mainMatter = kernel.matter(mainMatterId);
+    const mainRunBinding = kernel.runBinding(mainRunId);
+    if (!mainMatter || mainMatter.status !== "active" || mainMatter.activeRunId !== mainRunId || !mainRunBinding) {
+      throw new Error("focused causal commitment is not interruptible");
+    }
+
+    const causalId = occurrence.id;
+    const interruptMatterId = `matter.mira.interrupt.${causalId}`;
+    const interruptRunId = `run.mira.interrupt.${causalId}.semantic-1`;
+    if (acceptedMatterIds.has(interruptMatterId) || kernel.matter(interruptMatterId)) {
+      throw new Error(`addressed interruption already materialized: ${interruptMatterId}`);
+    }
+
+    const evidence = kernel.recordEvidence({
+      id: `evidence:mira:interrupt:${causalId}:${percept.tick}`,
+      tick: percept.tick,
+      kind: "player_addressed_speech",
+      summary: `Addressed speech interrupted Mira: ${percept.text ?? percept.summary}`,
+    });
+    kernel.openMatter({
+      id: interruptMatterId,
+      originEvidenceId: evidence.id,
+      semanticCourse: "briefly acknowledge the addressed player, then return to the interrupted commitment",
+    });
+    kernel.bindRun({
+      matterId: interruptMatterId,
+      taskId: `task.mira.interrupt.${causalId}.semantic-1`,
+      runId: interruptRunId,
+    });
+    acceptedMatterIds.add(interruptMatterId);
+
+    kernel.suspendMatter(mainMatterId, interruptMatterId);
+    const focusClaim = arbitrator.request(interruptRunId);
+    if (focusClaim.status !== "acquired") {
+      throw new Error(`interrupt run failed to acquire resident body: ${focusClaim.status}`);
+    }
+    authority.enforceMotionAuthority();
+
+    activeInterruption = {
+      originPerceptId: percept.id,
+      addressedDirection: percept.spatial.kind === "directional"
+        && Math.hypot(percept.spatial.direction.x, percept.spatial.direction.y) > 1e-9
+        ? { ...percept.spatial.direction }
+        : null,
+      interruptMatterId,
+      interruptRunId,
+      mainMatterId,
+      mainRunId,
+      mainRunBinding: structuredClone(mainRunBinding),
+      responseOccurrenceId: null,
+      remainingHoldTicks: INTERRUPTION_HOLD_TICKS,
+      responded: false,
+    };
+    return interruptionSnapshot(activeInterruption, "active");
+  }
+
+  function advanceAddressedInterruptionOneWorldTick(): MiraCausalInterruptionStep {
+    const active = activeInterruption;
+    if (!active) throw new Error("Mira has no active addressed interruption");
+
+    if (!active.responded) {
+      const effects = [
+        { kind: "motion" as const, desiredVelocity: { x: 0, y: 0 } },
+        ...(active.addressedDirection
+          ? [{ kind: "look" as const, direction: { ...active.addressedDirection } }]
+          : []),
+        {
+          kind: "speech" as const,
+          text: INTERRUPTION_RESPONSE,
+          radius: REQUEST_RADIUS,
+          addressedActorIds: [PLAYER_ID],
+        },
+      ];
+      const applied = authority.apply({ runId: active.interruptRunId, effects });
+      if (applied.status !== "applied") {
+        throw new Error(`interrupt response execution failed: ${applied.status}`);
+      }
+      const response = applied.occurrences.find((candidate) => candidate.kind === "speech");
+      if (!response) throw new Error("interrupt response did not create a World speech occurrence");
+      active.responded = true;
+      active.responseOccurrenceId = response.id;
+      world.step();
+      return {
+        status: "responded",
+        interruption: interruptionSnapshot(active, "active"),
+      };
+    }
+
+    if (active.remainingHoldTicks > 0) {
+      active.remainingHoldTicks -= 1;
+      world.step();
+      return {
+        status: "holding",
+        interruption: interruptionSnapshot(active, "active"),
+      };
+    }
+
+    const reconciled = kernel.reconcileRunOutcome({
+      runId: active.interruptRunId,
+      tick: world.tick,
+      status: "succeeded",
+      summary: `acknowledged addressed player via ${active.responseOccurrenceId ?? "speech"}`,
+    });
+    if (reconciled.status !== "recorded") {
+      throw new Error("interrupt response factual reconciliation failed");
+    }
+    kernel.resolveMatter(active.interruptMatterId);
+    authority.enforceMotionAuthority();
+
+    if (!kernel.resumeMatter(active.mainMatterId)) {
+      throw new Error("interrupted causal commitment failed to resume");
+    }
+    const bindingAfterResume = kernel.runBinding(active.mainRunId);
+    if (JSON.stringify(bindingAfterResume) !== JSON.stringify(active.mainRunBinding)) {
+      throw new Error("interrupted causal run binding changed across interruption");
+    }
+    const resumedFocus = arbitrator.request(active.mainRunId);
+    if (resumedFocus.status !== "acquired") {
+      throw new Error(`resumed causal run failed to reacquire resident body: ${resumedFocus.status}`);
+    }
+
+    const completed = interruptionSnapshot(active, "completed");
+    activeInterruption = null;
+    world.step();
+    return { status: "resumed", interruption: completed };
+  }
+
   function semanticRevisionExecutionIdentity(matter: ResidentMatter) {
     return {
       taskId: `task.mira.regrounded.${matter.id}.semantic-${matter.semanticRevision}`,
@@ -667,6 +863,8 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
     materializeAdmittedPlayerCommitmentRequest,
     settlePreparedPlayerRequest,
     acceptPlayerRequest,
+    beginAddressedInterruption,
+    advanceAddressedInterruptionOneWorldTick,
     advanceFocusedMatterOneWorldTick,
     completeFocusedMatter,
     choose(runId: string): ResidentExecutionArbitrationChoice {
