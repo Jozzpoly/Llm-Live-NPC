@@ -45,5 +45,9 @@ function openMatter(kernel: ResidentContinuityKernel, matterId: string, evidence
     kind: "test",
     summary: matterId,
   });
-  kernel.openMatter({ matterId, id: matterId, originEvidenceId: evidenceId, semanticCourse: `continue ${matterId}` } as never);
+  kernel.openMatter({
+    id: matterId,
+    originEvidenceId: evidenceId,
+    semanticCourse: `continue ${matterId}`,
+  });
 }
