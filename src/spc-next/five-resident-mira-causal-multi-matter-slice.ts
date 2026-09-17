@@ -93,10 +93,17 @@ export interface GroundedCausalCommitmentIntent {
 
 type CausalCommitmentProposal = ResidentCognitionProposal | ResidentLifeIntentProposal;
 
+interface CausalCommitmentIdentity {
+  matterId: string;
+  taskId: string;
+  runId: string;
+  evidenceKey: string;
+}
+
 interface GroundedCommitmentAuthority {
   attempt: ResidentLifeIntentAttempt;
   occurrenceId: string;
-  matterId: string;
+  identity: CausalCommitmentIdentity;
   proposal: CausalCommitmentProposal;
 }
 
@@ -264,7 +271,7 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
     return groundPreparedPlayerProposal(
       prepared,
       occurrence,
-      spec,
+      legacyCommitmentIdentity(spec),
       proposal,
       providerContext,
       groundLegacyCommitment,
@@ -274,14 +281,14 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
   function groundPreparedPlayerCommitmentRequest(
     prepared: PreparedCausalLifeIntent,
     occurrence: WorldOccurrence,
-    spec: MiraCausalCommitmentSpec,
+    _spec: MiraCausalCommitmentSpec,
     proposal: ResidentLifeIntentProposal,
     providerContext: ResidentLifeCognitionContext,
   ): ResidentLifeIntentAdmission<GroundedCausalCommitmentIntent> {
     return groundPreparedPlayerProposal(
       prepared,
       occurrence,
-      spec,
+      causalCommitmentIdentity(occurrence),
       proposal,
       providerContext,
       groundLifeCommitment,
@@ -291,7 +298,7 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
   function groundPreparedPlayerProposal<Proposal extends CausalCommitmentProposal>(
     prepared: PreparedCausalLifeIntent,
     occurrence: WorldOccurrence,
-    spec: MiraCausalCommitmentSpec,
+    identity: CausalCommitmentIdentity,
     proposal: Proposal,
     providerContext: ResidentLifeCognitionContext,
     ground: (
@@ -302,8 +309,8 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
       navigation: ReturnType<typeof createFiveResidentNavigationGraph>,
     ) => ResidentLifeIntentAdmission<GroundedCausalCommitmentIntent>,
   ): ResidentLifeIntentAdmission<GroundedCausalCommitmentIntent> {
-    if (acceptedMatterIds.has(spec.matterId)) {
-      return { status: "rejected", detail: `commitment already accepted: ${spec.matterId}` };
+    if (acceptedMatterIds.has(identity.matterId)) {
+      return { status: "rejected", detail: `commitment already accepted: ${identity.matterId}` };
     }
     const originPercept = exactOriginPercept(prepared, occurrence);
     if (!originPercept) {
@@ -329,7 +336,7 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
     groundedCommitmentAuthority.set(intent, {
       attempt: prepared.attempt,
       occurrenceId: occurrence.id,
-      matterId: spec.matterId,
+      identity: { ...identity },
       proposal,
     });
     return { status: "accepted", intent };
@@ -342,23 +349,35 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
     proposal: ResidentCognitionProposal,
     intent: GroundedCausalCommitmentIntent,
   ): AcceptedCausalCommitment {
-    return materializeAdmittedPlayerProposal(prepared, occurrence, spec, proposal, intent);
+    return materializeAdmittedPlayerProposal(
+      prepared,
+      occurrence,
+      legacyCommitmentIdentity(spec),
+      proposal,
+      intent,
+    );
   }
 
   function materializeAdmittedPlayerCommitmentRequest(
     prepared: PreparedCausalLifeIntent,
     occurrence: WorldOccurrence,
-    spec: MiraCausalCommitmentSpec,
+    _spec: MiraCausalCommitmentSpec,
     proposal: ResidentLifeIntentProposal,
     intent: GroundedCausalCommitmentIntent,
   ): AcceptedCausalCommitment {
-    return materializeAdmittedPlayerProposal(prepared, occurrence, spec, proposal, intent);
+    return materializeAdmittedPlayerProposal(
+      prepared,
+      occurrence,
+      causalCommitmentIdentity(occurrence),
+      proposal,
+      intent,
+    );
   }
 
   function materializeAdmittedPlayerProposal(
     prepared: PreparedCausalLifeIntent,
     occurrence: WorldOccurrence,
-    spec: MiraCausalCommitmentSpec,
+    identity: CausalCommitmentIdentity,
     proposal: CausalCommitmentProposal,
     intent: GroundedCausalCommitmentIntent,
   ): AcceptedCausalCommitment {
@@ -366,13 +385,13 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
     if (!groundingAuthority
       || groundingAuthority.attempt !== prepared.attempt
       || groundingAuthority.occurrenceId !== occurrence.id
-      || groundingAuthority.matterId !== spec.matterId
+      || !sameCommitmentIdentity(groundingAuthority.identity, identity)
       || groundingAuthority.proposal !== proposal) {
       throw new Error("grounded commitment intent lacks exact admitted grounding authority");
     }
-    if (acceptedMatterIds.has(spec.matterId)) {
+    if (acceptedMatterIds.has(identity.matterId)) {
       groundedCommitmentAuthority.delete(intent);
-      throw new Error(`commitment already accepted: ${spec.matterId}`);
+      throw new Error(`commitment already accepted: ${identity.matterId}`);
     }
     const originPercept = exactOriginPercept(prepared, occurrence);
     if (!originPercept || originPercept.id !== intent.originPerceptId) {
@@ -382,30 +401,34 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
 
     mira.scheduleAdaptiveReview(world.tick, proposal.reviewAfterSeconds, FIXED_DELTA_SECONDS);
     const origin = kernel.recordEvidence({
-      id: `evidence:mira:accepted-request:${spec.key}:${originPercept.tick}`,
+      id: `evidence:mira:accepted-${identity.evidenceKey}:${originPercept.tick}`,
       tick: originPercept.tick,
       kind: "accepted_cognition_commitment",
       summary: `${intent.semanticCourse}; origin occurrence ${originPercept.occurrenceId}`,
     });
     const matter = kernel.openMatter({
-      id: spec.matterId,
+      id: identity.matterId,
       originEvidenceId: origin.id,
       semanticCourse: intent.semanticCourse,
       semanticIntent: intent.semanticIntent,
     });
-    kernel.bindRun({ matterId: spec.matterId, taskId: spec.taskId, runId: spec.runId });
-    const focusClaim = arbitrator.request(spec.runId);
+    kernel.bindRun({
+      matterId: identity.matterId,
+      taskId: identity.taskId,
+      runId: identity.runId,
+    });
+    const focusClaim = arbitrator.request(identity.runId);
     if (focusClaim.status === "rejected") {
       throw new Error(`accepted commitment run was not authorized: ${focusClaim.reason}`);
     }
 
     executors.set(
-      spec.runId,
-      new ResidentGroundedTravelExecutor(spec.runId, intent.destination, authority, world),
+      identity.runId,
+      new ResidentGroundedTravelExecutor(identity.runId, intent.destination, authority, world),
     );
-    groundedTargetRegionIds.set(spec.runId, intent.semanticIntent.targetRegionId);
-    runMatterIds.set(spec.runId, spec.matterId);
-    acceptedMatterIds.add(spec.matterId);
+    groundedTargetRegionIds.set(identity.runId, intent.semanticIntent.targetRegionId);
+    runMatterIds.set(identity.runId, identity.matterId);
+    acceptedMatterIds.add(identity.matterId);
     groundedCommitmentAuthority.delete(intent);
 
     return {
@@ -414,7 +437,7 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
       context: structuredClone(prepared.attempt.context),
       originPerceptId: originPercept.id,
       matter: structuredClone(matter),
-      runId: spec.runId,
+      runId: identity.runId,
       routeRegionIds: [...intent.routeRegionIds],
       focusClaim: structuredClone(focusClaim),
     };
@@ -661,6 +684,35 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
       return mira.cognitionContext({ residentId: MIRA_ID, requestedAtTick: world.tick, reasons: [] });
     },
   };
+}
+
+function legacyCommitmentIdentity(spec: MiraCausalCommitmentSpec): CausalCommitmentIdentity {
+  return {
+    matterId: spec.matterId,
+    taskId: spec.taskId,
+    runId: spec.runId,
+    evidenceKey: `request:${spec.key}`,
+  };
+}
+
+function causalCommitmentIdentity(occurrence: WorldOccurrence): CausalCommitmentIdentity {
+  const causalId = occurrence.id;
+  return {
+    matterId: `matter.mira.causal.${causalId}`,
+    taskId: `task.mira.causal.${causalId}.semantic-1`,
+    runId: `run.mira.causal.${causalId}.semantic-1`,
+    evidenceKey: `commitment:${causalId}`,
+  };
+}
+
+function sameCommitmentIdentity(
+  left: CausalCommitmentIdentity,
+  right: CausalCommitmentIdentity,
+): boolean {
+  return left.matterId === right.matterId
+    && left.taskId === right.taskId
+    && left.runId === right.runId
+    && left.evidenceKey === right.evidenceKey;
 }
 
 function legacyCommitmentProposal(spec: MiraCausalCommitmentSpec): ResidentCognitionProposal {
