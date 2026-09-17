@@ -7,7 +7,7 @@ import {
 const [HEARTH, WORKSHOP, FIELDS] = MIRA_CAUSAL_COMMITMENTS;
 
 describe("five-resident Mira causal multi-matter acquisition", () => {
-  it("accumulates three commitments from real addressed World speech and reaches genuine B/C arbitration only after factual A completion", () => {
+  it("accumulates three commitments from real addressed World speech and reaches genuine B/C arbitration plus cognition pressure only after factual A completion", () => {
     const slice = createFiveResidentMiraCausalMultiMatterSlice();
 
     const acceptedA = slice.acceptPlayerRequest(HEARTH!);
@@ -76,18 +76,25 @@ describe("five-resident Mira causal multi-matter acquisition", () => {
       deferredRunIds: [FIELDS!.runId, WORKSHOP!.runId].sort((a, b) => a.localeCompare(b)),
     });
 
+    const reviewBeforeChoice = slice.mira.cognitionScheduleDiagnostics().nextQuietReviewTick;
     const completedA = slice.completeFocusedMatter(HEARTH!.matterId);
     expect(completedA.arbitration).toEqual({
       status: "choice_required",
       candidateRunIds: [FIELDS!.runId, WORKSHOP!.runId].sort((a, b) => a.localeCompare(b)),
     });
+    expect(completedA.choiceReview).toEqual({
+      status: "scheduled",
+      candidateRunIds: [FIELDS!.runId, WORKSHOP!.runId].sort((a, b) => a.localeCompare(b)),
+    });
+    expect(slice.mira.cognitionScheduleDiagnostics().nextQuietReviewTick).toBeLessThan(reviewBeforeChoice);
     expect(slice.kernel.matter(HEARTH!.matterId)).toMatchObject({ status: "resolved", activeRunId: null });
     expect(slice.kernel.matter(WORKSHOP!.matterId)).toMatchObject({ status: "active", activeRunId: WORKSHOP!.runId });
     expect(slice.kernel.matter(FIELDS!.matterId)).toMatchObject({ status: "active", activeRunId: FIELDS!.runId });
     expect(slice.focus.focusedRun()).toBeNull();
 
     // No life-choice policy is smuggled into this origin specimen. The exact next
-    // boundary is deliberately the existing higher-cognition choice seam.
+    // boundary is deliberately the existing higher-cognition choice seam, but that
+    // seam now has resident-owned scheduler pressure rather than test-owned polling.
     expect(slice.arbitrator.deferredRunIds()).toEqual([
       FIELDS!.runId,
       WORKSHOP!.runId,
