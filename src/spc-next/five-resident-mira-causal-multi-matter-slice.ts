@@ -12,11 +12,16 @@ import {
 } from "./resident-execution-arbitrator";
 import { ResidentExecutionFocusAuthority, type ResidentExecutionFocusClaim } from "./resident-execution-focus-authority";
 import { ResidentGroundedTravelExecutor } from "./resident-grounded-travel-executor";
+import {
+  ResidentLifeChoiceReviewBridge,
+  type ResidentLifeChoiceReviewObservation,
+} from "./resident-life-choice-review-bridge";
 import { ResidentWorldExecutionAuthority } from "./resident-world-execution-authority";
 
 const MIRA_ID = "resident.mira";
 const PLAYER_ID = "player.jozz";
 const REQUEST_RADIUS = 420;
+const FIXED_DELTA_SECONDS = 1 / 60;
 const MAX_BATCH_STEPS = 180;
 const MAX_TRAVEL_STEPS = 2_000;
 
@@ -88,6 +93,7 @@ export interface CompletedCausalCommitment {
   runId: string;
   worldTick: number;
   arbitration: ResidentExecutionArbitration;
+  choiceReview: ResidentLifeChoiceReviewObservation;
 }
 
 /**
@@ -114,6 +120,7 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
   const kernel = new ResidentContinuityKernel();
   const focus = new ResidentExecutionFocusAuthority(kernel);
   const arbitrator = new ResidentExecutionArbitrator(kernel, focus);
+  const choiceReviewBridge = new ResidentLifeChoiceReviewBridge(mira);
 
   // This specimen starts after authored-local activity. Recovered authority may own
   // Mira immediately because no authored walk is part of the variable under test.
@@ -155,6 +162,7 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
     if (settlement.status !== "applied") {
       throw new Error(`commitment cognition did not apply: ${settlement.status}`);
     }
+    mira.scheduleAdaptiveReview(world.tick, settlement.proposal.reviewAfterSeconds, FIXED_DELTA_SECONDS);
 
     const exactConcern = settlement.proposal.concerns.find((concern) => concern.id === settlement.intent.concernId);
     if (!exactConcern
@@ -225,12 +233,14 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
       if (reconciled.status !== "recorded") throw new Error(`failed to reconcile ${spec.runId}`);
       kernel.resolveMatter(spec.matterId);
       const arbitration = arbitrator.reconcile();
+      const choiceReview = choiceReviewBridge.observe(arbitration, world.tick);
       authority.enforceMotionAuthority();
       return {
         matterId: spec.matterId,
         runId: spec.runId,
         worldTick: world.tick,
         arbitration: structuredClone(arbitration),
+        choiceReview: structuredClone(choiceReview),
       };
     }
     throw new Error(`${spec.runId} exceeded bounded travel guard`);
@@ -243,10 +253,19 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
     focus,
     arbitrator,
     authority,
+    choiceReviewBridge,
     acceptPlayerRequest,
     completeFocusedMatter,
     choose(runId: string): ResidentExecutionArbitrationChoice {
-      return arbitrator.choose(runId);
+      const choice = arbitrator.choose(runId);
+      if (choice.status === "acquired" || choice.status === "already_focused") {
+        choiceReviewBridge.observe({
+          status: "focused",
+          runId,
+          deferredRunIds: arbitrator.deferredRunIds(),
+        }, world.tick);
+      }
+      return choice;
     },
     privateContext(): ResidentCognitionContext {
       return mira.cognitionContext({ residentId: MIRA_ID, requestedAtTick: world.tick, reasons: [] });
