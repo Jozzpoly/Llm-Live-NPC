@@ -12,6 +12,7 @@ on:
 permissions:
   contents: read
   issues: read
+  checks: read
 
 jobs:
   spc-live-provider-evidence:
@@ -69,7 +70,39 @@ jobs:
           echo "Requested qualifiers: ${REQUESTED_QUALIFIERS}"
 
           CANDIDATE_URL=""
+          RESOLVED_FROM=""
           for attempt in $(seq 1 72); do
+            curl --fail --silent --show-error \
+              -H "Authorization: Bearer ${GH_TOKEN}" \
+              -H "Accept: application/vnd.github+json" \
+              "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/check-runs?per_page=100" \
+              > /tmp/commit-check-runs.json
+
+            CANDIDATE_URL="$(node <<'NODE'
+          const fs = require('fs');
+          const payload = JSON.parse(fs.readFileSync('/tmp/commit-check-runs.json', 'utf8'));
+          const exactSha = process.env.GITHUB_SHA;
+          for (const run of payload.check_runs ?? []) {
+            if (run?.head_sha !== exactSha) continue;
+            if (run?.app?.slug !== 'cloudflare-workers-and-pages') continue;
+            if (run?.name !== 'Workers Builds: llm-live-npc') continue;
+            if (run?.status !== 'completed' || run?.conclusion !== 'success') continue;
+            const summary = String(run?.output?.summary ?? '');
+            const match = summary.match(/Preview URL:\s*(https:\/\/[^\s]+\.workers\.dev)/u);
+            if (match) {
+              process.stdout.write(match[1]);
+              break;
+            }
+          }
+          NODE
+            )"
+            if [ -n "$CANDIDATE_URL" ]; then
+              RESOLVED_FROM="exact Cloudflare check-run"
+              break
+            fi
+
+            # Historical fallback: the Cloudflare PR comment can lag the authoritative
+            # exact-commit check-run, but remains useful for older deployments.
             curl --fail --silent --show-error \
               -H "Authorization: Bearer ${GH_TOKEN}" \
               -H "Accept: application/vnd.github+json" \
@@ -93,13 +126,15 @@ jobs:
           NODE
             )"
             if [ -n "$CANDIDATE_URL" ]; then
+              RESOLVED_FROM="Cloudflare PR comment fallback"
               break
             fi
             sleep 5
           done
 
           if [ -z "$CANDIDATE_URL" ]; then
-            echo "Cloudflare bot did not publish an exact-commit preview for ${GITHUB_SHA}" >&2
+            echo "Cloudflare did not publish an exact-commit preview for ${GITHUB_SHA}" >&2
+            cat /tmp/commit-check-runs.json >&2 || true
             cat /tmp/pr-comments.json >&2 || true
             exit 1
           fi
@@ -107,7 +142,7 @@ jobs:
           echo "LIVE_PROVIDER_BASE_URL=$CANDIDATE_URL" >> "$GITHUB_ENV"
           echo "SOURCE_SHA=$GITHUB_SHA" >> "$GITHUB_ENV"
           printf '%s\n' "$CANDIDATE_URL" > /tmp/live-provider-candidate-url.txt
-          echo "Exact candidate: $CANDIDATE_URL"
+          echo "Exact candidate: $CANDIDATE_URL (${RESOLVED_FROM})"
 
       - name: Wait for exact candidate to serve the SPC client
         shell: bash
