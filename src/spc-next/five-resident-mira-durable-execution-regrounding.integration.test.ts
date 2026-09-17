@@ -68,8 +68,8 @@ describe("five-resident Mira durable execution re-grounding", () => {
     expect(slice.kernel.runBinding(staleRunId)).toBeNull();
     expect(slice.kernel.canRunMutateWorld(regroundedB!.activeRunId!)).toBe(true);
     expect(slice.focus.focusedRun()).toBe(regroundedB!.activeRunId);
-    expect(completedA.arbitration).toMatchObject({
-      status: "focused",
+    expect(completedA.arbitration).toEqual({
+      status: "acquired_deferred",
       runId: regroundedB!.activeRunId,
     });
 
