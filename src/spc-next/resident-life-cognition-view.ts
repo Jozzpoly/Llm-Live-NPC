@@ -29,6 +29,7 @@ export interface ResidentLifeMatterView {
   status: ResidentMatter["status"];
   semanticRevision: number;
   semanticCourse: string;
+  semanticIntent: ResidentMatter["semanticIntent"];
   suspendedByMatterId: string | null;
   originEvidence: ResidentLifeEvidenceView | null;
   semanticEvidence: ResidentLifeEvidenceView | null;
@@ -65,6 +66,9 @@ export interface CaptureResidentLifeCognitionViewInput {
  * This view composes already-authoritative resident-owned state without mutating it or
  * creating a second life model. The caller explicitly chooses which resident matters
  * belong in this cognition review.
+ *
+ * Structured matter intent is resident semantic truth. Concrete execution methods
+ * such as routes, destinations and executor state deliberately stay outside this view.
  */
 export function captureResidentLifeCognitionView(
   input: CaptureResidentLifeCognitionViewInput,
@@ -121,6 +125,7 @@ function projectMatter(
     status: matter.status,
     semanticRevision: matter.semanticRevision,
     semanticCourse: matter.semanticCourse,
+    semanticIntent: matter.semanticIntent ? structuredClone(matter.semanticIntent) : null,
     suspendedByMatterId: matter.suspendedByMatterId,
     originEvidence: projectEvidence(kernel.originEvidence(matter.id)),
     semanticEvidence: projectEvidence(kernel.semanticEvidence(matter.id)),
