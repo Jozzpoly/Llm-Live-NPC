@@ -1,9 +1,7 @@
 import type { ResidentCognitionContext, ResidentCognitionProposal } from "./cognition-contract";
-import { CognitionGrounder } from "./cognition-grounder";
 import type { CognitionBatch, Vec2, WorldOccurrence } from "./contracts";
 import { createFiveResidentNavigationGraph } from "./five-resident-navigation";
 import { createFiveResidentRegionComposition } from "./five-resident-region";
-import { ResidentCognitionOwner } from "./resident-cognition-owner";
 import { ResidentContinuityKernel, type ResidentMatter } from "./resident-continuity-kernel";
 import {
   ResidentExecutionArbitrator,
@@ -16,6 +14,9 @@ import {
   ResidentLifeChoiceReviewBridge,
   type ResidentLifeChoiceReviewObservation,
 } from "./resident-life-choice-review-bridge";
+import type { ResidentLifeCognitionContext } from "./resident-life-cognition-context";
+import { captureResidentLifeCognitionView } from "./resident-life-cognition-view";
+import { ResidentLifeIntentOwner } from "./resident-life-intent-owner";
 import { ResidentWorldExecutionAuthority } from "./resident-world-execution-authority";
 
 const MIRA_ID = "resident.mira";
@@ -75,6 +76,7 @@ interface GroundedCommitmentIntent {
 export interface AcceptedCausalCommitment {
   occurrence: WorldOccurrence;
   batch: CognitionBatch;
+  context: ResidentLifeCognitionContext;
   originPerceptId: string;
   matter: ResidentMatter;
   runId: string;
@@ -98,22 +100,25 @@ export interface CompletedCausalCommitment {
  * is opened here only after one exact addressed private percept and one admitted,
  * known-region-grounded cognition intent agree on a concrete resident commitment.
  *
+ * Admission is life-aware even while another recovered matter owns the body. Provider-
+ * facing cognition therefore sees legacy activity only as `localActivity` and receives
+ * the authoritative recovered matter/run/body projection in `life`. The intent owner
+ * itself still stops before matter/run/body authority.
+ *
  * A `ResidentMind` concern is intentionally NOT created as a second copy of the same
  * commitment. Once admitted, continuity `matter` is the durable semantic authority;
  * concerns remain a separate private uncertainty/problem representation.
  *
  * This is deliberately NOT a general life runtime or arbitrary language-understanding
  * claim. The deterministic proposal supplies the interpretation so this specimen can
- * isolate causal matter acquisition and concurrency. It also intentionally keeps the
- * first commitment inside Hearth while the later Workshop/Fields runs are grounded,
- * avoiding a separate stale-route/re-grounding question that must be attacked next.
+ * isolate causal matter acquisition and concurrency.
  */
 export function createFiveResidentMiraCausalMultiMatterSlice() {
   const composition = createFiveResidentRegionComposition({ playerStart: { x: 700, y: 700 } });
   const { world } = composition;
   const mira = composition.runtimes[MIRA_ID];
   const navigation = createFiveResidentNavigationGraph();
-  const cognitionOwner = new ResidentCognitionOwner(mira, new CognitionGrounder(navigation));
+  const lifeIntentOwner = new ResidentLifeIntentOwner(mira);
   const kernel = new ResidentContinuityKernel();
   const focus = new ResidentExecutionFocusAuthority(kernel);
   const arbitrator = new ResidentExecutionArbitrator(kernel, focus);
@@ -136,23 +141,34 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
   const executors = new Map<string, ResidentGroundedTravelExecutor>();
   const acceptedMatterIds = new Set<string>();
 
+  function currentLife() {
+    return captureResidentLifeCognitionView({
+      kernel,
+      focus,
+      arbitrator,
+      matterIds: [...acceptedMatterIds].sort((a, b) => a.localeCompare(b)),
+    });
+  }
+
   function acceptPlayerRequest(spec: MiraCausalCommitmentSpec): AcceptedCausalCommitment {
     if (acceptedMatterIds.has(spec.matterId)) throw new Error(`commitment already accepted: ${spec.matterId}`);
 
     const occurrence = world.speak(PLAYER_ID, spec.requestText, REQUEST_RADIUS, [MIRA_ID]);
     world.step();
     const batch = waitForAddressedSpeechBatch(world, mira);
-    const attempt = cognitionOwner.prepare(batch);
-    if (!attempt) throw new Error("Mira cognition owner refused addressed commitment request");
+    const lifeAtAdmission = currentLife();
+    const attempt = lifeIntentOwner.prepare(batch, lifeAtAdmission);
+    if (!attempt) throw new Error("Mira life intent owner refused addressed commitment request");
 
     const originPercept = attempt.context.recentPercepts.find((percept) => percept.occurrenceId === occurrence.id);
     if (!originPercept || originPercept.phenomenon !== "speech" || !originPercept.addressed) {
       throw new Error("addressed commitment lost its exact private speech percept");
     }
 
-    const settlement = cognitionOwner.settleIntent(
+    const settlement = lifeIntentOwner.settleIntent(
       attempt,
       commitmentProposal(spec),
+      currentLife(),
       world.tick,
       (proposal, context) => groundCommitment(proposal, context, spec, originPercept.id, navigation),
     );
@@ -187,6 +203,7 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
     return {
       occurrence: structuredClone(occurrence),
       batch: structuredClone(batch),
+      context: structuredClone(attempt.context),
       originPerceptId: originPercept.id,
       matter: structuredClone(matter),
       runId: spec.runId,
@@ -243,6 +260,7 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
     arbitrator,
     authority,
     choiceReviewBridge,
+    lifeIntentOwner,
     acceptPlayerRequest,
     completeFocusedMatter,
     choose(runId: string): ResidentExecutionArbitrationChoice {
@@ -302,7 +320,7 @@ function commitmentProposal(spec: MiraCausalCommitmentSpec): ResidentCognitionPr
 
 function groundCommitment(
   proposal: ResidentCognitionProposal,
-  context: ResidentCognitionContext,
+  context: ResidentLifeCognitionContext,
   spec: MiraCausalCommitmentSpec,
   originPerceptId: string,
   navigation: ReturnType<typeof createFiveResidentNavigationGraph>,
