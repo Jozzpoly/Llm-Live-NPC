@@ -149,17 +149,23 @@ describe("Mira resident-life live intent vertical", () => {
       admission.settlement.proposal,
       admission.settlement.intent,
     );
+    const localMatterId = `matter.mira.causal.${occurrence.id}`;
+    const localRunId = `run.mira.causal.${occurrence.id}.semantic-1`;
     expect(acceptedB.context.currentRegionId).toBe("hearth");
     expect(acceptedB.routeRegionIds).toEqual(["workshop", "fields"]);
+    expect(acceptedB.matter.id).toBe(localMatterId);
+    expect(acceptedB.runId).toBe(localRunId);
     expect(acceptedB.focusClaim).toEqual({
       status: "busy",
-      runId: FIELDS.runId,
+      runId: localRunId,
       focusedRunId: WORKSHOP.runId,
     });
-    const matter = slice.kernel.matter(FIELDS.matterId);
+    expect(slice.kernel.matter(FIELDS.matterId)).toBeNull();
+    expect(slice.kernel.runBinding(FIELDS.runId)).toBeNull();
+    const matter = slice.kernel.matter(localMatterId);
     expect(matter).toMatchObject({
       status: "active",
-      activeRunId: FIELDS.runId,
+      activeRunId: localRunId,
       semanticCourse: admittedSemanticCourse(providerProposal),
       semanticIntent: {
         kind: "travel_region",
@@ -169,7 +175,7 @@ describe("Mira resident-life live intent vertical", () => {
     });
     expect(matter?.semanticIntent).not.toHaveProperty("routeRegionIds");
     expect(matter?.semanticIntent).not.toHaveProperty("destination");
-    expect(slice.arbitrator.deferredRunIds()).toEqual([FIELDS.runId]);
+    expect(slice.arbitrator.deferredRunIds()).toEqual([localRunId]);
     expect(slice.focus.focusedRun()).toBe(WORKSHOP.runId);
 
     // Exact capability is one-shot; replay cannot duplicate the matter/run.
