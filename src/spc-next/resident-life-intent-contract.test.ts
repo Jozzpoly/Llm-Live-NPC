@@ -7,7 +7,14 @@ const context: ResidentCognitionContext = {
   resident: { id: "resident.mira", name: "Mira" },
   tick: 120,
   currentRegionId: "hearth",
-  reasons: [{ id: "reason:speech:120", kind: "heard_speech", createdTick: 120, sourceId: "percept:speech:120" }],
+  reasons: [{
+    id: "reason:speech:120",
+    tick: 120,
+    kind: "heard_speech",
+    salience: 1,
+    summary: "Jozz addressed Mira",
+    evidenceIds: ["percept:speech:120"],
+  }],
   currentActivity: {
     id: "activity:mira:legacy-idle",
     kind: "idle",
