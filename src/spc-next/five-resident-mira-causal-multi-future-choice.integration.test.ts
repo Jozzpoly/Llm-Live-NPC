@@ -165,6 +165,130 @@ describe("Mira fully causal multi-future life choice", () => {
     expect(slice.kernel.matter(matterC)).toMatchObject({ status: "resolved", activeRunId: null });
     expect(slice.focus.focusedRun()).toBeNull();
   });
+
+  it("invalidates an in-flight B/C choice when addressed D becomes a new deferred future without letting D leapfrog", async () => {
+    const slice = createFiveResidentMiraCausalMultiMatterSlice();
+
+    const a = acceptFirstCausalCommitment(
+      slice,
+      "Mira, zajrzyj do znanego ci warsztatu.",
+      proposal("workshop", "inspect the familiar workshop", "accept workshop A"),
+    );
+    const matterA = a.matter.id;
+    const runA = a.runId;
+
+    const b = acceptCausalCommitmentWhileFocused(
+      slice,
+      matterA,
+      runA,
+      "Mira, później wróć do znajomego paleniska.",
+      proposal("hearth", "return to the familiar hearth", "accept hearth B"),
+    );
+    const c = acceptCausalCommitmentWhileFocused(
+      slice,
+      matterA,
+      runA,
+      "Mira, później sprawdź znajome pola.",
+      proposal("fields", "inspect the familiar fields", "accept fields C"),
+    );
+    const matterB = b.matter.id;
+    const matterC = c.matter.id;
+    const runB = b.runId;
+    const runC = c.runId;
+
+    const completedA = slice.completeFocusedMatter(matterA);
+    const oldCandidates = [runB, runC].sort((left, right) => left.localeCompare(right));
+    expect(completedA.arbitration).toEqual({
+      status: "choice_required",
+      candidateRunIds: oldCandidates,
+    });
+    expect(slice.focus.focusedRun()).toBeNull();
+
+    const choiceBatch = waitForChoiceCognitionOpportunity(slice);
+    const choiceOwner = new ResidentLifeChoiceOwner(slice.mira);
+    const choiceAttempt = choiceOwner.prepare(choiceBatch, slice.currentLifeView());
+    expect(choiceAttempt).not.toBeNull();
+    if (!choiceAttempt) return;
+    expect(choiceAttempt.candidateMatterIds).toEqual(
+      [matterB, matterC].sort((left, right) => left.localeCompare(right)),
+    );
+
+    let releaseProvider!: (response: Response) => void;
+    const pendingProvider = new Promise<Response>((resolve) => {
+      releaseProvider = resolve;
+    });
+    const upstream = vi.fn(async () => pendingProvider);
+    vi.stubGlobal("fetch", upstream);
+    const limiter = { async limit() { return { success: true }; } };
+    const env = {
+      AI: { async run() { return {}; } },
+      AI_PROBE_LIMITER: limiter,
+      HEARTH_COGNITION_LIMITER: limiter,
+      OPENAI_API_KEY: "test-key",
+      SPC_NEXT_LIFE_CHOICE_MODEL: "gpt-5.6-luna",
+      SPC_NEXT_LIFE_CHOICE_REASONING: "low",
+      SPC_NEXT_LIFE_CHOICE_MAX_OUTPUT_TOKENS: "512",
+    };
+    const choiceHost = new ResidentLifeChoiceLiveHost(
+      choiceOwner,
+      "/api/spc-next/life-choice",
+      async (input, init) => worker.fetch(
+        new Request(new URL(String(input), "https://worker.test"), init),
+        env,
+      ),
+    );
+
+    const oldArrivalPromise = choiceHost.request(choiceAttempt);
+    for (let step = 0; step < 20 && upstream.mock.calls.length === 0; step += 1) {
+      await Promise.resolve();
+    }
+    expect(upstream).toHaveBeenCalledTimes(1);
+
+    // While B/C choice cognition is genuinely in flight, newer addressed pressure D
+    // is perceived, judged and accepted through the ordinary commitment-native path.
+    const d = acceptCausalCommitmentWhileBodyFree(
+      slice,
+      "Mira, zanim skończysz dzień, wróć też później do znajomego warsztatu.",
+      proposal("workshop", "return to the familiar workshop later", "accept newer workshop D"),
+    );
+    const matterD = d.matter.id;
+    const runD = d.runId;
+    expect(d.focusClaim).toEqual({ status: "deferred", runId: runD });
+    expect(slice.focus.focusedRun()).toBeNull();
+
+    const currentCandidates = [runB, runC, runD].sort((left, right) => left.localeCompare(right));
+    expect(slice.arbitrator.deferredRunIds()).toEqual(currentCandidates);
+    expect(slice.arbitrator.reconcile()).toEqual({
+      status: "choice_required",
+      candidateRunIds: currentCandidates,
+    });
+    expect(slice.choiceReviewBridge.activeCandidateRunIds()).toEqual(currentCandidates);
+
+    releaseProvider(openAiChoiceResponse({
+      kind: "focus_matter",
+      matterId: matterC,
+      reason: "old B/C frame preferred fields C",
+      reviewAfterSeconds: 20,
+    }));
+    const oldArrival = await oldArrivalPromise;
+    expect(oldArrival.status).toBe("proposal");
+
+    const staleAdmission = choiceHost.admit(oldArrival, slice.world.tick, slice.currentLifeView());
+    expect(staleAdmission).toEqual({
+      status: "stale",
+      admissionTick: slice.world.tick,
+      settlement: { status: "stale", reason: "newer_addressed_attention" },
+    });
+
+    // The stale B/C answer must not focus C, D or any other run. Current B/C/D
+    // ambiguity survives and requires a fresh current-life choice.
+    expect(slice.focus.focusedRun()).toBeNull();
+    expect(slice.arbitrator.deferredRunIds()).toEqual(currentCandidates);
+    expect(slice.kernel.matter(matterD)).toMatchObject({
+      status: "active",
+      activeRunId: runD,
+    });
+  });
 });
 
 function acceptFirstCausalCommitment(
@@ -234,6 +358,43 @@ function acceptCausalCommitmentWhileFocused(
   );
   if (settlement.status !== "applied") {
     throw new Error(`deferred causal commitment settlement failed: ${settlement.status}`);
+  }
+  return slice.materializeAdmittedPlayerCommitmentRequest(
+    prepared,
+    occurrence,
+    settlement.proposal,
+    settlement.intent,
+  );
+}
+
+function acceptCausalCommitmentWhileBodyFree(
+  slice: ReturnType<typeof createFiveResidentMiraCausalMultiMatterSlice>,
+  text: string,
+  cognition: ResidentLifeIntentProposal,
+) {
+  expect(slice.focus.focusedRun()).toBeNull();
+  const occurrence = slice.world.speak(PLAYER_ID, text, REQUEST_RADIUS, [MIRA_ID]);
+  let prepared: ReturnType<typeof slice.takeReadyLifeIntentAttempt> = null;
+  for (let step = 0; step < MAX_PREPARE_STEPS && !prepared; step += 1) {
+    slice.world.step();
+    prepared = slice.takeReadyLifeIntentAttempt();
+  }
+  if (!prepared) throw new Error("free-body causal commitment never reached cognition");
+
+  const settlement = slice.lifeIntentOwner.settleCommitmentIntent(
+    prepared.attempt,
+    cognition,
+    slice.currentLifeView(),
+    slice.world.tick,
+    (admittedProposal, providerContext) => slice.groundPreparedPlayerCommitmentRequest(
+      prepared,
+      occurrence,
+      admittedProposal,
+      providerContext,
+    ),
+  );
+  if (settlement.status !== "applied") {
+    throw new Error(`free-body causal commitment settlement failed: ${settlement.status}`);
   }
   return slice.materializeAdmittedPlayerCommitmentRequest(
     prepared,
