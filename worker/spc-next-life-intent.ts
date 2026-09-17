@@ -2,6 +2,10 @@ import type {
   ResidentCognitionContext,
   ResidentCognitionProposal,
 } from "../src/spc-next/cognition-contract";
+import {
+  parseResidentLifeIntentProposal,
+  type ResidentLifeIntentProposal,
+} from "../src/spc-next/resident-life-intent-contract";
 import type { ResidentLifeCognitionContext } from "../src/spc-next/resident-life-cognition-context";
 import {
   extractSpcNextProposal,
@@ -75,6 +79,17 @@ export function extractSpcNextLifeIntentProposal(
   return extractSpcNextLifeIntentProposalWithDiagnostic(result, context).proposal;
 }
 
+export function extractSpcNextLifeCommitmentProposal(
+  result: unknown,
+  context: unknown,
+): ResidentLifeIntentProposal | null {
+  const lifeContext = sanitizeSpcNextLifeIntentContext(context);
+  if (!lifeContext) return null;
+  const payload = strictAssistantJsonPayload(result);
+  if (payload === null) return null;
+  return parseResidentLifeIntentProposal(payload, privateParserContext(lifeContext));
+}
+
 function extractSpcNextLifeIntentProposalWithDiagnostic(
   result: unknown,
   context: unknown,
@@ -99,7 +114,7 @@ function extractSpcNextLifeIntentProposalWithDiagnostic(
   return shared;
 }
 
-function strictProposalPayload(result: unknown): unknown | null {
+function strictAssistantJsonPayload(result: unknown): unknown | null {
   if (!record(result) || result.status !== "completed" || !Array.isArray(result.output) || result.output.length > 16) return null;
   let text: string | null = null;
   for (const item of result.output) {
@@ -114,9 +129,12 @@ function strictProposalPayload(result: unknown): unknown | null {
   }
   if (!text) return null;
 
-  let parsed: unknown;
-  try { parsed = JSON.parse(text); }
+  try { return JSON.parse(text); }
   catch { return null; }
+}
+
+function strictProposalPayload(result: unknown): unknown | null {
+  const parsed = strictAssistantJsonPayload(result);
   return strictProposalShape(parsed) ? parsed : null;
 }
 
