@@ -484,6 +484,80 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
     return { status: "accepted", intent };
   }
 
+  function materializeAdmittedLifeOutcomeCommitment(
+    prepared: PreparedCausalLifeIntent,
+    sourceMatterId: string,
+    proposal: ResidentLifeIntentProposal,
+    intent: GroundedCausalOutcomeCommitmentIntent,
+  ): AcceptedCausalOutcomeCommitment {
+    const outcomeEvidence = exactLifeOutcomeEvidence(prepared.attempt.context, sourceMatterId);
+    const identity = outcomeEvidence ? causalOutcomeCommitmentIdentity(outcomeEvidence.id) : null;
+    const groundingAuthority = groundedOutcomeCommitmentAuthority.get(intent);
+    if (!outcomeEvidence
+      || !identity
+      || !groundingAuthority
+      || groundingAuthority.attempt !== prepared.attempt
+      || groundingAuthority.sourceMatterId !== sourceMatterId
+      || groundingAuthority.outcomeEvidenceId !== outcomeEvidence.id
+      || !sameCommitmentIdentity(groundingAuthority.identity, identity)
+      || groundingAuthority.proposal !== proposal
+      || intent.sourceMatterId !== sourceMatterId
+      || intent.originOutcomeEvidenceId !== outcomeEvidence.id) {
+      groundedOutcomeCommitmentAuthority.delete(intent);
+      throw new Error("grounded outcome commitment lacks exact admitted factual authority");
+    }
+    if (acceptedMatterIds.has(identity.matterId)) {
+      groundedOutcomeCommitmentAuthority.delete(intent);
+      throw new Error(`commitment already accepted: ${identity.matterId}`);
+    }
+
+    mira.scheduleAdaptiveReview(world.tick, proposal.reviewAfterSeconds, FIXED_DELTA_SECONDS);
+    const origin = kernel.recordEvidence({
+      id: `evidence:mira:accepted-${identity.evidenceKey}:${world.tick}`,
+      tick: world.tick,
+      kind: "accepted_cognition_commitment",
+      summary: `${intent.semanticCourse}; source outcome ${outcomeEvidence.id}: ${outcomeEvidence.summary}`,
+    });
+    const matter = kernel.openMatter({
+      id: identity.matterId,
+      originEvidenceId: origin.id,
+      semanticCourse: intent.semanticCourse,
+      semanticIntent: intent.semanticIntent,
+    });
+    kernel.bindRun({
+      matterId: identity.matterId,
+      taskId: identity.taskId,
+      runId: identity.runId,
+    });
+    const focusClaim = arbitrator.request(identity.runId);
+    if (focusClaim.status === "rejected") {
+      throw new Error(`accepted outcome follow-up run was not authorized: ${focusClaim.reason}`);
+    }
+    if (focusClaim.status === "deferred") {
+      choiceReviewBridge.observe(arbitrator.reconcile(), world.tick);
+    }
+
+    executors.set(
+      identity.runId,
+      new ResidentGroundedTravelExecutor(identity.runId, intent.destination, authority, world),
+    );
+    groundedTargetRegionIds.set(identity.runId, intent.semanticIntent.targetRegionId);
+    runMatterIds.set(identity.runId, identity.matterId);
+    acceptedMatterIds.add(identity.matterId);
+    groundedOutcomeCommitmentAuthority.delete(intent);
+
+    return {
+      sourceMatterId,
+      originOutcomeEvidence: structuredClone(outcomeEvidence),
+      batch: structuredClone(prepared.batch),
+      context: structuredClone(prepared.attempt.context),
+      matter: structuredClone(matter),
+      runId: identity.runId,
+      routeRegionIds: [...intent.routeRegionIds],
+      focusClaim: structuredClone(focusClaim),
+    };
+  }
+
   function materializeAdmittedPlayerRequest(
     prepared: PreparedCausalLifeIntent,
     occurrence: WorldOccurrence,
@@ -984,9 +1058,11 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
     groundPreparedPlayerRequest,
     groundPreparedPlayerCommitmentRequest,
     groundPreparedPrivateSpeechCommitment,
+    groundPreparedLifeOutcomeCommitment,
     materializeAdmittedPlayerRequest,
     materializeAdmittedPlayerCommitmentRequest,
     materializeAdmittedPrivateSpeechCommitment,
+    materializeAdmittedLifeOutcomeCommitment,
     settlePreparedPlayerRequest,
     acceptPlayerRequest,
     beginAddressedInterruption,
@@ -1026,6 +1102,19 @@ function causalCommitmentIdentity(occurrence: WorldOccurrence): CausalCommitment
     taskId: `task.mira.causal.${causalId}.semantic-1`,
     runId: `run.mira.causal.${causalId}.semantic-1`,
     evidenceKey: `commitment:${causalId}`,
+  };
+}
+
+function causalOutcomeCommitmentIdentity(outcomeEvidenceId: string): CausalCommitmentIdentity {
+  if (typeof outcomeEvidenceId !== "string" || outcomeEvidenceId.trim().length === 0) {
+    throw new Error("causal outcome evidence id must be non-empty");
+  }
+  const causalId = `outcome:${outcomeEvidenceId}`;
+  return {
+    matterId: `matter.mira.causal.${causalId}`,
+    taskId: `task.mira.causal.${causalId}.semantic-1`,
+    runId: `run.mira.causal.${causalId}.semantic-1`,
+    evidenceKey: causalId,
   };
 }
 
@@ -1102,6 +1191,52 @@ function groundLifeCommitment(
     navigation,
     false,
   );
+}
+
+function groundLifeOutcomeFollowup(
+  proposal: ResidentLifeIntentProposal,
+  groundingContext: ResidentCognitionContext,
+  sourceMatterId: string,
+  outcomeEvidenceId: string,
+  navigation: ReturnType<typeof createFiveResidentNavigationGraph>,
+): ResidentLifeIntentAdmission<GroundedCausalOutcomeCommitmentIntent> {
+  const decision = proposal.commitmentDecision;
+  if (decision.kind !== "accept") {
+    return { status: "rejected", detail: `commitment decision is ${decision.kind}, not accept` };
+  }
+  const activity = decision.intent;
+  if (activity.kind !== "travel" || activity.targetRegionId === null) {
+    return { status: "rejected", detail: "expected known-region travel follow-up" };
+  }
+
+  const currentRegionId = groundingContext.currentRegionId;
+  if (!currentRegionId) {
+    return { status: "rejected", detail: "current resident region is unavailable at follow-up admission" };
+  }
+  const targetRegionId = activity.targetRegionId;
+  const known = new Set(groundingContext.knownRegions.map((region) => region.id));
+  known.add(currentRegionId);
+  const route = navigation.route(currentRegionId, targetRegionId, known);
+  const destination = navigation.destinationPoint(targetRegionId);
+  if (!route || !destination) {
+    return { status: "rejected", detail: "follow-up target lacks current resident-known route/destination" };
+  }
+
+  return {
+    status: "accepted",
+    intent: {
+      sourceMatterId,
+      originOutcomeEvidenceId: outcomeEvidenceId,
+      destination,
+      routeRegionIds: [...route.regionIds],
+      semanticCourse: `${decision.reason} · ${activity.goal}`,
+      semanticIntent: {
+        kind: "travel_region",
+        goal: activity.goal,
+        targetRegionId,
+      },
+    },
+  };
 }
 
 function groundAcceptedTravelCommitment(
