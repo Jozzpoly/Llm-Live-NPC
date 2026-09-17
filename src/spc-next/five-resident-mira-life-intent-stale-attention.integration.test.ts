@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import worker from "../../worker/index";
-import type { ResidentCognitionProposal } from "./cognition-contract";
+import type { ResidentLifeIntentProposal } from "./resident-life-intent-contract";
 import {
   MIRA_CAUSAL_COMMITMENTS,
   createFiveResidentMiraCausalMultiMatterSlice,
@@ -17,7 +17,7 @@ const MAX_TO_COGNITION = 120;
 afterEach(() => vi.unstubAllGlobals());
 
 describe("Mira resident-life intent stale attention", () => {
-  it("cannot turn an arrived old provider answer into grounding or a matter after newer addressed attention", async () => {
+  it("cannot turn an arrived old commitment answer into grounding or a matter after newer addressed attention", async () => {
     const slice = createFiveResidentMiraCausalMultiMatterSlice();
     slice.acceptPlayerRequest(WORKSHOP);
 
@@ -74,8 +74,8 @@ describe("Mira resident-life intent stale attention", () => {
     expect(slice.focus.focusedRun()).toBe(WORKSHOP.runId);
 
     // A newer addressed event changes private attention after the old provider answer
-    // arrived but before explicit admission. The arrived semantic answer must now die
-    // before local grounding and must never create a continuity capability.
+    // arrived but before explicit admission. The arrived semantic commitment answer
+    // must die before local grounding and never create a continuity capability.
     const newerSpeech = slice.world.speak(
       PLAYER_ID,
       "Mira, jednak moment — mam nową informację.",
@@ -88,14 +88,14 @@ describe("Mira resident-life intent stale attention", () => {
       runId: WORKSHOP.runId,
     });
 
-    const grounding = vi.fn((proposal, providerContext) => slice.groundPreparedPlayerRequest(
+    const grounding = vi.fn((proposal, providerContext) => slice.groundPreparedPlayerCommitmentRequest(
       prepared,
       firstSpeech,
       FIELDS,
       proposal,
       providerContext,
     ));
-    const admission = host.admit(
+    const admission = host.admitCommitment(
       arrival,
       slice.world.tick,
       slice.currentLifeView(),
@@ -124,13 +124,13 @@ describe("Mira resident-life intent stale attention", () => {
   });
 });
 
-function commitmentProposal(spec: typeof FIELDS): ResidentCognitionProposal {
+function commitmentProposal(spec: typeof FIELDS): ResidentLifeIntentProposal {
   return {
     version: 1,
-    activityDirective: {
-      kind: "replace",
-      reason: `accept the addressed ${spec.key} request as a continuing commitment`,
-      activity: {
+    commitmentDecision: {
+      kind: "accept",
+      reason: `accept the addressed ${spec.key} request as a later continuing commitment`,
+      intent: {
         kind: "travel",
         goal: spec.semanticCourse,
         targetActorId: null,
@@ -145,7 +145,7 @@ function commitmentProposal(spec: typeof FIELDS): ResidentCognitionProposal {
   };
 }
 
-function openAiResponse(proposal: ResidentCognitionProposal): Response {
+function openAiResponse(proposal: ResidentLifeIntentProposal): Response {
   return new Response(JSON.stringify({
     id: "resp_mira_life_intent_stale_attention",
     status: "completed",
