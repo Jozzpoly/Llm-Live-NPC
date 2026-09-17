@@ -964,7 +964,6 @@ function groundLegacyCommitment(
   groundingContext: ResidentCognitionContext,
   originPerceptId: string,
   navigation: ReturnType<typeof createFiveResidentNavigationGraph>,
-  requireAddressedOrigin: boolean,
 ): ResidentLifeIntentAdmission<GroundedCausalCommitmentIntent> {
   const directive = proposal.activityDirective;
   if (directive.kind !== "replace") {
@@ -1010,6 +1009,7 @@ function groundAcceptedTravelCommitment(
   groundingContext: ResidentCognitionContext,
   originPerceptId: string,
   navigation: ReturnType<typeof createFiveResidentNavigationGraph>,
+  requireAddressedOrigin: boolean,
 ): ResidentLifeIntentAdmission<GroundedCausalCommitmentIntent> {
   if (activity.kind !== "travel" || activity.targetRegionId === null) {
     return { status: "rejected", detail: "expected known-region travel commitment" };
