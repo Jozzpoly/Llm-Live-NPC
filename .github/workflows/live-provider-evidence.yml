@@ -37,13 +37,14 @@ jobs:
           const qualifiers = Array.isArray(request.qualifiers)
             ? request.qualifiers
             : ['lifecycle', 'interruption'];
-          const allowed = new Set(['lifecycle', 'interruption', 'life-choice']);
+          const allowed = new Set(['lifecycle', 'interruption', 'life-choice', 'life-intent']);
           if (qualifiers.length === 0 || qualifiers.some((value) => !allowed.has(value))) {
             throw new Error(`invalid live-provider qualifiers: ${JSON.stringify(qualifiers)}`);
           }
           process.stdout.write(`RUN_LIFECYCLE=${qualifiers.includes('lifecycle') ? '1' : '0'}\n`);
           process.stdout.write(`RUN_INTERRUPTION=${qualifiers.includes('interruption') ? '1' : '0'}\n`);
           process.stdout.write(`RUN_LIFE_CHOICE=${qualifiers.includes('life-choice') ? '1' : '0'}\n`);
+          process.stdout.write(`RUN_LIFE_INTENT=${qualifiers.includes('life-intent') ? '1' : '0'}\n`);
           process.stdout.write(`REQUESTED_QUALIFIERS=${qualifiers.join(',')}\n`);
           NODE
 
@@ -184,6 +185,12 @@ jobs:
           LIVE_PROVIDER_OUTPUT: evidence/live-provider/live-provider-life-choice.json
         run: node scripts/spc-live-provider-life-choice-evidence.mjs
 
+      - name: Qualify real Luna resident life-intent contract
+        if: env.RUN_LIFE_INTENT == '1'
+        env:
+          LIVE_PROVIDER_OUTPUT: evidence/live-provider/live-provider-life-intent.json
+        run: node scripts/spc-live-provider-life-intent-evidence.mjs
+
       - name: Print live-provider evidence summary
         if: always()
         shell: bash
@@ -213,6 +220,12 @@ jobs:
           echo "--- Resident life choice provider evidence ---"
           if [ "${RUN_LIFE_CHOICE:-0}" = "1" ]; then
             cat evidence/live-provider/live-provider-life-choice.json 2>/dev/null || true
+          else
+            echo "not requested in this run"
+          fi
+          echo "--- Resident life-intent provider evidence ---"
+          if [ "${RUN_LIFE_INTENT:-0}" = "1" ]; then
+            cat evidence/live-provider/live-provider-life-intent.json 2>/dev/null || true
           else
             echo "not requested in this run"
           fi
