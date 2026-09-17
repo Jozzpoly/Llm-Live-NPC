@@ -67,8 +67,58 @@ export function extractSpcNextLifeIntentProposal(
   context: unknown,
 ): ResidentCognitionProposal | null {
   const lifeContext = sanitizeSpcNextLifeIntentContext(context);
-  if (!lifeContext) return null;
+  if (!lifeContext || strictProposalPayload(result) === null) return null;
   return extractSpcNextProposal(result, privateParserContext(lifeContext)).proposal;
+}
+
+function strictProposalPayload(result: unknown): unknown | null {
+  if (!record(result) || result.status !== "completed" || !Array.isArray(result.output) || result.output.length > 16) return null;
+  let text: string | null = null;
+  for (const item of result.output) {
+    if (!record(item)) return null;
+    if (item.type === "reasoning") continue;
+    if (item.type !== "message" || item.role !== "assistant" || item.status !== "completed" || text !== null) return null;
+    if (!Array.isArray(item.content) || item.content.length !== 1) return null;
+    const content = item.content[0];
+    if (!record(content) || content.type === "refusal") return null;
+    if (content.type !== "output_text" || typeof content.text !== "string" || !content.text.trim()) return null;
+    text = content.text;
+  }
+  if (!text) return null;
+
+  let parsed: unknown;
+  try { parsed = JSON.parse(text); }
+  catch { return null; }
+  return strictProposalShape(parsed) ? parsed : null;
+}
+
+function strictProposalShape(value: unknown): boolean {
+  if (!record(value) || !hasExactKeys(value, ["version", "activityDirective", "beliefs", "concerns", "reviewAfterSeconds"])) return false;
+  const directive = value.activityDirective;
+  if (!record(directive)) return false;
+  if (directive.kind === "keep" || directive.kind === "stop") {
+    if (!hasExactKeys(directive, ["kind", "reason"])) return false;
+  } else if (directive.kind === "replace") {
+    if (!hasExactKeys(directive, ["kind", "reason", "activity"]) || !record(directive.activity)) return false;
+    if (!hasExactKeys(directive.activity, ["kind", "goal", "targetActorId", "targetRegionId", "targetPosition", "text"])) return false;
+    if (directive.activity.targetPosition !== null) {
+      if (!record(directive.activity.targetPosition)
+        || !hasExactKeys(directive.activity.targetPosition, ["x", "y"])) return false;
+    }
+  } else {
+    return false;
+  }
+
+  if (!Array.isArray(value.beliefs) || !value.beliefs.every((belief) =>
+    record(belief) && hasExactKeys(belief, ["id", "statement", "confidence", "evidenceIds"]))) return false;
+  if (!Array.isArray(value.concerns) || !value.concerns.every((concern) =>
+    record(concern) && hasExactKeys(concern, ["id", "summary", "priority", "status", "evidenceIds"]))) return false;
+  return true;
+}
+
+function hasExactKeys(value: Record<string, unknown>, keys: readonly string[]): boolean {
+  if (Object.keys(value).length !== keys.length) return false;
+  return keys.every((key) => Object.hasOwn(value, key));
 }
 
 function privateParserContext(context: ResidentLifeCognitionContext): ResidentCognitionContext {
