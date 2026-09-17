@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { ResidentPercept, ResidentProfile } from "./contracts";
 import type { ResidentLifeIntentProposal } from "./resident-life-intent-contract";
 import type { CognitionFetch } from "./resident-cognition-live-host";
+import type { ResidentLifeCognitionContext } from "./resident-life-cognition-context";
 import type { ResidentLifeCognitionView } from "./resident-life-cognition-view";
 import { ResidentLifeIntentLiveHost } from "./resident-life-intent-live-host";
 import { ResidentLifeIntentOwner } from "./resident-life-intent-owner";
@@ -111,14 +112,19 @@ describe("ResidentLifeIntentLiveHost commitment admission", () => {
     expect(host.pendingArrivals()).toBe(1);
     expect(life.body.focusedRunId).toBe("run.mira.workshop");
 
-    const admitted = host.admitCommitment(arrival, 2, life, (proposal, context) => {
-      expect(proposal.commitmentDecision).toMatchObject({
-        kind: "accept",
-        intent: { kind: "travel", targetRegionId: "fields" },
-      });
-      expect(context.life.body.focusedRunId).toBe("run.mira.workshop");
-      return { status: "accepted", intent: { targetRegionId: "fields" as const } };
-    });
+    const admitted = host.admitCommitment(
+      arrival,
+      2,
+      life,
+      (proposal: ResidentLifeIntentProposal, context: ResidentLifeCognitionContext) => {
+        expect(proposal.commitmentDecision).toMatchObject({
+          kind: "accept",
+          intent: { kind: "travel", targetRegionId: "fields" },
+        });
+        expect(context.life.body.focusedRunId).toBe("run.mira.workshop");
+        return { status: "accepted", intent: { targetRegionId: "fields" as const } };
+      },
+    );
 
     expect(admitted).toMatchObject({
       status: "applied",
@@ -134,9 +140,14 @@ describe("ResidentLifeIntentLiveHost commitment admission", () => {
     expect(life.body.focusedRunId).toBe("run.mira.workshop");
     expect(resident.publicState().activity.kind).toBe("idle");
 
-    expect(host.admitCommitment(arrival, 3, life, () => {
-      throw new Error("already admitted arrival must never reach callback");
-    })).toEqual({
+    expect(host.admitCommitment(
+      arrival,
+      3,
+      life,
+      (_proposal: ResidentLifeIntentProposal, _context: ResidentLifeCognitionContext) => {
+        throw new Error("already admitted arrival must never reach callback");
+      },
+    )).toEqual({
       status: "arrival_rejected",
       reason: "already_admitted",
     });
