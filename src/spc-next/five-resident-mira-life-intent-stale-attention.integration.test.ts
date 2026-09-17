@@ -91,7 +91,6 @@ describe("Mira resident-life intent stale attention", () => {
     const grounding = vi.fn((proposal, providerContext) => slice.groundPreparedPlayerCommitmentRequest(
       prepared,
       firstSpeech,
-      FIELDS,
       proposal,
       providerContext,
     ));
