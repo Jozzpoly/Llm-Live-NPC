@@ -5,6 +5,7 @@ import type {
 import type { ResidentLifeCognitionContext } from "../src/spc-next/resident-life-cognition-context";
 import {
   extractSpcNextProposal,
+  type SpcCognitionDiagnostic,
   type SpcNextCognitionEnv,
 } from "./spc-next-cognition";
 import { sanitizeSpcNextLifeContext } from "./spc-next-life-context";
@@ -62,13 +63,40 @@ export function sanitizeSpcNextLifeIntentContext(value: unknown): ResidentLifeCo
   return sanitizeSpcNextLifeContext(value);
 }
 
+interface LifeIntentExtractionResult {
+  proposal: ResidentCognitionProposal | null;
+  diagnostic: SpcCognitionDiagnostic | null;
+}
+
 export function extractSpcNextLifeIntentProposal(
   result: unknown,
   context: unknown,
 ): ResidentCognitionProposal | null {
+  return extractSpcNextLifeIntentProposalWithDiagnostic(result, context).proposal;
+}
+
+function extractSpcNextLifeIntentProposalWithDiagnostic(
+  result: unknown,
+  context: unknown,
+): LifeIntentExtractionResult {
   const lifeContext = sanitizeSpcNextLifeIntentContext(context);
-  if (!lifeContext || strictProposalPayload(result) === null) return null;
-  return extractSpcNextProposal(result, privateParserContext(lifeContext)).proposal;
+  if (!lifeContext) {
+    return {
+      proposal: null,
+      diagnostic: { stage: "request_validation", code: "invalid_life_intent_context" },
+    };
+  }
+
+  const shared = extractSpcNextProposal(result, privateParserContext(lifeContext));
+  if (strictProposalPayload(result) === null) {
+    return shared.proposal
+      ? {
+          proposal: null,
+          diagnostic: { stage: "proposal_validation", code: "strict_shape" },
+        }
+      : shared;
+  }
+  return shared;
 }
 
 function strictProposalPayload(result: unknown): unknown | null {
@@ -285,10 +313,17 @@ export async function handleSpcNextLifeIntent(request: Request, env: SpcNextLife
       }, 502);
     }
 
-    const proposal = extractSpcNextLifeIntentProposal(result, context);
+    const extraction = extractSpcNextLifeIntentProposalWithDiagnostic(result, context);
     const usage = observedUsage(result, config.model, Date.now() - started);
-    if (!proposal) return json({ ok: false, code: "invalid_life_intent_output", usage }, 502);
-    return json({ ok: true, proposal, usage });
+    if (!extraction.proposal) {
+      return json({
+        ok: false,
+        code: "invalid_life_intent_output",
+        diagnostic: extraction.diagnostic,
+        usage,
+      }, 502);
+    }
+    return json({ ok: true, proposal: extraction.proposal, usage });
   } catch {
     if (request.signal.aborted) return json({ ok: false, code: "request_cancelled" }, 499);
     if (timedOut) return json({ ok: false, code: "upstream_timeout" }, 504);
