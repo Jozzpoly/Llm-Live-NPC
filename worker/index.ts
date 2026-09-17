@@ -4,6 +4,7 @@ import { handleResidentConversation } from "./living-resident";
 import { handleHearthCognition } from "./hearth-cognition";
 import { handleSpcNextCognition } from "./spc-next-cognition";
 import { handleSpcNextLifeChoice, type SpcNextLifeChoiceEnv } from "./spc-next-life-choice";
+import { handleSpcNextLifeIntent, type SpcNextLifeIntentEnv } from "./spc-next-life-intent";
 import { handleSpcNextSemantic, type SpcNextSemanticEnv } from "./spc-next-semantic";
 
 const GATEWAY_ID = "default";
@@ -30,7 +31,7 @@ interface RateLimitBinding {
   limit(options: { key: string }): Promise<{ success: boolean }>;
 }
 
-interface Env extends SpcNextSemanticEnv, SpcNextLifeChoiceEnv {
+interface Env extends SpcNextSemanticEnv, SpcNextLifeChoiceEnv, SpcNextLifeIntentEnv {
   AI: AiBinding;
   AI_PROBE_LIMITER: RateLimitBinding;
 }
@@ -176,6 +177,11 @@ export default {
         hearthModelConfigured: env.HEARTH_COGNITION_MODEL ?? "gpt-5.6-luna",
         spcNextCognitionEndpoint: "/api/spc-next/cognition",
         spcNextCognitionModelConfigured: env.SPC_NEXT_COGNITION_MODEL ?? env.HEARTH_COGNITION_MODEL ?? "gpt-5.6-luna",
+        spcNextLifeIntentEndpoint: "/api/spc-next/life-intent",
+        spcNextLifeIntentModelConfigured: env.SPC_NEXT_LIFE_INTENT_MODEL
+          ?? env.SPC_NEXT_COGNITION_MODEL
+          ?? env.HEARTH_COGNITION_MODEL
+          ?? "gpt-5.6-luna",
         spcNextLifeChoiceEndpoint: "/api/spc-next/life-choice",
         spcNextLifeChoiceModelConfigured: env.SPC_NEXT_LIFE_CHOICE_MODEL
           ?? env.SPC_NEXT_COGNITION_MODEL
@@ -207,6 +213,10 @@ export default {
 
     if (url.pathname === "/api/spc-next/cognition") {
       return handleSpcNextCognition(request, env);
+    }
+
+    if (url.pathname === "/api/spc-next/life-intent") {
+      return handleSpcNextLifeIntent(request, env);
     }
 
     if (url.pathname === "/api/spc-next/life-choice") {
