@@ -102,7 +102,6 @@ describe("Mira one-thread sustained life falsifier", () => {
       (proposal, providerContext) => slice.groundPreparedPlayerCommitmentRequest(
         prepared,
         bOrigin,
-        HEARTH,
         proposal,
         providerContext,
       ),
@@ -114,7 +113,6 @@ describe("Mira one-thread sustained life falsifier", () => {
     const acceptedB = slice.materializeAdmittedPlayerCommitmentRequest(
       prepared,
       bOrigin,
-      HEARTH,
       admission.settlement.proposal,
       admission.settlement.intent,
     );
