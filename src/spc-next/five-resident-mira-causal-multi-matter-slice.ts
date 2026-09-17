@@ -264,13 +264,12 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
     });
   }
 
-  function exactOriginPercept(prepared: PreparedCausalLifeIntent, occurrence: WorldOccurrence) {
+  function exactPrivateSpeechPercept(prepared: PreparedCausalLifeIntent, occurrence: WorldOccurrence) {
     const originPercept = prepared.attempt.context.recentPercepts.find(
       (percept) => percept.occurrenceId === occurrence.id,
     );
     if (!originPercept
       || originPercept.phenomenon !== "speech"
-      || !originPercept.addressed
       || originPercept.text !== occurrence.text) {
       return null;
     }
@@ -311,7 +310,7 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
     );
   }
 
-  function groundPreparedPlayerCommitmentRequest(
+  function groundPreparedPrivateSpeechCommitment(
     prepared: PreparedCausalLifeIntent,
     occurrence: WorldOccurrence,
     proposal: ResidentLifeIntentProposal,
@@ -325,6 +324,15 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
       providerContext,
       groundLifeCommitment,
     );
+  }
+
+  function groundPreparedPlayerCommitmentRequest(
+    prepared: PreparedCausalLifeIntent,
+    occurrence: WorldOccurrence,
+    proposal: ResidentLifeIntentProposal,
+    providerContext: ResidentLifeCognitionContext,
+  ): ResidentLifeIntentAdmission<GroundedCausalCommitmentIntent> {
+    return groundPreparedPrivateSpeechCommitment(prepared, occurrence, proposal, providerContext);
   }
 
   function groundPreparedPlayerProposal<Proposal extends CausalCommitmentProposal>(
@@ -344,9 +352,9 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
     if (acceptedMatterIds.has(identity.matterId)) {
       return { status: "rejected", detail: `commitment already accepted: ${identity.matterId}` };
     }
-    const originPercept = exactOriginPercept(prepared, occurrence);
+    const originPercept = exactPrivateSpeechPercept(prepared, occurrence);
     if (!originPercept) {
-      return { status: "rejected", detail: "prepared commitment lost its exact addressed private speech percept" };
+      return { status: "rejected", detail: "prepared commitment lost its exact private speech percept" };
     }
 
     const grounded = ground(
@@ -390,7 +398,7 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
     );
   }
 
-  function materializeAdmittedPlayerCommitmentRequest(
+  function materializeAdmittedPrivateSpeechCommitment(
     prepared: PreparedCausalLifeIntent,
     occurrence: WorldOccurrence,
     proposal: ResidentLifeIntentProposal,
@@ -403,6 +411,15 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
       proposal,
       intent,
     );
+  }
+
+  function materializeAdmittedPlayerCommitmentRequest(
+    prepared: PreparedCausalLifeIntent,
+    occurrence: WorldOccurrence,
+    proposal: ResidentLifeIntentProposal,
+    intent: GroundedCausalCommitmentIntent,
+  ): AcceptedCausalCommitment {
+    return materializeAdmittedPrivateSpeechCommitment(prepared, occurrence, proposal, intent);
   }
 
   function materializeAdmittedPlayerProposal(
@@ -424,7 +441,7 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
       groundedCommitmentAuthority.delete(intent);
       throw new Error(`commitment already accepted: ${identity.matterId}`);
     }
-    const originPercept = exactOriginPercept(prepared, occurrence);
+    const originPercept = exactPrivateSpeechPercept(prepared, occurrence);
     if (!originPercept || originPercept.id !== intent.originPerceptId) {
       groundedCommitmentAuthority.delete(intent);
       throw new Error("grounded commitment intent lost its exact causal origin");
@@ -864,8 +881,10 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
     takeReadyLifeIntentAttempt,
     groundPreparedPlayerRequest,
     groundPreparedPlayerCommitmentRequest,
+    groundPreparedPrivateSpeechCommitment,
     materializeAdmittedPlayerRequest,
     materializeAdmittedPlayerCommitmentRequest,
+    materializeAdmittedPrivateSpeechCommitment,
     settlePreparedPlayerRequest,
     acceptPlayerRequest,
     beginAddressedInterruption,
@@ -945,6 +964,7 @@ function groundLegacyCommitment(
   groundingContext: ResidentCognitionContext,
   originPerceptId: string,
   navigation: ReturnType<typeof createFiveResidentNavigationGraph>,
+  requireAddressedOrigin: boolean,
 ): ResidentLifeIntentAdmission<GroundedCausalCommitmentIntent> {
   const directive = proposal.activityDirective;
   if (directive.kind !== "replace") {
@@ -957,6 +977,7 @@ function groundLegacyCommitment(
     groundingContext,
     originPerceptId,
     navigation,
+    true,
   );
 }
 
@@ -978,6 +999,7 @@ function groundLifeCommitment(
     groundingContext,
     originPerceptId,
     navigation,
+    false,
   );
 }
 
@@ -995,9 +1017,14 @@ function groundAcceptedTravelCommitment(
   if (!providerContext.recentPercepts.some((percept) => (
     percept.id === originPerceptId
     && percept.phenomenon === "speech"
-    && percept.addressed
+    && (!requireAddressedOrigin || percept.addressed)
   ))) {
-    return { status: "rejected", detail: "commitment origin is not the exact addressed private speech percept" };
+    return {
+      status: "rejected",
+      detail: requireAddressedOrigin
+        ? "commitment origin is not the exact addressed private speech percept"
+        : "commitment origin is not the exact private speech percept",
+    };
   }
 
   const currentRegionId = groundingContext.currentRegionId;
