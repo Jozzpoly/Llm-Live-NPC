@@ -119,7 +119,6 @@ describe("Mira commitment-native sustained life", () => {
       (admittedProposal, providerContext) => slice.groundPreparedPlayerCommitmentRequest(
         prepared,
         occurrence,
-        FIELDS,
         admittedProposal,
         providerContext,
       ),
@@ -139,7 +138,6 @@ describe("Mira commitment-native sustained life", () => {
     const acceptedB = slice.materializeAdmittedPlayerCommitmentRequest(
       prepared,
       occurrence,
-      FIELDS,
       admission.settlement.proposal,
       admission.settlement.intent,
     );
