@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
-import type { CognitionBatch, ResidentPercept, ResidentProfile } from "./contracts";
+import type { ResidentCognitionProposal } from "./cognition-contract";
+import type { ResidentPercept, ResidentProfile } from "./contracts";
 import {
   ResidentLifeIntentOwner,
   type ResidentLifeIntentAdmission,
 } from "./resident-life-intent-owner";
+import type { ResidentLifeCognitionContext } from "./resident-life-cognition-context";
 import type { ResidentLifeCognitionView } from "./resident-life-cognition-view";
 import { ResidentRuntime } from "./resident-runtime";
 
@@ -104,8 +106,8 @@ function proposal() {
 }
 
 function admitWorkshop(): (
-  proposalValue: Parameters<ResidentLifeIntentOwner["settleIntent"]>[1] extends never ? never : any,
-  context: any,
+  proposalValue: ResidentCognitionProposal,
+  context: ResidentLifeCognitionContext,
 ) => ResidentLifeIntentAdmission<{ targetRegionId: string }> {
   return (_proposalValue, context) => {
     if (context.life.body.focusedRunId !== "run.mira.a") {
@@ -212,13 +214,19 @@ describe("ResidentLifeIntentOwner", () => {
     const { owner, batch } = setup();
     const initial = lifeView();
     const attempt = owner.prepare(batch, initial)!;
-    const changed = structuredClone(initial) as ResidentLifeCognitionView;
-    changed.body.focusedRunId = null;
-    changed.matters[0] = {
-      ...changed.matters[0]!,
-      activeRun: {
-        ...changed.matters[0]!.activeRun!,
-        bodyState: "unfocused",
+    const changed: ResidentLifeCognitionView = {
+      ...structuredClone(initial),
+      matters: initial.matters.map((matter, index) => index === 0
+        ? {
+            ...structuredClone(matter),
+            activeRun: matter.activeRun
+              ? { ...structuredClone(matter.activeRun), bodyState: "unfocused" }
+              : null,
+          }
+        : structuredClone(matter)),
+      body: {
+        ...structuredClone(initial.body),
+        focusedRunId: null,
       },
     };
 
