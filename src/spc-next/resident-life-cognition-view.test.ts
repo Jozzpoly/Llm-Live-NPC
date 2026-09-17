@@ -142,6 +142,38 @@ describe("resident life cognition truth projection", () => {
     expect(fixture.kernel.lastOutcomeEvidence(MATTER_A)).toBeNull();
   });
 
+  it("forgets terminal outcome projection after bounded recent evidence really evicts it", () => {
+    const kernel = new ResidentContinuityKernel({ recentEvidenceLimit: 2 });
+    kernel.recordEvidence({ id: "evidence:origin", tick: 1, kind: "life_context", summary: "bounded origin" });
+    kernel.openMatter({ id: MATTER_A, originEvidenceId: "evidence:origin", semanticCourse: "bounded matter" });
+    kernel.bindRun({ matterId: MATTER_A, taskId: "task.mira.a", runId: RUN_A });
+    const focus = new ResidentExecutionFocusAuthority(kernel);
+    const arbitrator = new ResidentExecutionArbitrator(kernel, focus);
+    expect(arbitrator.request(RUN_A)).toEqual({ status: "acquired", runId: RUN_A });
+
+    const reconciled = kernel.reconcileRunOutcome({
+      runId: RUN_A,
+      tick: 2,
+      status: "succeeded",
+      summary: "bounded outcome",
+    });
+    expect(reconciled.status).toBe("recorded");
+    kernel.resolveMatter(MATTER_A);
+
+    kernel.recordEvidence({ id: "evidence:filler:1", tick: 3, kind: "test", summary: "filler one" });
+    kernel.recordEvidence({ id: "evidence:filler:2", tick: 4, kind: "test", summary: "filler two" });
+    expect(kernel.recentEvidenceSnapshot().some((entry) => entry.id === "task-outcome:run.mira.a:2")).toBe(false);
+
+    const view = captureResidentLifeCognitionView({
+      kernel,
+      focus,
+      arbitrator,
+      matterIds: [MATTER_A],
+    });
+    expect(view.matters[0]?.lastOutcomeEvidence).toBeNull();
+    expect(kernel.lastOutcomeEvidence(MATTER_A)).toBeNull();
+  });
+
   it("is read-only over resident continuity state", () => {
     const fixture = setupTwoMatters();
     expect(fixture.arbitrator.request(RUN_A).status).toBe("acquired");
