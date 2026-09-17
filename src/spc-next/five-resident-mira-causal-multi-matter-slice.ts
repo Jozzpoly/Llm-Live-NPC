@@ -94,6 +94,15 @@ export interface GroundedCausalCommitmentIntent {
   semanticIntent: ResidentMatterIntent;
 }
 
+export interface GroundedCausalOutcomeCommitmentIntent {
+  sourceMatterId: string;
+  originOutcomeEvidenceId: string;
+  destination: Vec2;
+  routeRegionIds: readonly string[];
+  semanticCourse: string;
+  semanticIntent: ResidentMatterIntent;
+}
+
 type CausalCommitmentProposal = ResidentCognitionProposal | ResidentLifeIntentProposal;
 
 interface CausalCommitmentIdentity {
@@ -110,6 +119,14 @@ interface GroundedCommitmentAuthority {
   proposal: CausalCommitmentProposal;
 }
 
+interface GroundedOutcomeCommitmentAuthority {
+  attempt: ResidentLifeIntentAttempt;
+  sourceMatterId: string;
+  outcomeEvidenceId: string;
+  identity: CausalCommitmentIdentity;
+  proposal: ResidentLifeIntentProposal;
+}
+
 export interface PreparedCausalLifeIntent {
   batch: CognitionBatch;
   /** Exact authority handle. Do not clone before settlement. */
@@ -121,6 +138,17 @@ export interface AcceptedCausalCommitment {
   batch: CognitionBatch;
   context: ResidentLifeCognitionContext;
   originPerceptId: string;
+  matter: ResidentMatter;
+  runId: string;
+  routeRegionIds: readonly string[];
+  focusClaim: ResidentExecutionArbitrationRequest;
+}
+
+export interface AcceptedCausalOutcomeCommitment {
+  sourceMatterId: string;
+  originOutcomeEvidence: ResidentKernelEvidence;
+  batch: CognitionBatch;
+  context: ResidentLifeCognitionContext;
   matter: ResidentMatter;
   runId: string;
   routeRegionIds: readonly string[];
@@ -241,6 +269,10 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
   const runMatterIds = new Map<string, string>();
   const acceptedMatterIds = new Set<string>();
   const groundedCommitmentAuthority = new WeakMap<GroundedCausalCommitmentIntent, GroundedCommitmentAuthority>();
+  const groundedOutcomeCommitmentAuthority = new WeakMap<
+    GroundedCausalOutcomeCommitmentIntent,
+    GroundedOutcomeCommitmentAuthority
+  >();
   let activeInterruption: ActiveMiraCausalInterruption | null = null;
 
   function currentLife() {
