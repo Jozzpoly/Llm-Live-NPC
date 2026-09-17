@@ -1,7 +1,9 @@
 import { handleE1AgentDecision } from "./e1-agent";
 import { handleFirstPresenceSemanticProposal } from "./first-presence-semantic";
 import { handleResidentConversation } from "./living-resident";
-import { handleHearthCognition, type HearthCognitionEnv } from "./hearth-cognition";
+import { handleHearthCognition } from "./hearth-cognition";
+import { handleSpcNextCognition, type SpcNextCognitionEnv } from "./spc-next-cognition";
+import { handleSpcNextSemantic, type SpcNextSemanticEnv } from "./spc-next-semantic";
 
 const GATEWAY_ID = "default";
 const LIVE_STAGE = "e1-grounded-notice-fetch";
@@ -27,7 +29,7 @@ interface RateLimitBinding {
   limit(options: { key: string }): Promise<{ success: boolean }>;
 }
 
-interface Env extends HearthCognitionEnv {
+interface Env extends SpcNextSemanticEnv, SpcNextCognitionEnv {
   AI: AiBinding;
   AI_PROBE_LIMITER: RateLimitBinding;
 }
@@ -171,6 +173,10 @@ export default {
         residentConversationEndpoint: "/api/resident/converse",
         hearthCognitionEndpoint: "/api/hearth/cognition",
         hearthModelConfigured: env.HEARTH_COGNITION_MODEL ?? "gpt-5.6-luna",
+        spcNextCognitionEndpoint: "/api/spc-next/cognition",
+        spcNextCognitionModelConfigured: env.SPC_NEXT_COGNITION_MODEL ?? env.HEARTH_COGNITION_MODEL ?? "gpt-5.6-luna",
+        spcNextSemanticEndpoint: "/api/spc-next/semantic",
+        spcNextSemanticModelConfigured: env.SPC_NEXT_SEMANTIC_MODEL ?? env.HEARTH_COGNITION_MODEL ?? "gpt-5.6-luna",
         hearthKeyConfigured: Boolean(env.OPENAI_API_KEY?.trim()),
         transportQualificationEndpoint: "/api/ai/qualify",
         probeCandidates: PROBE_CANDIDATES
@@ -191,6 +197,14 @@ export default {
 
     if (url.pathname === "/api/hearth/cognition") {
       return handleHearthCognition(request, env);
+    }
+
+    if (url.pathname === "/api/spc-next/cognition") {
+      return handleSpcNextCognition(request, env);
+    }
+
+    if (url.pathname === "/api/spc-next/semantic") {
+      return handleSpcNextSemantic(request, env);
     }
 
     if (url.pathname === "/api/ai/smoke") {

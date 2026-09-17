@@ -1,150 +1,187 @@
 # LLM Live NPC
 
-Experimental web laboratory for **persistent embodied NPCs whose cognition may use LLMs without letting the model become the world, the physics engine or the per-frame controller**.
+Experimental web laboratory for **persistent embodied residents whose cognition may use LLMs without letting the model become the world, the physics engine or the per-frame controller**.
+
+## Live SPC Next takeover authority
+
+This branch is currently the SPC refoundation line:
+
+`refoundation/spc-next-five-resident-world`
+
+Draft PR: **#125 — SPC Next: five-resident living-world refoundation**.
+
+Current status:
+
+> **CAUSAL / MULTI-RESIDENT SUBSTRATE PARTIALLY DEFENDED · RESIDENT CONTINUITY KERNEL REGRESSED / INCOMPLETE · LIVE END-TO-END SPC NOT CONNECTED · NOT OWNER-LIVING-WORLD READY**
+
+A deeper 2026-09-15 audit found that SPC Next preserved valuable World/multi-resident foundations but simplified or dropped several resident-life invariants already earned by earlier First Presence / Pass-2 research. Green CI is therefore a mechanical repository signal, **not** a promotion signal for living-SPC quality.
+
+For a fresh takeover on this branch, read in this order:
+
+1. `docs/SPC_NEXT_OWNER_INTENT_AND_GAP_AUDIT.md` — Owner target, current reality gaps and corrected development strategy;
+2. `docs/SPC_NEXT_ARCHITECTURE_RECOVERY_GATE.md` — binding stop-the-line recovery obligations and promotion gates;
+3. `docs/SPC_NEXT_FIVE_RESIDENT_FOUNDATION.md` — original five-resident refoundation direction and useful architectural commitments;
+4. `docs/SPC_NEXT_CURRENT_STATE_RECONCILIATION.md` — scoped substrate evidence from before the deeper recovery audit;
+5. `docs/LIVE_NPC_PASS1_PRESENCE_CONTRACT.md` — durable product/presence contract;
+6. `docs/LIVE_NPC_PASS2_ARCHITECTURE_DECISION.md` and preserved `src/research/p2-*` tests — donor invariants that SPC Next must recover or explicitly supersede with stronger evidence;
+7. `docs/FIRST_HEARTH_FOUNDATION.md`, `docs/CONTINUITY_OWNER_BUILD.md`, `docs/RESIDENT_WORLD_CONTACT.md` and `src/living`, `src/world`, `src/resident` — embodied/playable donor capabilities and historical evidence, **not** current architecture authority.
+
+`docs/PROJECT_STATE.md` and `docs/FRESH_TAKEOVER.md` are preserved historical Pass-2 orientation documents from the earlier `recovery/owner-fail-2026-09-07` line. They are valuable donor/research history but **must not be treated as the live SPC Next takeover authority on this branch**.
+
+If documentation conflicts with live code/evidence, live evidence wins. Resolve the contradiction before extending implementation or making a broader PASS claim.
 
 ## North star
 
-The project is trying to create **one persistent resident of a shared simulated world**, not a chatbot attached to a sprite.
+The project is trying to create **genuinely living embodied SPC residents of one shared authored world**, not chatbots attached to sprites and not a world engine waiting for AI later.
 
-A successful resident should remain one coherent participant across time and across players; experience only evidence that could legitimately reach it; allow novel language and situations to change its semantic direction; retain meaningful unresolved consequences of earlier decisions; remain legitimately uncertain when evidence is insufficient; and act or communicate through world mechanisms whose real outcomes — not model declarations — determine what actually happened.
+The immediate architectural pressure is **five independent SPCs**. Each should remain one coherent participant through time, acquire only information that can causally reach it, accumulate a divergent private history, carry unresolved matters/purposes across interruptions, act through local embodied competence, and receive factual consequences from World authority.
+
+The Owner should eventually be able to enter the world, interfere, follow residents, leave and return, talk or ask questions, and discover whether five different lives remain coherent without relying on a research panel to manufacture that impression.
 
 Shorthand:
 
 > **meaning may be generative; reality must remain grounded.**
 
-## Current phase
+And for the current recovery:
 
-**Pass 1 — Presence Contract — is closed.**
+> **semantic purpose is not bodily activity; bodily activity is not physical outcome.**
 
-**Pass 2 — architecture / donor / comparative research — is closed as a bounded architecture-selection pass.**
+## Intelligence split
 
-The bounded executable research campaign has now advanced through **P2-E0…P2-E12** on the canonical refoundation line. The resulting research substrate supports a causal chain from grounded experience and unresolved semantic matters, through scoped asynchronous semantic proposals, into grounded task execution and factual outcome reconciliation, including interruption, semantic reconsideration, terminal disposition and stale-cognition lifecycle handling.
+### Semantic / LLM cognition
 
-This is substantial architecture evidence. It is **not yet a fresh playable Presence qualification and not a wholesale production integration of the research seams**.
+The LLM is a higher-level participant in judgement, reinterpretation, uncertainty, prioritisation and semantic reconsideration. It must not become the per-frame movement controller or temporary owner of the resident.
 
-Current-best architecture hypothesis for the first Presence experiment remains a **Minimal Resident Kernel**: one logical resident owner preserving bounded grounded experience, unresolved semantic matters, scoped asynchronous semantic proposals and grounded task causality while local competences act through World authority.
+Cognition may be bursty when the situation genuinely requires it and sparse when local competence is enough. Latency, provider failure, usage and cost must be measured through the real integrated path rather than assumed from old model economics.
 
-Current next step:
+### Local live brain
 
-> **broaden the post-P2-E12 gap/readiness audit before selecting another implementation frontier.**
+The local brain is intended to become a real continuous embodied intelligence, not merely an executor of LLM instructions. It should progressively own or participate in sensory processing, selective attention, facing/orientation, local spatial reasoning, steering/navigation execution, procedural competence, manipulation, micro-problem solving, routine continuation, local reaction/improvisation and later bounded learning/adaptation where evidence justifies it.
 
-Do not jump automatically to a live LLM/provider, memory system, planner, generic scheduler or playable integration merely because the research chain is now deep. Candidate questions such as admission/bounding of multiple genuinely-live same-revision cognition requests remain hypotheses to attack, not selected architecture.
+Game-AI techniques are donors, not the quality ceiling.
 
-Canonical research docs:
+## Durable causal boundaries
 
-- [`docs/LIVE_NPC_PASS1_PRESENCE_CONTRACT.md`](docs/LIVE_NPC_PASS1_PRESENCE_CONTRACT.md)
-- [`docs/LIVE_NPC_PASS2_ARCHITECTURE_DECISION.md`](docs/LIVE_NPC_PASS2_ARCHITECTURE_DECISION.md)
+Preserve unless later evidence overturns them:
 
-## Live repository state
-
-Current research/refoundation line:
-
-`recovery/owner-fail-2026-09-07`
-
-Canonical P2-E12 merge head:
-
-`be543147bbfcc43f92fd18bbc8aa7aac30588621`
-
-Exact independent merge-head qualification:
-
-- **247/247 tests across 56 files**;
-- strict TypeScript PASS;
-- Worker/client production build PASS;
-- preview deploy dry-run PASS;
-- GitHub validate PASS;
-- Cloudflare Workers Build PASS;
-- Worker Version ID `f22afa01-3fc0-4008-9a27-1150750e0f12`.
-
-This qualification includes executable research apparatus. It does **not** create a new Owner/browser Presence claim.
-
-Recovered playable-runtime donor checkpoint remains:
-
-`b31a851c3f708077fbf9e6fb8206fa392f8def13`
-
-That runtime is **automated/R8-qualified donor evidence, not a fresh final qualitative Owner/browser PASS**. Its bounded runtime qualification remains 145/145 tests across 26 files plus strict build/preview/Cloudflare PASS, Worker Version ID `0e1a7e36-edba-4660-8fa2-f2b38172d760`.
-
-Final evidence-only combined R8 PR #75, closed without merge, reached 149/149 tests across 27 files and combined R8 4/4 PASS without runtime product changes.
-
-`main` intentionally remains the historical P0 transport checkpoint:
-
-`f207419ee87c03979544d2d579e624f043300bbc`
-
-The former P1 integration PR #3 is closed as historical donor evidence. The old post-readiness `experiment/e1-grounded-notice-fetch` line is non-canonical after a decisive Owner/browser FAIL; recovery deliberately restarted from the last good pre-readiness checkpoint rather than forward-merging that failed line.
-
-## What P2-E0…P2-E12 earned
-
-The sequence is cumulative research evidence, not twelve independent product features.
-
-- **P2-E0 — resident causal kernel:** bounded grounded evidence, unresolved matters, scoped proposal identity, task/run provenance and simple interruption/resumption without a general belief/planner architecture.
-- **P2-E1 — grounded communication seam:** one canonical spoken occurrence can project receiver-specific grounded experience without exposing a global event log as omniscient cognition.
-- **P2-E2 — communication runtime ownership:** one occurrence-time communication frame can enter only the matching resident as sourced `heard` evidence while World physical truth remains separate.
-- **P2-E3 — explicit semantic attribution:** the same grounded evidence identity may explicitly advance one or more matters; merely recording evidence does not itself change semantic context.
-- **P2-E4 — bounded semantic context:** a selected matter/proposal can be projected into a small self-contained semantic context without raw World/E1/perception spill or uncovered dependency state.
-- **P2-E5 — provider authority membrane:** model-visible input carries semantic content but not resident mutation authority; settlement remains local, identity-safe and stale-protected.
-- **P2-E6 — grounded task start:** committed semantics are grounded against current World state and tied to the exact semantic revision before executor start + resident binding.
-- **P2-E7 — factual task outcome:** terminal executor/World outcome returns through exact resident binding as evidence; mechanical completion does not auto-resolve semantic meaning.
-- **P2-E8 — open-matter semantic continuity:** each unresolved matter may retain exactly its current semantic evidence dependency through unrelated recent-evidence churn without creating a general archive.
-- **P2-E9 — semantic reconsideration hold:** an exact semantically superseded run can be mechanically held while the shared World continues; unresolved reconsideration cannot silently release it.
-- **P2-E10 — suspension execution causality:** suspending one matter can pause its exact bound run while unrelated World activity continues, then resume the same run after the interrupt is terminal and the matter is explicitly resumed.
-- **P2-E11 — terminal task disposition:** a terminal matter can neutrally retire its exact still-running task and release resident ownership without fabricating success, failure or World outcome; P2-E9 sidecar state is cleaned with the retired run.
-- **P2-E12 — pending cognition authority lifecycle:** active `pending` means semantic authority that is still genuinely live; terminal/superseded/losing proposals are revoked immediately with bounded recent causal provenance, and dead resident authority cannot retain a meaningless provider retry path.
-
-The detailed RED/fix/re-attack evidence is preserved in merged PRs #79 and #82–#94. Use those only when exact provenance is needed; this README is the current orientation layer.
-
-## Durable architecture boundaries
-
-Preserve these unless later evidence overturns them:
-
-- `World` owns canonical physical truth, legality and factual outcomes;
+- one authoritative `World` owns canonical physical truth, legality and factual outcomes;
 - Phaser/client presentation does not become World authority;
 - one logical resident continuity is distinct from any particular hosting framework;
-- communication/perception evidence must remain situated and sourced;
-- `A said X` is evidence that A said X, not automatic truth of X;
-- semantic proposal authority is scoped to explicit dependencies, not a global World-version CAS;
-- unrelated physical change does not automatically stale valid semantic meaning;
-- later semantic supersession of the same matter does stale older meaning;
-- semantic intention, grounded task, mechanical attempt and factual success remain distinct;
-- mechanical task success does not automatically equal semantic satisfaction;
-- slow semantic cognition is a proposal/reconsideration participant, not temporary ownership of the resident;
-- routine mechanics should not require per-frame LLM control;
-- causal provenance should be inspectable without exposing model chain-of-thought.
+- World truth, resident observation, belief and remembered belief remain distinct;
+- communication/perception evidence is situated and sourced;
+- hearing speech does not automatically imply exact position, identity, understanding, agreement or responsibility;
+- semantic intention / continuing matter, grounded task, local mechanical attempt and factual World outcome remain distinct;
+- mechanical task completion does not automatically equal semantic satisfaction;
+- slow semantic cognition returns a proposal/reconsideration, not resident ownership;
+- proposal validity is scoped to the semantic dependencies it actually used, not every unrelated World mutation;
+- routine mechanics continue locally without waiting for LLM inference;
+- causal provenance remains inspectable without exposing hidden model chain-of-thought;
+- debug/research visibility never becomes resident knowledge or a substitute for missing world-readable consequence.
 
-## Research vs playable product boundary
+## What current SPC Next genuinely contributes
 
-Most P2-E0…P2-E12 code intentionally lives under `src/research/`. Some experiments reuse or minimally extend recovered execution donors, but the campaign has **not** claimed that every research seam is already wired together into the browser runtime as the final resident architecture.
+Current branch work includes useful substrate that should normally survive recovery:
 
-The broader playable donor is still `b31a851c...`, and its old automated qualification is not equivalent to a fresh qualitative Owner gate. A new Owner/browser gate becomes meaningful when a coherent playable Presence slice exists and the decision depends on feel, readability, continuity or usability.
+- one-clock `SpcWorldRuntime` for player + residents;
+- actor/control separation and authoritative desired-vs-resolved motion;
+- chunk spatial indexing and locality;
+- independent resident runtimes/private mind state;
+- resident-local cognition scheduling plus bounded global concurrency;
+- event-time occurrence witness snapshots;
+- private sight/hearing percept flow;
+- continuous actor sight lifecycle and authored point-LOS blockers;
+- semantic region familiarity/visitation and knowledge-limited macro navigation;
+- deterministic World phase semantics;
+- defensive authored-world authority for regions/anchors;
+- routing destinations separated from authored places;
+- strict worker-side context/proposal sanitation;
+- browser research scaffold with five spatially separated residents and research projection.
 
-## Explicitly open / unselected
+These are **foundation assets, not evidence that five living SPCs already exist**.
 
-The project has not yet solved or selected:
+## Why architecture recovery is active
 
-- final production resident/Mind API or hosting topology;
-- the orchestration layer that composes the qualified research seams into a playable resident;
-- final attention/addressedness and cognition-admission policy;
-- whether/how multiple genuinely-live same-revision provider requests should be deduplicated, bounded or scheduled;
-- final hearing range/channel/acoustic rules and communication UI;
-- automatic matter creation, focus selection and semantic satisfaction policy;
-- general belief representation;
-- long-term memory/consolidation/forgetting;
-- planner/BT/GOAP/HTN/skill composition architecture;
-- proactive autonomy/long-horizon goals;
-- pathfinding/navmesh;
-- multiplayer resident hosting/concurrency;
-- persistence/offscreen simulation/time scaling;
-- production scaling/cost architecture;
-- final live model/provider and transport integration.
+The deeper audit found material regressions or growth blockers in the current resident-life layer, including:
 
-Historical R5b timeout/retry, R6 sensory-buffer and R7 ingress/provider-observability work remain donors to reconsider when an earned consumer requires them. They are not an automatic repair checklist.
+- no persistent matter/purpose authority; one current `ResidentActivity` is too flat;
+- resident-wide `attentionRevision/activityRevision` is weaker than earlier per-matter semantic authority;
+- no exact matter → semantic revision → task → run provenance on current execution;
+- no causal hold preventing semantically superseded execution from mutating World during LLM latency;
+- no recovered suspend/resume/terminal/disposition lifecycle;
+- bounded recent evidence can leave beliefs/concerns with orphaned provenance;
+- unknown heard speakers can leak actor identity;
+- self-region can remain stale when an actor enters unregioned World space;
+- `emitInteraction()` can create authoritative-looking events without authoritative action resolution;
+- current local command surface is mutually exclusive (`move` OR `speak`) rather than composable locomotion/attention/action/communication control;
+- facing, checked absence, deliberate embodied search and object manipulation from older donors are not yet recovered;
+- cognition pending reasons can grow as an event inbox rather than bounded unresolved semantic pressure;
+- public physical snapshot and private semantic activity reason are mixed;
+- research trace is too thin to join evidence → semantic authority → exact task/run → World outcome;
+- current browser SPC scene is not wired to the SPC cognition host/worker endpoint;
+- current five residents differ mostly by starting position/familiarity/initial scripted activity; role-pressure metadata is not yet causal resident identity/capability state;
+- initial activities intentionally collapse to idle after a short specimen run;
+- current World-only research presentation is not a participant-bounded sensory view.
 
-## Canonical spine
+See `docs/SPC_NEXT_ARCHITECTURE_RECOVERY_GATE.md` for exact obligations and promotion criteria.
 
-A fresh takeover should read:
+## Preserved Pass-2 / First Presence corpus
 
-1. `README.md` — fast orientation;
-2. `docs/PROJECT_STATE.md` — current evidence, topology and open frontier;
-3. `docs/LIVE_NPC_PASS1_PRESENCE_CONTRACT.md` — product/problem contract;
-4. `docs/LIVE_NPC_PASS2_ARCHITECTURE_DECISION.md` — architecture-selection decision;
-5. `docs/FRESH_TAKEOVER.md` — startup mandate for continuation.
+The repository intentionally retains earlier research and playable donors. They are not dead clutter and they are not current architecture by default.
 
-If live repository state contradicts this spine, **live evidence wins** and the contradiction should be resolved before extending strong claims or implementation.
+Especially important Pass-2 evidence established:
+
+- bounded grounded evidence + unresolved semantic matters;
+- matter-scoped semantic proposal identity and revisions;
+- explicit semantic attribution;
+- provider authority membrane;
+- grounded atomic task start;
+- factual task outcome reconciliation;
+- open-matter evidence continuity through recent-memory churn;
+- semantic reconsideration hold;
+- suspension/resume of the exact bound run;
+- neutral terminal task disposition;
+- pending cognition revocation/lifecycle;
+- later adversarial tests for terminal monotonicity, suspended-time semantic revision, immediate execution revocation and provider-attempt abandonment.
+
+SPC Next does **not** automatically inherit these properties merely because their tests still pass in `src/research`. Recovery requires new SPC Next executable tests that ask the same adversarial questions of the new architecture.
+
+Older Living/World/First Hearth donors also contain useful embodied capability: facing, directional sight, checked absence, grounded search, objects/holding/manipulation, action outcomes, communication after physical contact, suspend/resume progress and richer causal research views. Reuse must preserve current World/private-mind boundaries rather than wholesale-import old architecture.
+
+## Current development rule
+
+Do not return to horizontal substrate-first development and do not attempt to build every final system at once.
+
+Use bounded vertical living slices:
+
+1. choose a falsifiable question about resident life;
+2. add only the World/local-brain/cognition capability needed to test it honestly;
+3. make the consequence visible in participant/world presentation;
+4. qualify deterministic causal lifecycle;
+5. qualify real provider behavior where semantic cognition matters;
+6. adversarially interrupt/supersede/fail it;
+7. stress the surviving architecture under five residents;
+8. generalize only what survives.
+
+The first meaningful promotion target is not "anchors complete", "collision complete" or "more map". It is a resident with a persistent own matter that causes real World progress, is physically and semantically interrupted, preserves or consciously revises that matter, and resumes/abandons it through grounded authority while the causal story remains inspectable.
+
+## Evidence language
+
+Use claims narrowly:
+
+- **STATIC / CONTRACT PASS** — parser/type/invariant or isolated contract evidence;
+- **DETERMINISTIC CAUSAL PASS** — controlled executable lifecycle through real runtime classes;
+- **LIFE-SLICE PASS** — bounded resident-life scenario survives interruption/return with real World consequence;
+- **LIVE PROVIDER PASS** — actual provider participates on the integrated path under measured latency/failure;
+- **WORLD-READABLE PASS** — participant can understand the relevant behavior without research telemetry;
+- **OWNER-OBSERVED** — Owner personally exercised/observed that behavior;
+- **FIVE-RESIDENT PRESSURE PASS** — the same architecture survives independent concurrent resident lives/events/cognition.
+
+Never promote a broader claim from a narrower gate.
+
+## Current promotion boundary
+
+PR #125 remains draft. Standard repository CI proves source/test/build/deploy-dry-run health; it is not a living-SPC promotion gate.
+
+Until the Architecture Recovery Gate is satisfied, use:
+
+> **RECOVERY IN PROGRESS — DO NOT PROMOTE BY GREEN CI OR FEATURE COUNT.**
