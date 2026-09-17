@@ -64,7 +64,6 @@ describe("Mira commitment-native interruption and exact return", () => {
       (proposal, providerContext) => slice.groundPreparedPlayerCommitmentRequest(
         prepared,
         bOrigin,
-        HEARTH,
         proposal,
         providerContext,
       ),
@@ -75,7 +74,6 @@ describe("Mira commitment-native interruption and exact return", () => {
     const acceptedB = slice.materializeAdmittedPlayerCommitmentRequest(
       prepared,
       bOrigin,
-      HEARTH,
       settlement.proposal,
       settlement.intent,
     );
