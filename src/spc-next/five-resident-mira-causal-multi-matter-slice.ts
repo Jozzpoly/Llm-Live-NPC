@@ -199,6 +199,7 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
   const authority = new ResidentWorldExecutionAuthority(MIRA_ID, arbitrator, world);
   const executors = new Map<string, ResidentGroundedTravelExecutor>();
   const groundedTargetRegionIds = new Map<string, string>();
+  const runMatterIds = new Map<string, string>();
   const acceptedMatterIds = new Set<string>();
   const groundedCommitmentAuthority = new WeakMap<GroundedCausalCommitmentIntent, GroundedCommitmentAuthority>();
 
@@ -403,6 +404,7 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
       new ResidentGroundedTravelExecutor(spec.runId, intent.destination, authority, world),
     );
     groundedTargetRegionIds.set(spec.runId, intent.semanticIntent.targetRegionId);
+    runMatterIds.set(spec.runId, spec.matterId);
     acceptedMatterIds.add(spec.matterId);
     groundedCommitmentAuthority.delete(intent);
 
@@ -474,26 +476,107 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
     return settlePreparedPlayerRequest(prepared, occurrence, spec, legacyCommitmentProposal(spec));
   }
 
-  function finishArrivedMatter(spec: MiraCausalCommitmentSpec): CompletedCausalCommitment {
-    const groundedTargetRegionId = groundedTargetRegionIds.get(spec.runId);
-    if (!groundedTargetRegionId) {
-      throw new Error(`missing run-bound grounded target for ${spec.runId}`);
+  function semanticRevisionExecutionIdentity(matter: ResidentMatter) {
+    return {
+      taskId: `task.mira.regrounded.${matter.id}.semantic-${matter.semanticRevision}`,
+      runId: `run.mira.regrounded.${matter.id}.semantic-${matter.semanticRevision}`,
+    };
+  }
+
+  function regroundCurrentTravelExecution(matterId: string): string | null {
+    const before = kernel.matter(matterId);
+    if (!before || before.status !== "active" || before.semanticIntent?.kind !== "travel_region") {
+      return null;
     }
+    if (before.activeRunId && kernel.canRunMutateWorld(before.activeRunId)) {
+      return before.activeRunId;
+    }
+
+    if (before.activeRunId) {
+      const staleRunId = before.activeRunId;
+      kernel.retireRun(staleRunId);
+      executors.delete(staleRunId);
+      groundedTargetRegionIds.delete(staleRunId);
+      runMatterIds.delete(staleRunId);
+    }
+
+    const matter = kernel.matter(matterId);
+    if (!matter || matter.status !== "active" || matter.semanticIntent?.kind !== "travel_region") {
+      return null;
+    }
+    const groundingContext = mira.cognitionContext({
+      residentId: MIRA_ID,
+      requestedAtTick: world.tick,
+      reasons: [],
+    });
+    const currentRegionId = groundingContext.currentRegionId;
+    if (!currentRegionId) return null;
+    const known = new Set(groundingContext.knownRegions.map((region) => region.id));
+    known.add(currentRegionId);
+    const targetRegionId = matter.semanticIntent.targetRegionId;
+    const route = navigation.route(currentRegionId, targetRegionId, known);
+    const destination = navigation.destinationPoint(targetRegionId);
+    if (!route || !destination) return null;
+
+    const identity = semanticRevisionExecutionIdentity(matter);
+    kernel.bindRun({
+      matterId,
+      taskId: identity.taskId,
+      runId: identity.runId,
+    });
+    const claim = arbitrator.request(identity.runId);
+    if (claim.status === "rejected") {
+      kernel.retireRun(identity.runId);
+      throw new Error(`re-grounded commitment run was not authorized: ${claim.reason}`);
+    }
+
+    executors.set(
+      identity.runId,
+      new ResidentGroundedTravelExecutor(identity.runId, destination, authority, world),
+    );
+    groundedTargetRegionIds.set(identity.runId, targetRegionId);
+    runMatterIds.set(identity.runId, matterId);
+    return identity.runId;
+  }
+
+  function refreshStaleDeferredExecutions(excludeMatterId: string): void {
+    for (const matterId of [...acceptedMatterIds].sort((a, b) => a.localeCompare(b))) {
+      if (matterId === excludeMatterId) continue;
+      const matter = kernel.matter(matterId);
+      if (!matter || matter.status !== "active") continue;
+      if (matter.activeRunId && kernel.canRunMutateWorld(matter.activeRunId)) continue;
+      regroundCurrentTravelExecution(matterId);
+    }
+  }
+
+  function finishArrivedMatter(matterId: string, runId: string): CompletedCausalCommitment {
+    const groundedTargetRegionId = groundedTargetRegionIds.get(runId);
+    if (!groundedTargetRegionId) {
+      throw new Error(`missing run-bound grounded target for ${runId}`);
+    }
+
+    // Rebuild any semantically stale deferred execution while this factual run still
+    // owns the body. New demands therefore become deferred behind the current run,
+    // preserving explicit choice_required semantics if several matters need rebinding.
+    refreshStaleDeferredExecutions(matterId);
+
     const reconciled = kernel.reconcileRunOutcome({
-      runId: spec.runId,
+      runId,
       tick: world.tick,
       status: "succeeded",
-      summary: `${spec.runId} physically reached its cognition-grounded ${groundedTargetRegionId} destination`,
+      summary: `${runId} physically reached its cognition-grounded ${groundedTargetRegionId} destination`,
     });
-    if (reconciled.status !== "recorded") throw new Error(`failed to reconcile ${spec.runId}`);
-    groundedTargetRegionIds.delete(spec.runId);
-    kernel.resolveMatter(spec.matterId);
+    if (reconciled.status !== "recorded") throw new Error(`failed to reconcile ${runId}`);
+    executors.delete(runId);
+    groundedTargetRegionIds.delete(runId);
+    runMatterIds.delete(runId);
+    kernel.resolveMatter(matterId);
     const arbitration = arbitrator.reconcile();
     const choiceReview = choiceReviewBridge.observe(arbitration, world.tick);
     authority.enforceMotionAuthority();
     return {
-      matterId: spec.matterId,
-      runId: spec.runId,
+      matterId,
+      runId,
       worldTick: world.tick,
       outcomeEvidence: structuredClone(reconciled.evidence),
       arbitration: structuredClone(arbitration),
@@ -504,8 +587,8 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
   function advanceFocusedMatterOneWorldTick(): IncrementalCausalCommitmentStep {
     const runId = focus.focusedRun();
     if (!runId) throw new Error("cannot advance causal execution without a focused run");
-    const spec = MIRA_CAUSAL_COMMITMENTS.find((candidate) => candidate.runId === runId);
-    if (!spec) throw new Error(`focused run is not a causal commitment: ${runId}`);
+    const matterId = runMatterIds.get(runId);
+    if (!matterId) throw new Error(`focused run is not a causal commitment: ${runId}`);
     const executor = executors.get(runId);
     if (!executor) throw new Error(`missing executor for ${runId}`);
 
@@ -514,7 +597,7 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
       world.step();
       return {
         status: "running",
-        matterId: spec.matterId,
+        matterId,
         runId,
         worldTick: world.tick,
       };
@@ -522,14 +605,15 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
     if (local.status !== "arrived") {
       throw new Error(`${runId} did not reach its grounded destination: ${local.status}`);
     }
-    return { status: "completed", completion: finishArrivedMatter(spec) };
+    return { status: "completed", completion: finishArrivedMatter(matterId, runId) };
   }
 
   function completeFocusedMatter(matterId: string): CompletedCausalCommitment {
-    const spec = MIRA_CAUSAL_COMMITMENTS.find((candidate) => candidate.matterId === matterId);
-    if (!spec) throw new Error(`unknown causal commitment: ${matterId}`);
-    if (focus.focusedRun() !== spec.runId) {
-      throw new Error(`cannot complete unfocused commitment run: ${spec.runId}`);
+    const matter = kernel.matter(matterId);
+    if (!matter) throw new Error(`unknown causal commitment: ${matterId}`);
+    const runId = matter.activeRunId;
+    if (!runId || focus.focusedRun() !== runId) {
+      throw new Error(`cannot complete unfocused commitment run: ${runId ?? "none"}`);
     }
 
     for (let step = 0; step < MAX_TRAVEL_STEPS; step += 1) {
@@ -540,7 +624,7 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
       }
       return advanced.completion;
     }
-    throw new Error(`${spec.runId} exceeded bounded travel guard`);
+    throw new Error(`${runId} exceeded bounded travel guard`);
   }
 
   return {
