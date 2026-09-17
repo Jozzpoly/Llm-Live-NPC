@@ -92,6 +92,10 @@ export interface CompletedCausalCommitment {
   choiceReview: ResidentLifeChoiceReviewObservation;
 }
 
+export type IncrementalCausalCommitmentStep =
+  | { status: "running"; matterId: string; runId: string; worldTick: number }
+  | { status: "completed"; completion: CompletedCausalCommitment };
+
 /**
  * Bounded research composition for the first non-fixture multi-matter origin pressure.
  *
@@ -212,42 +216,65 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
     };
   }
 
+  function finishArrivedMatter(spec: MiraCausalCommitmentSpec): CompletedCausalCommitment {
+    const reconciled = kernel.reconcileRunOutcome({
+      runId: spec.runId,
+      tick: world.tick,
+      status: "succeeded",
+      summary: `${spec.runId} physically reached its cognition-grounded ${spec.targetRegionId} destination`,
+    });
+    if (reconciled.status !== "recorded") throw new Error(`failed to reconcile ${spec.runId}`);
+    kernel.resolveMatter(spec.matterId);
+    const arbitration = arbitrator.reconcile();
+    const choiceReview = choiceReviewBridge.observe(arbitration, world.tick);
+    authority.enforceMotionAuthority();
+    return {
+      matterId: spec.matterId,
+      runId: spec.runId,
+      worldTick: world.tick,
+      arbitration: structuredClone(arbitration),
+      choiceReview: structuredClone(choiceReview),
+    };
+  }
+
+  function advanceFocusedMatterOneWorldTick(): IncrementalCausalCommitmentStep {
+    const runId = focus.focusedRun();
+    if (!runId) throw new Error("cannot advance causal execution without a focused run");
+    const spec = MIRA_CAUSAL_COMMITMENTS.find((candidate) => candidate.runId === runId);
+    if (!spec) throw new Error(`focused run is not a causal commitment: ${runId}`);
+    const executor = executors.get(runId);
+    if (!executor) throw new Error(`missing executor for ${runId}`);
+
+    const local = executor.step();
+    if (local.status === "running") {
+      world.step();
+      return {
+        status: "running",
+        matterId: spec.matterId,
+        runId,
+        worldTick: world.tick,
+      };
+    }
+    if (local.status !== "arrived") {
+      throw new Error(`${runId} did not reach its grounded destination: ${local.status}`);
+    }
+    return { status: "completed", completion: finishArrivedMatter(spec) };
+  }
+
   function completeFocusedMatter(matterId: string): CompletedCausalCommitment {
     const spec = MIRA_CAUSAL_COMMITMENTS.find((candidate) => candidate.matterId === matterId);
     if (!spec) throw new Error(`unknown causal commitment: ${matterId}`);
     if (focus.focusedRun() !== spec.runId) {
       throw new Error(`cannot complete unfocused commitment run: ${spec.runId}`);
     }
-    const executor = executors.get(spec.runId);
-    if (!executor) throw new Error(`missing executor for ${spec.runId}`);
 
     for (let step = 0; step < MAX_TRAVEL_STEPS; step += 1) {
-      const local = executor.step();
-      if (local.status === "running") {
-        world.step();
-        continue;
+      const advanced = advanceFocusedMatterOneWorldTick();
+      if (advanced.status === "running") continue;
+      if (advanced.completion.matterId !== matterId) {
+        throw new Error(`unexpected causal commitment completed: ${advanced.completion.matterId}`);
       }
-      if (local.status !== "arrived") {
-        throw new Error(`${spec.runId} did not reach its grounded destination: ${local.status}`);
-      }
-      const reconciled = kernel.reconcileRunOutcome({
-        runId: spec.runId,
-        tick: world.tick,
-        status: "succeeded",
-        summary: `${spec.runId} physically reached its cognition-grounded ${spec.targetRegionId} destination`,
-      });
-      if (reconciled.status !== "recorded") throw new Error(`failed to reconcile ${spec.runId}`);
-      kernel.resolveMatter(spec.matterId);
-      const arbitration = arbitrator.reconcile();
-      const choiceReview = choiceReviewBridge.observe(arbitration, world.tick);
-      authority.enforceMotionAuthority();
-      return {
-        matterId: spec.matterId,
-        runId: spec.runId,
-        worldTick: world.tick,
-        arbitration: structuredClone(arbitration),
-        choiceReview: structuredClone(choiceReview),
-      };
+      return advanced.completion;
     }
     throw new Error(`${spec.runId} exceeded bounded travel guard`);
   }
@@ -262,6 +289,7 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
     choiceReviewBridge,
     lifeIntentOwner,
     acceptPlayerRequest,
+    advanceFocusedMatterOneWorldTick,
     completeFocusedMatter,
     choose(runId: string): ResidentExecutionArbitrationChoice {
       const choice = arbitrator.choose(runId);
