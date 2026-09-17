@@ -29,7 +29,12 @@ export interface ResidentLifeMatterView {
   status: ResidentMatter["status"];
   semanticRevision: number;
   semanticCourse: string;
-  semanticIntent: ResidentMatter["semanticIntent"];
+  /**
+   * New resident-owned structured meaning. Optional only so existing
+   * resident_life_cognition_v1 fixtures/transport payloads remain readable during
+   * migration; kernel-backed projection always emits object-or-null explicitly.
+   */
+  semanticIntent?: ResidentMatter["semanticIntent"];
   suspendedByMatterId: string | null;
   originEvidence: ResidentLifeEvidenceView | null;
   semanticEvidence: ResidentLifeEvidenceView | null;
