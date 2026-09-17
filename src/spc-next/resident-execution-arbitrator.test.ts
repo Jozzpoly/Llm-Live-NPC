@@ -132,6 +132,51 @@ describe("ResidentExecutionArbitrator", () => {
     });
     expect(fixture.focus.focusedRun()).toBeNull();
   });
+
+  it("lets an explicit interruption preempt A and restores exact A without consuming unrelated deferred B/C", () => {
+    const fixture = setupRuns([RUN_A, RUN_B, RUN_C]);
+
+    expect(fixture.arbitrator.request(RUN_A)).toEqual({ status: "acquired", runId: RUN_A });
+    expect(fixture.arbitrator.request(RUN_B).status).toBe("busy");
+    expect(fixture.arbitrator.request(RUN_C).status).toBe("busy");
+    expect(fixture.arbitrator.deferredRunIds()).toEqual([RUN_B, RUN_C]);
+
+    fixture.kernel.recordEvidence({
+      id: "evidence.interrupt",
+      tick: 2,
+      kind: "test",
+      summary: "addressed interruption",
+    });
+    fixture.kernel.openMatter({
+      id: MATTER_D,
+      originEvidenceId: "evidence.interrupt",
+      semanticCourse: "brief interruption",
+    });
+    fixture.kernel.bindRun({ matterId: MATTER_D, taskId: "task.interrupt", runId: RUN_D });
+
+    fixture.kernel.suspendMatter(MATTER_A, MATTER_D);
+    expect(fixture.kernel.canRunMutateWorld(RUN_A)).toBe(false);
+    expect(fixture.arbitrator.claimInterruption(RUN_D)).toEqual({
+      status: "acquired",
+      runId: RUN_D,
+    });
+    expect(fixture.focus.focusedRun()).toBe(RUN_D);
+    expect(fixture.arbitrator.deferredRunIds()).toEqual([RUN_B, RUN_C]);
+
+    finishRun(fixture.kernel, MATTER_D, RUN_D, 3);
+    expect(fixture.kernel.resumeMatter(MATTER_A)).toBe(true);
+    expect(fixture.arbitrator.restoreInterrupted(RUN_A)).toEqual({
+      status: "acquired",
+      runId: RUN_A,
+    });
+    expect(fixture.focus.focusedRun()).toBe(RUN_A);
+    expect(fixture.arbitrator.deferredRunIds()).toEqual([RUN_B, RUN_C]);
+    expect(fixture.arbitrator.reconcile()).toEqual({
+      status: "focused",
+      runId: RUN_A,
+      deferredRunIds: [RUN_B, RUN_C],
+    });
+  });
 });
 
 function setupRuns(runIds: readonly string[]) {
