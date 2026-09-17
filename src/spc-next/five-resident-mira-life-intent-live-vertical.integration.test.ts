@@ -110,7 +110,6 @@ describe("Mira resident-life live intent vertical", () => {
       (proposal, providerContext) => slice.groundPreparedPlayerCommitmentRequest(
         prepared,
         occurrence,
-        FIELDS,
         proposal,
         providerContext,
       ),
@@ -136,7 +135,6 @@ describe("Mira resident-life live intent vertical", () => {
     expect(() => slice.materializeAdmittedPlayerCommitmentRequest(
       prepared,
       occurrence,
-      FIELDS,
       admission.settlement.proposal,
       structuredClone(admission.settlement.intent),
     )).toThrow(/exact admitted grounding authority/u);
@@ -145,7 +143,6 @@ describe("Mira resident-life live intent vertical", () => {
     const acceptedB = slice.materializeAdmittedPlayerCommitmentRequest(
       prepared,
       occurrence,
-      FIELDS,
       admission.settlement.proposal,
       admission.settlement.intent,
     );
@@ -182,7 +179,6 @@ describe("Mira resident-life live intent vertical", () => {
     expect(() => slice.materializeAdmittedPlayerCommitmentRequest(
       prepared,
       occurrence,
-      FIELDS,
       admission.settlement.proposal,
       admission.settlement.intent,
     )).toThrow(/exact admitted grounding authority/u);
