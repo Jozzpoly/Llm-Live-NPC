@@ -81,4 +81,64 @@ describe("five-resident Mira durable execution re-grounding", () => {
       activeRunId: null,
     });
   });
+
+  it("re-grounds two stale deferred matters without inventing a winner when the focused body becomes free", () => {
+    const slice = createFiveResidentMiraCausalMultiMatterSlice();
+
+    slice.acceptPlayerRequest(WORKSHOP!);
+    const acceptedB = slice.acceptPlayerRequest(FIELDS!);
+    const acceptedC = slice.acceptPlayerRequest(HEARTH!);
+    expect(slice.focus.focusedRun()).toBe(WORKSHOP!.runId);
+
+    const staleB = acceptedB.runId;
+    const staleC = acceptedC.runId;
+
+    const reviseB = slice.kernel.beginSemanticProposal(FIELDS!.matterId);
+    expect(slice.kernel.commitSemanticProposal(reviseB, {
+      semanticCourse: "return to the familiar hearth after current work",
+      semanticIntent: {
+        kind: "travel_region",
+        goal: "return to the familiar hearth",
+        targetRegionId: HEARTH!.targetRegionId,
+      },
+    }).status).toBe("applied");
+
+    const reviseC = slice.kernel.beginSemanticProposal(HEARTH!.matterId);
+    expect(slice.kernel.commitSemanticProposal(reviseC, {
+      semanticCourse: "inspect the familiar fields after current work",
+      semanticIntent: {
+        kind: "travel_region",
+        goal: "inspect the familiar fields",
+        targetRegionId: FIELDS!.targetRegionId,
+      },
+    }).status).toBe("applied");
+
+    expect(slice.kernel.canRunMutateWorld(staleB)).toBe(false);
+    expect(slice.kernel.canRunMutateWorld(staleC)).toBe(false);
+    expect(slice.focus.focusedRun()).toBe(WORKSHOP!.runId);
+
+    const completedA = slice.completeFocusedMatter(WORKSHOP!.matterId);
+    const regroundedB = slice.kernel.matter(FIELDS!.matterId)!;
+    const regroundedC = slice.kernel.matter(HEARTH!.matterId)!;
+    const freshB = regroundedB.activeRunId;
+    const freshC = regroundedC.activeRunId;
+
+    expect(freshB).not.toBeNull();
+    expect(freshC).not.toBeNull();
+    expect(freshB).not.toBe(staleB);
+    expect(freshC).not.toBe(staleC);
+    expect(freshB).not.toBe(freshC);
+    expect(slice.kernel.runBinding(staleB)).toBeNull();
+    expect(slice.kernel.runBinding(staleC)).toBeNull();
+    expect(slice.kernel.canRunMutateWorld(freshB!)).toBe(true);
+    expect(slice.kernel.canRunMutateWorld(freshC!)).toBe(true);
+
+    const candidates = [freshB!, freshC!].sort((a, b) => a.localeCompare(b));
+    expect(completedA.arbitration).toEqual({
+      status: "choice_required",
+      candidateRunIds: candidates,
+    });
+    expect(slice.focus.focusedRun()).toBeNull();
+    expect(slice.arbitrator.deferredRunIds()).toEqual(candidates);
+  });
 });
