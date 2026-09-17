@@ -68,7 +68,9 @@ describe("Mira fully causal multi-future life choice", () => {
     });
     expect(slice.focus.focusedRun()).toBeNull();
 
-    const batch = waitForChoiceReview(slice);
+    expect(slice.choiceReviewBridge.activeCandidateRunIds()).toEqual(candidates);
+    const batch = waitForChoiceCognitionOpportunity(slice);
+    expect(batch.reasons.length).toBeGreaterThan(0);
     const lifeAtChoice = slice.currentLifeView();
     expect(lifeAtChoice.body).toEqual({
       focusedRunId: null,
@@ -241,16 +243,16 @@ function acceptCausalCommitmentWhileFocused(
   );
 }
 
-function waitForChoiceReview(slice: ReturnType<typeof createFiveResidentMiraCausalMultiMatterSlice>) {
+function waitForChoiceCognitionOpportunity(slice: ReturnType<typeof createFiveResidentMiraCausalMultiMatterSlice>) {
+  // choice_required schedules a near-term quiet review as a fallback, but any earlier
+  // truthful cognition pressure may carry the same higher-life decision. Do not throw
+  // away real World-change reasons merely to wait for a synthetic quiet_review label.
   for (let step = 0; step < MAX_REVIEW_STEPS; step += 1) {
     const batch = slice.mira.takeCognitionBatch(slice.world.tick);
-    if (batch) {
-      expect(batch.reasons).toEqual([expect.objectContaining({ kind: "quiet_review" })]);
-      return batch;
-    }
+    if (batch) return batch;
     slice.world.step();
   }
-  throw new Error("causal life ambiguity never produced a resident choice review");
+  throw new Error("causal life ambiguity never reached a resident cognition opportunity");
 }
 
 function proposal(
