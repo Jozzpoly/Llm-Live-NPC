@@ -244,8 +244,9 @@ describe("Mira fully causal multi-future life choice", () => {
     }
     expect(upstream).toHaveBeenCalledTimes(1);
 
-    // While B/C choice cognition is genuinely in flight, newer addressed pressure D
-    // is perceived, judged and accepted through the ordinary commitment-native path.
+    // While B/C choice cognition is genuinely in flight, the player physically
+    // approaches Mira at Workshop before creating newer addressed pressure D.
+    movePlayerNearMira(slice);
     const d = acceptCausalCommitmentWhileBodyFree(
       slice,
       "Mira, zanim skończysz dzień, wróć też później do znajomego warsztatu.",
@@ -365,6 +366,33 @@ function acceptCausalCommitmentWhileFocused(
     settlement.proposal,
     settlement.intent,
   );
+}
+
+function movePlayerNearMira(
+  slice: ReturnType<typeof createFiveResidentMiraCausalMultiMatterSlice>,
+) {
+  for (let step = 0; step < 1_200; step += 1) {
+    const snapshot = slice.world.publicSnapshot();
+    const player = snapshot.actors.find((actor) => actor.id === PLAYER_ID);
+    const mira = snapshot.actors.find((actor) => actor.id === MIRA_ID);
+    if (!player || !mira) throw new Error("player/Mira body missing while approaching");
+
+    const dx = mira.position.x - player.position.x;
+    const dy = mira.position.y - player.position.y;
+    const distance = Math.hypot(dx, dy);
+    if (distance <= 180) {
+      slice.world.setActorMotionIntent(PLAYER_ID, { x: 0, y: 0 });
+      slice.world.step();
+      return;
+    }
+
+    slice.world.setActorMotionIntent(PLAYER_ID, {
+      x: (dx / distance) * 140,
+      y: (dy / distance) * 140,
+    });
+    slice.world.step();
+  }
+  throw new Error("player never physically approached Mira for addressed D");
 }
 
 function acceptCausalCommitmentWhileBodyFree(
