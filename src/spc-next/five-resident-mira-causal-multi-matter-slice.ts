@@ -313,7 +313,6 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
   function groundPreparedPlayerCommitmentRequest(
     prepared: PreparedCausalLifeIntent,
     occurrence: WorldOccurrence,
-    _spec: MiraCausalCommitmentSpec,
     proposal: ResidentLifeIntentProposal,
     providerContext: ResidentLifeCognitionContext,
   ): ResidentLifeIntentAdmission<GroundedCausalCommitmentIntent> {
@@ -393,7 +392,6 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
   function materializeAdmittedPlayerCommitmentRequest(
     prepared: PreparedCausalLifeIntent,
     occurrence: WorldOccurrence,
-    _spec: MiraCausalCommitmentSpec,
     proposal: ResidentLifeIntentProposal,
     intent: GroundedCausalCommitmentIntent,
   ): AcceptedCausalCommitment {
