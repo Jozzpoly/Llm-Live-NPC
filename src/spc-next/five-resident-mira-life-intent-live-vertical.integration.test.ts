@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import worker from "../../worker/index";
-import type { ResidentCognitionProposal } from "./cognition-contract";
+import type { ResidentLifeIntentProposal } from "./resident-life-intent-contract";
 import {
   MIRA_CAUSAL_COMMITMENTS,
   createFiveResidentMiraCausalMultiMatterSlice,
@@ -17,7 +17,7 @@ const MAX_GUARD = 600;
 afterEach(() => vi.unstubAllGlobals());
 
 describe("Mira resident-life live intent vertical", () => {
-  it("keeps A embodied during provider latency, admits an inert B arrival on a later tick, re-grounds from current life and materializes only the exact admitted capability", async () => {
+  it("keeps A embodied during provider latency, accepts B as a later commitment, re-grounds from current life and materializes only the exact admitted capability", async () => {
     const slice = createFiveResidentMiraCausalMultiMatterSlice();
     slice.acceptPlayerRequest(WORKSHOP);
 
@@ -74,7 +74,7 @@ describe("Mira resident-life live intent vertical", () => {
     await Promise.resolve();
     await Promise.resolve();
 
-    // The worker/provider is in flight, but factual resident execution remains live.
+    // Higher cognition is in flight, but A remains factual resident execution.
     guard = 0;
     while (slice.privateContext().currentRegionId !== "workshop" && guard < MAX_GUARD) {
       expect(slice.advanceFocusedMatterOneWorldTick()).toMatchObject({ status: "running", runId: WORKSHOP.runId });
@@ -103,11 +103,11 @@ describe("Mira resident-life live intent vertical", () => {
     expect(slice.kernel.matter(FIELDS.matterId)).toBeNull();
     expect(slice.focus.focusedRun()).toBe(WORKSHOP.runId);
 
-    const admission = host.admit(
+    const admission = host.admitCommitment(
       arrival,
       slice.world.tick,
       slice.currentLifeView(),
-      (proposal, providerContext) => slice.groundPreparedPlayerRequest(
+      (proposal, providerContext) => slice.groundPreparedPlayerCommitmentRequest(
         prepared,
         occurrence,
         FIELDS,
@@ -118,7 +118,11 @@ describe("Mira resident-life live intent vertical", () => {
     expect(admission.status).toBe("applied");
     if (admission.status !== "applied") return;
 
-    // Explicit provider admission is still semantic only: no continuity mutation yet.
+    // Accept is still semantic only: B does not exist until local materialization.
+    expect(admission.settlement.proposal.commitmentDecision).toMatchObject({
+      kind: "accept",
+      intent: { kind: "travel", targetRegionId: FIELDS.targetRegionId },
+    });
     expect(admission.settlement.intent.routeRegionIds).toEqual(["workshop", "fields"]);
     expect(admission.settlement.intent.semanticIntent).toEqual({
       kind: "travel_region",
@@ -129,7 +133,7 @@ describe("Mira resident-life live intent vertical", () => {
     expect(slice.focus.focusedRun()).toBe(WORKSHOP.runId);
 
     // Grounded intent identity is a capability. A structural clone must not create life.
-    expect(() => slice.materializeAdmittedPlayerRequest(
+    expect(() => slice.materializeAdmittedPlayerCommitmentRequest(
       prepared,
       occurrence,
       FIELDS,
@@ -138,7 +142,7 @@ describe("Mira resident-life live intent vertical", () => {
     )).toThrow(/exact admitted grounding authority/u);
     expect(slice.kernel.matter(FIELDS.matterId)).toBeNull();
 
-    const acceptedB = slice.materializeAdmittedPlayerRequest(
+    const acceptedB = slice.materializeAdmittedPlayerCommitmentRequest(
       prepared,
       occurrence,
       FIELDS,
@@ -169,7 +173,7 @@ describe("Mira resident-life live intent vertical", () => {
     expect(slice.focus.focusedRun()).toBe(WORKSHOP.runId);
 
     // Exact capability is one-shot; replay cannot duplicate the matter/run.
-    expect(() => slice.materializeAdmittedPlayerRequest(
+    expect(() => slice.materializeAdmittedPlayerCommitmentRequest(
       prepared,
       occurrence,
       FIELDS,
@@ -179,13 +183,13 @@ describe("Mira resident-life live intent vertical", () => {
   });
 });
 
-function commitmentProposal(spec: typeof FIELDS): ResidentCognitionProposal {
+function commitmentProposal(spec: typeof FIELDS): ResidentLifeIntentProposal {
   return {
     version: 1,
-    activityDirective: {
-      kind: "replace",
-      reason: `accept the addressed ${spec.key} request as a continuing commitment`,
-      activity: {
+    commitmentDecision: {
+      kind: "accept",
+      reason: `accept the addressed ${spec.key} request as a later continuing commitment`,
+      intent: {
         kind: "travel",
         goal: spec.semanticCourse,
         targetActorId: null,
@@ -200,12 +204,13 @@ function commitmentProposal(spec: typeof FIELDS): ResidentCognitionProposal {
   };
 }
 
-function admittedSemanticCourse(proposal: ResidentCognitionProposal): string {
-  if (proposal.activityDirective.kind !== "replace") throw new Error("expected replacement proposal");
-  return `${proposal.activityDirective.reason} · ${proposal.activityDirective.activity.goal}`;
+function admittedSemanticCourse(proposal: ResidentLifeIntentProposal): string {
+  const decision = proposal.commitmentDecision;
+  if (decision.kind !== "accept") throw new Error("expected accepted commitment proposal");
+  return `${decision.reason} · ${decision.intent.goal}`;
 }
 
-function openAiResponse(proposal: ResidentCognitionProposal): Response {
+function openAiResponse(proposal: ResidentLifeIntentProposal): Response {
   return new Response(JSON.stringify({
     id: "resp_mira_life_intent_vertical",
     status: "completed",
