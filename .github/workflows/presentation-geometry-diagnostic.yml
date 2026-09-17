@@ -5,6 +5,7 @@ on:
     branches:
       - experiment/presented-frame-geometry-convergence-p2-1
     paths:
+      - "scripts/spc-browser-geometry-convergence-diagnostic.mjs"
       - ".github/workflows/presentation-geometry-diagnostic.yml"
   workflow_dispatch:
 
