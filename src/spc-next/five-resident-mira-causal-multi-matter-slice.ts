@@ -16,6 +16,7 @@ import {
   ResidentExecutionArbitrator,
   type ResidentExecutionArbitration,
   type ResidentExecutionArbitrationChoice,
+  type ResidentExecutionArbitrationRequest,
 } from "./resident-execution-arbitrator";
 import { ResidentExecutionFocusAuthority, type ResidentExecutionFocusClaim } from "./resident-execution-focus-authority";
 import { ResidentGroundedTravelExecutor } from "./resident-grounded-travel-executor";
@@ -123,7 +124,7 @@ export interface AcceptedCausalCommitment {
   matter: ResidentMatter;
   runId: string;
   routeRegionIds: readonly string[];
-  focusClaim: ResidentExecutionFocusClaim;
+  focusClaim: ResidentExecutionArbitrationRequest;
 }
 
 export interface CompletedCausalCommitment {
@@ -598,7 +599,7 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
     acceptedMatterIds.add(interruptMatterId);
 
     kernel.suspendMatter(mainMatterId, interruptMatterId);
-    const focusClaim = arbitrator.request(interruptRunId);
+    const focusClaim = arbitrator.claimInterruption(interruptRunId);
     if (focusClaim.status !== "acquired") {
       throw new Error(`interrupt run failed to acquire resident body: ${focusClaim.status}`);
     }
@@ -682,7 +683,7 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
     if (JSON.stringify(bindingAfterResume) !== JSON.stringify(active.mainRunBinding)) {
       throw new Error("interrupted causal run binding changed across interruption");
     }
-    const resumedFocus = arbitrator.request(active.mainRunId);
+    const resumedFocus = arbitrator.restoreInterrupted(active.mainRunId);
     if (resumedFocus.status !== "acquired") {
       throw new Error(`resumed causal run failed to reacquire resident body: ${resumedFocus.status}`);
     }
