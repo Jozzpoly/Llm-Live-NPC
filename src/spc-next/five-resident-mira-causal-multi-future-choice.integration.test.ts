@@ -96,10 +96,11 @@ describe("Mira fully causal multi-future life choice", () => {
     const limiter = { async limit() { return { success: true }; } };
     const upstream = vi.fn(async (_url: string, init?: RequestInit) => {
       const body = JSON.parse(String(init?.body));
-      const matterEnum = body.text.format.schema.properties.decision.anyOf[0].properties.matterId.enum;
+      const focusSchema = body.text.format.schema.properties.decision.anyOf[0];
+      const matterEnum = focusSchema.properties.matterId.enum;
       expect(matterEnum).toEqual(attempt.candidateMatterIds);
-      expect(JSON.stringify(body)).not.toContain(runB);
-      expect(JSON.stringify(body)).not.toContain(runC);
+      expect(focusSchema.properties).not.toHaveProperty("runId");
+      expect(focusSchema.properties).not.toHaveProperty("taskId");
       return openAiChoiceResponse({
         kind: "focus_matter",
         matterId: matterC,
