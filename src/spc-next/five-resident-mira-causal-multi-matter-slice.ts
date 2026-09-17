@@ -16,7 +16,10 @@ import {
 } from "./resident-life-choice-review-bridge";
 import type { ResidentLifeCognitionContext } from "./resident-life-cognition-context";
 import { captureResidentLifeCognitionView } from "./resident-life-cognition-view";
-import { ResidentLifeIntentOwner } from "./resident-life-intent-owner";
+import {
+  ResidentLifeIntentOwner,
+  type ResidentLifeIntentAttempt,
+} from "./resident-life-intent-owner";
 import { ResidentWorldExecutionAuthority } from "./resident-world-execution-authority";
 
 const MIRA_ID = "resident.mira";
@@ -73,6 +76,12 @@ interface GroundedCommitmentIntent {
   semanticCourse: string;
 }
 
+export interface PreparedCausalLifeIntent {
+  batch: CognitionBatch;
+  /** Exact authority handle. Do not clone before settlement. */
+  attempt: ResidentLifeIntentAttempt;
+}
+
 export interface AcceptedCausalCommitment {
   occurrence: WorldOccurrence;
   batch: CognitionBatch;
@@ -106,16 +115,18 @@ export type IncrementalCausalCommitmentStep =
  *
  * Admission is life-aware even while another recovered matter owns the body. Provider-
  * facing cognition therefore sees legacy activity only as `localActivity` and receives
- * the authoritative recovered matter/run/body projection in `life`. The intent owner
- * itself still stops before matter/run/body authority.
+ * the authoritative recovered matter/run/body projection in `life`. Preparing an
+ * attempt and settling it are separate boundaries so body execution may continue while
+ * higher cognition is in flight. Neither boundary grants provider/network completion
+ * direct matter/run/body/World authority.
  *
  * A `ResidentMind` concern is intentionally NOT created as a second copy of the same
  * commitment. Once admitted, continuity `matter` is the durable semantic authority;
  * concerns remain a separate private uncertainty/problem representation.
  *
  * This is deliberately NOT a general life runtime or arbitrary language-understanding
- * claim. The deterministic proposal supplies the interpretation so this specimen can
- * isolate causal matter acquisition and concurrency.
+ * claim. Deterministic proposals supply interpretation so the specimen can isolate
+ * causal matter acquisition, concurrency and delayed cognition admission.
  */
 export function createFiveResidentMiraCausalMultiMatterSlice() {
   const composition = createFiveResidentRegionComposition({ playerStart: { x: 700, y: 700 } });
@@ -128,8 +139,6 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
   const arbitrator = new ResidentExecutionArbitrator(kernel, focus);
   const choiceReviewBridge = new ResidentLifeChoiceReviewBridge(mira);
 
-  // This specimen starts after authored-local activity. Recovered authority may own
-  // Mira immediately because no authored walk is part of the variable under test.
   world.setResidentActivity(MIRA_ID, {
     id: "activity:mira:causal-multi-matter-idle",
     kind: "idle",
@@ -154,24 +163,44 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
     });
   }
 
-  function acceptPlayerRequest(spec: MiraCausalCommitmentSpec): AcceptedCausalCommitment {
+  function takeReadyLifeIntentAttempt(): PreparedCausalLifeIntent | null {
+    // Do not consume another scheduler batch while an exact cognition attempt owns
+    // the current admission authority. The existing batch must settle or abandon first.
+    if (lifeIntentOwner.state().activeAttemptId !== null) return null;
+    const batch = mira.takeCognitionBatch(world.tick);
+    if (!batch) return null;
+    const attempt = lifeIntentOwner.prepare(batch, currentLife());
+    if (!attempt) {
+      mira.requeueCognitionBatch(batch);
+      throw new Error("Mira life intent owner refused a ready cognition batch");
+    }
+    return {
+      batch: structuredClone(batch),
+      attempt,
+    };
+  }
+
+  function settlePreparedPlayerRequest(
+    prepared: PreparedCausalLifeIntent,
+    occurrence: WorldOccurrence,
+    spec: MiraCausalCommitmentSpec,
+    rawProposal: unknown,
+  ): AcceptedCausalCommitment {
     if (acceptedMatterIds.has(spec.matterId)) throw new Error(`commitment already accepted: ${spec.matterId}`);
 
-    const occurrence = world.speak(PLAYER_ID, spec.requestText, REQUEST_RADIUS, [MIRA_ID]);
-    world.step();
-    const batch = waitForAddressedSpeechBatch(world, mira);
-    const lifeAtAdmission = currentLife();
-    const attempt = lifeIntentOwner.prepare(batch, lifeAtAdmission);
-    if (!attempt) throw new Error("Mira life intent owner refused addressed commitment request");
-
-    const originPercept = attempt.context.recentPercepts.find((percept) => percept.occurrenceId === occurrence.id);
-    if (!originPercept || originPercept.phenomenon !== "speech" || !originPercept.addressed) {
-      throw new Error("addressed commitment lost its exact private speech percept");
+    const originPercept = prepared.attempt.context.recentPercepts.find(
+      (percept) => percept.occurrenceId === occurrence.id,
+    );
+    if (!originPercept
+      || originPercept.phenomenon !== "speech"
+      || !originPercept.addressed
+      || originPercept.text !== occurrence.text) {
+      throw new Error("prepared commitment lost its exact addressed private speech percept");
     }
 
     const settlement = lifeIntentOwner.settleIntent(
-      attempt,
-      commitmentProposal(spec),
+      prepared.attempt,
+      rawProposal,
       currentLife(),
       world.tick,
       (proposal, context) => groundCommitment(proposal, context, spec, originPercept.id, navigation),
@@ -206,14 +235,37 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
 
     return {
       occurrence: structuredClone(occurrence),
-      batch: structuredClone(batch),
-      context: structuredClone(attempt.context),
+      batch: structuredClone(prepared.batch),
+      context: structuredClone(prepared.attempt.context),
       originPerceptId: originPercept.id,
       matter: structuredClone(matter),
       runId: spec.runId,
       routeRegionIds: [...settlement.intent.routeRegionIds],
       focusClaim: structuredClone(focusClaim),
     };
+  }
+
+  function waitForPreparedAddressedSpeech(): PreparedCausalLifeIntent {
+    for (let step = 0; step < MAX_BATCH_STEPS; step += 1) {
+      const prepared = takeReadyLifeIntentAttempt();
+      if (prepared) {
+        if (!prepared.batch.reasons.some((reason) => reason.kind === "heard_speech")) {
+          lifeIntentOwner.abandon(prepared.attempt);
+          throw new Error("unexpected non-speech cognition batch contaminated commitment admission");
+        }
+        return prepared;
+      }
+      world.step();
+    }
+    throw new Error("addressed commitment speech never produced a cognition attempt");
+  }
+
+  function acceptPlayerRequest(spec: MiraCausalCommitmentSpec): AcceptedCausalCommitment {
+    if (acceptedMatterIds.has(spec.matterId)) throw new Error(`commitment already accepted: ${spec.matterId}`);
+    const occurrence = world.speak(PLAYER_ID, spec.requestText, REQUEST_RADIUS, [MIRA_ID]);
+    world.step();
+    const prepared = waitForPreparedAddressedSpeech();
+    return settlePreparedPlayerRequest(prepared, occurrence, spec, commitmentProposal(spec));
   }
 
   function finishArrivedMatter(spec: MiraCausalCommitmentSpec): CompletedCausalCommitment {
@@ -288,6 +340,8 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
     authority,
     choiceReviewBridge,
     lifeIntentOwner,
+    takeReadyLifeIntentAttempt,
+    settlePreparedPlayerRequest,
     acceptPlayerRequest,
     advanceFocusedMatterOneWorldTick,
     completeFocusedMatter,
@@ -306,23 +360,6 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
       return mira.cognitionContext({ residentId: MIRA_ID, requestedAtTick: world.tick, reasons: [] });
     },
   };
-}
-
-function waitForAddressedSpeechBatch(
-  world: ReturnType<typeof createFiveResidentRegionComposition>["world"],
-  mira: ReturnType<typeof createFiveResidentRegionComposition>["runtimes"]["resident.mira"],
-): CognitionBatch {
-  for (let step = 0; step < MAX_BATCH_STEPS; step += 1) {
-    const batch = mira.takeCognitionBatch(world.tick);
-    if (batch) {
-      if (!batch.reasons.some((reason) => reason.kind === "heard_speech")) {
-        throw new Error("unexpected non-speech cognition batch contaminated commitment admission");
-      }
-      return batch;
-    }
-    world.step();
-  }
-  throw new Error("addressed commitment speech never produced a cognition batch");
 }
 
 function commitmentProposal(spec: MiraCausalCommitmentSpec): ResidentCognitionProposal {
