@@ -3,7 +3,6 @@ import type { ResidentLifeIntentProposal } from "./resident-life-intent-contract
 import {
   MIRA_CAUSAL_COMMITMENTS,
   createFiveResidentMiraCausalMultiMatterSlice,
-  type MiraCausalCommitmentSpec,
 } from "./five-resident-mira-causal-multi-matter-slice";
 
 const WORKSHOP = MIRA_CAUSAL_COMMITMENTS[1]!;
@@ -14,20 +13,13 @@ const REQUEST_RADIUS = 420;
 const MAX_TO_COGNITION = 180;
 
 describe("Mira local commitment identity", () => {
-  it("derives commitment-native matter/run identity from local causal origin instead of authored fixture ids", () => {
+  it("derives commitment-native matter/run identity from local causal origin without any authored identity argument", () => {
     const slice = createFiveResidentMiraCausalMultiMatterSlice();
     slice.acceptPlayerRequest(WORKSHOP);
 
-    const poisonedSpec: MiraCausalCommitmentSpec = {
-      ...FIELDS,
-      matterId: "fixture.must.not.own.matter",
-      taskId: "fixture.must.not.own.task",
-      runId: "fixture.must.not.own.run",
-    };
-
     const occurrence = slice.world.speak(
       PLAYER_ID,
-      poisonedSpec.requestText,
+      FIELDS.requestText,
       REQUEST_RADIUS,
       [MIRA_ID],
     );
@@ -50,7 +42,6 @@ describe("Mira local commitment identity", () => {
       (admittedProposal, providerContext) => slice.groundPreparedPlayerCommitmentRequest(
         prepared,
         occurrence,
-        poisonedSpec,
         admittedProposal,
         providerContext,
       ),
@@ -61,7 +52,6 @@ describe("Mira local commitment identity", () => {
     const accepted = slice.materializeAdmittedPlayerCommitmentRequest(
       prepared,
       occurrence,
-      poisonedSpec,
       settlement.proposal,
       settlement.intent,
     );
@@ -71,10 +61,10 @@ describe("Mira local commitment identity", () => {
 
     expect(accepted.matter.id).toBe(expectedMatterId);
     expect(accepted.runId).toBe(expectedRunId);
-    expect(accepted.matter.id).not.toBe(poisonedSpec.matterId);
-    expect(accepted.runId).not.toBe(poisonedSpec.runId);
-    expect(slice.kernel.matter(poisonedSpec.matterId)).toBeNull();
-    expect(slice.kernel.runBinding(poisonedSpec.runId)).toBeNull();
+    expect(accepted.matter.id).not.toBe(FIELDS.matterId);
+    expect(accepted.runId).not.toBe(FIELDS.runId);
+    expect(slice.kernel.matter(FIELDS.matterId)).toBeNull();
+    expect(slice.kernel.runBinding(FIELDS.runId)).toBeNull();
 
     expect(slice.kernel.matter(expectedMatterId)).toMatchObject({
       id: expectedMatterId,
