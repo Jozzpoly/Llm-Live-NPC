@@ -13,13 +13,15 @@ function env() {
 }
 
 describe("Worker SPC Next routing", () => {
-  it("advertises resident cognition, resident-life choice and matter semantic endpoints", async () => {
+  it("advertises resident cognition, resident-life intent/choice and matter semantic endpoints", async () => {
     const response = await worker.fetch(new Request("https://example.test/api/health"), env());
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toMatchObject({
       ok: true,
       spcNextCognitionEndpoint: "/api/spc-next/cognition",
       spcNextCognitionModelConfigured: "gpt-5.6-luna",
+      spcNextLifeIntentEndpoint: "/api/spc-next/life-intent",
+      spcNextLifeIntentModelConfigured: "gpt-5.6-luna",
       spcNextLifeChoiceEndpoint: "/api/spc-next/life-choice",
       spcNextLifeChoiceModelConfigured: "gpt-5.6-luna",
       spcNextSemanticEndpoint: "/api/spc-next/semantic",
@@ -41,6 +43,20 @@ describe("Worker SPC Next routing", () => {
         stage: "request_validation",
         code: "cognition_not_configured",
       },
+    });
+  });
+
+  it("routes resident-life intent to its dedicated life-aware semantic handler", async () => {
+    const response = await worker.fetch(new Request("https://example.test/api/spc-next/life-intent", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({}),
+    }), env());
+
+    expect(response.status).toBe(503);
+    await expect(response.json()).resolves.toEqual({
+      ok: false,
+      code: "life_intent_not_configured",
     });
   });
 
