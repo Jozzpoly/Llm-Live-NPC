@@ -85,6 +85,11 @@ const DEFAULT_REVOCATION_LIMIT = 64;
  * provider transport or focus policy. Its job is narrower: preserve continuing
  * resident matters and answer whether a semantic proposal or exact task run still
  * has authority to affect the resident / World.
+ *
+ * Exact run ids are lifetime identities inside one kernel. Once successfully bound,
+ * an id is never reusable even after reconciliation or retirement; provenance and
+ * deferred execution references may therefore treat the id as one causal run rather
+ * than a recyclable label.
  */
 export class ResidentContinuityKernel {
   private readonly recentEvidence = new Map<string, ResidentKernelEvidence>();
@@ -93,6 +98,7 @@ export class ResidentContinuityKernel {
   private readonly pinnedSemanticEvidence = new Map<string, ResidentKernelEvidence>();
   private readonly pinnedOutcomeEvidence = new Map<string, ResidentKernelEvidence>();
   private readonly runBindings = new Map<string, ResidentTaskRunBinding>();
+  private readonly usedRunIds = new Set<string>();
   private readonly pendingProposals = new Map<string, ResidentSemanticProposalTicket>();
   private readonly recentRevocations: ResidentSemanticProposalRevocation[] = [];
   private proposalSequence = 0;
@@ -297,6 +303,7 @@ export class ResidentContinuityKernel {
     if (matter.status !== "active") throw new Error("cannot bind a run to a suspended matter");
     if (matter.activeRunId !== null) throw new Error(`matter already owns run: ${matter.activeRunId}`);
     if (this.runBindings.has(input.runId)) throw new Error(`run already bound: ${input.runId}`);
+    if (this.usedRunIds.has(input.runId)) throw new Error(`run identity already used: ${input.runId}`);
 
     const binding: ResidentTaskRunBinding = {
       runId: input.runId,
@@ -304,6 +311,7 @@ export class ResidentContinuityKernel {
       matterId: matter.id,
       semanticRevision: matter.semanticRevision,
     };
+    this.usedRunIds.add(binding.runId);
     this.runBindings.set(binding.runId, binding);
     matter.activeRunId = binding.runId;
     return structuredClone(binding);
