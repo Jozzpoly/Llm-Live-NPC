@@ -22,7 +22,7 @@ const PROVIDER_GOAL = "visit the familiar workshop and inspect it";
 const PROVIDER_TARGET = "workshop" as const;
 
 describe("Mira factual outcome target provenance", () => {
-  it("records the actually admitted and reached target instead of the legacy fixture target", () => {
+  it("returns factual completion evidence for the actually admitted and reached target instead of the legacy fixture target", () => {
     const slice = createFiveResidentMiraCausalMultiMatterSlice();
     const occurrence = slice.world.speak(
       PLAYER_ID,
@@ -58,10 +58,13 @@ describe("Mira factual outcome target provenance", () => {
     expect(completed.matterId).toBe(FIELDS.matterId);
     expect(slice.privateContext().currentRegionId).toBe(PROVIDER_TARGET);
 
-    const outcome = slice.kernel.lastOutcomeEvidence(FIELDS.matterId);
-    expect(outcome).not.toBeNull();
-    expect(outcome?.summary).toContain(PROVIDER_TARGET);
-    expect(outcome?.summary).not.toContain("fields destination");
+    // Terminal matters intentionally release live evidence pins. The completion result
+    // must therefore carry the exact factual reconciliation evidence across that boundary.
+    expect(completed.outcomeEvidence).toMatchObject({
+      kind: "task_outcome",
+    });
+    expect(completed.outcomeEvidence.summary).toContain(PROVIDER_TARGET);
+    expect(completed.outcomeEvidence.summary).not.toContain("fields destination");
   });
 });
 
