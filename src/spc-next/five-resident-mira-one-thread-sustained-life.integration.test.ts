@@ -100,7 +100,11 @@ describe("Mira fixture-free one-thread sustained life falsifier", () => {
     expect(preparedB.attempt.context.life.matters).toContainEqual(expect.objectContaining({
       id: matterA,
       status: "active",
-      activeRunId: runA,
+      activeRun: expect.objectContaining({
+        runId: runA,
+        bodyState: "focused",
+        canMutateWorld: true,
+      }),
     }));
 
     let releaseProvider!: (response: Response) => void;
