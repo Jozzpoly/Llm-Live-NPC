@@ -137,7 +137,125 @@ describe("Mira self-origin follow-up from factual outcome", () => {
       activeRunId: null,
     });
   });
+
+  it("rejects a cloned grounded outcome capability and still permits the exact original one-shot authority", () => {
+    const fixture = prepareGroundedOutcomeFollowup();
+    const clonedIntent = structuredClone(fixture.settlementB.intent);
+    const expectedMatterId = `matter.mira.causal.outcome:${fixture.completedA.outcomeEvidence.id}`;
+
+    expect(() => fixture.slice.materializeAdmittedLifeOutcomeCommitment(
+      fixture.preparedB,
+      fixture.acceptedA.matter.id,
+      fixture.settlementB.proposal,
+      clonedIntent,
+    )).toThrow("grounded outcome commitment lacks exact admitted factual authority");
+    expect(fixture.slice.kernel.matter(expectedMatterId)).toBeNull();
+
+    const acceptedB = fixture.slice.materializeAdmittedLifeOutcomeCommitment(
+      fixture.preparedB,
+      fixture.acceptedA.matter.id,
+      fixture.settlementB.proposal,
+      fixture.settlementB.intent,
+    );
+    expect(acceptedB.matter.id).toBe(expectedMatterId);
+    expect(acceptedB.focusClaim).toEqual({ status: "acquired", runId: acceptedB.runId });
+  });
+
+  it("fails closed if the factual source outcome is evicted after cognition settlement but before matter materialization", () => {
+    const fixture = prepareGroundedOutcomeFollowup();
+    const expectedMatterId = `matter.mira.causal.outcome:${fixture.completedA.outcomeEvidence.id}`;
+
+    for (let index = 0; index < 80; index += 1) {
+      fixture.slice.kernel.recordEvidence({
+        id: `evidence:mira:outcome-churn:${index}`,
+        tick: fixture.slice.world.tick + index + 1,
+        kind: "bounded_churn",
+        summary: `bounded evidence churn ${index}`,
+      });
+    }
+
+    expect(fixture.slice.kernel.recentEvidenceSnapshot().some(
+      (entry) => entry.id === fixture.completedA.outcomeEvidence.id,
+    )).toBe(false);
+    expect(fixture.slice.currentLifeView().matters.find(
+      (matter) => matter.id === fixture.acceptedA.matter.id,
+    )?.lastOutcomeEvidence).toBeNull();
+
+    expect(() => fixture.slice.materializeAdmittedLifeOutcomeCommitment(
+      fixture.preparedB,
+      fixture.acceptedA.matter.id,
+      fixture.settlementB.proposal,
+      fixture.settlementB.intent,
+    )).toThrow("grounded outcome commitment lacks exact admitted factual authority");
+    expect(fixture.slice.kernel.matter(expectedMatterId)).toBeNull();
+    expect(fixture.slice.focus.focusedRun()).toBeNull();
+  });
 });
+
+function prepareGroundedOutcomeFollowup() {
+  const slice = createFiveResidentMiraCausalMultiMatterSlice();
+  const occurrence = slice.world.speak(
+    PLAYER_ID,
+    "Mira, zajrzyj proszę do znanego ci warsztatu.",
+    REQUEST_RADIUS,
+    [MIRA_ID],
+  );
+  slice.world.step();
+
+  const preparedA = waitForLifeIntent(slice);
+  const proposalA = acceptTravel(
+    "workshop",
+    "inspect the familiar workshop",
+    "accept the workshop visit",
+    1,
+  );
+  const settlementA = slice.lifeIntentOwner.settleCommitmentIntent(
+    preparedA.attempt,
+    proposalA,
+    slice.currentLifeView(),
+    slice.world.tick,
+    (proposal, providerContext) => slice.groundPreparedPrivateSpeechCommitment(
+      preparedA,
+      occurrence,
+      proposal,
+      providerContext,
+    ),
+  );
+  if (settlementA.status !== "applied") {
+    throw new Error(`failed to establish source matter: ${settlementA.status}`);
+  }
+  const acceptedA = slice.materializeAdmittedPrivateSpeechCommitment(
+    preparedA,
+    occurrence,
+    settlementA.proposal,
+    settlementA.intent,
+  );
+  const completedA = slice.completeFocusedMatter(acceptedA.matter.id);
+
+  const preparedB = waitForLifeIntent(slice);
+  const proposalB = acceptTravel(
+    "hearth",
+    "return to the familiar hearth after completing the workshop visit",
+    "choose a bounded self-origin follow-up",
+    30,
+  );
+  const settlementB = slice.lifeIntentOwner.settleCommitmentIntent(
+    preparedB.attempt,
+    proposalB,
+    slice.currentLifeView(),
+    slice.world.tick,
+    (proposal, providerContext) => slice.groundPreparedLifeOutcomeCommitment(
+      preparedB,
+      acceptedA.matter.id,
+      proposal,
+      providerContext,
+    ),
+  );
+  if (settlementB.status !== "applied") {
+    throw new Error(`failed to ground outcome follow-up: ${settlementB.status}`);
+  }
+  return { slice, acceptedA, completedA, preparedB, settlementB };
+}
 
 function waitForLifeIntent(slice: ReturnType<typeof createFiveResidentMiraCausalMultiMatterSlice>) {
   for (let step = 0; step < MAX_REVIEW_STEPS; step += 1) {
