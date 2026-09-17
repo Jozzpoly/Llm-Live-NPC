@@ -80,6 +80,32 @@ describe("ResidentLifeOutcomeReviewBridge", () => {
     expect(resident.cognitionScheduleDiagnostics().nextQuietReviewTick).toBeGreaterThan(firstDeadline);
   });
 
+  it("bounds remembered outcome ids so lifetime dedupe state cannot grow without limit", () => {
+    const resident = new ResidentRuntime({
+      id: "resident.mira",
+      name: "Mira",
+      ...DEFAULT_RESIDENT_PROFILE,
+    });
+    const bridge = new ResidentLifeOutcomeReviewBridge(resident, {
+      rememberedOutcomeLimit: 2,
+    });
+
+    const outcomeA = { ...OUTCOME, id: "task-outcome:a", tick: 100 };
+    const outcomeB = { ...OUTCOME, id: "task-outcome:b", tick: 101 };
+    const outcomeC = { ...OUTCOME, id: "task-outcome:c", tick: 102 };
+
+    expect(bridge.observe(outcomeA, 100).status).toBe("scheduled");
+    expect(bridge.observe(outcomeB, 101).status).toBe("scheduled");
+    expect(bridge.observe(outcomeC, 102).status).toBe("scheduled");
+
+    // A has left the bounded dedupe window. Re-observing it may schedule again rather
+    // than forcing the bridge to retain every outcome id for the resident's lifetime.
+    expect(bridge.observe(outcomeA, 103)).toEqual({
+      status: "scheduled",
+      outcomeEvidenceId: outcomeA.id,
+    });
+  });
+
   it("rejects non-outcome kernel evidence instead of manufacturing life reflection pressure", () => {
     const resident = new ResidentRuntime({
       id: "resident.mira",
