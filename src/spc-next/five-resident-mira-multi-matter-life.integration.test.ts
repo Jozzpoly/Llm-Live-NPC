@@ -34,11 +34,11 @@ describe("five-resident Mira multi-matter life composition", () => {
     const kernel = new ResidentContinuityKernel();
     const focus = new ResidentExecutionFocusAuthority(kernel);
     const arbitrator = new ResidentExecutionArbitrator(kernel, focus);
-    const authority = new ResidentWorldExecutionAuthority(MIRA_ID, arbitrator, world);
     const choiceOwner = new ResidentLifeChoiceOwner(mira);
 
-    // Do not poll cognition while the authored walk is still running. Doing so would
-    // itself mutate scheduler cadence and contaminate the experiment.
+    // Do not install recovered execution authority while Mira's authored opening is
+    // still running: claiming it intentionally disables the legacy fastStep path.
+    // First let the existing World/runtime produce the factual completion pressure.
     const firstBatch = waitForAuthoredCompletionThenBatch(world, mira);
     expect(firstBatch.reasons.some((reason) => reason.kind === "activity_completed")).toBe(true);
 
@@ -55,6 +55,7 @@ describe("five-resident Mira multi-matter life composition", () => {
 
     openMatterAndRun(kernel, A, world.tick, "first post-authored resident matter");
     expect(arbitrator.request(A.runId)).toEqual({ status: "acquired", runId: A.runId });
+    const authority = new ResidentWorldExecutionAuthority(MIRA_ID, arbitrator, world);
 
     // B/C are fixture-authored only as concurrent continuing matters. This test does
     // not promote their origin as autonomous cognition; it qualifies coexistence,
