@@ -91,6 +91,49 @@ describe("shared SPC Next resident-life context sanitizer", () => {
     });
   });
 
+  it("preserves bounded structured semantic intent while keeping legacy missing intent readable", () => {
+    expect(sanitizeSpcNextLifeContext(focusedContext)?.life.matters[0]?.semanticIntent).toBeNull();
+
+    const structured = structuredClone(focusedContext) as any;
+    structured.life.matters[0].semanticIntent = {
+      kind: "travel_region",
+      goal: "check the familiar fields after the current work",
+      targetRegionId: "fields",
+    };
+    expect(sanitizeSpcNextLifeContext(structured)?.life.matters[0]?.semanticIntent).toEqual({
+      kind: "travel_region",
+      goal: "check the familiar fields after the current work",
+      targetRegionId: "fields",
+    });
+  });
+
+  it("fails closed on malformed structured intent and execution-method leakage", () => {
+    const blankGoal = structuredClone(focusedContext) as any;
+    blankGoal.life.matters[0].semanticIntent = {
+      kind: "travel_region",
+      goal: "   ",
+      targetRegionId: "fields",
+    };
+    expect(sanitizeSpcNextLifeContext(blankGoal)).toBeNull();
+
+    const unknownRegionShape = structuredClone(focusedContext) as any;
+    unknownRegionShape.life.matters[0].semanticIntent = {
+      kind: "travel_region",
+      goal: "check the fields",
+      targetRegionId: "fields",
+      routeRegionIds: ["hearth", "fields"],
+    };
+    expect(sanitizeSpcNextLifeContext(unknownRegionShape)).toBeNull();
+
+    const unknownKind = structuredClone(focusedContext) as any;
+    unknownKind.life.matters[0].semanticIntent = {
+      kind: "teleport_region",
+      goal: "appear in the fields",
+      targetRegionId: "fields",
+    };
+    expect(sanitizeSpcNextLifeContext(unknownKind)).toBeNull();
+  });
+
   it("also accepts a free-body deferred set without imposing life-choice policy", () => {
     const deferred = structuredClone(focusedContext) as any;
     deferred.life.matters[0].activeRun.bodyState = "deferred";
