@@ -16,10 +16,7 @@ import type {
   ResidentKnownMaterialObject,
   ResidentMaterialKnowledge,
 } from "../spc-next/resident-material-knowledge";
-import type {
-  ResidentWorldActionFact,
-  ResidentWorldExecutionAuthority,
-} from "../spc-next/resident-world-execution-authority";
+import type { ResidentWorldActionFact } from "../spc-next/resident-world-execution-authority";
 import type { SpcWorldRuntime } from "../spc-next/spc-world-runtime";
 
 export interface SpcCanonicalEvidenceSnapshotV1 {
@@ -53,15 +50,29 @@ export interface SpcCanonicalEvidenceSnapshotV1 {
   };
 }
 
+/**
+ * Read-only provenance surface used by canonical observation.
+ *
+ * ResidentWorldExecutionAuthority structurally satisfies this interface, but the
+ * evidence layer no longer requires the mutable execution facade itself. Scenarios
+ * with no run-scoped material/action facts can omit the source instead of creating a
+ * second authority merely so research can take a snapshot.
+ */
+export interface ResidentWorldActionFactSource {
+  readonly residentId: string;
+  recentActionFacts(): ResidentWorldActionFact[];
+}
+
 export interface SpcCanonicalEvidenceSnapshotInput {
   scenarioId: string;
   residentId: string;
   matterId: string;
   world: SpcWorldRuntime;
   kernel: ResidentContinuityKernel;
-  /** Optional resident-specific material extension; generic social slices need none. */
+  /** Optional resident-specific material extension; generic social/travel slices need none. */
   materialKnowledge?: ResidentMaterialKnowledge | null;
-  authority: ResidentWorldExecutionAuthority;
+  /** Optional read-only action provenance. Observation must never create execution authority. */
+  authority?: ResidentWorldActionFactSource | null;
 }
 
 /**
@@ -69,9 +80,9 @@ export interface SpcCanonicalEvidenceSnapshotInput {
  *
  * This is deliberately not a savegame, participant DTO or complete final game
  * state. It composes existing authoritative/private owners without creating a
- * second mutable truth. Material knowledge is one optional resident-specific
- * extension; generic World, private diagnostics, continuity and causal provenance
- * remain valid for non-material residents such as Ida.
+ * second mutable truth. Material knowledge and run-scoped action facts are optional
+ * resident-specific extensions; generic World, private diagnostics and continuity
+ * remain valid for non-material or travel-only residents.
  */
 export function captureSpcCanonicalEvidenceSnapshot(
   input: SpcCanonicalEvidenceSnapshotInput,
@@ -82,8 +93,8 @@ export function captureSpcCanonicalEvidenceSnapshot(
   if (input.materialKnowledge && input.materialKnowledge.residentId !== input.residentId) {
     throw new Error("materialKnowledge resident does not match evidence residentId");
   }
-  if (input.authority.residentId !== input.residentId) {
-    throw new Error("execution authority resident does not match evidence residentId");
+  if (input.authority && input.authority.residentId !== input.residentId) {
+    throw new Error("action provenance resident does not match evidence residentId");
   }
 
   const publicWorld = input.world.publicSnapshot();
@@ -120,7 +131,7 @@ export function captureSpcCanonicalEvidenceSnapshot(
         .filter((entry) => entry.ticket.matterId === input.matterId),
     },
     causalProvenance: {
-      residentWorldActionFacts: input.authority.recentActionFacts(),
+      residentWorldActionFacts: input.authority?.recentActionFacts() ?? [],
     },
   };
 }
