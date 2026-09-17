@@ -1,11 +1,12 @@
 import type { ResidentCognitionProposal } from "./cognition-contract";
+import type { ResidentLifeIntentProposal } from "./resident-life-intent-contract";
 import type { ResidentLifeCognitionContext } from "./resident-life-cognition-context";
 import type { ResidentLifeCognitionView } from "./resident-life-cognition-view";
 import {
   ResidentLifeIntentOwner,
   type ResidentLifeIntentAdmission,
   type ResidentLifeIntentAttempt,
-  type ResidentLifeIntentSettlement,
+  type ResidentLifeSettlement,
 } from "./resident-life-intent-owner";
 import type {
   CognitionFetch,
@@ -31,21 +32,21 @@ export type ResidentLifeIntentLiveArrival = Readonly<
     }
 >;
 
-export type ResidentLifeIntentLiveAdmission<T> =
+type ResidentLifeLiveAdmission<T, Proposal> =
   | {
       status: "applied";
       admissionTick: number;
-      settlement: Extract<ResidentLifeIntentSettlement<T>, { status: "applied" }>;
+      settlement: Extract<ResidentLifeSettlement<T, Proposal>, { status: "applied" }>;
     }
   | {
       status: "stale";
       admissionTick: number;
-      settlement: Extract<ResidentLifeIntentSettlement<T>, { status: "stale" }>;
+      settlement: Extract<ResidentLifeSettlement<T, Proposal>, { status: "stale" }>;
     }
   | {
       status: "rejected";
       admissionTick: number;
-      settlement: Extract<ResidentLifeIntentSettlement<T>, { status: "rejected" }>;
+      settlement: Extract<ResidentLifeSettlement<T, Proposal>, { status: "rejected" }>;
     }
   | {
       status: "provider_error";
@@ -57,6 +58,12 @@ export type ResidentLifeIntentLiveAdmission<T> =
       status: "arrival_rejected";
       reason: "unknown_arrival" | "already_admitted";
     };
+
+/** Compatibility result for the pre-commitment proposal vocabulary. */
+export type ResidentLifeIntentLiveAdmission<T> = ResidentLifeLiveAdmission<T, ResidentCognitionProposal>;
+
+/** Resident-life-native result whose semantic decision is independent from body activity. */
+export type ResidentLifeCommitmentLiveAdmission<T> = ResidentLifeLiveAdmission<T, ResidentLifeIntentProposal>;
 
 export interface ResidentLifeIntentAdmissionRecord {
   sequence: number;
@@ -81,15 +88,19 @@ const ADMISSION_RECORD_LIMIT = 128;
  *
  * request() may complete at arbitrary wall-clock time, but the returned arrival is
  * inert. Provider/network completion cannot settle cognition, create a matter, bind a
- * run, claim the body or mutate World. Only admit() may consume the exact host-owned
- * arrival at an explicit resident/World tick.
+ * run, claim the body or mutate World. Only explicit admission may consume the exact
+ * host-owned arrival at a resident/World tick.
  *
- * Even admit() does not own grounding or execution. The caller supplies one bounded
- * local admission callback. ResidentLifeIntentOwner first revalidates exact attempt,
- * attention/local-activity/recovered-life freshness and strict provider proposal shape;
- * only then may that callback translate the frozen semantic proposal into a local
- * intent. Navigation/current grounding, continuity and World authority stay outside
- * this transport membrane.
+ * `admitCommitment()` is the resident-life-native path. It delegates accept/decline/
+ * defer/clarify settlement to ResidentLifeIntentOwner without turning that decision
+ * into body authority. `admit()` remains a temporary compatibility path for callers
+ * still using the older ResidentCognitionProposal activity vocabulary. Both consume
+ * the same exact arrival authority, so one provider arrival can never be admitted by
+ * both paths.
+ *
+ * Neither path owns grounding or execution. The caller supplies one bounded local
+ * admission callback after exact attempt and staleness validation. Navigation/current
+ * grounding, continuity and World authority stay outside this transport membrane.
  */
 export class ResidentLifeIntentLiveHost {
   private arrivalSequence = 0;
@@ -149,6 +160,7 @@ export class ResidentLifeIntentLiveHost {
     }));
   }
 
+  /** Compatibility admission for the older activityDirective proposal contract. */
   admit<T>(
     arrival: ResidentLifeIntentLiveArrival,
     admissionTick: number,
@@ -158,18 +170,70 @@ export class ResidentLifeIntentLiveHost {
       context: ResidentLifeCognitionContext,
     ) => ResidentLifeIntentAdmission<T>,
   ): ResidentLifeIntentLiveAdmission<T> {
+    return this.admitWithSettlement(
+      arrival,
+      admissionTick,
+      (attempt) => this.owner.settleIntent(
+        attempt,
+        arrival.status === "proposal" ? arrival.proposal : null,
+        currentLife,
+        admissionTick,
+        admitIntent,
+      ),
+      "semantic_intent_applied",
+    );
+  }
+
+  /**
+   * Resident-life-native admission. Accepting a new commitment here does not itself
+   * open a matter, bind a run, choose body focus or mutate World; those remain caller-
+   * owned consequences after the exact proposal survives owner validation.
+   */
+  admitCommitment<T>(
+    arrival: ResidentLifeIntentLiveArrival,
+    admissionTick: number,
+    currentLife: ResidentLifeCognitionView,
+    admitIntent: (
+      proposal: ResidentLifeIntentProposal,
+      context: ResidentLifeCognitionContext,
+    ) => ResidentLifeIntentAdmission<T>,
+  ): ResidentLifeCommitmentLiveAdmission<T> {
+    return this.admitWithSettlement(
+      arrival,
+      admissionTick,
+      (attempt) => this.owner.settleCommitmentIntent(
+        attempt,
+        arrival.status === "proposal" ? arrival.proposal : null,
+        currentLife,
+        admissionTick,
+        admitIntent,
+      ),
+      "semantic_commitment_applied",
+    );
+  }
+
+  pendingArrivals(): number {
+    return this.activeArrivals.size;
+  }
+
+  recentAdmissions(): ResidentLifeIntentAdmissionRecord[] {
+    return this.admissionRecords.map((record) => structuredClone(record));
+  }
+
+  private admitWithSettlement<T, Proposal>(
+    arrival: ResidentLifeIntentLiveArrival,
+    admissionTick: number,
+    settle: (attempt: ResidentLifeIntentAttempt) => ResidentLifeSettlement<T, Proposal>,
+    appliedDetail: string,
+  ): ResidentLifeLiveAdmission<T, Proposal> {
     assertAdmissionTick(admissionTick);
-    const authority = this.arrivalAuthority.get(arrival);
+    const authority = this.claimArrival(arrival);
     if (!authority) {
       return {
         status: "arrival_rejected",
         reason: this.admittedArrivals.has(arrival) ? "already_admitted" : "unknown_arrival",
       };
     }
-
-    this.arrivalAuthority.delete(arrival);
-    this.activeArrivals.delete(arrival);
-    this.admittedArrivals.add(arrival);
 
     if (arrival.status === "provider_error") {
       const abandoned = this.owner.abandon(authority.attempt);
@@ -187,15 +251,9 @@ export class ResidentLifeIntentLiveHost {
       };
     }
 
-    const settlement = this.owner.settleIntent(
-      authority.attempt,
-      arrival.proposal,
-      currentLife,
-      admissionTick,
-      admitIntent,
-    );
+    const settlement = settle(authority.attempt);
     if (settlement.status === "applied") {
-      this.recordAdmission(arrival, admissionTick, "applied", "semantic_intent_applied");
+      this.recordAdmission(arrival, admissionTick, "applied", appliedDetail);
       return { status: "applied", admissionTick, settlement };
     }
     if (settlement.status === "stale") {
@@ -207,12 +265,17 @@ export class ResidentLifeIntentLiveHost {
     return { status: "rejected", admissionTick, settlement };
   }
 
-  pendingArrivals(): number {
-    return this.activeArrivals.size;
-  }
-
-  recentAdmissions(): ResidentLifeIntentAdmissionRecord[] {
-    return this.admissionRecords.map((record) => structuredClone(record));
+  /**
+   * The only admission-authority consumption point. Both compatibility and commitment
+   * paths must claim the same exact object identity here before touching the owner.
+   */
+  private claimArrival(arrival: ResidentLifeIntentLiveArrival): PrivateArrivalAuthority | null {
+    const authority = this.arrivalAuthority.get(arrival);
+    if (!authority) return null;
+    this.arrivalAuthority.delete(arrival);
+    this.activeArrivals.delete(arrival);
+    this.admittedArrivals.add(arrival);
+    return authority;
   }
 
   private registerErrorArrival(
