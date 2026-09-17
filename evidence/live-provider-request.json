@@ -1,7 +1,7 @@
 {
-  "version": 10,
+  "version": 11,
   "pr": 137,
   "qualifiers": ["life-intent"],
-  "purpose": "Qualify only the new recovered resident-life intent transport on an exact commit preview. Require spend-free exact-preview health, exact gpt-5.6-luna model and method-boundary gates first; only then make exactly one real provider request using resident_life_cognition_v1 where Mira has an already-authorized focused workshop run while localActivity is idle and she hears an addressed request about the fields. Accept any schema-valid bounded semantic proposal rather than imposing judgement quality. This qualifies provider transport, strict private-life context handling and the no-authority output boundary only; it does not qualify matter materialization, run/body/World authority, preferred decisions, autonomous pressure generation, or sustained resident life. Do not re-spend on lifecycle, interruption or life-choice.",
-  "requestedAtUtc": "2026-09-17T19:57:18Z"
+  "purpose": "Repeat the bounded resident-life intent qualifier exactly once after adding fail-closed rejection diagnostics. This is a diagnostic rerun, not retry-until-green: require spend-free exact-preview health, exact gpt-5.6-luna model and method-boundary gates first; then make exactly one real provider request using the same resident_life_cognition_v1 scenario. If the provider proposal is rejected again, preserve the safe stage/code diagnostic so we can distinguish extraction/strict-envelope failure from semantic schema_or_grounding failure without exposing raw provider output. Do not run lifecycle, interruption or life-choice. Do not weaken validation based on this run.",
+  "requestedAtUtc": "2026-09-17T20:04:30Z"
 }
