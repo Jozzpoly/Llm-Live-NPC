@@ -28,7 +28,6 @@ const MAX_TRAVEL_STEPS = 2_000;
 export interface MiraCausalCommitmentSpec {
   key: "hearth" | "workshop" | "fields";
   requestText: string;
-  concernId: string;
   matterId: string;
   taskId: string;
   runId: string;
@@ -40,7 +39,6 @@ export const MIRA_CAUSAL_COMMITMENTS: readonly MiraCausalCommitmentSpec[] = [
   {
     key: "hearth",
     requestText: "Mira, sprawdzisz palenisko zanim pójdziesz dalej?",
-    concernId: "concern.mira.request.hearth",
     matterId: "matter.mira.request.hearth",
     taskId: "task.mira.request.hearth.travel",
     runId: "run.mira.request.hearth.travel",
@@ -50,7 +48,6 @@ export const MIRA_CAUSAL_COMMITMENTS: readonly MiraCausalCommitmentSpec[] = [
   {
     key: "workshop",
     requestText: "Mira, zajrzysz później do warsztatu?",
-    concernId: "concern.mira.request.workshop",
     matterId: "matter.mira.request.workshop",
     taskId: "task.mira.request.workshop.travel",
     runId: "run.mira.request.workshop.travel",
@@ -60,7 +57,6 @@ export const MIRA_CAUSAL_COMMITMENTS: readonly MiraCausalCommitmentSpec[] = [
   {
     key: "fields",
     requestText: "Mira, sprawdzisz też później pola?",
-    concernId: "concern.mira.request.fields",
     matterId: "matter.mira.request.fields",
     taskId: "task.mira.request.fields.travel",
     runId: "run.mira.request.fields.travel",
@@ -70,7 +66,6 @@ export const MIRA_CAUSAL_COMMITMENTS: readonly MiraCausalCommitmentSpec[] = [
 ] as const;
 
 interface GroundedCommitmentIntent {
-  concernId: string;
   originPerceptId: string;
   destination: Vec2;
   routeRegionIds: readonly string[];
@@ -81,7 +76,6 @@ export interface AcceptedCausalCommitment {
   occurrence: WorldOccurrence;
   batch: CognitionBatch;
   originPerceptId: string;
-  concernId: string;
   matter: ResidentMatter;
   runId: string;
   routeRegionIds: readonly string[];
@@ -101,9 +95,12 @@ export interface CompletedCausalCommitment {
  *
  * The test driver may author only external addressed World speech and deterministic
  * cognition answers. It never calls continuity `openMatter()` directly. Each matter
- * is opened here only after one exact addressed percept survived private cognition
- * parsing, an evidence-backed open concern was admitted, and a known-region travel
- * intent was grounded from the same frozen resident context.
+ * is opened here only after one exact addressed private percept and one admitted,
+ * known-region-grounded cognition intent agree on a concrete resident commitment.
+ *
+ * A `ResidentMind` concern is intentionally NOT created as a second copy of the same
+ * commitment. Once admitted, continuity `matter` is the durable semantic authority;
+ * concerns remain a separate private uncertainty/problem representation.
  *
  * This is deliberately NOT a general life runtime or arbitrary language-understanding
  * claim. The deterministic proposal supplies the interpretation so this specimen can
@@ -155,7 +152,7 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
 
     const settlement = cognitionOwner.settleIntent(
       attempt,
-      commitmentProposal(spec, originPercept.id),
+      commitmentProposal(spec),
       world.tick,
       (proposal, context) => groundCommitment(proposal, context, spec, originPercept.id, navigation),
     );
@@ -164,18 +161,11 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
     }
     mira.scheduleAdaptiveReview(world.tick, settlement.proposal.reviewAfterSeconds, FIXED_DELTA_SECONDS);
 
-    const exactConcern = settlement.proposal.concerns.find((concern) => concern.id === settlement.intent.concernId);
-    if (!exactConcern
-      || exactConcern.status !== "open"
-      || !exactConcern.evidenceIds.includes(settlement.intent.originPerceptId)) {
-      throw new Error("applied commitment lost evidence-backed open concern semantics");
-    }
-
     const origin = kernel.recordEvidence({
       id: `evidence:mira:accepted-request:${spec.key}:${originPercept.tick}`,
       tick: originPercept.tick,
       kind: "accepted_cognition_commitment",
-      summary: `${exactConcern.summary}; origin occurrence ${originPercept.occurrenceId}`,
+      summary: `${settlement.intent.semanticCourse}; origin occurrence ${originPercept.occurrenceId}`,
     });
     const matter = kernel.openMatter({
       id: spec.matterId,
@@ -198,7 +188,6 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
       occurrence: structuredClone(occurrence),
       batch: structuredClone(batch),
       originPerceptId: originPercept.id,
-      concernId: exactConcern.id,
       matter: structuredClone(matter),
       runId: spec.runId,
       routeRegionIds: [...settlement.intent.routeRegionIds],
@@ -290,7 +279,7 @@ function waitForAddressedSpeechBatch(
   throw new Error("addressed commitment speech never produced a cognition batch");
 }
 
-function commitmentProposal(spec: MiraCausalCommitmentSpec, originPerceptId: string): ResidentCognitionProposal {
+function commitmentProposal(spec: MiraCausalCommitmentSpec): ResidentCognitionProposal {
   return {
     version: 1,
     activityDirective: {
@@ -306,13 +295,7 @@ function commitmentProposal(spec: MiraCausalCommitmentSpec, originPerceptId: str
       },
     },
     beliefs: [],
-    concerns: [{
-      id: spec.concernId,
-      summary: spec.semanticCourse,
-      priority: 0.6,
-      status: "open",
-      evidenceIds: [originPerceptId],
-    }],
+    concerns: [],
     reviewAfterSeconds: 30,
   };
 }
@@ -331,13 +314,12 @@ function groundCommitment(
     || !context.currentRegionId) {
     return { status: "rejected" as const, detail: "expected known-region travel commitment" };
   }
-
-  const concern = proposal.concerns.find((candidate) => candidate.id === spec.concernId);
-  if (!concern || concern.status !== "open" || !concern.evidenceIds.includes(originPerceptId)) {
-    return { status: "rejected" as const, detail: "commitment requires exact evidence-backed open concern" };
-  }
-  if (!context.recentPercepts.some((percept) => percept.id === originPerceptId && percept.addressed)) {
-    return { status: "rejected" as const, detail: "commitment origin is not an addressed private percept" };
+  if (!context.recentPercepts.some((percept) => (
+    percept.id === originPerceptId
+    && percept.phenomenon === "speech"
+    && percept.addressed
+  ))) {
+    return { status: "rejected" as const, detail: "commitment origin is not the exact addressed private speech percept" };
   }
 
   const known = new Set(context.knownRegions.map((region) => region.id));
@@ -351,7 +333,6 @@ function groundCommitment(
   return {
     status: "accepted" as const,
     intent: {
-      concernId: spec.concernId,
       originPerceptId,
       destination,
       routeRegionIds: [...route.regionIds],
