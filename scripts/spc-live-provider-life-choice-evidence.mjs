@@ -5,6 +5,7 @@ const BASE_URL = process.env.LIVE_PROVIDER_BASE_URL;
 const SOURCE_SHA = process.env.SOURCE_SHA;
 const OUTPUT_FILE = resolve(process.env.LIVE_PROVIDER_OUTPUT ?? "evidence/live-provider/live-provider-life-choice.json");
 const REQUEST_TIMEOUT_MS = 45_000;
+const EXPECTED_MODEL = "gpt-5.6-luna";
 const MATTER_B = "matter.mira.provider-choice.hearth";
 const MATTER_C = "matter.mira.provider-choice.fields";
 
@@ -160,6 +161,11 @@ async function run() {
     report.spendFreePreflight.health,
   );
   assert(
+    "exact preview is configured for the intended GPT-5.6 Luna qualifier",
+    health?.spcNextLifeChoiceModelConfigured === EXPECTED_MODEL,
+    report.spendFreePreflight.health,
+  );
+  assert(
     "exact preview reports a configured provider key before the bounded spend",
     health?.hearthKeyConfigured === true,
     report.spendFreePreflight.health,
@@ -219,9 +225,8 @@ async function run() {
 
   const usage = providerBody?.usage;
   assert(
-    "real provider evidence records model, latency and non-zero token usage",
-    typeof usage?.model === "string"
-      && usage.model.length > 0
+    "real provider evidence records exact Luna model, latency and non-zero token usage",
+    usage?.model === EXPECTED_MODEL
       && Number.isSafeInteger(usage?.inputTokens)
       && usage.inputTokens > 0
       && Number.isSafeInteger(usage?.outputTokens)
