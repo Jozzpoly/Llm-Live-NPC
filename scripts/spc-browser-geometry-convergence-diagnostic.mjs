@@ -75,7 +75,7 @@ async function main() {
   const port = 12200 + Math.floor(Math.random() * 300);
   const chrome = spawn(chromeExecutable(), ["--headless=new", "--no-sandbox", "--disable-dev-shm-usage", `--remote-debugging-port=${port}`, "--remote-debugging-address=127.0.0.1", `--user-data-dir=${profile}`, "--window-size=1400,900", "about:blank"], { stdio: ["ignore", "pipe", "pipe"] });
   let cdp;
-  const report = { schemaVersion: 1, experiment: "spc-geometry-convergence-diagnostic", sourceSha: SOURCE_SHA, startedAt: new Date().toISOString(), samples: [] };
+  const report = { schemaVersion: 2, experiment: "spc-geometry-convergence-diagnostic", sourceSha: SOURCE_SHA, startedAt: new Date().toISOString(), samples: [] };
   try {
     const version = await pollJson(`http://127.0.0.1:${port}/json/version`); report.chrome = version.Browser ?? null;
     const target = await (await fetch(`http://127.0.0.1:${port}/json/new?about:blank`, { method: "PUT" })).json();
@@ -84,10 +84,46 @@ async function main() {
     await cdp.send("Page.navigate", { url: `${BASE_URL}/?spc=1&evidence=1&scenario=missing-crate&geometry-ack=1` });
     await until(() => evalv(cdp, `Boolean(window.__SPC_EVIDENCE__?.ready?.()&&window.__SPC_PRESENTATION_GEOMETRY_ACK__?.ready?.())`), 20000, "diagnostic ready");
 
+    const browserPresentationState = async () => await evalv(cdp, `(() => {
+      const app = document.querySelector("#app");
+      if (!(app instanceof HTMLElement)) return null;
+      const style = getComputedStyle(app);
+      const animations = app.getAnimations({ subtree: false }).map((animation) => {
+        const transitionProperty = typeof CSS === "object" && "CSSTransition" in window && animation instanceof CSSTransition
+          ? animation.transitionProperty
+          : null;
+        const timing = animation.effect?.getComputedTiming?.() ?? null;
+        return {
+          kind: animation.constructor?.name ?? null,
+          transitionProperty,
+          playState: animation.playState,
+          currentTime: typeof animation.currentTime === "number" ? animation.currentTime : null,
+          startTime: typeof animation.startTime === "number" ? animation.startTime : null,
+          pending: animation.pending,
+          timing: timing ? {
+            duration: typeof timing.duration === "number" ? timing.duration : String(timing.duration),
+            delay: timing.delay,
+            endTime: timing.endTime,
+            progress: timing.progress,
+          } : null,
+        };
+      });
+      return {
+        worldOnly: app.classList.contains("spc-world-only"),
+        gridTemplateColumns: style.gridTemplateColumns,
+        rowGap: style.rowGap,
+        columnGap: style.columnGap,
+        transitionProperty: style.transitionProperty,
+        transitionDuration: style.transitionDuration,
+        transitionDelay: style.transitionDelay,
+        animations,
+      };
+    })()`);
+
     const capture = async (label, elapsedMs) => {
       const state = await evalv(cdp, "window.__SPC_PRESENTATION_GEOMETRY_ACK__.state()");
-      const worldOnly = await evalv(cdp, `document.querySelector("#app")?.classList.contains("spc-world-only")??null`);
-      report.samples.push({ label, elapsedMs, wallUtcMs: Date.now(), worldOnly, state });
+      const presentation = await browserPresentationState();
+      report.samples.push({ label, elapsedMs, wallUtcMs: Date.now(), worldOnly: presentation?.worldOnly ?? null, presentation, state });
     };
 
     await capture("before-click", 0);
@@ -95,8 +131,13 @@ async function main() {
     await evalv(cdp, `document.querySelector(".spc-world-mode-toggle").click()`);
     await capture("immediate-after-click", Date.now() - clickUtcMs);
 
-    let previous = 0;
-    for (const targetMs of [10, 25, 50, 100, 150, 200, 300, 500, 1000]) {
+    await evalv(cdp, `new Promise((resolve) => requestAnimationFrame(() => resolve(true)))`);
+    await capture("after-first-raf", Date.now() - clickUtcMs);
+    await evalv(cdp, `new Promise((resolve) => requestAnimationFrame(() => resolve(true)))`);
+    await capture("after-second-raf", Date.now() - clickUtcMs);
+
+    let previous = Date.now() - clickUtcMs;
+    for (const targetMs of [50, 100, 150, 200, 300, 500, 1000]) {
       await sleep(Math.max(0, targetMs - previous));
       previous = targetMs;
       await capture(`after-${targetMs}ms`, Date.now() - clickUtcMs);
