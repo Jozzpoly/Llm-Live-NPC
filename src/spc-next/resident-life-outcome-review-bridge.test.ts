@@ -77,7 +77,9 @@ describe("ResidentLifeOutcomeReviewBridge", () => {
       status: "scheduled",
       outcomeEvidenceId: nextOutcome.id,
     });
-    expect(resident.cognitionScheduleDiagnostics().nextQuietReviewTick).toBeGreaterThan(firstDeadline);
+    // A second distinct factual outcome is new information, but it must not postpone
+    // the already guaranteed earlier opportunity to interpret outcome A.
+    expect(resident.cognitionScheduleDiagnostics().nextQuietReviewTick).toBe(firstDeadline);
   });
 
   it("bounds remembered outcome ids so lifetime dedupe state cannot grow without limit", () => {
