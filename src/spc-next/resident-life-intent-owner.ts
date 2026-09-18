@@ -13,6 +13,7 @@ import {
   type ResidentLifeCognitionContext,
 } from "./resident-life-cognition-context";
 import type { ResidentLifeCognitionView } from "./resident-life-cognition-view";
+import type { ResidentLifeSelfContext } from "./resident-life-self-context";
 import { ResidentRuntime, type ResidentCognitionRevision } from "./resident-runtime";
 
 export interface ResidentLifeIntentAttempt {
@@ -79,7 +80,10 @@ export class ResidentLifeIntentOwner {
   private active: ActiveLifeIntentAttempt | null = null;
   private sequence = 0;
 
-  constructor(private readonly resident: ResidentRuntime) {}
+  constructor(
+    private readonly resident: ResidentRuntime,
+    private readonly self?: ResidentLifeSelfContext,
+  ) {}
 
   prepare(batch: CognitionBatch, life: ResidentLifeCognitionView): ResidentLifeIntentAttempt | null {
     if (this.active) return null;
@@ -88,7 +92,7 @@ export class ResidentLifeIntentOwner {
     }
 
     const parserContext = this.resident.cognitionContext(batch);
-    const context = composeResidentLifeCognitionContext(parserContext, life);
+    const context = composeResidentLifeCognitionContext(parserContext, life, this.self);
     const attempt: ResidentLifeIntentAttempt = {
       id: `resident-life-intent:${batch.residentId}:${batch.requestedAtTick}:${this.sequence++}`,
       residentId: batch.residentId,
