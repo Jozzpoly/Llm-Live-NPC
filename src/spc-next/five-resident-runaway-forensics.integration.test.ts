@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { FiveResidentUnifiedLivingRuntime } from "./five-resident-unified-living-runtime";
 
-type PolicyName = "defer30" | "travel4" | "travel0.25";
+type PolicyName = "defer30" | "travel600" | "travel30" | "travel4" | "travel0.25";
 
 interface LedgerEntry {
   tick: number;
@@ -30,7 +30,7 @@ interface ForensicSummary {
 const SIMULATION_TICKS = 7_200; // 120 seconds at 60 Hz.
 
 describe("2026-09-18 runaway cognition forensics", () => {
-  for (const policy of ["defer30", "travel4", "travel0.25"] as const) {
+  for (const policy of ["defer30", "travel600", "travel30", "travel4", "travel0.25"] as const) {
     it(`measures request production under ${policy}`, async () => {
       const ledger: LedgerEntry[] = [];
 
@@ -71,11 +71,13 @@ describe("2026-09-18 runaway cognition forensics", () => {
             (region) => region.id !== context.currentRegionId,
           );
 
-          const reviewAfterSeconds = policy === "defer30"
+          const reviewAfterSeconds = policy === "defer30" || policy === "travel30"
             ? 30
-            : policy === "travel4"
-              ? 4
-              : 0.25;
+            : policy === "travel600"
+              ? 600
+              : policy === "travel4"
+                ? 4
+                : 0.25;
 
           const commitmentDecision = policy !== "defer30" && !active && targetRegion
             ? {
