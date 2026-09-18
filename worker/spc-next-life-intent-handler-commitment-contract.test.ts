@@ -124,7 +124,7 @@ describe("SPC Next life-intent endpoint commitment contract", () => {
     let upstreamRequest: any = null;
     vi.stubGlobal("fetch", vi.fn(async (_url: string, init?: RequestInit) => {
       upstreamRequest = JSON.parse(String(init?.body));
-      return new Response(JSON.stringify(providerResponse(acceptedFieldsProposal)), {
+      return new Response(JSON.stringify(providerResponse({\n        originReasonId: "reason:mira:speech:120",\n        proposal: acceptedFieldsProposal,\n      })), {
         status: 200,
         headers: { "content-type": "application/json" },
       });
