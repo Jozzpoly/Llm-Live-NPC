@@ -60,6 +60,7 @@ export class ResidentRuntime {
   private currentRegionId: string | null = null;
   private attentionRevisionValue = 0;
   private activityRevisionValue = 0;
+  private perceptionRevisionValue = 0;
   private lastMovementTraceSignature: string | null = null;
   private lastBlockedSignature: string | null = null;
 
@@ -93,6 +94,13 @@ export class ResidentRuntime {
       publicState: this.publicState(),
       recentPercepts: structuredClone(this.recentPercepts),
       trace: structuredClone(this.trace),
+    };
+  }
+
+  perceptionSnapshot(): { revision: number; recentPercepts: ResidentPercept[] } {
+    return {
+      revision: this.perceptionRevisionValue,
+      recentPercepts: structuredClone(this.recentPercepts),
     };
   }
 
@@ -181,6 +189,7 @@ export class ResidentRuntime {
         this.attentionRevisionValue += 1;
       }
       this.recentPercepts.push(structuredClone(percept));
+      this.perceptionRevisionValue += 1;
       if (percept.actorId) {
         if (percept.spatial.kind === "exact") {
           this.lastKnownActorContacts.set(percept.actorId, {
