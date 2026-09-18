@@ -271,10 +271,16 @@ export class ResidentRuntime {
     });
   }
 
-  cognitionContext(batch: CognitionBatch): ResidentCognitionContext {
+  cognitionContext(
+    batch: CognitionBatch,
+    snapshotTick = batch.requestedAtTick,
+  ): ResidentCognitionContext {
     if (batch.residentId !== this.profile.id) throw new Error("cognition batch belongs to another resident");
+    if (!Number.isSafeInteger(snapshotTick) || snapshotTick < batch.requestedAtTick) {
+      throw new Error("cognition snapshot tick cannot precede batch readiness");
+    }
     return this.mind.context(
-      batch.requestedAtTick,
+      snapshotTick,
       this.currentRegionId,
       batch.reasons,
       this.activity,
