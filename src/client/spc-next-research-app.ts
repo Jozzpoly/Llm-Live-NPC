@@ -4,7 +4,11 @@ import "./spc-next-research-style.css";
 import type { SpcCanonicalEvidenceSnapshotV1 } from "../evidence/spc-next-canonical-evidence-snapshot";
 import { FIVE_RESIDENT_ROLE_PRESSURES } from "../spc-next/five-resident-region";
 import type { ResidentPercept, ResidentTraceEvent, WorldOccurrence } from "../spc-next/contracts";
-import { SpcNextResearchScene, type SpcNextResearchFrame } from "./spc-next-research-scene";
+import {
+  SPC_PLAYER_SPEECH_RADIUS,
+  SpcNextResearchScene,
+  type SpcNextResearchFrame,
+} from "./spc-next-research-scene";
 
 const params = new URLSearchParams(location.search);
 const evidenceMode = params.get("evidence") === "1";
@@ -134,10 +138,24 @@ function renderPanel(frame: SpcNextResearchFrame): void {
       <span class="spc-log-sub">${escapeHtml(event.detail)}</span>
     </li>`).join("") ?? "";
 
-  chatInput.placeholder = frame.selectedResidentId
-    ? `Powiedz coś: ${selected?.publicState.name ?? frame.selectedResidentId}`
-    : "Wybierz SPC i naciśnij Enter…";
-  chatSend.disabled = frame.selectedResidentId === null;
+  const playerActor = frame.snapshot.actors.find((actor) => actor.id === "player.jozz") ?? null;
+  const selectedSpeechDistance = playerActor && selectedActor
+    ? Math.hypot(
+        selectedActor.position.x - playerActor.position.x,
+        selectedActor.position.y - playerActor.position.y,
+      )
+    : null;
+  const selectedCanHearPlayer = frame.selectedResidentId !== null
+    && selectedSpeechDistance !== null
+    && selectedSpeechDistance <= SPC_PLAYER_SPEECH_RADIUS;
+
+  chatInput.disabled = !selectedCanHearPlayer;
+  chatInput.placeholder = frame.selectedResidentId === null
+    ? "Wybierz SPC…"
+    : selectedCanHearPlayer
+      ? `Powiedz coś: ${selected?.publicState.name ?? frame.selectedResidentId}`
+      : `${selected?.publicState.name ?? frame.selectedResidentId} jest poza zasięgiem głosu — podejdź bliżej`;
+  chatSend.disabled = !selectedCanHearPlayer;
 
   debugNode.innerHTML = `
     <div class="workspace-header spc-research-header">
@@ -316,7 +334,15 @@ chatForm.addEventListener("submit", (event) => {
   event.preventDefault();
   const text = chatInput.value.trim();
   const residentId = lastFrame?.selectedResidentId ?? null;
-  if (!text || !residentId) return;
+  const player = lastFrame?.snapshot.actors.find((actor) => actor.id === "player.jozz") ?? null;
+  const resident = residentId
+    ? lastFrame?.snapshot.actors.find((actor) => actor.id === residentId) ?? null
+    : null;
+  const inSpeechRange = player && resident
+    ? Math.hypot(resident.position.x - player.position.x, resident.position.y - player.position.y)
+      <= SPC_PLAYER_SPEECH_RADIUS
+    : false;
+  if (!text || !residentId || !inSpeechRange) return;
   scene.playerAddressResident(residentId, text);
   chatInput.value = "";
   chatInput.blur();
