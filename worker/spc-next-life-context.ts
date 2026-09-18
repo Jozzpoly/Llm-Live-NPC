@@ -186,12 +186,26 @@ function sanitizeMatter(value: unknown, contextTick: number): ResidentLifeMatter
 }
 
 function sanitizeMatterIntent(value: unknown): ResidentMatterIntent | null {
-  if (!record(value) || !hasOnlyKeys(value, ["kind", "goal", "targetRegionId"])) return null;
-  if (value.kind !== "travel_region") return null;
-  const goal = boundedText(value.goal, 1_200);
-  const targetRegionId = identifier(value.targetRegionId);
-  if (!goal || !targetRegionId) return null;
-  return { kind: "travel_region", goal, targetRegionId };
+  if (!record(value)) return null;
+
+  if (value.kind === "travel_region") {
+    if (!hasOnlyKeys(value, ["kind", "goal", "targetRegionId"])) return null;
+    const goal = boundedText(value.goal, 1_200);
+    const targetRegionId = identifier(value.targetRegionId);
+    if (!goal || !targetRegionId) return null;
+    return { kind: "travel_region", goal, targetRegionId };
+  }
+
+  if (value.kind === "communicate_actor") {
+    if (!hasOnlyKeys(value, ["kind", "goal", "targetActorId", "text"])) return null;
+    const goal = boundedText(value.goal, 1_200);
+    const targetActorId = identifier(value.targetActorId);
+    const text = boundedText(value.text, 1_200);
+    if (!goal || !targetActorId || !text) return null;
+    return { kind: "communicate_actor", goal, targetActorId, text };
+  }
+
+  return null;
 }
 
 function sanitizeEvidence(value: unknown, contextTick: number): ResidentLifeEvidenceView | null {
