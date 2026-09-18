@@ -96,9 +96,23 @@ export type RunOutcomeReconciliationResult =
     }
   | { status: "rejected"; reason: "run_missing" };
 
+export interface ResidentContinuityKernelCommittedSnapshot {
+  version: 1;
+  recentEvidenceLimit: number;
+  revocationLimit: number;
+  recentEvidence: readonly ResidentKernelEvidence[];
+  matters: readonly ResidentMatter[];
+  pinnedOriginEvidence: readonly { matterId: string; evidence: ResidentKernelEvidence }[];
+  pinnedSemanticEvidence: readonly { matterId: string; evidence: ResidentKernelEvidence }[];
+  pinnedOutcomeEvidence: readonly { matterId: string; evidence: ResidentKernelEvidence }[];
+  usedRunIds: readonly string[];
+  proposalSequence: number;
+}
+
 export interface ResidentContinuityKernelOptions {
   recentEvidenceLimit?: number;
   revocationLimit?: number;
+  committedSnapshot?: ResidentContinuityKernelCommittedSnapshot;
 }
 
 const DEFAULT_RECENT_EVIDENCE_LIMIT = 64;
@@ -132,14 +146,35 @@ export class ResidentContinuityKernel {
   private readonly revocationLimit: number;
 
   constructor(options: ResidentContinuityKernelOptions = {}) {
-    this.recentEvidenceLimit = options.recentEvidenceLimit ?? DEFAULT_RECENT_EVIDENCE_LIMIT;
-    this.revocationLimit = options.revocationLimit ?? DEFAULT_REVOCATION_LIMIT;
+    const snapshot = options.committedSnapshot;
+    if (snapshot && snapshot.version !== 1) {
+      throw new Error("unsupported resident continuity committed snapshot version");
+    }
+    if (snapshot
+      && options.recentEvidenceLimit !== undefined
+      && options.recentEvidenceLimit !== snapshot.recentEvidenceLimit) {
+      throw new Error("recentEvidenceLimit conflicts with committed snapshot");
+    }
+    if (snapshot
+      && options.revocationLimit !== undefined
+      && options.revocationLimit !== snapshot.revocationLimit) {
+      throw new Error("revocationLimit conflicts with committed snapshot");
+    }
+
+    this.recentEvidenceLimit = options.recentEvidenceLimit
+      ?? snapshot?.recentEvidenceLimit
+      ?? DEFAULT_RECENT_EVIDENCE_LIMIT;
+    this.revocationLimit = options.revocationLimit
+      ?? snapshot?.revocationLimit
+      ?? DEFAULT_REVOCATION_LIMIT;
     if (!Number.isInteger(this.recentEvidenceLimit) || this.recentEvidenceLimit < 1) {
       throw new Error("recentEvidenceLimit must be a positive integer");
     }
     if (!Number.isInteger(this.revocationLimit) || this.revocationLimit < 1) {
       throw new Error("revocationLimit must be a positive integer");
     }
+
+    if (snapshot) this.restoreCommittedSnapshot(snapshot);
   }
 
   recordEvidence(evidence: ResidentKernelEvidence): ResidentKernelEvidence {
@@ -212,6 +247,31 @@ export class ResidentContinuityKernel {
 
   recentSemanticProposalRevocations(): ResidentSemanticProposalRevocation[] {
     return this.recentRevocations.map((entry) => structuredClone(entry));
+  }
+
+  /**
+   * Snapshot only committed resident continuity. In-flight semantic/provider tickets
+   * are deliberately excluded: reconstruction must not revive volatile admission
+   * authority. Bound execution runs are also excluded for now because focus/deferred
+   * body state has not yet earned a reconstruction contract.
+   */
+  snapshotCommittedState(): ResidentContinuityKernelCommittedSnapshot {
+    if (this.runBindings.size > 0) {
+      throw new Error("cannot snapshot committed continuity while runs remain bound");
+    }
+
+    return {
+      version: 1,
+      recentEvidenceLimit: this.recentEvidenceLimit,
+      revocationLimit: this.revocationLimit,
+      recentEvidence: [...this.recentEvidence.values()].map((entry) => structuredClone(entry)),
+      matters: [...this.matters.values()].map((matter) => structuredClone(matter)),
+      pinnedOriginEvidence: snapshotEvidencePins(this.pinnedOriginEvidence),
+      pinnedSemanticEvidence: snapshotEvidencePins(this.pinnedSemanticEvidence),
+      pinnedOutcomeEvidence: snapshotEvidencePins(this.pinnedOutcomeEvidence),
+      usedRunIds: [...this.usedRunIds].sort((left, right) => left.localeCompare(right)),
+      proposalSequence: this.proposalSequence,
+    };
   }
 
   advanceSemanticContext(matterId: string, evidenceId: string): ResidentMatter {
@@ -509,6 +569,126 @@ export class ResidentContinuityKernel {
       if (oldest === undefined) break;
       this.recentEvidence.delete(oldest);
     }
+  }
+
+  private restoreCommittedSnapshot(snapshot: ResidentContinuityKernelCommittedSnapshot): void {
+    validateCommittedSnapshot(snapshot, this.recentEvidenceLimit, this.revocationLimit);
+
+    for (const evidence of snapshot.recentEvidence) {
+      this.recentEvidence.set(evidence.id, structuredClone(evidence));
+    }
+    for (const matter of snapshot.matters) {
+      this.matters.set(matter.id, structuredClone(matter));
+    }
+    restoreEvidencePins(this.pinnedOriginEvidence, snapshot.pinnedOriginEvidence, this.matters);
+    restoreEvidencePins(this.pinnedSemanticEvidence, snapshot.pinnedSemanticEvidence, this.matters);
+    restoreEvidencePins(this.pinnedOutcomeEvidence, snapshot.pinnedOutcomeEvidence, this.matters);
+    for (const runId of snapshot.usedRunIds) this.usedRunIds.add(runId);
+    this.proposalSequence = snapshot.proposalSequence;
+  }
+}
+
+function snapshotEvidencePins(
+  pins: ReadonlyMap<string, ResidentKernelEvidence>,
+): { matterId: string; evidence: ResidentKernelEvidence }[] {
+  return [...pins.entries()]
+    .map(([matterId, evidence]) => ({ matterId, evidence: structuredClone(evidence) }))
+    .sort((left, right) => left.matterId.localeCompare(right.matterId));
+}
+
+function restoreEvidencePins(
+  target: Map<string, ResidentKernelEvidence>,
+  pins: readonly { matterId: string; evidence: ResidentKernelEvidence }[],
+  matters: ReadonlyMap<string, ResidentMatter>,
+): void {
+  const seen = new Set<string>();
+  for (const pin of pins) {
+    assertNonEmpty(pin.matterId, "snapshot evidence pin matter id");
+    if (!matters.has(pin.matterId)) {
+      throw new Error(`snapshot evidence pin references unknown matter: ${pin.matterId}`);
+    }
+    if (seen.has(pin.matterId)) {
+      throw new Error(`duplicate snapshot evidence pin: ${pin.matterId}`);
+    }
+    seen.add(pin.matterId);
+    validateEvidence(pin.evidence);
+    target.set(pin.matterId, structuredClone(pin.evidence));
+  }
+}
+
+function validateCommittedSnapshot(
+  snapshot: ResidentContinuityKernelCommittedSnapshot,
+  recentEvidenceLimit: number,
+  revocationLimit: number,
+): void {
+  if (snapshot.version !== 1) {
+    throw new Error("unsupported resident continuity committed snapshot version");
+  }
+  if (snapshot.recentEvidenceLimit !== recentEvidenceLimit
+    || snapshot.revocationLimit !== revocationLimit) {
+    throw new Error("resident continuity committed snapshot limits mismatch");
+  }
+  if (!Number.isSafeInteger(snapshot.proposalSequence) || snapshot.proposalSequence < 0) {
+    throw new Error("snapshot proposalSequence must be a non-negative safe integer");
+  }
+  if (snapshot.recentEvidence.length > recentEvidenceLimit) {
+    throw new Error("snapshot recent evidence exceeds configured bound");
+  }
+
+  const evidenceIds = new Set<string>();
+  for (const evidence of snapshot.recentEvidence) {
+    validateEvidence(evidence);
+    if (evidenceIds.has(evidence.id)) {
+      throw new Error(`duplicate snapshot evidence id: ${evidence.id}`);
+    }
+    evidenceIds.add(evidence.id);
+  }
+
+  const matterIds = new Set<string>();
+  for (const matter of snapshot.matters) {
+    validateSnapshotMatter(matter);
+    if (matterIds.has(matter.id)) {
+      throw new Error(`duplicate snapshot matter id: ${matter.id}`);
+    }
+    matterIds.add(matter.id);
+  }
+
+  const usedRunIds = new Set<string>();
+  for (const runId of snapshot.usedRunIds) {
+    assertNonEmpty(runId, "snapshot used run id");
+    if (usedRunIds.has(runId)) {
+      throw new Error(`duplicate snapshot used run id: ${runId}`);
+    }
+    usedRunIds.add(runId);
+  }
+}
+
+function validateSnapshotMatter(matter: ResidentMatter): void {
+  assertNonEmpty(matter.id, "snapshot matter id");
+  assertNonEmpty(matter.originEvidenceId, "snapshot matter origin evidence id");
+  assertNonEmpty(matter.semanticEvidenceId, "snapshot matter semantic evidence id");
+  assertNonEmpty(matter.semanticCourse, "snapshot matter semantic course");
+  if (!Number.isSafeInteger(matter.semanticRevision) || matter.semanticRevision < 1) {
+    throw new Error("snapshot matter semanticRevision must be a positive safe integer");
+  }
+  if (!["active", "suspended", "resolved", "cancelled"].includes(matter.status)) {
+    throw new Error(`invalid snapshot matter status: ${matter.status}`);
+  }
+  if (matter.semanticIntent) validateMatterIntent(matter.semanticIntent);
+  if (matter.suspendedByMatterId !== null) {
+    assertNonEmpty(matter.suspendedByMatterId, "snapshot suspendedByMatterId");
+  }
+  if (matter.activeRunId !== null) {
+    throw new Error("committed continuity snapshot cannot contain an active run binding");
+  }
+  if (matter.lastOutcomeEvidenceId !== null) {
+    assertNonEmpty(matter.lastOutcomeEvidenceId, "snapshot last outcome evidence id");
+  }
+  if (matter.lastOutcomeSemanticRevision !== null
+    && (!Number.isSafeInteger(matter.lastOutcomeSemanticRevision)
+      || matter.lastOutcomeSemanticRevision < 1
+      || matter.lastOutcomeSemanticRevision > matter.semanticRevision)) {
+    throw new Error("invalid snapshot lastOutcomeSemanticRevision");
   }
 }
 
