@@ -221,6 +221,7 @@ describe("ResidentCausalExecutionCoordinator", () => {
         occurrence,
         proposal: admittedProposal,
         providerContext,
+        groundingContext: ida.cognitionContext(prepared!.batch),
       }),
     );
     expect(settlement.status).toBe("applied");
