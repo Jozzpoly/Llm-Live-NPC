@@ -49,6 +49,15 @@ describe("five-resident unified causal cognition host", () => {
       expect(requests.length).toBeLessThanOrEqual(2);
 
       for (const request of requests) {
+        expect(request.context.self?.role.length ?? 0).toBeGreaterThan(0);
+        expect(request.context.self?.drives.length ?? 0).toBeGreaterThan(0);
+        expect(request.context.self?.role).toContain(
+          request.residentId === "resident.mira" ? "settlement"
+            : request.residentId === "resident.janek" ? "workshop"
+              : request.residentId === "resident.ida" ? "social"
+                : request.residentId === "resident.oren" ? "traveller"
+                  : "explorer",
+        );
         const origin = request.batch.reasons.find((reason) => reason.kind !== "heard_speech");
         expect(origin, `${request.residentId} lacks self-origin pressure`).toBeDefined();
         if (!origin) continue;
