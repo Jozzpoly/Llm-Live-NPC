@@ -1,5 +1,8 @@
 # SPC Next — Owner intent recovery and live gap audit
 
+> **CURRENT EXECUTION NOTICE (2026-09-18):** The Owner/product guardrails in this document remain durable and important, but many implementation-gap statements describe the pre-unified runtime. Current execution order and live qualification state are owned by `docs/SPC_LIVING_WORLD_EXECUTION_PROGRAM.md`.
+
+
 Status: **binding direction/reality guardrail for the current refoundation, not a frozen architecture**  
 Recovered against live head `f10553900a1662cec21aabfd5bee706a6864897f` on 2026-09-15.  
 Scope: `refoundation/spc-next-five-resident-world` / draft PR #125.
