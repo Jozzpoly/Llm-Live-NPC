@@ -169,6 +169,32 @@ describe("shared SPC Next resident-life context sanitizer", () => {
     });
   });
 
+
+  it("preserves exact bounded outcome-run provenance and rejects malformed provenance", () => {
+    const withOutcome = structuredClone(focusedContext) as any;
+    withOutcome.life.matters[0].lastOutcomeEvidence = {
+      id: "task-outcome:0123456789abcdef:119",
+      tick: 119,
+      kind: "task_outcome",
+      summary: "succeeded: factual prior run outcome",
+      sourceRunId: "run.mira.prior",
+    };
+
+    expect(sanitizeSpcNextLifeContext(withOutcome)?.life.matters[0]?.lastOutcomeEvidence)
+      .toMatchObject({
+        id: "task-outcome:0123456789abcdef:119",
+        sourceRunId: "run.mira.prior",
+      });
+
+    const malformed = structuredClone(withOutcome);
+    malformed.life.matters[0].lastOutcomeEvidence.sourceRunId = "run id with spaces";
+    expect(sanitizeSpcNextLifeContext(malformed)).toBeNull();
+
+    const oversized = structuredClone(withOutcome);
+    oversized.life.matters[0].lastOutcomeEvidence.sourceRunId = "r".repeat(129);
+    expect(sanitizeSpcNextLifeContext(oversized)).toBeNull();
+  });
+
   it("fails closed on inconsistent execution truth, future evidence, duplicates and extra fields", () => {
     const missingFocused = structuredClone(focusedContext) as any;
     missingFocused.life.body.focusedRunId = "run.mira.hidden";
