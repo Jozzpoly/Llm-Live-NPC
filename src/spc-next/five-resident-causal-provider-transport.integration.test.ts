@@ -110,4 +110,50 @@ describe("five-resident causal provider transport", () => {
     });
     expect(fetcher).toHaveBeenCalledTimes(1);
   });
+  it("retains bounded Worker status/code without leaking arbitrary error payloads", async () => {
+    const composition = createFiveResidentRegionComposition();
+    const runtime = new FiveResidentCausalLifeRuntime(composition);
+    const cognition = new FiveResidentCausalCognitionHost(runtime, 1);
+
+    let guard = 0;
+    while (runtime.claimedResidentIds().length < 5 && guard < 1_500) {
+      runtime.advanceOneWorldTick();
+      guard += 1;
+    }
+    while (runtime.world.tick < 2_400) runtime.advanceOneWorldTick();
+    cognition.collectReadyBatches();
+    const request = cognition.startReadyRequests()[0];
+    expect(request).toBeDefined();
+    if (!request) return;
+
+    const fetcher = vi.fn(async () => new Response(JSON.stringify({
+      ok: false,
+      code: "global_limit",
+      secretDiagnostic: "must-not-cross-client-boundary",
+    }), {
+      status: 429,
+      headers: { "content-type": "application/json" },
+    }));
+    const transport = new FiveResidentCausalProviderTransport(
+      "/api/spc-next/life-intent",
+      fetcher,
+    );
+
+    const arrival = await transport.request(request);
+    expect(arrival).toMatchObject({
+      status: "provider_error",
+      code: "http",
+      detail: "HTTP 429: global_limit",
+    });
+    expect(JSON.stringify(arrival)).not.toContain("must-not-cross-client-boundary");
+
+    const admission = transport.admit(arrival, cognition);
+    expect(admission).toMatchObject({
+      status: "provider_error",
+      code: "http",
+      detail: "HTTP 429: global_limit",
+      abandonment: true,
+    });
+  });
+
 });
