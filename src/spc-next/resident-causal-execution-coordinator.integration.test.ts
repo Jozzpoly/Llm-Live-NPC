@@ -414,6 +414,46 @@ describe("ResidentCausalExecutionCoordinator", () => {
     expect(life.worldAuthority.motionOwner()).toBeNull();
     expect(ida.cognitionScheduleDiagnostics().nextQuietReviewTick)
       .toBeLessThanOrEqual(reviewBeforeBlockedOutcome);
+
+    expect(life.kernel.matter(accepted.matter.id)).toMatchObject({
+      lastOutcomeSemanticRevision: 1,
+    });
+    expect(execution.stepFocusedRun()).toEqual({ status: "idle" });
+    expect(execution.reactivateReviewedMatter(accepted.matter.id)).toEqual({
+      status: "rejected",
+      matterId: accepted.matter.id,
+      reason: "semantic_review_required",
+    });
+
+    const review = life.kernel.beginSemanticProposal(accepted.matter.id);
+    const current = life.kernel.matter(accepted.matter.id);
+    expect(current?.semanticIntent?.kind).toBe("communicate_actor");
+    if (!current?.semanticIntent) throw new Error("blocked matter lost durable intent");
+    expect(life.kernel.commitSemanticProposal(review, {
+      semanticCourse: "retry the accepted delivery after reviewing the factual block",
+      semanticIntent: current.semanticIntent,
+    })).toMatchObject({
+      status: "applied",
+      matter: {
+        id: accepted.matter.id,
+        semanticRevision: 2,
+      },
+    });
+
+    const reactivated = execution.reactivateReviewedMatter(accepted.matter.id);
+    expect(reactivated).toMatchObject({
+      status: "acquired",
+      matterId: accepted.matter.id,
+    });
+    if (reactivated.status !== "acquired") return;
+    expect(reactivated.runId).not.toBe(accepted.runId);
+    expect(life.kernel.canRunMutateWorld(reactivated.runId)).toBe(true);
+    expect(life.focus.focusedRun()).toBe(reactivated.runId);
+    expect(life.kernel.matter(accepted.matter.id)).toMatchObject({
+      status: "active",
+      semanticRevision: 2,
+      activeRunId: reactivated.runId,
+    });
   });
 });
 
