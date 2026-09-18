@@ -11,11 +11,10 @@ const OUTPUT_FILE = resolve(
 );
 const VIEWPORT = { width: 1400, height: 900, deviceScaleFactor: 1, mobile: false };
 const PLAYER_ID = "player.jozz";
-const PREFERRED_RESIDENT_ID = "resident.mira";
 const SPEECH_RADIUS = 420;
-const CALL_TEXT = "Mira, podejdź proszę do mnie i powiedz: Zaraz wracam do swoich spraw.";
+const CALL_TEXT = "Podejdź proszę do mnie i powiedz: Zaraz wracam do swoich spraw.";
 const MAX_RECOVERY_STEPS = 1_200;
-const MAX_MOVE_STEPS = 320;
+const MAX_MOVE_STEPS = 1_200;
 const MAX_PROVIDER_WAIT_MS = 45_000;
 const MAX_SETTLEMENT_STEPS = 300;
 const MAX_RETURN_STEPS = 120;
@@ -474,7 +473,6 @@ async function run() {
 
 function chooseTargetResident(frame) {
   const residents = frame.snapshot?.residents ?? [];
-  if (residents.some((resident) => resident.id === PREFERRED_RESIDENT_ID)) return PREFERRED_RESIDENT_ID;
   const player = actor(frame, PLAYER_ID);
   if (!player) throw new Error("player missing while choosing target resident");
   const candidates = residents
@@ -483,10 +481,19 @@ function chooseTargetResident(frame) {
       actor: actor(frame, resident.id),
     }))
     .filter((candidate) => candidate.actor)
-    .sort((a, b) =>
-      distance(player.position, a.actor.position) - distance(player.position, b.actor.position));
-  if (!candidates[0]) throw new Error("no resident target available");
-  return candidates[0].id;
+    .map((candidate) => ({
+      ...candidate,
+      distance: distance(player.position, candidate.actor.position),
+      moving: Math.hypot(
+        candidate.actor.velocity?.x ?? 0,
+        candidate.actor.velocity?.y ?? 0,
+      ) > 1e-6,
+    }));
+  const moving = candidates.filter((candidate) => candidate.moving);
+  const pool = moving.length > 0 ? moving : candidates;
+  pool.sort((a, b) => a.distance - b.distance || a.id.localeCompare(b.id));
+  if (!pool[0]) throw new Error("no resident target available");
+  return pool[0].id;
 }
 
 async function movePlayerIntoVoiceRange(cdp, targetId) {
