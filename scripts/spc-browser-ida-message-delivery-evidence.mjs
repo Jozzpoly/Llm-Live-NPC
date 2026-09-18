@@ -191,7 +191,7 @@ async function run() {
       && first.reacquired.janekSightPercept.modality === "sight"
     ), first?.reacquired ?? null);
 
-    assert(report, "matter resolves only with one exact Ida World speech occurrence to Janek", Boolean(
+    assert(report, "terminal Ida matter releases live outcome authority but retains an audit join to the exact factual speech occurrence", Boolean(
       first?.resolved?.matterStatus === "resolved"
       && first.resolved.activeRunId === null
       && first.resolved.activeRunCanMutateWorld === false
@@ -199,7 +199,10 @@ async function run() {
       && first.resolved.deliveryOccurrence?.text === MESSAGE
       && first.resolved.deliveryOccurrence?.addressedActorIds?.length === 1
       && first.resolved.deliveryOccurrence?.addressedActorIds?.[0] === JANEK_ID
-      && first.resolved.lastOutcomeEvidenceSummary?.includes(first.resolved.deliveryOccurrence.id)
+      && first.resolved.lastOutcomeEvidenceSummary === null
+      && first.resolved.lastOutcomeEvidenceId
+      && first.resolved.historicalOutcomeEvidenceId === first.resolved.lastOutcomeEvidenceId
+      && first.resolved.historicalOutcomeEvidenceSummary?.includes(first.resolved.deliveryOccurrence.id)
     ), first?.resolved ?? null);
 
     assert(report, "the same factual occurrence becomes Janek addressed hearing and Mira unaddressed hearing", Boolean(
@@ -344,7 +347,10 @@ function summarize(snapshot) {
     activeRunId: snapshot.continuity?.matter?.activeRunId ?? null,
     activeRunCanMutateWorld: snapshot.continuity?.activeRunCanMutateWorld ?? null,
     originEvidenceKind: snapshot.continuity?.originEvidence?.kind ?? null,
+    lastOutcomeEvidenceId: snapshot.continuity?.matter?.lastOutcomeEvidenceId ?? null,
     lastOutcomeEvidenceSummary: snapshot.continuity?.lastOutcomeEvidence?.summary ?? null,
+    historicalOutcomeEvidenceId: snapshot.continuity?.historicalOutcomeEvidence?.id ?? null,
+    historicalOutcomeEvidenceSummary: snapshot.continuity?.historicalOutcomeEvidence?.summary ?? null,
     materialKnowledgeCount: snapshot.residentPrivate?.materialKnowledge?.length ?? null,
     idaPosition: ida?.position ?? null,
     idaVelocity: ida?.velocity ?? null,

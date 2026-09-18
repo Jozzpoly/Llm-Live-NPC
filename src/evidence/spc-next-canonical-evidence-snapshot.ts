@@ -39,7 +39,13 @@ export interface SpcCanonicalEvidenceSnapshotV1 {
     matter: ResidentMatter | null;
     originEvidence: ResidentKernelEvidence | null;
     semanticEvidence: ResidentKernelEvidence | null;
+    /** Live pinned outcome evidence; intentionally null after terminal matter cleanup. */
     lastOutcomeEvidence: ResidentKernelEvidence | null;
+    /**
+     * Audit-only historical recovery of matter.lastOutcomeEvidenceId from the bounded
+     * recent-evidence journal. This is not a live authority pin and may age out later.
+     */
+    historicalOutcomeEvidence: ResidentKernelEvidence | null;
     activeRunBinding: ResidentTaskRunBinding | null;
     activeRunCanMutateWorld: boolean;
     pendingSemanticProposals: readonly ResidentSemanticProposalTicket[];
@@ -102,6 +108,8 @@ export function captureSpcCanonicalEvidenceSnapshot(
   const matter = input.kernel.matter(input.matterId);
   const activeRunId = matter?.activeRunId ?? null;
   const activeRunBinding = activeRunId ? input.kernel.runBinding(activeRunId) : null;
+  const lastOutcomeEvidence = input.kernel.lastOutcomeEvidence(input.matterId);
+  const historicalOutcomeEvidence = findHistoricalOutcomeEvidence(input.kernel, matter, lastOutcomeEvidence);
 
   return {
     schemaVersion: 1,
@@ -122,7 +130,8 @@ export function captureSpcCanonicalEvidenceSnapshot(
       matter,
       originEvidence: input.kernel.originEvidence(input.matterId),
       semanticEvidence: input.kernel.semanticEvidence(input.matterId),
-      lastOutcomeEvidence: input.kernel.lastOutcomeEvidence(input.matterId),
+      lastOutcomeEvidence,
+      historicalOutcomeEvidence,
       activeRunBinding,
       activeRunCanMutateWorld: activeRunId !== null && input.kernel.canRunMutateWorld(activeRunId),
       pendingSemanticProposals: input.kernel.pendingSemanticProposals()
@@ -134,6 +143,18 @@ export function captureSpcCanonicalEvidenceSnapshot(
       residentWorldActionFacts: input.authority?.recentActionFacts() ?? [],
     },
   };
+}
+
+function findHistoricalOutcomeEvidence(
+  kernel: ResidentContinuityKernel,
+  matter: ResidentMatter | null,
+  liveOutcome: ResidentKernelEvidence | null,
+): ResidentKernelEvidence | null {
+  const evidenceId = matter?.lastOutcomeEvidenceId ?? null;
+  if (!evidenceId) return null;
+  if (liveOutcome?.id === evidenceId) return structuredClone(liveOutcome);
+  const historical = kernel.recentEvidenceSnapshot().find((evidence) => evidence.id === evidenceId) ?? null;
+  return historical ? structuredClone(historical) : null;
 }
 
 function assertId(value: string, label: string): void {
