@@ -265,6 +265,22 @@ export class SpcWorldRuntime {
     this.activeMotionBlockages.delete(residentId);
   }
 
+  releaseResidentExecutionAuthority(
+    residentId: string,
+    authority: ResidentRunAuthority,
+  ): boolean {
+    this.requireResident(residentId);
+    const registered = this.residentExecutionAuthorities.get(residentId);
+    if (!registered || registered.authority !== authority) return false;
+
+    // Release is a capability handoff, not merely registry cleanup. Stop any latched
+    // motion owned by the old lease before another authority can claim this resident.
+    this.actorState.setDesiredVelocity(residentId, { x: 0, y: 0 });
+    this.activeMotionBlockages.delete(residentId);
+    this.residentExecutionAuthorities.delete(residentId);
+    return true;
+  }
+
   residentMotionOwner(residentId: string): string | null {
     return this.requireResidentExecutionAuthority(residentId).motionOwnerRunId;
   }
