@@ -293,4 +293,64 @@ describe("SPC Next resident-life intent Worker", () => {
     expect(unconfigured.status).toBe(503);
     expect(fetchMock).not.toHaveBeenCalled();
   });
+  it("requires exact causal attribution when multiple private pressures share one provider frame", async () => {
+    const multi = structuredClone(context) as any;
+    multi.reasons.push({
+      id: "quiet:resident.mira:120",
+      tick: 120,
+      kind: "quiet_review",
+      salience: 0.1,
+      summary: "Quiet periodic review is due.",
+      evidenceIds: [],
+    });
+
+    const attributed = {
+      originReasonId: "reason:mira:speech:120",
+      proposal: commitmentProposal(),
+    };
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify(responseBody(attributed)), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    })));
+
+    const accepted = await handleSpcNextLifeIntent(requestForContext(multi), configuredEnv());
+    expect(accepted.status).toBe(200);
+    await expect(accepted.json()).resolves.toMatchObject({
+      ok: true,
+      originReasonId: "reason:mira:speech:120",
+      proposal: commitmentProposal(),
+    });
+
+    vi.unstubAllGlobals();
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify(responseBody({
+      originReasonId: "reason:hidden:global",
+      proposal: commitmentProposal(),
+    })), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    })));
+
+    const forged = await handleSpcNextLifeIntent(requestForContext(multi), configuredEnv());
+    expect(forged.status).toBe(502);
+    await expect(forged.json()).resolves.toMatchObject({
+      ok: false,
+      code: "invalid_life_intent_output",
+      diagnostic: { stage: "proposal_validation", code: "causal_origin_not_in_batch" },
+    });
+
+    vi.unstubAllGlobals();
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify(responseBody(commitmentProposal())), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    })));
+
+    const unattributed = await handleSpcNextLifeIntent(requestForContext(multi), configuredEnv());
+    expect(unattributed.status).toBe(502);
+    await expect(unattributed.json()).resolves.toMatchObject({
+      ok: false,
+      code: "invalid_life_intent_output",
+      diagnostic: { stage: "proposal_validation", code: "causal_origin_required" },
+    });
+  });
+
 });
