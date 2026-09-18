@@ -12,6 +12,8 @@ export interface ResidentKernelEvidence {
   tick: number;
   kind: string;
   summary: string;
+  /** Exact causal run provenance when this evidence records a factual run outcome. */
+  sourceRunId?: string;
 }
 
 /**
@@ -455,6 +457,7 @@ export class ResidentContinuityKernel {
       tick: outcome.tick,
       kind: "task_outcome",
       summary: `${outcome.status}: ${outcome.summary}`,
+      sourceRunId: binding.runId,
     });
 
     matter.lastOutcomeEvidenceId = resultEvidence.id;
@@ -768,6 +771,9 @@ function validateMatterIntent(intent: ResidentMatterIntent): void {
 
 function validateEvidence(evidence: ResidentKernelEvidence): void {
   assertSpcIdentifier(evidence.id, "evidence id");
+  if (evidence.sourceRunId !== undefined) {
+    assertSpcIdentifier(evidence.sourceRunId, "evidence sourceRunId");
+  }
   assertNonEmpty(evidence.kind, "evidence kind");
   assertNonEmpty(evidence.summary, "evidence summary");
   if (!Number.isSafeInteger(evidence.tick) || evidence.tick < 0) {
