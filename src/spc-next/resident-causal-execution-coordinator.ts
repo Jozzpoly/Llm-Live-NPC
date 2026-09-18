@@ -2,7 +2,10 @@ import type {
   ResidentKernelEvidence,
   ResidentMatter,
 } from "./resident-continuity-kernel";
-import type { ResidentExecutionArbitration } from "./resident-execution-arbitrator";
+import type {
+  ResidentExecutionArbitration,
+  ResidentExecutionArbitrationRequest,
+} from "./resident-execution-arbitrator";
 import { ResidentGroundedTravelExecutor } from "./resident-grounded-travel-executor";
 import { ResidentMessageDeliveryExecutor } from "./resident-message-delivery-executor";
 import type { ResidentLifeChoiceReviewObservation } from "./resident-life-choice-review-bridge";
@@ -62,6 +65,23 @@ interface CommunicateExecutionState {
   targetActorId: string;
 }
 
+export type ResidentCausalExecutionReactivation =
+  | ({
+      matterId: string;
+      runId: string;
+    } & ResidentExecutionArbitrationRequest)
+  | {
+      status: "rejected";
+      matterId: string;
+      reason:
+        | "matter_missing"
+        | "matter_not_active"
+        | "run_already_bound"
+        | "semantic_review_required"
+        | "unsupported_intent"
+        | "run_not_authorized";
+    };
+
 /**
  * Resident-generic execution/reconciliation layer for already-authorized causal life.
  *
@@ -79,6 +99,48 @@ export class ResidentCausalExecutionCoordinator {
   private readonly communicate = new Map<string, CommunicateExecutionState>();
 
   constructor(private readonly life: ResidentCausalLifeSubstrate) {}
+
+  reactivateReviewedMatter(matterId: string): ResidentCausalExecutionReactivation {
+    const matter = this.life.kernel.matter(matterId);
+    if (!matter) return { status: "rejected", matterId, reason: "matter_missing" };
+    if (matter.status !== "active") {
+      return { status: "rejected", matterId, reason: "matter_not_active" };
+    }
+    if (matter.activeRunId !== null) {
+      return { status: "rejected", matterId, reason: "run_already_bound" };
+    }
+    if (!matter.semanticIntent
+      || (matter.semanticIntent.kind !== "travel_region"
+        && matter.semanticIntent.kind !== "communicate_actor")) {
+      return { status: "rejected", matterId, reason: "unsupported_intent" };
+    }
+
+    const priorExecutionRevision = matter.lastOutcomeSemanticRevision ?? 1;
+    if (matter.semanticRevision <= priorExecutionRevision) {
+      return { status: "rejected", matterId, reason: "semantic_review_required" };
+    }
+
+    const identityStem = matter.id.startsWith("matter.")
+      ? matter.id.slice("matter.".length)
+      : matter.id;
+    const runId = `run.${identityStem}.semantic-${matter.semanticRevision}`;
+    const taskId = `task.${identityStem}.semantic-${matter.semanticRevision}`;
+
+    this.life.kernel.bindRun({ matterId, taskId, runId });
+    const claim = this.life.arbitrator.request(runId);
+    if (claim.status === "rejected") {
+      this.life.kernel.retireRun(runId);
+      return { status: "rejected", matterId, reason: "run_not_authorized" };
+    }
+    if (claim.status === "deferred") {
+      this.life.choiceReviewBridge.observe(this.life.arbitrator.reconcile(), this.life.world.tick);
+    }
+    return {
+      ...structuredClone(claim),
+      matterId,
+      runId,
+    };
+  }
 
   stepFocusedRun(): ResidentCausalExecutionStep {
     this.life.focus.sync();
