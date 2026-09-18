@@ -200,6 +200,7 @@ describe("ResidentContinuityKernel recovery authority", () => {
         id: outcomeEvidenceId,
         kind: "task_outcome",
         summary: "succeeded: station inspection completed physically",
+        sourceRunId: "run.inspect",
       },
       matter: {
         id: "matter.work",
