@@ -236,12 +236,27 @@ function sanitizeMatterIntent(value: unknown): ResidentMatterIntent | null {
 }
 
 function sanitizeEvidence(value: unknown, contextTick: number): ResidentLifeEvidenceView | null {
-  if (!record(value) || !hasOnlyKeys(value, ["id", "tick", "kind", "summary"])) return null;
+  if (!record(value)
+    || !hasRequiredAndOptionalKeys(value, ["id", "tick", "kind", "summary"], ["sourceRunId"])) return null;
   const id = identifier(value.id);
   const kind = boundedText(value.kind, 120);
   const summary = boundedText(value.summary, 4_000);
-  if (!id || !safeInt(value.tick) || value.tick > contextTick || !kind || !summary) return null;
-  return { id, tick: value.tick, kind, summary };
+  const sourceRunId = Object.hasOwn(value, "sourceRunId")
+    ? identifier(value.sourceRunId)
+    : null;
+  if (!id
+    || !safeInt(value.tick)
+    || value.tick > contextTick
+    || !kind
+    || !summary
+    || (Object.hasOwn(value, "sourceRunId") && !sourceRunId)) return null;
+  return {
+    id,
+    tick: value.tick,
+    kind,
+    summary,
+    ...(sourceRunId ? { sourceRunId } : {}),
+  };
 }
 
 function sanitizeRun(value: unknown): ResidentLifeRunView | null {
