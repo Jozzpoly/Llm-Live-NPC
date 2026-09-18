@@ -232,7 +232,7 @@ function createUnifiedLivingScenario(): SpcNextResearchScenario {
     world: living.world,
     kernel: janek.kernel,
     materialKnowledge: null,
-    authority: janek.authority,
+    authority: janek.worldAuthority,
     canonicalEvidenceSupported: false,
     residentLifeView(residentId: string): ResidentLifeCognitionView | null {
       if (!living.world.publicSnapshot().residents.some((resident) => resident.id === residentId)) {
