@@ -353,6 +353,13 @@ async function run() {
       responseBody?.ok === true
       && responseBody?.originReasonId === speechReason.id
     ), responseBody);
+    const semanticDecision = responseBody?.proposal?.commitmentDecision ?? null;
+    assertReport(
+      report,
+      "provider does not mistake local contact acknowledgement for semantic handling of speech",
+      !mistakesContactAcknowledgementForSemanticSettlement(semanticDecision),
+      semanticDecision,
+    );
 
     let admitted = null;
     let settlementSteps = 0;
@@ -755,6 +762,14 @@ function safeJson(value) {
   } catch {
     return null;
   }
+}
+
+function mistakesContactAcknowledgementForSemanticSettlement(decision) {
+  if (!decision || (decision.kind !== "decline" && decision.kind !== "defer")) return false;
+  const reason = String(decision.reason ?? "").toLowerCase();
+  const contact = /(contact|interrupt|acknowledg|tak\?)/u.test(reason);
+  const semanticClosure = /(already|previously|resolved|handled|satisfied|fulfilled|completed)/u.test(reason);
+  return contact && semanticClosure;
 }
 
 function assertReport(report, label, pass, details) {
