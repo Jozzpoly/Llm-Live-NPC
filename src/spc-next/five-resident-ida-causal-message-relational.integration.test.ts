@@ -79,6 +79,10 @@ describe("Ida cognition-native social commitment relational epistemics", () => {
       summary: terminal.reason,
     });
     expect(reconciled.status).toBe("recorded");
+    expect(fixture.worldAuthority.enforceMotionAuthority()).toEqual({
+      status: "revoked",
+      runId: fixture.accepted.runId,
+    });
     expect(fixture.kernel.matter(fixture.accepted.matter.id)).toMatchObject({
       status: "active",
       activeRunId: null,
