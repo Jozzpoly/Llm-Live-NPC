@@ -32,7 +32,7 @@ export class ResidentLifeOutcomeReviewBridge {
   private readonly rememberedOutcomeLimit: number;
 
   constructor(
-    private readonly resident: Pick<ResidentRuntime, "scheduleAdaptiveReview">,
+    private readonly resident: Pick<ResidentRuntime, "ensureAdaptiveReview">,
     options: ResidentLifeOutcomeReviewBridgeOptions = {},
   ) {
     this.reviewAfterSeconds = options.reviewAfterSeconds ?? DEFAULT_REVIEW_AFTER_SECONDS;
@@ -76,7 +76,7 @@ export class ResidentLifeOutcomeReviewBridge {
       const evicted = this.observedOutcomeOrder.shift();
       if (evicted !== undefined) this.observedOutcomeEvidenceIds.delete(evicted);
     }
-    this.resident.scheduleAdaptiveReview(
+    this.resident.ensureAdaptiveReview(
       tick,
       this.reviewAfterSeconds,
       this.fixedDeltaSeconds,
