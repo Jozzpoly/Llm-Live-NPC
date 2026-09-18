@@ -472,4 +472,139 @@ describe("ResidentCausalLifeSubstrate", () => {
     expect(restored.kernel.canRunMutateWorld(cMatter.runId)).toBe(true);
   });
 
+  it("reconstructs an active interruption and exact-returns the suspended run before unrelated deferred work", () => {
+    const composition = createFiveResidentRegionComposition({
+      playerStart: { x: 3_000, y: 900 },
+    });
+    const { world } = composition;
+    const ida = composition.runtimes[IDA_ID];
+    const navigation = createFiveResidentNavigationGraph();
+    const life = new ResidentCausalLifeSubstrate({
+      residentId: IDA_ID,
+      resident: ida,
+      world,
+      navigation,
+    });
+
+    const seed = (
+      id: string,
+      targetRegionId: "hearth" | "workshop" | "fields",
+    ) => {
+      const origin = life.kernel.recordEvidence({
+        id: `evidence.ida.restore-interrupt.${id}`,
+        tick: world.tick,
+        kind: "test_origin",
+        summary: `interruption reconstruction matter ${id}`,
+      });
+      const matter = life.kernel.openMatter({
+        id: `matter.ida.restore-interrupt.${id}`,
+        originEvidenceId: origin.id,
+        semanticCourse: `continue ${id}`,
+        semanticIntent: {
+          kind: "travel_region",
+          goal: `visit ${targetRegionId}`,
+          targetRegionId,
+        },
+      });
+      life.matterScope.track(matter.id);
+      const runId = `run.ida.restore-interrupt.${id}.semantic-1`;
+      life.kernel.bindRun({
+        matterId: matter.id,
+        taskId: `task.ida.restore-interrupt.${id}.semantic-1`,
+        runId,
+      });
+      return { matter, runId };
+    };
+
+    const main = seed("main", "workshop");
+    const later = seed("later", "hearth");
+    const interrupt = seed("interrupt", "fields");
+
+    expect(life.arbitrator.request(main.runId)).toEqual({
+      status: "acquired",
+      runId: main.runId,
+    });
+    expect(life.arbitrator.request(later.runId)).toMatchObject({
+      status: "busy",
+      runId: later.runId,
+      focusedRunId: main.runId,
+    });
+
+    life.kernel.suspendMatter(main.matter.id, interrupt.matter.id);
+    expect(life.kernel.canRunMutateWorld(main.runId)).toBe(false);
+    expect(life.arbitrator.claimInterruption(interrupt.runId)).toEqual({
+      status: "acquired",
+      runId: interrupt.runId,
+    });
+    expect(life.focus.focusedRun()).toBe(interrupt.runId);
+    expect(life.arbitrator.deferredRunIds()).toEqual([later.runId]);
+
+    const execution = new ResidentCausalExecutionCoordinator(life);
+    expect(execution.stepFocusedRun()).toMatchObject({
+      status: "running",
+      matterId: interrupt.matter.id,
+      runId: interrupt.runId,
+    });
+    world.step(5);
+
+    const snapshot = life.snapshotCommittedLife();
+    expect(snapshot.execution).toEqual({
+      focusedRunId: interrupt.runId,
+      deferredRunIds: [later.runId],
+    });
+    expect(life.releaseWorldExecutionAuthority()).toBe(true);
+
+    const restored = new ResidentCausalLifeSubstrate({
+      residentId: IDA_ID,
+      resident: ida,
+      world,
+      navigation,
+      snapshot,
+    });
+    expect(restored.kernel.matter(main.matter.id)).toMatchObject({
+      status: "suspended",
+      suspendedByMatterId: interrupt.matter.id,
+      activeRunId: main.runId,
+    });
+    expect(restored.focus.focusedRun()).toBe(interrupt.runId);
+    expect(restored.arbitrator.deferredRunIds()).toEqual([later.runId]);
+
+    const resumedExecution = new ResidentCausalExecutionCoordinator(restored);
+    let terminal: ReturnType<typeof resumedExecution.stepFocusedRun> | null = null;
+    for (let step = 0; step < 2_000; step += 1) {
+      const local = resumedExecution.stepFocusedRun();
+      if (local.status === "running") {
+        world.step();
+        continue;
+      }
+      terminal = local;
+      break;
+    }
+
+    expect(terminal).toMatchObject({
+      status: "completed",
+      matterId: interrupt.matter.id,
+      runId: interrupt.runId,
+      outcomeEvidence: { kind: "task_outcome" },
+    });
+
+    // Terminal interruption must exact-return continuity before ordinary deferred
+    // work can acquire the free body.
+    expect(restored.kernel.matter(main.matter.id)).toMatchObject({
+      status: "active",
+      suspendedByMatterId: null,
+      activeRunId: main.runId,
+    });
+    expect(restored.focus.focusedRun()).toBe(main.runId);
+    expect(restored.kernel.canRunMutateWorld(main.runId)).toBe(true);
+    expect(restored.arbitrator.deferredRunIds()).toEqual([later.runId]);
+    expect(terminal).toMatchObject({
+      arbitration: {
+        status: "focused",
+        runId: main.runId,
+        deferredRunIds: [later.runId],
+      },
+    });
+  });
+
 });
