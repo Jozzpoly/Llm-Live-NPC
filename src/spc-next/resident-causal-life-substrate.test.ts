@@ -172,6 +172,10 @@ describe("ResidentCausalLifeSubstrate", () => {
     }));
 
     expect(restored.kernel.pendingSemanticProposals()).toEqual([]);
+    const freshTicket = restored.kernel.beginSemanticProposal(matter.id);
+    expect(freshTicket.attemptId).not.toBe(volatileTicket.attemptId);
+    expect(restored.kernel.abandonSemanticProposal(freshTicket).status).toBe("abandoned");
+
     expect(restored.kernel.commitSemanticProposal(volatileTicket, {
       semanticCourse: "stale pre-reconstruction proposal must not apply",
       semanticIntent: current.semanticIntent,
@@ -196,6 +200,116 @@ describe("ResidentCausalLifeSubstrate", () => {
     if (reactivated.status !== "acquired") return;
     expect(reactivated.runId).toBe("run.ida.reconstruction.semantic-2");
     expect(restored.kernel.canRunMutateWorld(reactivated.runId)).toBe(true);
+  });
+
+  it("refuses a committed-life checkpoint while an execution run is still bound", () => {
+    const composition = createFiveResidentRegionComposition({
+      playerStart: { x: 3_000, y: 900 },
+    });
+    const { world } = composition;
+    const substrate = new ResidentCausalLifeSubstrate({
+      residentId: IDA_ID,
+      resident: composition.runtimes[IDA_ID],
+      world,
+      navigation: createFiveResidentNavigationGraph(),
+    });
+
+    substrate.kernel.recordEvidence({
+      id: "evidence.ida.active-snapshot",
+      tick: world.tick,
+      kind: "test_origin",
+      summary: "active matter must not be checkpointed without execution state",
+    });
+    const matter = substrate.kernel.openMatter({
+      id: "matter.ida.active-snapshot",
+      originEvidenceId: "evidence.ida.active-snapshot",
+      semanticCourse: "continue active travel",
+      semanticIntent: {
+        kind: "travel_region",
+        goal: "visit workshop",
+        targetRegionId: "workshop",
+      },
+    });
+    substrate.matterScope.track(matter.id);
+    substrate.kernel.bindRun({
+      matterId: matter.id,
+      taskId: "task.ida.active-snapshot",
+      runId: "run.ida.active-snapshot",
+    });
+
+    expect(() => substrate.snapshotCommittedLife())
+      .toThrow("cannot snapshot committed continuity while runs remain bound");
+  });
+
+  it("rejects tampered resident, namespace and matter-scope snapshots before World authority claim", () => {
+    const composition = createFiveResidentRegionComposition({
+      playerStart: { x: 3_000, y: 900 },
+    });
+    const { world } = composition;
+    const navigation = createFiveResidentNavigationGraph();
+    const original = new ResidentCausalLifeSubstrate({
+      residentId: IDA_ID,
+      resident: composition.runtimes[IDA_ID],
+      world,
+      navigation,
+      identityNamespace: "ida-reconstruction",
+    });
+
+    original.kernel.recordEvidence({
+      id: "evidence.ida.snapshot-integrity",
+      tick: world.tick,
+      kind: "test_origin",
+      summary: "snapshot integrity seed",
+    });
+    const matter = original.kernel.openMatter({
+      id: "matter.ida.snapshot-integrity",
+      originEvidenceId: "evidence.ida.snapshot-integrity",
+      semanticCourse: "preserve snapshot integrity",
+    });
+    original.matterScope.track(matter.id);
+
+    const snapshot = original.snapshotCommittedLife();
+    expect(original.releaseWorldExecutionAuthority()).toBe(true);
+
+    expect(() => new ResidentCausalLifeSubstrate({
+      residentId: "resident.mira",
+      resident: composition.runtimes["resident.mira"],
+      world,
+      navigation,
+      snapshot,
+    })).toThrow("resident causal life snapshot belongs to another resident");
+
+    expect(() => new ResidentCausalLifeSubstrate({
+      residentId: IDA_ID,
+      resident: composition.runtimes[IDA_ID],
+      world,
+      navigation,
+      identityNamespace: "different-namespace",
+      snapshot,
+    })).toThrow("resident causal life snapshot identity namespace mismatch");
+
+    const phantomScope = structuredClone(snapshot);
+    phantomScope.matterIds = [...phantomScope.matterIds, "matter.ida.phantom"];
+    expect(() => new ResidentCausalLifeSubstrate({
+      residentId: IDA_ID,
+      resident: composition.runtimes[IDA_ID],
+      world,
+      navigation,
+      snapshot: phantomScope,
+    })).toThrow("unknown resident life matter: matter.ida.phantom");
+
+    // Failed restore attempts above must not have claimed the resident's World lease.
+    const restored = new ResidentCausalLifeSubstrate({
+      residentId: IDA_ID,
+      resident: composition.runtimes[IDA_ID],
+      world,
+      navigation,
+      snapshot,
+    });
+    expect(restored.currentLifeView().matters).toContainEqual(expect.objectContaining({
+      id: matter.id,
+      status: "active",
+    }));
   });
 
 });
