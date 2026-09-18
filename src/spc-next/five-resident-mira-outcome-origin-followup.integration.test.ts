@@ -183,9 +183,13 @@ describe("Mira self-origin follow-up from factual outcome", () => {
     expect(fixture.slice.kernel.recentEvidenceSnapshot().some(
       (entry) => entry.id === fixture.completedA.outcomeEvidence.id,
     )).toBe(false);
+    expect(fixture.slice.kernel.matter(fixture.acceptedA.matter.id)).toMatchObject({
+      status: "resolved",
+      lastOutcomeEvidenceId: fixture.completedA.outcomeEvidence.id,
+    });
     expect(fixture.slice.currentLifeView().matters.find(
       (matter) => matter.id === fixture.acceptedA.matter.id,
-    )?.lastOutcomeEvidence).toBeNull();
+    )).toBeUndefined();
 
     expect(() => fixture.slice.materializeAdmittedLifeOutcomeCommitment(
       fixture.preparedB,
