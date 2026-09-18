@@ -164,4 +164,34 @@ describe("shared SPC Next resident-life context sanitizer", () => {
 
     expect(sanitizeSpcNextLifeContext({ ...focusedContext, hiddenWorldTruth: true })).toBeNull();
   });
+  it("accepts bounded authored self-knowledge but rejects malformed or overbroad self context", () => {
+    const withSelf = structuredClone(focusedContext) as any;
+    withSelf.self = {
+      version: 1,
+      role: "settlement resident who keeps everyday life connected",
+      drives: [
+        "maintain useful continuity across familiar places",
+        "respond to people actually perceived without inventing their needs",
+      ],
+    };
+    expect(sanitizeSpcNextLifeContext(withSelf)?.self).toEqual(withSelf.self);
+
+    const hiddenTruth = structuredClone(withSelf);
+    hiddenTruth.self.hiddenWorldTruth = "the crate is definitely missing";
+    expect(sanitizeSpcNextLifeContext(hiddenTruth)).toBeNull();
+
+    const noDrive = structuredClone(withSelf);
+    noDrive.self.drives = [];
+    expect(sanitizeSpcNextLifeContext(noDrive)).toBeNull();
+
+    const duplicateDrive = structuredClone(withSelf);
+    duplicateDrive.self.drives = ["stay useful", "stay useful"];
+    expect(sanitizeSpcNextLifeContext(duplicateDrive)).toBeNull();
+
+    const hugeRole = structuredClone(withSelf);
+    hugeRole.self.role = "x".repeat(801);
+    expect(sanitizeSpcNextLifeContext(hugeRole)).toBeNull();
+  });
+
+
 });
