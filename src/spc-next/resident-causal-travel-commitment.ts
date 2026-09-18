@@ -12,6 +12,7 @@ import type {
 import type { RegionNavigationGraph } from "./region-navigation";
 import type { ResidentLifeCognitionContext } from "./resident-life-cognition-context";
 import type { ResidentLifeIntentProposal } from "./resident-life-intent-contract";
+import { ResidentLifeMatterScope } from "./resident-life-matter-scope";
 import type {
   ResidentLifeIntentAdmission,
   ResidentLifeIntentAttempt,
@@ -44,6 +45,7 @@ export interface ResidentCausalTravelCommitmentAuthorityOptions {
   kernel: ResidentContinuityKernel;
   arbitrator: ResidentExecutionArbitrator;
   authority: ResidentWorldExecutionAuthority;
+  matterScope?: ResidentLifeMatterScope;
   identityNamespace?: string;
 }
 
@@ -70,12 +72,12 @@ interface CausalIdentity {
  * execution stepping, outcome reconciliation, interruption policy or life-choice policy.
  */
 export class ResidentCausalTravelCommitmentAuthority {
-  private readonly accepted = new Set<string>();
   private readonly grounded = new WeakMap<
     GroundedResidentCausalTravelCommitmentIntent,
     GroundedCapabilityAuthority
   >();
   private readonly identityNamespace: string;
+  private readonly matterScope: ResidentLifeMatterScope;
 
   constructor(private readonly options: ResidentCausalTravelCommitmentAuthorityOptions) {
     if (options.residentId.trim().length === 0) throw new Error("residentId must be non-empty");
@@ -88,10 +90,11 @@ export class ResidentCausalTravelCommitmentAuthority {
     this.identityNamespace = normalizeIdentityNamespace(
       options.identityNamespace ?? defaultIdentityNamespace(options.residentId),
     );
+    this.matterScope = options.matterScope ?? new ResidentLifeMatterScope(options.kernel);
   }
 
   acceptedMatterIds(): string[] {
-    return [...this.accepted].sort((a, b) => a.localeCompare(b));
+    return this.matterScope.matterIds();
   }
 
   groundPrivateSpeechCommitment(input: {
@@ -145,7 +148,7 @@ export class ResidentCausalTravelCommitmentAuthority {
     }
 
     const identity = this.identityFor(input.occurrence);
-    if (this.accepted.has(identity.matterId) || this.options.kernel.matter(identity.matterId)) {
+    if (this.options.kernel.matter(identity.matterId)) {
       return { status: "rejected", detail: `commitment already accepted: ${identity.matterId}` };
     }
 
@@ -197,7 +200,7 @@ export class ResidentCausalTravelCommitmentAuthority {
       this.grounded.delete(input.intent);
       throw new Error("grounded causal travel intent lost its exact private speech origin");
     }
-    if (this.accepted.has(identity.matterId) || this.options.kernel.matter(identity.matterId)) {
+    if (this.options.kernel.matter(identity.matterId)) {
       this.grounded.delete(input.intent);
       throw new Error(`commitment already accepted: ${identity.matterId}`);
     }
@@ -227,7 +230,7 @@ export class ResidentCausalTravelCommitmentAuthority {
       throw new Error(`accepted causal travel run was not authorized: ${focusClaim.reason}`);
     }
 
-    this.accepted.add(identity.matterId);
+    this.matterScope.track(matter.id);
     this.grounded.delete(input.intent);
     return {
       matter: structuredClone(matter),
