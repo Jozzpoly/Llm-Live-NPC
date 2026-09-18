@@ -1141,16 +1141,6 @@ function legacyCommitmentIdentity(spec: MiraCausalCommitmentSpec): CausalCommitm
   };
 }
 
-function causalCommitmentIdentity(occurrence: WorldOccurrence): CausalCommitmentIdentity {
-  const causalId = occurrence.id;
-  return {
-    matterId: `matter.mira.causal.${causalId}`,
-    taskId: `task.mira.causal.${causalId}.semantic-1`,
-    runId: `run.mira.causal.${causalId}.semantic-1`,
-    evidenceKey: `commitment:${causalId}`,
-  };
-}
-
 function causalOutcomeCommitmentIdentity(outcomeEvidenceId: string): CausalCommitmentIdentity {
   if (typeof outcomeEvidenceId !== "string" || outcomeEvidenceId.trim().length === 0) {
     throw new Error("causal outcome evidence id must be non-empty");
@@ -1214,28 +1204,6 @@ function groundLegacyCommitment(
     originPerceptId,
     navigation,
     true,
-  );
-}
-
-function groundLifeCommitment(
-  proposal: ResidentLifeIntentProposal,
-  providerContext: ResidentLifeCognitionContext,
-  groundingContext: ResidentCognitionContext,
-  originPerceptId: string,
-  navigation: ReturnType<typeof createFiveResidentNavigationGraph>,
-): ResidentLifeIntentAdmission<GroundedCausalCommitmentIntent> {
-  const decision = proposal.commitmentDecision;
-  if (decision.kind !== "accept") {
-    return { status: "rejected", detail: `commitment decision is ${decision.kind}, not accept` };
-  }
-  return groundAcceptedTravelCommitment(
-    decision.intent,
-    decision.reason,
-    providerContext,
-    groundingContext,
-    originPerceptId,
-    navigation,
-    false,
   );
 }
 
