@@ -1,7 +1,10 @@
 import { ResidentCausalCommunicateCommitmentAuthority } from "./resident-causal-communicate-commitment";
 import { ResidentCausalOutcomeTravelCommitmentAuthority } from "./resident-causal-outcome-travel-commitment";
 import { ResidentCausalTravelCommitmentAuthority } from "./resident-causal-travel-commitment";
-import { ResidentContinuityKernel } from "./resident-continuity-kernel";
+import {
+  ResidentContinuityKernel,
+  type ResidentContinuityKernelCommittedSnapshot,
+} from "./resident-continuity-kernel";
 import { ResidentExecutionArbitrator } from "./resident-execution-arbitrator";
 import { ResidentExecutionFocusAuthority } from "./resident-execution-focus-authority";
 import { ResidentLifeChoiceReviewBridge } from "./resident-life-choice-review-bridge";
@@ -21,12 +24,21 @@ import { ResidentWorldExecutionAuthority } from "./resident-world-execution-auth
 import type { SpcWorldRuntime } from "./spc-world-runtime";
 import type { CognitionBatch } from "./contracts";
 
+export interface ResidentCausalLifeSnapshot {
+  version: 1;
+  residentId: string;
+  identityNamespace: string | null;
+  matterIds: readonly string[];
+  kernel: ResidentContinuityKernelCommittedSnapshot;
+}
+
 export interface ResidentCausalLifeSubstrateOptions {
   residentId: string;
   resident: ResidentRuntime;
   world: SpcWorldRuntime;
   navigation: RegionNavigationGraph;
   identityNamespace?: string;
+  snapshot?: ResidentCausalLifeSnapshot;
 }
 
 export interface PreparedResidentCausalLifeIntent {
@@ -56,6 +68,8 @@ export class ResidentCausalLifeSubstrate {
   readonly communicateCommitments: ResidentCausalCommunicateCommitmentAuthority;
   readonly outcomeTravelCommitments: ResidentCausalOutcomeTravelCommitmentAuthority;
 
+  private readonly effectiveIdentityNamespace: string | null;
+
   constructor(private readonly options: ResidentCausalLifeSubstrateOptions) {
     if (typeof options.residentId !== "string" || options.residentId.trim().length === 0) {
       throw new Error("residentId must be non-empty");
@@ -64,8 +78,41 @@ export class ResidentCausalLifeSubstrate {
       throw new Error("resident causal life substrate runtime belongs to another resident");
     }
 
-    this.kernel = new ResidentContinuityKernel();
+    const snapshot = options.snapshot;
+    if (snapshot) {
+      if (snapshot.version !== 1) {
+        throw new Error("unsupported resident causal life snapshot version");
+      }
+      if (snapshot.residentId !== options.residentId) {
+        throw new Error("resident causal life snapshot belongs to another resident");
+      }
+      const requestedNamespace = options.identityNamespace ?? null;
+      if (requestedNamespace !== null && requestedNamespace !== snapshot.identityNamespace) {
+        throw new Error("resident causal life snapshot identity namespace mismatch");
+      }
+    }
+
+    this.effectiveIdentityNamespace = snapshot
+      ? snapshot.identityNamespace
+      : options.identityNamespace ?? null;
+
+    this.kernel = new ResidentContinuityKernel(
+      snapshot ? { committedSnapshot: snapshot.kernel } : {},
+    );
     this.matterScope = new ResidentLifeMatterScope(this.kernel);
+    if (snapshot) {
+      const seenMatterIds = new Set<string>();
+      for (const matterId of snapshot.matterIds) {
+        if (typeof matterId !== "string" || matterId.trim().length === 0) {
+          throw new Error("resident causal life snapshot matter id must be non-empty");
+        }
+        if (seenMatterIds.has(matterId)) {
+          throw new Error(`duplicate resident causal life snapshot matter id: ${matterId}`);
+        }
+        seenMatterIds.add(matterId);
+        this.matterScope.track(matterId);
+      }
+    }
     this.focus = new ResidentExecutionFocusAuthority(this.kernel);
     this.arbitrator = new ResidentExecutionArbitrator(this.kernel, this.focus);
     this.worldAuthority = new ResidentWorldExecutionAuthority(
@@ -85,9 +132,9 @@ export class ResidentCausalLifeSubstrate {
       arbitrator: this.arbitrator,
       authority: this.worldAuthority,
       matterScope: this.matterScope,
-      ...(options.identityNamespace === undefined
+      ...(this.effectiveIdentityNamespace === null
         ? {}
-        : { identityNamespace: options.identityNamespace }),
+        : { identityNamespace: this.effectiveIdentityNamespace }),
     };
 
     this.travelCommitments = new ResidentCausalTravelCommitmentAuthority({
@@ -115,6 +162,16 @@ export class ResidentCausalLifeSubstrate {
 
   get navigation(): RegionNavigationGraph {
     return this.options.navigation;
+  }
+
+  snapshotCommittedLife(): ResidentCausalLifeSnapshot {
+    return {
+      version: 1,
+      residentId: this.options.residentId,
+      identityNamespace: this.effectiveIdentityNamespace,
+      matterIds: this.matterScope.matterIds(),
+      kernel: this.kernel.snapshotCommittedState(),
+    };
   }
 
   currentLifeView(): ResidentLifeCognitionView {
