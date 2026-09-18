@@ -92,7 +92,7 @@ describe("unified resident life long-run Worker boundary", () => {
       },
     });
 
-    for (let step = 0; step < 12_000; step += 1) {
+    for (let step = 0; step < 5_000; step += 1) {
       living.advanceOneWorldTick();
       // Permit the same Promise/microtask boundary used by the browser pump without
       // adding wall-clock provider latency.
@@ -101,6 +101,9 @@ describe("unified resident life long-run Worker boundary", () => {
     for (let index = 0; index < 8; index += 1) await Promise.resolve();
     living.advanceOneWorldTick();
 
+    // The original transport drift first failed at t1335 and then poisoned every
+    // later review. Five thousand ticks crosses that frontier repeatedly while
+    // remaining a bounded CI qualification rather than a wall-clock endurance test.
     expect(validatedRequests).toBeGreaterThan(20);
     expect(validationFailures).toEqual([]);
     expect(living.diagnostics().recentProviderEvents.some(
