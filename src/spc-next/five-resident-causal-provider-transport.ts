@@ -25,6 +25,7 @@ export type FiveResidentCausalProviderArrival = Readonly<
       residentId: string;
       status: "provider_error";
       code: ResidentCognitionProviderErrorCode;
+      detail: string | null;
     }
 >;
 
@@ -34,6 +35,7 @@ export type FiveResidentCausalProviderAdmission =
       status: "provider_error";
       residentId: string;
       code: ResidentCognitionProviderErrorCode;
+      detail: string | null;
       abandonment: boolean;
     }
   | { status: "arrival_rejected"; reason: "unknown_arrival" | "already_admitted" };
@@ -79,12 +81,15 @@ export class FiveResidentCausalProviderTransport {
         signal: options.signal,
       });
     } catch {
-      return this.registerError(request, "network");
+      return this.registerError(request, "network", "network transport failed");
     }
 
     if (!response.ok) {
-      void response.body?.cancel().catch(() => {});
-      return this.registerError(request, "http");
+      return this.registerError(
+        request,
+        "http",
+        await safeHttpErrorDetail(response),
+      );
     }
 
     let raw: unknown;
@@ -93,7 +98,7 @@ export class FiveResidentCausalProviderTransport {
       if (text.length > MAX_RESPONSE_CHARACTERS) throw new Error("provider response too large");
       raw = JSON.parse(text);
     } catch {
-      return this.registerError(request, "invalid_response");
+      return this.registerError(request, "invalid_response", "response body was not bounded JSON");
     }
 
     if (!isRecord(raw)
@@ -101,7 +106,7 @@ export class FiveResidentCausalProviderTransport {
       || typeof raw.originReasonId !== "string"
       || !("proposal" in raw)
       || !request.batch.reasons.some((reason) => reason.id === raw.originReasonId)) {
-      return this.registerError(request, "invalid_response");
+      return this.registerError(request, "invalid_response", "response lacked exact ok/origin/proposal contract");
     }
 
     return this.register(request, Object.freeze({
@@ -136,6 +141,7 @@ export class FiveResidentCausalProviderTransport {
         status: "provider_error",
         residentId: arrival.residentId,
         code: arrival.code,
+        detail: arrival.detail,
         abandonment: cognition.abandon(local.request),
       };
     }
@@ -154,6 +160,7 @@ export class FiveResidentCausalProviderTransport {
   private registerError(
     request: FiveResidentCausalCognitionRequest,
     code: ResidentCognitionProviderErrorCode,
+    detail: string | null,
   ): FiveResidentCausalProviderArrival {
     return this.register(request, Object.freeze({
       version: 1 as const,
@@ -162,6 +169,7 @@ export class FiveResidentCausalProviderTransport {
       residentId: request.residentId,
       status: "provider_error" as const,
       code,
+      detail,
     }));
   }
 
@@ -181,4 +189,22 @@ export class FiveResidentCausalProviderTransport {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+
+async function safeHttpErrorDetail(response: Response): Promise<string> {
+  const status = response.status;
+  let workerCode: string | null = null;
+  try {
+    const text = await response.text();
+    if (text.length <= MAX_RESPONSE_CHARACTERS) {
+      const raw = JSON.parse(text) as unknown;
+      if (isRecord(raw) && typeof raw.code === "string" && /^[A-Za-z0-9_.:-]{1,120}$/u.test(raw.code)) {
+        workerCode = raw.code;
+      }
+    }
+  } catch {
+    // Status alone remains sufficient bounded diagnostic truth.
+  }
+  return workerCode ? `HTTP ${status}: ${workerCode}` : `HTTP ${status}`;
 }
