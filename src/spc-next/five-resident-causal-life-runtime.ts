@@ -5,6 +5,7 @@ import {
   type FiveResidentRegionComposition,
 } from "./five-resident-region";
 import { createFiveResidentNavigationGraph } from "./five-resident-navigation";
+import { FIVE_RESIDENT_LIFE_SELF } from "./five-resident-life-self";
 import {
   ResidentCausalExecutionCoordinator,
   type ResidentCausalExecutionStep,
@@ -128,6 +129,7 @@ export class FiveResidentCausalLifeRuntime {
         world: this.composition.world,
         navigation: this.navigation,
         identityNamespace: residentId.split(".").at(-1) ?? residentId,
+        selfContext: FIVE_RESIDENT_LIFE_SELF[residentId],
       });
       this.lanes.set(residentId, {
         life,
