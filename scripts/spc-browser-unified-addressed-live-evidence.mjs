@@ -567,11 +567,20 @@ function newestAddressedSpeechPercept(frame, actorId, text) {
 }
 
 function newestSpeechReason(frame, text) {
-  const reasons = frame.selectedDiagnostics?.recentCognitionReasons ?? [];
-  for (let index = reasons.length - 1; index >= 0; index -= 1) {
-    const reason = reasons[index];
-    if (reason?.kind === "heard_speech"
-      && String(reason?.summary ?? "").includes(text)) return reason;
+  const trace = frame.selectedDiagnostics?.trace ?? [];
+  for (let index = trace.length - 1; index >= 0; index -= 1) {
+    const event = trace[index];
+    if (event?.kind !== "cognition_reason") continue;
+    if (event?.summary !== `Speech addressed to me: ${text}`) continue;
+    const reasonId = event?.refIds?.[0];
+    if (typeof reasonId !== "string" || !reasonId) continue;
+    return {
+      id: reasonId,
+      tick: event.tick,
+      kind: "heard_speech",
+      summary: event.summary,
+      evidenceIds: event.refIds.slice(1),
+    };
   }
   return null;
 }
@@ -682,14 +691,17 @@ async function addressResident(cdp, residentId, text) {
 }
 
 async function tryResponseBody(cdp, requestId) {
-  try {
-    const result = await cdp.send("Network.getResponseBody", { requestId }, 3_000);
-    return result.base64Encoded
-      ? Buffer.from(result.body, "base64").toString("utf8")
-      : result.body;
-  } catch {
-    return null;
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    try {
+      const result = await cdp.send("Network.getResponseBody", { requestId }, 3_000);
+      return result.base64Encoded
+        ? Buffer.from(result.body, "base64").toString("utf8")
+        : result.body;
+    } catch {
+      await sleep(50);
+    }
   }
+  return null;
 }
 
 async function evaluate(cdp, expression) {
