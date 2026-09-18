@@ -33,12 +33,29 @@ const boundedText = (value: unknown, maxLength: number): string | null => {
  * requirement that body be free with at least two deferred candidates) belongs after
  * this boundary.
  */
-export function sanitizeSpcNextLifeContext(value: unknown): ResidentLifeCognitionContext | null {
-  if (!record(value) || value.contract !== "resident_life_cognition_v1" || !record(value.life)) return null;
+export type SpcNextLifeContextDiagnosticCode =
+  | "outer_shape"
+  | "private_context"
+  | "life_context"
+  | "self_context";
+
+export interface SpcNextLifeContextSanitization {
+  context: ResidentLifeCognitionContext | null;
+  diagnostic: SpcNextLifeContextDiagnosticCode | null;
+}
+
+export function sanitizeSpcNextLifeContextWithDiagnostic(
+  value: unknown,
+): SpcNextLifeContextSanitization {
+  if (!record(value) || value.contract !== "resident_life_cognition_v1" || !record(value.life)) {
+    return { context: null, diagnostic: "outer_shape" };
+  }
   if (!hasRequiredAndOptionalKeys(value, [
     "contract", "resident", "tick", "currentRegionId", "reasons", "localActivity",
     "recentPercepts", "concerns", "beliefs", "knownActors", "knownRegions", "life",
-  ], ["self"])) return null;
+  ], ["self"])) {
+    return { context: null, diagnostic: "outer_shape" };
+  }
 
   const privateContext = sanitizeSpcNextContext({
     version: 1,
@@ -53,28 +70,37 @@ export function sanitizeSpcNextLifeContext(value: unknown): ResidentLifeCognitio
     knownActors: value.knownActors,
     knownRegions: value.knownRegions,
   });
-  if (!privateContext) return null;
+  if (!privateContext) return { context: null, diagnostic: "private_context" };
 
   const life = sanitizeLife(value.life, privateContext.tick);
-  if (!life) return null;
+  if (!life) return { context: null, diagnostic: "life_context" };
   const self = Object.hasOwn(value, "self") ? sanitizeSelf(value.self) : null;
-  if (Object.hasOwn(value, "self") && !self) return null;
+  if (Object.hasOwn(value, "self") && !self) {
+    return { context: null, diagnostic: "self_context" };
+  }
 
   return {
-    contract: "resident_life_cognition_v1",
-    resident: structuredClone(privateContext.resident),
-    ...(self ? { self } : {}),
-    tick: privateContext.tick,
-    currentRegionId: privateContext.currentRegionId,
-    reasons: structuredClone(privateContext.reasons),
-    localActivity: structuredClone(privateContext.currentActivity),
-    recentPercepts: structuredClone(privateContext.recentPercepts),
-    concerns: structuredClone(privateContext.concerns),
-    beliefs: structuredClone(privateContext.beliefs),
-    knownActors: structuredClone(privateContext.knownActors),
-    knownRegions: structuredClone(privateContext.knownRegions),
-    life,
+    context: {
+      contract: "resident_life_cognition_v1",
+      resident: structuredClone(privateContext.resident),
+      ...(self ? { self } : {}),
+      tick: privateContext.tick,
+      currentRegionId: privateContext.currentRegionId,
+      reasons: structuredClone(privateContext.reasons),
+      localActivity: structuredClone(privateContext.currentActivity),
+      recentPercepts: structuredClone(privateContext.recentPercepts),
+      concerns: structuredClone(privateContext.concerns),
+      beliefs: structuredClone(privateContext.beliefs),
+      knownActors: structuredClone(privateContext.knownActors),
+      knownRegions: structuredClone(privateContext.knownRegions),
+      life,
+    },
+    diagnostic: null,
   };
+}
+
+export function sanitizeSpcNextLifeContext(value: unknown): ResidentLifeCognitionContext | null {
+  return sanitizeSpcNextLifeContextWithDiagnostic(value).context;
 }
 
 function sanitizeSelf(value: unknown): ResidentLifeSelfContext | null {
