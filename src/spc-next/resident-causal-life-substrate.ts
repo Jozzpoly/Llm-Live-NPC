@@ -101,6 +101,22 @@ export class ResidentCausalLifeSubstrate {
     });
   }
 
+  get residentId(): string {
+    return this.options.residentId;
+  }
+
+  get resident(): ResidentRuntime {
+    return this.options.resident;
+  }
+
+  get world(): SpcWorldRuntime {
+    return this.options.world;
+  }
+
+  get navigation(): RegionNavigationGraph {
+    return this.options.navigation;
+  }
+
   currentLifeView(): ResidentLifeCognitionView {
     return structuredClone(captureResidentLifeCognitionView({
       kernel: this.kernel,
