@@ -135,6 +135,34 @@ describe("ResidentLifeIntentOwner", () => {
     expect(attempt.context.reasons.some((reason) => reason.kind === "heard_speech")).toBe(true);
   });
 
+  it("snapshots provider context at dispatch time while preserving older causal reason time", () => {
+    const { owner, batch } = setup();
+    expect(batch.requestedAtTick).toBe(1);
+
+    const life = lifeView();
+    life.matters[0] = {
+      ...life.matters[0]!,
+      status: "resolved",
+      lastOutcomeEvidence: {
+        id: "evidence:mira:a:outcome",
+        tick: 40,
+        kind: "task_outcome",
+        summary: "A completed factually at tick 40",
+      },
+      activeRun: null,
+    };
+    life.body = { focusedRunId: null, deferredRunIds: [] };
+
+    const attempt = owner.prepare(batch, life, 50);
+    expect(attempt).not.toBeNull();
+    if (!attempt) return;
+
+    expect(attempt.batch.requestedAtTick).toBe(1);
+    expect(attempt.context.tick).toBe(50);
+    expect(attempt.context.reasons.every((reason) => reason.tick <= attempt.context.tick)).toBe(true);
+    expect(attempt.context.life.matters[0]?.lastOutcomeEvidence?.tick).toBe(40);
+  });
+
   it("admits a bounded legacy proposal against the frozen private evidence while giving the admission callback truthful life context", () => {
     const { resident, owner, batch } = setup();
     const life = lifeView();
