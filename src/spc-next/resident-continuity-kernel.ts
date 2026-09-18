@@ -47,6 +47,8 @@ export interface ResidentMatter {
   suspendedByMatterId: string | null;
   activeRunId: string | null;
   lastOutcomeEvidenceId: string | null;
+  /** Semantic revision of the exact run that produced the last factual outcome. */
+  lastOutcomeSemanticRevision: number | null;
 }
 
 export interface ResidentSemanticProposalTicket {
@@ -172,6 +174,7 @@ export class ResidentContinuityKernel {
       suspendedByMatterId: null,
       activeRunId: null,
       lastOutcomeEvidenceId: null,
+      lastOutcomeSemanticRevision: null,
     };
     this.matters.set(matter.id, matter);
     this.pinnedOriginEvidence.set(matter.id, structuredClone(evidence));
@@ -394,6 +397,7 @@ export class ResidentContinuityKernel {
     });
 
     matter.lastOutcomeEvidenceId = resultEvidence.id;
+    matter.lastOutcomeSemanticRevision = binding.semanticRevision;
     if (!isTerminal(matter.status)) {
       this.pinnedOutcomeEvidence.set(matter.id, structuredClone(resultEvidence));
     }
