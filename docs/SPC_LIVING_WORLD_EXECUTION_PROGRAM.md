@@ -4,8 +4,13 @@ Status: **CANONICAL CURRENT EXECUTION AUTHORITY**
 Updated: 2026-09-18
 Active integration branch: `integration/spc-next-owner-living-runtime-v1`
 Draft PR: **#141 — integration: five-resident owner living runtime v1**
-Last fully qualified runtime checkpoint when this program was written:
-`0ab1c81b738bd0e64eedee66a2473a14ffee1e32`
+Frozen Owner-candidate runtime checkpoint:
+`c1816785c89b5403889a7c57498843ecbbb69b97`
+
+Exact Owner-candidate preview:
+`https://441dfa93-llm-live-npc.jozzpoly.workers.dev/?spc=1&scenario=unified-living`
+
+Later branch commits may update documentation/evidence metadata only. Do **not** silently replace the frozen runtime identity with a newer docs HEAD.
 
 This document is deliberately dynamic. It owns **what we are trying to prove next and why**.
 It does not replace historical evidence or donor documents. Live code/evidence wins over prose when they disagree.
@@ -45,7 +50,7 @@ The project has crossed an important boundary.
 
 Earlier documents correctly warned that the five-resident scene was mostly a substrate plus scenario-specific vertical slices. That is no longer the whole truth.
 
-At qualified runtime checkpoint `0ab1c81...`:
+The unified runtime first became materially qualified at `0ab1c81...`; the current frozen Owner candidate is `c1816785...`. Across that path:
 
 - five residents coexist in one World and transition from authored opening into recovered causal life;
 - one fair cognition coordinator serves all five without making LLM output World authority;
@@ -58,7 +63,15 @@ At qualified runtime checkpoint `0ab1c81...`:
 - exact outcome provenance is preserved structurally through `sourceRunId` rather than recursively growing identifier strings;
 - full repository Check passed **233/233 files, 883/883 tests**;
 - Browser Evidence passed on the same checkpoint;
-- an exact Cloudflare preview completed a bounded live run with **5/5 recovered residents and 56 real provider requests**, with no `invalid_life_intent_context`, provider-error loop or runtime exception.
+- an exact Cloudflare preview completed a bounded live run with **5/5 recovered residents and 56 real provider requests**, with no `invalid_life_intent_context`, provider-error loop or runtime exception;
+- the normal unified Owner path now accepts physical player movement, addressed speech and resident selection without evidence-mode authority;
+- a real addressed-speech join is qualified end-to-end:
+  `World.speak -> private addressed percept -> exact heard_speech reason -> Luna origin attribution -> local admission -> resident-owned continuing matter`;
+- the project caught and repaired a semantic boundary bug where local `Tak?` acknowledgement could be mistaken for semantic handling of the speech content;
+- the corrected contract now preserves:
+  **local contact acknowledgement != acceptance/decline/fulfilment of speech meaning**;
+- real Luna re-qualification on the frozen candidate passed the semantic regression oracle and accepted a grounded `communicate_actor` commitment from addressed player speech;
+- normal non-evidence browser sanity on the exact preview reached **5/5 recovered residents**, continued provider traffic and showed no visible provider/context error signal.
 
 This means the immediate problem is no longer:
 
@@ -112,11 +125,17 @@ Missing-crate search/pickup, checked absence, richer material recovery and other
 
 ---
 
-## 4. Immediate campaign: close the first Owner living sandbox
+## 4. Immediate campaign: Owner Living Sandbox
 
-**This is the current phase. Do not skip it for feature expansion.**
+**The technical credibility gate for the first Owner candidate is closed. Do not add another pre-Owner feature campaign by inertia.**
 
-The first Owner candidate should let the Owner enter the actual unified world and test resident life as a participant.
+Frozen runtime:
+`c1816785c89b5403889a7c57498843ecbbb69b97`
+
+Exact preview:
+`https://441dfa93-llm-live-npc.jozzpoly.workers.dev/?spc=1&scenario=unified-living`
+
+The next missing evidence plane is **Owner observation**. The Owner should now enter the actual unified world and judge resident life as a participant.
 
 The minimum credibility gate is not "all future systems exist". It is:
 
@@ -131,17 +150,25 @@ The minimum credibility gate is not "all future systems exist". It is:
 9. no research-only fixture or global debug knowledge leaks into resident experience;
 10. the Owner can observe enough of this in-world to judge whether it feels alive.
 
-### Current final join under qualification
+### Promotion evidence now earned
 
-The exact suspend/return mechanism is already independently defended.
+The Owner candidate is backed by separate evidence planes:
 
-The remaining live composition question is the normal unified path:
+- **STATIC / CONTRACT PASS** — full Check on the candidate line remains green;
+- **DETERMINISTIC CAUSAL PASS** — matter/run/outcome, interruption and private-speech boundaries remain defended;
+- **BROWSER PASS** — full Browser Evidence is green on the frozen candidate;
+- **LIVE PROVIDER PASS** — exact deployed preview passed unified addressed-speech inference with exact causal origin attribution;
+- **SEMANTIC REGRESSION PASS** — Luna did not treat local contact acknowledgement as proof that speech content was already semantically handled;
+- **NORMAL OWNER-PATH SANITY** — the non-evidence unified scene loaded on the exact preview and reached 5/5 recovered residents under live provider traffic.
 
-`player addressed speech -> private hearing/reason -> local reaction -> real Luna settlement -> continued resident life`
+Still deliberately **not** claimed:
 
-A browser automation inability to physically position the player is **apparatus failure**, not product evidence. Do not reclassify it as an SPC failure.
+- `OWNER-OBSERVED`;
+- compelling ordinary-life quality;
+- complete capability breadth;
+- final game quality.
 
-Once the integrated addressed-speech path is sufficiently qualified, stop adding gates and hand the sandbox to the Owner.
+Those now require the Owner, not another automated pre-gate.
 
 ---
 
@@ -480,20 +507,24 @@ If documentation conflicts with live runtime evidence, **live evidence wins and 
 
 ## 13. Current concrete next move
 
-At the time this document was created:
+Current truth:
 
-- the unified five-resident real-Luna runtime is causally alive and survives repeated provider cycles;
-- the previous `life_context` poison bug is closed by deterministic + real-provider evidence;
-- exact interruption/return is defended independently;
-- the remaining Owner-candidate composition pressure is normal player-addressed speech through the unified runtime and its join with local reaction / higher cognition;
-- browser automation that failed to physically position the player is classified as apparatus failure, not product failure.
+- the frozen Owner candidate is `c1816785c89b5403889a7c57498843ecbbb69b97`;
+- exact preview:
+  `https://441dfa93-llm-live-npc.jozzpoly.workers.dev/?spc=1&scenario=unified-living`;
+- unified five-resident real-Luna runtime is causally alive;
+- full Check, Browser Evidence and exact-preview live provider qualification are green;
+- normal Owner-path sanity reached 5/5 recovered residents;
+- addressed player speech is causally grounded and semantically separated from local contact acknowledgement;
+- no further automated pre-Owner gate is currently justified.
 
 Therefore the current work order is:
 
-`finish live addressed-speech join`
-→ `bounded exact-candidate sanity`
-→ **`OWNER LIVING SANDBOX`**
-→ `use Owner observations to re-plan L1 rather than implementing the rest of this roadmap by inertia`.
+**`OWNER LIVING SANDBOX`**
+→ `collect Owner observations / feel failures / surprises`
+→ `re-plan Phase L1 from that evidence`.
+
+A short `continue` **before Owner feedback** must not be interpreted as permission to invent another pre-test subsystem. Re-check candidate health if necessary, help the Owner test, or wait at the human-evidence boundary.
 
 ---
 
