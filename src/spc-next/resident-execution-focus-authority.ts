@@ -58,6 +58,23 @@ export class ResidentExecutionFocusAuthority implements ResidentRunAuthority {
     return true;
   }
 
+  /**
+   * Restore exact previously-committed body ownership on a fresh focus authority.
+   * This does not arbitrate or select a run; the snapshot must already identify one
+   * exact still-authorized run.
+   */
+  restoreFocusedRun(runId: string | null): void {
+    if (this.focusedRunId !== null) {
+      throw new Error("execution focus restore requires fresh authority");
+    }
+    if (runId === null) return;
+    assertRunId(runId);
+    if (!this.underlying.canRunMutateWorld(runId)) {
+      throw new Error(`cannot restore unauthorized focused run: ${runId}`);
+    }
+    this.focusedRunId = runId;
+  }
+
   sync(): ResidentExecutionFocusSync {
     const runId = this.focusedRunId;
     if (runId === null) return { status: "unchanged", focusedRunId: null };
