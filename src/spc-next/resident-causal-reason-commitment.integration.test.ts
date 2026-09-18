@@ -14,18 +14,10 @@ describe("resident causal self-origin bootstrap", () => {
     const composition = createFiveResidentRegionComposition({ playerStart: { x: 700, y: 700 } });
     const { world } = composition;
     const mira = composition.runtimes[MIRA_ID];
-    const life = new ResidentCausalLifeSubstrate({
-      residentId: MIRA_ID,
-      resident: mira,
-      world,
-      navigation: createFiveResidentNavigationGraph(),
-      identityNamespace: "mira",
-    });
-    const execution = new ResidentCausalExecutionCoordinator(life);
 
-    // Earlier direct-world pressure is allowed during the authored opening. Do not
-    // consume it merely to force the fixture into the desired branch; let the real
-    // scheduler accumulate its causal history until the authored activity itself ends.
+    // Recovered World authority disables legacy fastStep by design. Therefore the
+    // causal-life substrate must be claimed only after the authored/local opening has
+    // naturally reached its handoff boundary.
     let guard = 0;
     while (
       !mira.publicState().activity.reason.includes("completed activity:mira:initial")
@@ -35,6 +27,15 @@ describe("resident causal self-origin bootstrap", () => {
       guard += 1;
     }
     expect(guard).toBeLessThan(MAX_OPENING_STEPS);
+
+    const life = new ResidentCausalLifeSubstrate({
+      residentId: MIRA_ID,
+      resident: mira,
+      world,
+      navigation: createFiveResidentNavigationGraph(),
+      identityNamespace: "mira",
+    });
+    const execution = new ResidentCausalExecutionCoordinator(life);
 
     const prepared = life.takeReadyLifeIntentAttempt();
     expect(prepared).not.toBeNull();
