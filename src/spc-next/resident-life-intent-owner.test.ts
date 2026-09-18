@@ -139,19 +139,24 @@ describe("ResidentLifeIntentOwner", () => {
     const { owner, batch } = setup();
     expect(batch.requestedAtTick).toBe(1);
 
-    const life = lifeView();
-    life.matters[0] = {
-      ...life.matters[0]!,
-      status: "resolved",
-      lastOutcomeEvidence: {
-        id: "evidence:mira:a:outcome",
-        tick: 40,
-        kind: "task_outcome",
-        summary: "A completed factually at tick 40",
-      },
-      activeRun: null,
+    const initial = lifeView();
+    const life: ResidentLifeCognitionView = {
+      ...structuredClone(initial),
+      matters: initial.matters.map((matter, index) => index === 0
+        ? {
+            ...structuredClone(matter),
+            status: "resolved",
+            lastOutcomeEvidence: {
+              id: "evidence:mira:a:outcome",
+              tick: 40,
+              kind: "task_outcome",
+              summary: "A completed factually at tick 40",
+            },
+            activeRun: null,
+          }
+        : structuredClone(matter)),
+      body: { focusedRunId: null, deferredRunIds: [] },
     };
-    life.body = { focusedRunId: null, deferredRunIds: [] };
 
     const attempt = owner.prepare(batch, life, 50);
     expect(attempt).not.toBeNull();
