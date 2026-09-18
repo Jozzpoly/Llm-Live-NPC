@@ -1,5 +1,6 @@
 import { ResidentCausalCommunicateCommitmentAuthority } from "./resident-causal-communicate-commitment";
 import { ResidentCausalOutcomeTravelCommitmentAuthority } from "./resident-causal-outcome-travel-commitment";
+import { ResidentCausalReasonCommitmentAuthority } from "./resident-causal-reason-commitment";
 import { ResidentCausalTravelCommitmentAuthority } from "./resident-causal-travel-commitment";
 import {
   ResidentContinuityKernel,
@@ -70,6 +71,7 @@ export class ResidentCausalLifeSubstrate {
   readonly outcomeReviewBridge: ResidentLifeOutcomeReviewBridge;
   readonly travelCommitments: ResidentCausalTravelCommitmentAuthority;
   readonly communicateCommitments: ResidentCausalCommunicateCommitmentAuthority;
+  readonly reasonCommitments: ResidentCausalReasonCommitmentAuthority;
   readonly outcomeTravelCommitments: ResidentCausalOutcomeTravelCommitmentAuthority;
 
   private readonly effectiveIdentityNamespace: string | null;
@@ -149,6 +151,10 @@ export class ResidentCausalLifeSubstrate {
       navigation: options.navigation,
     });
     this.communicateCommitments = new ResidentCausalCommunicateCommitmentAuthority(shared);
+    this.reasonCommitments = new ResidentCausalReasonCommitmentAuthority({
+      ...shared,
+      navigation: options.navigation,
+    });
     this.outcomeTravelCommitments = new ResidentCausalOutcomeTravelCommitmentAuthority({
       ...shared,
       navigation: options.navigation,
