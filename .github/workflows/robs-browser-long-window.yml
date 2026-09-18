@@ -1,0 +1,82 @@
+name: ROBS Browser Long Window
+
+on:
+  pull_request:
+    paths:
+      - "src/**"
+      - "scripts/spc-browser-long-window-characterization.mjs"
+      - "index.html"
+      - "package.json"
+      - "package-lock.json"
+      - "vite.config.ts"
+      - ".github/workflows/robs-browser-long-window.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser-long-window:
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Use Node 22
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Build browser candidate
+        run: npm run build
+
+      - name: Locate runner Chrome
+        shell: bash
+        run: |
+          set -euo pipefail
+          CHROME_PATH="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)"
+          test -n "$CHROME_PATH"
+          echo "CHROME_PATH=$CHROME_PATH" >> "$GITHUB_ENV"
+          "$CHROME_PATH" --version
+
+      - name: Start static built-client server
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory dist/client > /tmp/spc-static.log 2>&1 &
+          for attempt in $(seq 1 80); do
+            if curl --fail --silent --show-error 'http://127.0.0.1:4173/?spc=1' > /dev/null; then
+              exit 0
+            fi
+            sleep 0.25
+          done
+          cat /tmp/spc-static.log
+          exit 1
+
+      - name: Characterize current browser specimen through t6000
+        env:
+          EVIDENCE_BASE_URL: http://127.0.0.1:4173
+          LONG_WINDOW_OUTPUT: evidence/browser/long-window-characterization.json
+          SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: node scripts/spc-browser-long-window-characterization.mjs
+
+      - name: Print long-window characterization
+        if: always()
+        run: cat evidence/browser/long-window-characterization.json 2>/dev/null || true
+
+      - name: Upload long-window evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: spc-browser-long-window-${{ github.event.pull_request.head.sha || github.sha }}
+          path: evidence/browser
+          if-no-files-found: error
+          retention-days: 14
