@@ -62,6 +62,7 @@ export class ResidentAddressedInterruptionController {
   private readonly handledPerceptIds = new Set<string>();
   private readonly responseText: string;
   private readonly holdTicks: number;
+  private lastPerceptionRevision = -1;
   private active: ActiveInterruption | null = null;
 
   constructor(
@@ -83,8 +84,11 @@ export class ResidentAddressedInterruptionController {
       return { status: "already_active", interruption: this.snapshot(this.active, "active") };
     }
 
-    const percepts = this.life.resident.diagnostics().recentPercepts;
-    for (const percept of percepts) {
+    const perception = this.life.resident.perceptionSnapshot();
+    if (perception.revision === this.lastPerceptionRevision) return { status: "none" };
+    this.lastPerceptionRevision = perception.revision;
+
+    for (const percept of perception.recentPercepts) {
       if (this.handledPerceptIds.has(percept.id)) continue;
       if (percept.phenomenon !== "speech" || !percept.addressed || !percept.text) continue;
 
