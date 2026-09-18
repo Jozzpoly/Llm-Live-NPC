@@ -11,6 +11,10 @@ import type {
   ResidentPercept,
 } from "./contracts";
 import type { ResidentLifeCognitionView } from "./resident-life-cognition-view";
+import {
+  cloneResidentLifeSelfContext,
+  type ResidentLifeSelfContext,
+} from "./resident-life-self-context";
 
 /**
  * Transitional higher-cognition input for the recovered resident-life architecture.
@@ -27,6 +31,8 @@ import type { ResidentLifeCognitionView } from "./resident-life-cognition-view";
 export interface ResidentLifeCognitionContext {
   contract: "resident_life_cognition_v1";
   resident: { id: string; name: string };
+  /** Optional authored self-knowledge; never World evidence. */
+  self?: ResidentLifeSelfContext;
   tick: number;
   currentRegionId: string | null;
   reasons: readonly CognitionReason[];
@@ -42,10 +48,12 @@ export interface ResidentLifeCognitionContext {
 export function composeResidentLifeCognitionContext(
   privateContext: ResidentCognitionContext,
   life: ResidentLifeCognitionView,
+  self?: ResidentLifeSelfContext,
 ): ResidentLifeCognitionContext {
   return {
     contract: "resident_life_cognition_v1",
     resident: structuredClone(privateContext.resident),
+    ...(self ? { self: cloneResidentLifeSelfContext(self) } : {}),
     tick: privateContext.tick,
     currentRegionId: privateContext.currentRegionId,
     reasons: structuredClone(privateContext.reasons),
