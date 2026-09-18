@@ -193,7 +193,7 @@ export class ResidentCausalReasonCommitmentAuthority {
           targetActorId: decision.intent.targetActorId,
           text: decision.intent.text,
         }),
-        routeRegionIds: Object.freeze([]),
+        routeRegionIds: [] as const,
       }) satisfies GroundedResidentCausalReasonCommitmentIntent;
       this.grounded.set(intent, {
         attempt: input.attempt,
