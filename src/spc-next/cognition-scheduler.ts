@@ -52,11 +52,25 @@ export class CognitionScheduler {
   }
 
   scheduleQuietReviewAfter(tick: number, delayTicks: number): void {
+    this.nextQuietReviewTick = this.quietReviewDeadline(tick, delayTicks);
+  }
+
+  /**
+   * Guarantee a cognition opportunity no later than the requested bound without
+   * postponing an already-earlier review. Event bridges use this; provider cadence
+   * may still deliberately replace the deadline through scheduleQuietReviewAfter().
+   */
+  ensureQuietReviewWithin(tick: number, delayTicks: number): void {
+    const candidate = this.quietReviewDeadline(tick, delayTicks);
+    this.nextQuietReviewTick = Math.min(this.nextQuietReviewTick, candidate);
+  }
+
+  private quietReviewDeadline(tick: number, delayTicks: number): number {
     if (!Number.isInteger(tick) || tick < 0) throw new Error("tick must be a non-negative integer");
     if (!Number.isInteger(delayTicks) || delayTicks < 1) throw new Error("delayTicks must be a positive integer");
     const boundedDelay = Math.max(this.options.normalMinIntervalTicks, delayTicks);
     const microStagger = stableMicroStagger(this.options.residentId, boundedDelay);
-    this.nextQuietReviewTick = tick + boundedDelay + microStagger;
+    return tick + boundedDelay + microStagger;
   }
 
   diagnostics(): CognitionScheduleDiagnostics {

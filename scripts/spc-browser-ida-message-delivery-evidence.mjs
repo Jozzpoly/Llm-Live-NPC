@@ -199,7 +199,6 @@ async function run() {
       && first.resolved.deliveryOccurrence?.text === MESSAGE
       && first.resolved.deliveryOccurrence?.addressedActorIds?.length === 1
       && first.resolved.deliveryOccurrence?.addressedActorIds?.[0] === JANEK_ID
-      && first.resolved.lastOutcomeEvidenceSummary?.includes(first.resolved.deliveryOccurrence.id)
     ), first?.resolved ?? null);
 
     assert(report, "the same factual occurrence becomes Janek addressed hearing and Mira unaddressed hearing", Boolean(

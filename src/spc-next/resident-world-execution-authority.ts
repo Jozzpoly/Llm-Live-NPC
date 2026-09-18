@@ -61,6 +61,8 @@ export interface ResidentWorldActionFact {
 export class ResidentWorldExecutionAuthority {
   private actionFactSequence = 0;
   private readonly actionFacts: ResidentWorldActionFact[] = [];
+  private readonly worldLeaseAuthority: ResidentRunAuthority;
+  private released = false;
 
   constructor(
     readonly residentId: string,
@@ -68,16 +70,29 @@ export class ResidentWorldExecutionAuthority {
     private readonly world: SpcWorldRuntime,
   ) {
     if (residentId.trim().length === 0) throw new Error("residentId must be non-empty");
-    this.world.claimResidentExecutionAuthority(residentId, {
-      canRunMutateWorld: (runId) => this.runAuthority.canRunMutateWorld(runId),
-    });
+    this.worldLeaseAuthority = {
+      canRunMutateWorld: (runId) => !this.released && this.runAuthority.canRunMutateWorld(runId),
+    };
+    this.world.claimResidentExecutionAuthority(residentId, this.worldLeaseAuthority);
+  }
+
+  release(): boolean {
+    if (this.released) return false;
+    const released = this.world.releaseResidentExecutionAuthority(
+      this.residentId,
+      this.worldLeaseAuthority,
+    );
+    if (released) this.released = true;
+    return released;
   }
 
   apply(frame: ResidentWorldExecutionFrame): ResidentWorldExecutionResult {
+    this.assertActive();
     return this.world.applyResidentExecutionFrame(this.residentId, frame);
   }
 
   act(runId: string, action: ResidentWorldAction): ResidentWorldActionResolution {
+    this.assertActive();
     const resolution = this.world.applyResidentWorldAction(this.residentId, runId, action);
     this.recordActionFact(runId, action, resolution);
     if (resolution.status !== "resolved") return resolution;
@@ -92,15 +107,22 @@ export class ResidentWorldExecutionAuthority {
   }
 
   enforceMotionAuthority(): { status: "unchanged" } | { status: "revoked"; runId: string } {
+    this.assertActive();
     return this.world.enforceResidentMotionAuthority(this.residentId);
   }
 
   motionOwner(): string | null {
+    this.assertActive();
     return this.world.residentMotionOwner(this.residentId);
   }
 
   lastMotionOutcome(): ResidentAuthorizedMotionOutcome | null {
+    this.assertActive();
     return this.world.residentAuthorizedMotionOutcome(this.residentId);
+  }
+
+  private assertActive(): void {
+    if (this.released) throw new Error("resident World execution authority is released");
   }
 
   private recordActionFact(

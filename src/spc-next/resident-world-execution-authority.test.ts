@@ -198,6 +198,37 @@ describe("ResidentWorldExecutionAuthority K5a", () => {
     expect(world.diagnostics().recentOccurrences).toHaveLength(0);
   });
 
+  it("hands off the exact World lease without letting the released facade control its replacement", () => {
+    const { world, kernel, authority } = setup();
+
+    authority.apply({
+      runId: "run.work",
+      effects: [{ kind: "motion", desiredVelocity: { x: 90, y: 0 } }],
+    });
+    world.step();
+    const beforeRelease = miraX(world);
+
+    expect(authority.release()).toBe(true);
+    expect(() => authority.motionOwner()).toThrow("resident World execution authority is released");
+    world.step(3);
+    expect(miraX(world)).toBe(beforeRelease);
+
+    const replacement = new ResidentWorldExecutionAuthority("resident.mira", kernel, world);
+    // The old exact lease cannot release the new registration.
+    expect(authority.release()).toBe(false);
+
+    expect(replacement.apply({
+      runId: "run.work",
+      effects: [{ kind: "motion", desiredVelocity: { x: 120, y: 0 } }],
+    })).toMatchObject({
+      status: "applied",
+      runId: "run.work",
+    });
+    world.step();
+    expect(miraX(world)).toBeGreaterThan(beforeRelease);
+    expect(replacement.motionOwner()).toBe("run.work");
+  });
+
   it("does not let an old run's revocation stop a newer motion owner", () => {
     const { world, kernel, authority } = setup();
     authority.apply({

@@ -115,6 +115,17 @@ export class ResidentRuntime {
     this.scheduler.scheduleQuietReviewAfter(tick, delayTicks);
   }
 
+  ensureAdaptiveReview(tick: number, reviewAfterSeconds: number, fixedDeltaSeconds: number): void {
+    if (!Number.isFinite(reviewAfterSeconds) || reviewAfterSeconds <= 0) {
+      throw new Error("reviewAfterSeconds must be positive");
+    }
+    if (!Number.isFinite(fixedDeltaSeconds) || fixedDeltaSeconds <= 0) {
+      throw new Error("fixedDeltaSeconds must be positive");
+    }
+    const delayTicks = Math.max(1, Math.ceil(reviewAfterSeconds / fixedDeltaSeconds));
+    this.scheduler.ensureQuietReviewWithin(tick, delayTicks);
+  }
+
   /**
    * World ingress keeps physical source identity separate until this resident's
    * private recognition state permits it. Raw World actor IDs never enter the

@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - refoundation/spc-next-five-resident-world
+      - research/i2-mira-live-cognition-bridge
     paths:
       - "evidence/live-provider-request.json"
   workflow_dispatch:
@@ -11,6 +12,7 @@ on:
 permissions:
   contents: read
   issues: read
+  checks: read
 
 jobs:
   spc-live-provider-evidence:
@@ -35,16 +37,19 @@ jobs:
           const qualifiers = Array.isArray(request.qualifiers)
             ? request.qualifiers
             : ['lifecycle', 'interruption'];
-          const allowed = new Set(['lifecycle', 'interruption']);
+          const allowed = new Set(['lifecycle', 'interruption', 'life-choice', 'life-intent']);
           if (qualifiers.length === 0 || qualifiers.some((value) => !allowed.has(value))) {
             throw new Error(`invalid live-provider qualifiers: ${JSON.stringify(qualifiers)}`);
           }
           process.stdout.write(`RUN_LIFECYCLE=${qualifiers.includes('lifecycle') ? '1' : '0'}\n`);
           process.stdout.write(`RUN_INTERRUPTION=${qualifiers.includes('interruption') ? '1' : '0'}\n`);
+          process.stdout.write(`RUN_LIFE_CHOICE=${qualifiers.includes('life-choice') ? '1' : '0'}\n`);
+          process.stdout.write(`RUN_LIFE_INTENT=${qualifiers.includes('life-intent') ? '1' : '0'}\n`);
           process.stdout.write(`REQUESTED_QUALIFIERS=${qualifiers.join(',')}\n`);
           NODE
 
       - name: Locate runner Chrome
+        if: env.RUN_LIFECYCLE == '1' || env.RUN_INTERRUPTION == '1'
         shell: bash
         run: |
           set -euo pipefail
@@ -66,7 +71,39 @@ jobs:
           echo "Requested qualifiers: ${REQUESTED_QUALIFIERS}"
 
           CANDIDATE_URL=""
+          RESOLVED_FROM=""
           for attempt in $(seq 1 72); do
+            curl --fail --silent --show-error \
+              -H "Authorization: Bearer ${GH_TOKEN}" \
+              -H "Accept: application/vnd.github+json" \
+              "${GITHUB_API_URL}/repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/check-runs?per_page=100" \
+              > /tmp/commit-check-runs.json
+
+            CANDIDATE_URL="$(node <<'NODE'
+          const fs = require('fs');
+          const payload = JSON.parse(fs.readFileSync('/tmp/commit-check-runs.json', 'utf8'));
+          const exactSha = process.env.GITHUB_SHA;
+          for (const run of payload.check_runs ?? []) {
+            if (run?.head_sha !== exactSha) continue;
+            if (run?.app?.slug !== 'cloudflare-workers-and-pages') continue;
+            if (run?.name !== 'Workers Builds: llm-live-npc') continue;
+            if (run?.status !== 'completed' || run?.conclusion !== 'success') continue;
+            const summary = String(run?.output?.summary ?? '');
+            const match = summary.match(/Preview URL:\s*(https:\/\/[^\s]+\.workers\.dev)/u);
+            if (match) {
+              process.stdout.write(match[1]);
+              break;
+            }
+          }
+          NODE
+            )"
+            if [ -n "$CANDIDATE_URL" ]; then
+              RESOLVED_FROM="exact Cloudflare check-run"
+              break
+            fi
+
+            # Historical fallback: the Cloudflare PR comment can lag the authoritative
+            # exact-commit check-run, but remains useful for older deployments.
             curl --fail --silent --show-error \
               -H "Authorization: Bearer ${GH_TOKEN}" \
               -H "Accept: application/vnd.github+json" \
@@ -90,13 +127,15 @@ jobs:
           NODE
             )"
             if [ -n "$CANDIDATE_URL" ]; then
+              RESOLVED_FROM="Cloudflare PR comment fallback"
               break
             fi
             sleep 5
           done
 
           if [ -z "$CANDIDATE_URL" ]; then
-            echo "Cloudflare bot did not publish an exact-commit preview for ${GITHUB_SHA}" >&2
+            echo "Cloudflare did not publish an exact-commit preview for ${GITHUB_SHA}" >&2
+            cat /tmp/commit-check-runs.json >&2 || true
             cat /tmp/pr-comments.json >&2 || true
             exit 1
           fi
@@ -104,7 +143,7 @@ jobs:
           echo "LIVE_PROVIDER_BASE_URL=$CANDIDATE_URL" >> "$GITHUB_ENV"
           echo "SOURCE_SHA=$GITHUB_SHA" >> "$GITHUB_ENV"
           printf '%s\n' "$CANDIDATE_URL" > /tmp/live-provider-candidate-url.txt
-          echo "Exact candidate: $CANDIDATE_URL"
+          echo "Exact candidate: $CANDIDATE_URL (${RESOLVED_FROM})"
 
       - name: Wait for exact candidate to serve the SPC client
         shell: bash
@@ -123,6 +162,7 @@ jobs:
           exit 1
 
       - name: Preflight exact browser boundary without provider spend
+        if: env.RUN_LIFECYCLE == '1' || env.RUN_INTERRUPTION == '1'
         env:
           LIVE_PROVIDER_PREFLIGHT_OUTPUT: evidence/live-provider/preflight.json
         run: node scripts/spc-browser-live-provider-preflight.mjs
@@ -139,6 +179,18 @@ jobs:
           LIVE_PROVIDER_OUTPUT: evidence/live-provider/live-provider-interruption.json
         run: node scripts/spc-browser-live-provider-interruption-evidence-v3.mjs
 
+      - name: Qualify real Luna resident life choice contract
+        if: env.RUN_LIFE_CHOICE == '1'
+        env:
+          LIVE_PROVIDER_OUTPUT: evidence/live-provider/live-provider-life-choice.json
+        run: node scripts/spc-live-provider-life-choice-evidence.mjs
+
+      - name: Qualify real Luna resident life-intent contract
+        if: env.RUN_LIFE_INTENT == '1'
+        env:
+          LIVE_PROVIDER_OUTPUT: evidence/live-provider/live-provider-life-intent.json
+        run: node scripts/spc-live-provider-life-intent-evidence.mjs
+
       - name: Print live-provider evidence summary
         if: always()
         shell: bash
@@ -147,8 +199,12 @@ jobs:
           cat /tmp/live-provider-candidate-url.txt 2>/dev/null || true
           echo "--- Requested qualifiers ---"
           echo "${REQUESTED_QUALIFIERS:-unresolved}"
-          echo "--- Spend-free preflight ---"
-          cat evidence/live-provider/preflight.json 2>/dev/null || true
+          echo "--- Spend-free browser preflight ---"
+          if [ "${RUN_LIFECYCLE:-0}" = "1" ] || [ "${RUN_INTERRUPTION:-0}" = "1" ]; then
+            cat evidence/live-provider/preflight.json 2>/dev/null || true
+          else
+            echo "not requested in this run"
+          fi
           echo "--- Two-burst material lifecycle ---"
           if [ "${RUN_LIFECYCLE:-0}" = "1" ]; then
             cat evidence/live-provider/live-provider-lifecycle.json 2>/dev/null || true
@@ -158,6 +214,18 @@ jobs:
           echo "--- Live provider interruption evidence ---"
           if [ "${RUN_INTERRUPTION:-0}" = "1" ]; then
             cat evidence/live-provider/live-provider-interruption.json 2>/dev/null || true
+          else
+            echo "not requested in this run"
+          fi
+          echo "--- Resident life choice provider evidence ---"
+          if [ "${RUN_LIFE_CHOICE:-0}" = "1" ]; then
+            cat evidence/live-provider/live-provider-life-choice.json 2>/dev/null || true
+          else
+            echo "not requested in this run"
+          fi
+          echo "--- Resident life-intent provider evidence ---"
+          if [ "${RUN_LIFE_INTENT:-0}" = "1" ]; then
+            cat evidence/live-provider/live-provider-life-intent.json 2>/dev/null || true
           else
             echo "not requested in this run"
           fi
