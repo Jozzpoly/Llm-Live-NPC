@@ -318,10 +318,29 @@ async function run() {
       targetLife: summarizeLife(frame.selectedLife),
     };
 
+    const hadPreemptableRun = Boolean(preFocusedRunId && preFocusedMatter);
+    let localAckObserved = newestSpeechOccurrence(frame, targetId, "Tak?");
+    let exactReturnObserved = null;
+    const observeTransientContactState = (currentFrame) => {
+      localAckObserved ??= newestSpeechOccurrence(currentFrame, targetId, "Tak?");
+      if (!hadPreemptableRun || exactReturnObserved) return;
+      const life = currentFrame.selectedLife;
+      if (life?.body?.focusedRunId !== preFocusedRunId) return;
+      const matter = life.matters.find((candidate) => candidate.id === preFocusedMatter.id) ?? null;
+      if (matter?.status !== "active" || matter.activeRun?.runId !== preFocusedRunId) return;
+      exactReturnObserved = {
+        tick: currentFrame.snapshot.tick,
+        matter,
+        focusedRunId: life.body.focusedRunId,
+      };
+    };
+    observeTransientContactState(frame);
+
     let matchingRequest = null;
     const providerDeadline = Date.now() + MAX_PROVIDER_WAIT_MS;
     while (!matchingRequest && Date.now() < providerDeadline) {
       frame = await stepEvidence(cdp, 1);
+      observeTransientContactState(frame);
       await sleep(10);
       matchingRequest = findSpeechRequest(lifeIntentRequests, targetId, speechReason.id, CALL_TEXT);
     }
@@ -337,7 +356,8 @@ async function run() {
     while (!responseMeta && Date.now() < providerDeadline) {
       await sleep(20);
       responseMeta = lifeIntentResponses.get(matchingRequest.requestId) ?? null;
-      await stepEvidence(cdp, 1);
+      frame = await stepEvidence(cdp, 1);
+      observeTransientContactState(frame);
     }
     assertReport(report, "real Luna response returns for the exact speech-bearing request", Boolean(
       responseMeta && responseMeta.status === 200
@@ -364,6 +384,7 @@ async function run() {
     let settlementSteps = 0;
     while (!admitted && settlementSteps < MAX_SETTLEMENT_STEPS) {
       frame = await stepEvidence(cdp, 1);
+      observeTransientContactState(frame);
       settlementSteps += 1;
       admitted = newestAdmissionForResident(frame, targetId, matchingRequest.body?.tick ?? 0);
       if (!admitted) await sleep(5);
@@ -374,39 +395,25 @@ async function run() {
       recentProviderEvents: frame.livingDiagnostics?.recentProviderEvents ?? [],
     });
 
-    const responseOccurrence = newestSpeechOccurrence(frame, targetId, "Tak?");
-    const hadPreemptableRun = Boolean(preFocusedRunId && preFocusedMatter);
     if (hadPreemptableRun) {
-      assertReport(report, "focused resident locally acknowledges addressed interruption with Tak?", Boolean(responseOccurrence), responseOccurrence);
-      const duringLife = frame.selectedLife;
-      const originalMatterDuring = duringLife?.matters?.find((matter) => matter.id === preFocusedMatter.id) ?? null;
+      assertReport(report, "focused resident locally acknowledges addressed interruption with Tak?", Boolean(localAckObserved), localAckObserved);
       assertReport(report, "original focused matter is suspended while local contact owns the body", Boolean(
-        originalMatterDuring?.status === "suspended"
-        || responseOccurrence
-      ), {
-        originalMatter: originalMatterDuring,
-        focusedRunId: duringLife?.body?.focusedRunId ?? null,
-      });
+        interruptAfterDelivery.priorMatterStatus === "suspended"
+        && interruptAfterDelivery.currentFocusedRunId !== preFocusedRunId
+      ), interruptAfterDelivery);
 
-      let returned = null;
       let returnSteps = 0;
-      while (!returned && returnSteps < MAX_RETURN_STEPS) {
+      while (!exactReturnObserved && returnSteps < MAX_RETURN_STEPS) {
         frame = await stepEvidence(cdp, 1);
+        observeTransientContactState(frame);
         returnSteps += 1;
-        const life = frame.selectedLife;
-        if (life?.body?.focusedRunId === preFocusedRunId) {
-          const matter = life.matters.find((candidate) => candidate.id === preFocusedMatter.id) ?? null;
-          if (matter?.status === "active" && matter.activeRun?.runId === preFocusedRunId) {
-            returned = { tick: frame.snapshot.tick, matter, focusedRunId: life.body.focusedRunId };
-          }
-        }
       }
-      assertReport(report, "local interruption restores the exact same pre-contact run binding", Boolean(returned), {
+      assertReport(report, "local interruption restores the exact same pre-contact run binding", Boolean(exactReturnObserved), {
         preFocusedRunId,
         returnSteps,
-        returned,
+        returned: exactReturnObserved,
       });
-      report.checkpoints.exactReturn = returned;
+      report.checkpoints.exactReturn = exactReturnObserved;
     } else {
       report.checkpoints.localInterruption = {
         mode: "heard_without_preemption",
@@ -417,6 +424,7 @@ async function run() {
 
     for (let index = 0; index < 30; index += 1) {
       frame = await stepEvidence(cdp, 1);
+      observeTransientContactState(frame);
       if (index % 5 === 0) await sleep(5);
     }
     const badProviderEvents = (frame.livingDiagnostics?.recentProviderEvents ?? []).filter((event) =>
@@ -444,7 +452,7 @@ async function run() {
       frame: summarizeFrame(frame),
       targetLife: summarizeLife(frame.selectedLife),
       recentProviderEvents: frame.livingDiagnostics?.recentProviderEvents ?? [],
-      responseOccurrence: newestSpeechOccurrence(frame, targetId, "Tak?"),
+      responseOccurrence: localAckObserved,
     };
 
     report.qualification = hadPreemptableRun
@@ -461,7 +469,12 @@ async function run() {
       && !report.error
       ? "PASS"
       : "FAIL";
-    if (report.outcome !== "PASS") process.exitCode = 1;
+    if (report.outcome !== "PASS") {
+      if (!report.error && typeof report.qualification === "string" && report.qualification.endsWith("_PASS")) {
+        report.qualification = "LIVE_UNIFIED_ADDRESSED_ASSERTION_FAILURE";
+      }
+      process.exitCode = 1;
+    }
     writeFileSync(OUTPUT_FILE, `${JSON.stringify(report, null, 2)}\n`);
     cdp?.close();
     chrome.kill("SIGTERM");
