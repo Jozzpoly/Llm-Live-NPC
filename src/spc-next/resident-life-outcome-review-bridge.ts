@@ -4,6 +4,7 @@ import type { ResidentRuntime } from "./resident-runtime";
 export interface ResidentLifeOutcomeReviewBridgeOptions {
   reviewAfterSeconds?: number;
   fixedDeltaSeconds?: number;
+  rememberedOutcomeLimit?: number;
 }
 
 export type ResidentLifeOutcomeReviewObservation =
@@ -12,6 +13,7 @@ export type ResidentLifeOutcomeReviewObservation =
 
 const DEFAULT_REVIEW_AFTER_SECONDS = 0.25;
 const DEFAULT_FIXED_DELTA_SECONDS = 1 / 60;
+const DEFAULT_REMEMBERED_OUTCOME_LIMIT = 128;
 
 /**
  * Edge-triggered bridge from an already factual recovered-run outcome into the
@@ -24,8 +26,10 @@ const DEFAULT_FIXED_DELTA_SECONDS = 1 / 60;
  */
 export class ResidentLifeOutcomeReviewBridge {
   private readonly observedOutcomeEvidenceIds = new Set<string>();
+  private readonly observedOutcomeOrder: string[] = [];
   private readonly reviewAfterSeconds: number;
   private readonly fixedDeltaSeconds: number;
+  private readonly rememberedOutcomeLimit: number;
 
   constructor(
     private readonly resident: Pick<ResidentRuntime, "scheduleAdaptiveReview">,
@@ -33,11 +37,15 @@ export class ResidentLifeOutcomeReviewBridge {
   ) {
     this.reviewAfterSeconds = options.reviewAfterSeconds ?? DEFAULT_REVIEW_AFTER_SECONDS;
     this.fixedDeltaSeconds = options.fixedDeltaSeconds ?? DEFAULT_FIXED_DELTA_SECONDS;
+    this.rememberedOutcomeLimit = options.rememberedOutcomeLimit ?? DEFAULT_REMEMBERED_OUTCOME_LIMIT;
     if (!Number.isFinite(this.reviewAfterSeconds) || this.reviewAfterSeconds <= 0) {
       throw new Error("life outcome reviewAfterSeconds must be positive and finite");
     }
     if (!Number.isFinite(this.fixedDeltaSeconds) || this.fixedDeltaSeconds <= 0) {
       throw new Error("life outcome fixedDeltaSeconds must be positive and finite");
+    }
+    if (!Number.isSafeInteger(this.rememberedOutcomeLimit) || this.rememberedOutcomeLimit < 1) {
+      throw new Error("life outcome rememberedOutcomeLimit must be a positive safe integer");
     }
   }
 
@@ -63,6 +71,11 @@ export class ResidentLifeOutcomeReviewBridge {
     }
 
     this.observedOutcomeEvidenceIds.add(outcomeEvidence.id);
+    this.observedOutcomeOrder.push(outcomeEvidence.id);
+    while (this.observedOutcomeOrder.length > this.rememberedOutcomeLimit) {
+      const evicted = this.observedOutcomeOrder.shift();
+      if (evicted !== undefined) this.observedOutcomeEvidenceIds.delete(evicted);
+    }
     this.resident.scheduleAdaptiveReview(
       tick,
       this.reviewAfterSeconds,
