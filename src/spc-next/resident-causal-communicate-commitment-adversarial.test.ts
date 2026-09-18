@@ -155,6 +155,7 @@ function setup() {
     authority,
   });
 
+  movePlayerNear(world, actorPosition(world, IDA_ID));
   const occurrence = world.speak(
     PLAYER_ID,
     `Ida, tell Janek exactly: "${MESSAGE}"`,
@@ -198,6 +199,38 @@ function setup() {
   };
 
   return { world, ida, kernel, focus, arbitrator, authority, owner, causal, occurrence, batch, attempt, proposal };
+}
+
+function movePlayerNear(
+  world: ReturnType<typeof createFiveResidentRegionComposition>["world"],
+  target: { x: number; y: number },
+) {
+  for (let step = 0; step < 900; step += 1) {
+    const current = actorPosition(world, PLAYER_ID);
+    const dx = target.x - current.x;
+    const dy = target.y - current.y;
+    const distance = Math.hypot(dx, dy);
+    if (distance <= 120) {
+      world.setActorMotionIntent(PLAYER_ID, { x: 0, y: 0 });
+      world.step();
+      return;
+    }
+    world.setActorMotionIntent(PLAYER_ID, {
+      x: (dx / distance) * 150,
+      y: (dy / distance) * 150,
+    });
+    world.step();
+  }
+  throw new Error("player never physically reached Ida");
+}
+
+function actorPosition(
+  world: ReturnType<typeof createFiveResidentRegionComposition>["world"],
+  actorId: string,
+) {
+  const actor = world.publicSnapshot().actors.find((candidate) => candidate.id === actorId);
+  if (!actor) throw new Error(`missing actor ${actorId}`);
+  return { ...actor.position };
 }
 
 function currentLife(fixture: Pick<ReturnType<typeof setup>, "kernel" | "focus" | "arbitrator" | "causal">) {
