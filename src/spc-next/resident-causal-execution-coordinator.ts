@@ -4,6 +4,7 @@ import type {
 } from "./resident-continuity-kernel";
 import type { ResidentExecutionArbitration } from "./resident-execution-arbitrator";
 import { ResidentGroundedTravelExecutor } from "./resident-grounded-travel-executor";
+import { ResidentMessageDeliveryExecutor } from "./resident-message-delivery-executor";
 import type { ResidentLifeChoiceReviewObservation } from "./resident-life-choice-review-bridge";
 import { ResidentCausalLifeSubstrate } from "./resident-causal-life-substrate";
 
@@ -13,7 +14,7 @@ export type ResidentCausalExecutionStep =
       status: "running";
       matterId: string;
       runId: string;
-      intentKind: "travel_region";
+      intentKind: "travel_region" | "communicate_actor";
     }
   | {
       status: "completed";
@@ -56,6 +57,11 @@ interface TravelExecutionState {
   targetRegionId: string;
 }
 
+interface CommunicateExecutionState {
+  executor: ResidentMessageDeliveryExecutor;
+  targetActorId: string;
+}
+
 /**
  * Resident-generic execution/reconciliation layer for already-authorized causal life.
  *
@@ -70,6 +76,7 @@ interface TravelExecutionState {
  */
 export class ResidentCausalExecutionCoordinator {
   private readonly travel = new Map<string, TravelExecutionState>();
+  private readonly communicate = new Map<string, CommunicateExecutionState>();
 
   constructor(private readonly life: ResidentCausalLifeSubstrate) {}
 
@@ -81,7 +88,7 @@ export class ResidentCausalExecutionCoordinator {
     const binding = this.life.kernel.runBinding(runId);
     const matter = binding ? this.life.kernel.matter(binding.matterId) : null;
     if (!binding || !matter || !this.life.kernel.canRunMutateWorld(runId)) {
-      this.travel.delete(runId);
+      this.clearExecution(runId);
       const releasedMatterId = binding?.matterId ?? null;
       const arbitration = this.life.arbitrator.reconcile();
       const choiceReview = this.life.choiceReviewBridge.observe(arbitration, this.life.world.tick);
@@ -96,19 +103,33 @@ export class ResidentCausalExecutionCoordinator {
     }
 
     const intent = matter.semanticIntent;
-    if (!intent || intent.kind !== "travel_region") {
+    if (!intent) {
       return {
         status: "unsupported_intent",
         matterId: matter.id,
         runId,
-        intentKind: intent?.kind ?? null,
+        intentKind: null,
       };
     }
 
-    const state = this.travel.get(runId) ?? this.createTravelExecution(matter, runId);
-    if (!state) {
-      return this.travelGroundingFailure(matter, runId);
+    if (intent.kind === "travel_region") {
+      return this.stepTravel(matter, runId);
     }
+    if (intent.kind === "communicate_actor") {
+      return this.stepCommunicate(matter, runId);
+    }
+
+    return {
+      status: "unsupported_intent",
+      matterId: matter.id,
+      runId,
+      intentKind: intent.kind,
+    };
+  }
+
+  private stepTravel(matter: ResidentMatter, runId: string): ResidentCausalExecutionStep {
+    const state = this.travel.get(runId) ?? this.createTravelExecution(matter, runId);
+    if (!state) return this.travelGroundingFailure(matter, runId);
 
     const local = state.executor.step();
     if (local.status === "running") {
@@ -120,20 +141,11 @@ export class ResidentCausalExecutionCoordinator {
       };
     }
     if (local.status === "authority_lost") {
-      this.travel.delete(runId);
-      const arbitration = this.life.arbitrator.reconcile();
-      const choiceReview = this.life.choiceReviewBridge.observe(arbitration, this.life.world.tick);
-      this.life.worldAuthority.enforceMotionAuthority();
-      return {
-        status: "authority_lost",
-        matterId: matter.id,
-        runId,
-        arbitration: structuredClone(arbitration),
-        choiceReview: structuredClone(choiceReview),
-      };
+      this.clearExecution(runId);
+      return this.finishAuthorityLost(matter.id, runId);
     }
     if (local.status === "blocked") {
-      this.travel.delete(runId);
+      this.clearExecution(runId);
       return this.finishRun(
         matter,
         runId,
@@ -143,7 +155,7 @@ export class ResidentCausalExecutionCoordinator {
       );
     }
 
-    this.travel.delete(runId);
+    this.clearExecution(runId);
     return this.finishRun(
       matter,
       runId,
@@ -151,6 +163,108 @@ export class ResidentCausalExecutionCoordinator {
       `${runId} physically reached resident-grounded ${state.targetRegionId} destination`,
       true,
     );
+  }
+
+  private stepCommunicate(matter: ResidentMatter, runId: string): ResidentCausalExecutionStep {
+    const intent = matter.semanticIntent;
+    if (!intent || intent.kind !== "communicate_actor") {
+      return {
+        status: "unsupported_intent",
+        matterId: matter.id,
+        runId,
+        intentKind: intent?.kind ?? null,
+      };
+    }
+
+    const state = this.communicate.get(runId) ?? this.createCommunicateExecution(matter, runId);
+    if (!state) {
+      return {
+        status: "unsupported_intent",
+        matterId: matter.id,
+        runId,
+        intentKind: intent.kind,
+      };
+    }
+
+    const local = state.executor.step();
+    if (local.status === "running") {
+      return {
+        status: "running",
+        matterId: matter.id,
+        runId,
+        intentKind: "communicate_actor",
+      };
+    }
+    if (local.status === "authority_lost") {
+      this.clearExecution(runId);
+      return this.finishAuthorityLost(matter.id, runId);
+    }
+    if (local.status === "blocked") {
+      this.clearExecution(runId);
+      return this.finishRun(
+        matter,
+        runId,
+        "blocked",
+        `communication to ${state.targetActorId} blocked: ${local.reason}`,
+        false,
+      );
+    }
+
+    this.clearExecution(runId);
+    return this.finishRun(
+      matter,
+      runId,
+      "succeeded",
+      `${runId} factually delivered speech to ${state.targetActorId} through ${local.occurrence.id}`,
+      true,
+    );
+  }
+
+  private createCommunicateExecution(
+    matter: ResidentMatter,
+    runId: string,
+  ): CommunicateExecutionState | null {
+    const intent = matter.semanticIntent;
+    if (!intent || intent.kind !== "communicate_actor") return null;
+
+    const state: CommunicateExecutionState = {
+      executor: new ResidentMessageDeliveryExecutor(
+        runId,
+        intent.targetActorId,
+        intent.text,
+        (actorId) => this.life.resident.cognitionContext({
+          residentId: this.life.residentId,
+          requestedAtTick: this.life.world.tick,
+          reasons: [],
+        }).knownActors.find((actor) => actor.id === actorId) ?? null,
+        this.life.worldAuthority,
+        this.life.world,
+      ),
+      targetActorId: intent.targetActorId,
+    };
+    this.communicate.set(runId, state);
+    return state;
+  }
+
+  private finishAuthorityLost(
+    matterId: string | null,
+    runId: string,
+  ): Extract<ResidentCausalExecutionStep, { status: "authority_lost" }> {
+    const arbitration = this.life.arbitrator.reconcile();
+    const choiceReview = this.life.choiceReviewBridge.observe(arbitration, this.life.world.tick);
+    this.life.worldAuthority.enforceMotionAuthority();
+    return {
+      status: "authority_lost",
+      matterId,
+      runId,
+      arbitration: structuredClone(arbitration),
+      choiceReview: structuredClone(choiceReview),
+    };
+  }
+
+  private clearExecution(runId: string): void {
+    this.travel.delete(runId);
+    this.communicate.delete(runId);
   }
 
   private createTravelExecution(matter: ResidentMatter, runId: string): TravelExecutionState | null {
