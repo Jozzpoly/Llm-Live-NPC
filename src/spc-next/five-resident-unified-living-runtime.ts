@@ -149,7 +149,7 @@ export class FiveResidentUnifiedLivingRuntime {
           "arrival_ready",
           arrival.status === "proposal"
             ? `proposal arrived from origin ${arrival.originReasonId}`
-            : `provider error arrival: ${arrival.code}`,
+            : `provider error arrival: ${arrival.code}${arrival.detail ? `; ${arrival.detail}` : ""}`,
         );
       }).catch((error: unknown) => {
         this.providerInFlight.delete(request.id);
@@ -173,7 +173,7 @@ export class FiveResidentUnifiedLivingRuntime {
         arrival.residentId,
         arrival.requestId,
         "provider_error",
-        `${admission.code}; abandonment=${admission.abandonment}`,
+        `${admission.code}${admission.detail ? `; ${admission.detail}` : ""}; abandonment=${admission.abandonment}`,
       );
       return;
     }
