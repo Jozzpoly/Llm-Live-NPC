@@ -23,6 +23,7 @@ import type { RegionNavigationGraph } from "./region-navigation";
 import type { ResidentRuntime } from "./resident-runtime";
 import { ResidentWorldExecutionAuthority } from "./resident-world-execution-authority";
 import type { SpcWorldRuntime } from "./spc-world-runtime";
+import type { ResidentLifeSelfContext } from "./resident-life-self-context";
 import type { CognitionBatch } from "./contracts";
 
 export interface ResidentCausalLifeSnapshot {
@@ -43,6 +44,7 @@ export interface ResidentCausalLifeSubstrateOptions {
   world: SpcWorldRuntime;
   navigation: RegionNavigationGraph;
   identityNamespace?: string;
+  selfContext?: ResidentLifeSelfContext;
   snapshot?: ResidentCausalLifeSnapshot;
 }
 
@@ -129,7 +131,7 @@ export class ResidentCausalLifeSubstrate {
       this.arbitrator,
       options.world,
     );
-    this.lifeIntentOwner = new ResidentLifeIntentOwner(options.resident);
+    this.lifeIntentOwner = new ResidentLifeIntentOwner(options.resident, options.selfContext);
     this.choiceReviewBridge = new ResidentLifeChoiceReviewBridge(options.resident);
     this.outcomeReviewBridge = new ResidentLifeOutcomeReviewBridge(options.resident);
 
