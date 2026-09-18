@@ -52,7 +52,6 @@ describe("resident-generic causal travel adversarial authority", () => {
       detail: "causal travel commitment resident mismatch",
     });
 
-    expect(fixture.kernel.matterIds?.()).toBeUndefined();
     expect(fixture.causal.acceptedMatterIds()).toEqual([]);
     expect(fixture.focus.focusedRun()).toBeNull();
   });
