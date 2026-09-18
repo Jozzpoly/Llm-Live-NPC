@@ -108,6 +108,12 @@ describe("five-resident generic addressed interruption", () => {
     expect(life.kernel.runBinding(mainRunId)).toEqual(bindingBefore);
     expect(life.kernel.canRunMutateWorld(mainRunId)).toBe(false);
     expect(life.focus.focusedRun()).toBe(active.interruptRunId);
+    expect(life.kernel.matter(active.interruptMatterId)?.semanticCourse).toContain(
+      "contact/attention only",
+    );
+    expect(life.kernel.matter(active.interruptMatterId)?.semanticCourse).toContain(
+      "do not interpret, accept, decline or fulfill the speech content",
+    );
 
     const responded = runtime.advanceOneWorldTick();
     expect(responded.interruptions[MIRA_ID]).toMatchObject({
@@ -144,6 +150,15 @@ describe("five-resident generic addressed interruption", () => {
     expect(life.kernel.runBinding(mainRunId)).toEqual(bindingBefore);
     expect(life.kernel.canRunMutateWorld(mainRunId)).toBe(true);
     expect(life.focus.focusedRun()).toBe(mainRunId);
+    const resolvedContact = life.currentLifeView().matters.find(
+      (matter) => matter.id === active.interruptMatterId,
+    );
+    expect(resolvedContact?.lastOutcomeEvidence?.summary).toContain(
+      "contact/attention",
+    );
+    expect(resolvedContact?.lastOutcomeEvidence?.summary).toContain(
+      "speech content remains semantically unsettled",
+    );
 
     const beforeResume = runtime.world.publicSnapshot().actors.find(
       (actor) => actor.id === MIRA_ID,
