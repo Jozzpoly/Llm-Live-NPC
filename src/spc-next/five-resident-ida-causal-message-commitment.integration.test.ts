@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { distanceSquared, type ResidentActivity, type Vec2 } from "./contracts";
-import {
-  FIVE_RESIDENT_FAMILIARITY,
-  createFiveResidentRegionComposition,
-} from "./five-resident-region";
+import { createFiveResidentRegionComposition } from "./five-resident-region";
 import { ResidentCausalCommunicateCommitmentAuthority } from "./resident-causal-communicate-commitment";
 import { ResidentContinuityKernel } from "./resident-continuity-kernel";
 import { ResidentExecutionArbitrator } from "./resident-execution-arbitrator";
@@ -153,10 +150,16 @@ describe("Ida cognition-native causal message commitment", () => {
     expect(accepted.focusClaim).toEqual({ status: "acquired", runId: accepted.runId });
     expect(kernel.canRunMutateWorld(accepted.runId)).toBe(true);
 
+    const durableIntent = accepted.matter.semanticIntent;
+    expect(durableIntent?.kind).toBe("communicate_actor");
+    if (!durableIntent || durableIntent.kind !== "communicate_actor") {
+      throw new Error("Ida social commitment lost communicate-actor meaning");
+    }
+
     const executor = new ResidentMessageDeliveryExecutor(
       accepted.runId,
-      accepted.matter.semanticIntent!.targetActorId,
-      accepted.matter.semanticIntent!.text,
+      durableIntent.targetActorId,
+      durableIntent.text,
       (actorId) => ida.cognitionContext({
         residentId: IDA_ID,
         requestedAtTick: world.tick,
