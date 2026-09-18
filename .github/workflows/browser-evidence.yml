@@ -7,6 +7,7 @@ on:
       - "worker/**"
       - "scripts/spc-browser-evidence.mjs"
       - "scripts/spc-browser-manual-control-evidence.mjs"
+      - "scripts/spc-browser-real-pointer-presented-frame-canary.mjs"
       - "scripts/spc-browser-missing-crate-evidence.mjs"
       - "scripts/spc-browser-missing-crate-recovery-evidence.mjs"
       - "scripts/spc-browser-missing-crate-interruption-evidence.mjs"
@@ -90,6 +91,14 @@ jobs:
           SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: node scripts/spc-browser-manual-control-evidence.mjs
 
+      - name: Qualify trusted pointer to presented frame
+        if: success()
+        env:
+          EVIDENCE_BASE_URL: http://127.0.0.1:4173
+          REAL_POINTER_FRAME_OUTPUT: evidence/browser/real-pointer-presented-frame.json
+          SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: node scripts/spc-browser-real-pointer-presented-frame-canary.mjs
+
       - name: Qualify missing-crate epistemic boundary
         if: success()
         env:
@@ -141,6 +150,12 @@ jobs:
             cat evidence/browser/manual-control.json
           else
             echo "manual-control.json missing"
+          fi
+          echo "--- Trusted pointer to presented frame ---"
+          if [ -f evidence/browser/real-pointer-presented-frame.json ]; then
+            cat evidence/browser/real-pointer-presented-frame.json
+          else
+            echo "real-pointer-presented-frame.json missing"
           fi
           echo "--- Missing-crate adversarial evidence ---"
           if [ -f evidence/browser/missing-crate.json ]; then
