@@ -212,7 +212,11 @@ export class ResidentCausalLifeSubstrate {
     }
     if (this.lifeIntentOwner.state().activeAttemptId !== null) return null;
 
-    const attempt = this.lifeIntentOwner.prepare(batch, this.currentLifeView());
+    const attempt = this.lifeIntentOwner.prepare(
+      batch,
+      this.currentLifeView(),
+      this.options.world.tick,
+    );
     if (!attempt) return null;
     return {
       batch: structuredClone(batch),
