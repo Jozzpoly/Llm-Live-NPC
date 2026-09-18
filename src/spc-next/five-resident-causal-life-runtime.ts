@@ -1,5 +1,9 @@
 import type { CognitionBatch } from "./contracts";
 import {
+  ResidentAddressedInterruptionController,
+  type ResidentAddressedInterruptionStep,
+} from "./resident-addressed-interruption-controller";
+import {
   FIVE_RESIDENT_ROLE_PRESSURES,
   type FiveResidentId,
   type FiveResidentRegionComposition,
@@ -20,12 +24,14 @@ export type FiveResidentCausalLifeOwnership = "local_opening" | "recovered_life"
 interface ResidentLane {
   life: ResidentCausalLifeSubstrate;
   execution: ResidentCausalExecutionCoordinator;
+  interruption: ResidentAddressedInterruptionController;
 }
 
 export interface FiveResidentCausalLifeTick {
   tick: number;
   claimedResidentIds: readonly FiveResidentId[];
   execution: Readonly<Partial<Record<FiveResidentId, ResidentCausalExecutionStep>>>;
+  interruptions: Readonly<Partial<Record<FiveResidentId, ResidentAddressedInterruptionStep>>>;
 }
 
 export interface FiveResidentPreparedLifeIntent {
@@ -82,6 +88,10 @@ export class FiveResidentCausalLifeRuntime {
     return this.lanes.get(residentId)?.execution ?? null;
   }
 
+  interruption(residentId: FiveResidentId): ResidentAddressedInterruptionController | null {
+    return this.lanes.get(residentId)?.interruption ?? null;
+  }
+
   takeReadyLifeIntentAttempts(): FiveResidentPreparedLifeIntent[] {
     const prepared: FiveResidentPreparedLifeIntent[] = [];
     for (const residentId of this.claimedResidentIds()) {
@@ -99,17 +109,33 @@ export class FiveResidentCausalLifeRuntime {
 
   advanceOneWorldTick(): FiveResidentCausalLifeTick {
     const execution: Partial<Record<FiveResidentId, ResidentCausalExecutionStep>> = {};
+    const interruptions: Partial<Record<FiveResidentId, ResidentAddressedInterruptionStep>> = {};
+
     for (const residentId of this.claimedResidentIds()) {
-      execution[residentId] = this.lanes.get(residentId)!.execution.stepFocusedRun();
+      const lane = this.lanes.get(residentId)!;
+      if (lane.interruption.current()) {
+        interruptions[residentId] = lane.interruption.advanceOneExecutionFrame();
+      } else {
+        execution[residentId] = lane.execution.stepFocusedRun();
+      }
     }
 
     this.composition.world.step();
     this.claimReadyResidents();
 
+    // Perception is produced by the shared World step. Only after that boundary may
+    // local contact logic discover a newly heard addressed utterance and suspend the
+    // exact run for the *next* execution frame.
+    for (const residentId of this.claimedResidentIds()) {
+      const lane = this.lanes.get(residentId)!;
+      if (!lane.interruption.current()) lane.interruption.observePrivateAddressedSpeech();
+    }
+
     return {
       tick: this.composition.world.tick,
       claimedResidentIds: this.claimedResidentIds(),
       execution: structuredClone(execution),
+      interruptions: structuredClone(interruptions),
     };
   }
 
@@ -134,6 +160,7 @@ export class FiveResidentCausalLifeRuntime {
       this.lanes.set(residentId, {
         life,
         execution: new ResidentCausalExecutionCoordinator(life),
+        interruption: new ResidentAddressedInterruptionController(life),
       });
     }
   }
