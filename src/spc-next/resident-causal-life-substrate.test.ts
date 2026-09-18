@@ -202,43 +202,112 @@ describe("ResidentCausalLifeSubstrate", () => {
     expect(restored.kernel.canRunMutateWorld(reactivated.runId)).toBe(true);
   });
 
-  it("refuses a committed-life checkpoint while an execution run is still bound", () => {
+  it("reconstructs one focused active travel run and resumes the same exact run from current World state", () => {
     const composition = createFiveResidentRegionComposition({
       playerStart: { x: 3_000, y: 900 },
     });
     const { world } = composition;
+    const ida = composition.runtimes[IDA_ID];
+    const navigation = createFiveResidentNavigationGraph();
     const substrate = new ResidentCausalLifeSubstrate({
       residentId: IDA_ID,
-      resident: composition.runtimes[IDA_ID],
+      resident: ida,
       world,
-      navigation: createFiveResidentNavigationGraph(),
+      navigation,
     });
+
+    expect(ida.cognitionContext({
+      residentId: IDA_ID,
+      requestedAtTick: world.tick,
+      reasons: [],
+    }).knownRegions.map((region) => region.id)).toContain("workshop");
 
     substrate.kernel.recordEvidence({
       id: "evidence.ida.active-snapshot",
       tick: world.tick,
       kind: "test_origin",
-      summary: "active matter must not be checkpointed without execution state",
+      summary: "Ida is already executing one durable workshop matter",
     });
     const matter = substrate.kernel.openMatter({
       id: "matter.ida.active-snapshot",
       originEvidenceId: "evidence.ida.active-snapshot",
-      semanticCourse: "continue active travel",
+      semanticCourse: "continue active travel to the familiar workshop",
       semanticIntent: {
         kind: "travel_region",
-        goal: "visit workshop",
+        goal: "visit the familiar workshop",
         targetRegionId: "workshop",
       },
     });
     substrate.matterScope.track(matter.id);
+    const runId = "run.ida.active-snapshot.semantic-1";
     substrate.kernel.bindRun({
       matterId: matter.id,
-      taskId: "task.ida.active-snapshot",
-      runId: "run.ida.active-snapshot",
+      taskId: "task.ida.active-snapshot.semantic-1",
+      runId,
     });
+    expect(substrate.arbitrator.request(runId)).toEqual({ status: "acquired", runId });
 
-    expect(() => substrate.snapshotCommittedLife())
-      .toThrow("cannot snapshot committed continuity while runs remain bound");
+    const before = world.publicSnapshot().actors.find((actor) => actor.id === IDA_ID)?.position;
+    if (!before) throw new Error("Ida missing before active snapshot");
+    const execution = new ResidentCausalExecutionCoordinator(substrate);
+    expect(execution.stepFocusedRun()).toMatchObject({
+      status: "running",
+      matterId: matter.id,
+      runId,
+      intentKind: "travel_region",
+    });
+    world.step(5);
+    const mid = world.publicSnapshot().actors.find((actor) => actor.id === IDA_ID)?.position;
+    if (!mid) throw new Error("Ida missing at active snapshot");
+    expect(mid.x).toBeLessThan(before.x);
+
+    const snapshot = substrate.snapshotCommittedLife();
+    expect(substrate.releaseWorldExecutionAuthority()).toBe(true);
+
+    const restored = new ResidentCausalLifeSubstrate({
+      residentId: IDA_ID,
+      resident: ida,
+      world,
+      navigation,
+      snapshot,
+    });
+    expect(restored.focus.focusedRun()).toBe(runId);
+    expect(restored.kernel.canRunMutateWorld(runId)).toBe(true);
+    expect(restored.currentLifeView().matters).toContainEqual(expect.objectContaining({
+      id: matter.id,
+      status: "active",
+      activeRun: expect.objectContaining({
+        runId,
+        bodyState: "focused",
+        canMutateWorld: true,
+      }),
+    }));
+
+    const resumedExecution = new ResidentCausalExecutionCoordinator(restored);
+    let terminal: ReturnType<typeof resumedExecution.stepFocusedRun> | null = null;
+    for (let step = 0; step < 2_000; step += 1) {
+      const local = resumedExecution.stepFocusedRun();
+      if (local.status === "running") {
+        world.step();
+        continue;
+      }
+      terminal = local;
+      break;
+    }
+
+    expect(terminal).toMatchObject({
+      status: "completed",
+      matterId: matter.id,
+      runId,
+      outcomeEvidence: {
+        kind: "task_outcome",
+        summary: expect.stringContaining("workshop"),
+      },
+    });
+    expect(restored.kernel.matter(matter.id)).toMatchObject({
+      status: "resolved",
+      activeRunId: null,
+    });
   });
 
   it("rejects tampered resident, namespace and matter-scope snapshots before World authority claim", () => {
