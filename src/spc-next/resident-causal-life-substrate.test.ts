@@ -381,4 +381,95 @@ describe("ResidentCausalLifeSubstrate", () => {
     }));
   });
 
+  it("reconstructs unresolved deferred B/C without inventing a winner", () => {
+    const composition = createFiveResidentRegionComposition({
+      playerStart: { x: 3_000, y: 900 },
+    });
+    const { world } = composition;
+    const ida = composition.runtimes[IDA_ID];
+    const navigation = createFiveResidentNavigationGraph();
+    const substrate = new ResidentCausalLifeSubstrate({
+      residentId: IDA_ID,
+      resident: ida,
+      world,
+      navigation,
+    });
+
+    const seed = (id: string, targetRegionId: "hearth" | "workshop" | "fields") => {
+      const evidence = substrate.kernel.recordEvidence({
+        id: `evidence.ida.restore-choice.${id}`,
+        tick: world.tick,
+        kind: "test_origin",
+        summary: `durable matter ${id}`,
+      });
+      const matter = substrate.kernel.openMatter({
+        id: `matter.ida.restore-choice.${id}`,
+        originEvidenceId: evidence.id,
+        semanticCourse: `continue ${id}`,
+        semanticIntent: {
+          kind: "travel_region",
+          goal: `visit ${targetRegionId}`,
+          targetRegionId,
+        },
+      });
+      substrate.matterScope.track(matter.id);
+      const runId = `run.ida.restore-choice.${id}.semantic-1`;
+      substrate.kernel.bindRun({
+        matterId: matter.id,
+        taskId: `task.ida.restore-choice.${id}.semantic-1`,
+        runId,
+      });
+      return { matter, runId };
+    };
+
+    const a = seed("a", "workshop");
+    const b = seed("b", "hearth");
+    const cMatter = seed("c", "fields");
+
+    expect(substrate.arbitrator.request(a.runId)).toEqual({ status: "acquired", runId: a.runId });
+    expect(substrate.arbitrator.request(b.runId)).toMatchObject({ status: "busy", runId: b.runId });
+    expect(substrate.arbitrator.request(cMatter.runId)).toMatchObject({ status: "busy", runId: cMatter.runId });
+
+    const aOutcome = substrate.kernel.reconcileRunOutcome({
+      runId: a.runId,
+      tick: world.tick,
+      status: "succeeded",
+      summary: "A completed before snapshot",
+    });
+    expect(aOutcome.status).toBe("recorded");
+    substrate.kernel.resolveMatter(a.matter.id);
+
+    const candidates = [b.runId, cMatter.runId].sort((left, right) => left.localeCompare(right));
+    expect(substrate.arbitrator.reconcile()).toEqual({
+      status: "choice_required",
+      candidateRunIds: candidates,
+    });
+    expect(substrate.focus.focusedRun()).toBeNull();
+
+    const snapshot = substrate.snapshotCommittedLife();
+    expect(snapshot.execution).toEqual({
+      focusedRunId: null,
+      deferredRunIds: candidates,
+    });
+    expect(substrate.releaseWorldExecutionAuthority()).toBe(true);
+
+    const restored = new ResidentCausalLifeSubstrate({
+      residentId: IDA_ID,
+      resident: ida,
+      world,
+      navigation,
+      snapshot,
+    });
+
+    expect(restored.focus.focusedRun()).toBeNull();
+    expect(restored.arbitrator.deferredRunIds()).toEqual(candidates);
+    expect(restored.arbitrator.reconcile()).toEqual({
+      status: "choice_required",
+      candidateRunIds: candidates,
+    });
+    expect(restored.focus.focusedRun()).toBeNull();
+    expect(restored.kernel.canRunMutateWorld(b.runId)).toBe(true);
+    expect(restored.kernel.canRunMutateWorld(cMatter.runId)).toBe(true);
+  });
+
 });
