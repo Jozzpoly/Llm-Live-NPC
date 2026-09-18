@@ -174,6 +174,10 @@ export class ResidentCausalLifeSubstrate {
     };
   }
 
+  releaseWorldExecutionAuthority(): boolean {
+    return this.worldAuthority.release();
+  }
+
   currentLifeView(): ResidentLifeCognitionView {
     return structuredClone(captureResidentLifeCognitionView({
       kernel: this.kernel,
