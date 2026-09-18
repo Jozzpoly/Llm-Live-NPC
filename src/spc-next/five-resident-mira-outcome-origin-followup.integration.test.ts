@@ -23,7 +23,7 @@ describe("Mira self-origin follow-up from factual outcome", () => {
       "workshop",
       "inspect the familiar workshop",
       "accept the workshop visit",
-      1,
+      600,
     );
     const settlementA = slice.lifeIntentOwner.settleCommitmentIntent(
       preparedA.attempt,
@@ -45,8 +45,14 @@ describe("Mira self-origin follow-up from factual outcome", () => {
       settlementA.proposal,
       settlementA.intent,
     );
+    const providerReviewDeadline = slice.mira.cognitionScheduleDiagnostics().nextQuietReviewTick;
+    expect(providerReviewDeadline - slice.world.tick).toBeGreaterThan(30_000);
 
     const completedA = slice.completeFocusedMatter(acceptedA.matter.id);
+    const outcomeReviewDeadline = slice.mira.cognitionScheduleDiagnostics().nextQuietReviewTick;
+    expect(outcomeReviewDeadline).toBeLessThan(providerReviewDeadline);
+    expect(outcomeReviewDeadline).toBeGreaterThanOrEqual(completedA.worldTick + 60);
+    expect(outcomeReviewDeadline).toBeLessThanOrEqual(completedA.worldTick + 90);
     expect(completedA.outcomeEvidence.kind).toBe("task_outcome");
     expect(completedA.outcomeEvidence.summary).toContain("workshop");
 
