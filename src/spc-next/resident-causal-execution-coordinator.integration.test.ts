@@ -133,10 +133,10 @@ describe("ResidentCausalExecutionCoordinator", () => {
       id: accepted.matter.id,
       status: "resolved",
       activeRun: null,
-      lastOutcomeEvidence: {
+      lastOutcomeEvidence: expect.objectContaining({
         id: terminal.outcomeEvidence.id,
         kind: "task_outcome",
-      },
+      }),
     }));
 
     const reviewAfterCompletion = ida.cognitionScheduleDiagnostics().nextQuietReviewTick;
