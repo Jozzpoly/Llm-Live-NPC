@@ -1,0 +1,734 @@
+{
+  "schemaVersion": 3,
+  "sourceSha": "ba9f0c4221849723beedfbe856e4aa3728c5ff00",
+  "startedAt": "2026-09-18T15:32:49.952Z",
+  "chrome": "Chrome/152.0.7977.82",
+  "assertions": [
+    {
+      "name": "missing-crate opens before the hidden perturbation with stale-able legal knowledge",
+      "pass": true,
+      "detail": {
+        "schemaVersion": 1,
+        "scenarioId": "browser-missing-crate",
+        "tick": 247,
+        "presentationTick": 247,
+        "matterStatus": "active",
+        "semanticRevision": 1,
+        "activeRunId": "run.janek.pickup-last-known-crate",
+        "activeRunCanMutateWorld": true,
+        "semanticEvidenceKind": "life_context",
+        "lastOutcomeEvidenceKind": null,
+        "pendingProposalCount": 0,
+        "crateLocation": {
+          "kind": "free",
+          "position": {
+            "x": 1952,
+            "y": 720
+          }
+        },
+        "janekPosition": {
+          "x": 1430.416666666648,
+          "y": 720
+        },
+        "materialKnowledge": [
+          {
+            "objectId": "crate.workshop.01",
+            "lastKnownPosition": {
+              "x": 1952,
+              "y": 720
+            },
+            "observedAtTick": 0,
+            "currentlyVisible": false
+          }
+        ],
+        "relocatorPerceptCount": 0,
+        "actionFacts": []
+      }
+    },
+    {
+      "name": "wall-clock cannot silently perform the hidden relocation",
+      "pass": true,
+      "detail": {
+        "preHash": "00465c795be0c2fcfcc3de5d649552a4d0e0b8abbfb6496134479a3424e77756",
+        "frozenPreHash": "00465c795be0c2fcfcc3de5d649552a4d0e0b8abbfb6496134479a3424e77756"
+      }
+    },
+    {
+      "name": "one explicit browser World tick performs the hidden relocation and nothing semantic",
+      "pass": true,
+      "detail": {
+        "pre": {
+          "schemaVersion": 1,
+          "scenarioId": "browser-missing-crate",
+          "tick": 247,
+          "presentationTick": 247,
+          "matterStatus": "active",
+          "semanticRevision": 1,
+          "activeRunId": "run.janek.pickup-last-known-crate",
+          "activeRunCanMutateWorld": true,
+          "semanticEvidenceKind": "life_context",
+          "lastOutcomeEvidenceKind": null,
+          "pendingProposalCount": 0,
+          "crateLocation": {
+            "kind": "free",
+            "position": {
+              "x": 1952,
+              "y": 720
+            }
+          },
+          "janekPosition": {
+            "x": 1430.416666666648,
+            "y": 720
+          },
+          "materialKnowledge": [
+            {
+              "objectId": "crate.workshop.01",
+              "lastKnownPosition": {
+                "x": 1952,
+                "y": 720
+              },
+              "observedAtTick": 0,
+              "currentlyVisible": false
+            }
+          ],
+          "relocatorPerceptCount": 0,
+          "actionFacts": []
+        },
+        "postRelocation": {
+          "schemaVersion": 1,
+          "scenarioId": "browser-missing-crate",
+          "tick": 248,
+          "presentationTick": 248,
+          "matterStatus": "active",
+          "semanticRevision": 1,
+          "activeRunId": "run.janek.pickup-last-known-crate",
+          "activeRunCanMutateWorld": true,
+          "semanticEvidenceKind": "life_context",
+          "lastOutcomeEvidenceKind": null,
+          "pendingProposalCount": 0,
+          "crateLocation": {
+            "kind": "free",
+            "position": {
+              "x": 2752,
+              "y": 720
+            }
+          },
+          "janekPosition": {
+            "x": 1430.416666666648,
+            "y": 720
+          },
+          "materialKnowledge": [
+            {
+              "objectId": "crate.workshop.01",
+              "lastKnownPosition": {
+                "x": 1952,
+                "y": 720
+              },
+              "observedAtTick": 0,
+              "currentlyVisible": false
+            }
+          ],
+          "relocatorPerceptCount": 0,
+          "actionFacts": []
+        }
+      }
+    },
+    {
+      "name": "resident physically inspects stale history before checked absence without probing hidden object truth",
+      "pass": true,
+      "detail": {
+        "schemaVersion": 1,
+        "scenarioId": "browser-missing-crate",
+        "tick": 656,
+        "presentationTick": 656,
+        "matterStatus": "active",
+        "semanticRevision": 2,
+        "activeRunId": null,
+        "activeRunCanMutateWorld": false,
+        "semanticEvidenceKind": "checked_absence",
+        "lastOutcomeEvidenceKind": "task_outcome",
+        "pendingProposalCount": 0,
+        "crateLocation": {
+          "kind": "free",
+          "position": {
+            "x": 2752,
+            "y": 720
+          }
+        },
+        "janekPosition": {
+          "x": 1949.0035809792762,
+          "y": 724.7345828746754
+        },
+        "materialKnowledge": [
+          {
+            "objectId": "crate.workshop.01",
+            "lastKnownPosition": {
+              "x": 1952,
+              "y": 720
+            },
+            "observedAtTick": 0,
+            "currentlyVisible": false
+          }
+        ],
+        "relocatorPerceptCount": 0,
+        "actionFacts": []
+      }
+    },
+    {
+      "name": "preHash is exactly reproducible across real-Chrome reloads",
+      "pass": true,
+      "detail": [
+        "00465c795be0c2fcfcc3de5d649552a4d0e0b8abbfb6496134479a3424e77756",
+        "00465c795be0c2fcfcc3de5d649552a4d0e0b8abbfb6496134479a3424e77756",
+        "00465c795be0c2fcfcc3de5d649552a4d0e0b8abbfb6496134479a3424e77756"
+      ]
+    },
+    {
+      "name": "postRelocationHash is exactly reproducible across real-Chrome reloads",
+      "pass": true,
+      "detail": [
+        "de3e4e0eb6cb7e207ffffa9174aa8531789116d3c8d21289ba8ec964dd7163d5",
+        "de3e4e0eb6cb7e207ffffa9174aa8531789116d3c8d21289ba8ec964dd7163d5",
+        "de3e4e0eb6cb7e207ffffa9174aa8531789116d3c8d21289ba8ec964dd7163d5"
+      ]
+    },
+    {
+      "name": "checkedAbsenceHash is exactly reproducible across real-Chrome reloads",
+      "pass": true,
+      "detail": [
+        "7910e77289f8902193cadd7c0e27ae4ca998f3a9767a8431d06dad1519b034dd",
+        "7910e77289f8902193cadd7c0e27ae4ca998f3a9767a8431d06dad1519b034dd",
+        "7910e77289f8902193cadd7c0e27ae4ca998f3a9767a8431d06dad1519b034dd"
+      ]
+    },
+    {
+      "name": "checked-absence causal boundary occurs at the same World tick across reloads",
+      "pass": true,
+      "detail": [
+        656,
+        656,
+        656
+      ]
+    },
+    {
+      "name": "local-inspection causal boundary occurs at the same World tick across reloads",
+      "pass": true,
+      "detail": [
+        559,
+        559,
+        559
+      ]
+    },
+    {
+      "name": "participant causal-frame screenshots are non-empty and canonically frozen",
+      "pass": true,
+      "detail": {
+        "pre": {
+          "file": "missing-crate-01-pre-world.png",
+          "tick": 247,
+          "bytes": 43029,
+          "sha256": "02a70e3c1a28da218da67e36a46a71c32ca36701293ebedbd9a11834462ccc4d",
+          "canonicalHash": "00465c795be0c2fcfcc3de5d649552a4d0e0b8abbfb6496134479a3424e77756"
+        },
+        "postRelocation": {
+          "file": "missing-crate-02-post-relocation-world.png",
+          "tick": 248,
+          "bytes": 41322,
+          "sha256": "e3cf80cf3b601a989c5baefbdf23b351f84e8a928ae320e380b902bbddedacfe",
+          "canonicalHash": "de3e4e0eb6cb7e207ffffa9174aa8531789116d3c8d21289ba8ec964dd7163d5"
+        },
+        "beforeInspection": {
+          "file": "missing-crate-03-before-local-inspection-world.png",
+          "tick": 559,
+          "bytes": 41522,
+          "sha256": "e4a1e112d5ae7eb89160fa70dc29acb1f1d3ab6dc499519c6ee75745042c35d0",
+          "canonicalHash": "f8e2f84c9049914adfc92f4c577265479abe5ccd865f8e1893f6baa34c9e4f03"
+        },
+        "midInspection": {
+          "file": "missing-crate-04-local-inspection-world.png",
+          "tick": 583,
+          "bytes": 41526,
+          "sha256": "1584f5a8696206a7cc653394babd2fe79230b858dd5d7b18680ae1fdaeb20259",
+          "canonicalHash": "e2173c865f79926ecb2c38c248b16f85905f9cec9339fa9cd98a321971cc372b"
+        },
+        "checkedAbsenceWorld": {
+          "file": "missing-crate-05-checked-absence-world.png",
+          "tick": 656,
+          "bytes": 41706,
+          "sha256": "ca7548857e8679cb0e87c43fb0bfe2364710d0850705bfde507319ab6f856164",
+          "canonicalHash": "7910e77289f8902193cadd7c0e27ae4ca998f3a9767a8431d06dad1519b034dd"
+        },
+        "checkedAbsenceResearch": {
+          "file": "missing-crate-06-checked-absence-research.png",
+          "tick": 656,
+          "bytes": 105006,
+          "sha256": "74daeafb8a7b136b72ea6bb76ff2e25d8b21888793b68fc97e64f99757f450d9",
+          "canonicalHash": "7910e77289f8902193cadd7c0e27ae4ca998f3a9767a8431d06dad1519b034dd"
+        }
+      }
+    },
+    {
+      "name": "missing-crate browser specimen has no uncaught runtime exceptions",
+      "pass": true,
+      "detail": []
+    }
+  ],
+  "runtimeExceptions": [],
+  "runs": [
+    {
+      "runIndex": 0,
+      "residentSteps": 408,
+      "inspectionStartedTick": 559,
+      "inspectionStepCount": 96,
+      "preHash": "00465c795be0c2fcfcc3de5d649552a4d0e0b8abbfb6496134479a3424e77756",
+      "frozenPreHash": "00465c795be0c2fcfcc3de5d649552a4d0e0b8abbfb6496134479a3424e77756",
+      "postRelocationHash": "de3e4e0eb6cb7e207ffffa9174aa8531789116d3c8d21289ba8ec964dd7163d5",
+      "checkedAbsenceHash": "7910e77289f8902193cadd7c0e27ae4ca998f3a9767a8431d06dad1519b034dd",
+      "pre": {
+        "schemaVersion": 1,
+        "scenarioId": "browser-missing-crate",
+        "tick": 247,
+        "presentationTick": 247,
+        "matterStatus": "active",
+        "semanticRevision": 1,
+        "activeRunId": "run.janek.pickup-last-known-crate",
+        "activeRunCanMutateWorld": true,
+        "semanticEvidenceKind": "life_context",
+        "lastOutcomeEvidenceKind": null,
+        "pendingProposalCount": 0,
+        "crateLocation": {
+          "kind": "free",
+          "position": {
+            "x": 1952,
+            "y": 720
+          }
+        },
+        "janekPosition": {
+          "x": 1430.416666666648,
+          "y": 720
+        },
+        "materialKnowledge": [
+          {
+            "objectId": "crate.workshop.01",
+            "lastKnownPosition": {
+              "x": 1952,
+              "y": 720
+            },
+            "observedAtTick": 0,
+            "currentlyVisible": false
+          }
+        ],
+        "relocatorPerceptCount": 0,
+        "actionFacts": []
+      },
+      "postRelocation": {
+        "schemaVersion": 1,
+        "scenarioId": "browser-missing-crate",
+        "tick": 248,
+        "presentationTick": 248,
+        "matterStatus": "active",
+        "semanticRevision": 1,
+        "activeRunId": "run.janek.pickup-last-known-crate",
+        "activeRunCanMutateWorld": true,
+        "semanticEvidenceKind": "life_context",
+        "lastOutcomeEvidenceKind": null,
+        "pendingProposalCount": 0,
+        "crateLocation": {
+          "kind": "free",
+          "position": {
+            "x": 2752,
+            "y": 720
+          }
+        },
+        "janekPosition": {
+          "x": 1430.416666666648,
+          "y": 720
+        },
+        "materialKnowledge": [
+          {
+            "objectId": "crate.workshop.01",
+            "lastKnownPosition": {
+              "x": 1952,
+              "y": 720
+            },
+            "observedAtTick": 0,
+            "currentlyVisible": false
+          }
+        ],
+        "relocatorPerceptCount": 0,
+        "actionFacts": []
+      },
+      "checkedAbsence": {
+        "schemaVersion": 1,
+        "scenarioId": "browser-missing-crate",
+        "tick": 656,
+        "presentationTick": 656,
+        "matterStatus": "active",
+        "semanticRevision": 2,
+        "activeRunId": null,
+        "activeRunCanMutateWorld": false,
+        "semanticEvidenceKind": "checked_absence",
+        "lastOutcomeEvidenceKind": "task_outcome",
+        "pendingProposalCount": 0,
+        "crateLocation": {
+          "kind": "free",
+          "position": {
+            "x": 2752,
+            "y": 720
+          }
+        },
+        "janekPosition": {
+          "x": 1949.0035809792762,
+          "y": 724.7345828746754
+        },
+        "materialKnowledge": [
+          {
+            "objectId": "crate.workshop.01",
+            "lastKnownPosition": {
+              "x": 1952,
+              "y": 720
+            },
+            "observedAtTick": 0,
+            "currentlyVisible": false
+          }
+        ],
+        "relocatorPerceptCount": 0,
+        "actionFacts": []
+      },
+      "visualEvidence": {
+        "pre": {
+          "file": "missing-crate-01-pre-world.png",
+          "tick": 247,
+          "bytes": 43029,
+          "sha256": "02a70e3c1a28da218da67e36a46a71c32ca36701293ebedbd9a11834462ccc4d",
+          "canonicalHash": "00465c795be0c2fcfcc3de5d649552a4d0e0b8abbfb6496134479a3424e77756"
+        },
+        "postRelocation": {
+          "file": "missing-crate-02-post-relocation-world.png",
+          "tick": 248,
+          "bytes": 41322,
+          "sha256": "e3cf80cf3b601a989c5baefbdf23b351f84e8a928ae320e380b902bbddedacfe",
+          "canonicalHash": "de3e4e0eb6cb7e207ffffa9174aa8531789116d3c8d21289ba8ec964dd7163d5"
+        },
+        "beforeInspection": {
+          "file": "missing-crate-03-before-local-inspection-world.png",
+          "tick": 559,
+          "bytes": 41522,
+          "sha256": "e4a1e112d5ae7eb89160fa70dc29acb1f1d3ab6dc499519c6ee75745042c35d0",
+          "canonicalHash": "f8e2f84c9049914adfc92f4c577265479abe5ccd865f8e1893f6baa34c9e4f03"
+        },
+        "midInspection": {
+          "file": "missing-crate-04-local-inspection-world.png",
+          "tick": 583,
+          "bytes": 41526,
+          "sha256": "1584f5a8696206a7cc653394babd2fe79230b858dd5d7b18680ae1fdaeb20259",
+          "canonicalHash": "e2173c865f79926ecb2c38c248b16f85905f9cec9339fa9cd98a321971cc372b"
+        },
+        "checkedAbsenceWorld": {
+          "file": "missing-crate-05-checked-absence-world.png",
+          "tick": 656,
+          "bytes": 41706,
+          "sha256": "ca7548857e8679cb0e87c43fb0bfe2364710d0850705bfde507319ab6f856164",
+          "canonicalHash": "7910e77289f8902193cadd7c0e27ae4ca998f3a9767a8431d06dad1519b034dd"
+        },
+        "checkedAbsenceResearch": {
+          "file": "missing-crate-06-checked-absence-research.png",
+          "tick": 656,
+          "bytes": 105006,
+          "sha256": "74daeafb8a7b136b72ea6bb76ff2e25d8b21888793b68fc97e64f99757f450d9",
+          "canonicalHash": "7910e77289f8902193cadd7c0e27ae4ca998f3a9767a8431d06dad1519b034dd"
+        }
+      }
+    },
+    {
+      "runIndex": 1,
+      "residentSteps": 408,
+      "inspectionStartedTick": 559,
+      "inspectionStepCount": 96,
+      "preHash": "00465c795be0c2fcfcc3de5d649552a4d0e0b8abbfb6496134479a3424e77756",
+      "frozenPreHash": "00465c795be0c2fcfcc3de5d649552a4d0e0b8abbfb6496134479a3424e77756",
+      "postRelocationHash": "de3e4e0eb6cb7e207ffffa9174aa8531789116d3c8d21289ba8ec964dd7163d5",
+      "checkedAbsenceHash": "7910e77289f8902193cadd7c0e27ae4ca998f3a9767a8431d06dad1519b034dd",
+      "pre": {
+        "schemaVersion": 1,
+        "scenarioId": "browser-missing-crate",
+        "tick": 247,
+        "presentationTick": 247,
+        "matterStatus": "active",
+        "semanticRevision": 1,
+        "activeRunId": "run.janek.pickup-last-known-crate",
+        "activeRunCanMutateWorld": true,
+        "semanticEvidenceKind": "life_context",
+        "lastOutcomeEvidenceKind": null,
+        "pendingProposalCount": 0,
+        "crateLocation": {
+          "kind": "free",
+          "position": {
+            "x": 1952,
+            "y": 720
+          }
+        },
+        "janekPosition": {
+          "x": 1430.416666666648,
+          "y": 720
+        },
+        "materialKnowledge": [
+          {
+            "objectId": "crate.workshop.01",
+            "lastKnownPosition": {
+              "x": 1952,
+              "y": 720
+            },
+            "observedAtTick": 0,
+            "currentlyVisible": false
+          }
+        ],
+        "relocatorPerceptCount": 0,
+        "actionFacts": []
+      },
+      "postRelocation": {
+        "schemaVersion": 1,
+        "scenarioId": "browser-missing-crate",
+        "tick": 248,
+        "presentationTick": 248,
+        "matterStatus": "active",
+        "semanticRevision": 1,
+        "activeRunId": "run.janek.pickup-last-known-crate",
+        "activeRunCanMutateWorld": true,
+        "semanticEvidenceKind": "life_context",
+        "lastOutcomeEvidenceKind": null,
+        "pendingProposalCount": 0,
+        "crateLocation": {
+          "kind": "free",
+          "position": {
+            "x": 2752,
+            "y": 720
+          }
+        },
+        "janekPosition": {
+          "x": 1430.416666666648,
+          "y": 720
+        },
+        "materialKnowledge": [
+          {
+            "objectId": "crate.workshop.01",
+            "lastKnownPosition": {
+              "x": 1952,
+              "y": 720
+            },
+            "observedAtTick": 0,
+            "currentlyVisible": false
+          }
+        ],
+        "relocatorPerceptCount": 0,
+        "actionFacts": []
+      },
+      "checkedAbsence": {
+        "schemaVersion": 1,
+        "scenarioId": "browser-missing-crate",
+        "tick": 656,
+        "presentationTick": 656,
+        "matterStatus": "active",
+        "semanticRevision": 2,
+        "activeRunId": null,
+        "activeRunCanMutateWorld": false,
+        "semanticEvidenceKind": "checked_absence",
+        "lastOutcomeEvidenceKind": "task_outcome",
+        "pendingProposalCount": 0,
+        "crateLocation": {
+          "kind": "free",
+          "position": {
+            "x": 2752,
+            "y": 720
+          }
+        },
+        "janekPosition": {
+          "x": 1949.0035809792762,
+          "y": 724.7345828746754
+        },
+        "materialKnowledge": [
+          {
+            "objectId": "crate.workshop.01",
+            "lastKnownPosition": {
+              "x": 1952,
+              "y": 720
+            },
+            "observedAtTick": 0,
+            "currentlyVisible": false
+          }
+        ],
+        "relocatorPerceptCount": 0,
+        "actionFacts": []
+      },
+      "visualEvidence": null
+    },
+    {
+      "runIndex": 2,
+      "residentSteps": 408,
+      "inspectionStartedTick": 559,
+      "inspectionStepCount": 96,
+      "preHash": "00465c795be0c2fcfcc3de5d649552a4d0e0b8abbfb6496134479a3424e77756",
+      "frozenPreHash": "00465c795be0c2fcfcc3de5d649552a4d0e0b8abbfb6496134479a3424e77756",
+      "postRelocationHash": "de3e4e0eb6cb7e207ffffa9174aa8531789116d3c8d21289ba8ec964dd7163d5",
+      "checkedAbsenceHash": "7910e77289f8902193cadd7c0e27ae4ca998f3a9767a8431d06dad1519b034dd",
+      "pre": {
+        "schemaVersion": 1,
+        "scenarioId": "browser-missing-crate",
+        "tick": 247,
+        "presentationTick": 247,
+        "matterStatus": "active",
+        "semanticRevision": 1,
+        "activeRunId": "run.janek.pickup-last-known-crate",
+        "activeRunCanMutateWorld": true,
+        "semanticEvidenceKind": "life_context",
+        "lastOutcomeEvidenceKind": null,
+        "pendingProposalCount": 0,
+        "crateLocation": {
+          "kind": "free",
+          "position": {
+            "x": 1952,
+            "y": 720
+          }
+        },
+        "janekPosition": {
+          "x": 1430.416666666648,
+          "y": 720
+        },
+        "materialKnowledge": [
+          {
+            "objectId": "crate.workshop.01",
+            "lastKnownPosition": {
+              "x": 1952,
+              "y": 720
+            },
+            "observedAtTick": 0,
+            "currentlyVisible": false
+          }
+        ],
+        "relocatorPerceptCount": 0,
+        "actionFacts": []
+      },
+      "postRelocation": {
+        "schemaVersion": 1,
+        "scenarioId": "browser-missing-crate",
+        "tick": 248,
+        "presentationTick": 248,
+        "matterStatus": "active",
+        "semanticRevision": 1,
+        "activeRunId": "run.janek.pickup-last-known-crate",
+        "activeRunCanMutateWorld": true,
+        "semanticEvidenceKind": "life_context",
+        "lastOutcomeEvidenceKind": null,
+        "pendingProposalCount": 0,
+        "crateLocation": {
+          "kind": "free",
+          "position": {
+            "x": 2752,
+            "y": 720
+          }
+        },
+        "janekPosition": {
+          "x": 1430.416666666648,
+          "y": 720
+        },
+        "materialKnowledge": [
+          {
+            "objectId": "crate.workshop.01",
+            "lastKnownPosition": {
+              "x": 1952,
+              "y": 720
+            },
+            "observedAtTick": 0,
+            "currentlyVisible": false
+          }
+        ],
+        "relocatorPerceptCount": 0,
+        "actionFacts": []
+      },
+      "checkedAbsence": {
+        "schemaVersion": 1,
+        "scenarioId": "browser-missing-crate",
+        "tick": 656,
+        "presentationTick": 656,
+        "matterStatus": "active",
+        "semanticRevision": 2,
+        "activeRunId": null,
+        "activeRunCanMutateWorld": false,
+        "semanticEvidenceKind": "checked_absence",
+        "lastOutcomeEvidenceKind": "task_outcome",
+        "pendingProposalCount": 0,
+        "crateLocation": {
+          "kind": "free",
+          "position": {
+            "x": 2752,
+            "y": 720
+          }
+        },
+        "janekPosition": {
+          "x": 1949.0035809792762,
+          "y": 724.7345828746754
+        },
+        "materialKnowledge": [
+          {
+            "objectId": "crate.workshop.01",
+            "lastKnownPosition": {
+              "x": 1952,
+              "y": 720
+            },
+            "observedAtTick": 0,
+            "currentlyVisible": false
+          }
+        ],
+        "relocatorPerceptCount": 0,
+        "actionFacts": []
+      },
+      "visualEvidence": null
+    }
+  ],
+  "visualEvidence": {
+    "pre": {
+      "file": "missing-crate-01-pre-world.png",
+      "tick": 247,
+      "bytes": 43029,
+      "sha256": "02a70e3c1a28da218da67e36a46a71c32ca36701293ebedbd9a11834462ccc4d",
+      "canonicalHash": "00465c795be0c2fcfcc3de5d649552a4d0e0b8abbfb6496134479a3424e77756"
+    },
+    "postRelocation": {
+      "file": "missing-crate-02-post-relocation-world.png",
+      "tick": 248,
+      "bytes": 41322,
+      "sha256": "e3cf80cf3b601a989c5baefbdf23b351f84e8a928ae320e380b902bbddedacfe",
+      "canonicalHash": "de3e4e0eb6cb7e207ffffa9174aa8531789116d3c8d21289ba8ec964dd7163d5"
+    },
+    "beforeInspection": {
+      "file": "missing-crate-03-before-local-inspection-world.png",
+      "tick": 559,
+      "bytes": 41522,
+      "sha256": "e4a1e112d5ae7eb89160fa70dc29acb1f1d3ab6dc499519c6ee75745042c35d0",
+      "canonicalHash": "f8e2f84c9049914adfc92f4c577265479abe5ccd865f8e1893f6baa34c9e4f03"
+    },
+    "midInspection": {
+      "file": "missing-crate-04-local-inspection-world.png",
+      "tick": 583,
+      "bytes": 41526,
+      "sha256": "1584f5a8696206a7cc653394babd2fe79230b858dd5d7b18680ae1fdaeb20259",
+      "canonicalHash": "e2173c865f79926ecb2c38c248b16f85905f9cec9339fa9cd98a321971cc372b"
+    },
+    "checkedAbsenceWorld": {
+      "file": "missing-crate-05-checked-absence-world.png",
+      "tick": 656,
+      "bytes": 41706,
+      "sha256": "ca7548857e8679cb0e87c43fb0bfe2364710d0850705bfde507319ab6f856164",
+      "canonicalHash": "7910e77289f8902193cadd7c0e27ae4ca998f3a9767a8431d06dad1519b034dd"
+    },
+    "checkedAbsenceResearch": {
+      "file": "missing-crate-06-checked-absence-research.png",
+      "tick": 656,
+      "bytes": 105006,
+      "sha256": "74daeafb8a7b136b72ea6bb76ff2e25d8b21888793b68fc97e64f99757f450d9",
+      "canonicalHash": "7910e77289f8902193cadd7c0e27ae4ca998f3a9767a8431d06dad1519b034dd"
+    }
+  },
+  "finishedAt": "2026-09-18T15:33:47.370Z",
+  "outcome": "PASS"
+}

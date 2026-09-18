@@ -1,0 +1,2437 @@
+{
+  "schemaVersion": 1,
+  "sourceSha": "ba9f0c4221849723beedfbe856e4aa3728c5ff00",
+  "baseUrl": "http://127.0.0.1:4173",
+  "startedAt": "2026-09-18T15:32:20.143Z",
+  "chrome": "Chrome/152.0.7977.82",
+  "checkpoints": [
+    {
+      "name": "01-janek-early-research",
+      "worldOnly": false,
+      "screenshot": "screenshots/01-janek-early-research.jpg",
+      "bytes": 73626,
+      "snapshot": {
+        "tick": 26,
+        "selectedName": "Janek",
+        "role": "future material work interruption and return",
+        "facts": {
+          "region": "workshop",
+          "position": "1937, 732",
+          "body": "moving",
+          "legacy activity": "idle",
+          "motion intent": "90.0",
+          "resolved velocity": "90.0",
+          "resolution": "full",
+          "constraint": "—",
+          "cognition queue": "0",
+          "recovered matters": "—",
+          "focused run": "—",
+          "semantic intent": "—",
+          "camera zoom": "0.72×"
+        },
+        "activityReason": "legacy reason: between tasks at the workshop; no fake work mechanic",
+        "privatePerception": [],
+        "residentTrace": [
+          "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+        ],
+        "publicOccurrences": [
+          "Brak publicznych occurrences."
+        ],
+        "stage": "WORLD / EPISTEMIC LAB",
+        "worldOnly": false,
+        "canvas": {
+          "x": 13,
+          "y": 83,
+          "width": 972,
+          "height": 760
+        },
+        "bodyTextLength": 1803
+      }
+    },
+    {
+      "name": "02-player-call-mira-research",
+      "worldOnly": false,
+      "screenshot": "screenshots/02-player-call-mira-research.jpg",
+      "bytes": 66590,
+      "snapshot": {
+        "tick": 138,
+        "selectedName": "Mira",
+        "role": "settlement continuity and player contact",
+        "facts": {
+          "region": "hearth",
+          "position": "961, 726",
+          "body": "moving",
+          "legacy activity": "travel",
+          "motion intent": "95.0",
+          "resolved velocity": "95.0",
+          "resolution": "full",
+          "constraint": "—",
+          "cognition queue": "2",
+          "recovered matters": "—",
+          "focused run": "—",
+          "semantic intent": "—",
+          "camera zoom": "0.72×"
+        },
+        "activityReason": "legacy reason: walk through the settlement",
+        "privatePerception": [
+          "t109 · speech / hearing player.jozz · far direction (-1.00, 0.00)",
+          "t1 · actor_sight_enter / sight player.jozz · exact (620, 620)"
+        ],
+        "residentTrace": [
+          "t138 · command travel movement",
+          "t135 · command travel movement",
+          "t132 · command travel movement",
+          "t129 · command travel movement",
+          "t123 · command travel movement",
+          "t120 · command travel movement",
+          "t109 · cognition_reason Overheard speech: Hej!",
+          "t109 · perception speech/hearing: speech"
+        ],
+        "publicOccurrences": [
+          "t109 · speech · player.jozz Hej!"
+        ],
+        "stage": "WORLD / EPISTEMIC LAB",
+        "worldOnly": false,
+        "canvas": {
+          "x": 13,
+          "y": 83,
+          "width": 972,
+          "height": 760
+        },
+        "bodyTextLength": 1968
+      }
+    },
+    {
+      "name": "03-janek-mid-delivery-research",
+      "worldOnly": false,
+      "screenshot": "screenshots/03-janek-mid-delivery-research.jpg",
+      "bytes": 73953,
+      "snapshot": {
+        "tick": 165,
+        "selectedName": "Janek",
+        "role": "future material work interruption and return",
+        "facts": {
+          "region": "workshop",
+          "position": "2135, 798",
+          "body": "moving",
+          "legacy activity": "idle",
+          "motion intent": "90.0",
+          "resolved velocity": "90.0",
+          "resolution": "full",
+          "constraint": "—",
+          "cognition queue": "0",
+          "recovered matters": "—",
+          "focused run": "—",
+          "semantic intent": "—",
+          "camera zoom": "0.72×"
+        },
+        "activityReason": "legacy reason: between tasks at the workshop; no fake work mechanic",
+        "privatePerception": [],
+        "residentTrace": [
+          "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+        ],
+        "publicOccurrences": [
+          "t109 · speech · player.jozz Hej!"
+        ],
+        "stage": "WORLD / EPISTEMIC LAB",
+        "worldOnly": false,
+        "canvas": {
+          "x": 13,
+          "y": 83,
+          "width": 972,
+          "height": 760
+        },
+        "bodyTextLength": 1807
+      }
+    },
+    {
+      "name": "04-janek-mid-delivery-world",
+      "worldOnly": true,
+      "screenshot": "screenshots/04-janek-mid-delivery-world.jpg",
+      "bytes": 31487,
+      "snapshot": {
+        "tick": 165,
+        "selectedName": "Janek",
+        "role": "future material work interruption and return",
+        "facts": {
+          "region": "workshop",
+          "position": "2135, 798",
+          "body": "moving",
+          "legacy activity": "idle",
+          "motion intent": "90.0",
+          "resolved velocity": "90.0",
+          "resolution": "full",
+          "constraint": "—",
+          "cognition queue": "0",
+          "recovered matters": "—",
+          "focused run": "—",
+          "semantic intent": "—",
+          "camera zoom": "0.72×"
+        },
+        "activityReason": "legacy reason: between tasks at the workshop; no fake work mechanic",
+        "privatePerception": [],
+        "residentTrace": [
+          "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+        ],
+        "publicOccurrences": [
+          "t109 · speech · player.jozz Hej!"
+        ],
+        "stage": "WORLD / EPISTEMIC LAB",
+        "worldOnly": false,
+        "canvas": {
+          "x": 13,
+          "y": 83,
+          "width": 972,
+          "height": 760
+        },
+        "bodyTextLength": 1807
+      }
+    },
+    {
+      "name": "05-janek-settled-research",
+      "worldOnly": false,
+      "screenshot": "screenshots/05-janek-settled-research.jpg",
+      "bytes": 65807,
+      "snapshot": {
+        "tick": 769,
+        "selectedName": "Janek",
+        "role": "future material work interruption and return",
+        "facts": {
+          "region": "crossroads",
+          "position": "2927, 1062",
+          "body": "still",
+          "legacy activity": "idle",
+          "motion intent": "0.0",
+          "resolved velocity": "0.0",
+          "resolution": "full",
+          "constraint": "—",
+          "cognition queue": "1",
+          "recovered matters": "—",
+          "focused run": "—",
+          "semantic intent": "—",
+          "camera zoom": "0.72×"
+        },
+        "activityReason": "legacy reason: between tasks at the workshop; no fake work mechanic",
+        "privatePerception": [],
+        "residentTrace": [
+          "t563 · cognition_reason Entered region: Crossroads",
+          "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+        ],
+        "publicOccurrences": [
+          "t109 · speech · player.jozz Hej!"
+        ],
+        "stage": "WORLD / EPISTEMIC LAB",
+        "worldOnly": false,
+        "canvas": {
+          "x": 13,
+          "y": 83,
+          "width": 972,
+          "height": 760
+        },
+        "bodyTextLength": 1696
+      }
+    },
+    {
+      "name": "06-janek-settled-world",
+      "worldOnly": true,
+      "screenshot": "screenshots/06-janek-settled-world.jpg",
+      "bytes": 32368,
+      "snapshot": {
+        "tick": 769,
+        "selectedName": "Janek",
+        "role": "future material work interruption and return",
+        "facts": {
+          "region": "crossroads",
+          "position": "2927, 1062",
+          "body": "still",
+          "legacy activity": "idle",
+          "motion intent": "0.0",
+          "resolved velocity": "0.0",
+          "resolution": "full",
+          "constraint": "—",
+          "cognition queue": "1",
+          "recovered matters": "—",
+          "focused run": "—",
+          "semantic intent": "—",
+          "camera zoom": "0.72×"
+        },
+        "activityReason": "legacy reason: between tasks at the workshop; no fake work mechanic",
+        "privatePerception": [],
+        "residentTrace": [
+          "t563 · cognition_reason Entered region: Crossroads",
+          "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+        ],
+        "publicOccurrences": [
+          "t109 · speech · player.jozz Hej!"
+        ],
+        "stage": "WORLD / EPISTEMIC LAB",
+        "worldOnly": false,
+        "canvas": {
+          "x": 13,
+          "y": 83,
+          "width": 972,
+          "height": 760
+        },
+        "bodyTextLength": 1696
+      }
+    }
+  ],
+  "timeline": [
+    {
+      "elapsedMs": 11141,
+      "tick": 40,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "1957, 739",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "—",
+        "focused run": "—",
+        "semantic intent": "—",
+        "camera zoom": "0.72×"
+      },
+      "activityReason": "legacy reason: between tasks at the workshop; no fake work mechanic",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "Brak publicznych occurrences."
+      ],
+      "stage": "WORLD / EPISTEMIC LAB",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 83,
+        "width": 972,
+        "height": 760
+      },
+      "bodyTextLength": 1803
+    },
+    {
+      "elapsedMs": 11400,
+      "tick": 54,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "1977, 746",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "—",
+        "focused run": "—",
+        "semantic intent": "—",
+        "camera zoom": "0.72×"
+      },
+      "activityReason": "legacy reason: between tasks at the workshop; no fake work mechanic",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "Brak publicznych occurrences."
+      ],
+      "stage": "WORLD / EPISTEMIC LAB",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 83,
+        "width": 972,
+        "height": 760
+      },
+      "bodyTextLength": 1803
+    },
+    {
+      "elapsedMs": 11665,
+      "tick": 68,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "1997, 752",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "—",
+        "focused run": "—",
+        "semantic intent": "—",
+        "camera zoom": "0.72×"
+      },
+      "activityReason": "legacy reason: between tasks at the workshop; no fake work mechanic",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "Brak publicznych occurrences."
+      ],
+      "stage": "WORLD / EPISTEMIC LAB",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 83,
+        "width": 972,
+        "height": 760
+      },
+      "bodyTextLength": 1803
+    },
+    {
+      "elapsedMs": 11926,
+      "tick": 82,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "2017, 759",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "—",
+        "focused run": "—",
+        "semantic intent": "—",
+        "camera zoom": "0.72×"
+      },
+      "activityReason": "legacy reason: between tasks at the workshop; no fake work mechanic",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "Brak publicznych occurrences."
+      ],
+      "stage": "WORLD / EPISTEMIC LAB",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 83,
+        "width": 972,
+        "height": 760
+      },
+      "bodyTextLength": 1803
+    },
+    {
+      "elapsedMs": 12196,
+      "tick": 96,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "2037, 766",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "—",
+        "focused run": "—",
+        "semantic intent": "—",
+        "camera zoom": "0.72×"
+      },
+      "activityReason": "legacy reason: between tasks at the workshop; no fake work mechanic",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "Brak publicznych occurrences."
+      ],
+      "stage": "WORLD / EPISTEMIC LAB",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 83,
+        "width": 972,
+        "height": 760
+      },
+      "bodyTextLength": 1803
+    },
+    {
+      "elapsedMs": 12454,
+      "tick": 110,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "2057, 772",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "—",
+        "focused run": "—",
+        "semantic intent": "—",
+        "camera zoom": "0.72×"
+      },
+      "activityReason": "legacy reason: between tasks at the workshop; no fake work mechanic",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t109 · speech · player.jozz Hej!"
+      ],
+      "stage": "WORLD / EPISTEMIC LAB",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 83,
+        "width": 972,
+        "height": 760
+      },
+      "bodyTextLength": 1807
+    },
+    {
+      "elapsedMs": 12716,
+      "tick": 117,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "2066, 775",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "—",
+        "focused run": "—",
+        "semantic intent": "—",
+        "camera zoom": "0.72×"
+      },
+      "activityReason": "legacy reason: between tasks at the workshop; no fake work mechanic",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t109 · speech · player.jozz Hej!"
+      ],
+      "stage": "WORLD / EPISTEMIC LAB",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 83,
+        "width": 972,
+        "height": 760
+      },
+      "bodyTextLength": 1807
+    },
+    {
+      "elapsedMs": 12976,
+      "tick": 132,
+      "selectedName": "Mira",
+      "role": "settlement continuity and player contact",
+      "facts": {
+        "region": "hearth",
+        "position": "952, 723",
+        "body": "moving",
+        "legacy activity": "travel",
+        "motion intent": "95.0",
+        "resolved velocity": "95.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "2",
+        "recovered matters": "—",
+        "focused run": "—",
+        "semantic intent": "—",
+        "camera zoom": "0.72×"
+      },
+      "activityReason": "legacy reason: walk through the settlement",
+      "privatePerception": [
+        "t109 · speech / hearing player.jozz · far direction (-1.00, 0.00)",
+        "t1 · actor_sight_enter / sight player.jozz · exact (620, 620)"
+      ],
+      "residentTrace": [
+        "t132 · command travel movement",
+        "t129 · command travel movement",
+        "t123 · command travel movement",
+        "t120 · command travel movement",
+        "t109 · cognition_reason Overheard speech: Hej!",
+        "t109 · perception speech/hearing: speech",
+        "t105 · command travel movement",
+        "t102 · command travel movement"
+      ],
+      "publicOccurrences": [
+        "t109 · speech · player.jozz Hej!"
+      ],
+      "stage": "WORLD / EPISTEMIC LAB",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 83,
+        "width": 972,
+        "height": 760
+      },
+      "bodyTextLength": 1968
+    },
+    {
+      "elapsedMs": 13244,
+      "tick": 151,
+      "selectedName": "Mira",
+      "role": "settlement continuity and player contact",
+      "facts": {
+        "region": "hearth",
+        "position": "981, 734",
+        "body": "moving",
+        "legacy activity": "travel",
+        "motion intent": "95.0",
+        "resolved velocity": "95.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "2",
+        "recovered matters": "—",
+        "focused run": "—",
+        "semantic intent": "—",
+        "camera zoom": "0.72×"
+      },
+      "activityReason": "legacy reason: walk through the settlement",
+      "privatePerception": [
+        "t109 · speech / hearing player.jozz · far direction (-1.00, 0.00)",
+        "t1 · actor_sight_enter / sight player.jozz · exact (620, 620)"
+      ],
+      "residentTrace": [
+        "t138 · command travel movement",
+        "t135 · command travel movement",
+        "t132 · command travel movement",
+        "t129 · command travel movement",
+        "t123 · command travel movement",
+        "t120 · command travel movement",
+        "t109 · cognition_reason Overheard speech: Hej!",
+        "t109 · perception speech/hearing: speech"
+      ],
+      "publicOccurrences": [
+        "t109 · speech · player.jozz Hej!"
+      ],
+      "stage": "WORLD / EPISTEMIC LAB",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 83,
+        "width": 972,
+        "height": 760
+      },
+      "bodyTextLength": 1968
+    },
+    {
+      "elapsedMs": 13501,
+      "tick": 165,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "2135, 798",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "—",
+        "focused run": "—",
+        "semantic intent": "—",
+        "camera zoom": "0.72×"
+      },
+      "activityReason": "legacy reason: between tasks at the workshop; no fake work mechanic",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t109 · speech · player.jozz Hej!"
+      ],
+      "stage": "WORLD / EPISTEMIC LAB",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 83,
+        "width": 972,
+        "height": 760
+      },
+      "bodyTextLength": 1807
+    },
+    {
+      "elapsedMs": 13756,
+      "tick": 185,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "2163, 808",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "—",
+        "focused run": "—",
+        "semantic intent": "—",
+        "camera zoom": "0.72×"
+      },
+      "activityReason": "legacy reason: between tasks at the workshop; no fake work mechanic",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t109 · speech · player.jozz Hej!"
+      ],
+      "stage": "WORLD VIEW · NO TELEMETRY",
+      "worldOnly": true,
+      "canvas": {
+        "x": 13,
+        "y": 83,
+        "width": 1374,
+        "height": 760
+      },
+      "bodyTextLength": 250
+    },
+    {
+      "elapsedMs": 14012,
+      "tick": 199,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "2183, 814",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "—",
+        "focused run": "—",
+        "semantic intent": "—",
+        "camera zoom": "0.72×"
+      },
+      "activityReason": "legacy reason: between tasks at the workshop; no fake work mechanic",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t109 · speech · player.jozz Hej!"
+      ],
+      "stage": "WORLD VIEW · NO TELEMETRY",
+      "worldOnly": true,
+      "canvas": {
+        "x": 13,
+        "y": 83,
+        "width": 1374,
+        "height": 760
+      },
+      "bodyTextLength": 250
+    },
+    {
+      "elapsedMs": 14271,
+      "tick": 213,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "2203, 821",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "—",
+        "focused run": "—",
+        "semantic intent": "—",
+        "camera zoom": "0.72×"
+      },
+      "activityReason": "legacy reason: between tasks at the workshop; no fake work mechanic",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t109 · speech · player.jozz Hej!"
+      ],
+      "stage": "WORLD / EPISTEMIC LAB",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13.09375,
+        "y": 83,
+        "width": 972,
+        "height": 760
+      },
+      "bodyTextLength": 1801
+    },
+    {
+      "elapsedMs": 14558,
+      "tick": 233,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "2232, 831",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "—",
+        "focused run": "—",
+        "semantic intent": "—",
+        "camera zoom": "0.72×"
+      },
+      "activityReason": "legacy reason: between tasks at the workshop; no fake work mechanic",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t109 · speech · player.jozz Hej!"
+      ],
+      "stage": "WORLD / EPISTEMIC LAB",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 83,
+        "width": 972,
+        "height": 760
+      },
+      "bodyTextLength": 1801
+    },
+    {
+      "elapsedMs": 14814,
+      "tick": 247,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "2251, 837",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "—",
+        "focused run": "—",
+        "semantic intent": "—",
+        "camera zoom": "0.72×"
+      },
+      "activityReason": "legacy reason: between tasks at the workshop; no fake work mechanic",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t109 · speech · player.jozz Hej!"
+      ],
+      "stage": "WORLD / EPISTEMIC LAB",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 83,
+        "width": 972,
+        "height": 760
+      },
+      "bodyTextLength": 1801
+    },
+    {
+      "elapsedMs": 15069,
+      "tick": 266,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "2279, 846",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "—",
+        "focused run": "—",
+        "semantic intent": "—",
+        "camera zoom": "0.72×"
+      },
+      "activityReason": "legacy reason: between tasks at the workshop; no fake work mechanic",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t109 · speech · player.jozz Hej!"
+      ],
+      "stage": "WORLD / EPISTEMIC LAB",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 83,
+        "width": 972,
+        "height": 760
+      },
+      "bodyTextLength": 1801
+    },
+    {
+      "elapsedMs": 15331,
+      "tick": 279,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "2297, 852",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "—",
+        "focused run": "—",
+        "semantic intent": "—",
+        "camera zoom": "0.72×"
+      },
+      "activityReason": "legacy reason: between tasks at the workshop; no fake work mechanic",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t109 · speech · player.jozz Hej!"
+      ],
+      "stage": "WORLD / EPISTEMIC LAB",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 83,
+        "width": 972,
+        "height": 760
+      },
+      "bodyTextLength": 1801
+    },
+    {
+      "elapsedMs": 15593,
+      "tick": 293,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "2317, 859",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "—",
+        "focused run": "—",
+        "semantic intent": "—",
+        "camera zoom": "0.72×"
+      },
+      "activityReason": "legacy reason: between tasks at the workshop; no fake work mechanic",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t109 · speech · player.jozz Hej!"
+      ],
+      "stage": "WORLD / EPISTEMIC LAB",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 83,
+        "width": 972,
+        "height": 760
+      },
+      "bodyTextLength": 1795
+    },
+    {
+      "elapsedMs": 15858,
+      "tick": 312,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "2344, 868",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "—",
+        "focused run": "—",
+        "semantic intent": "—",
+        "camera zoom": "0.72×"
+      },
+      "activityReason": "legacy reason: between tasks at the workshop; no fake work mechanic",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t109 · speech · player.jozz Hej!"
+      ],
+      "stage": "WORLD / EPISTEMIC LAB",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 83,
+        "width": 972,
+        "height": 760
+      },
+      "bodyTextLength": 1795
+    },
+    {
+      "elapsedMs": 16125,
+      "tick": 325,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "2362, 874",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "—",
+        "focused run": "—",
+        "semantic intent": "—",
+        "camera zoom": "0.72×"
+      },
+      "activityReason": "legacy reason: between tasks at the workshop; no fake work mechanic",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t109 · speech · player.jozz Hej!"
+      ],
+      "stage": "WORLD / EPISTEMIC LAB",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 83,
+        "width": 972,
+        "height": 760
+      },
+      "bodyTextLength": 1795
+    },
+    {
+      "elapsedMs": 16384,
+      "tick": 345,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "2391, 884",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "—",
+        "focused run": "—",
+        "semantic intent": "—",
+        "camera zoom": "0.72×"
+      },
+      "activityReason": "legacy reason: between tasks at the workshop; no fake work mechanic",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t109 · speech · player.jozz Hej!"
+      ],
+      "stage": "WORLD / EPISTEMIC LAB",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 83,
+        "width": 972,
+        "height": 760
+      },
+      "bodyTextLength": 1795
+    },
+    {
+      "elapsedMs": 16655,
+      "tick": 358,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "2409, 890",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "—",
+        "focused run": "—",
+        "semantic intent": "—",
+        "camera zoom": "0.72×"
+      },
+      "activityReason": "legacy reason: between tasks at the workshop; no fake work mechanic",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t109 · speech · player.jozz Hej!"
+      ],
+      "stage": "WORLD / EPISTEMIC LAB",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 83,
+        "width": 972,
+        "height": 760
+      },
+      "bodyTextLength": 1795
+    },
+    {
+      "elapsedMs": 16915,
+      "tick": 370,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "2427, 896",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "—",
+        "focused run": "—",
+        "semantic intent": "—",
+        "camera zoom": "0.72×"
+      },
+      "activityReason": "legacy reason: between tasks at the workshop; no fake work mechanic",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t109 · speech · player.jozz Hej!"
+      ],
+      "stage": "WORLD / EPISTEMIC LAB",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 83,
+        "width": 972,
+        "height": 760
+      },
+      "bodyTextLength": 1795
+    },
+    {
+      "elapsedMs": 17172,
+      "tick": 390,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "2455, 905",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "—",
+        "focused run": "—",
+        "semantic intent": "—",
+        "camera zoom": "0.72×"
+      },
+      "activityReason": "legacy reason: between tasks at the workshop; no fake work mechanic",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t109 · speech · player.jozz Hej!"
+      ],
+      "stage": "WORLD / EPISTEMIC LAB",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 83,
+        "width": 972,
+        "height": 760
+      },
+      "bodyTextLength": 1795
+    },
+    {
+      "elapsedMs": 17426,
+      "tick": 403,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "2473, 911",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "—",
+        "focused run": "—",
+        "semantic intent": "—",
+        "camera zoom": "0.72×"
+      },
+      "activityReason": "legacy reason: between tasks at the workshop; no fake work mechanic",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t109 · speech · player.jozz Hej!"
+      ],
+      "stage": "WORLD / EPISTEMIC LAB",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 83,
+        "width": 972,
+        "height": 760
+      },
+      "bodyTextLength": 1795
+    },
+    {
+      "elapsedMs": 17684,
+      "tick": 416,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "2492, 917",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "—",
+        "focused run": "—",
+        "semantic intent": "—",
+        "camera zoom": "0.72×"
+      },
+      "activityReason": "legacy reason: between tasks at the workshop; no fake work mechanic",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t109 · speech · player.jozz Hej!"
+      ],
+      "stage": "WORLD / EPISTEMIC LAB",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 83,
+        "width": 972,
+        "height": 760
+      },
+      "bodyTextLength": 1795
+    },
+    {
+      "elapsedMs": 17939,
+      "tick": 436,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "2520, 927",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "—",
+        "focused run": "—",
+        "semantic intent": "—",
+        "camera zoom": "0.72×"
+      },
+      "activityReason": "legacy reason: between tasks at the workshop; no fake work mechanic",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t109 · speech · player.jozz Hej!"
+      ],
+      "stage": "WORLD / EPISTEMIC LAB",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 83,
+        "width": 972,
+        "height": 760
+      },
+      "bodyTextLength": 1795
+    },
+    {
+      "elapsedMs": 18199,
+      "tick": 448,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "2538, 933",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "—",
+        "focused run": "—",
+        "semantic intent": "—",
+        "camera zoom": "0.72×"
+      },
+      "activityReason": "legacy reason: between tasks at the workshop; no fake work mechanic",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t109 · speech · player.jozz Hej!"
+      ],
+      "stage": "WORLD / EPISTEMIC LAB",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 83,
+        "width": 972,
+        "height": 760
+      },
+      "bodyTextLength": 1795
+    },
+    {
+      "elapsedMs": 18456,
+      "tick": 468,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "2566, 942",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "—",
+        "focused run": "—",
+        "semantic intent": "—",
+        "camera zoom": "0.72×"
+      },
+      "activityReason": "legacy reason: between tasks at the workshop; no fake work mechanic",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t109 · speech · player.jozz Hej!"
+      ],
+      "stage": "WORLD / EPISTEMIC LAB",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 83,
+        "width": 972,
+        "height": 760
+      },
+      "bodyTextLength": 1795
+    },
+    {
+      "elapsedMs": 18717,
+      "tick": 482,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "2586, 949",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "—",
+        "focused run": "—",
+        "semantic intent": "—",
+        "camera zoom": "0.72×"
+      },
+      "activityReason": "legacy reason: between tasks at the workshop; no fake work mechanic",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t109 · speech · player.jozz Hej!"
+      ],
+      "stage": "WORLD / EPISTEMIC LAB",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 83,
+        "width": 972,
+        "height": 760
+      },
+      "bodyTextLength": 1795
+    },
+    {
+      "elapsedMs": 18977,
+      "tick": 495,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "2604, 955",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "—",
+        "focused run": "—",
+        "semantic intent": "—",
+        "camera zoom": "0.72×"
+      },
+      "activityReason": "legacy reason: between tasks at the workshop; no fake work mechanic",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t109 · speech · player.jozz Hej!"
+      ],
+      "stage": "WORLD / EPISTEMIC LAB",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 83,
+        "width": 972,
+        "height": 760
+      },
+      "bodyTextLength": 1789
+    },
+    {
+      "elapsedMs": 19229,
+      "tick": 515,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "2633, 964",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "—",
+        "focused run": "—",
+        "semantic intent": "—",
+        "camera zoom": "0.72×"
+      },
+      "activityReason": "legacy reason: between tasks at the workshop; no fake work mechanic",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t109 · speech · player.jozz Hej!"
+      ],
+      "stage": "WORLD / EPISTEMIC LAB",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 83,
+        "width": 972,
+        "height": 760
+      },
+      "bodyTextLength": 1789
+    },
+    {
+      "elapsedMs": 19486,
+      "tick": 528,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "2651, 970",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "—",
+        "focused run": "—",
+        "semantic intent": "—",
+        "camera zoom": "0.72×"
+      },
+      "activityReason": "legacy reason: between tasks at the workshop; no fake work mechanic",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t109 · speech · player.jozz Hej!"
+      ],
+      "stage": "WORLD / EPISTEMIC LAB",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 83,
+        "width": 972,
+        "height": 760
+      },
+      "bodyTextLength": 1789
+    },
+    {
+      "elapsedMs": 19741,
+      "tick": 542,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "2671, 977",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "—",
+        "focused run": "—",
+        "semantic intent": "—",
+        "camera zoom": "0.72×"
+      },
+      "activityReason": "legacy reason: between tasks at the workshop; no fake work mechanic",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t109 · speech · player.jozz Hej!"
+      ],
+      "stage": "WORLD / EPISTEMIC LAB",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 83,
+        "width": 972,
+        "height": 760
+      },
+      "bodyTextLength": 1789
+    },
+    {
+      "elapsedMs": 19998,
+      "tick": 561,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "2698, 986",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "—",
+        "focused run": "—",
+        "semantic intent": "—",
+        "camera zoom": "0.72×"
+      },
+      "activityReason": "legacy reason: between tasks at the workshop; no fake work mechanic",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t109 · speech · player.jozz Hej!"
+      ],
+      "stage": "WORLD / EPISTEMIC LAB",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 83,
+        "width": 972,
+        "height": 760
+      },
+      "bodyTextLength": 1789
+    },
+    {
+      "elapsedMs": 20267,
+      "tick": 573,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "crossroads",
+        "position": "2715, 992",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "1",
+        "recovered matters": "—",
+        "focused run": "—",
+        "semantic intent": "—",
+        "camera zoom": "0.72×"
+      },
+      "activityReason": "legacy reason: between tasks at the workshop; no fake work mechanic",
+      "privatePerception": [],
+      "residentTrace": [
+        "t563 · cognition_reason Entered region: Crossroads",
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t109 · speech · player.jozz Hej!"
+      ],
+      "stage": "WORLD / EPISTEMIC LAB",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 83,
+        "width": 972,
+        "height": 760
+      },
+      "bodyTextLength": 1842
+    },
+    {
+      "elapsedMs": 20528,
+      "tick": 593,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "crossroads",
+        "position": "2744, 1001",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "1",
+        "recovered matters": "—",
+        "focused run": "—",
+        "semantic intent": "—",
+        "camera zoom": "0.72×"
+      },
+      "activityReason": "legacy reason: between tasks at the workshop; no fake work mechanic",
+      "privatePerception": [],
+      "residentTrace": [
+        "t563 · cognition_reason Entered region: Crossroads",
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t109 · speech · player.jozz Hej!"
+      ],
+      "stage": "WORLD / EPISTEMIC LAB",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 83,
+        "width": 972,
+        "height": 760
+      },
+      "bodyTextLength": 1832
+    },
+    {
+      "elapsedMs": 20788,
+      "tick": 606,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "crossroads",
+        "position": "2762, 1007",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "1",
+        "recovered matters": "—",
+        "focused run": "—",
+        "semantic intent": "—",
+        "camera zoom": "0.72×"
+      },
+      "activityReason": "legacy reason: between tasks at the workshop; no fake work mechanic",
+      "privatePerception": [],
+      "residentTrace": [
+        "t563 · cognition_reason Entered region: Crossroads",
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t109 · speech · player.jozz Hej!"
+      ],
+      "stage": "WORLD / EPISTEMIC LAB",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 83,
+        "width": 972,
+        "height": 760
+      },
+      "bodyTextLength": 1832
+    },
+    {
+      "elapsedMs": 21047,
+      "tick": 619,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "crossroads",
+        "position": "2781, 1014",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "1",
+        "recovered matters": "—",
+        "focused run": "—",
+        "semantic intent": "—",
+        "camera zoom": "0.72×"
+      },
+      "activityReason": "legacy reason: between tasks at the workshop; no fake work mechanic",
+      "privatePerception": [],
+      "residentTrace": [
+        "t563 · cognition_reason Entered region: Crossroads",
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t109 · speech · player.jozz Hej!"
+      ],
+      "stage": "WORLD / EPISTEMIC LAB",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 83,
+        "width": 972,
+        "height": 760
+      },
+      "bodyTextLength": 1832
+    },
+    {
+      "elapsedMs": 21305,
+      "tick": 639,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "crossroads",
+        "position": "2809, 1023",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "1",
+        "recovered matters": "—",
+        "focused run": "—",
+        "semantic intent": "—",
+        "camera zoom": "0.72×"
+      },
+      "activityReason": "legacy reason: between tasks at the workshop; no fake work mechanic",
+      "privatePerception": [],
+      "residentTrace": [
+        "t563 · cognition_reason Entered region: Crossroads",
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t109 · speech · player.jozz Hej!"
+      ],
+      "stage": "WORLD / EPISTEMIC LAB",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 83,
+        "width": 972,
+        "height": 760
+      },
+      "bodyTextLength": 1832
+    },
+    {
+      "elapsedMs": 21567,
+      "tick": 653,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "crossroads",
+        "position": "2829, 1030",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "1",
+        "recovered matters": "—",
+        "focused run": "—",
+        "semantic intent": "—",
+        "camera zoom": "0.72×"
+      },
+      "activityReason": "legacy reason: between tasks at the workshop; no fake work mechanic",
+      "privatePerception": [],
+      "residentTrace": [
+        "t563 · cognition_reason Entered region: Crossroads",
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t109 · speech · player.jozz Hej!"
+      ],
+      "stage": "WORLD / EPISTEMIC LAB",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 83,
+        "width": 972,
+        "height": 760
+      },
+      "bodyTextLength": 1832
+    },
+    {
+      "elapsedMs": 21828,
+      "tick": 666,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "crossroads",
+        "position": "2848, 1036",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "1",
+        "recovered matters": "—",
+        "focused run": "—",
+        "semantic intent": "—",
+        "camera zoom": "0.72×"
+      },
+      "activityReason": "legacy reason: between tasks at the workshop; no fake work mechanic",
+      "privatePerception": [],
+      "residentTrace": [
+        "t563 · cognition_reason Entered region: Crossroads",
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t109 · speech · player.jozz Hej!"
+      ],
+      "stage": "WORLD / EPISTEMIC LAB",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 83,
+        "width": 972,
+        "height": 760
+      },
+      "bodyTextLength": 1832
+    },
+    {
+      "elapsedMs": 22094,
+      "tick": 686,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "crossroads",
+        "position": "2876, 1045",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "1",
+        "recovered matters": "—",
+        "focused run": "—",
+        "semantic intent": "—",
+        "camera zoom": "0.72×"
+      },
+      "activityReason": "legacy reason: between tasks at the workshop; no fake work mechanic",
+      "privatePerception": [],
+      "residentTrace": [
+        "t563 · cognition_reason Entered region: Crossroads",
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t109 · speech · player.jozz Hej!"
+      ],
+      "stage": "WORLD / EPISTEMIC LAB",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 83,
+        "width": 972,
+        "height": 760
+      },
+      "bodyTextLength": 1832
+    },
+    {
+      "elapsedMs": 22363,
+      "tick": 700,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "crossroads",
+        "position": "2896, 1052",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "1",
+        "recovered matters": "—",
+        "focused run": "—",
+        "semantic intent": "—",
+        "camera zoom": "0.72×"
+      },
+      "activityReason": "legacy reason: between tasks at the workshop; no fake work mechanic",
+      "privatePerception": [],
+      "residentTrace": [
+        "t563 · cognition_reason Entered region: Crossroads",
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t109 · speech · player.jozz Hej!"
+      ],
+      "stage": "WORLD / EPISTEMIC LAB",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 83,
+        "width": 972,
+        "height": 760
+      },
+      "bodyTextLength": 1832
+    },
+    {
+      "elapsedMs": 22626,
+      "tick": 713,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "crossroads",
+        "position": "2915, 1058",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "1",
+        "recovered matters": "—",
+        "focused run": "—",
+        "semantic intent": "—",
+        "camera zoom": "0.72×"
+      },
+      "activityReason": "legacy reason: between tasks at the workshop; no fake work mechanic",
+      "privatePerception": [],
+      "residentTrace": [
+        "t563 · cognition_reason Entered region: Crossroads",
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t109 · speech · player.jozz Hej!"
+      ],
+      "stage": "WORLD / EPISTEMIC LAB",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 83,
+        "width": 972,
+        "height": 760
+      },
+      "bodyTextLength": 1832
+    },
+    {
+      "elapsedMs": 22892,
+      "tick": 734,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "crossroads",
+        "position": "2927, 1062",
+        "body": "still",
+        "legacy activity": "idle",
+        "motion intent": "0.0",
+        "resolved velocity": "0.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "1",
+        "recovered matters": "—",
+        "focused run": "—",
+        "semantic intent": "—",
+        "camera zoom": "0.72×"
+      },
+      "activityReason": "legacy reason: between tasks at the workshop; no fake work mechanic",
+      "privatePerception": [],
+      "residentTrace": [
+        "t563 · cognition_reason Entered region: Crossroads",
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t109 · speech · player.jozz Hej!"
+      ],
+      "stage": "WORLD / EPISTEMIC LAB",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 83,
+        "width": 972,
+        "height": 760
+      },
+      "bodyTextLength": 1696
+    },
+    {
+      "elapsedMs": 23150,
+      "tick": 748,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "crossroads",
+        "position": "2927, 1062",
+        "body": "still",
+        "legacy activity": "idle",
+        "motion intent": "0.0",
+        "resolved velocity": "0.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "1",
+        "recovered matters": "—",
+        "focused run": "—",
+        "semantic intent": "—",
+        "camera zoom": "0.72×"
+      },
+      "activityReason": "legacy reason: between tasks at the workshop; no fake work mechanic",
+      "privatePerception": [],
+      "residentTrace": [
+        "t563 · cognition_reason Entered region: Crossroads",
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t109 · speech · player.jozz Hej!"
+      ],
+      "stage": "WORLD / EPISTEMIC LAB",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 83,
+        "width": 972,
+        "height": 760
+      },
+      "bodyTextLength": 1696
+    },
+    {
+      "elapsedMs": 23417,
+      "tick": 762,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "crossroads",
+        "position": "2927, 1062",
+        "body": "still",
+        "legacy activity": "idle",
+        "motion intent": "0.0",
+        "resolved velocity": "0.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "1",
+        "recovered matters": "—",
+        "focused run": "—",
+        "semantic intent": "—",
+        "camera zoom": "0.72×"
+      },
+      "activityReason": "legacy reason: between tasks at the workshop; no fake work mechanic",
+      "privatePerception": [],
+      "residentTrace": [
+        "t563 · cognition_reason Entered region: Crossroads",
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t109 · speech · player.jozz Hej!"
+      ],
+      "stage": "WORLD / EPISTEMIC LAB",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 83,
+        "width": 972,
+        "height": 760
+      },
+      "bodyTextLength": 1696
+    },
+    {
+      "elapsedMs": 23669,
+      "tick": 776,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "crossroads",
+        "position": "2927, 1062",
+        "body": "still",
+        "legacy activity": "idle",
+        "motion intent": "0.0",
+        "resolved velocity": "0.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "1",
+        "recovered matters": "—",
+        "focused run": "—",
+        "semantic intent": "—",
+        "camera zoom": "0.72×"
+      },
+      "activityReason": "legacy reason: between tasks at the workshop; no fake work mechanic",
+      "privatePerception": [],
+      "residentTrace": [
+        "t563 · cognition_reason Entered region: Crossroads",
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t109 · speech · player.jozz Hej!"
+      ],
+      "stage": "WORLD / EPISTEMIC LAB",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 83,
+        "width": 972,
+        "height": 760
+      },
+      "bodyTextLength": 1696
+    },
+    {
+      "elapsedMs": 23921,
+      "tick": 789,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "crossroads",
+        "position": "2927, 1062",
+        "body": "still",
+        "legacy activity": "idle",
+        "motion intent": "0.0",
+        "resolved velocity": "0.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "1",
+        "recovered matters": "—",
+        "focused run": "—",
+        "semantic intent": "—",
+        "camera zoom": "0.72×"
+      },
+      "activityReason": "legacy reason: between tasks at the workshop; no fake work mechanic",
+      "privatePerception": [],
+      "residentTrace": [
+        "t563 · cognition_reason Entered region: Crossroads",
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t109 · speech · player.jozz Hej!"
+      ],
+      "stage": "WORLD VIEW · NO TELEMETRY",
+      "worldOnly": true,
+      "canvas": {
+        "x": 13,
+        "y": 83,
+        "width": 1374,
+        "height": 760
+      },
+      "bodyTextLength": 250
+    },
+    {
+      "elapsedMs": 24177,
+      "tick": 809,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "crossroads",
+        "position": "2927, 1062",
+        "body": "still",
+        "legacy activity": "idle",
+        "motion intent": "0.0",
+        "resolved velocity": "0.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "1",
+        "recovered matters": "—",
+        "focused run": "—",
+        "semantic intent": "—",
+        "camera zoom": "0.72×"
+      },
+      "activityReason": "legacy reason: between tasks at the workshop; no fake work mechanic",
+      "privatePerception": [],
+      "residentTrace": [
+        "t563 · cognition_reason Entered region: Crossroads",
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t109 · speech · player.jozz Hej!"
+      ],
+      "stage": "WORLD / EPISTEMIC LAB",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13.015625,
+        "y": 244.359375,
+        "width": 983.96875,
+        "height": 544.265625
+      },
+      "bodyTextLength": 1696
+    }
+  ],
+  "console": [
+    {
+      "type": "log",
+      "timestamp": 1789745549761.858,
+      "values": [
+        "%cPhaser v4.2.1 (WebGL | Web Audio)%c https://phaser.io/v4021",
+        "color: #ffffff; background-image: url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAOCAYAAAAmL5yKAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAARBJREFUeNpi/P//P0OHsPB/BiCoePuWkYFEwALSXJElzMBgLwE2CNkQxgWr/yMr/p8QimlBu5DQ//+8vBBco/ofzAe6imH+qv/53/6jYJAYSA4ZoxoANYTPKhiuCQZwGcJU+e4dqpMmvsDq14krV2MPAxDha2CMKvoXoiE/PBQUDgQD8j82UFae9B9bOIC8B9UD9gIjjIMN7Ns6lWHn4XMoYu62RgxO3tkMjIyMII2MYAOAtmFVhA+ADHf2ycGMRhANjUq8YO+WKWCvgAORIV8CkpDCrzIwsLIymC1qAtuAD4Bsh3sBmqAY3qcGwL2AC4DCpKtzHlgzOLWihwEuzTCN0GhDJHeYC4gByBphACDAAH2dDIxdjr+VAAAAAElFTkSuQmCC\"), linear-gradient(to bottom, #000814, #001d3d, #003566); background-repeat: no-repeat; background-position: 4px center, 0 0; padding: 2px 6px 2px 24px;",
+        "background: transparent"
+      ]
+    }
+  ],
+  "runtimeExceptions": [],
+  "logErrors": [],
+  "networkFailures": [],
+  "httpErrors": [],
+  "assertions": [
+    {
+      "name": "screenshot 01-janek-early-research is non-empty",
+      "pass": true,
+      "severity": "gate",
+      "detail": {
+        "bytes": 73626
+      }
+    },
+    {
+      "name": "nearby Mira receives player speech through real browser/world path",
+      "pass": true,
+      "severity": "gate",
+      "detail": [
+        "t109 · speech / hearing player.jozz · far direction (-1.00, 0.00)",
+        "t1 · actor_sight_enter / sight player.jozz · exact (620, 620)"
+      ]
+    },
+    {
+      "name": "screenshot 02-player-call-mira-research is non-empty",
+      "pass": true,
+      "severity": "gate",
+      "detail": {
+        "bytes": 66590
+      }
+    },
+    {
+      "name": "Janek produces visible resolved motion during recovered delivery",
+      "pass": true,
+      "severity": "gate",
+      "detail": {
+        "region": "workshop",
+        "position": "2135, 798",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "—",
+        "focused run": "—",
+        "semantic intent": "—",
+        "camera zoom": "0.72×"
+      }
+    },
+    {
+      "name": "screenshot 03-janek-mid-delivery-research is non-empty",
+      "pass": true,
+      "severity": "gate",
+      "detail": {
+        "bytes": 73953
+      }
+    },
+    {
+      "name": "screenshot 04-janek-mid-delivery-world is non-empty",
+      "pass": true,
+      "severity": "gate",
+      "detail": {
+        "bytes": 31487
+      }
+    },
+    {
+      "name": "Janek delivery reaches a settled physical state in browser",
+      "pass": true,
+      "severity": "gate",
+      "detail": {
+        "region": "crossroads",
+        "position": "2927, 1062",
+        "body": "still",
+        "legacy activity": "idle",
+        "motion intent": "0.0",
+        "resolved velocity": "0.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "1",
+        "recovered matters": "—",
+        "focused run": "—",
+        "semantic intent": "—",
+        "camera zoom": "0.72×"
+      }
+    },
+    {
+      "name": "screenshot 05-janek-settled-research is non-empty",
+      "pass": true,
+      "severity": "gate",
+      "detail": {
+        "bytes": 65807
+      }
+    },
+    {
+      "name": "screenshot 06-janek-settled-world is non-empty",
+      "pass": true,
+      "severity": "gate",
+      "detail": {
+        "bytes": 32368
+      }
+    },
+    {
+      "name": "Phaser canvas is present and non-trivial",
+      "pass": true,
+      "severity": "gate",
+      "detail": {
+        "width": 972,
+        "height": 760,
+        "cssWidth": 972,
+        "cssHeight": 760
+      }
+    },
+    {
+      "name": "no uncaught browser/runtime errors",
+      "pass": true,
+      "severity": "gate",
+      "detail": {
+        "runtimeExceptions": [],
+        "logErrors": []
+      }
+    }
+  ],
+  "performance": {
+    "finalMetrics": {
+      "Timestamp": 430.89842,
+      "AudioHandlers": 3,
+      "AudioWorkletProcessors": 0,
+      "Documents": 1,
+      "Frames": 1,
+      "JSEventListeners": 47,
+      "LayoutObjects": 6104,
+      "MediaKeySessions": 0,
+      "MediaKeys": 0,
+      "Nodes": 10375,
+      "Resources": 10,
+      "ContextLifecycleStateObservers": 5,
+      "V8PerContextDatas": 1,
+      "WorkerGlobalScopes": 0,
+      "UACSSResources": 0,
+      "RTCPeerConnections": 0,
+      "ResourceFetchers": 1,
+      "AdSubframes": 0,
+      "DetachedScriptStates": 0,
+      "ArrayBufferContents": 33,
+      "LayoutCount": 182,
+      "RecalcStyleCount": 190,
+      "LayoutDuration": 0.23595,
+      "RecalcStyleDuration": 0.131802,
+      "DevToolsCommandDuration": 0.091397,
+      "ScriptDuration": 2.170353,
+      "V8CompileDuration": 0,
+      "TaskDuration": 15.484697,
+      "TaskOtherDuration": 12.855195,
+      "ThreadTime": 2.628057,
+      "ProcessTime": 4.14,
+      "JSHeapUsedSize": 15506448,
+      "JSHeapTotalSize": 27525120,
+      "FirstMeaningfulPaint": 0,
+      "DomContentLoaded": 415.382322,
+      "NavigationStart": 415.121838
+    },
+    "canvas": {
+      "width": 972,
+      "height": 760,
+      "cssWidth": 972,
+      "cssHeight": 760
+    }
+  },
+  "finishedAt": "2026-09-18T15:32:44.584Z",
+  "outcome": "PASS"
+}

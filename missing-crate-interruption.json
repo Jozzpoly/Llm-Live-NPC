@@ -1,0 +1,1695 @@
+{
+  "schemaVersion": 2,
+  "sourceSha": "ba9f0c4221849723beedfbe856e4aa3728c5ff00",
+  "startedAt": "2026-09-18T15:35:46.644Z",
+  "chrome": "Chrome/152.0.7977.82",
+  "assertions": [
+    {
+      "name": "player action becomes Janek private addressed directional speech evidence before interruption authority changes",
+      "pass": true,
+      "detail": {
+        "call": {
+          "id": "occurrence:658:0",
+          "tick": 658,
+          "kind": "speech",
+          "actorId": "player.jozz",
+          "subjectId": null,
+          "position": {
+            "x": 1600,
+            "y": 620
+          },
+          "radius": 420,
+          "summary": "speech",
+          "text": "Janek, chwila!",
+          "addressedActorIds": [
+            "resident.janek"
+          ]
+        },
+        "interrupted": {
+          "scenarioId": "browser-missing-crate-interruption",
+          "tick": 659,
+          "matterStatus": "suspended",
+          "semanticRevision": 3,
+          "semanticCourse": "search the nearby workshop area for the familiar crate before deciding what to do next",
+          "activeRunId": "run.janek.search-nearby-workshop",
+          "activeRunCanMutateWorld": false,
+          "suspendedByMatterId": "matter.janek.player-contact:658:percept-resident.janek-658-15",
+          "janekPosition": {
+            "x": 1952.1700291273119,
+            "y": 724.6973820201079
+          },
+          "janekVelocity": {
+            "x": 0,
+            "y": 0
+          },
+          "janekFacing": {
+            "x": 0.9999309941164624,
+            "y": -0.01174763828449585
+          },
+          "crateLocation": {
+            "kind": "free",
+            "position": {
+              "x": 2752,
+              "y": 720
+            }
+          },
+          "addressedPercept": {
+            "id": "percept:resident.janek:658:15",
+            "occurrenceId": "occurrence:658:0",
+            "tick": 658,
+            "phenomenon": "speech",
+            "modality": "hearing",
+            "actorId": "player.jozz",
+            "subjectId": null,
+            "spatial": {
+              "kind": "directional",
+              "direction": {
+                "x": -1,
+                "y": 0
+              },
+              "distanceBand": "far"
+            },
+            "summary": "speech",
+            "text": "Janek, chwila!",
+            "addressed": true
+          },
+          "responseOccurrence": null,
+          "actionFacts": []
+        }
+      }
+    },
+    {
+      "name": "Janek stops, turns to the private hearing cue, and answers through public World speech while search stays suspended",
+      "pass": true,
+      "detail": {
+        "scenarioId": "browser-missing-crate-interruption",
+        "tick": 660,
+        "matterStatus": "suspended",
+        "semanticRevision": 3,
+        "semanticCourse": "search the nearby workshop area for the familiar crate before deciding what to do next",
+        "activeRunId": "run.janek.search-nearby-workshop",
+        "activeRunCanMutateWorld": false,
+        "suspendedByMatterId": "matter.janek.player-contact:658:percept-resident.janek-658-15",
+        "janekPosition": {
+          "x": 1952.1700291273119,
+          "y": 724.6973820201079
+        },
+        "janekVelocity": {
+          "x": 0,
+          "y": 0
+        },
+        "janekFacing": {
+          "x": -1,
+          "y": 0
+        },
+        "crateLocation": {
+          "kind": "free",
+          "position": {
+            "x": 2752,
+            "y": 720
+          }
+        },
+        "addressedPercept": {
+          "id": "percept:resident.janek:658:15",
+          "occurrenceId": "occurrence:658:0",
+          "tick": 658,
+          "phenomenon": "speech",
+          "modality": "hearing",
+          "actorId": "player.jozz",
+          "subjectId": null,
+          "spatial": {
+            "kind": "directional",
+            "direction": {
+              "x": -1,
+              "y": 0
+            },
+            "distanceBand": "far"
+          },
+          "summary": "speech",
+          "text": "Janek, chwila!",
+          "addressed": true
+        },
+        "responseOccurrence": {
+          "id": "occurrence:659:1",
+          "tick": 659,
+          "kind": "speech",
+          "actorId": "resident.janek",
+          "subjectId": null,
+          "position": {
+            "x": 1952.1700291273119,
+            "y": 724.6973820201079
+          },
+          "radius": 420,
+          "summary": "speech",
+          "text": "Tak?",
+          "addressedActorIds": [
+            "player.jozz"
+          ]
+        },
+        "actionFacts": []
+      }
+    },
+    {
+      "name": "bounded interruption keeps Janek physically still, facing the heard player direction, and preserves exact search continuity",
+      "pass": true,
+      "detail": {
+        "positionStable": true,
+        "facingStable": true,
+        "semanticRevisionStable": true,
+        "runIdStable": true,
+        "authorityDeniedThroughout": true,
+        "samples": 24
+      }
+    },
+    {
+      "name": "the same search run regains authority and real motion reclaims body facing after player contact ends",
+      "pass": true,
+      "detail": {
+        "heardDirection": {
+          "x": -1,
+          "y": 0
+        },
+        "resumed": {
+          "scenarioId": "browser-missing-crate-interruption",
+          "tick": 685,
+          "matterStatus": "active",
+          "semanticRevision": 3,
+          "semanticCourse": "search the nearby workshop area for the familiar crate before deciding what to do next",
+          "activeRunId": "run.janek.search-nearby-workshop",
+          "activeRunCanMutateWorld": true,
+          "suspendedByMatterId": null,
+          "janekPosition": {
+            "x": 1952.1700291273119,
+            "y": 724.6973820201079
+          },
+          "janekVelocity": {
+            "x": 0,
+            "y": 0
+          },
+          "janekFacing": {
+            "x": -1,
+            "y": 0
+          },
+          "crateLocation": {
+            "kind": "free",
+            "position": {
+              "x": 2752,
+              "y": 720
+            }
+          },
+          "addressedPercept": {
+            "id": "percept:resident.janek:658:15",
+            "occurrenceId": "occurrence:658:0",
+            "tick": 658,
+            "phenomenon": "speech",
+            "modality": "hearing",
+            "actorId": "player.jozz",
+            "subjectId": null,
+            "spatial": {
+              "kind": "directional",
+              "direction": {
+                "x": -1,
+                "y": 0
+              },
+              "distanceBand": "far"
+            },
+            "summary": "speech",
+            "text": "Janek, chwila!",
+            "addressed": true
+          },
+          "responseOccurrence": {
+            "id": "occurrence:659:1",
+            "tick": 659,
+            "kind": "speech",
+            "actorId": "resident.janek",
+            "subjectId": null,
+            "position": {
+              "x": 1952.1700291273119,
+              "y": 724.6973820201079
+            },
+            "radius": 420,
+            "summary": "speech",
+            "text": "Tak?",
+            "addressedActorIds": [
+              "player.jozz"
+            ]
+          },
+          "actionFacts": []
+        },
+        "afterResumeMotion": {
+          "scenarioId": "browser-missing-crate-interruption",
+          "tick": 686,
+          "matterStatus": "active",
+          "semanticRevision": 3,
+          "semanticCourse": "search the nearby workshop area for the familiar crate before deciding what to do next",
+          "activeRunId": "run.janek.search-nearby-workshop",
+          "activeRunCanMutateWorld": true,
+          "suspendedByMatterId": null,
+          "janekPosition": {
+            "x": 1953.7532532013297,
+            "y": 724.6787815928241
+          },
+          "janekVelocity": {
+            "x": 94.9934444410701,
+            "y": -1.1160256370271782
+          },
+          "janekFacing": {
+            "x": 0.9999309941164624,
+            "y": -0.01174763828449585
+          },
+          "crateLocation": {
+            "kind": "free",
+            "position": {
+              "x": 2752,
+              "y": 720
+            }
+          },
+          "addressedPercept": {
+            "id": "percept:resident.janek:658:15",
+            "occurrenceId": "occurrence:658:0",
+            "tick": 658,
+            "phenomenon": "speech",
+            "modality": "hearing",
+            "actorId": "player.jozz",
+            "subjectId": null,
+            "spatial": {
+              "kind": "directional",
+              "direction": {
+                "x": -1,
+                "y": 0
+              },
+              "distanceBand": "far"
+            },
+            "summary": "speech",
+            "text": "Janek, chwila!",
+            "addressed": true
+          },
+          "responseOccurrence": {
+            "id": "occurrence:659:1",
+            "tick": 659,
+            "kind": "speech",
+            "actorId": "resident.janek",
+            "subjectId": null,
+            "position": {
+              "x": 1952.1700291273119,
+              "y": 724.6973820201079
+            },
+            "radius": 420,
+            "summary": "speech",
+            "text": "Tak?",
+            "addressedActorIds": [
+              "player.jozz"
+            ]
+          },
+          "actionFacts": []
+        }
+      }
+    },
+    {
+      "name": "after returning to its own search Janek still reaches the original factual pickup consequence",
+      "pass": true,
+      "detail": {
+        "scenarioId": "browser-missing-crate-interruption",
+        "tick": 1175,
+        "matterStatus": "resolved",
+        "semanticRevision": 5,
+        "semanticCourse": "pick up the reacquired workshop crate",
+        "activeRunId": null,
+        "activeRunCanMutateWorld": false,
+        "suspendedByMatterId": null,
+        "janekPosition": {
+          "x": 2697.3989900212105,
+          "y": 720.1476526751023
+        },
+        "janekVelocity": {
+          "x": 0,
+          "y": 0
+        },
+        "janekFacing": {
+          "x": 0.999996343640333,
+          "y": -0.002704201539321199
+        },
+        "crateLocation": {
+          "kind": "held",
+          "actorId": "resident.janek"
+        },
+        "addressedPercept": {
+          "id": "percept:resident.janek:658:15",
+          "occurrenceId": "occurrence:658:0",
+          "tick": 658,
+          "phenomenon": "speech",
+          "modality": "hearing",
+          "actorId": "player.jozz",
+          "subjectId": null,
+          "spatial": {
+            "kind": "directional",
+            "direction": {
+              "x": -1,
+              "y": 0
+            },
+            "distanceBand": "far"
+          },
+          "summary": "speech",
+          "text": "Janek, chwila!",
+          "addressed": true
+        },
+        "responseOccurrence": {
+          "id": "occurrence:659:1",
+          "tick": 659,
+          "kind": "speech",
+          "actorId": "resident.janek",
+          "subjectId": null,
+          "position": {
+            "x": 1952.1700291273119,
+            "y": 724.6973820201079
+          },
+          "radius": 420,
+          "summary": "speech",
+          "text": "Tak?",
+          "addressedActorIds": [
+            "player.jozz"
+          ]
+        },
+        "actionFacts": [
+          {
+            "tick": 1174,
+            "runId": "run.janek.pickup-reacquired-crate",
+            "kind": "material_pickup",
+            "objectId": "crate.workshop.01",
+            "outcomeStatus": "succeeded",
+            "code": "picked_up"
+          }
+        ]
+      }
+    },
+    {
+      "name": "interruptedHash is reproducible across real-Chrome reloads",
+      "pass": true,
+      "detail": [
+        "ed5fa7bf6bf26289274acadbe3a8a472bc82b8425ebbcc9f6831dd86832103ac",
+        "ed5fa7bf6bf26289274acadbe3a8a472bc82b8425ebbcc9f6831dd86832103ac",
+        "ed5fa7bf6bf26289274acadbe3a8a472bc82b8425ebbcc9f6831dd86832103ac"
+      ]
+    },
+    {
+      "name": "respondedHash is reproducible across real-Chrome reloads",
+      "pass": true,
+      "detail": [
+        "5289912a332adaa3e0d09b8f9f975a5427891ebfbce621f35e54613b9c0e2fab",
+        "5289912a332adaa3e0d09b8f9f975a5427891ebfbce621f35e54613b9c0e2fab",
+        "5289912a332adaa3e0d09b8f9f975a5427891ebfbce621f35e54613b9c0e2fab"
+      ]
+    },
+    {
+      "name": "resumedHash is reproducible across real-Chrome reloads",
+      "pass": true,
+      "detail": [
+        "4cefa0bde0a1944730f29a204512a338363a48b4c62803890ebc9a3dc48577f1",
+        "4cefa0bde0a1944730f29a204512a338363a48b4c62803890ebc9a3dc48577f1",
+        "4cefa0bde0a1944730f29a204512a338363a48b4c62803890ebc9a3dc48577f1"
+      ]
+    },
+    {
+      "name": "afterResumeMotionHash is reproducible across real-Chrome reloads",
+      "pass": true,
+      "detail": [
+        "006dc2c119777c7d2b66503d9de505d0cd2da0d2e03d0cf82c99c6b9bac196d6",
+        "006dc2c119777c7d2b66503d9de505d0cd2da0d2e03d0cf82c99c6b9bac196d6",
+        "006dc2c119777c7d2b66503d9de505d0cd2da0d2e03d0cf82c99c6b9bac196d6"
+      ]
+    },
+    {
+      "name": "resolvedHash is reproducible across real-Chrome reloads",
+      "pass": true,
+      "detail": [
+        "9f658343e61adf921550e9359eeb3ce611e0b9ca806d607a99ecf490ab02fe6c",
+        "9f658343e61adf921550e9359eeb3ce611e0b9ca806d607a99ecf490ab02fe6c",
+        "9f658343e61adf921550e9359eeb3ce611e0b9ca806d607a99ecf490ab02fe6c"
+      ]
+    },
+    {
+      "name": "attention-turn participant frames are non-empty and screenshot capture is canonically read-only",
+      "pass": true,
+      "detail": {
+        "searching": {
+          "fileName": "missing-crate-interruption-01-searching.png",
+          "tick": 658,
+          "bytes": 41823,
+          "canonicalHash": "76ada9f1b99a4a8a08e4d1d403d784a0e98745feb1335909461101d062f7a784"
+        },
+        "responded": {
+          "fileName": "missing-crate-interruption-02-turned-and-responded.png",
+          "tick": 660,
+          "bytes": 43937,
+          "canonicalHash": "ffabf2233a91efd9fd62b14b5a481bf136862fffdc90626f4892cc579a807a49"
+        },
+        "returnedToSearch": {
+          "fileName": "missing-crate-interruption-03-returned-to-search.png",
+          "tick": 686,
+          "bytes": 43907,
+          "canonicalHash": "78adb2ca8352d76878bfcc7b63fc40d89b885b22993a759aacba1a126d627ed0"
+        },
+        "resolved": {
+          "fileName": "missing-crate-interruption-04-resolved.png",
+          "tick": 1175,
+          "bytes": 41227,
+          "canonicalHash": "4c3f216ec99a06824b90b7b012cd916ad03ef42d6bb5b9d16bc7b8836dccbadb"
+        }
+      }
+    },
+    {
+      "name": "interruption attention browser specimen has no uncaught runtime exceptions",
+      "pass": true,
+      "detail": []
+    }
+  ],
+  "runtimeExceptions": [],
+  "runs": [
+    {
+      "runIndex": 0,
+      "call": {
+        "id": "occurrence:658:0",
+        "tick": 658,
+        "kind": "speech",
+        "actorId": "player.jozz",
+        "subjectId": null,
+        "position": {
+          "x": 1600,
+          "y": 620
+        },
+        "radius": 420,
+        "summary": "speech",
+        "text": "Janek, chwila!",
+        "addressedActorIds": [
+          "resident.janek"
+        ]
+      },
+      "searching": {
+        "scenarioId": "browser-missing-crate-interruption",
+        "tick": 658,
+        "matterStatus": "active",
+        "semanticRevision": 3,
+        "semanticCourse": "search the nearby workshop area for the familiar crate before deciding what to do next",
+        "activeRunId": "run.janek.search-nearby-workshop",
+        "activeRunCanMutateWorld": true,
+        "suspendedByMatterId": null,
+        "janekPosition": {
+          "x": 1950.586805053294,
+          "y": 724.7159824473916
+        },
+        "janekVelocity": {
+          "x": 94.9934444410701,
+          "y": -1.1160256370271782
+        },
+        "janekFacing": {
+          "x": 0.9999309941164624,
+          "y": -0.01174763828449585
+        },
+        "crateLocation": {
+          "kind": "free",
+          "position": {
+            "x": 2752,
+            "y": 720
+          }
+        },
+        "addressedPercept": null,
+        "responseOccurrence": null,
+        "actionFacts": []
+      },
+      "interrupted": {
+        "scenarioId": "browser-missing-crate-interruption",
+        "tick": 659,
+        "matterStatus": "suspended",
+        "semanticRevision": 3,
+        "semanticCourse": "search the nearby workshop area for the familiar crate before deciding what to do next",
+        "activeRunId": "run.janek.search-nearby-workshop",
+        "activeRunCanMutateWorld": false,
+        "suspendedByMatterId": "matter.janek.player-contact:658:percept-resident.janek-658-15",
+        "janekPosition": {
+          "x": 1952.1700291273119,
+          "y": 724.6973820201079
+        },
+        "janekVelocity": {
+          "x": 0,
+          "y": 0
+        },
+        "janekFacing": {
+          "x": 0.9999309941164624,
+          "y": -0.01174763828449585
+        },
+        "crateLocation": {
+          "kind": "free",
+          "position": {
+            "x": 2752,
+            "y": 720
+          }
+        },
+        "addressedPercept": {
+          "id": "percept:resident.janek:658:15",
+          "occurrenceId": "occurrence:658:0",
+          "tick": 658,
+          "phenomenon": "speech",
+          "modality": "hearing",
+          "actorId": "player.jozz",
+          "subjectId": null,
+          "spatial": {
+            "kind": "directional",
+            "direction": {
+              "x": -1,
+              "y": 0
+            },
+            "distanceBand": "far"
+          },
+          "summary": "speech",
+          "text": "Janek, chwila!",
+          "addressed": true
+        },
+        "responseOccurrence": null,
+        "actionFacts": []
+      },
+      "responded": {
+        "scenarioId": "browser-missing-crate-interruption",
+        "tick": 660,
+        "matterStatus": "suspended",
+        "semanticRevision": 3,
+        "semanticCourse": "search the nearby workshop area for the familiar crate before deciding what to do next",
+        "activeRunId": "run.janek.search-nearby-workshop",
+        "activeRunCanMutateWorld": false,
+        "suspendedByMatterId": "matter.janek.player-contact:658:percept-resident.janek-658-15",
+        "janekPosition": {
+          "x": 1952.1700291273119,
+          "y": 724.6973820201079
+        },
+        "janekVelocity": {
+          "x": 0,
+          "y": 0
+        },
+        "janekFacing": {
+          "x": -1,
+          "y": 0
+        },
+        "crateLocation": {
+          "kind": "free",
+          "position": {
+            "x": 2752,
+            "y": 720
+          }
+        },
+        "addressedPercept": {
+          "id": "percept:resident.janek:658:15",
+          "occurrenceId": "occurrence:658:0",
+          "tick": 658,
+          "phenomenon": "speech",
+          "modality": "hearing",
+          "actorId": "player.jozz",
+          "subjectId": null,
+          "spatial": {
+            "kind": "directional",
+            "direction": {
+              "x": -1,
+              "y": 0
+            },
+            "distanceBand": "far"
+          },
+          "summary": "speech",
+          "text": "Janek, chwila!",
+          "addressed": true
+        },
+        "responseOccurrence": {
+          "id": "occurrence:659:1",
+          "tick": 659,
+          "kind": "speech",
+          "actorId": "resident.janek",
+          "subjectId": null,
+          "position": {
+            "x": 1952.1700291273119,
+            "y": 724.6973820201079
+          },
+          "radius": 420,
+          "summary": "speech",
+          "text": "Tak?",
+          "addressedActorIds": [
+            "player.jozz"
+          ]
+        },
+        "actionFacts": []
+      },
+      "holdInvariant": {
+        "positionStable": true,
+        "facingStable": true,
+        "semanticRevisionStable": true,
+        "runIdStable": true,
+        "authorityDeniedThroughout": true,
+        "samples": 24
+      },
+      "resumed": {
+        "scenarioId": "browser-missing-crate-interruption",
+        "tick": 685,
+        "matterStatus": "active",
+        "semanticRevision": 3,
+        "semanticCourse": "search the nearby workshop area for the familiar crate before deciding what to do next",
+        "activeRunId": "run.janek.search-nearby-workshop",
+        "activeRunCanMutateWorld": true,
+        "suspendedByMatterId": null,
+        "janekPosition": {
+          "x": 1952.1700291273119,
+          "y": 724.6973820201079
+        },
+        "janekVelocity": {
+          "x": 0,
+          "y": 0
+        },
+        "janekFacing": {
+          "x": -1,
+          "y": 0
+        },
+        "crateLocation": {
+          "kind": "free",
+          "position": {
+            "x": 2752,
+            "y": 720
+          }
+        },
+        "addressedPercept": {
+          "id": "percept:resident.janek:658:15",
+          "occurrenceId": "occurrence:658:0",
+          "tick": 658,
+          "phenomenon": "speech",
+          "modality": "hearing",
+          "actorId": "player.jozz",
+          "subjectId": null,
+          "spatial": {
+            "kind": "directional",
+            "direction": {
+              "x": -1,
+              "y": 0
+            },
+            "distanceBand": "far"
+          },
+          "summary": "speech",
+          "text": "Janek, chwila!",
+          "addressed": true
+        },
+        "responseOccurrence": {
+          "id": "occurrence:659:1",
+          "tick": 659,
+          "kind": "speech",
+          "actorId": "resident.janek",
+          "subjectId": null,
+          "position": {
+            "x": 1952.1700291273119,
+            "y": 724.6973820201079
+          },
+          "radius": 420,
+          "summary": "speech",
+          "text": "Tak?",
+          "addressedActorIds": [
+            "player.jozz"
+          ]
+        },
+        "actionFacts": []
+      },
+      "afterResumeMotion": {
+        "scenarioId": "browser-missing-crate-interruption",
+        "tick": 686,
+        "matterStatus": "active",
+        "semanticRevision": 3,
+        "semanticCourse": "search the nearby workshop area for the familiar crate before deciding what to do next",
+        "activeRunId": "run.janek.search-nearby-workshop",
+        "activeRunCanMutateWorld": true,
+        "suspendedByMatterId": null,
+        "janekPosition": {
+          "x": 1953.7532532013297,
+          "y": 724.6787815928241
+        },
+        "janekVelocity": {
+          "x": 94.9934444410701,
+          "y": -1.1160256370271782
+        },
+        "janekFacing": {
+          "x": 0.9999309941164624,
+          "y": -0.01174763828449585
+        },
+        "crateLocation": {
+          "kind": "free",
+          "position": {
+            "x": 2752,
+            "y": 720
+          }
+        },
+        "addressedPercept": {
+          "id": "percept:resident.janek:658:15",
+          "occurrenceId": "occurrence:658:0",
+          "tick": 658,
+          "phenomenon": "speech",
+          "modality": "hearing",
+          "actorId": "player.jozz",
+          "subjectId": null,
+          "spatial": {
+            "kind": "directional",
+            "direction": {
+              "x": -1,
+              "y": 0
+            },
+            "distanceBand": "far"
+          },
+          "summary": "speech",
+          "text": "Janek, chwila!",
+          "addressed": true
+        },
+        "responseOccurrence": {
+          "id": "occurrence:659:1",
+          "tick": 659,
+          "kind": "speech",
+          "actorId": "resident.janek",
+          "subjectId": null,
+          "position": {
+            "x": 1952.1700291273119,
+            "y": 724.6973820201079
+          },
+          "radius": 420,
+          "summary": "speech",
+          "text": "Tak?",
+          "addressedActorIds": [
+            "player.jozz"
+          ]
+        },
+        "actionFacts": []
+      },
+      "resolved": {
+        "scenarioId": "browser-missing-crate-interruption",
+        "tick": 1175,
+        "matterStatus": "resolved",
+        "semanticRevision": 5,
+        "semanticCourse": "pick up the reacquired workshop crate",
+        "activeRunId": null,
+        "activeRunCanMutateWorld": false,
+        "suspendedByMatterId": null,
+        "janekPosition": {
+          "x": 2697.3989900212105,
+          "y": 720.1476526751023
+        },
+        "janekVelocity": {
+          "x": 0,
+          "y": 0
+        },
+        "janekFacing": {
+          "x": 0.999996343640333,
+          "y": -0.002704201539321199
+        },
+        "crateLocation": {
+          "kind": "held",
+          "actorId": "resident.janek"
+        },
+        "addressedPercept": {
+          "id": "percept:resident.janek:658:15",
+          "occurrenceId": "occurrence:658:0",
+          "tick": 658,
+          "phenomenon": "speech",
+          "modality": "hearing",
+          "actorId": "player.jozz",
+          "subjectId": null,
+          "spatial": {
+            "kind": "directional",
+            "direction": {
+              "x": -1,
+              "y": 0
+            },
+            "distanceBand": "far"
+          },
+          "summary": "speech",
+          "text": "Janek, chwila!",
+          "addressed": true
+        },
+        "responseOccurrence": {
+          "id": "occurrence:659:1",
+          "tick": 659,
+          "kind": "speech",
+          "actorId": "resident.janek",
+          "subjectId": null,
+          "position": {
+            "x": 1952.1700291273119,
+            "y": 724.6973820201079
+          },
+          "radius": 420,
+          "summary": "speech",
+          "text": "Tak?",
+          "addressedActorIds": [
+            "player.jozz"
+          ]
+        },
+        "actionFacts": [
+          {
+            "tick": 1174,
+            "runId": "run.janek.pickup-reacquired-crate",
+            "kind": "material_pickup",
+            "objectId": "crate.workshop.01",
+            "outcomeStatus": "succeeded",
+            "code": "picked_up"
+          }
+        ]
+      },
+      "interruptedHash": "ed5fa7bf6bf26289274acadbe3a8a472bc82b8425ebbcc9f6831dd86832103ac",
+      "respondedHash": "5289912a332adaa3e0d09b8f9f975a5427891ebfbce621f35e54613b9c0e2fab",
+      "resumedHash": "4cefa0bde0a1944730f29a204512a338363a48b4c62803890ebc9a3dc48577f1",
+      "afterResumeMotionHash": "006dc2c119777c7d2b66503d9de505d0cd2da0d2e03d0cf82c99c6b9bac196d6",
+      "resolvedHash": "9f658343e61adf921550e9359eeb3ce611e0b9ca806d607a99ecf490ab02fe6c",
+      "visualEvidence": {
+        "searching": {
+          "fileName": "missing-crate-interruption-01-searching.png",
+          "tick": 658,
+          "bytes": 41823,
+          "canonicalHash": "76ada9f1b99a4a8a08e4d1d403d784a0e98745feb1335909461101d062f7a784"
+        },
+        "responded": {
+          "fileName": "missing-crate-interruption-02-turned-and-responded.png",
+          "tick": 660,
+          "bytes": 43937,
+          "canonicalHash": "ffabf2233a91efd9fd62b14b5a481bf136862fffdc90626f4892cc579a807a49"
+        },
+        "returnedToSearch": {
+          "fileName": "missing-crate-interruption-03-returned-to-search.png",
+          "tick": 686,
+          "bytes": 43907,
+          "canonicalHash": "78adb2ca8352d76878bfcc7b63fc40d89b885b22993a759aacba1a126d627ed0"
+        },
+        "resolved": {
+          "fileName": "missing-crate-interruption-04-resolved.png",
+          "tick": 1175,
+          "bytes": 41227,
+          "canonicalHash": "4c3f216ec99a06824b90b7b012cd916ad03ef42d6bb5b9d16bc7b8836dccbadb"
+        }
+      }
+    },
+    {
+      "runIndex": 1,
+      "call": {
+        "id": "occurrence:658:0",
+        "tick": 658,
+        "kind": "speech",
+        "actorId": "player.jozz",
+        "subjectId": null,
+        "position": {
+          "x": 1600,
+          "y": 620
+        },
+        "radius": 420,
+        "summary": "speech",
+        "text": "Janek, chwila!",
+        "addressedActorIds": [
+          "resident.janek"
+        ]
+      },
+      "searching": {
+        "scenarioId": "browser-missing-crate-interruption",
+        "tick": 658,
+        "matterStatus": "active",
+        "semanticRevision": 3,
+        "semanticCourse": "search the nearby workshop area for the familiar crate before deciding what to do next",
+        "activeRunId": "run.janek.search-nearby-workshop",
+        "activeRunCanMutateWorld": true,
+        "suspendedByMatterId": null,
+        "janekPosition": {
+          "x": 1950.586805053294,
+          "y": 724.7159824473916
+        },
+        "janekVelocity": {
+          "x": 94.9934444410701,
+          "y": -1.1160256370271782
+        },
+        "janekFacing": {
+          "x": 0.9999309941164624,
+          "y": -0.01174763828449585
+        },
+        "crateLocation": {
+          "kind": "free",
+          "position": {
+            "x": 2752,
+            "y": 720
+          }
+        },
+        "addressedPercept": null,
+        "responseOccurrence": null,
+        "actionFacts": []
+      },
+      "interrupted": {
+        "scenarioId": "browser-missing-crate-interruption",
+        "tick": 659,
+        "matterStatus": "suspended",
+        "semanticRevision": 3,
+        "semanticCourse": "search the nearby workshop area for the familiar crate before deciding what to do next",
+        "activeRunId": "run.janek.search-nearby-workshop",
+        "activeRunCanMutateWorld": false,
+        "suspendedByMatterId": "matter.janek.player-contact:658:percept-resident.janek-658-15",
+        "janekPosition": {
+          "x": 1952.1700291273119,
+          "y": 724.6973820201079
+        },
+        "janekVelocity": {
+          "x": 0,
+          "y": 0
+        },
+        "janekFacing": {
+          "x": 0.9999309941164624,
+          "y": -0.01174763828449585
+        },
+        "crateLocation": {
+          "kind": "free",
+          "position": {
+            "x": 2752,
+            "y": 720
+          }
+        },
+        "addressedPercept": {
+          "id": "percept:resident.janek:658:15",
+          "occurrenceId": "occurrence:658:0",
+          "tick": 658,
+          "phenomenon": "speech",
+          "modality": "hearing",
+          "actorId": "player.jozz",
+          "subjectId": null,
+          "spatial": {
+            "kind": "directional",
+            "direction": {
+              "x": -1,
+              "y": 0
+            },
+            "distanceBand": "far"
+          },
+          "summary": "speech",
+          "text": "Janek, chwila!",
+          "addressed": true
+        },
+        "responseOccurrence": null,
+        "actionFacts": []
+      },
+      "responded": {
+        "scenarioId": "browser-missing-crate-interruption",
+        "tick": 660,
+        "matterStatus": "suspended",
+        "semanticRevision": 3,
+        "semanticCourse": "search the nearby workshop area for the familiar crate before deciding what to do next",
+        "activeRunId": "run.janek.search-nearby-workshop",
+        "activeRunCanMutateWorld": false,
+        "suspendedByMatterId": "matter.janek.player-contact:658:percept-resident.janek-658-15",
+        "janekPosition": {
+          "x": 1952.1700291273119,
+          "y": 724.6973820201079
+        },
+        "janekVelocity": {
+          "x": 0,
+          "y": 0
+        },
+        "janekFacing": {
+          "x": -1,
+          "y": 0
+        },
+        "crateLocation": {
+          "kind": "free",
+          "position": {
+            "x": 2752,
+            "y": 720
+          }
+        },
+        "addressedPercept": {
+          "id": "percept:resident.janek:658:15",
+          "occurrenceId": "occurrence:658:0",
+          "tick": 658,
+          "phenomenon": "speech",
+          "modality": "hearing",
+          "actorId": "player.jozz",
+          "subjectId": null,
+          "spatial": {
+            "kind": "directional",
+            "direction": {
+              "x": -1,
+              "y": 0
+            },
+            "distanceBand": "far"
+          },
+          "summary": "speech",
+          "text": "Janek, chwila!",
+          "addressed": true
+        },
+        "responseOccurrence": {
+          "id": "occurrence:659:1",
+          "tick": 659,
+          "kind": "speech",
+          "actorId": "resident.janek",
+          "subjectId": null,
+          "position": {
+            "x": 1952.1700291273119,
+            "y": 724.6973820201079
+          },
+          "radius": 420,
+          "summary": "speech",
+          "text": "Tak?",
+          "addressedActorIds": [
+            "player.jozz"
+          ]
+        },
+        "actionFacts": []
+      },
+      "holdInvariant": {
+        "positionStable": true,
+        "facingStable": true,
+        "semanticRevisionStable": true,
+        "runIdStable": true,
+        "authorityDeniedThroughout": true,
+        "samples": 24
+      },
+      "resumed": {
+        "scenarioId": "browser-missing-crate-interruption",
+        "tick": 685,
+        "matterStatus": "active",
+        "semanticRevision": 3,
+        "semanticCourse": "search the nearby workshop area for the familiar crate before deciding what to do next",
+        "activeRunId": "run.janek.search-nearby-workshop",
+        "activeRunCanMutateWorld": true,
+        "suspendedByMatterId": null,
+        "janekPosition": {
+          "x": 1952.1700291273119,
+          "y": 724.6973820201079
+        },
+        "janekVelocity": {
+          "x": 0,
+          "y": 0
+        },
+        "janekFacing": {
+          "x": -1,
+          "y": 0
+        },
+        "crateLocation": {
+          "kind": "free",
+          "position": {
+            "x": 2752,
+            "y": 720
+          }
+        },
+        "addressedPercept": {
+          "id": "percept:resident.janek:658:15",
+          "occurrenceId": "occurrence:658:0",
+          "tick": 658,
+          "phenomenon": "speech",
+          "modality": "hearing",
+          "actorId": "player.jozz",
+          "subjectId": null,
+          "spatial": {
+            "kind": "directional",
+            "direction": {
+              "x": -1,
+              "y": 0
+            },
+            "distanceBand": "far"
+          },
+          "summary": "speech",
+          "text": "Janek, chwila!",
+          "addressed": true
+        },
+        "responseOccurrence": {
+          "id": "occurrence:659:1",
+          "tick": 659,
+          "kind": "speech",
+          "actorId": "resident.janek",
+          "subjectId": null,
+          "position": {
+            "x": 1952.1700291273119,
+            "y": 724.6973820201079
+          },
+          "radius": 420,
+          "summary": "speech",
+          "text": "Tak?",
+          "addressedActorIds": [
+            "player.jozz"
+          ]
+        },
+        "actionFacts": []
+      },
+      "afterResumeMotion": {
+        "scenarioId": "browser-missing-crate-interruption",
+        "tick": 686,
+        "matterStatus": "active",
+        "semanticRevision": 3,
+        "semanticCourse": "search the nearby workshop area for the familiar crate before deciding what to do next",
+        "activeRunId": "run.janek.search-nearby-workshop",
+        "activeRunCanMutateWorld": true,
+        "suspendedByMatterId": null,
+        "janekPosition": {
+          "x": 1953.7532532013297,
+          "y": 724.6787815928241
+        },
+        "janekVelocity": {
+          "x": 94.9934444410701,
+          "y": -1.1160256370271782
+        },
+        "janekFacing": {
+          "x": 0.9999309941164624,
+          "y": -0.01174763828449585
+        },
+        "crateLocation": {
+          "kind": "free",
+          "position": {
+            "x": 2752,
+            "y": 720
+          }
+        },
+        "addressedPercept": {
+          "id": "percept:resident.janek:658:15",
+          "occurrenceId": "occurrence:658:0",
+          "tick": 658,
+          "phenomenon": "speech",
+          "modality": "hearing",
+          "actorId": "player.jozz",
+          "subjectId": null,
+          "spatial": {
+            "kind": "directional",
+            "direction": {
+              "x": -1,
+              "y": 0
+            },
+            "distanceBand": "far"
+          },
+          "summary": "speech",
+          "text": "Janek, chwila!",
+          "addressed": true
+        },
+        "responseOccurrence": {
+          "id": "occurrence:659:1",
+          "tick": 659,
+          "kind": "speech",
+          "actorId": "resident.janek",
+          "subjectId": null,
+          "position": {
+            "x": 1952.1700291273119,
+            "y": 724.6973820201079
+          },
+          "radius": 420,
+          "summary": "speech",
+          "text": "Tak?",
+          "addressedActorIds": [
+            "player.jozz"
+          ]
+        },
+        "actionFacts": []
+      },
+      "resolved": {
+        "scenarioId": "browser-missing-crate-interruption",
+        "tick": 1175,
+        "matterStatus": "resolved",
+        "semanticRevision": 5,
+        "semanticCourse": "pick up the reacquired workshop crate",
+        "activeRunId": null,
+        "activeRunCanMutateWorld": false,
+        "suspendedByMatterId": null,
+        "janekPosition": {
+          "x": 2697.3989900212105,
+          "y": 720.1476526751023
+        },
+        "janekVelocity": {
+          "x": 0,
+          "y": 0
+        },
+        "janekFacing": {
+          "x": 0.999996343640333,
+          "y": -0.002704201539321199
+        },
+        "crateLocation": {
+          "kind": "held",
+          "actorId": "resident.janek"
+        },
+        "addressedPercept": {
+          "id": "percept:resident.janek:658:15",
+          "occurrenceId": "occurrence:658:0",
+          "tick": 658,
+          "phenomenon": "speech",
+          "modality": "hearing",
+          "actorId": "player.jozz",
+          "subjectId": null,
+          "spatial": {
+            "kind": "directional",
+            "direction": {
+              "x": -1,
+              "y": 0
+            },
+            "distanceBand": "far"
+          },
+          "summary": "speech",
+          "text": "Janek, chwila!",
+          "addressed": true
+        },
+        "responseOccurrence": {
+          "id": "occurrence:659:1",
+          "tick": 659,
+          "kind": "speech",
+          "actorId": "resident.janek",
+          "subjectId": null,
+          "position": {
+            "x": 1952.1700291273119,
+            "y": 724.6973820201079
+          },
+          "radius": 420,
+          "summary": "speech",
+          "text": "Tak?",
+          "addressedActorIds": [
+            "player.jozz"
+          ]
+        },
+        "actionFacts": [
+          {
+            "tick": 1174,
+            "runId": "run.janek.pickup-reacquired-crate",
+            "kind": "material_pickup",
+            "objectId": "crate.workshop.01",
+            "outcomeStatus": "succeeded",
+            "code": "picked_up"
+          }
+        ]
+      },
+      "interruptedHash": "ed5fa7bf6bf26289274acadbe3a8a472bc82b8425ebbcc9f6831dd86832103ac",
+      "respondedHash": "5289912a332adaa3e0d09b8f9f975a5427891ebfbce621f35e54613b9c0e2fab",
+      "resumedHash": "4cefa0bde0a1944730f29a204512a338363a48b4c62803890ebc9a3dc48577f1",
+      "afterResumeMotionHash": "006dc2c119777c7d2b66503d9de505d0cd2da0d2e03d0cf82c99c6b9bac196d6",
+      "resolvedHash": "9f658343e61adf921550e9359eeb3ce611e0b9ca806d607a99ecf490ab02fe6c",
+      "visualEvidence": null
+    },
+    {
+      "runIndex": 2,
+      "call": {
+        "id": "occurrence:658:0",
+        "tick": 658,
+        "kind": "speech",
+        "actorId": "player.jozz",
+        "subjectId": null,
+        "position": {
+          "x": 1600,
+          "y": 620
+        },
+        "radius": 420,
+        "summary": "speech",
+        "text": "Janek, chwila!",
+        "addressedActorIds": [
+          "resident.janek"
+        ]
+      },
+      "searching": {
+        "scenarioId": "browser-missing-crate-interruption",
+        "tick": 658,
+        "matterStatus": "active",
+        "semanticRevision": 3,
+        "semanticCourse": "search the nearby workshop area for the familiar crate before deciding what to do next",
+        "activeRunId": "run.janek.search-nearby-workshop",
+        "activeRunCanMutateWorld": true,
+        "suspendedByMatterId": null,
+        "janekPosition": {
+          "x": 1950.586805053294,
+          "y": 724.7159824473916
+        },
+        "janekVelocity": {
+          "x": 94.9934444410701,
+          "y": -1.1160256370271782
+        },
+        "janekFacing": {
+          "x": 0.9999309941164624,
+          "y": -0.01174763828449585
+        },
+        "crateLocation": {
+          "kind": "free",
+          "position": {
+            "x": 2752,
+            "y": 720
+          }
+        },
+        "addressedPercept": null,
+        "responseOccurrence": null,
+        "actionFacts": []
+      },
+      "interrupted": {
+        "scenarioId": "browser-missing-crate-interruption",
+        "tick": 659,
+        "matterStatus": "suspended",
+        "semanticRevision": 3,
+        "semanticCourse": "search the nearby workshop area for the familiar crate before deciding what to do next",
+        "activeRunId": "run.janek.search-nearby-workshop",
+        "activeRunCanMutateWorld": false,
+        "suspendedByMatterId": "matter.janek.player-contact:658:percept-resident.janek-658-15",
+        "janekPosition": {
+          "x": 1952.1700291273119,
+          "y": 724.6973820201079
+        },
+        "janekVelocity": {
+          "x": 0,
+          "y": 0
+        },
+        "janekFacing": {
+          "x": 0.9999309941164624,
+          "y": -0.01174763828449585
+        },
+        "crateLocation": {
+          "kind": "free",
+          "position": {
+            "x": 2752,
+            "y": 720
+          }
+        },
+        "addressedPercept": {
+          "id": "percept:resident.janek:658:15",
+          "occurrenceId": "occurrence:658:0",
+          "tick": 658,
+          "phenomenon": "speech",
+          "modality": "hearing",
+          "actorId": "player.jozz",
+          "subjectId": null,
+          "spatial": {
+            "kind": "directional",
+            "direction": {
+              "x": -1,
+              "y": 0
+            },
+            "distanceBand": "far"
+          },
+          "summary": "speech",
+          "text": "Janek, chwila!",
+          "addressed": true
+        },
+        "responseOccurrence": null,
+        "actionFacts": []
+      },
+      "responded": {
+        "scenarioId": "browser-missing-crate-interruption",
+        "tick": 660,
+        "matterStatus": "suspended",
+        "semanticRevision": 3,
+        "semanticCourse": "search the nearby workshop area for the familiar crate before deciding what to do next",
+        "activeRunId": "run.janek.search-nearby-workshop",
+        "activeRunCanMutateWorld": false,
+        "suspendedByMatterId": "matter.janek.player-contact:658:percept-resident.janek-658-15",
+        "janekPosition": {
+          "x": 1952.1700291273119,
+          "y": 724.6973820201079
+        },
+        "janekVelocity": {
+          "x": 0,
+          "y": 0
+        },
+        "janekFacing": {
+          "x": -1,
+          "y": 0
+        },
+        "crateLocation": {
+          "kind": "free",
+          "position": {
+            "x": 2752,
+            "y": 720
+          }
+        },
+        "addressedPercept": {
+          "id": "percept:resident.janek:658:15",
+          "occurrenceId": "occurrence:658:0",
+          "tick": 658,
+          "phenomenon": "speech",
+          "modality": "hearing",
+          "actorId": "player.jozz",
+          "subjectId": null,
+          "spatial": {
+            "kind": "directional",
+            "direction": {
+              "x": -1,
+              "y": 0
+            },
+            "distanceBand": "far"
+          },
+          "summary": "speech",
+          "text": "Janek, chwila!",
+          "addressed": true
+        },
+        "responseOccurrence": {
+          "id": "occurrence:659:1",
+          "tick": 659,
+          "kind": "speech",
+          "actorId": "resident.janek",
+          "subjectId": null,
+          "position": {
+            "x": 1952.1700291273119,
+            "y": 724.6973820201079
+          },
+          "radius": 420,
+          "summary": "speech",
+          "text": "Tak?",
+          "addressedActorIds": [
+            "player.jozz"
+          ]
+        },
+        "actionFacts": []
+      },
+      "holdInvariant": {
+        "positionStable": true,
+        "facingStable": true,
+        "semanticRevisionStable": true,
+        "runIdStable": true,
+        "authorityDeniedThroughout": true,
+        "samples": 24
+      },
+      "resumed": {
+        "scenarioId": "browser-missing-crate-interruption",
+        "tick": 685,
+        "matterStatus": "active",
+        "semanticRevision": 3,
+        "semanticCourse": "search the nearby workshop area for the familiar crate before deciding what to do next",
+        "activeRunId": "run.janek.search-nearby-workshop",
+        "activeRunCanMutateWorld": true,
+        "suspendedByMatterId": null,
+        "janekPosition": {
+          "x": 1952.1700291273119,
+          "y": 724.6973820201079
+        },
+        "janekVelocity": {
+          "x": 0,
+          "y": 0
+        },
+        "janekFacing": {
+          "x": -1,
+          "y": 0
+        },
+        "crateLocation": {
+          "kind": "free",
+          "position": {
+            "x": 2752,
+            "y": 720
+          }
+        },
+        "addressedPercept": {
+          "id": "percept:resident.janek:658:15",
+          "occurrenceId": "occurrence:658:0",
+          "tick": 658,
+          "phenomenon": "speech",
+          "modality": "hearing",
+          "actorId": "player.jozz",
+          "subjectId": null,
+          "spatial": {
+            "kind": "directional",
+            "direction": {
+              "x": -1,
+              "y": 0
+            },
+            "distanceBand": "far"
+          },
+          "summary": "speech",
+          "text": "Janek, chwila!",
+          "addressed": true
+        },
+        "responseOccurrence": {
+          "id": "occurrence:659:1",
+          "tick": 659,
+          "kind": "speech",
+          "actorId": "resident.janek",
+          "subjectId": null,
+          "position": {
+            "x": 1952.1700291273119,
+            "y": 724.6973820201079
+          },
+          "radius": 420,
+          "summary": "speech",
+          "text": "Tak?",
+          "addressedActorIds": [
+            "player.jozz"
+          ]
+        },
+        "actionFacts": []
+      },
+      "afterResumeMotion": {
+        "scenarioId": "browser-missing-crate-interruption",
+        "tick": 686,
+        "matterStatus": "active",
+        "semanticRevision": 3,
+        "semanticCourse": "search the nearby workshop area for the familiar crate before deciding what to do next",
+        "activeRunId": "run.janek.search-nearby-workshop",
+        "activeRunCanMutateWorld": true,
+        "suspendedByMatterId": null,
+        "janekPosition": {
+          "x": 1953.7532532013297,
+          "y": 724.6787815928241
+        },
+        "janekVelocity": {
+          "x": 94.9934444410701,
+          "y": -1.1160256370271782
+        },
+        "janekFacing": {
+          "x": 0.9999309941164624,
+          "y": -0.01174763828449585
+        },
+        "crateLocation": {
+          "kind": "free",
+          "position": {
+            "x": 2752,
+            "y": 720
+          }
+        },
+        "addressedPercept": {
+          "id": "percept:resident.janek:658:15",
+          "occurrenceId": "occurrence:658:0",
+          "tick": 658,
+          "phenomenon": "speech",
+          "modality": "hearing",
+          "actorId": "player.jozz",
+          "subjectId": null,
+          "spatial": {
+            "kind": "directional",
+            "direction": {
+              "x": -1,
+              "y": 0
+            },
+            "distanceBand": "far"
+          },
+          "summary": "speech",
+          "text": "Janek, chwila!",
+          "addressed": true
+        },
+        "responseOccurrence": {
+          "id": "occurrence:659:1",
+          "tick": 659,
+          "kind": "speech",
+          "actorId": "resident.janek",
+          "subjectId": null,
+          "position": {
+            "x": 1952.1700291273119,
+            "y": 724.6973820201079
+          },
+          "radius": 420,
+          "summary": "speech",
+          "text": "Tak?",
+          "addressedActorIds": [
+            "player.jozz"
+          ]
+        },
+        "actionFacts": []
+      },
+      "resolved": {
+        "scenarioId": "browser-missing-crate-interruption",
+        "tick": 1175,
+        "matterStatus": "resolved",
+        "semanticRevision": 5,
+        "semanticCourse": "pick up the reacquired workshop crate",
+        "activeRunId": null,
+        "activeRunCanMutateWorld": false,
+        "suspendedByMatterId": null,
+        "janekPosition": {
+          "x": 2697.3989900212105,
+          "y": 720.1476526751023
+        },
+        "janekVelocity": {
+          "x": 0,
+          "y": 0
+        },
+        "janekFacing": {
+          "x": 0.999996343640333,
+          "y": -0.002704201539321199
+        },
+        "crateLocation": {
+          "kind": "held",
+          "actorId": "resident.janek"
+        },
+        "addressedPercept": {
+          "id": "percept:resident.janek:658:15",
+          "occurrenceId": "occurrence:658:0",
+          "tick": 658,
+          "phenomenon": "speech",
+          "modality": "hearing",
+          "actorId": "player.jozz",
+          "subjectId": null,
+          "spatial": {
+            "kind": "directional",
+            "direction": {
+              "x": -1,
+              "y": 0
+            },
+            "distanceBand": "far"
+          },
+          "summary": "speech",
+          "text": "Janek, chwila!",
+          "addressed": true
+        },
+        "responseOccurrence": {
+          "id": "occurrence:659:1",
+          "tick": 659,
+          "kind": "speech",
+          "actorId": "resident.janek",
+          "subjectId": null,
+          "position": {
+            "x": 1952.1700291273119,
+            "y": 724.6973820201079
+          },
+          "radius": 420,
+          "summary": "speech",
+          "text": "Tak?",
+          "addressedActorIds": [
+            "player.jozz"
+          ]
+        },
+        "actionFacts": [
+          {
+            "tick": 1174,
+            "runId": "run.janek.pickup-reacquired-crate",
+            "kind": "material_pickup",
+            "objectId": "crate.workshop.01",
+            "outcomeStatus": "succeeded",
+            "code": "picked_up"
+          }
+        ]
+      },
+      "interruptedHash": "ed5fa7bf6bf26289274acadbe3a8a472bc82b8425ebbcc9f6831dd86832103ac",
+      "respondedHash": "5289912a332adaa3e0d09b8f9f975a5427891ebfbce621f35e54613b9c0e2fab",
+      "resumedHash": "4cefa0bde0a1944730f29a204512a338363a48b4c62803890ebc9a3dc48577f1",
+      "afterResumeMotionHash": "006dc2c119777c7d2b66503d9de505d0cd2da0d2e03d0cf82c99c6b9bac196d6",
+      "resolvedHash": "9f658343e61adf921550e9359eeb3ce611e0b9ca806d607a99ecf490ab02fe6c",
+      "visualEvidence": null
+    }
+  ],
+  "visualEvidence": {
+    "searching": {
+      "fileName": "missing-crate-interruption-01-searching.png",
+      "tick": 658,
+      "bytes": 41823,
+      "canonicalHash": "76ada9f1b99a4a8a08e4d1d403d784a0e98745feb1335909461101d062f7a784"
+    },
+    "responded": {
+      "fileName": "missing-crate-interruption-02-turned-and-responded.png",
+      "tick": 660,
+      "bytes": 43937,
+      "canonicalHash": "ffabf2233a91efd9fd62b14b5a481bf136862fffdc90626f4892cc579a807a49"
+    },
+    "returnedToSearch": {
+      "fileName": "missing-crate-interruption-03-returned-to-search.png",
+      "tick": 686,
+      "bytes": 43907,
+      "canonicalHash": "78adb2ca8352d76878bfcc7b63fc40d89b885b22993a759aacba1a126d627ed0"
+    },
+    "resolved": {
+      "fileName": "missing-crate-interruption-04-resolved.png",
+      "tick": 1175,
+      "bytes": 41227,
+      "canonicalHash": "4c3f216ec99a06824b90b7b012cd916ad03ef42d6bb5b9d16bc7b8836dccbadb"
+    }
+  },
+  "finishedAt": "2026-09-18T15:37:52.252Z",
+  "outcome": "PASS"
+}

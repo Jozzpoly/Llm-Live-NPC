@@ -1,0 +1,869 @@
+{
+  "schemaVersion": 1,
+  "sourceSha": "ba9f0c4221849723beedfbe856e4aa3728c5ff00",
+  "startedAt": "2026-09-18T15:33:47.551Z",
+  "chrome": "Chrome/152.0.7977.82",
+  "assertions": [
+    {
+      "name": "recovery reaches checked absence before changing semantic course",
+      "pass": true,
+      "detail": {
+        "schemaVersion": 1,
+        "scenarioId": "browser-missing-crate-recovery",
+        "tick": 656,
+        "matterStatus": "active",
+        "semanticRevision": 2,
+        "semanticCourse": "go to the last-known workshop crate position and pick it up",
+        "activeRunId": null,
+        "activeRunCanMutateWorld": false,
+        "semanticEvidenceKind": "checked_absence",
+        "lastOutcomeEvidenceKind": "task_outcome",
+        "crateLocation": {
+          "kind": "free",
+          "position": {
+            "x": 2752,
+            "y": 720
+          }
+        },
+        "materialKnowledge": [
+          {
+            "objectId": "crate.workshop.01",
+            "lastKnownPosition": {
+              "x": 1952,
+              "y": 720
+            },
+            "observedAtTick": 0,
+            "currentlyVisible": false
+          }
+        ],
+        "actionFacts": []
+      }
+    },
+    {
+      "name": "next explicit World tick admits search semantics and exact search run",
+      "pass": true,
+      "detail": {
+        "schemaVersion": 1,
+        "scenarioId": "browser-missing-crate-recovery",
+        "tick": 657,
+        "matterStatus": "active",
+        "semanticRevision": 3,
+        "semanticCourse": "search the nearby workshop area for the familiar crate before deciding what to do next",
+        "activeRunId": "run.janek.search-nearby-workshop",
+        "activeRunCanMutateWorld": true,
+        "semanticEvidenceKind": "checked_absence",
+        "lastOutcomeEvidenceKind": "task_outcome",
+        "crateLocation": {
+          "kind": "free",
+          "position": {
+            "x": 2752,
+            "y": 720
+          }
+        },
+        "materialKnowledge": [
+          {
+            "objectId": "crate.workshop.01",
+            "lastKnownPosition": {
+              "x": 1952,
+              "y": 720
+            },
+            "observedAtTick": 0,
+            "currentlyVisible": false
+          }
+        ],
+        "actionFacts": []
+      }
+    },
+    {
+      "name": "embodied search legally reacquires the crate without any material action",
+      "pass": true,
+      "detail": {
+        "schemaVersion": 1,
+        "scenarioId": "browser-missing-crate-recovery",
+        "tick": 837,
+        "matterStatus": "active",
+        "semanticRevision": 4,
+        "semanticCourse": "search the nearby workshop area for the familiar crate before deciding what to do next",
+        "activeRunId": null,
+        "activeRunCanMutateWorld": false,
+        "semanticEvidenceKind": "material_reacquired",
+        "lastOutcomeEvidenceKind": "task_outcome",
+        "crateLocation": {
+          "kind": "free",
+          "position": {
+            "x": 2752,
+            "y": 720
+          }
+        },
+        "materialKnowledge": [
+          {
+            "objectId": "crate.workshop.01",
+            "lastKnownPosition": {
+              "x": 2752,
+              "y": 720
+            },
+            "observedAtTick": 836,
+            "currentlyVisible": true
+          }
+        ],
+        "actionFacts": []
+      }
+    },
+    {
+      "name": "second explicit semantic boundary authorizes pickup only after reacquisition",
+      "pass": true,
+      "detail": {
+        "schemaVersion": 1,
+        "scenarioId": "browser-missing-crate-recovery",
+        "tick": 838,
+        "matterStatus": "active",
+        "semanticRevision": 5,
+        "semanticCourse": "pick up the reacquired workshop crate",
+        "activeRunId": "run.janek.pickup-reacquired-crate",
+        "activeRunCanMutateWorld": true,
+        "semanticEvidenceKind": "material_reacquired",
+        "lastOutcomeEvidenceKind": "task_outcome",
+        "crateLocation": {
+          "kind": "free",
+          "position": {
+            "x": 2752,
+            "y": 720
+          }
+        },
+        "materialKnowledge": [
+          {
+            "objectId": "crate.workshop.01",
+            "lastKnownPosition": {
+              "x": 2752,
+              "y": 720
+            },
+            "observedAtTick": 836,
+            "currentlyVisible": true
+          }
+        ],
+        "actionFacts": []
+      }
+    },
+    {
+      "name": "recovery resolves only after one exact resident pickup World action",
+      "pass": true,
+      "detail": {
+        "schemaVersion": 1,
+        "scenarioId": "browser-missing-crate-recovery",
+        "tick": 1149,
+        "matterStatus": "resolved",
+        "semanticRevision": 5,
+        "semanticCourse": "pick up the reacquired workshop crate",
+        "activeRunId": null,
+        "activeRunCanMutateWorld": false,
+        "semanticEvidenceKind": null,
+        "lastOutcomeEvidenceKind": null,
+        "crateLocation": {
+          "kind": "held",
+          "actorId": "resident.janek"
+        },
+        "materialKnowledge": [
+          {
+            "objectId": "crate.workshop.01",
+            "lastKnownPosition": {
+              "x": 2752,
+              "y": 720
+            },
+            "observedAtTick": 1148,
+            "currentlyVisible": true
+          }
+        ],
+        "actionFacts": [
+          {
+            "tick": 1148,
+            "runId": "run.janek.pickup-reacquired-crate",
+            "kind": "material_pickup",
+            "objectId": "crate.workshop.01",
+            "outcomeStatus": "succeeded",
+            "code": "picked_up",
+            "actionSeq": 3
+          }
+        ]
+      }
+    },
+    {
+      "name": "checkedAbsenceHash is exactly reproducible across real-Chrome reloads",
+      "pass": true,
+      "detail": [
+        "0e925b02a0098693469f6164e62db29f7e8365a9ab0a901e6fd60ce3efc7e41e",
+        "0e925b02a0098693469f6164e62db29f7e8365a9ab0a901e6fd60ce3efc7e41e",
+        "0e925b02a0098693469f6164e62db29f7e8365a9ab0a901e6fd60ce3efc7e41e"
+      ]
+    },
+    {
+      "name": "searchAdmittedHash is exactly reproducible across real-Chrome reloads",
+      "pass": true,
+      "detail": [
+        "322778f9ad378fa84b37dd50ecb7e4b509d82758049f59559ed8b06034a3d7db",
+        "322778f9ad378fa84b37dd50ecb7e4b509d82758049f59559ed8b06034a3d7db",
+        "322778f9ad378fa84b37dd50ecb7e4b509d82758049f59559ed8b06034a3d7db"
+      ]
+    },
+    {
+      "name": "reacquiredHash is exactly reproducible across real-Chrome reloads",
+      "pass": true,
+      "detail": [
+        "5d6810f78f101e1ae81e56d0a01d1062fb72f976fcf47b77ff65f59687d9474f",
+        "5d6810f78f101e1ae81e56d0a01d1062fb72f976fcf47b77ff65f59687d9474f",
+        "5d6810f78f101e1ae81e56d0a01d1062fb72f976fcf47b77ff65f59687d9474f"
+      ]
+    },
+    {
+      "name": "pickupAdmittedHash is exactly reproducible across real-Chrome reloads",
+      "pass": true,
+      "detail": [
+        "91413b7f544a9f6743319ffa00b26685fcb361122124488271f7b0307a7f90ad",
+        "91413b7f544a9f6743319ffa00b26685fcb361122124488271f7b0307a7f90ad",
+        "91413b7f544a9f6743319ffa00b26685fcb361122124488271f7b0307a7f90ad"
+      ]
+    },
+    {
+      "name": "resolvedHash is exactly reproducible across real-Chrome reloads",
+      "pass": true,
+      "detail": [
+        "c55c0648ac46143da43184ee2dc4239abb0a458d2a149567f0e0670affcbef34",
+        "c55c0648ac46143da43184ee2dc4239abb0a458d2a149567f0e0670affcbef34",
+        "c55c0648ac46143da43184ee2dc4239abb0a458d2a149567f0e0670affcbef34"
+      ]
+    },
+    {
+      "name": "checkedAbsence occurs at the same World tick across reloads",
+      "pass": true,
+      "detail": [
+        656,
+        656,
+        656
+      ]
+    },
+    {
+      "name": "searchAdmitted occurs at the same World tick across reloads",
+      "pass": true,
+      "detail": [
+        657,
+        657,
+        657
+      ]
+    },
+    {
+      "name": "reacquired occurs at the same World tick across reloads",
+      "pass": true,
+      "detail": [
+        837,
+        837,
+        837
+      ]
+    },
+    {
+      "name": "pickupAdmitted occurs at the same World tick across reloads",
+      "pass": true,
+      "detail": [
+        838,
+        838,
+        838
+      ]
+    },
+    {
+      "name": "resolved occurs at the same World tick across reloads",
+      "pass": true,
+      "detail": [
+        1149,
+        1149,
+        1149
+      ]
+    },
+    {
+      "name": "recovery participant screenshots are non-empty and canonically frozen",
+      "pass": true,
+      "detail": {
+        "searching": {
+          "fileName": "missing-crate-recovery-01-searching.png",
+          "tick": 657,
+          "bytes": 41541,
+          "canonicalHash": "69848c02c2fa03e0ddccc76cb158c8eaad060f6db65c4d4e4058ab2549a09316"
+        },
+        "reacquired": {
+          "fileName": "missing-crate-recovery-02-reacquired.png",
+          "tick": 837,
+          "bytes": 39945,
+          "canonicalHash": "a4df6aace4cf7c6559a80b57205d6ceb6579275d1f132b69fedd3d331fe4051a"
+        },
+        "resolved": {
+          "fileName": "missing-crate-recovery-03-resolved.png",
+          "tick": 1149,
+          "bytes": 41434,
+          "canonicalHash": "e9cf2706da454647a17465b28ca0b4d5fd5697c4c9c10cc6e427ba0a0f9123c5"
+        }
+      }
+    },
+    {
+      "name": "missing-crate recovery has no uncaught runtime exceptions",
+      "pass": true,
+      "detail": []
+    }
+  ],
+  "runtimeExceptions": [],
+  "runs": [
+    {
+      "runIndex": 0,
+      "worldSteps": 902,
+      "checkedAbsenceHash": "0e925b02a0098693469f6164e62db29f7e8365a9ab0a901e6fd60ce3efc7e41e",
+      "searchAdmittedHash": "322778f9ad378fa84b37dd50ecb7e4b509d82758049f59559ed8b06034a3d7db",
+      "reacquiredHash": "5d6810f78f101e1ae81e56d0a01d1062fb72f976fcf47b77ff65f59687d9474f",
+      "pickupAdmittedHash": "91413b7f544a9f6743319ffa00b26685fcb361122124488271f7b0307a7f90ad",
+      "resolvedHash": "c55c0648ac46143da43184ee2dc4239abb0a458d2a149567f0e0670affcbef34",
+      "checkedAbsence": {
+        "schemaVersion": 1,
+        "scenarioId": "browser-missing-crate-recovery",
+        "tick": 656,
+        "matterStatus": "active",
+        "semanticRevision": 2,
+        "semanticCourse": "go to the last-known workshop crate position and pick it up",
+        "activeRunId": null,
+        "activeRunCanMutateWorld": false,
+        "semanticEvidenceKind": "checked_absence",
+        "lastOutcomeEvidenceKind": "task_outcome",
+        "crateLocation": {
+          "kind": "free",
+          "position": {
+            "x": 2752,
+            "y": 720
+          }
+        },
+        "materialKnowledge": [
+          {
+            "objectId": "crate.workshop.01",
+            "lastKnownPosition": {
+              "x": 1952,
+              "y": 720
+            },
+            "observedAtTick": 0,
+            "currentlyVisible": false
+          }
+        ],
+        "actionFacts": []
+      },
+      "searchAdmitted": {
+        "schemaVersion": 1,
+        "scenarioId": "browser-missing-crate-recovery",
+        "tick": 657,
+        "matterStatus": "active",
+        "semanticRevision": 3,
+        "semanticCourse": "search the nearby workshop area for the familiar crate before deciding what to do next",
+        "activeRunId": "run.janek.search-nearby-workshop",
+        "activeRunCanMutateWorld": true,
+        "semanticEvidenceKind": "checked_absence",
+        "lastOutcomeEvidenceKind": "task_outcome",
+        "crateLocation": {
+          "kind": "free",
+          "position": {
+            "x": 2752,
+            "y": 720
+          }
+        },
+        "materialKnowledge": [
+          {
+            "objectId": "crate.workshop.01",
+            "lastKnownPosition": {
+              "x": 1952,
+              "y": 720
+            },
+            "observedAtTick": 0,
+            "currentlyVisible": false
+          }
+        ],
+        "actionFacts": []
+      },
+      "reacquired": {
+        "schemaVersion": 1,
+        "scenarioId": "browser-missing-crate-recovery",
+        "tick": 837,
+        "matterStatus": "active",
+        "semanticRevision": 4,
+        "semanticCourse": "search the nearby workshop area for the familiar crate before deciding what to do next",
+        "activeRunId": null,
+        "activeRunCanMutateWorld": false,
+        "semanticEvidenceKind": "material_reacquired",
+        "lastOutcomeEvidenceKind": "task_outcome",
+        "crateLocation": {
+          "kind": "free",
+          "position": {
+            "x": 2752,
+            "y": 720
+          }
+        },
+        "materialKnowledge": [
+          {
+            "objectId": "crate.workshop.01",
+            "lastKnownPosition": {
+              "x": 2752,
+              "y": 720
+            },
+            "observedAtTick": 836,
+            "currentlyVisible": true
+          }
+        ],
+        "actionFacts": []
+      },
+      "pickupAdmitted": {
+        "schemaVersion": 1,
+        "scenarioId": "browser-missing-crate-recovery",
+        "tick": 838,
+        "matterStatus": "active",
+        "semanticRevision": 5,
+        "semanticCourse": "pick up the reacquired workshop crate",
+        "activeRunId": "run.janek.pickup-reacquired-crate",
+        "activeRunCanMutateWorld": true,
+        "semanticEvidenceKind": "material_reacquired",
+        "lastOutcomeEvidenceKind": "task_outcome",
+        "crateLocation": {
+          "kind": "free",
+          "position": {
+            "x": 2752,
+            "y": 720
+          }
+        },
+        "materialKnowledge": [
+          {
+            "objectId": "crate.workshop.01",
+            "lastKnownPosition": {
+              "x": 2752,
+              "y": 720
+            },
+            "observedAtTick": 836,
+            "currentlyVisible": true
+          }
+        ],
+        "actionFacts": []
+      },
+      "resolved": {
+        "schemaVersion": 1,
+        "scenarioId": "browser-missing-crate-recovery",
+        "tick": 1149,
+        "matterStatus": "resolved",
+        "semanticRevision": 5,
+        "semanticCourse": "pick up the reacquired workshop crate",
+        "activeRunId": null,
+        "activeRunCanMutateWorld": false,
+        "semanticEvidenceKind": null,
+        "lastOutcomeEvidenceKind": null,
+        "crateLocation": {
+          "kind": "held",
+          "actorId": "resident.janek"
+        },
+        "materialKnowledge": [
+          {
+            "objectId": "crate.workshop.01",
+            "lastKnownPosition": {
+              "x": 2752,
+              "y": 720
+            },
+            "observedAtTick": 1148,
+            "currentlyVisible": true
+          }
+        ],
+        "actionFacts": [
+          {
+            "tick": 1148,
+            "runId": "run.janek.pickup-reacquired-crate",
+            "kind": "material_pickup",
+            "objectId": "crate.workshop.01",
+            "outcomeStatus": "succeeded",
+            "code": "picked_up",
+            "actionSeq": 3
+          }
+        ]
+      },
+      "visualEvidence": {
+        "searching": {
+          "fileName": "missing-crate-recovery-01-searching.png",
+          "tick": 657,
+          "bytes": 41541,
+          "canonicalHash": "69848c02c2fa03e0ddccc76cb158c8eaad060f6db65c4d4e4058ab2549a09316"
+        },
+        "reacquired": {
+          "fileName": "missing-crate-recovery-02-reacquired.png",
+          "tick": 837,
+          "bytes": 39945,
+          "canonicalHash": "a4df6aace4cf7c6559a80b57205d6ceb6579275d1f132b69fedd3d331fe4051a"
+        },
+        "resolved": {
+          "fileName": "missing-crate-recovery-03-resolved.png",
+          "tick": 1149,
+          "bytes": 41434,
+          "canonicalHash": "e9cf2706da454647a17465b28ca0b4d5fd5697c4c9c10cc6e427ba0a0f9123c5"
+        }
+      }
+    },
+    {
+      "runIndex": 1,
+      "worldSteps": 902,
+      "checkedAbsenceHash": "0e925b02a0098693469f6164e62db29f7e8365a9ab0a901e6fd60ce3efc7e41e",
+      "searchAdmittedHash": "322778f9ad378fa84b37dd50ecb7e4b509d82758049f59559ed8b06034a3d7db",
+      "reacquiredHash": "5d6810f78f101e1ae81e56d0a01d1062fb72f976fcf47b77ff65f59687d9474f",
+      "pickupAdmittedHash": "91413b7f544a9f6743319ffa00b26685fcb361122124488271f7b0307a7f90ad",
+      "resolvedHash": "c55c0648ac46143da43184ee2dc4239abb0a458d2a149567f0e0670affcbef34",
+      "checkedAbsence": {
+        "schemaVersion": 1,
+        "scenarioId": "browser-missing-crate-recovery",
+        "tick": 656,
+        "matterStatus": "active",
+        "semanticRevision": 2,
+        "semanticCourse": "go to the last-known workshop crate position and pick it up",
+        "activeRunId": null,
+        "activeRunCanMutateWorld": false,
+        "semanticEvidenceKind": "checked_absence",
+        "lastOutcomeEvidenceKind": "task_outcome",
+        "crateLocation": {
+          "kind": "free",
+          "position": {
+            "x": 2752,
+            "y": 720
+          }
+        },
+        "materialKnowledge": [
+          {
+            "objectId": "crate.workshop.01",
+            "lastKnownPosition": {
+              "x": 1952,
+              "y": 720
+            },
+            "observedAtTick": 0,
+            "currentlyVisible": false
+          }
+        ],
+        "actionFacts": []
+      },
+      "searchAdmitted": {
+        "schemaVersion": 1,
+        "scenarioId": "browser-missing-crate-recovery",
+        "tick": 657,
+        "matterStatus": "active",
+        "semanticRevision": 3,
+        "semanticCourse": "search the nearby workshop area for the familiar crate before deciding what to do next",
+        "activeRunId": "run.janek.search-nearby-workshop",
+        "activeRunCanMutateWorld": true,
+        "semanticEvidenceKind": "checked_absence",
+        "lastOutcomeEvidenceKind": "task_outcome",
+        "crateLocation": {
+          "kind": "free",
+          "position": {
+            "x": 2752,
+            "y": 720
+          }
+        },
+        "materialKnowledge": [
+          {
+            "objectId": "crate.workshop.01",
+            "lastKnownPosition": {
+              "x": 1952,
+              "y": 720
+            },
+            "observedAtTick": 0,
+            "currentlyVisible": false
+          }
+        ],
+        "actionFacts": []
+      },
+      "reacquired": {
+        "schemaVersion": 1,
+        "scenarioId": "browser-missing-crate-recovery",
+        "tick": 837,
+        "matterStatus": "active",
+        "semanticRevision": 4,
+        "semanticCourse": "search the nearby workshop area for the familiar crate before deciding what to do next",
+        "activeRunId": null,
+        "activeRunCanMutateWorld": false,
+        "semanticEvidenceKind": "material_reacquired",
+        "lastOutcomeEvidenceKind": "task_outcome",
+        "crateLocation": {
+          "kind": "free",
+          "position": {
+            "x": 2752,
+            "y": 720
+          }
+        },
+        "materialKnowledge": [
+          {
+            "objectId": "crate.workshop.01",
+            "lastKnownPosition": {
+              "x": 2752,
+              "y": 720
+            },
+            "observedAtTick": 836,
+            "currentlyVisible": true
+          }
+        ],
+        "actionFacts": []
+      },
+      "pickupAdmitted": {
+        "schemaVersion": 1,
+        "scenarioId": "browser-missing-crate-recovery",
+        "tick": 838,
+        "matterStatus": "active",
+        "semanticRevision": 5,
+        "semanticCourse": "pick up the reacquired workshop crate",
+        "activeRunId": "run.janek.pickup-reacquired-crate",
+        "activeRunCanMutateWorld": true,
+        "semanticEvidenceKind": "material_reacquired",
+        "lastOutcomeEvidenceKind": "task_outcome",
+        "crateLocation": {
+          "kind": "free",
+          "position": {
+            "x": 2752,
+            "y": 720
+          }
+        },
+        "materialKnowledge": [
+          {
+            "objectId": "crate.workshop.01",
+            "lastKnownPosition": {
+              "x": 2752,
+              "y": 720
+            },
+            "observedAtTick": 836,
+            "currentlyVisible": true
+          }
+        ],
+        "actionFacts": []
+      },
+      "resolved": {
+        "schemaVersion": 1,
+        "scenarioId": "browser-missing-crate-recovery",
+        "tick": 1149,
+        "matterStatus": "resolved",
+        "semanticRevision": 5,
+        "semanticCourse": "pick up the reacquired workshop crate",
+        "activeRunId": null,
+        "activeRunCanMutateWorld": false,
+        "semanticEvidenceKind": null,
+        "lastOutcomeEvidenceKind": null,
+        "crateLocation": {
+          "kind": "held",
+          "actorId": "resident.janek"
+        },
+        "materialKnowledge": [
+          {
+            "objectId": "crate.workshop.01",
+            "lastKnownPosition": {
+              "x": 2752,
+              "y": 720
+            },
+            "observedAtTick": 1148,
+            "currentlyVisible": true
+          }
+        ],
+        "actionFacts": [
+          {
+            "tick": 1148,
+            "runId": "run.janek.pickup-reacquired-crate",
+            "kind": "material_pickup",
+            "objectId": "crate.workshop.01",
+            "outcomeStatus": "succeeded",
+            "code": "picked_up",
+            "actionSeq": 3
+          }
+        ]
+      },
+      "visualEvidence": null
+    },
+    {
+      "runIndex": 2,
+      "worldSteps": 902,
+      "checkedAbsenceHash": "0e925b02a0098693469f6164e62db29f7e8365a9ab0a901e6fd60ce3efc7e41e",
+      "searchAdmittedHash": "322778f9ad378fa84b37dd50ecb7e4b509d82758049f59559ed8b06034a3d7db",
+      "reacquiredHash": "5d6810f78f101e1ae81e56d0a01d1062fb72f976fcf47b77ff65f59687d9474f",
+      "pickupAdmittedHash": "91413b7f544a9f6743319ffa00b26685fcb361122124488271f7b0307a7f90ad",
+      "resolvedHash": "c55c0648ac46143da43184ee2dc4239abb0a458d2a149567f0e0670affcbef34",
+      "checkedAbsence": {
+        "schemaVersion": 1,
+        "scenarioId": "browser-missing-crate-recovery",
+        "tick": 656,
+        "matterStatus": "active",
+        "semanticRevision": 2,
+        "semanticCourse": "go to the last-known workshop crate position and pick it up",
+        "activeRunId": null,
+        "activeRunCanMutateWorld": false,
+        "semanticEvidenceKind": "checked_absence",
+        "lastOutcomeEvidenceKind": "task_outcome",
+        "crateLocation": {
+          "kind": "free",
+          "position": {
+            "x": 2752,
+            "y": 720
+          }
+        },
+        "materialKnowledge": [
+          {
+            "objectId": "crate.workshop.01",
+            "lastKnownPosition": {
+              "x": 1952,
+              "y": 720
+            },
+            "observedAtTick": 0,
+            "currentlyVisible": false
+          }
+        ],
+        "actionFacts": []
+      },
+      "searchAdmitted": {
+        "schemaVersion": 1,
+        "scenarioId": "browser-missing-crate-recovery",
+        "tick": 657,
+        "matterStatus": "active",
+        "semanticRevision": 3,
+        "semanticCourse": "search the nearby workshop area for the familiar crate before deciding what to do next",
+        "activeRunId": "run.janek.search-nearby-workshop",
+        "activeRunCanMutateWorld": true,
+        "semanticEvidenceKind": "checked_absence",
+        "lastOutcomeEvidenceKind": "task_outcome",
+        "crateLocation": {
+          "kind": "free",
+          "position": {
+            "x": 2752,
+            "y": 720
+          }
+        },
+        "materialKnowledge": [
+          {
+            "objectId": "crate.workshop.01",
+            "lastKnownPosition": {
+              "x": 1952,
+              "y": 720
+            },
+            "observedAtTick": 0,
+            "currentlyVisible": false
+          }
+        ],
+        "actionFacts": []
+      },
+      "reacquired": {
+        "schemaVersion": 1,
+        "scenarioId": "browser-missing-crate-recovery",
+        "tick": 837,
+        "matterStatus": "active",
+        "semanticRevision": 4,
+        "semanticCourse": "search the nearby workshop area for the familiar crate before deciding what to do next",
+        "activeRunId": null,
+        "activeRunCanMutateWorld": false,
+        "semanticEvidenceKind": "material_reacquired",
+        "lastOutcomeEvidenceKind": "task_outcome",
+        "crateLocation": {
+          "kind": "free",
+          "position": {
+            "x": 2752,
+            "y": 720
+          }
+        },
+        "materialKnowledge": [
+          {
+            "objectId": "crate.workshop.01",
+            "lastKnownPosition": {
+              "x": 2752,
+              "y": 720
+            },
+            "observedAtTick": 836,
+            "currentlyVisible": true
+          }
+        ],
+        "actionFacts": []
+      },
+      "pickupAdmitted": {
+        "schemaVersion": 1,
+        "scenarioId": "browser-missing-crate-recovery",
+        "tick": 838,
+        "matterStatus": "active",
+        "semanticRevision": 5,
+        "semanticCourse": "pick up the reacquired workshop crate",
+        "activeRunId": "run.janek.pickup-reacquired-crate",
+        "activeRunCanMutateWorld": true,
+        "semanticEvidenceKind": "material_reacquired",
+        "lastOutcomeEvidenceKind": "task_outcome",
+        "crateLocation": {
+          "kind": "free",
+          "position": {
+            "x": 2752,
+            "y": 720
+          }
+        },
+        "materialKnowledge": [
+          {
+            "objectId": "crate.workshop.01",
+            "lastKnownPosition": {
+              "x": 2752,
+              "y": 720
+            },
+            "observedAtTick": 836,
+            "currentlyVisible": true
+          }
+        ],
+        "actionFacts": []
+      },
+      "resolved": {
+        "schemaVersion": 1,
+        "scenarioId": "browser-missing-crate-recovery",
+        "tick": 1149,
+        "matterStatus": "resolved",
+        "semanticRevision": 5,
+        "semanticCourse": "pick up the reacquired workshop crate",
+        "activeRunId": null,
+        "activeRunCanMutateWorld": false,
+        "semanticEvidenceKind": null,
+        "lastOutcomeEvidenceKind": null,
+        "crateLocation": {
+          "kind": "held",
+          "actorId": "resident.janek"
+        },
+        "materialKnowledge": [
+          {
+            "objectId": "crate.workshop.01",
+            "lastKnownPosition": {
+              "x": 2752,
+              "y": 720
+            },
+            "observedAtTick": 1148,
+            "currentlyVisible": true
+          }
+        ],
+        "actionFacts": [
+          {
+            "tick": 1148,
+            "runId": "run.janek.pickup-reacquired-crate",
+            "kind": "material_pickup",
+            "objectId": "crate.workshop.01",
+            "outcomeStatus": "succeeded",
+            "code": "picked_up",
+            "actionSeq": 3
+          }
+        ]
+      },
+      "visualEvidence": null
+    }
+  ],
+  "visualEvidence": {
+    "searching": {
+      "fileName": "missing-crate-recovery-01-searching.png",
+      "tick": 657,
+      "bytes": 41541,
+      "canonicalHash": "69848c02c2fa03e0ddccc76cb158c8eaad060f6db65c4d4e4058ab2549a09316"
+    },
+    "reacquired": {
+      "fileName": "missing-crate-recovery-02-reacquired.png",
+      "tick": 837,
+      "bytes": 39945,
+      "canonicalHash": "a4df6aace4cf7c6559a80b57205d6ceb6579275d1f132b69fedd3d331fe4051a"
+    },
+    "resolved": {
+      "fileName": "missing-crate-recovery-03-resolved.png",
+      "tick": 1149,
+      "bytes": 41434,
+      "canonicalHash": "e9cf2706da454647a17465b28ca0b4d5fd5697c4c9c10cc6e427ba0a0f9123c5"
+    }
+  },
+  "finishedAt": "2026-09-18T15:35:46.462Z",
+  "outcome": "PASS"
+}

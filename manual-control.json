@@ -1,0 +1,967 @@
+{
+  "schemaVersion": 2,
+  "sourceSha": "ba9f0c4221849723beedfbe856e4aa3728c5ff00",
+  "startedAt": "2026-09-18T15:32:45.001Z",
+  "chrome": "Chrome/152.0.7977.82",
+  "assertions": [
+    {
+      "name": "evidence API v3 exposes manual World control and canonical snapshot",
+      "pass": true,
+      "detail": {
+        "version": 3,
+        "control": "manual-world",
+        "ready": true,
+        "hasCanonicalSnapshot": true
+      }
+    },
+    {
+      "name": "canonical snapshot v1 is available at the frozen initial boundary",
+      "pass": true,
+      "detail": {
+        "schemaVersion": 1,
+        "scenarioId": "browser-baseline-delivery",
+        "tick": 0,
+        "matterStatus": "active",
+        "semanticRevision": 1,
+        "activeRunId": "run.janek.pickup-delivery-crate",
+        "activeRunCanMutateWorld": true,
+        "crateLocation": {
+          "kind": "free",
+          "position": {
+            "x": 1952,
+            "y": 720
+          }
+        },
+        "materialKnowledge": [],
+        "actionFacts": []
+      }
+    },
+    {
+      "name": "wall-clock passage does not advance evidence-controlled World",
+      "pass": true,
+      "detail": {
+        "beforeTick": 0,
+        "afterTick": 0
+      }
+    },
+    {
+      "name": "wall-clock passage leaves canonical causal state unchanged while frozen",
+      "pass": true,
+      "detail": {
+        "beforeHash": "5ea292c35d1807a3e4e9417c5eaa46388e8710292233cafc5986ff9865f372ea",
+        "afterHash": "5ea292c35d1807a3e4e9417c5eaa46388e8710292233cafc5986ff9865f372ea"
+      }
+    },
+    {
+      "name": "camera/render control can change while World tick stays frozen",
+      "pass": true,
+      "detail": {
+        "tick": 0,
+        "zoomBefore": 0.72,
+        "zoomAfter": 0.12
+      }
+    },
+    {
+      "name": "camera/viewpoint changes do not mutate canonical causal state",
+      "pass": true,
+      "detail": {
+        "canonicalHashBefore": "5ea292c35d1807a3e4e9417c5eaa46388e8710292233cafc5986ff9865f372ea",
+        "canonicalHashAfter": "5ea292c35d1807a3e4e9417c5eaa46388e8710292233cafc5986ff9865f372ea"
+      }
+    },
+    {
+      "name": "manual stepWorld advances exactly requested ticks",
+      "pass": true,
+      "detail": {
+        "presentationTick": 7,
+        "canonicalTick": 7
+      }
+    },
+    {
+      "name": "World remains frozen again after a manual step burst",
+      "pass": true,
+      "detail": {
+        "presentationTick": 7,
+        "canonicalTick": 7
+      }
+    },
+    {
+      "name": "frozen post-step canonical state remains stable",
+      "pass": true,
+      "detail": {
+        "canonicalHashBefore": "131244f02aa4155c161cc8fe131bf1d99665bea000ac594f1fcd42a979561c3a",
+        "canonicalHashAfter": "131244f02aa4155c161cc8fe131bf1d99665bea000ac594f1fcd42a979561c3a"
+      }
+    },
+    {
+      "name": "manual presentation projection is exactly reproducible at t0",
+      "pass": true,
+      "detail": [
+        "8fd597ff326c4f34f5a565dcc7feb0409f6851ed1e19f6809e4f22f5cfbf9891",
+        "8fd597ff326c4f34f5a565dcc7feb0409f6851ed1e19f6809e4f22f5cfbf9891",
+        "8fd597ff326c4f34f5a565dcc7feb0409f6851ed1e19f6809e4f22f5cfbf9891"
+      ]
+    },
+    {
+      "name": "canonical evidence snapshot is exactly reproducible at t0",
+      "pass": true,
+      "detail": [
+        "5ea292c35d1807a3e4e9417c5eaa46388e8710292233cafc5986ff9865f372ea",
+        "5ea292c35d1807a3e4e9417c5eaa46388e8710292233cafc5986ff9865f372ea",
+        "5ea292c35d1807a3e4e9417c5eaa46388e8710292233cafc5986ff9865f372ea"
+      ]
+    },
+    {
+      "name": "manual presentation projection is exactly reproducible at t120",
+      "pass": true,
+      "detail": [
+        "b77fc6b0f1af5de3d1d3d398c0c412a232446ec7bdc2570981cb75822801016c",
+        "b77fc6b0f1af5de3d1d3d398c0c412a232446ec7bdc2570981cb75822801016c",
+        "b77fc6b0f1af5de3d1d3d398c0c412a232446ec7bdc2570981cb75822801016c"
+      ]
+    },
+    {
+      "name": "canonical evidence snapshot is exactly reproducible at t120",
+      "pass": true,
+      "detail": [
+        "a4cd221de5568c6433e96bd35205b0becc1cb1ca38a2b2394ef39ecf39b075a9",
+        "a4cd221de5568c6433e96bd35205b0becc1cb1ca38a2b2394ef39ecf39b075a9",
+        "a4cd221de5568c6433e96bd35205b0becc1cb1ca38a2b2394ef39ecf39b075a9"
+      ]
+    },
+    {
+      "name": "manual presentation projection is exactly reproducible at t360",
+      "pass": true,
+      "detail": [
+        "0f278bd502af440fdc9984bc4da2710718446a822ed25dc5b4e8dcf5d6d638d6",
+        "0f278bd502af440fdc9984bc4da2710718446a822ed25dc5b4e8dcf5d6d638d6",
+        "0f278bd502af440fdc9984bc4da2710718446a822ed25dc5b4e8dcf5d6d638d6"
+      ]
+    },
+    {
+      "name": "canonical evidence snapshot is exactly reproducible at t360",
+      "pass": true,
+      "detail": [
+        "5239e211b27b6033ee6e510a4606752bf56b9a6606d9397791c0b0e84042ad65",
+        "5239e211b27b6033ee6e510a4606752bf56b9a6606d9397791c0b0e84042ad65",
+        "5239e211b27b6033ee6e510a4606752bf56b9a6606d9397791c0b0e84042ad65"
+      ]
+    },
+    {
+      "name": "manual presentation projection is exactly reproducible at t760",
+      "pass": true,
+      "detail": [
+        "5b6f120010d610369a519d8119e89052ff7b0721ff5da976b16bcdd5a6f42ee4",
+        "5b6f120010d610369a519d8119e89052ff7b0721ff5da976b16bcdd5a6f42ee4",
+        "5b6f120010d610369a519d8119e89052ff7b0721ff5da976b16bcdd5a6f42ee4"
+      ]
+    },
+    {
+      "name": "canonical evidence snapshot is exactly reproducible at t760",
+      "pass": true,
+      "detail": [
+        "09460865a080d5e01f3541828966622a005973c1076301a99d7eb42a594bef06",
+        "09460865a080d5e01f3541828966622a005973c1076301a99d7eb42a594bef06",
+        "09460865a080d5e01f3541828966622a005973c1076301a99d7eb42a594bef06"
+      ]
+    },
+    {
+      "name": "canonical t760 proves material delivery and matter terminality",
+      "pass": true,
+      "detail": {
+        "schemaVersion": 1,
+        "scenarioId": "browser-baseline-delivery",
+        "tick": 760,
+        "matterStatus": "resolved",
+        "semanticRevision": 1,
+        "activeRunId": null,
+        "activeRunCanMutateWorld": false,
+        "crateLocation": {
+          "kind": "free",
+          "position": {
+            "x": 2980,
+            "y": 1080
+          }
+        },
+        "materialKnowledge": [
+          {
+            "objectId": "crate.workshop.01",
+            "lastKnownPosition": {
+              "x": 1952,
+              "y": 720
+            },
+            "observedAtTick": 0,
+            "currentlyVisible": true
+          }
+        ],
+        "actionFacts": [
+          {
+            "id": "resident-world-action:resident.janek:0",
+            "tick": 0,
+            "runId": "run.janek.pickup-delivery-crate",
+            "kind": "material_pickup",
+            "objectId": "crate.workshop.01",
+            "outcomeStatus": "succeeded",
+            "code": "picked_up",
+            "actionSeq": 1
+          },
+          {
+            "id": "resident-world-action:resident.janek:1",
+            "tick": 722,
+            "runId": "run.janek.place-delivery-crate",
+            "kind": "material_place",
+            "objectId": "crate.workshop.01",
+            "outcomeStatus": "succeeded",
+            "code": "placed",
+            "actionSeq": 2
+          }
+        ]
+      }
+    },
+    {
+      "name": "canonical t760 retains exact pickup/place run-to-World action provenance",
+      "pass": true,
+      "detail": [
+        {
+          "id": "resident-world-action:resident.janek:0",
+          "tick": 0,
+          "runId": "run.janek.pickup-delivery-crate",
+          "kind": "material_pickup",
+          "objectId": "crate.workshop.01",
+          "outcomeStatus": "succeeded",
+          "code": "picked_up",
+          "actionSeq": 1
+        },
+        {
+          "id": "resident-world-action:resident.janek:1",
+          "tick": 722,
+          "runId": "run.janek.place-delivery-crate",
+          "kind": "material_place",
+          "objectId": "crate.workshop.01",
+          "outcomeStatus": "succeeded",
+          "code": "placed",
+          "actionSeq": 2
+        }
+      ]
+    },
+    {
+      "name": "normal SPC runtime does not expose evidence control API",
+      "pass": true,
+      "detail": {
+        "hasEvidenceApi": false,
+        "tickBefore": 0,
+        "tickAfter": 26
+      }
+    },
+    {
+      "name": "normal SPC runtime still advances from Phaser wall-clock",
+      "pass": true,
+      "detail": {
+        "hasEvidenceApi": false,
+        "tickBefore": 0,
+        "tickAfter": 26
+      }
+    },
+    {
+      "name": "manual-control probe has no uncaught runtime exceptions",
+      "pass": true,
+      "detail": []
+    }
+  ],
+  "runtimeExceptions": [],
+  "manualControl": {
+    "initialTick": 0,
+    "tickAfterWallClock": 0,
+    "tickAfterSevenSteps": 7,
+    "tickAfterSecondWallClock": 7,
+    "zoomBefore": 0.72,
+    "zoomAfter": 0.12,
+    "canonicalInitial": {
+      "schemaVersion": 1,
+      "scenarioId": "browser-baseline-delivery",
+      "tick": 0,
+      "matterStatus": "active",
+      "semanticRevision": 1,
+      "activeRunId": "run.janek.pickup-delivery-crate",
+      "activeRunCanMutateWorld": true,
+      "crateLocation": {
+        "kind": "free",
+        "position": {
+          "x": 1952,
+          "y": 720
+        }
+      },
+      "materialKnowledge": [],
+      "actionFacts": []
+    },
+    "canonicalAfterSeven": {
+      "schemaVersion": 1,
+      "scenarioId": "browser-baseline-delivery",
+      "tick": 7,
+      "matterStatus": "active",
+      "semanticRevision": 1,
+      "activeRunId": "run.janek.place-delivery-crate",
+      "activeRunCanMutateWorld": true,
+      "crateLocation": {
+        "kind": "held",
+        "actorId": "resident.janek"
+      },
+      "materialKnowledge": [
+        {
+          "objectId": "crate.workshop.01",
+          "lastKnownPosition": {
+            "x": 1952,
+            "y": 720
+          },
+          "observedAtTick": 0,
+          "currentlyVisible": true
+        }
+      ],
+      "actionFacts": [
+        {
+          "id": "resident-world-action:resident.janek:0",
+          "tick": 0,
+          "runId": "run.janek.pickup-delivery-crate",
+          "kind": "material_pickup",
+          "objectId": "crate.workshop.01",
+          "outcomeStatus": "succeeded",
+          "code": "picked_up",
+          "actionSeq": 1
+        }
+      ]
+    }
+  },
+  "repeatedRuns": [
+    {
+      "runIndex": 0,
+      "checkpoints": [
+        {
+          "tick": 0,
+          "presentationHash": "8fd597ff326c4f34f5a565dcc7feb0409f6851ed1e19f6809e4f22f5cfbf9891",
+          "canonicalHash": "5ea292c35d1807a3e4e9417c5eaa46388e8710292233cafc5986ff9865f372ea",
+          "janek": {
+            "position": {
+              "x": 1900,
+              "y": 720
+            },
+            "velocity": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "occurrenceCount": 0,
+          "canonical": {
+            "schemaVersion": 1,
+            "scenarioId": "browser-baseline-delivery",
+            "tick": 0,
+            "matterStatus": "active",
+            "semanticRevision": 1,
+            "activeRunId": "run.janek.pickup-delivery-crate",
+            "activeRunCanMutateWorld": true,
+            "crateLocation": {
+              "kind": "free",
+              "position": {
+                "x": 1952,
+                "y": 720
+              }
+            },
+            "materialKnowledge": [],
+            "actionFacts": []
+          }
+        },
+        {
+          "tick": 120,
+          "presentationHash": "b77fc6b0f1af5de3d1d3d398c0c412a232446ec7bdc2570981cb75822801016c",
+          "canonicalHash": "a4cd221de5568c6433e96bd35205b0becc1cb1ca38a2b2394ef39ecf39b075a9",
+          "janek": {
+            "position": {
+              "x": 2070.762993649101,
+              "y": 776.9209978830349
+            },
+            "velocity": {
+              "x": 85.38149682453877,
+              "y": 28.46049894151747
+            }
+          },
+          "occurrenceCount": 0,
+          "canonical": {
+            "schemaVersion": 1,
+            "scenarioId": "browser-baseline-delivery",
+            "tick": 120,
+            "matterStatus": "active",
+            "semanticRevision": 1,
+            "activeRunId": "run.janek.place-delivery-crate",
+            "activeRunCanMutateWorld": true,
+            "crateLocation": {
+              "kind": "held",
+              "actorId": "resident.janek"
+            },
+            "materialKnowledge": [
+              {
+                "objectId": "crate.workshop.01",
+                "lastKnownPosition": {
+                  "x": 1952,
+                  "y": 720
+                },
+                "observedAtTick": 0,
+                "currentlyVisible": true
+              }
+            ],
+            "actionFacts": [
+              {
+                "id": "resident-world-action:resident.janek:0",
+                "tick": 0,
+                "runId": "run.janek.pickup-delivery-crate",
+                "kind": "material_pickup",
+                "objectId": "crate.workshop.01",
+                "outcomeStatus": "succeeded",
+                "code": "picked_up",
+                "actionSeq": 1
+              }
+            ]
+          }
+        },
+        {
+          "tick": 360,
+          "presentationHash": "0f278bd502af440fdc9984bc4da2710718446a822ed25dc5b4e8dcf5d6d638d6",
+          "canonicalHash": "5239e211b27b6033ee6e510a4606752bf56b9a6606d9397791c0b0e84042ad65",
+          "janek": {
+            "position": {
+              "x": 2412.2889809472563,
+              "y": 890.7629936490955
+            },
+            "velocity": {
+              "x": 85.38149682453877,
+              "y": 28.46049894151065
+            }
+          },
+          "occurrenceCount": 0,
+          "canonical": {
+            "schemaVersion": 1,
+            "scenarioId": "browser-baseline-delivery",
+            "tick": 360,
+            "matterStatus": "active",
+            "semanticRevision": 1,
+            "activeRunId": "run.janek.place-delivery-crate",
+            "activeRunCanMutateWorld": true,
+            "crateLocation": {
+              "kind": "held",
+              "actorId": "resident.janek"
+            },
+            "materialKnowledge": [
+              {
+                "objectId": "crate.workshop.01",
+                "lastKnownPosition": {
+                  "x": 1952,
+                  "y": 720
+                },
+                "observedAtTick": 0,
+                "currentlyVisible": true
+              }
+            ],
+            "actionFacts": [
+              {
+                "id": "resident-world-action:resident.janek:0",
+                "tick": 0,
+                "runId": "run.janek.pickup-delivery-crate",
+                "kind": "material_pickup",
+                "objectId": "crate.workshop.01",
+                "outcomeStatus": "succeeded",
+                "code": "picked_up",
+                "actionSeq": 1
+              }
+            ]
+          }
+        },
+        {
+          "tick": 760,
+          "presentationHash": "5b6f120010d610369a519d8119e89052ff7b0721ff5da976b16bcdd5a6f42ee4",
+          "canonicalHash": "09460865a080d5e01f3541828966622a005973c1076301a99d7eb42a594bef06",
+          "janek": {
+            "position": {
+              "x": 2927.42401178864,
+              "y": 1062.4746705962168
+            },
+            "velocity": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "occurrenceCount": 0,
+          "canonical": {
+            "schemaVersion": 1,
+            "scenarioId": "browser-baseline-delivery",
+            "tick": 760,
+            "matterStatus": "resolved",
+            "semanticRevision": 1,
+            "activeRunId": null,
+            "activeRunCanMutateWorld": false,
+            "crateLocation": {
+              "kind": "free",
+              "position": {
+                "x": 2980,
+                "y": 1080
+              }
+            },
+            "materialKnowledge": [
+              {
+                "objectId": "crate.workshop.01",
+                "lastKnownPosition": {
+                  "x": 1952,
+                  "y": 720
+                },
+                "observedAtTick": 0,
+                "currentlyVisible": true
+              }
+            ],
+            "actionFacts": [
+              {
+                "id": "resident-world-action:resident.janek:0",
+                "tick": 0,
+                "runId": "run.janek.pickup-delivery-crate",
+                "kind": "material_pickup",
+                "objectId": "crate.workshop.01",
+                "outcomeStatus": "succeeded",
+                "code": "picked_up",
+                "actionSeq": 1
+              },
+              {
+                "id": "resident-world-action:resident.janek:1",
+                "tick": 722,
+                "runId": "run.janek.place-delivery-crate",
+                "kind": "material_place",
+                "objectId": "crate.workshop.01",
+                "outcomeStatus": "succeeded",
+                "code": "placed",
+                "actionSeq": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "runIndex": 1,
+      "checkpoints": [
+        {
+          "tick": 0,
+          "presentationHash": "8fd597ff326c4f34f5a565dcc7feb0409f6851ed1e19f6809e4f22f5cfbf9891",
+          "canonicalHash": "5ea292c35d1807a3e4e9417c5eaa46388e8710292233cafc5986ff9865f372ea",
+          "janek": {
+            "position": {
+              "x": 1900,
+              "y": 720
+            },
+            "velocity": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "occurrenceCount": 0,
+          "canonical": {
+            "schemaVersion": 1,
+            "scenarioId": "browser-baseline-delivery",
+            "tick": 0,
+            "matterStatus": "active",
+            "semanticRevision": 1,
+            "activeRunId": "run.janek.pickup-delivery-crate",
+            "activeRunCanMutateWorld": true,
+            "crateLocation": {
+              "kind": "free",
+              "position": {
+                "x": 1952,
+                "y": 720
+              }
+            },
+            "materialKnowledge": [],
+            "actionFacts": []
+          }
+        },
+        {
+          "tick": 120,
+          "presentationHash": "b77fc6b0f1af5de3d1d3d398c0c412a232446ec7bdc2570981cb75822801016c",
+          "canonicalHash": "a4cd221de5568c6433e96bd35205b0becc1cb1ca38a2b2394ef39ecf39b075a9",
+          "janek": {
+            "position": {
+              "x": 2070.762993649101,
+              "y": 776.9209978830349
+            },
+            "velocity": {
+              "x": 85.38149682453877,
+              "y": 28.46049894151747
+            }
+          },
+          "occurrenceCount": 0,
+          "canonical": {
+            "schemaVersion": 1,
+            "scenarioId": "browser-baseline-delivery",
+            "tick": 120,
+            "matterStatus": "active",
+            "semanticRevision": 1,
+            "activeRunId": "run.janek.place-delivery-crate",
+            "activeRunCanMutateWorld": true,
+            "crateLocation": {
+              "kind": "held",
+              "actorId": "resident.janek"
+            },
+            "materialKnowledge": [
+              {
+                "objectId": "crate.workshop.01",
+                "lastKnownPosition": {
+                  "x": 1952,
+                  "y": 720
+                },
+                "observedAtTick": 0,
+                "currentlyVisible": true
+              }
+            ],
+            "actionFacts": [
+              {
+                "id": "resident-world-action:resident.janek:0",
+                "tick": 0,
+                "runId": "run.janek.pickup-delivery-crate",
+                "kind": "material_pickup",
+                "objectId": "crate.workshop.01",
+                "outcomeStatus": "succeeded",
+                "code": "picked_up",
+                "actionSeq": 1
+              }
+            ]
+          }
+        },
+        {
+          "tick": 360,
+          "presentationHash": "0f278bd502af440fdc9984bc4da2710718446a822ed25dc5b4e8dcf5d6d638d6",
+          "canonicalHash": "5239e211b27b6033ee6e510a4606752bf56b9a6606d9397791c0b0e84042ad65",
+          "janek": {
+            "position": {
+              "x": 2412.2889809472563,
+              "y": 890.7629936490955
+            },
+            "velocity": {
+              "x": 85.38149682453877,
+              "y": 28.46049894151065
+            }
+          },
+          "occurrenceCount": 0,
+          "canonical": {
+            "schemaVersion": 1,
+            "scenarioId": "browser-baseline-delivery",
+            "tick": 360,
+            "matterStatus": "active",
+            "semanticRevision": 1,
+            "activeRunId": "run.janek.place-delivery-crate",
+            "activeRunCanMutateWorld": true,
+            "crateLocation": {
+              "kind": "held",
+              "actorId": "resident.janek"
+            },
+            "materialKnowledge": [
+              {
+                "objectId": "crate.workshop.01",
+                "lastKnownPosition": {
+                  "x": 1952,
+                  "y": 720
+                },
+                "observedAtTick": 0,
+                "currentlyVisible": true
+              }
+            ],
+            "actionFacts": [
+              {
+                "id": "resident-world-action:resident.janek:0",
+                "tick": 0,
+                "runId": "run.janek.pickup-delivery-crate",
+                "kind": "material_pickup",
+                "objectId": "crate.workshop.01",
+                "outcomeStatus": "succeeded",
+                "code": "picked_up",
+                "actionSeq": 1
+              }
+            ]
+          }
+        },
+        {
+          "tick": 760,
+          "presentationHash": "5b6f120010d610369a519d8119e89052ff7b0721ff5da976b16bcdd5a6f42ee4",
+          "canonicalHash": "09460865a080d5e01f3541828966622a005973c1076301a99d7eb42a594bef06",
+          "janek": {
+            "position": {
+              "x": 2927.42401178864,
+              "y": 1062.4746705962168
+            },
+            "velocity": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "occurrenceCount": 0,
+          "canonical": {
+            "schemaVersion": 1,
+            "scenarioId": "browser-baseline-delivery",
+            "tick": 760,
+            "matterStatus": "resolved",
+            "semanticRevision": 1,
+            "activeRunId": null,
+            "activeRunCanMutateWorld": false,
+            "crateLocation": {
+              "kind": "free",
+              "position": {
+                "x": 2980,
+                "y": 1080
+              }
+            },
+            "materialKnowledge": [
+              {
+                "objectId": "crate.workshop.01",
+                "lastKnownPosition": {
+                  "x": 1952,
+                  "y": 720
+                },
+                "observedAtTick": 0,
+                "currentlyVisible": true
+              }
+            ],
+            "actionFacts": [
+              {
+                "id": "resident-world-action:resident.janek:0",
+                "tick": 0,
+                "runId": "run.janek.pickup-delivery-crate",
+                "kind": "material_pickup",
+                "objectId": "crate.workshop.01",
+                "outcomeStatus": "succeeded",
+                "code": "picked_up",
+                "actionSeq": 1
+              },
+              {
+                "id": "resident-world-action:resident.janek:1",
+                "tick": 722,
+                "runId": "run.janek.place-delivery-crate",
+                "kind": "material_place",
+                "objectId": "crate.workshop.01",
+                "outcomeStatus": "succeeded",
+                "code": "placed",
+                "actionSeq": 2
+              }
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "runIndex": 2,
+      "checkpoints": [
+        {
+          "tick": 0,
+          "presentationHash": "8fd597ff326c4f34f5a565dcc7feb0409f6851ed1e19f6809e4f22f5cfbf9891",
+          "canonicalHash": "5ea292c35d1807a3e4e9417c5eaa46388e8710292233cafc5986ff9865f372ea",
+          "janek": {
+            "position": {
+              "x": 1900,
+              "y": 720
+            },
+            "velocity": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "occurrenceCount": 0,
+          "canonical": {
+            "schemaVersion": 1,
+            "scenarioId": "browser-baseline-delivery",
+            "tick": 0,
+            "matterStatus": "active",
+            "semanticRevision": 1,
+            "activeRunId": "run.janek.pickup-delivery-crate",
+            "activeRunCanMutateWorld": true,
+            "crateLocation": {
+              "kind": "free",
+              "position": {
+                "x": 1952,
+                "y": 720
+              }
+            },
+            "materialKnowledge": [],
+            "actionFacts": []
+          }
+        },
+        {
+          "tick": 120,
+          "presentationHash": "b77fc6b0f1af5de3d1d3d398c0c412a232446ec7bdc2570981cb75822801016c",
+          "canonicalHash": "a4cd221de5568c6433e96bd35205b0becc1cb1ca38a2b2394ef39ecf39b075a9",
+          "janek": {
+            "position": {
+              "x": 2070.762993649101,
+              "y": 776.9209978830349
+            },
+            "velocity": {
+              "x": 85.38149682453877,
+              "y": 28.46049894151747
+            }
+          },
+          "occurrenceCount": 0,
+          "canonical": {
+            "schemaVersion": 1,
+            "scenarioId": "browser-baseline-delivery",
+            "tick": 120,
+            "matterStatus": "active",
+            "semanticRevision": 1,
+            "activeRunId": "run.janek.place-delivery-crate",
+            "activeRunCanMutateWorld": true,
+            "crateLocation": {
+              "kind": "held",
+              "actorId": "resident.janek"
+            },
+            "materialKnowledge": [
+              {
+                "objectId": "crate.workshop.01",
+                "lastKnownPosition": {
+                  "x": 1952,
+                  "y": 720
+                },
+                "observedAtTick": 0,
+                "currentlyVisible": true
+              }
+            ],
+            "actionFacts": [
+              {
+                "id": "resident-world-action:resident.janek:0",
+                "tick": 0,
+                "runId": "run.janek.pickup-delivery-crate",
+                "kind": "material_pickup",
+                "objectId": "crate.workshop.01",
+                "outcomeStatus": "succeeded",
+                "code": "picked_up",
+                "actionSeq": 1
+              }
+            ]
+          }
+        },
+        {
+          "tick": 360,
+          "presentationHash": "0f278bd502af440fdc9984bc4da2710718446a822ed25dc5b4e8dcf5d6d638d6",
+          "canonicalHash": "5239e211b27b6033ee6e510a4606752bf56b9a6606d9397791c0b0e84042ad65",
+          "janek": {
+            "position": {
+              "x": 2412.2889809472563,
+              "y": 890.7629936490955
+            },
+            "velocity": {
+              "x": 85.38149682453877,
+              "y": 28.46049894151065
+            }
+          },
+          "occurrenceCount": 0,
+          "canonical": {
+            "schemaVersion": 1,
+            "scenarioId": "browser-baseline-delivery",
+            "tick": 360,
+            "matterStatus": "active",
+            "semanticRevision": 1,
+            "activeRunId": "run.janek.place-delivery-crate",
+            "activeRunCanMutateWorld": true,
+            "crateLocation": {
+              "kind": "held",
+              "actorId": "resident.janek"
+            },
+            "materialKnowledge": [
+              {
+                "objectId": "crate.workshop.01",
+                "lastKnownPosition": {
+                  "x": 1952,
+                  "y": 720
+                },
+                "observedAtTick": 0,
+                "currentlyVisible": true
+              }
+            ],
+            "actionFacts": [
+              {
+                "id": "resident-world-action:resident.janek:0",
+                "tick": 0,
+                "runId": "run.janek.pickup-delivery-crate",
+                "kind": "material_pickup",
+                "objectId": "crate.workshop.01",
+                "outcomeStatus": "succeeded",
+                "code": "picked_up",
+                "actionSeq": 1
+              }
+            ]
+          }
+        },
+        {
+          "tick": 760,
+          "presentationHash": "5b6f120010d610369a519d8119e89052ff7b0721ff5da976b16bcdd5a6f42ee4",
+          "canonicalHash": "09460865a080d5e01f3541828966622a005973c1076301a99d7eb42a594bef06",
+          "janek": {
+            "position": {
+              "x": 2927.42401178864,
+              "y": 1062.4746705962168
+            },
+            "velocity": {
+              "x": 0,
+              "y": 0
+            }
+          },
+          "occurrenceCount": 0,
+          "canonical": {
+            "schemaVersion": 1,
+            "scenarioId": "browser-baseline-delivery",
+            "tick": 760,
+            "matterStatus": "resolved",
+            "semanticRevision": 1,
+            "activeRunId": null,
+            "activeRunCanMutateWorld": false,
+            "crateLocation": {
+              "kind": "free",
+              "position": {
+                "x": 2980,
+                "y": 1080
+              }
+            },
+            "materialKnowledge": [
+              {
+                "objectId": "crate.workshop.01",
+                "lastKnownPosition": {
+                  "x": 1952,
+                  "y": 720
+                },
+                "observedAtTick": 0,
+                "currentlyVisible": true
+              }
+            ],
+            "actionFacts": [
+              {
+                "id": "resident-world-action:resident.janek:0",
+                "tick": 0,
+                "runId": "run.janek.pickup-delivery-crate",
+                "kind": "material_pickup",
+                "objectId": "crate.workshop.01",
+                "outcomeStatus": "succeeded",
+                "code": "picked_up",
+                "actionSeq": 1
+              },
+              {
+                "id": "resident-world-action:resident.janek:1",
+                "tick": 722,
+                "runId": "run.janek.place-delivery-crate",
+                "kind": "material_place",
+                "objectId": "crate.workshop.01",
+                "outcomeStatus": "succeeded",
+                "code": "placed",
+                "actionSeq": 2
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "normalRuntime": {
+    "hasEvidenceApi": false,
+    "tickBefore": 0,
+    "tickAfter": 26
+  },
+  "finishedAt": "2026-09-18T15:32:49.775Z",
+  "outcome": "PASS"
+}
