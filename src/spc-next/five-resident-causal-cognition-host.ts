@@ -19,6 +19,10 @@ import {
 } from "./five-resident-causal-life-runtime";
 import type { FiveResidentId } from "./five-resident-region";
 
+export const CAUSAL_STALE_RETRY_TICKS = 15;
+export const CAUSAL_REJECT_RETRY_TICKS = 60;
+export const CAUSAL_PROVIDER_ERROR_RETRY_TICKS = 120;
+
 export interface FiveResidentCausalCognitionRequest {
   readonly id: string;
   readonly residentId: FiveResidentId;
@@ -66,6 +70,7 @@ export class FiveResidentCausalCognitionHost {
   private readonly coordinator: CognitionCoordinator;
   private readonly authority = new WeakMap<FiveResidentCausalCognitionRequest, RequestAuthority>();
   private readonly active = new Set<FiveResidentCausalCognitionRequest>();
+  private readonly retryNotBeforeTick = new Map<FiveResidentId, number>();
 
   constructor(
     private readonly runtime: FiveResidentCausalLifeRuntime,
@@ -81,6 +86,8 @@ export class FiveResidentCausalCognitionHost {
 
     for (const residentId of this.runtime.claimedResidentIds()) {
       if (inFlight.has(residentId)) continue;
+      const retryNotBefore = this.retryNotBeforeTick.get(residentId) ?? 0;
+      if (this.runtime.world.tick < retryNotBefore) continue;
       const life = this.runtime.life(residentId);
       if (!life || life.lifeIntentOwner.state().activeAttemptId !== null) continue;
       const batch = life.resident.takeCognitionBatch(this.runtime.world.tick);
@@ -143,6 +150,7 @@ export class FiveResidentCausalCognitionHost {
     if (!originReason) {
       life.lifeIntentOwner.abandon(local.prepared.attempt);
       this.coordinator.settle(local.dispatch.id);
+      this.deferRetry(request.residentId, CAUSAL_REJECT_RETRY_TICKS);
       return {
         status: "rejected",
         residentId: request.residentId,
@@ -243,6 +251,10 @@ export class FiveResidentCausalCognitionHost {
     this.coordinator.settle(local.dispatch.id);
 
     if (settlement.status !== "applied") {
+      this.deferRetry(
+        request.residentId,
+        settlement.status === "stale" ? CAUSAL_STALE_RETRY_TICKS : CAUSAL_REJECT_RETRY_TICKS,
+      );
       return {
         status: settlement.status,
         residentId: request.residentId,
@@ -251,6 +263,7 @@ export class FiveResidentCausalCognitionHost {
       };
     }
 
+    this.retryNotBeforeTick.delete(request.residentId);
     life.resident.scheduleAdaptiveReview(
       this.runtime.world.tick,
       settlement.proposal.reviewAfterSeconds,
@@ -293,12 +306,16 @@ export class FiveResidentCausalCognitionHost {
     };
   }
 
-  abandon(request: FiveResidentCausalCognitionRequest): boolean {
+  abandon(
+    request: FiveResidentCausalCognitionRequest,
+    retryAfterTicks = CAUSAL_PROVIDER_ERROR_RETRY_TICKS,
+  ): boolean {
     const local = this.claimRequest(request);
     if (!local) return false;
     const life = this.runtime.life(request.residentId);
     const abandoned = life?.lifeIntentOwner.abandon(local.prepared.attempt) ?? false;
     this.coordinator.settle(local.dispatch.id);
+    this.deferRetry(request.residentId, retryAfterTicks);
     return abandoned;
   }
 
@@ -306,7 +323,21 @@ export class FiveResidentCausalCognitionHost {
     return {
       ...this.coordinator.state(),
       activeRequestCount: this.active.size,
+      retryNotBeforeTick: Object.fromEntries(
+        [...this.retryNotBeforeTick.entries()].sort((a, b) => a[0].localeCompare(b[0])),
+      ),
     };
+  }
+
+  private deferRetry(residentId: FiveResidentId, ticks: number): void {
+    if (!Number.isSafeInteger(ticks) || ticks < 0) {
+      throw new Error("causal cognition retry delay must be a non-negative safe integer");
+    }
+    if (ticks === 0) {
+      this.retryNotBeforeTick.delete(residentId);
+      return;
+    }
+    this.retryNotBeforeTick.set(residentId, this.runtime.world.tick + ticks);
   }
 
   private claimRequest(request: FiveResidentCausalCognitionRequest): RequestAuthority | null {
