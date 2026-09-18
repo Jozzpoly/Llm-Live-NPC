@@ -24,6 +24,7 @@ import {
   ResidentLifeChoiceReviewBridge,
   type ResidentLifeChoiceReviewObservation,
 } from "./resident-life-choice-review-bridge";
+import { ResidentLifeOutcomeReviewBridge } from "./resident-life-outcome-review-bridge";
 import type { ResidentLifeIntentProposal } from "./resident-life-intent-contract";
 import type { ResidentLifeCognitionContext } from "./resident-life-cognition-context";
 import {
@@ -251,6 +252,7 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
   const focus = new ResidentExecutionFocusAuthority(kernel);
   const arbitrator = new ResidentExecutionArbitrator(kernel, focus);
   const choiceReviewBridge = new ResidentLifeChoiceReviewBridge(mira);
+  const outcomeReviewBridge = new ResidentLifeOutcomeReviewBridge(mira);
 
   world.setResidentActivity(MIRA_ID, {
     id: "activity:mira:causal-multi-matter-idle",
@@ -988,6 +990,7 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
     groundedTargetRegionIds.delete(runId);
     runMatterIds.delete(runId);
     kernel.resolveMatter(matterId);
+    outcomeReviewBridge.observe(reconciled.evidence, world.tick);
     const arbitration = arbitrator.reconcile();
     const choiceReview = choiceReviewBridge.observe(arbitration, world.tick);
     authority.enforceMotionAuthority();
