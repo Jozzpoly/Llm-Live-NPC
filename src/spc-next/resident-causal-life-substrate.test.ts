@@ -144,6 +144,8 @@ describe("ResidentCausalLifeSubstrate", () => {
     expect(original.kernel.pendingSemanticProposals()).toContainEqual(volatileTicket);
 
     const snapshot = original.snapshotCommittedLife();
+    expect(original.releaseWorldExecutionAuthority()).toBe(true);
+    expect(() => original.worldAuthority.motionOwner()).toThrow("resident World execution authority is released");
 
     const restored = new ResidentCausalLifeSubstrate({
       residentId: IDA_ID,
