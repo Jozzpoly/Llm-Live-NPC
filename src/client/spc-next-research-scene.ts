@@ -1,4 +1,6 @@
 import * as Phaser from "phaser";
+import type { ResidentLifeCognitionView } from "../spc-next/resident-life-cognition-view";
+import type { FiveResidentLivingRuntimeDiagnostics } from "../spc-next/five-resident-unified-living-runtime";
 import type {
   ActorMotionOutcome,
   ActorState,
@@ -57,6 +59,8 @@ export interface SpcNextResearchFrame {
   selectedResidentId: string | null;
   selectedDiagnostics: ResidentDiagnostics | null;
   selectedRegionId: string | null;
+  selectedLife: ResidentLifeCognitionView | null;
+  livingDiagnostics: FiveResidentLivingRuntimeDiagnostics | null;
   overlayEnabled: boolean;
   cameraZoom: number;
 }
@@ -97,7 +101,7 @@ export class SpcNextResearchScene extends Phaser.Scene {
     super({ key: "spc-next-research" });
     this.manualWorldControl = options.manualWorldControl ?? false;
     const scenarioKind = options.scenarioKind
-      ?? (this.manualWorldControl ? researchScenarioKindFromSearch(location.search) : "baseline-delivery");
+      ?? researchScenarioKindFromSearch(location.search);
     this.scenario = createSpcNextResearchScenario(scenarioKind);
     this.world = this.scenario.world;
     this.snapshot = this.world.publicSnapshot();
@@ -231,6 +235,9 @@ export class SpcNextResearchScene extends Phaser.Scene {
       throw new Error("canonical evidence snapshot is available only in evidence control mode");
     }
     if (!this.created) throw new Error("SPC research scene is not ready for canonical evidence capture");
+    if (this.scenario.canonicalEvidenceSupported === false) {
+      throw new Error("this multi-resident scenario has no single-resident canonical evidence target");
+    }
     return captureSpcCanonicalEvidenceSnapshot({
       scenarioId: this.scenario.evidenceScenarioId,
       residentId: this.scenario.residentId,
@@ -395,7 +402,13 @@ export class SpcNextResearchScene extends Phaser.Scene {
       view.heading.setVisible(true);
       view.heading.setRotation(Math.atan2(actor.facing.y, actor.facing.x));
       const publicResident = this.snapshot.residents.find((resident) => resident.id === actor.id);
-      view.stateLabel.setText(publicResident ? publicResident.activity.kind : "player");
+      const life = publicResident ? this.scenario.residentLifeView?.(actor.id) ?? null : null;
+      const focusedMatter = life?.body.focusedRunId
+        ? life.matters.find((matter) => matter.activeRun?.runId === life.body.focusedRunId) ?? null
+        : null;
+      const recoveredLabel = focusedMatter?.semanticIntent?.kind
+        ?? (life ? "causal idle" : null);
+      view.stateLabel.setText(publicResident ? recoveredLabel ?? publicResident.activity.kind : "player");
       view.stateLabel.setVisible(this.overlayEnabled);
       const selected = actor.id === this.selectedResidentId;
       view.body.setStrokeStyle(selected ? 4 : 2, selected ? 0xf0d889 : 0xc5d3dc, selected ? 1 : 0.48);
@@ -628,6 +641,10 @@ export class SpcNextResearchScene extends Phaser.Scene {
       selectedResidentId: this.selectedResidentId,
       selectedDiagnostics,
       selectedRegionId: selectedActor ? this.world.regionAt(selectedActor.position)?.id ?? null : null,
+      selectedLife: this.selectedResidentId
+        ? this.scenario.residentLifeView?.(this.selectedResidentId) ?? null
+        : null,
+      livingDiagnostics: this.scenario.livingDiagnostics?.() ?? null,
       overlayEnabled: this.overlayEnabled,
       cameraZoom: this.cameras.main?.zoom ?? 1,
     };
