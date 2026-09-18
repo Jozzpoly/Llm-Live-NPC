@@ -224,8 +224,9 @@ describe("ResidentCausalExecutionCoordinator", () => {
         groundingContext: ida.cognitionContext(prepared!.batch),
       }),
     );
-    expect(settlement.status).toBe("applied");
-    if (settlement.status !== "applied") return;
+    if (settlement.status !== "applied") {
+      throw new Error(`generic communicate settlement failed: ${settlement.status} ${"reason" in settlement ? settlement.reason : ""} ${"detail" in settlement ? settlement.detail ?? "" : ""}`);
+    }
 
     const accepted = life.communicateCommitments.materializePrivateSpeechCommitment({
       attempt: prepared.attempt,
