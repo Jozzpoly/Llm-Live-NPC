@@ -12,6 +12,7 @@ import {
   type ResidentKernelEvidence,
   type ResidentMatter,
   type ResidentMatterIntent,
+  type ResidentTravelRegionMatterIntent,
 } from "./resident-continuity-kernel";
 import {
   ResidentExecutionArbitrator,
@@ -93,7 +94,7 @@ export interface GroundedCausalCommitmentIntent {
   destination: Vec2;
   routeRegionIds: readonly string[];
   semanticCourse: string;
-  semanticIntent: ResidentMatterIntent;
+  semanticIntent: ResidentTravelRegionMatterIntent;
 }
 
 export interface GroundedCausalOutcomeCommitmentIntent {
@@ -102,7 +103,7 @@ export interface GroundedCausalOutcomeCommitmentIntent {
   destination: Vec2;
   routeRegionIds: readonly string[];
   semanticCourse: string;
-  semanticIntent: ResidentMatterIntent;
+  semanticIntent: ResidentTravelRegionMatterIntent;
 }
 
 type CausalCommitmentProposal = ResidentCognitionProposal | ResidentLifeIntentProposal;
