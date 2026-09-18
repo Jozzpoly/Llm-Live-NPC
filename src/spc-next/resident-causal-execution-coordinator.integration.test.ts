@@ -12,6 +12,7 @@ const MAX_PREPARE_STEPS = 240;
 const MAX_EXECUTION_STEPS = 2_000;
 const JANEK_ID = "resident.janek";
 const MESSAGE = "Mira says the field well needs checking before dusk.";
+const HIDDEN_JANEK_POSITION = { x: 1_200, y: 720 };
 
 describe("ResidentCausalExecutionCoordinator", () => {
   it("executes and reconciles a generic Ida travel matter without a bespoke vertical executor loop", () => {
@@ -270,6 +271,150 @@ describe("ResidentCausalExecutionCoordinator", () => {
     expect(life.focus.focusedRun()).toBeNull();
     expect(life.worldAuthority.motionOwner()).toBeNull();
   });
+
+  it("reconciles blocked Ida communication without resolving the durable matter or oracle-tracking Janek", () => {
+    const composition = createFiveResidentRegionComposition({
+      playerStart: { x: 3_000, y: 900 },
+    });
+    const { world } = composition;
+    const ida = composition.runtimes[IDA_ID];
+    const navigation = createFiveResidentNavigationGraph();
+
+    establishIdaJanekContact(world, ida);
+    movePlayerNear(world, actorPosition(world, IDA_ID));
+    world.setResidentActivity(IDA_ID, {
+      id: "activity:ida:generic-blocked-communicate-idle",
+      kind: "idle",
+      targetActorId: null,
+      targetPosition: null,
+      text: null,
+      speed: null,
+      reason: "generic blocked communicate specimen idle",
+    });
+    world.step();
+
+    const life = new ResidentCausalLifeSubstrate({
+      residentId: IDA_ID,
+      resident: ida,
+      world,
+      navigation,
+    });
+    const execution = new ResidentCausalExecutionCoordinator(life);
+
+    const occurrence = world.speak(
+      PLAYER_ID,
+      `Ida, proszę przekaż Jankowi dokładnie: "${MESSAGE}"`,
+      REQUEST_RADIUS,
+      [IDA_ID],
+    );
+    world.step();
+
+    let prepared = life.takeReadyLifeIntentAttempt();
+    for (let step = 0; step < MAX_PREPARE_STEPS && !prepared; step += 1) {
+      world.step();
+      prepared = life.takeReadyLifeIntentAttempt();
+    }
+    if (!prepared) throw new Error("Ida blocked-message cognition never became ready");
+
+    const proposal = {
+      version: 1 as const,
+      commitmentDecision: {
+        kind: "accept" as const,
+        reason: "accept responsibility for delivering the exact message",
+        intent: {
+          kind: "communicate" as const,
+          goal: "deliver the accepted message to Janek",
+          targetActorId: JANEK_ID,
+          targetRegionId: null,
+          targetPosition: null,
+          text: MESSAGE,
+        },
+      },
+      beliefs: [],
+      concerns: [],
+      reviewAfterSeconds: 600,
+    };
+
+    const settlement = life.lifeIntentOwner.settleCommitmentIntent(
+      prepared.attempt,
+      proposal,
+      life.currentLifeView(),
+      world.tick,
+      (admittedProposal, providerContext) => life.communicateCommitments.groundPrivateSpeechCommitment({
+        attempt: prepared!.attempt,
+        occurrence,
+        proposal: admittedProposal,
+        providerContext,
+        groundingContext: ida.cognitionContext(prepared!.batch),
+      }),
+    );
+    if (settlement.status !== "applied") {
+      throw new Error(`blocked communicate settlement failed: ${settlement.status}`);
+    }
+
+    const accepted = life.communicateCommitments.materializePrivateSpeechCommitment({
+      attempt: prepared.attempt,
+      occurrence,
+      proposal: settlement.proposal,
+      intent: settlement.intent,
+    });
+
+    const beforeHidden = knownActor(ida, JANEK_ID, world.tick);
+    expect(beforeHidden).toMatchObject({
+      id: JANEK_ID,
+      currentlyVisible: false,
+      lastKnownPosition: expect.any(Object),
+    });
+
+    relocateJanekOutsideIdaKnowledge(world, ida, HIDDEN_JANEK_POSITION);
+    expect(knownActor(ida, JANEK_ID, world.tick)).toEqual(beforeHidden);
+    expect(actorPosition(world, JANEK_ID)).not.toEqual(beforeHidden!.lastKnownPosition);
+
+    const reviewBeforeBlockedOutcome = ida.cognitionScheduleDiagnostics().nextQuietReviewTick;
+
+    let terminal: ReturnType<typeof execution.stepFocusedRun> | null = null;
+    for (let step = 0; step < MAX_EXECUTION_STEPS; step += 1) {
+      const local = execution.stepFocusedRun();
+      if (local.status === "running") {
+        world.step();
+        continue;
+      }
+      terminal = local;
+      break;
+    }
+
+    expect(terminal).toMatchObject({
+      status: "blocked",
+      matterId: accepted.matter.id,
+      runId: accepted.runId,
+      outcomeEvidence: {
+        kind: "task_outcome",
+        summary: expect.stringContaining("recipient_absent_at_best_known_contact"),
+      },
+      arbitration: { status: "idle" },
+    });
+    if (!terminal || terminal.status !== "blocked") return;
+
+    expect(world.diagnostics().recentOccurrences.filter((candidate) => (
+      candidate.kind === "speech"
+      && candidate.actorId === IDA_ID
+      && candidate.text === MESSAGE
+    ))).toEqual([]);
+
+    expect(life.kernel.matter(accepted.matter.id)).toMatchObject({
+      status: "active",
+      activeRunId: null,
+      semanticIntent: {
+        kind: "communicate_actor",
+        targetActorId: JANEK_ID,
+        text: MESSAGE,
+      },
+    });
+    expect(life.focus.focusedRun()).toBeNull();
+    expect(life.worldAuthority.motionOwner()).toBeNull();
+    expect(ida.cognitionScheduleDiagnostics().nextQuietReviewTick)
+      .toBeLessThanOrEqual(reviewBeforeBlockedOutcome);
+  });
 });
 
 function establishIdaJanekContact(
@@ -328,6 +473,49 @@ function establishIdaJanekContact(
     }
   }
   throw new Error("Ida did not retreat while preserving stale Janek contact");
+}
+
+function knownActor(
+  resident: ReturnType<typeof createFiveResidentRegionComposition>["runtimes"]["resident.ida"],
+  actorId: string,
+  tick: number,
+) {
+  return resident.cognitionContext({
+    residentId: IDA_ID,
+    requestedAtTick: tick,
+    reasons: [],
+  }).knownActors.find((actor) => actor.id === actorId) ?? null;
+}
+
+function relocateJanekOutsideIdaKnowledge(
+  world: ReturnType<typeof createFiveResidentRegionComposition>["world"],
+  ida: ReturnType<typeof createFiveResidentRegionComposition>["runtimes"]["resident.ida"],
+  target: Vec2,
+) {
+  const before = knownActor(ida, JANEK_ID, world.tick);
+  world.setResidentActivity(
+    JANEK_ID,
+    travelActivity("janek-generic-hidden-relocation", target, "hidden relocation outside Ida knowledge"),
+  );
+
+  for (let step = 0; step < MAX_EXECUTION_STEPS; step += 1) {
+    if (distanceSquared(actorPosition(world, JANEK_ID), target) <= 18 ** 2) {
+      world.setResidentActivity(JANEK_ID, {
+        id: "activity:janek-generic-hidden-hold",
+        kind: "idle",
+        targetActorId: null,
+        targetPosition: null,
+        text: null,
+        speed: null,
+        reason: "hold after hidden relocation",
+      });
+      world.step();
+      if (knownActor(ida, JANEK_ID, world.tick) !== null && before !== null) return;
+      throw new Error("Ida lost Janek identity during hidden relocation");
+    }
+    world.step();
+  }
+  throw new Error("hidden Janek relocation exceeded guard");
 }
 
 function movePlayerNear(
