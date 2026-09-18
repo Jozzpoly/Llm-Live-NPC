@@ -2,12 +2,15 @@ import { CognitionCoordinator, type CognitionDispatch } from "./cognition-coordi
 import type { CognitionBatch, CognitionReason, WorldOccurrence } from "./contracts";
 import type {
   AcceptedResidentCausalCommunicateCommitment,
+  GroundedResidentCausalCommunicateCommitmentIntent,
 } from "./resident-causal-communicate-commitment";
 import type {
   AcceptedResidentCausalReasonCommitment,
+  GroundedResidentCausalReasonCommitmentIntent,
 } from "./resident-causal-reason-commitment";
 import type {
   AcceptedResidentCausalTravelCommitment,
+  GroundedResidentCausalTravelCommitmentIntent,
 } from "./resident-causal-travel-commitment";
 import type { ResidentLifeIntentProposal } from "./resident-life-intent-contract";
 import type { PreparedResidentCausalLifeIntent } from "./resident-causal-life-substrate";
@@ -32,18 +35,6 @@ type AcceptedCommitment =
   | AcceptedResidentCausalTravelCommitment
   | AcceptedResidentCausalCommunicateCommitment
   | AcceptedResidentCausalReasonCommitment;
-
-type GroundedAdmission =
-  | { kind: "no_commitment" }
-  | {
-      kind: "private_speech_travel";
-      occurrence: WorldOccurrence;
-      intent: Parameters<
-        ReturnType<FiveResidentCausalLifeRuntime["life"]> extends never
-          ? never
-          : never
-      >[0];
-    };
 
 export type FiveResidentCausalCognitionSettlement =
   | {
@@ -171,16 +162,16 @@ export class FiveResidentCausalCognitionHost {
       | {
           kind: "speech_travel";
           occurrence: WorldOccurrence;
-          intent: ReturnType<typeof life.travelCommitments.groundPrivateSpeechCommitment> extends { status: "accepted"; intent: infer T } ? T : never;
+          intent: GroundedResidentCausalTravelCommitmentIntent;
         }
       | {
           kind: "speech_communicate";
           occurrence: WorldOccurrence;
-          intent: ReturnType<typeof life.communicateCommitments.groundPrivateSpeechCommitment> extends { status: "accepted"; intent: infer T } ? T : never;
+          intent: GroundedResidentCausalCommunicateCommitmentIntent;
         }
       | {
           kind: "reason";
-          intent: ReturnType<typeof life.reasonCommitments.groundCommitment> extends { status: "accepted"; intent: infer T } ? T : never;
+          intent: GroundedResidentCausalReasonCommitmentIntent;
         };
 
     const settlement = life.lifeIntentOwner.settleCommitmentIntent<Admission>(
@@ -189,7 +180,8 @@ export class FiveResidentCausalCognitionHost {
       life.currentLifeView(),
       this.runtime.world.tick,
       (proposal, providerContext) => {
-        if (proposal.commitmentDecision.kind !== "accept") {
+        if (proposal.commitmentDecision.kind !== "accept"
+          || proposal.commitmentDecision.intent.kind === "idle") {
           return { status: "accepted", intent: { kind: "no_commitment" } };
         }
 
