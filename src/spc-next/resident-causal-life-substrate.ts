@@ -204,22 +204,32 @@ export class ResidentCausalLifeSubstrate {
     }));
   }
 
+  prepareLifeIntentAttempt(batch: CognitionBatch): PreparedResidentCausalLifeIntent | null {
+    if (batch.residentId !== this.options.residentId) {
+      throw new Error("resident causal life batch belongs to another resident");
+    }
+    if (this.lifeIntentOwner.state().activeAttemptId !== null) return null;
+
+    const attempt = this.lifeIntentOwner.prepare(batch, this.currentLifeView());
+    if (!attempt) return null;
+    return {
+      batch: structuredClone(batch),
+      attempt,
+    };
+  }
+
   takeReadyLifeIntentAttempt(): PreparedResidentCausalLifeIntent | null {
     if (this.lifeIntentOwner.state().activeAttemptId !== null) return null;
 
     const batch = this.options.resident.takeCognitionBatch(this.options.world.tick);
     if (!batch) return null;
 
-    const attempt = this.lifeIntentOwner.prepare(batch, this.currentLifeView());
-    if (!attempt) {
+    const prepared = this.prepareLifeIntentAttempt(batch);
+    if (!prepared) {
       this.options.resident.requeueCognitionBatch(batch);
       throw new Error("resident causal life substrate intent owner refused a ready cognition batch");
     }
-
-    return {
-      batch: structuredClone(batch),
-      attempt,
-    };
+    return prepared;
   }
 }
 
