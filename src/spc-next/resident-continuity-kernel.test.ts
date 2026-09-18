@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { deriveSpcIdentifier } from "./identity-contract";
 import { ResidentContinuityKernel } from "./resident-continuity-kernel";
 
 function evidence(id: string, tick: number, summary = id) {
@@ -191,11 +192,12 @@ describe("ResidentContinuityKernel recovery authority", () => {
       summary: "station inspection completed physically",
     });
 
+    const outcomeEvidenceId = deriveSpcIdentifier("task-outcome", binding.runId, "20");
     expect(result).toMatchObject({
       status: "recorded",
       binding,
       evidence: {
-        id: "task-outcome:run.inspect:20",
+        id: outcomeEvidenceId,
         kind: "task_outcome",
         summary: "succeeded: station inspection completed physically",
       },
@@ -204,7 +206,7 @@ describe("ResidentContinuityKernel recovery authority", () => {
         status: "active",
         semanticCourse: "inspect the workshop station",
         activeRunId: null,
-        lastOutcomeEvidenceId: "task-outcome:run.inspect:20",
+        lastOutcomeEvidenceId: outcomeEvidenceId,
       },
     });
     expect(kernel.runBinding(binding.runId)).toBeNull();
