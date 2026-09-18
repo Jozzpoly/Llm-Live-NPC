@@ -1,5 +1,8 @@
 # SPC Re-observation — Findings Ledger
 
+> **CURRENT EXECUTION NOTICE (2026-09-18):** These findings remain valid evidence within their recorded scope, especially the contract-to-oracle warnings. Some composition gaps have since advanced materially. Use `docs/SPC_LIVING_WORLD_EXECUTION_PROGRAM.md` for current execution state and do not promote this ledger's old stop-line as today's roadmap.
+
+
 Date: **2026-09-16**  
 Campaign: `SPC_REOBSERVATION_CAMPAIGN.md`  
 Status: **ACTIVE / findings are scoped, not global project verdicts**
