@@ -1,0 +1,86 @@
+name: Presentation Geometry Ack Canary
+
+on:
+  push:
+    branches:
+      - experiment/presented-frame-geometry-convergence-p2-1
+    paths:
+      - "src/client/main.ts"
+      - "src/client/spc-next-presentation-geometry-ack-instrumentation.ts"
+      - "scripts/spc-browser-geometry-convergence-ack-canary.mjs"
+      - ".github/workflows/presentation-geometry-ack-canary.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  p2-1-geometry-convergence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+
+    steps:
+      - name: Checkout exact canary head
+        uses: actions/checkout@v6
+
+      - name: Use Node 22
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Build exact browser candidate
+        run: npm run build
+
+      - name: Locate runner Chrome
+        shell: bash
+        run: |
+          set -euo pipefail
+          CHROME_PATH="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)"
+          test -n "$CHROME_PATH"
+          echo "CHROME_PATH=$CHROME_PATH" >> "$GITHUB_ENV"
+          "$CHROME_PATH" --version
+
+      - name: Start static exact-candidate server
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory dist/client > /tmp/p2-1-static.log 2>&1 &
+          echo $! > /tmp/p2-1-static.pid
+          for attempt in $(seq 1 80); do
+            if curl --fail --silent --show-error 'http://127.0.0.1:4173/?spc=1&evidence=1&scenario=missing-crate&geometry-ack=1' > /dev/null; then
+              exit 0
+            fi
+            sleep 0.25
+          done
+          cat /tmp/p2-1-static.log
+          exit 1
+
+      - name: Execute P2.1 geometry-converged presentation canary
+        env:
+          EVIDENCE_BASE_URL: http://127.0.0.1:4173
+          SOURCE_SHA: ${{ github.sha }}
+          MANUAL_CONTROL_OUTPUT: evidence/presentation-geometry/p2-1-report.json
+        run: node scripts/spc-browser-geometry-convergence-ack-canary.mjs
+
+      - name: Print P2.1 report
+        if: always()
+        shell: bash
+        run: |
+          echo "--- Static server ---"
+          cat /tmp/p2-1-static.log 2>/dev/null || true
+          echo "--- P2.1 report ---"
+          cat evidence/presentation-geometry/p2-1-report.json 2>/dev/null || true
+
+      - name: Upload P2.1 evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p2-1-presentation-geometry-${{ github.sha }}
+          path: evidence/presentation-geometry
+          if-no-files-found: error
+          retention-days: 14

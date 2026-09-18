@@ -1,0 +1,67 @@
+name: Presentation Geometry Diagnostic
+
+on:
+  push:
+    branches:
+      - experiment/presented-frame-geometry-convergence-p2-1
+    paths:
+      - "scripts/spc-browser-geometry-convergence-diagnostic.mjs"
+      - ".github/workflows/presentation-geometry-diagnostic.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  first-click-timeline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Checkout exact research head
+        uses: actions/checkout@v6
+      - name: Use Node 22
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Build exact candidate
+        run: npm run build
+      - name: Locate Chrome
+        shell: bash
+        run: |
+          set -euo pipefail
+          CHROME_PATH="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)"
+          test -n "$CHROME_PATH"
+          echo "CHROME_PATH=$CHROME_PATH" >> "$GITHUB_ENV"
+          "$CHROME_PATH" --version
+      - name: Start static candidate
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m http.server 4173 --bind 127.0.0.1 --directory dist/client > /tmp/p2-1-diagnostic-static.log 2>&1 &
+          for attempt in $(seq 1 80); do
+            if curl --fail --silent --show-error 'http://127.0.0.1:4173/?spc=1&evidence=1&scenario=missing-crate&geometry-ack=1' > /dev/null; then exit 0; fi
+            sleep 0.25
+          done
+          cat /tmp/p2-1-diagnostic-static.log
+          exit 1
+      - name: Capture first-click geometry timeline
+        env:
+          EVIDENCE_BASE_URL: http://127.0.0.1:4173
+          SOURCE_SHA: ${{ github.sha }}
+          MANUAL_CONTROL_OUTPUT: evidence/presentation-geometry/p2-1-diagnostic.json
+        run: node scripts/spc-browser-geometry-convergence-diagnostic.mjs
+      - name: Print timeline
+        if: always()
+        run: cat evidence/presentation-geometry/p2-1-diagnostic.json 2>/dev/null || true
+      - name: Upload timeline
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p2-1-geometry-diagnostic-${{ github.sha }}
+          path: evidence/presentation-geometry
+          if-no-files-found: error
+          retention-days: 14
