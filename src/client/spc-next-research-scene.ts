@@ -33,7 +33,7 @@ const STATE_PUSH_INTERVAL_MS = 100;
 const MIN_ZOOM = 0.12;
 const MAX_ZOOM = 1.8;
 const PLAYER_SPEED = 150;
-const PLAYER_CALL_RADIUS = 420;
+export const SPC_PLAYER_SPEECH_RADIUS = 420;
 const MATERIAL_PLACE_OFFSET = 42;
 
 interface ActorView {
@@ -175,7 +175,7 @@ export class SpcNextResearchScene extends Phaser.Scene {
   }
 
   playerCall(text = "Hej!"): void {
-    this.world.speak(PLAYER_ID, text, PLAYER_CALL_RADIUS);
+    this.world.speak(PLAYER_ID, text, SPC_PLAYER_SPEECH_RADIUS);
     this.captureNewSpeechOccurrences();
     this.pushFrame(true);
   }
@@ -184,7 +184,7 @@ export class SpcNextResearchScene extends Phaser.Scene {
     if (!this.snapshot.residents.some((resident) => resident.id === residentId)) {
       throw new Error(`unknown SPC Next addressed resident: ${residentId}`);
     }
-    const occurrence = this.world.speak(PLAYER_ID, text, PLAYER_CALL_RADIUS, [residentId]);
+    const occurrence = this.world.speak(PLAYER_ID, text, SPC_PLAYER_SPEECH_RADIUS, [residentId]);
     this.captureNewSpeechOccurrences();
     this.pushFrame(true);
     return occurrence;
