@@ -1,4 +1,4 @@
-import type { ResidentCognitionContext } from "./cognition-contract";
+import type { ResidentCognitionContext, ResidentCognitionProposal } from "./cognition-contract";
 import {
   ResidentCognitionOwner,
   type CognitionIntentAdmission,
@@ -150,7 +150,7 @@ export class ResidentCognitionLiveHost {
     arrival: ResidentCognitionLiveArrival,
     admissionTick: number,
     groundIntent: (
-      proposal: Parameters<ResidentCognitionOwner["settleIntent"]>[1] extends never ? never : any,
+      proposal: ResidentCognitionProposal,
       context: ResidentCognitionContext,
     ) => CognitionIntentAdmission<T>,
   ): ResidentCognitionLiveAdmission<T> {
