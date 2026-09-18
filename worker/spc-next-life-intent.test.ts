@@ -180,6 +180,12 @@ describe("SPC Next resident-life intent Worker", () => {
       expect(body.instructions).toContain("commitmentDecision");
       expect(body.instructions).toContain("does not seize the body");
       expect(body.instructions).toContain("local admission");
+      expect(body.instructions).toContain(
+        "does NOT prove that the speech content was understood, accepted, declined, fulfilled",
+      );
+      expect(body.instructions).toContain(
+        "judge the speech content independently from that local acknowledgement",
+      );
       return new Response(JSON.stringify(responseBody(commitmentProposal())), {
         status: 200,
         headers: { "content-type": "application/json" },
