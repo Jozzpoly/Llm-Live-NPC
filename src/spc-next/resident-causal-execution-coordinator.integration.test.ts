@@ -418,12 +418,17 @@ describe("ResidentCausalExecutionCoordinator", () => {
     expect(life.kernel.matter(accepted.matter.id)).toMatchObject({
       lastOutcomeSemanticRevision: 1,
     });
-    expect(execution.stepFocusedRun()).toEqual({ status: "idle" });
-    expect(execution.reactivateReviewedMatter(accepted.matter.id)).toEqual({
+
+    // The retry guard is continuity truth, not coordinator-local memory.
+    const reconstructedExecution = new ResidentCausalExecutionCoordinator(life);
+    expect(reconstructedExecution.stepFocusedRun()).toEqual({ status: "idle" });
+    expect(reconstructedExecution.reactivateReviewedMatter(accepted.matter.id)).toEqual({
       status: "rejected",
       matterId: accepted.matter.id,
       reason: "semantic_review_required",
     });
+
+    reacquireJanekContact(world, ida);
 
     const review = life.kernel.beginSemanticProposal(accepted.matter.id);
     const current = life.kernel.matter(accepted.matter.id);
@@ -440,7 +445,7 @@ describe("ResidentCausalExecutionCoordinator", () => {
       },
     });
 
-    const reactivated = execution.reactivateReviewedMatter(accepted.matter.id);
+    const reactivated = reconstructedExecution.reactivateReviewedMatter(accepted.matter.id);
     expect(reactivated).toMatchObject({
       status: "acquired",
       matterId: accepted.matter.id,
@@ -453,6 +458,31 @@ describe("ResidentCausalExecutionCoordinator", () => {
       status: "active",
       semanticRevision: 2,
       activeRunId: reactivated.runId,
+    });
+
+    let recovered: ReturnType<typeof reconstructedExecution.stepFocusedRun> | null = null;
+    for (let step = 0; step < MAX_EXECUTION_STEPS; step += 1) {
+      const local = reconstructedExecution.stepFocusedRun();
+      if (local.status === "running") {
+        world.step();
+        continue;
+      }
+      recovered = local;
+      break;
+    }
+    expect(recovered).toMatchObject({
+      status: "completed",
+      matterId: accepted.matter.id,
+      runId: reactivated.runId,
+      outcomeEvidence: {
+        kind: "task_outcome",
+        summary: expect.stringContaining(JANEK_ID),
+      },
+    });
+    expect(life.kernel.matter(accepted.matter.id)).toMatchObject({
+      status: "resolved",
+      activeRunId: null,
+      lastOutcomeSemanticRevision: 2,
     });
   });
 });
@@ -556,6 +586,36 @@ function relocateJanekOutsideIdaKnowledge(
     world.step();
   }
   throw new Error("hidden Janek relocation exceeded guard");
+}
+
+function reacquireJanekContact(
+  world: ReturnType<typeof createFiveResidentRegionComposition>["world"],
+  ida: ReturnType<typeof createFiveResidentRegionComposition>["runtimes"]["resident.ida"],
+) {
+  const idaPosition = actorPosition(world, IDA_ID);
+  world.setResidentActivity(
+    JANEK_ID,
+    travelActivity("janek-generic-return-to-ida", idaPosition, "return into Ida private contact"),
+  );
+
+  for (let step = 0; step < MAX_EXECUTION_STEPS; step += 1) {
+    world.step();
+    const contact = knownActor(ida, JANEK_ID, world.tick);
+    if (contact?.currentlyVisible) {
+      world.setResidentActivity(JANEK_ID, {
+        id: "activity:janek-generic-return-hold",
+        kind: "idle",
+        targetActorId: null,
+        targetPosition: null,
+        text: null,
+        speed: null,
+        reason: "hold after factual reacquisition by Ida",
+      });
+      world.step();
+      return;
+    }
+  }
+  throw new Error("Ida never factually reacquired Janek after blocked delivery");
 }
 
 function movePlayerNear(
