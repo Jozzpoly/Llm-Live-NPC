@@ -1,9 +1,9 @@
 {
-  "version": 15,
+  "version": 16,
   "pr": 141,
   "qualifiers": [
     "unified-addressed"
   ],
-  "purpose": "Re-attack the unified addressed-speech semantic boundary after the prior run failed only because the browser harness stopped 17.6 world units outside voice range. The harness now chooses the nearest publicly moving recovered resident when possible (otherwise the nearest resident), uses no resident-id product shortcut, and may chase through the normal Phaser/WASD control path for up to 1200 World steps with no teleport. Require factual <=420 voice range before World.speak, exact private addressed speech percept/reason, a real gpt-5.6-luna request carrying that reason, exact originReasonId, explicit admission, healthy five-resident continuation, and when a focused mutable run exists local Tak? interruption plus restoration of the exact prior run binding. Semantic regression remains binding: local contact acknowledgement/Tak? is attention/body management only and must not be treated as proof that speech content was already handled, resolved, satisfied, fulfilled or completed. Decline/defer remain legal for independent semantic reasons. Do not retry merely to obtain a preferred semantic choice.",
-  "requestedAtUtc": "2026-09-18T13:21:00Z"
+  "purpose": "Final re-attack of the unified addressed-speech Owner gate. The previous exact run proved the semantic fix itself: Luna accepted the speech as an independent communicate commitment and passed the contact-acknowledgement semantic regression oracle. That run failed only because the evidence harness looked for exact return after provider latency, by which time the correctly resumed prior run had naturally completed. This qualifier must observe and retain local Tak? plus restoration of the exact pre-contact run binding during every World tick while waiting for provider request/response/admission, so later natural completion does not erase already-observed return evidence. Keep the generic normal-control participant approach, exact private speech reason/origin attribution, semantic regression guard, explicit admission and healthy five-resident continuation. No test teleport, hidden product authority or retry for a preferred semantic decision.",
+  "requestedAtUtc": "2026-09-18T13:28:00Z"
 }
