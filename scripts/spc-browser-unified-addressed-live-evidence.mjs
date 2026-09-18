@@ -418,7 +418,7 @@ async function run() {
       report.checkpoints.localInterruption = {
         mode: "heard_without_preemption",
         reason: "target had no focused mutable run at contact boundary",
-        responseOccurrence,
+        responseOccurrence: localAckObserved,
       };
     }
 
