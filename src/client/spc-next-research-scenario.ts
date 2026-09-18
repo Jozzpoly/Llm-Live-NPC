@@ -2,7 +2,10 @@ import type { ResidentContinuityKernel } from "../spc-next/resident-continuity-k
 import type { ResidentMaterialKnowledge } from "../spc-next/resident-material-knowledge";
 import type { ResidentWorldExecutionAuthority } from "../spc-next/resident-world-execution-authority";
 import type { ResidentLifeCognitionView } from "../spc-next/resident-life-cognition-view";
-import {\n  FiveResidentUnifiedLivingRuntime,\n  type FiveResidentLivingRuntimeDiagnostics,\n} from "../spc-next/five-resident-unified-living-runtime";
+import {
+  FiveResidentUnifiedLivingRuntime,
+  type FiveResidentLivingRuntimeDiagnostics,
+} from "../spc-next/five-resident-unified-living-runtime";
 import type { FiveResidentId } from "../spc-next/five-resident-region";
 import type { SpcWorldRuntime } from "../spc-next/spc-world-runtime";
 import { createFiveResidentJanekMaterialSlice } from "../spc-next/five-resident-material-slice";
@@ -23,7 +26,8 @@ export type SpcNextResearchScenarioKind =
   | "missing-crate-interruption"
   | "missing-crate-live-provider"
   | "missing-crate-live-provider-interruption"
-  | "ida-message-delivery"\n  | "unified-living";
+  | "ida-message-delivery"
+  | "unified-living";
 
 export interface SpcNextResearchScenario {
   readonly kind: SpcNextResearchScenarioKind;
@@ -49,7 +53,9 @@ export function createSpcNextResearchScenario(kind: SpcNextResearchScenarioKind)
   if (kind === "missing-crate-interruption") return createMissingCrateInterruptionScenario();
   if (kind === "missing-crate-live-provider") return createMissingCrateLiveProviderScenario();
   if (kind === "missing-crate-live-provider-interruption") return createMissingCrateLiveProviderInterruptionScenario();
-  if (kind === "ida-message-delivery") return createIdaMessageDeliveryScenario();\n  if (kind === "unified-living") return createUnifiedLivingScenario();\n  return createBaselineDeliveryScenario();
+  if (kind === "ida-message-delivery") return createIdaMessageDeliveryScenario();
+  if (kind === "unified-living") return createUnifiedLivingScenario();
+  return createBaselineDeliveryScenario();
 }
 
 export function researchScenarioKindFromSearch(search: string): SpcNextResearchScenarioKind {
@@ -60,7 +66,9 @@ export function researchScenarioKindFromSearch(search: string): SpcNextResearchS
   if (requested === "missing-crate-interruption") return "missing-crate-interruption";
   if (requested === "missing-crate-live-provider") return "missing-crate-live-provider";
   if (requested === "missing-crate-live-provider-interruption") return "missing-crate-live-provider-interruption";
-  if (requested === "ida-message-delivery") return "ida-message-delivery";\n  if (requested === "unified-living") return "unified-living";\n  throw new Error(`unknown SPC Next research scenario: ${requested}`);
+  if (requested === "ida-message-delivery") return "ida-message-delivery";
+  if (requested === "unified-living") return "unified-living";
+  throw new Error(`unknown SPC Next research scenario: ${requested}`);
 }
 
 function createBaselineDeliveryScenario(): SpcNextResearchScenario {
