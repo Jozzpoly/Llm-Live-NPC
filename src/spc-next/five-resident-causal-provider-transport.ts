@@ -71,7 +71,7 @@ export class FiveResidentCausalProviderTransport {
     try {
       response = await this.fetcher.call(globalThis, this.endpoint, {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: {\n          "content-type": "application/json",\n          "x-spc-life-runtime": "five-resident-causal-v1",\n        },
         body: JSON.stringify(request.context),
         signal: options.signal,
       });
