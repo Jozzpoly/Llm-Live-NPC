@@ -281,6 +281,8 @@ function establishIdaJanekContact(
     IDA_ID,
     travelActivity("ida-generic-contact", janek, "legally acquire Janek contact"),
   );
+
+  let acquired = false;
   for (let step = 0; step < MAX_EXECUTION_STEPS; step += 1) {
     world.step();
     const known = ida.cognitionContext({
@@ -288,9 +290,44 @@ function establishIdaJanekContact(
       requestedAtTick: world.tick,
       reasons: [],
     }).knownActors.find((actor) => actor.id === JANEK_ID);
-    if (known?.currentlyVisible) return;
+    if (known?.currentlyVisible) {
+      acquired = true;
+      break;
+    }
   }
-  throw new Error("Ida never legally acquired Janek contact");
+  if (!acquired) throw new Error("Ida never legally acquired Janek contact");
+
+  // Retreat after legal identity/contact acquisition. This preserves only Ida's
+  // stale private Janek contact before the later request and avoids making the
+  // request share one tiny recent-percept window with dense live contact churn.
+  const crossroads = { x: 3_050, y: 880 };
+  world.setResidentActivity(
+    IDA_ID,
+    travelActivity("ida-generic-retreat", crossroads, "return after legal Janek contact"),
+  );
+  for (let step = 0; step < MAX_EXECUTION_STEPS; step += 1) {
+    world.step();
+    const position = actorPosition(world, IDA_ID);
+    const known = ida.cognitionContext({
+      residentId: IDA_ID,
+      requestedAtTick: world.tick,
+      reasons: [],
+    }).knownActors.find((actor) => actor.id === JANEK_ID);
+    if (distanceSquared(position, crossroads) <= 20 ** 2 && known && !known.currentlyVisible) {
+      world.setResidentActivity(IDA_ID, {
+        id: "activity:ida:generic-after-contact",
+        kind: "idle",
+        targetActorId: null,
+        targetPosition: null,
+        text: null,
+        speed: null,
+        reason: "hold after legal Janek contact prehistory",
+      });
+      world.step();
+      return;
+    }
+  }
+  throw new Error("Ida did not retreat while preserving stale Janek contact");
 }
 
 function movePlayerNear(
