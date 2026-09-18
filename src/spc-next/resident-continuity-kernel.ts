@@ -25,7 +25,16 @@ export interface ResidentTravelRegionMatterIntent {
   targetRegionId: string;
 }
 
-export type ResidentMatterIntent = ResidentTravelRegionMatterIntent;
+export interface ResidentCommunicateActorMatterIntent {
+  kind: "communicate_actor";
+  goal: string;
+  targetActorId: string;
+  text: string;
+}
+
+export type ResidentMatterIntent =
+  | ResidentTravelRegionMatterIntent
+  | ResidentCommunicateActorMatterIntent;
 
 export interface ResidentMatter {
   id: string;
@@ -512,7 +521,15 @@ function sameProposalTicket(a: ResidentSemanticProposalTicket, b: ResidentSemant
 
 function validateMatterIntent(intent: ResidentMatterIntent): void {
   assertNonEmpty(intent.goal, "matter intent goal");
-  assertNonEmpty(intent.targetRegionId, "matter intent target region id");
+  switch (intent.kind) {
+    case "travel_region":
+      assertNonEmpty(intent.targetRegionId, "matter intent target region id");
+      return;
+    case "communicate_actor":
+      assertNonEmpty(intent.targetActorId, "matter intent target actor id");
+      assertNonEmpty(intent.text, "matter intent message text");
+      return;
+  }
 }
 
 function validateEvidence(evidence: ResidentKernelEvidence): void {
