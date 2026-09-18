@@ -155,7 +155,7 @@ export class ResidentAddressedInterruptionController {
       runId: active.interruptRunId,
       tick: this.life.world.tick,
       status: "succeeded",
-      summary: `acknowledged addressed speech via ${active.responseOccurrenceId ?? "speech"}`,
+      summary: `locally acknowledged contact/attention via ${active.responseOccurrenceId ?? "speech"}; addressed speech content remains semantically unsettled`,
     });
     if (outcome.status !== "recorded") {
       throw new Error("addressed interruption factual reconciliation failed");
@@ -197,12 +197,12 @@ export class ResidentAddressedInterruptionController {
       id: `evidence.${this.life.residentId}.contact-interrupt:${suffix}`,
       tick: percept.tick,
       kind: "addressed_speech_contact",
-      summary: `Physically heard addressed speech caused a brief local contact response: ${percept.text}`,
+      summary: `Physically heard addressed speech caused a brief local contact/attention acknowledgement only; semantic content remains for higher judgement: ${percept.text}`,
     });
     this.life.kernel.openMatter({
       id: interruptMatterId,
       originEvidenceId: evidence.id,
-      semanticCourse: "briefly acknowledge the addressed speaker, then return to the exact interrupted matter",
+      semanticCourse: "briefly acknowledge the addressed speaker's contact/attention only; do not interpret, accept, decline or fulfill the speech content; then return to the exact interrupted matter",
     });
     this.life.kernel.bindRun({
       matterId: interruptMatterId,
