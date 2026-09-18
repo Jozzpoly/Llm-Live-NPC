@@ -18,13 +18,6 @@ describe("ResidentCausalExecutionCoordinator", () => {
     const { world } = composition;
     const ida = composition.runtimes[IDA_ID];
     const navigation = createFiveResidentNavigationGraph();
-    const life = new ResidentCausalLifeSubstrate({
-      residentId: IDA_ID,
-      resident: ida,
-      world,
-      navigation,
-    });
-    const execution = new ResidentCausalExecutionCoordinator(life);
 
     world.setResidentActivity(IDA_ID, {
       id: "activity:ida:generic-execution-idle",
@@ -36,6 +29,14 @@ describe("ResidentCausalExecutionCoordinator", () => {
       reason: "generic execution specimen idle",
     });
     world.step();
+
+    const life = new ResidentCausalLifeSubstrate({
+      residentId: IDA_ID,
+      resident: ida,
+      world,
+      navigation,
+    });
+    const execution = new ResidentCausalExecutionCoordinator(life);
 
     const occurrence = world.speak(
       PLAYER_ID,
