@@ -370,6 +370,10 @@ export async function handleSpcNextLifeIntent(request: Request, env: SpcNextLife
 
   const context = sanitizeSpcNextLifeIntentContext(raw);
   if (!context) return json({ ok: false, code: "invalid_life_intent_context" }, 400);
+  const runtimeMode = request.headers.get("x-spc-life-runtime");
+  const instructions = runtimeMode === "five-resident-causal-v1"
+    ? `${SYSTEM_PROMPT}\n\n${FIVE_RESIDENT_CAUSAL_V1_GUIDANCE}`
+    : SYSTEM_PROMPT;
 
   try {
     if (!await allowed(env, "spc-next-life-intent:global")) {
