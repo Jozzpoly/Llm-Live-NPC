@@ -170,7 +170,12 @@ function setup() {
   }
   if (!batch) throw new Error("Ida social adversarial cognition never became ready");
 
-  const attempt = owner.prepare(batch, currentLife({ kernel, focus, arbitrator, causal } as any));
+  const attempt = owner.prepare(batch, captureResidentLifeCognitionView({
+    kernel,
+    focus,
+    arbitrator,
+    matterIds: causal.acceptedMatterIds(),
+  }));
   if (!attempt) throw new Error("Ida social adversarial attempt was not prepared");
 
   const proposal = {
