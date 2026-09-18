@@ -7,6 +7,7 @@ import type {
   ResidentLifeRunView,
 } from "../src/spc-next/resident-life-cognition-view";
 import type { ResidentMatterIntent } from "../src/spc-next/resident-continuity-kernel";
+import { isSpcIdentifier } from "../src/spc-next/identity-contract";
 import { sanitizeSpcNextContext } from "./spc-next-cognition";
 
 const MAX_MATTERS = 32;
@@ -17,7 +18,7 @@ const record = (value: unknown): value is Record<string, unknown> =>
 const safeInt = (value: unknown): value is number => Number.isSafeInteger(value) && Number(value) >= 0;
 const positiveInt = (value: unknown): value is number => Number.isSafeInteger(value) && Number(value) >= 1;
 const identifier = (value: unknown): string | null =>
-  typeof value === "string" && /^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$/u.test(value) ? value : null;
+  isSpcIdentifier(value) ? value : null;
 const boundedText = (value: unknown, maxLength: number): string | null => {
   if (typeof value !== "string" || value.length > maxLength) return null;
   const text = value.trim();
