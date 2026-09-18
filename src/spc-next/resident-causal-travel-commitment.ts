@@ -3,7 +3,7 @@ import type { Vec2, WorldOccurrence } from "./contracts";
 import type {
   ResidentContinuityKernel,
   ResidentMatter,
-  ResidentMatterIntent,
+  ResidentTravelRegionMatterIntent,
 } from "./resident-continuity-kernel";
 import type {
   ResidentExecutionArbitrator,
@@ -25,7 +25,7 @@ export interface GroundedResidentCausalTravelCommitmentIntent {
   destination: Vec2;
   routeRegionIds: readonly string[];
   semanticCourse: string;
-  semanticIntent: ResidentMatterIntent;
+  semanticIntent: ResidentTravelRegionMatterIntent;
 }
 
 export interface AcceptedResidentCausalTravelCommitment {
