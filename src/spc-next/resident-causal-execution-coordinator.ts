@@ -382,6 +382,32 @@ export class ResidentCausalExecutionCoordinator {
     return { status: "grounding_unavailable", matterId: matter.id, runId, reason: "route_unavailable" };
   }
 
+  private restoreExactInterruptedContinuity(interruptingMatterId: string): void {
+    const resumable = this.life.matterScope.matterIds()
+      .map((matterId) => this.life.kernel.matter(matterId))
+      .filter((candidate): candidate is ResidentMatter => (
+        candidate !== null
+        && candidate.status === "suspended"
+        && candidate.suspendedByMatterId === interruptingMatterId
+        && this.life.kernel.canResumeMatter(candidate.id)
+      ));
+
+    // One whole-body interrupt has one exact return target. If the semantic model ever
+    // permits several matters to be suspended by one interrupt, do not invent a winner
+    // here; leave that ambiguity for a higher continuity/policy layer.
+    if (resumable.length !== 1) return;
+
+    const returning = resumable[0]!;
+    if (!this.life.kernel.resumeMatter(returning.id)) return;
+    const runId = returning.activeRunId;
+    if (!runId || !this.life.kernel.canRunMutateWorld(runId)) return;
+
+    const restored = this.life.arbitrator.restoreInterrupted(runId);
+    if (restored.status !== "acquired" && restored.status !== "already_focused") {
+      throw new Error(`failed to exact-return interrupted run: ${runId}`);
+    }
+  }
+
   private finishRun(
     matter: ResidentMatter,
     runId: string,
@@ -399,7 +425,10 @@ export class ResidentCausalExecutionCoordinator {
       throw new Error(`failed to reconcile resident causal run: ${runId}`);
     }
 
-    if (resolveMatter) this.life.kernel.resolveMatter(matter.id);
+    if (resolveMatter) {
+      this.life.kernel.resolveMatter(matter.id);
+      this.restoreExactInterruptedContinuity(matter.id);
+    }
     this.life.outcomeReviewBridge.observe(reconciled.evidence, this.life.world.tick);
 
     const arbitration = this.life.arbitrator.reconcile();
