@@ -119,12 +119,8 @@ export class ResidentCausalExecutionCoordinator {
       return this.stepCommunicate(matter, runId);
     }
 
-    return {
-      status: "unsupported_intent",
-      matterId: matter.id,
-      runId,
-      intentKind: intent.kind,
-    };
+    const exhaustiveIntent: never = intent;
+    return exhaustiveIntent;
   }
 
   private stepTravel(matter: ResidentMatter, runId: string): ResidentCausalExecutionStep {
