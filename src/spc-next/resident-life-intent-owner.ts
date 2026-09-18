@@ -85,13 +85,17 @@ export class ResidentLifeIntentOwner {
     private readonly self?: ResidentLifeSelfContext,
   ) {}
 
-  prepare(batch: CognitionBatch, life: ResidentLifeCognitionView): ResidentLifeIntentAttempt | null {
+  prepare(
+    batch: CognitionBatch,
+    life: ResidentLifeCognitionView,
+    snapshotTick = batch.requestedAtTick,
+  ): ResidentLifeIntentAttempt | null {
     if (this.active) return null;
     if (batch.residentId !== this.resident.profile.id) {
       throw new Error("resident life intent batch belongs to another resident");
     }
 
-    const parserContext = this.resident.cognitionContext(batch);
+    const parserContext = this.resident.cognitionContext(batch, snapshotTick);
     const context = composeResidentLifeCognitionContext(parserContext, life, this.self);
     const attempt: ResidentLifeIntentAttempt = {
       id: `resident-life-intent:${batch.residentId}:${batch.requestedAtTick}:${this.sequence++}`,
