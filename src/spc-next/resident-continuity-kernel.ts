@@ -105,6 +105,7 @@ export interface ResidentContinuityKernelCommittedSnapshot {
   pinnedOriginEvidence: readonly { matterId: string; evidence: ResidentKernelEvidence }[];
   pinnedSemanticEvidence: readonly { matterId: string; evidence: ResidentKernelEvidence }[];
   pinnedOutcomeEvidence: readonly { matterId: string; evidence: ResidentKernelEvidence }[];
+  runBindings: readonly ResidentTaskRunBinding[];
   usedRunIds: readonly string[];
   proposalSequence: number;
 }
@@ -252,14 +253,10 @@ export class ResidentContinuityKernel {
   /**
    * Snapshot only committed resident continuity. In-flight semantic/provider tickets
    * are deliberately excluded: reconstruction must not revive volatile admission
-   * authority. Bound execution runs are also excluded for now because focus/deferred
-   * body state has not yet earned a reconstruction contract.
+   * authority. Exact run bindings are committed execution identity and may be restored
+   * separately from volatile executor objects.
    */
   snapshotCommittedState(): ResidentContinuityKernelCommittedSnapshot {
-    if (this.runBindings.size > 0) {
-      throw new Error("cannot snapshot committed continuity while runs remain bound");
-    }
-
     return {
       version: 1,
       recentEvidenceLimit: this.recentEvidenceLimit,
@@ -269,6 +266,9 @@ export class ResidentContinuityKernel {
       pinnedOriginEvidence: snapshotEvidencePins(this.pinnedOriginEvidence),
       pinnedSemanticEvidence: snapshotEvidencePins(this.pinnedSemanticEvidence),
       pinnedOutcomeEvidence: snapshotEvidencePins(this.pinnedOutcomeEvidence),
+      runBindings: [...this.runBindings.values()]
+        .map((binding) => structuredClone(binding))
+        .sort((left, right) => left.runId.localeCompare(right.runId)),
       usedRunIds: [...this.usedRunIds].sort((left, right) => left.localeCompare(right)),
       proposalSequence: this.proposalSequence,
     };
@@ -584,6 +584,9 @@ export class ResidentContinuityKernel {
     restoreEvidencePins(this.pinnedSemanticEvidence, snapshot.pinnedSemanticEvidence, this.matters);
     restoreEvidencePins(this.pinnedOutcomeEvidence, snapshot.pinnedOutcomeEvidence, this.matters);
     for (const runId of snapshot.usedRunIds) this.usedRunIds.add(runId);
+    for (const binding of snapshot.runBindings) {
+      this.runBindings.set(binding.runId, structuredClone(binding));
+    }
     this.proposalSequence = snapshot.proposalSequence;
   }
 }
@@ -661,6 +664,52 @@ function validateCommittedSnapshot(
     }
     usedRunIds.add(runId);
   }
+
+  const bindingRunIds = new Set<string>();
+  const boundMatterIds = new Set<string>();
+  const bindingByMatterId = new Map<string, ResidentTaskRunBinding>();
+  for (const binding of snapshot.runBindings) {
+    validateSnapshotRunBinding(binding);
+    if (bindingRunIds.has(binding.runId)) {
+      throw new Error(`duplicate snapshot run binding: ${binding.runId}`);
+    }
+    if (boundMatterIds.has(binding.matterId)) {
+      throw new Error(`snapshot matter has multiple active run bindings: ${binding.matterId}`);
+    }
+    if (!usedRunIds.has(binding.runId)) {
+      throw new Error(`snapshot run binding is not lifetime-used: ${binding.runId}`);
+    }
+    const matter = snapshot.matters.find((candidate) => candidate.id === binding.matterId);
+    if (!matter) {
+      throw new Error(`snapshot run binding references unknown matter: ${binding.matterId}`);
+    }
+    if (matter.activeRunId !== binding.runId) {
+      throw new Error(`snapshot run binding disagrees with matter activeRunId: ${binding.runId}`);
+    }
+    if (matter.semanticRevision !== binding.semanticRevision) {
+      throw new Error(`snapshot run binding semantic revision is stale: ${binding.runId}`);
+    }
+    bindingRunIds.add(binding.runId);
+    boundMatterIds.add(binding.matterId);
+    bindingByMatterId.set(binding.matterId, binding);
+  }
+
+  for (const matter of snapshot.matters) {
+    if (matter.activeRunId === null) continue;
+    const binding = bindingByMatterId.get(matter.id);
+    if (!binding || binding.runId !== matter.activeRunId) {
+      throw new Error(`snapshot active matter lacks exact run binding: ${matter.id}`);
+    }
+  }
+}
+
+function validateSnapshotRunBinding(binding: ResidentTaskRunBinding): void {
+  assertNonEmpty(binding.runId, "snapshot run binding run id");
+  assertNonEmpty(binding.taskId, "snapshot run binding task id");
+  assertNonEmpty(binding.matterId, "snapshot run binding matter id");
+  if (!Number.isSafeInteger(binding.semanticRevision) || binding.semanticRevision < 1) {
+    throw new Error("snapshot run binding semanticRevision must be a positive safe integer");
+  }
 }
 
 function validateSnapshotMatter(matter: ResidentMatter): void {
@@ -679,7 +728,7 @@ function validateSnapshotMatter(matter: ResidentMatter): void {
     assertNonEmpty(matter.suspendedByMatterId, "snapshot suspendedByMatterId");
   }
   if (matter.activeRunId !== null) {
-    throw new Error("committed continuity snapshot cannot contain an active run binding");
+    assertNonEmpty(matter.activeRunId, "snapshot activeRunId");
   }
   if (matter.lastOutcomeEvidenceId !== null) {
     assertNonEmpty(matter.lastOutcomeEvidenceId, "snapshot last outcome evidence id");
