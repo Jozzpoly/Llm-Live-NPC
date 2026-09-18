@@ -27,6 +27,7 @@ import {
   type ResidentLifeChoiceReviewObservation,
 } from "./resident-life-choice-review-bridge";
 import { ResidentLifeOutcomeReviewBridge } from "./resident-life-outcome-review-bridge";
+import { ResidentLifeMatterScope } from "./resident-life-matter-scope";
 import type { ResidentLifeIntentProposal } from "./resident-life-intent-contract";
 import type { ResidentLifeCognitionContext } from "./resident-life-cognition-context";
 import {
@@ -251,6 +252,7 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
   const navigation = createFiveResidentNavigationGraph();
   const lifeIntentOwner = new ResidentLifeIntentOwner(mira);
   const kernel = new ResidentContinuityKernel();
+  const lifeMatterScope = new ResidentLifeMatterScope(kernel);
   const focus = new ResidentExecutionFocusAuthority(kernel);
   const arbitrator = new ResidentExecutionArbitrator(kernel, focus);
   const choiceReviewBridge = new ResidentLifeChoiceReviewBridge(mira);
@@ -276,12 +278,12 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
     kernel,
     arbitrator,
     authority,
+    matterScope: lifeMatterScope,
     identityNamespace: "mira",
   });
   const executors = new Map<string, ResidentGroundedTravelExecutor>();
   const groundedTargetRegionIds = new Map<string, string>();
   const runMatterIds = new Map<string, string>();
-  const acceptedMatterIds = new Set<string>();
   const groundedCommitmentAuthority = new WeakMap<GroundedCausalCommitmentIntent, GroundedCommitmentAuthority>();
   const groundedOutcomeCommitmentAuthority = new WeakMap<
     GroundedCausalOutcomeCommitmentIntent,
@@ -294,7 +296,7 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
       kernel,
       focus,
       arbitrator,
-      matterIds: [...acceptedMatterIds].sort((a, b) => a.localeCompare(b)),
+      matterIds: lifeMatterScope.matterIds(),
     });
   }
 
@@ -419,7 +421,7 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
       return { status: "rejected", detail: "life follow-up lost its exact resident factual outcome" };
     }
     const identity = causalOutcomeCommitmentIdentity(outcomeEvidence.id);
-    if (acceptedMatterIds.has(identity.matterId)) {
+    if (kernel.matter(identity.matterId) !== null) {
       return { status: "rejected", detail: `commitment already accepted: ${identity.matterId}` };
     }
 
@@ -464,7 +466,7 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
       navigation: ReturnType<typeof createFiveResidentNavigationGraph>,
     ) => ResidentLifeIntentAdmission<GroundedCausalCommitmentIntent>,
   ): ResidentLifeIntentAdmission<GroundedCausalCommitmentIntent> {
-    if (acceptedMatterIds.has(identity.matterId)) {
+    if (kernel.matter(identity.matterId) !== null) {
       return { status: "rejected", detail: `commitment already accepted: ${identity.matterId}` };
     }
     const originPercept = exactPrivateSpeechPercept(prepared, occurrence);
@@ -519,7 +521,7 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
       groundedOutcomeCommitmentAuthority.delete(intent);
       throw new Error("grounded outcome commitment lacks exact admitted factual authority");
     }
-    if (acceptedMatterIds.has(identity.matterId)) {
+    if (kernel.matter(identity.matterId) !== null) {
       groundedOutcomeCommitmentAuthority.delete(intent);
       throw new Error(`commitment already accepted: ${identity.matterId}`);
     }
@@ -556,7 +558,7 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
     );
     groundedTargetRegionIds.set(identity.runId, intent.semanticIntent.targetRegionId);
     runMatterIds.set(identity.runId, identity.matterId);
-    acceptedMatterIds.add(identity.matterId);
+    lifeMatterScope.track(identity.matterId);
     groundedOutcomeCommitmentAuthority.delete(intent);
 
     return {
@@ -621,7 +623,6 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
     );
     groundedTargetRegionIds.set(accepted.runId, intent.semanticIntent.targetRegionId);
     runMatterIds.set(accepted.runId, accepted.matter.id);
-    acceptedMatterIds.add(accepted.matter.id);
 
     return {
       occurrence: structuredClone(occurrence),
@@ -659,7 +660,7 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
       || groundingAuthority.proposal !== proposal) {
       throw new Error("grounded commitment intent lacks exact admitted grounding authority");
     }
-    if (acceptedMatterIds.has(identity.matterId)) {
+    if (kernel.matter(identity.matterId) !== null) {
       groundedCommitmentAuthority.delete(intent);
       throw new Error(`commitment already accepted: ${identity.matterId}`);
     }
@@ -704,7 +705,7 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
     );
     groundedTargetRegionIds.set(identity.runId, intent.semanticIntent.targetRegionId);
     runMatterIds.set(identity.runId, identity.matterId);
-    acceptedMatterIds.add(identity.matterId);
+    lifeMatterScope.track(identity.matterId);
     groundedCommitmentAuthority.delete(intent);
 
     return {
@@ -725,7 +726,7 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
     spec: MiraCausalCommitmentSpec,
     rawProposal: unknown,
   ): AcceptedCausalCommitment {
-    if (acceptedMatterIds.has(spec.matterId)) throw new Error(`commitment already accepted: ${spec.matterId}`);
+    if (kernel.matter(spec.matterId) !== null) throw new Error(`commitment already accepted: ${spec.matterId}`);
 
     const settlement = lifeIntentOwner.settleIntent(
       prepared.attempt,
@@ -768,7 +769,7 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
   }
 
   function acceptPlayerRequest(spec: MiraCausalCommitmentSpec): AcceptedCausalCommitment {
-    if (acceptedMatterIds.has(spec.matterId)) throw new Error(`commitment already accepted: ${spec.matterId}`);
+    if (kernel.matter(spec.matterId) !== null) throw new Error(`commitment already accepted: ${spec.matterId}`);
     const occurrence = world.speak(PLAYER_ID, spec.requestText, REQUEST_RADIUS, [MIRA_ID]);
     world.step();
     const prepared = waitForPreparedAddressedSpeech();
@@ -821,7 +822,7 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
     const causalId = occurrence.id;
     const interruptMatterId = `matter.mira.interrupt.${causalId}`;
     const interruptRunId = `run.mira.interrupt.${causalId}.semantic-1`;
-    if (acceptedMatterIds.has(interruptMatterId) || kernel.matter(interruptMatterId)) {
+    if (kernel.matter(interruptMatterId)) {
       throw new Error(`addressed interruption already materialized: ${interruptMatterId}`);
     }
 
@@ -841,7 +842,7 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
       taskId: `task.mira.interrupt.${causalId}.semantic-1`,
       runId: interruptRunId,
     });
-    acceptedMatterIds.add(interruptMatterId);
+    lifeMatterScope.track(interruptMatterId);
 
     kernel.suspendMatter(mainMatterId, interruptMatterId);
     const focusClaim = arbitrator.claimInterruption(interruptRunId);
@@ -1003,7 +1004,7 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
   }
 
   function refreshStaleDeferredExecutions(excludeMatterId: string): void {
-    for (const matterId of [...acceptedMatterIds].sort((a, b) => a.localeCompare(b))) {
+    for (const matterId of lifeMatterScope.matterIds()) {
       if (matterId === excludeMatterId) continue;
       const matter = kernel.matter(matterId);
       if (!matter || matter.status !== "active") continue;
