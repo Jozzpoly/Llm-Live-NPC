@@ -1,4 +1,5 @@
 import type { ResidentLifeCognitionContext } from "../src/spc-next/resident-life-cognition-context";
+import type { ResidentLifeSelfContext } from "../src/spc-next/resident-life-self-context";
 import type {
   ResidentLifeCognitionView,
   ResidentLifeEvidenceView,
@@ -9,6 +10,7 @@ import type { ResidentMatterIntent } from "../src/spc-next/resident-continuity-k
 import { sanitizeSpcNextContext } from "./spc-next-cognition";
 
 const MAX_MATTERS = 32;
+const MAX_SELF_DRIVES = 8;
 
 const record = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === "object" && !Array.isArray(value);
@@ -33,10 +35,10 @@ const boundedText = (value: unknown, maxLength: number): string | null => {
  */
 export function sanitizeSpcNextLifeContext(value: unknown): ResidentLifeCognitionContext | null {
   if (!record(value) || value.contract !== "resident_life_cognition_v1" || !record(value.life)) return null;
-  if (!hasOnlyKeys(value, [
+  if (!hasRequiredAndOptionalKeys(value, [
     "contract", "resident", "tick", "currentRegionId", "reasons", "localActivity",
     "recentPercepts", "concerns", "beliefs", "knownActors", "knownRegions", "life",
-  ])) return null;
+  ], ["self"])) return null;
 
   const privateContext = sanitizeSpcNextContext({
     version: 1,
@@ -55,10 +57,13 @@ export function sanitizeSpcNextLifeContext(value: unknown): ResidentLifeCognitio
 
   const life = sanitizeLife(value.life, privateContext.tick);
   if (!life) return null;
+  const self = Object.hasOwn(value, "self") ? sanitizeSelf(value.self) : null;
+  if (Object.hasOwn(value, "self") && !self) return null;
 
   return {
     contract: "resident_life_cognition_v1",
     resident: structuredClone(privateContext.resident),
+    ...(self ? { self } : {}),
     tick: privateContext.tick,
     currentRegionId: privateContext.currentRegionId,
     reasons: structuredClone(privateContext.reasons),
@@ -70,6 +75,22 @@ export function sanitizeSpcNextLifeContext(value: unknown): ResidentLifeCognitio
     knownRegions: structuredClone(privateContext.knownRegions),
     life,
   };
+}
+
+function sanitizeSelf(value: unknown): ResidentLifeSelfContext | null {
+  if (!record(value) || value.version !== 1 || !hasOnlyKeys(value, ["version", "role", "drives"])) return null;
+  const role = boundedText(value.role, 800);
+  if (!role || !Array.isArray(value.drives) || value.drives.length < 1 || value.drives.length > MAX_SELF_DRIVES) return null;
+
+  const drives: string[] = [];
+  const seen = new Set<string>();
+  for (const raw of value.drives) {
+    const drive = boundedText(raw, 1_200);
+    if (!drive || seen.has(drive)) return null;
+    seen.add(drive);
+    drives.push(drive);
+  }
+  return { version: 1, role, drives };
 }
 
 function sanitizeLife(value: unknown, contextTick: number): ResidentLifeCognitionView | null {
