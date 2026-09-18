@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { distanceSquared, type ResidentActivity, type Vec2 } from "./contracts";
 import { createFiveResidentNavigationGraph } from "./five-resident-navigation";
 import { createFiveResidentRegionComposition } from "./five-resident-region";
 import { ResidentCausalExecutionCoordinator } from "./resident-causal-execution-coordinator";
@@ -9,6 +10,8 @@ const PLAYER_ID = "player.jozz";
 const REQUEST_RADIUS = 420;
 const MAX_PREPARE_STEPS = 240;
 const MAX_EXECUTION_STEPS = 2_000;
+const JANEK_ID = "resident.janek";
+const MESSAGE = "Mira says the field well needs checking before dusk.";
 
 describe("ResidentCausalExecutionCoordinator", () => {
   it("executes and reconciles a generic Ida travel matter without a bespoke vertical executor loop", () => {
@@ -142,4 +145,192 @@ describe("ResidentCausalExecutionCoordinator", () => {
     const reviewAfterCompletion = ida.cognitionScheduleDiagnostics().nextQuietReviewTick;
     expect(reviewAfterCompletion).toBeLessThanOrEqual(reviewBeforeCompletion);
   });
+
+  it("executes and reconciles a generic Ida communicate matter without a bespoke delivery vertical", () => {
+    const composition = createFiveResidentRegionComposition({
+      playerStart: { x: 3_000, y: 900 },
+    });
+    const { world } = composition;
+    const ida = composition.runtimes[IDA_ID];
+    const navigation = createFiveResidentNavigationGraph();
+
+    establishIdaJanekContact(world, ida);
+    movePlayerNear(world, actorPosition(world, IDA_ID));
+
+    world.setResidentActivity(IDA_ID, {
+      id: "activity:ida:generic-communicate-idle",
+      kind: "idle",
+      targetActorId: null,
+      targetPosition: null,
+      text: null,
+      speed: null,
+      reason: "generic communicate execution specimen idle",
+    });
+    world.step();
+
+    const life = new ResidentCausalLifeSubstrate({
+      residentId: IDA_ID,
+      resident: ida,
+      world,
+      navigation,
+    });
+    const execution = new ResidentCausalExecutionCoordinator(life);
+
+    const occurrence = world.speak(
+      PLAYER_ID,
+      `Ida, proszę przekaż Jankowi dokładnie: "${MESSAGE}"`,
+      REQUEST_RADIUS,
+      [IDA_ID],
+    );
+    world.step();
+
+    let prepared = life.takeReadyLifeIntentAttempt();
+    for (let step = 0; step < MAX_PREPARE_STEPS && !prepared; step += 1) {
+      world.step();
+      prepared = life.takeReadyLifeIntentAttempt();
+    }
+    expect(prepared).not.toBeNull();
+    if (!prepared) return;
+
+    const proposal = {
+      version: 1 as const,
+      commitmentDecision: {
+        kind: "accept" as const,
+        reason: "accept responsibility for delivering the exact message",
+        intent: {
+          kind: "communicate" as const,
+          goal: "deliver the accepted message to Janek",
+          targetActorId: JANEK_ID,
+          targetRegionId: null,
+          targetPosition: null,
+          text: MESSAGE,
+        },
+      },
+      beliefs: [],
+      concerns: [],
+      reviewAfterSeconds: 30,
+    };
+
+    const settlement = life.lifeIntentOwner.settleCommitmentIntent(
+      prepared.attempt,
+      proposal,
+      life.currentLifeView(),
+      world.tick,
+      (admittedProposal, providerContext) => life.communicateCommitments.groundPrivateSpeechCommitment({
+        attempt: prepared!.attempt,
+        occurrence,
+        proposal: admittedProposal,
+        providerContext,
+      }),
+    );
+    expect(settlement.status).toBe("applied");
+    if (settlement.status !== "applied") return;
+
+    const accepted = life.communicateCommitments.materializePrivateSpeechCommitment({
+      attempt: prepared.attempt,
+      occurrence,
+      proposal: settlement.proposal,
+      intent: settlement.intent,
+    });
+    expect(accepted.focusClaim).toEqual({ status: "acquired", runId: accepted.runId });
+
+    let terminal: ReturnType<typeof execution.stepFocusedRun> | null = null;
+    for (let step = 0; step < MAX_EXECUTION_STEPS; step += 1) {
+      const local = execution.stepFocusedRun();
+      if (local.status === "running") {
+        world.step();
+        continue;
+      }
+      terminal = local;
+      break;
+    }
+
+    expect(terminal).toMatchObject({
+      status: "completed",
+      matterId: accepted.matter.id,
+      runId: accepted.runId,
+      outcomeEvidence: { kind: "task_outcome" },
+      arbitration: { status: "idle" },
+    });
+    if (!terminal || terminal.status !== "completed") return;
+
+    expect(terminal.outcomeEvidence.summary).toContain(JANEK_ID);
+    expect(world.diagnostics().recentOccurrences).toContainEqual(expect.objectContaining({
+      kind: "speech",
+      actorId: IDA_ID,
+      text: MESSAGE,
+      addressedActorIds: [JANEK_ID],
+    }));
+    expect(life.kernel.matter(accepted.matter.id)).toMatchObject({
+      status: "resolved",
+      activeRunId: null,
+    });
+    expect(life.focus.focusedRun()).toBeNull();
+    expect(life.worldAuthority.motionOwner()).toBeNull();
+  });
 });
+
+function establishIdaJanekContact(
+  world: ReturnType<typeof createFiveResidentRegionComposition>["world"],
+  ida: ReturnType<typeof createFiveResidentRegionComposition>["runtimes"]["resident.ida"],
+) {
+  const janek = actorPosition(world, JANEK_ID);
+  world.setResidentActivity(
+    IDA_ID,
+    travelActivity("ida-generic-contact", janek, "legally acquire Janek contact"),
+  );
+  for (let step = 0; step < MAX_EXECUTION_STEPS; step += 1) {
+    world.step();
+    const known = ida.cognitionContext({
+      residentId: IDA_ID,
+      requestedAtTick: world.tick,
+      reasons: [],
+    }).knownActors.find((actor) => actor.id === JANEK_ID);
+    if (known?.currentlyVisible) return;
+  }
+  throw new Error("Ida never legally acquired Janek contact");
+}
+
+function movePlayerNear(
+  world: ReturnType<typeof createFiveResidentRegionComposition>["world"],
+  target: Vec2,
+) {
+  for (let step = 0; step < MAX_EXECUTION_STEPS; step += 1) {
+    const current = actorPosition(world, PLAYER_ID);
+    const dx = target.x - current.x;
+    const dy = target.y - current.y;
+    const distance = Math.hypot(dx, dy);
+    if (distance <= 120) {
+      world.setActorMotionIntent(PLAYER_ID, { x: 0, y: 0 });
+      world.step();
+      return;
+    }
+    world.setActorMotionIntent(PLAYER_ID, {
+      x: (dx / distance) * 150,
+      y: (dy / distance) * 150,
+    });
+    world.step();
+  }
+  throw new Error("player never physically reached Ida");
+}
+
+function actorPosition(
+  world: ReturnType<typeof createFiveResidentRegionComposition>["world"],
+  actorId: string,
+): Vec2 {
+  const actor = world.publicSnapshot().actors.find((candidate) => candidate.id === actorId);
+  if (!actor) throw new Error(`missing actor ${actorId}`);
+  return { ...actor.position };
+}
+
+function travelActivity(id: string, targetPosition: Vec2, reason: string): ResidentActivity {
+  return {
+    id: `activity:${id}`,
+    kind: "travel",
+    targetActorId: null,
+    targetPosition: { ...targetPosition },
+    text: null,
+    speed: 110,
+    reason,
+  };
+}
