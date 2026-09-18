@@ -168,6 +168,36 @@ export class ResidentExecutionArbitrator implements ResidentRunAuthority {
       .sort((a, b) => a.localeCompare(b));
   }
 
+  /**
+   * Restore previously-committed deferred execution demand on a fresh arbiter.
+   * This never chooses a winner and therefore cannot smuggle policy into recovery.
+   */
+  restoreDeferredRunIds(runIds: readonly string[]): void {
+    if (this.deferred.size > 0) {
+      throw new Error("execution arbitrator restore requires fresh deferred state");
+    }
+    const focusedRunId = this.focus.focusedRun();
+    const validated: string[] = [];
+    const seen = new Set<string>();
+
+    for (const runId of runIds) {
+      assertRunId(runId);
+      if (seen.has(runId)) {
+        throw new Error(`duplicate restored deferred run: ${runId}`);
+      }
+      if (runId === focusedRunId) {
+        throw new Error(`focused run cannot also be deferred: ${runId}`);
+      }
+      if (!this.runAuthority.canRunMutateWorld(runId)) {
+        throw new Error(`cannot restore unauthorized deferred run: ${runId}`);
+      }
+      seen.add(runId);
+      validated.push(runId);
+    }
+
+    for (const runId of validated) this.deferred.add(runId);
+  }
+
   canRunMutateWorld(runId: string): boolean {
     return this.focus.canRunMutateWorld(runId);
   }
