@@ -53,7 +53,9 @@ describe("Mira self-origin outcome through live intent transport", () => {
         },
       });
       expect(submitted.life.body).toEqual({ focusedRunId: null, deferredRunIds: [] });
-      const originReasonId = submitted.reasons[0]?.id;\n      if (!originReasonId) throw new Error("provider fixture lacks cognition reason");\n      return openAiLifeIntentResponse(originReasonId, providerProposal);
+      const originReasonId = submitted.reasons[0]?.id;
+      if (!originReasonId) throw new Error("provider fixture lacks cognition reason");
+      return openAiLifeIntentResponse(originReasonId, providerProposal);
     });
     vi.stubGlobal("fetch", upstream);
 
@@ -212,7 +214,10 @@ function openAiLifeIntentResponse(originReasonId: string, proposal: ResidentLife
         type: "message",
         role: "assistant",
         status: "completed",
-        content: [{\n          type: "output_text",\n          text: JSON.stringify({ originReasonId, proposal }),\n        }],
+        content: [{
+          type: "output_text",
+          text: JSON.stringify({ originReasonId, proposal }),
+        }],
       },
     ],
     usage: { input_tokens: 640, output_tokens: 92, total_tokens: 732 },
