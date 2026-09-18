@@ -12,7 +12,10 @@ import {
   type SpcCognitionDiagnostic,
   type SpcNextCognitionEnv,
 } from "./spc-next-cognition";
-import { sanitizeSpcNextLifeContext } from "./spc-next-life-context";
+import {
+  sanitizeSpcNextLifeContext,
+  sanitizeSpcNextLifeContextWithDiagnostic,
+} from "./spc-next-life-context";
 
 export interface SpcNextLifeIntentEnv extends SpcNextCognitionEnv {
   SPC_NEXT_LIFE_INTENT_MODEL?: string;
@@ -370,8 +373,14 @@ export async function handleSpcNextLifeIntent(request: Request, env: SpcNextLife
     }, error instanceof DeadlineExceeded ? 408 : 400);
   }
 
-  const context = sanitizeSpcNextLifeIntentContext(raw);
-  if (!context) return json({ ok: false, code: "invalid_life_intent_context" }, 400);
+  const contextCheck = sanitizeSpcNextLifeContextWithDiagnostic(raw);
+  const context = contextCheck.context;
+  if (!context) {
+    return json({
+      ok: false,
+      code: `invalid_life_intent_context.${contextCheck.diagnostic ?? "unknown"}`,
+    }, 400);
+  }
   const runtimeMode = request.headers.get("x-spc-life-runtime");
   const instructions = runtimeMode === "five-resident-causal-v1"
     ? `${SYSTEM_PROMPT}\n\n${FIVE_RESIDENT_CAUSAL_V1_GUIDANCE}`
