@@ -107,6 +107,30 @@ describe("shared SPC Next resident-life context sanitizer", () => {
     });
   });
 
+  it("preserves bounded communicate-actor intent without accepting execution leakage", () => {
+    const communicate = structuredClone(focusedContext) as any;
+    communicate.life.matters[0].semanticIntent = {
+      kind: "communicate_actor",
+      goal: "find Janek and deliver the accepted message",
+      targetActorId: "resident.janek",
+      text: "Mira says the field well needs checking before dusk.",
+    };
+    expect(sanitizeSpcNextLifeContext(communicate)?.life.matters[0]?.semanticIntent).toEqual({
+      kind: "communicate_actor",
+      goal: "find Janek and deliver the accepted message",
+      targetActorId: "resident.janek",
+      text: "Mira says the field well needs checking before dusk.",
+    });
+
+    const leaked = structuredClone(communicate);
+    leaked.life.matters[0].semanticIntent.routeRegionIds = ["hearth", "workshop"];
+    expect(sanitizeSpcNextLifeContext(leaked)).toBeNull();
+
+    const blankText = structuredClone(communicate);
+    blankText.life.matters[0].semanticIntent.text = " ";
+    expect(sanitizeSpcNextLifeContext(blankText)).toBeNull();
+  });
+
   it("fails closed on malformed structured intent and execution-method leakage", () => {
     const blankGoal = structuredClone(focusedContext) as any;
     blankGoal.life.matters[0].semanticIntent = {
