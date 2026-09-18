@@ -5,6 +5,7 @@ import type {
 } from "./cognition-contract";
 import type { CognitionBatch, ResidentPercept, Vec2, WorldOccurrence } from "./contracts";
 import { createFiveResidentNavigationGraph } from "./five-resident-navigation";
+import { ResidentCausalTravelCommitmentAuthority } from "./resident-causal-travel-commitment";
 import { createFiveResidentRegionComposition } from "./five-resident-region";
 import {
   ResidentContinuityKernel,
@@ -266,6 +267,16 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
   world.step();
 
   const authority = new ResidentWorldExecutionAuthority(MIRA_ID, arbitrator, world);
+  const causalTravelCommitments = new ResidentCausalTravelCommitmentAuthority({
+    residentId: MIRA_ID,
+    resident: mira,
+    world,
+    navigation,
+    kernel,
+    arbitrator,
+    authority,
+    identityNamespace: "mira",
+  });
   const executors = new Map<string, ResidentGroundedTravelExecutor>();
   const groundedTargetRegionIds = new Map<string, string>();
   const runMatterIds = new Map<string, string>();
@@ -378,14 +389,13 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
     proposal: ResidentLifeIntentProposal,
     providerContext: ResidentLifeCognitionContext,
   ): ResidentLifeIntentAdmission<GroundedCausalCommitmentIntent> {
-    return groundPreparedPlayerProposal(
-      prepared,
+    return causalTravelCommitments.groundPrivateSpeechCommitment({
+      attempt: prepared.attempt,
       occurrence,
-      causalCommitmentIdentity(occurrence),
       proposal,
       providerContext,
-      groundLifeCommitment,
-    );
+      groundingContext: currentGroundingContext(prepared.batch),
+    });
   }
 
   function groundPreparedPlayerCommitmentRequest(
@@ -582,13 +592,35 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
     proposal: ResidentLifeIntentProposal,
     intent: GroundedCausalCommitmentIntent,
   ): AcceptedCausalCommitment {
-    return materializeAdmittedPlayerProposal(
-      prepared,
+    const accepted = causalTravelCommitments.materializePrivateSpeechCommitment({
+      attempt: prepared.attempt,
       occurrence,
-      causalCommitmentIdentity(occurrence),
       proposal,
       intent,
+    });
+
+    mira.scheduleAdaptiveReview(world.tick, proposal.reviewAfterSeconds, FIXED_DELTA_SECONDS);
+    if (accepted.focusClaim.status === "deferred") {
+      choiceReviewBridge.observe(arbitrator.reconcile(), world.tick);
+    }
+    executors.set(
+      accepted.runId,
+      new ResidentGroundedTravelExecutor(accepted.runId, intent.destination, authority, world),
     );
+    groundedTargetRegionIds.set(accepted.runId, intent.semanticIntent.targetRegionId);
+    runMatterIds.set(accepted.runId, accepted.matter.id);
+    acceptedMatterIds.add(accepted.matter.id);
+
+    return {
+      occurrence: structuredClone(occurrence),
+      batch: structuredClone(prepared.batch),
+      context: structuredClone(prepared.attempt.context),
+      originPerceptId: accepted.originPerceptId,
+      matter: structuredClone(accepted.matter),
+      runId: accepted.runId,
+      routeRegionIds: [...accepted.routeRegionIds],
+      focusClaim: structuredClone(accepted.focusClaim),
+    };
   }
 
   function materializeAdmittedPlayerCommitmentRequest(
