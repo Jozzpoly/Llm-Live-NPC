@@ -283,6 +283,10 @@ export class SpcNextResearchScene extends Phaser.Scene {
   }
 
   private applyPlayerControl(): void {
+    if (textEntryActive()) {
+      this.world.setActorMotionIntent(PLAYER_ID, { x: 0, y: 0 });
+      return;
+    }
     const left = Boolean(this.cursors?.left.isDown || this.keys?.A.isDown);
     const right = Boolean(this.cursors?.right.isDown || this.keys?.D.isDown);
     const up = Boolean(this.cursors?.up.isDown || this.keys?.W.isDown);
@@ -298,7 +302,7 @@ export class SpcNextResearchScene extends Phaser.Scene {
   }
 
   private handleResearchShortcuts(): void {
-    if (!this.keys) return;
+    if (!this.keys || textEntryActive()) return;
     if (Phaser.Input.Keyboard.JustDown(this.keys.R)) this.toggleResearchOverlay();
     if (Phaser.Input.Keyboard.JustDown(this.keys.F)) this.focusSelected();
     if (Phaser.Input.Keyboard.JustDown(this.keys.P)) this.followPlayer();
@@ -677,4 +681,12 @@ function drawArrow(
   const head = 11 / zoom;
   graphics.lineBetween(toX, toY, toX - Math.cos(angle - Math.PI / 6) * head, toY - Math.sin(angle - Math.PI / 6) * head);
   graphics.lineBetween(toX, toY, toX - Math.cos(angle + Math.PI / 6) * head, toY - Math.sin(angle + Math.PI / 6) * head);
+}
+
+
+function textEntryActive(): boolean {
+  const active = document.activeElement;
+  return active instanceof HTMLInputElement
+    || active instanceof HTMLTextAreaElement
+    || active instanceof HTMLSelectElement;
 }
