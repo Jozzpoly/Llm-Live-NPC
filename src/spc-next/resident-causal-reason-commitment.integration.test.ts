@@ -23,14 +23,20 @@ describe("resident causal self-origin bootstrap", () => {
     });
     const execution = new ResidentCausalExecutionCoordinator(life);
 
-    let prepared = life.takeReadyLifeIntentAttempt();
+    // Earlier direct-world pressure is allowed during the authored opening. Do not
+    // consume it merely to force the fixture into the desired branch; let the real
+    // scheduler accumulate its causal history until the authored activity itself ends.
     let guard = 0;
-    while (!prepared && guard < MAX_OPENING_STEPS) {
+    while (
+      !mira.publicState().activity.reason.includes("completed activity:mira:initial")
+      && guard < MAX_OPENING_STEPS
+    ) {
       world.step();
-      prepared = life.takeReadyLifeIntentAttempt();
       guard += 1;
     }
     expect(guard).toBeLessThan(MAX_OPENING_STEPS);
+
+    const prepared = life.takeReadyLifeIntentAttempt();
     expect(prepared).not.toBeNull();
     if (!prepared) return;
 
