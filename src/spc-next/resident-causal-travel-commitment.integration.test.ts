@@ -13,14 +13,16 @@ import { ResidentWorldExecutionAuthority } from "./resident-world-execution-auth
 import { captureResidentLifeCognitionView } from "./resident-life-cognition-view";
 
 const IDA_ID = "resident.ida";
-const MIRA_ID = "resident.mira";
+const PLAYER_ID = "player.jozz";
 const REQUEST_RADIUS = 420;
 const MAX_PREPARE_STEPS = 240;
 const MAX_EXECUTION_STEPS = 2_000;
 
 describe("resident-generic causal travel commitment", () => {
   it("lets Ida acquire and execute a private-speech commitment without Mira-specific identity or materialization code", () => {
-    const composition = createFiveResidentRegionComposition();
+    const composition = createFiveResidentRegionComposition({
+      playerStart: { x: 3_000, y: 900 },
+    });
     const { world } = composition;
     const ida = composition.runtimes[IDA_ID];
     world.setResidentActivity(IDA_ID, {
@@ -51,7 +53,7 @@ describe("resident-generic causal travel commitment", () => {
     });
 
     const occurrence = world.speak(
-      MIRA_ID,
+      PLAYER_ID,
       "Ida, kiedy będziesz mogła, zajrzyj do znajomego warsztatu.",
       REQUEST_RADIUS,
       [IDA_ID],
