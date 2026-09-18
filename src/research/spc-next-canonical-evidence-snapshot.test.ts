@@ -114,7 +114,7 @@ describe("SPC canonical evidence snapshot v1", () => {
       },
       activeRunCanMutateWorld: true,
     });
-    expect(afterPickup.continuity.lastOutcomeEvidence?.id).toContain("run.janek.pickup-delivery-crate");
+    expect(afterPickup.continuity.lastOutcomeEvidence?.sourceRunId).toBe("run.janek.pickup-delivery-crate");
 
     let step = pickupBoundary;
     for (let guard = 0; guard < 1_400 && step.status !== "succeeded"; guard += 1) {
@@ -244,7 +244,7 @@ describe("SPC canonical evidence snapshot v1", () => {
     // causal ledger must contain no pickup attempt against the unseen object.
     expect(afterPressure.causalProvenance.residentWorldActionFacts).toEqual([]);
     expect(afterPressure.authoritativeWorld.recentMaterialActions.filter((action) => action.actorId === RESIDENT_ID)).toEqual([]);
-    expect(afterPressure.continuity.lastOutcomeEvidence?.id).toContain("run.janek.pickup-last-known-crate");
+    expect(afterPressure.continuity.lastOutcomeEvidence?.sourceRunId).toBe("run.janek.pickup-last-known-crate");
 
     const afterWorldCrate = afterPressure.authoritativeWorld.materialObjects.find((object) => object.id === CRATE_ID);
     const afterPrivateCrate = afterPressure.residentPrivate.materialKnowledge.find((object) => object.objectId === CRATE_ID);
