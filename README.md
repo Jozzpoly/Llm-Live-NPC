@@ -16,13 +16,21 @@ Current execution / roadmap authority:
 
 **`docs/SPC_LIVING_WORLD_EXECUTION_PROGRAM.md`**
 
-The last fully qualified runtime checkpoint recorded by that program is:
+The frozen first Owner-candidate runtime checkpoint is:
 
-`0ab1c81b738bd0e64eedee66a2473a14ffee1e32`
+`c1816785c89b5403889a7c57498843ecbbb69b97`
 
-At that checkpoint the project has crossed from isolated five-resident substrate/slices into a **single real-Luna five-resident causal living runtime**. Repository Check passed 233/233 files and 883/883 tests, Browser Evidence passed, the repeated resident-life Worker boundary passed a 5,000-tick qualification, and an exact Cloudflare preview sustained 5/5 recovered residents through 56 real provider requests without `invalid_life_intent_context`, provider-error loops or runtime exceptions.
+Exact Owner preview:
 
-This is **not** an Owner-quality or final living-game PASS. The immediate frontier is closing normal player-addressed speech through the unified runtime, then handing the first credible living sandbox to the Owner so human observation can drive the next campaign.
+`https://441dfa93-llm-live-npc.jozzpoly.workers.dev/?spc=1&scenario=unified-living`
+
+This candidate has crossed from isolated five-resident substrate/slices into a **single real-Luna five-resident causal living runtime**. The candidate line is green in repository Check and full Browser Evidence; exact-preview live qualification passes the addressed-speech join from public World speech through private hearing/reason, real Luna origin attribution and resident-owned continuing commitment.
+
+A semantic regression discovered during qualification was also closed: local `Tak?` / contact acknowledgement is now explicitly **not** treated as acceptance, decline or fulfilment of the speech content. Real Luna re-qualification passed that boundary.
+
+Normal non-evidence browser sanity on the exact preview reached **5/5 recovered residents** under continuing provider traffic with no visible provider/context error signal.
+
+This is **ready for Owner observation**, not an Owner-quality or final living-game PASS. The missing evidence plane is now the Owner's actual experience of the sandbox.
 
 ### Fresh takeover order
 
@@ -112,9 +120,9 @@ Use resident-life pressure:
 8. pressure the same architecture with other residents;
 9. generalize only after repeated need.
 
-The immediate promotion target is the first credible **Owner Living Sandbox**, not more infrastructure.
+The first credible **Owner Living Sandbox** is now frozen and ready for Owner observation.
 
-After that point, Owner observation becomes a primary development sensor.
+Do not add another pre-Owner infrastructure campaign by inertia. Owner observation is now the primary missing development sensor.
 
 ## Evidence language
 
@@ -156,9 +164,10 @@ Do not merge or declare broad Owner-ready quality merely because CI is green.
 
 Current order:
 
-`finish unified addressed-speech join`
-→ `bounded exact-candidate sanity`
-→ **`OWNER LIVING SANDBOX`**
-→ `re-plan from Owner observation`.
+**`OWNER LIVING SANDBOX`**
+→ `collect Owner feel / behavior / causality observations`
+→ `re-plan Phase L1 from that evidence`.
+
+Later documentation commits must not silently replace the frozen Owner runtime identity above.
 
 For all continuation decisions, use `docs/SPC_LIVING_WORLD_EXECUTION_PROGRAM.md`.
