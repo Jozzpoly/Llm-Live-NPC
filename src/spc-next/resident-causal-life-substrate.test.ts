@@ -607,4 +607,144 @@ describe("ResidentCausalLifeSubstrate", () => {
     });
   });
 
+  it("reconstructs a nested interruption chain and exact-returns each suspended run in causal order", () => {
+    const composition = createFiveResidentRegionComposition({
+      playerStart: { x: 3_000, y: 900 },
+    });
+    const { world } = composition;
+    const ida = composition.runtimes[IDA_ID];
+    const navigation = createFiveResidentNavigationGraph();
+    const life = new ResidentCausalLifeSubstrate({
+      residentId: IDA_ID,
+      resident: ida,
+      world,
+      navigation,
+    });
+
+    const seed = (
+      id: string,
+      targetRegionId: "hearth" | "workshop" | "fields",
+    ) => {
+      const origin = life.kernel.recordEvidence({
+        id: `evidence.ida.nested-interrupt.${id}`,
+        tick: world.tick,
+        kind: "test_origin",
+        summary: `nested interruption matter ${id}`,
+      });
+      const matter = life.kernel.openMatter({
+        id: `matter.ida.nested-interrupt.${id}`,
+        originEvidenceId: origin.id,
+        semanticCourse: `continue nested ${id}`,
+        semanticIntent: {
+          kind: "travel_region",
+          goal: `visit ${targetRegionId}`,
+          targetRegionId,
+        },
+      });
+      life.matterScope.track(matter.id);
+      const runId = `run.ida.nested-interrupt.${id}.semantic-1`;
+      life.kernel.bindRun({
+        matterId: matter.id,
+        taskId: `task.ida.nested-interrupt.${id}.semantic-1`,
+        runId,
+      });
+      return { matter, runId };
+    };
+
+    const main = seed("main", "workshop");
+    const later = seed("later", "fields");
+    const interruptOne = seed("interrupt-one", "hearth");
+    const interruptTwo = seed("interrupt-two", "fields");
+
+    expect(life.arbitrator.request(main.runId)).toEqual({
+      status: "acquired",
+      runId: main.runId,
+    });
+    expect(life.arbitrator.request(later.runId)).toMatchObject({
+      status: "busy",
+      runId: later.runId,
+    });
+
+    life.kernel.suspendMatter(main.matter.id, interruptOne.matter.id);
+    expect(life.arbitrator.claimInterruption(interruptOne.runId)).toEqual({
+      status: "acquired",
+      runId: interruptOne.runId,
+    });
+
+    life.kernel.suspendMatter(interruptOne.matter.id, interruptTwo.matter.id);
+    expect(life.arbitrator.claimInterruption(interruptTwo.runId)).toEqual({
+      status: "acquired",
+      runId: interruptTwo.runId,
+    });
+    expect(life.focus.focusedRun()).toBe(interruptTwo.runId);
+    expect(life.arbitrator.deferredRunIds()).toEqual([later.runId]);
+
+    const snapshot = life.snapshotCommittedLife();
+    expect(life.releaseWorldExecutionAuthority()).toBe(true);
+    const restored = new ResidentCausalLifeSubstrate({
+      residentId: IDA_ID,
+      resident: ida,
+      world,
+      navigation,
+      snapshot,
+    });
+    const execution = new ResidentCausalExecutionCoordinator(restored);
+
+    const completeFocused = () => {
+      let terminal: ReturnType<typeof execution.stepFocusedRun> | null = null;
+      for (let step = 0; step < 2_000; step += 1) {
+        const local = execution.stepFocusedRun();
+        if (local.status === "running") {
+          world.step();
+          continue;
+        }
+        terminal = local;
+        break;
+      }
+      if (!terminal) throw new Error("nested interruption execution exceeded guard");
+      return terminal;
+    };
+
+    const completedTwo = completeFocused();
+    expect(completedTwo).toMatchObject({
+      status: "completed",
+      matterId: interruptTwo.matter.id,
+      runId: interruptTwo.runId,
+      arbitration: {
+        status: "focused",
+        runId: interruptOne.runId,
+        deferredRunIds: [later.runId],
+      },
+    });
+    expect(restored.kernel.matter(interruptOne.matter.id)).toMatchObject({
+      status: "active",
+      suspendedByMatterId: null,
+      activeRunId: interruptOne.runId,
+    });
+    expect(restored.kernel.matter(main.matter.id)).toMatchObject({
+      status: "suspended",
+      suspendedByMatterId: interruptOne.matter.id,
+      activeRunId: main.runId,
+    });
+
+    const completedOne = completeFocused();
+    expect(completedOne).toMatchObject({
+      status: "completed",
+      matterId: interruptOne.matter.id,
+      runId: interruptOne.runId,
+      arbitration: {
+        status: "focused",
+        runId: main.runId,
+        deferredRunIds: [later.runId],
+      },
+    });
+    expect(restored.kernel.matter(main.matter.id)).toMatchObject({
+      status: "active",
+      suspendedByMatterId: null,
+      activeRunId: main.runId,
+    });
+    expect(restored.focus.focusedRun()).toBe(main.runId);
+    expect(restored.arbitrator.deferredRunIds()).toEqual([later.runId]);
+  });
+
 });
