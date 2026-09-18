@@ -592,12 +592,23 @@ export function createFiveResidentMiraCausalMultiMatterSlice() {
     proposal: ResidentLifeIntentProposal,
     intent: GroundedCausalCommitmentIntent,
   ): AcceptedCausalCommitment {
-    const accepted = causalTravelCommitments.materializePrivateSpeechCommitment({
-      attempt: prepared.attempt,
-      occurrence,
-      proposal,
-      intent,
-    });
+    let accepted;
+    try {
+      accepted = causalTravelCommitments.materializePrivateSpeechCommitment({
+        attempt: prepared.attempt,
+        occurrence,
+        proposal,
+        intent,
+      });
+    } catch (error) {
+      if (error instanceof Error && error.message === "grounded causal travel intent lacks exact admitted authority") {
+        throw new Error("grounded commitment intent lacks exact admitted grounding authority");
+      }
+      if (error instanceof Error && error.message === "grounded causal travel intent lost its exact private speech origin") {
+        throw new Error("grounded commitment intent lost its exact causal origin");
+      }
+      throw error;
+    }
 
     mira.scheduleAdaptiveReview(world.tick, proposal.reviewAfterSeconds, FIXED_DELTA_SECONDS);
     if (accepted.focusClaim.status === "deferred") {
