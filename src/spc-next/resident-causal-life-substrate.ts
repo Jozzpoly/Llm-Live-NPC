@@ -29,6 +29,10 @@ export interface ResidentCausalLifeSnapshot {
   residentId: string;
   identityNamespace: string | null;
   matterIds: readonly string[];
+  execution: {
+    focusedRunId: string | null;
+    deferredRunIds: readonly string[];
+  };
   kernel: ResidentContinuityKernelCommittedSnapshot;
 }
 
@@ -115,6 +119,9 @@ export class ResidentCausalLifeSubstrate {
     }
     this.focus = new ResidentExecutionFocusAuthority(this.kernel);
     this.arbitrator = new ResidentExecutionArbitrator(this.kernel, this.focus);
+    if (snapshot) {
+      restoreExecutionOwnership(snapshot, this.kernel, this.matterScope, this.focus, this.arbitrator);
+    }
     this.worldAuthority = new ResidentWorldExecutionAuthority(
       options.residentId,
       this.arbitrator,
@@ -170,6 +177,10 @@ export class ResidentCausalLifeSubstrate {
       residentId: this.options.residentId,
       identityNamespace: this.effectiveIdentityNamespace,
       matterIds: this.matterScope.matterIds(),
+      execution: {
+        focusedRunId: this.focus.focusedRun(),
+        deferredRunIds: this.arbitrator.deferredRunIds(),
+      },
       kernel: this.kernel.snapshotCommittedState(),
     };
   }
@@ -203,5 +214,59 @@ export class ResidentCausalLifeSubstrate {
       batch: structuredClone(batch),
       attempt,
     };
+  }
+}
+
+function restoreExecutionOwnership(
+  snapshot: ResidentCausalLifeSnapshot,
+  kernel: ResidentContinuityKernel,
+  matterScope: ResidentLifeMatterScope,
+  focus: ResidentExecutionFocusAuthority,
+  arbitrator: ResidentExecutionArbitrator,
+): void {
+  const focusedRunId = snapshot.execution?.focusedRunId ?? null;
+  const deferredRunIds = snapshot.execution?.deferredRunIds ?? [];
+  const represented = new Set<string>();
+  const scopedMatterIds = new Set(matterScope.matterIds());
+
+  if (focusedRunId !== null) {
+    validateRestoredExecutionRun(focusedRunId, "focused", kernel, scopedMatterIds);
+    represented.add(focusedRunId);
+  }
+
+  for (const runId of deferredRunIds) {
+    if (represented.has(runId)) {
+      throw new Error(`duplicate resident causal life execution run: ${runId}`);
+    }
+    validateRestoredExecutionRun(runId, "deferred", kernel, scopedMatterIds);
+    represented.add(runId);
+  }
+
+  for (const binding of snapshot.kernel.runBindings) {
+    if (!kernel.canRunMutateWorld(binding.runId)) continue;
+    if (!represented.has(binding.runId)) {
+      throw new Error(`authorized snapshot run lacks execution ownership: ${binding.runId}`);
+    }
+  }
+
+  focus.restoreFocusedRun(focusedRunId);
+  arbitrator.restoreDeferredRunIds(deferredRunIds);
+}
+
+function validateRestoredExecutionRun(
+  runId: string,
+  role: "focused" | "deferred",
+  kernel: ResidentContinuityKernel,
+  scopedMatterIds: ReadonlySet<string>,
+): void {
+  if (typeof runId !== "string" || runId.trim().length === 0) {
+    throw new Error(`resident causal life snapshot ${role} run id must be non-empty`);
+  }
+  const binding = kernel.runBinding(runId);
+  if (!binding || !kernel.canRunMutateWorld(runId)) {
+    throw new Error(`resident causal life snapshot ${role} run is not authorized: ${runId}`);
+  }
+  if (!scopedMatterIds.has(binding.matterId)) {
+    throw new Error(`resident causal life snapshot ${role} run matter is outside life scope: ${binding.matterId}`);
   }
 }
