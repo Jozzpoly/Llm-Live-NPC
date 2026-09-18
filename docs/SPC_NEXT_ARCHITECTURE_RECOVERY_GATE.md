@@ -1,5 +1,8 @@
 # SPC Next — Architecture Recovery Gate
 
+> **CURRENT EXECUTION NOTICE (2026-09-18):** This recovery gate is preserved as historical architecture debt/evidence. It is no longer the current stop-line or execution sequence after the unified five-resident runtime recovery. Use `docs/SPC_LIVING_WORLD_EXECUTION_PROGRAM.md` for current gates and roadmap; re-open obligations here only when live evidence proves they remain material.
+
+
 Status: **STOP-THE-LINE RECOVERY GATE**  
 Applies to: `refoundation/spc-next-five-resident-world` / draft PR #125  
 Grounded against: `daad9c72e3da936fb35c6183c8bedadb63084108` and preserved First Presence / P2 / Living / World donor evidence.

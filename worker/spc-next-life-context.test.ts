@@ -107,6 +107,30 @@ describe("shared SPC Next resident-life context sanitizer", () => {
     });
   });
 
+  it("preserves bounded communicate-actor intent without accepting execution leakage", () => {
+    const communicate = structuredClone(focusedContext) as any;
+    communicate.life.matters[0].semanticIntent = {
+      kind: "communicate_actor",
+      goal: "find Janek and deliver the accepted message",
+      targetActorId: "resident.janek",
+      text: "Mira says the field well needs checking before dusk.",
+    };
+    expect(sanitizeSpcNextLifeContext(communicate)?.life.matters[0]?.semanticIntent).toEqual({
+      kind: "communicate_actor",
+      goal: "find Janek and deliver the accepted message",
+      targetActorId: "resident.janek",
+      text: "Mira says the field well needs checking before dusk.",
+    });
+
+    const leaked = structuredClone(communicate);
+    leaked.life.matters[0].semanticIntent.routeRegionIds = ["hearth", "workshop"];
+    expect(sanitizeSpcNextLifeContext(leaked)).toBeNull();
+
+    const blankText = structuredClone(communicate);
+    blankText.life.matters[0].semanticIntent.text = " ";
+    expect(sanitizeSpcNextLifeContext(blankText)).toBeNull();
+  });
+
   it("fails closed on malformed structured intent and execution-method leakage", () => {
     const blankGoal = structuredClone(focusedContext) as any;
     blankGoal.life.matters[0].semanticIntent = {
@@ -145,6 +169,32 @@ describe("shared SPC Next resident-life context sanitizer", () => {
     });
   });
 
+
+  it("preserves exact bounded outcome-run provenance and rejects malformed provenance", () => {
+    const withOutcome = structuredClone(focusedContext) as any;
+    withOutcome.life.matters[0].lastOutcomeEvidence = {
+      id: "task-outcome:0123456789abcdef:119",
+      tick: 119,
+      kind: "task_outcome",
+      summary: "succeeded: factual prior run outcome",
+      sourceRunId: "run.mira.prior",
+    };
+
+    expect(sanitizeSpcNextLifeContext(withOutcome)?.life.matters[0]?.lastOutcomeEvidence)
+      .toMatchObject({
+        id: "task-outcome:0123456789abcdef:119",
+        sourceRunId: "run.mira.prior",
+      });
+
+    const malformed = structuredClone(withOutcome);
+    malformed.life.matters[0].lastOutcomeEvidence.sourceRunId = "run id with spaces";
+    expect(sanitizeSpcNextLifeContext(malformed)).toBeNull();
+
+    const oversized = structuredClone(withOutcome);
+    oversized.life.matters[0].lastOutcomeEvidence.sourceRunId = "r".repeat(129);
+    expect(sanitizeSpcNextLifeContext(oversized)).toBeNull();
+  });
+
   it("fails closed on inconsistent execution truth, future evidence, duplicates and extra fields", () => {
     const missingFocused = structuredClone(focusedContext) as any;
     missingFocused.life.body.focusedRunId = "run.mira.hidden";
@@ -164,4 +214,34 @@ describe("shared SPC Next resident-life context sanitizer", () => {
 
     expect(sanitizeSpcNextLifeContext({ ...focusedContext, hiddenWorldTruth: true })).toBeNull();
   });
+  it("accepts bounded authored self-knowledge but rejects malformed or overbroad self context", () => {
+    const withSelf = structuredClone(focusedContext) as any;
+    withSelf.self = {
+      version: 1,
+      role: "settlement resident who keeps everyday life connected",
+      drives: [
+        "maintain useful continuity across familiar places",
+        "respond to people actually perceived without inventing their needs",
+      ],
+    };
+    expect(sanitizeSpcNextLifeContext(withSelf)?.self).toEqual(withSelf.self);
+
+    const hiddenTruth = structuredClone(withSelf);
+    hiddenTruth.self.hiddenWorldTruth = "the crate is definitely missing";
+    expect(sanitizeSpcNextLifeContext(hiddenTruth)).toBeNull();
+
+    const noDrive = structuredClone(withSelf);
+    noDrive.self.drives = [];
+    expect(sanitizeSpcNextLifeContext(noDrive)).toBeNull();
+
+    const duplicateDrive = structuredClone(withSelf);
+    duplicateDrive.self.drives = ["stay useful", "stay useful"];
+    expect(sanitizeSpcNextLifeContext(duplicateDrive)).toBeNull();
+
+    const hugeRole = structuredClone(withSelf);
+    hugeRole.self.role = "x".repeat(801);
+    expect(sanitizeSpcNextLifeContext(hugeRole)).toBeNull();
+  });
+
+
 });

@@ -1,7 +1,9 @@
 {
-  "version": 12,
-  "pr": 137,
-  "qualifiers": ["life-intent"],
-  "purpose": "Qualify the materially changed commitment-native resident life-intent contract exactly once. Deterministic and browser gates are green before this trigger. Require exact-commit Cloudflare preview, spend-free endpoint/model/key/method preflight, then make exactly one real gpt-5.6-luna request over resident_life_cognition_v1 while an existing Workshop run owns the body. Any legal bounded commitmentDecision (accept, decline, defer or clarify) is a transport/contract PASS; do not retry for a preferred semantic choice. Provider output must contain no matter/run/task/body/route/World/outcome authority. This run does not prove judgement quality, matter materialization, execution, sustained autonomy or best-choice behavior.",
-  "requestedAtUtc": "2026-09-17T21:42:00Z"
+  "version": 17,
+  "pr": 141,
+  "qualifiers": [
+    "unified-addressed"
+  ],
+  "purpose": "Final apparatus closure for the unified addressed-speech Owner gate. The immediately previous exact run already passed the semantic regression itself: real gpt-5.6-luna independently accepted the addressed request as a communicate commitment and did not mistake local contact acknowledgement for semantic handling. It failed only because the no-focused-run reporting branch referenced a stale responseOccurrence variable after the evidence refactor. Re-run the same generic participant path with no product behavior changes. PASS requires real <=420 voice range, factual World.speak, exact private speech percept/reason, exact provider originReasonId, semantic acknowledgement-vs-content guard, explicit admission/settlement, five-resident runtime health, and conditional local interruption/exact-return evidence only when a focused mutable run actually exists at contact. Do not retry for a preferred semantic decision.",
+  "requestedAtUtc": "2026-09-18T13:31:00Z"
 }

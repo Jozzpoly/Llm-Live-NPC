@@ -1,5 +1,8 @@
 # SPC Next — current-state reconciliation and authority roadmap
 
+> **CURRENT EXECUTION NOTICE (2026-09-18):** This document preserves an important earlier substrate/authority reconciliation, but its capability sequence is **not the current execution roadmap**. For current direction, qualification boundary and continuation semantics use `docs/SPC_LIVING_WORLD_EXECUTION_PROGRAM.md`. Live evidence supersedes historical status claims here.
+
+
 Status: **live working reconciliation, not a frozen architecture**  
 Scope: `refoundation/spc-next-five-resident-world` / draft PR #125  
 Purpose: replace the stale assumption that the original F1–F12 audit is still the current roadmap.

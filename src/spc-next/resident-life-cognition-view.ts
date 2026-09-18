@@ -14,6 +14,8 @@ export interface ResidentLifeEvidenceView {
   tick: number;
   kind: string;
   summary: string;
+  /** Exact causal run when the evidence is a factual run outcome. */
+  sourceRunId?: string;
 }
 
 export interface ResidentLifeRunView {
@@ -154,6 +156,7 @@ function projectEvidence(evidence: ResidentKernelEvidence | null): ResidentLifeE
     tick: evidence.tick,
     kind: evidence.kind,
     summary: evidence.summary,
+    ...(evidence.sourceRunId ? { sourceRunId: evidence.sourceRunId } : {}),
   };
 }
 

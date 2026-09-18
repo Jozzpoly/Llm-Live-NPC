@@ -1,6 +1,12 @@
 import type { ResidentContinuityKernel } from "../spc-next/resident-continuity-kernel";
 import type { ResidentMaterialKnowledge } from "../spc-next/resident-material-knowledge";
 import type { ResidentWorldExecutionAuthority } from "../spc-next/resident-world-execution-authority";
+import type { ResidentLifeCognitionView } from "../spc-next/resident-life-cognition-view";
+import {
+  FiveResidentUnifiedLivingRuntime,
+  type FiveResidentLivingRuntimeDiagnostics,
+} from "../spc-next/five-resident-unified-living-runtime";
+import type { FiveResidentId } from "../spc-next/five-resident-region";
 import type { SpcWorldRuntime } from "../spc-next/spc-world-runtime";
 import { createFiveResidentJanekMaterialSlice } from "../spc-next/five-resident-material-slice";
 import { createFiveResidentJanekMissingCrateStagedSlice } from "../spc-next/five-resident-missing-crate-slice";
@@ -20,7 +26,8 @@ export type SpcNextResearchScenarioKind =
   | "missing-crate-interruption"
   | "missing-crate-live-provider"
   | "missing-crate-live-provider-interruption"
-  | "ida-message-delivery";
+  | "ida-message-delivery"
+  | "unified-living";
 
 export interface SpcNextResearchScenario {
   readonly kind: SpcNextResearchScenarioKind;
@@ -32,6 +39,10 @@ export interface SpcNextResearchScenario {
   /** Optional resident-specific evidence extension; social slices do not invent material knowledge. */
   readonly materialKnowledge?: ResidentMaterialKnowledge | null;
   readonly authority: ResidentWorldExecutionAuthority;
+  /** Unified runtime has multiple resident kernels and therefore no single canonical evidence target. */
+  readonly canonicalEvidenceSupported?: boolean;
+  readonly residentLifeView?: (residentId: string) => ResidentLifeCognitionView | null;
+  readonly livingDiagnostics?: () => FiveResidentLivingRuntimeDiagnostics | null;
   /** Advances exactly one authoritative World tick. */
   advanceOneWorldTick(): void;
 }
@@ -43,6 +54,7 @@ export function createSpcNextResearchScenario(kind: SpcNextResearchScenarioKind)
   if (kind === "missing-crate-live-provider") return createMissingCrateLiveProviderScenario();
   if (kind === "missing-crate-live-provider-interruption") return createMissingCrateLiveProviderInterruptionScenario();
   if (kind === "ida-message-delivery") return createIdaMessageDeliveryScenario();
+  if (kind === "unified-living") return createUnifiedLivingScenario();
   return createBaselineDeliveryScenario();
 }
 
@@ -55,6 +67,7 @@ export function researchScenarioKindFromSearch(search: string): SpcNextResearchS
   if (requested === "missing-crate-live-provider") return "missing-crate-live-provider";
   if (requested === "missing-crate-live-provider-interruption") return "missing-crate-live-provider-interruption";
   if (requested === "ida-message-delivery") return "ida-message-delivery";
+  if (requested === "unified-living") return "unified-living";
   throw new Error(`unknown SPC Next research scenario: ${requested}`);
 }
 
@@ -197,6 +210,41 @@ function createIdaMessageDeliveryScenario(): SpcNextResearchScenario {
       // advances only the resident-owned social commitment execution; it does not
       // inject delivery, recipient identity or recipient position into the slice.
       slice.advanceOneWorldTick();
+    },
+  };
+}
+
+
+function createUnifiedLivingScenario(): SpcNextResearchScenario {
+  const living = new FiveResidentUnifiedLivingRuntime();
+  const janek = living.life("resident.janek");
+  if (!janek) {
+    throw new Error("unified living runtime must claim idle Janek at construction");
+  }
+
+  return {
+    kind: "unified-living",
+    evidenceScenarioId: "browser-unified-living",
+    // Compatibility fields exist only because the older research shell is centered
+    // on one canonical target. Unified canonical evidence is explicitly disabled.
+    residentId: "resident.janek",
+    matterId: "matter.unified-living.multiple-residents",
+    world: living.world,
+    kernel: janek.kernel,
+    materialKnowledge: null,
+    authority: janek.worldAuthority,
+    canonicalEvidenceSupported: false,
+    residentLifeView(residentId: string): ResidentLifeCognitionView | null {
+      if (!living.world.publicSnapshot().residents.some((resident) => resident.id === residentId)) {
+        return null;
+      }
+      return living.life(residentId as FiveResidentId)?.currentLifeView() ?? null;
+    },
+    livingDiagnostics(): FiveResidentLivingRuntimeDiagnostics {
+      return living.diagnostics();
+    },
+    advanceOneWorldTick(): void {
+      living.advanceOneWorldTick();
     },
   };
 }
