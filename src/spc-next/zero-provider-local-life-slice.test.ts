@@ -152,7 +152,9 @@ describe("post-stress R1 zero-provider local life", () => {
     expect(slice.attention()).toMatchObject({
       kind: "quiet",
     });
-    expect(slice.pendingCognitionReasons()).toEqual([]);
+    expect(slice.pendingCognitionReasons()).toEqual([
+      expect.objectContaining({ kind: "heard_speech" }),
+    ]);
 
     const quietPosition = residentActor(slice).position;
     for (let tick = 0; tick < 600; tick += 1) {
@@ -171,7 +173,7 @@ describe("post-stress R1 zero-provider local life", () => {
     ]);
     expect(slice.attention()).toMatchObject({
       kind: "quiet",
-      reason: expect.stringContaining("no unresolved local reason"),
+      reason: expect.stringContaining("no unresolved local embodied matter"),
     });
 
     // Quiet is not inertness: a later addressed contact wakes local attention without
