@@ -127,6 +127,25 @@ export class ResidentRuntime {
     return this.semanticPressure.recentDecisions();
   }
 
+  /**
+   * Explicit resident-local promotion boundary for already-established semantic
+   * discrepancies (for example a real multi-matter choice or factual outcome).
+   *
+   * R2 uses this instead of scheduling a timer and hoping a later quiet_review
+   * fabricates the semantic reason.
+   */
+  promoteSemanticPressure(reason: CognitionReason): void {
+    if (!reason.id.trim()) throw new Error("semantic pressure reason id must be non-empty");
+    if (!Number.isSafeInteger(reason.tick) || reason.tick < 0) {
+      throw new Error("semantic pressure reason tick must be a non-negative safe integer");
+    }
+    if (!Number.isFinite(reason.salience) || reason.salience < 0 || reason.salience > 1) {
+      throw new Error("semantic pressure salience must be between zero and one");
+    }
+    if (!reason.summary.trim()) throw new Error("semantic pressure summary must be non-empty");
+    this.noteCognitionReason(reason);
+  }
+
   scheduleAdaptiveReview(tick: number, reviewAfterSeconds: number, fixedDeltaSeconds: number): void {
     if (!Number.isFinite(reviewAfterSeconds) || reviewAfterSeconds <= 0) {
       throw new Error("reviewAfterSeconds must be positive");
