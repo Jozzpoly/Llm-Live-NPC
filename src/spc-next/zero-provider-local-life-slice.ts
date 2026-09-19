@@ -98,7 +98,9 @@ export function createZeroProviderLocalLifeSlice() {
     fixedDeltaSeconds: 1 / 60,
   });
 
-  world.addPlayer(PLAYER_ID, { x: 520, y: 700 });
+  // Keep the participant physically local to the small workshop specimen so both
+  // mid-task and later quiet addressed contact must still pass real hearing geometry.
+  world.addPlayer(PLAYER_ID, { x: 850, y: 700 });
   const resident = world.addResident(RESIDENT_ID, "Mira", { x: 700, y: 500 });
   world.familiarizeResidentWithRegions(RESIDENT_ID, ["local-workshop"]);
   const object: MaterialObjectState = {
