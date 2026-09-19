@@ -104,7 +104,7 @@ describe("SPC World phase contract before authority extraction", () => {
         { id: "east", label: "East", minX: 500, minY: 0, maxX: 1_000, maxY: 1_000 },
       ],
     });
-    world.addResident("resident.mira", "Mira", { x: 495, y: 100 }, { maxSpeed: 600, brainIntervalTicks: 100 });
+    const mira = world.addResident("resident.mira", "Mira", { x: 495, y: 100 }, { maxSpeed: 600, brainIntervalTicks: 100 });
     world.setActorVelocity("resident.mira", { x: 600, y: 0 });
 
     world.step();
@@ -112,7 +112,6 @@ describe("SPC World phase contract before authority extraction", () => {
     expect(actor.position.x).toBeCloseTo(505, 8);
     expect(world.regionAt(actor.position)?.id).toBe("east");
 
-    const mira = world.residentRuntime("resident.mira");
     const regionDecision = mira.semanticPressureDecisions().find(
       (decision) => decision.code === "region_transition",
     );
