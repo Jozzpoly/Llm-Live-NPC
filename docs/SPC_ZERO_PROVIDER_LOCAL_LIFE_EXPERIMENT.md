@@ -86,6 +86,24 @@ The resident may begin with authored private state and one or more legitimate ma
 The experiment may use deterministic scripted **World occurrences** as perturbations, because the World is allowed to change.
 Those perturbations must not directly command resident behavior.
 
+### Critical semantic boundary
+
+R1 does **not** solve cognition-pressure relevance/lifecycle. That belongs to R2.
+
+In particular:
+
+`local contact acknowledgement != semantic handling of addressed speech`.
+
+A resident may locally stop, orient and acknowledge an addressed speaker while the speech-content reason remains unresolved for later higher cognition. R1 should prove that the body/local life can continue coherently **despite** such retained pressure when provider cognition is disabled.
+
+Therefore R1 must not earn a PASS by deleting every pending reason. The useful invariant is narrower:
+
+- ordinary local life does not require dispatching provider requests;
+- background/body handling does not automatically claim semantic settlement;
+- unresolved pressure remains bounded/stable when no new causal evidence arrives;
+- a new real percept may add new pressure;
+- old pressure must not manufacture new World activity by itself.
+
 ---
 
 ## 5. Required resident layers
