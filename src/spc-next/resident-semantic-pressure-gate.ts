@@ -10,6 +10,7 @@ export type ResidentSemanticPressureDisposition =
 export type ResidentSemanticPressureCode =
   | "addressed_speech"
   | "ambient_speech"
+  | "known_social_speech"
   | "world_change"
   | "actor_visibility"
   | "routine_perception"
@@ -77,6 +78,24 @@ export class ResidentSemanticPressureGate {
             evidenceIds: [percept.id],
           },
         };
+      } else if (percept.actorId) {
+        decision = {
+          tick: percept.tick,
+          residentId: this.residentId,
+          evidenceId: percept.id,
+          occurrenceId: percept.occurrenceId,
+          disposition: "unresolved",
+          code: "known_social_speech",
+          summary: "Unaddressed speech from a privately recognized actor becomes one coalesced social pressure for that actor.",
+          cognitionReason: {
+            id: `reason:${this.residentId}:ambient-social:${percept.actorId}`,
+            tick: percept.tick,
+            kind: "heard_speech",
+            salience: 0.55,
+            summary: `Overheard recognized actor: ${percept.text}`,
+            evidenceIds: [percept.id],
+          },
+        };
       } else {
         decision = {
           tick: percept.tick,
@@ -85,7 +104,7 @@ export class ResidentSemanticPressureGate {
           occurrenceId: percept.occurrenceId,
           disposition: "observation_only",
           code: "ambient_speech",
-          summary: "Unaddressed speech remains private evidence without immediate unresolved pressure.",
+          summary: "Unaddressed speech from an unrecognized source remains private evidence without immediate unresolved pressure.",
           cognitionReason: null,
         };
       }
