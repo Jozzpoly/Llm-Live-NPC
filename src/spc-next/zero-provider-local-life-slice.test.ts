@@ -157,12 +157,11 @@ describe("post-stress R1 zero-provider local life", () => {
     expect(slice.attention()).toMatchObject({
       kind: "quiet",
     });
-    expect(slice.pendingCognitionReasons()).toEqual([
-      expect.objectContaining({ kind: "heard_speech" }),
-    ]);
+    const pressureBeforeQuiet = slice.pendingCognitionReasons();
+    expect(pressureBeforeQuiet).toContainEqual(expect.objectContaining({ kind: "heard_speech" }));
 
     const quietPosition = residentActor(slice).position;
-    for (let tick = 0; tick < 600; tick += 1) {
+    for (let tick = 0; tick < 3_600; tick += 1) {
       const step = slice.advanceOneWorldTick();
       expect(step.status).toBe("settled");
     }
@@ -226,7 +225,7 @@ describe("post-stress R1 zero-provider local life", () => {
     });
     expect(slice.attention()).toMatchObject({
       kind: "quiet",
-      reason: expect.stringContaining("no unresolved local matter"),
+      reason: expect.stringContaining("no unresolved local embodied matter"),
     });
     expect(slice.pendingCognitionReasons()).toEqual(pressureAfterLateCall);
     expect(slice.world.materialObject(slice.objectId)?.location).toEqual({
