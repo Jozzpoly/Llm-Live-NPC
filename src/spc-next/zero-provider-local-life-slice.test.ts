@@ -67,7 +67,12 @@ describe("post-stress R1 zero-provider local life", () => {
       cognitionReasonSettled: false,
     });
     const pressureAfterBackground = slice.pendingCognitionReasons();
-    expect(pressureAfterBackground).toEqual(pressureBeforeBackground);
+    expect(pressureAfterBackground).toHaveLength(pressureBeforeBackground.length + 1);
+    expect(pressureAfterBackground).toContainEqual(expect.objectContaining({
+      kind: "heard_speech",
+      salience: 0.55,
+      summary: expect.stringContaining("Overheard recognized actor"),
+    }));
     expect(backgroundDecision?.cognitionReasonId).toBeNull();
 
     const addressed = slice.playerSpeak("Mira, chwila!", true);
