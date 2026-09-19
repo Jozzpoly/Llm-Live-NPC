@@ -73,7 +73,9 @@ describe("post-stress R1 zero-provider local life", () => {
       salience: 0.55,
       summary: expect.stringContaining("Overheard recognized actor"),
     }));
-    expect(backgroundDecision?.cognitionReasonId).toBeNull();
+    expect(backgroundDecision?.cognitionReasonId).toBe(
+      pressureAfterBackground.find((reason) => reason.salience === 0.55)?.id,
+    );
 
     const addressed = slice.playerSpeak("Mira, chwila!", true);
     const started = slice.advanceOneWorldTick();
