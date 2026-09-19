@@ -79,6 +79,46 @@ describe("R2 first semantic-pressure metabolism boundary", () => {
     )).toBe(true);
   });
 
+  it("coalesces repeated overheard speech from one privately recognized actor into one social pressure", () => {
+    const runtime = resident("resident.r2-known-social");
+
+    // Recognition is earned through sight first. Hearing does not acquire identity by itself.
+    runtime.ingestPercepts([{
+      id: "percept:r2:known-social:sight",
+      occurrenceId: "sight:actor_sight_enter:actor.ambient-speaker:0",
+      tick: 0,
+      phenomenon: "actor_sight_enter",
+      modality: "sight",
+      actorId: "actor.ambient-speaker",
+      subjectId: "actor.ambient-speaker",
+      spatial: { kind: "exact", position: { x: 12, y: 4 } },
+      summary: "Known actor entered sight.",
+      text: null,
+      addressed: false,
+    }], { x: 0, y: 0 });
+
+    expect(runtime.pendingCognitionReasons()).toEqual([]);
+
+    for (let index = 1; index <= 8; index += 1) {
+      runtime.ingestPercepts([speechPercept(index, false)], { x: 0, y: 0 });
+    }
+
+    const pending = runtime.pendingCognitionReasons();
+    expect(pending).toHaveLength(1);
+    expect(pending[0]).toMatchObject({
+      kind: "heard_speech",
+      salience: 0.55,
+      evidenceIds: ["percept:r2:speech:8"],
+    });
+    expect(pending[0]?.id).toContain("ambient-social:actor.ambient-speaker");
+
+    const socialDecisions = runtime.semanticPressureDecisions().filter(
+      (decision) => decision.code === "known_social_speech",
+    );
+    expect(socialDecisions).toHaveLength(8);
+    expect(socialDecisions.every((decision) => decision.disposition === "unresolved")).toBe(true);
+  });
+
   it("keeps addressed speech as one explicit unresolved issue while ambient chatter remains observation-only", () => {
     const runtime = resident("resident.r2-addressed");
 
