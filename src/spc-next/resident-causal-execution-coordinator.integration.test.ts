@@ -143,6 +143,13 @@ describe("ResidentCausalExecutionCoordinator", () => {
       }),
     }));
 
+    // R2 pre-fix characterization: even an expected successful terminal outcome
+    // currently becomes fresh unresolved semantic pressure by default.
+    expect(ida.pendingCognitionReasons()).toContainEqual(expect.objectContaining({
+      kind: "activity_completed",
+      evidenceIds: [terminal.outcomeEvidence.id],
+    }));
+
     const reviewAfterCompletion = ida.cognitionScheduleDiagnostics().nextQuietReviewTick;
     expect(reviewAfterCompletion).toBeLessThanOrEqual(reviewBeforeCompletion);
   });
@@ -414,6 +421,11 @@ describe("ResidentCausalExecutionCoordinator", () => {
     expect(life.worldAuthority.motionOwner()).toBeNull();
     expect(ida.cognitionScheduleDiagnostics().nextQuietReviewTick)
       .toBeLessThanOrEqual(reviewBeforeBlockedOutcome);
+    expect(ida.pendingCognitionReasons()).toContainEqual(expect.objectContaining({
+      kind: "activity_completed",
+      evidenceIds: [terminal.outcomeEvidence.id],
+      summary: expect.stringContaining("Factual run outcome requires resident interpretation"),
+    }));
 
     expect(life.kernel.matter(accepted.matter.id)).toMatchObject({
       lastOutcomeSemanticRevision: 1,
