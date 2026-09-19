@@ -63,7 +63,7 @@ describe("ResidentLifeChoiceReviewBridge with explicit R2 semantic pressure", ()
 
     expect(bridge.observe(ambiguity, 10).status).toBe("scheduled");
     expect(bridge.observe(ambiguity, 11).status).toBe("already_scheduled");
-    expect(bridge.observe({ status: "idle", candidateRunIds: [] }, 12).status).toBe("not_required");
+    expect(bridge.observe({ status: "idle" }, 12).status).toBe("not_required");
     expect(bridge.observe(ambiguity, 13).status).toBe("scheduled");
 
     // Same deterministic reason identity is updated rather than duplicated while
