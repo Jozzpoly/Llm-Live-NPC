@@ -2,8 +2,10 @@ import type { ResidentPercept, Vec2, WorldOccurrence } from "./contracts";
 import type { MaterialObjectState } from "./material-world-state";
 import { ResidentContinuityKernel, type ResidentTaskRunBinding } from "./resident-continuity-kernel";
 import { ResidentMaterialKnowledge } from "./resident-material-knowledge";
-import { ResidentMaterialPickupExecutor, type ResidentMaterialPickupStep } from "./resident-material-pickup-executor";
-import { ResidentMaterialPlaceExecutor, type ResidentMaterialPlaceStep } from "./resident-material-place-executor";
+import {
+  ResidentLocalMaterialDeliveryRoutine,
+  type ResidentLocalMaterialDeliveryStep,
+} from "./resident-local-material-delivery-routine";
 import { ResidentWorldExecutionAuthority } from "./resident-world-execution-authority";
 import { SpcWorldRuntime } from "./spc-world-runtime";
 
@@ -51,9 +53,8 @@ export interface ZeroProviderLocalInterruptionSnapshot {
 }
 
 export type ZeroProviderLocalLifeStep =
-  | { status: "running"; phase: "pickup"; local: ResidentMaterialPickupStep }
+  | { status: "running"; phase: "pickup" | "delivery"; local: ResidentLocalMaterialDeliveryStep }
   | { status: "pickup_completed"; tick: number }
-  | { status: "running"; phase: "delivery"; local: ResidentMaterialPlaceStep }
   | { status: "interruption_started"; interruption: ZeroProviderLocalInterruptionSnapshot }
   | { status: "interruption_responded"; interruption: ZeroProviderLocalInterruptionSnapshot }
   | { status: "interruption_holding"; interruption: ZeroProviderLocalInterruptionSnapshot }
@@ -129,23 +130,17 @@ export function createZeroProviderLocalLifeSlice() {
     originEvidenceId: origin.id,
     semanticCourse: "put the workshop basket back beside the local shelf",
   });
-  kernel.bindRun({
-    matterId: MAIN_MATTER_ID,
-    taskId: "task.mira.local-life.pickup-basket",
-    runId: PICKUP_RUN_ID,
-  });
-
   const knowledge = new ResidentMaterialKnowledge(RESIDENT_ID, [OBJECT_ID], world);
   const authority = new ResidentWorldExecutionAuthority(RESIDENT_ID, kernel, world);
-  const pickup = new ResidentMaterialPickupExecutor(
-    PICKUP_RUN_ID,
-    OBJECT_ID,
-    knowledge,
-    authority,
-    world,
-  );
-
-  let place: ResidentMaterialPlaceExecutor | null = null;
+  const materialRoutine = new ResidentLocalMaterialDeliveryRoutine({
+    matterId: MAIN_MATTER_ID,
+    objectId: OBJECT_ID,
+    destination: DESTINATION,
+    pickupTaskId: "task.mira.local-life.pickup-basket",
+    pickupRunId: PICKUP_RUN_ID,
+    placeTaskId: "task.mira.local-life.place-basket",
+    placeRunId: PLACE_RUN_ID,
+  }, kernel, knowledge, authority, world);
   let phase: ZeroProviderLocalLifePhase = "pickup";
   let attention: ZeroProviderLocalAttention = {
     kind: "matter",
@@ -157,22 +152,6 @@ export function createZeroProviderLocalLifeSlice() {
   let interruptSequence = 0;
   const handledPercepts = new Set<string>();
   const localDecisions: ZeroProviderLocalDecision[] = [];
-
-  function startDelivery(): void {
-    kernel.bindRun({
-      matterId: MAIN_MATTER_ID,
-      taskId: "task.mira.local-life.place-basket",
-      runId: PLACE_RUN_ID,
-    });
-    place = new ResidentMaterialPlaceExecutor(
-      PLACE_RUN_ID,
-      OBJECT_ID,
-      DESTINATION,
-      authority,
-      world,
-    );
-    phase = "delivery";
-  }
 
   function settlePerceptReasonLocally(percept: ResidentPercept): { id: string | null; settled: boolean } {
     const id = cognitionReasonIdForPercept(RESIDENT_ID, percept);
@@ -354,60 +333,26 @@ export function createZeroProviderLocalLifeSlice() {
       return { status: "settled", tick: world.tick };
     }
 
+    const local = materialRoutine.step();
     let step: ZeroProviderLocalLifeStep;
 
-    if (phase === "pickup") {
-      knowledge.sample();
-      const local = pickup.step();
-      if (local.status === "authority_lost") {
-        step = { status: "authority_lost", phase: "pickup" };
-      } else if (local.status === "blocked") {
-        step = { status: "blocked", phase: "pickup", reason: local.reason };
-      } else if (local.status === "succeeded") {
-        const reconciled = kernel.reconcileRunOutcome({
-          runId: local.runId,
-          tick: local.materialOutcome.tick,
-          status: "succeeded",
-          summary: "Mira picked up the workshop basket for her local matter.",
-        });
-        if (reconciled.status !== "recorded") {
-          step = { status: "blocked", phase: "pickup", reason: "pickup outcome did not reconcile" };
-        } else {
-          startDelivery();
-          step = { status: "pickup_completed", tick: world.tick };
-        }
-      } else {
-        step = { status: "running", phase: "pickup", local };
-      }
+    if (local.status === "authority_lost") {
+      step = { status: "authority_lost", phase: local.phase };
+    } else if (local.status === "blocked") {
+      step = { status: "blocked", phase: local.phase, reason: local.reason };
+    } else if (local.status === "pickup_completed") {
+      phase = "delivery";
+      step = { status: "pickup_completed", tick: world.tick };
+    } else if (local.status === "succeeded") {
+      phase = "settled";
+      attention = {
+        kind: "quiet",
+        reason: "basket matter is factually complete; no unresolved local reason requires action",
+      };
+      step = { status: "settled", tick: world.tick };
     } else {
-      if (!place) throw new Error("R1 delivery phase has no local place executor");
-      const local = place.step();
-      if (local.status === "authority_lost") {
-        step = { status: "authority_lost", phase: "delivery" };
-      } else if (local.status === "blocked") {
-        step = { status: "blocked", phase: "delivery", reason: local.reason };
-      } else if (local.status === "succeeded") {
-        const reconciled = kernel.reconcileRunOutcome({
-          runId: local.runId,
-          tick: local.materialOutcome.tick,
-          status: "succeeded",
-          summary: "Mira put the workshop basket back beside the local shelf.",
-        });
-        if (reconciled.status !== "recorded") {
-          step = { status: "blocked", phase: "delivery", reason: "place outcome did not reconcile" };
-        } else {
-          kernel.resolveMatter(MAIN_MATTER_ID);
-          authority.enforceMotionAuthority();
-          phase = "settled";
-          attention = {
-            kind: "quiet",
-            reason: "basket matter is factually complete; no unresolved local reason requires action",
-          };
-          step = { status: "settled", tick: world.tick };
-        }
-      } else {
-        step = { status: "running", phase: "delivery", local };
-      }
+      phase = local.phase;
+      step = { status: "running", phase: local.phase, local };
     }
 
     world.step();
