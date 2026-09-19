@@ -105,26 +105,14 @@ export class CognitionScheduler {
     const normalReady = pending.length > 0
       && tick - oldestPendingTick >= this.options.normalDebounceTicks
       && elapsed >= this.options.normalMinIntervalTicks;
-    const quietReady = pending.length === 0
-      && tick >= this.nextQuietReviewTick
-      && elapsed >= this.options.normalMinIntervalTicks;
+    // R2: passage of time is not itself unresolved semantic pressure.
+    // Quiet/local maintenance may still use nextQuietReviewTick as a diagnostic or
+    // local-brain deadline, but the semantic scheduler cannot fabricate a cognition
+    // batch while no explicit unresolved reason exists.
+    if (!urgentReady && !normalReady) return null;
 
-    if (!urgentReady && !normalReady && !quietReady) return null;
-
-    let reasons: CognitionReason[];
-    if (quietReady) {
-      reasons = [{
-        id: `quiet:${this.options.residentId}:${tick}`,
-        tick,
-        kind: "quiet_review",
-        salience: 0.1,
-        summary: "Quiet periodic review is due.",
-        evidenceIds: [],
-      }];
-    } else {
-      reasons = pending.slice(0, this.options.maxReasonsPerBatch);
-      for (const reason of reasons) this.pending.delete(reason.id);
-    }
+    const reasons = pending.slice(0, this.options.maxReasonsPerBatch);
+    for (const reason of reasons) this.pending.delete(reason.id);
 
     this.lastRequestTick = tick;
     // This is a safety fallback. A successfully admitted model proposal should replace
