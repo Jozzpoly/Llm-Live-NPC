@@ -154,9 +154,11 @@ export function createZeroProviderLocalLifeSlice() {
   const localDecisions: ZeroProviderLocalDecision[] = [];
 
   function settlePerceptReasonLocally(percept: ResidentPercept): { id: string | null; settled: boolean } {
-    const id = cognitionReasonIdForPercept(RESIDENT_ID, percept);
-    if (!id) return { id: null, settled: false };
-    return { id, settled: resident.settleCognitionReasonLocally(id) };
+    const settled = resident.settlePerceptCognitionLocally(percept.id);
+    return {
+      id: settled[0]?.id ?? null,
+      settled: settled.length > 0,
+    };
   }
 
   function processNewPercepts(): ZeroProviderLocalInterruptionSnapshot | null {
@@ -422,15 +424,3 @@ function snapshotActive(
   };
 }
 
-function cognitionReasonIdForPercept(residentId: string, percept: ResidentPercept): string | null {
-  if (percept.phenomenon === "speech" && percept.modality === "hearing" && percept.text) {
-    return `reason:${residentId}:speech:${percept.occurrenceId}`;
-  }
-  if (percept.phenomenon === "interaction" || percept.phenomenon === "system") {
-    return `reason:${residentId}:world:${percept.occurrenceId}`;
-  }
-  if (percept.phenomenon === "actor_sight_enter" || percept.phenomenon === "actor_sight_exit") {
-    return `reason:${residentId}:sight:${percept.occurrenceId}`;
-  }
-  return null;
-}
