@@ -29,6 +29,22 @@ describe("CognitionScheduler anti-storm semantics", () => {
     expect(scheduler.takeReady(1)?.reasons[0]?.id).toBe("urgent");
   });
 
+  it("lets local intelligence close exact pressure without fabricating a cognition request", () => {
+    const scheduler = createDefaultCognitionScheduler("resident.mira", 0);
+    scheduler.note(reason("locally-handled", 10, 0.7));
+
+    expect(scheduler.pendingSnapshot()).toEqual([
+      expect.objectContaining({ id: "locally-handled", tick: 10 }),
+    ]);
+    expect(scheduler.settleLocally("locally-handled")).toBe(true);
+    expect(scheduler.settleLocally("locally-handled")).toBe(false);
+    expect(scheduler.pendingSnapshot()).toEqual([]);
+    expect(scheduler.diagnostics()).toMatchObject({
+      pendingCount: 0,
+      lastRequestTick: null,
+    });
+  });
+
   it("gives five residents deterministic but non-identical initial quiet review deadlines", () => {
     const deadlines = ["mira", "janek", "ida", "oren", "nela"].map((name) =>
       createDefaultCognitionScheduler(`resident.${name}`, 0).diagnostics().nextQuietReviewTick,
