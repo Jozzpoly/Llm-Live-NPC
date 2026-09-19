@@ -4,7 +4,6 @@ import { ResidentContinuityKernel, type ResidentTaskRunBinding } from "./residen
 import { ResidentMaterialKnowledge } from "./resident-material-knowledge";
 import { ResidentMaterialPickupExecutor, type ResidentMaterialPickupStep } from "./resident-material-pickup-executor";
 import { ResidentMaterialPlaceExecutor, type ResidentMaterialPlaceStep } from "./resident-material-place-executor";
-import type { ResidentRuntime } from "./resident-runtime";
 import { ResidentWorldExecutionAuthority } from "./resident-world-execution-authority";
 import { SpcWorldRuntime } from "./spc-world-runtime";
 
@@ -447,7 +446,6 @@ export function createZeroProviderLocalLifeSlice() {
     interruption: () => interruptionSnapshot(),
     localDecisions: (): ZeroProviderLocalDecision[] => structuredClone(localDecisions),
     pendingCognitionReasons: () => resident.pendingCognitionReasons(),
-    providerRequestCount: () => 0,
     mainMatterId: MAIN_MATTER_ID,
     mainPlaceRunId: PLACE_RUN_ID,
     objectId: OBJECT_ID,
