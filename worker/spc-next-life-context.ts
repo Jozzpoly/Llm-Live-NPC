@@ -1,4 +1,5 @@
 import type { ResidentLifeCognitionContext } from "../src/spc-next/resident-life-cognition-context";
+import type { ResidentLifeSelfContext } from "../src/spc-next/resident-life-self-context";
 import type {
   ResidentLifeCognitionView,
   ResidentLifeEvidenceView,
@@ -6,16 +7,18 @@ import type {
   ResidentLifeRunView,
 } from "../src/spc-next/resident-life-cognition-view";
 import type { ResidentMatterIntent } from "../src/spc-next/resident-continuity-kernel";
+import { isSpcIdentifier } from "../src/spc-next/identity-contract";
 import { sanitizeSpcNextContext } from "./spc-next-cognition";
 
 const MAX_MATTERS = 32;
+const MAX_SELF_DRIVES = 8;
 
 const record = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === "object" && !Array.isArray(value);
 const safeInt = (value: unknown): value is number => Number.isSafeInteger(value) && Number(value) >= 0;
 const positiveInt = (value: unknown): value is number => Number.isSafeInteger(value) && Number(value) >= 1;
 const identifier = (value: unknown): string | null =>
-  typeof value === "string" && /^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$/u.test(value) ? value : null;
+  isSpcIdentifier(value) ? value : null;
 const boundedText = (value: unknown, maxLength: number): string | null => {
   if (typeof value !== "string" || value.length > maxLength) return null;
   const text = value.trim();
@@ -31,12 +34,29 @@ const boundedText = (value: unknown, maxLength: number): string | null => {
  * requirement that body be free with at least two deferred candidates) belongs after
  * this boundary.
  */
-export function sanitizeSpcNextLifeContext(value: unknown): ResidentLifeCognitionContext | null {
-  if (!record(value) || value.contract !== "resident_life_cognition_v1" || !record(value.life)) return null;
-  if (!hasOnlyKeys(value, [
+export type SpcNextLifeContextDiagnosticCode =
+  | "outer_shape"
+  | "private_context"
+  | "life_context"
+  | "self_context";
+
+export interface SpcNextLifeContextSanitization {
+  context: ResidentLifeCognitionContext | null;
+  diagnostic: SpcNextLifeContextDiagnosticCode | null;
+}
+
+export function sanitizeSpcNextLifeContextWithDiagnostic(
+  value: unknown,
+): SpcNextLifeContextSanitization {
+  if (!record(value) || value.contract !== "resident_life_cognition_v1" || !record(value.life)) {
+    return { context: null, diagnostic: "outer_shape" };
+  }
+  if (!hasRequiredAndOptionalKeys(value, [
     "contract", "resident", "tick", "currentRegionId", "reasons", "localActivity",
     "recentPercepts", "concerns", "beliefs", "knownActors", "knownRegions", "life",
-  ])) return null;
+  ], ["self"])) {
+    return { context: null, diagnostic: "outer_shape" };
+  }
 
   const privateContext = sanitizeSpcNextContext({
     version: 1,
@@ -51,25 +71,53 @@ export function sanitizeSpcNextLifeContext(value: unknown): ResidentLifeCognitio
     knownActors: value.knownActors,
     knownRegions: value.knownRegions,
   });
-  if (!privateContext) return null;
+  if (!privateContext) return { context: null, diagnostic: "private_context" };
 
   const life = sanitizeLife(value.life, privateContext.tick);
-  if (!life) return null;
+  if (!life) return { context: null, diagnostic: "life_context" };
+  const self = Object.hasOwn(value, "self") ? sanitizeSelf(value.self) : null;
+  if (Object.hasOwn(value, "self") && !self) {
+    return { context: null, diagnostic: "self_context" };
+  }
 
   return {
-    contract: "resident_life_cognition_v1",
-    resident: structuredClone(privateContext.resident),
-    tick: privateContext.tick,
-    currentRegionId: privateContext.currentRegionId,
-    reasons: structuredClone(privateContext.reasons),
-    localActivity: structuredClone(privateContext.currentActivity),
-    recentPercepts: structuredClone(privateContext.recentPercepts),
-    concerns: structuredClone(privateContext.concerns),
-    beliefs: structuredClone(privateContext.beliefs),
-    knownActors: structuredClone(privateContext.knownActors),
-    knownRegions: structuredClone(privateContext.knownRegions),
-    life,
+    context: {
+      contract: "resident_life_cognition_v1",
+      resident: structuredClone(privateContext.resident),
+      ...(self ? { self } : {}),
+      tick: privateContext.tick,
+      currentRegionId: privateContext.currentRegionId,
+      reasons: structuredClone(privateContext.reasons),
+      localActivity: structuredClone(privateContext.currentActivity),
+      recentPercepts: structuredClone(privateContext.recentPercepts),
+      concerns: structuredClone(privateContext.concerns),
+      beliefs: structuredClone(privateContext.beliefs),
+      knownActors: structuredClone(privateContext.knownActors),
+      knownRegions: structuredClone(privateContext.knownRegions),
+      life,
+    },
+    diagnostic: null,
   };
+}
+
+export function sanitizeSpcNextLifeContext(value: unknown): ResidentLifeCognitionContext | null {
+  return sanitizeSpcNextLifeContextWithDiagnostic(value).context;
+}
+
+function sanitizeSelf(value: unknown): ResidentLifeSelfContext | null {
+  if (!record(value) || value.version !== 1 || !hasOnlyKeys(value, ["version", "role", "drives"])) return null;
+  const role = boundedText(value.role, 800);
+  if (!role || !Array.isArray(value.drives) || value.drives.length < 1 || value.drives.length > MAX_SELF_DRIVES) return null;
+
+  const drives: string[] = [];
+  const seen = new Set<string>();
+  for (const raw of value.drives) {
+    const drive = boundedText(raw, 1_200);
+    if (!drive || seen.has(drive)) return null;
+    seen.add(drive);
+    drives.push(drive);
+  }
+  return { version: 1, role, drives };
 }
 
 function sanitizeLife(value: unknown, contextTick: number): ResidentLifeCognitionView | null {
@@ -165,21 +213,50 @@ function sanitizeMatter(value: unknown, contextTick: number): ResidentLifeMatter
 }
 
 function sanitizeMatterIntent(value: unknown): ResidentMatterIntent | null {
-  if (!record(value) || !hasOnlyKeys(value, ["kind", "goal", "targetRegionId"])) return null;
-  if (value.kind !== "travel_region") return null;
-  const goal = boundedText(value.goal, 1_200);
-  const targetRegionId = identifier(value.targetRegionId);
-  if (!goal || !targetRegionId) return null;
-  return { kind: "travel_region", goal, targetRegionId };
+  if (!record(value)) return null;
+
+  if (value.kind === "travel_region") {
+    if (!hasOnlyKeys(value, ["kind", "goal", "targetRegionId"])) return null;
+    const goal = boundedText(value.goal, 1_200);
+    const targetRegionId = identifier(value.targetRegionId);
+    if (!goal || !targetRegionId) return null;
+    return { kind: "travel_region", goal, targetRegionId };
+  }
+
+  if (value.kind === "communicate_actor") {
+    if (!hasOnlyKeys(value, ["kind", "goal", "targetActorId", "text"])) return null;
+    const goal = boundedText(value.goal, 1_200);
+    const targetActorId = identifier(value.targetActorId);
+    const text = boundedText(value.text, 1_200);
+    if (!goal || !targetActorId || !text) return null;
+    return { kind: "communicate_actor", goal, targetActorId, text };
+  }
+
+  return null;
 }
 
 function sanitizeEvidence(value: unknown, contextTick: number): ResidentLifeEvidenceView | null {
-  if (!record(value) || !hasOnlyKeys(value, ["id", "tick", "kind", "summary"])) return null;
+  if (!record(value)
+    || !hasRequiredAndOptionalKeys(value, ["id", "tick", "kind", "summary"], ["sourceRunId"])) return null;
   const id = identifier(value.id);
   const kind = boundedText(value.kind, 120);
   const summary = boundedText(value.summary, 4_000);
-  if (!id || !safeInt(value.tick) || value.tick > contextTick || !kind || !summary) return null;
-  return { id, tick: value.tick, kind, summary };
+  const sourceRunId = Object.hasOwn(value, "sourceRunId")
+    ? identifier(value.sourceRunId)
+    : null;
+  if (!id
+    || !safeInt(value.tick)
+    || value.tick > contextTick
+    || !kind
+    || !summary
+    || (Object.hasOwn(value, "sourceRunId") && !sourceRunId)) return null;
+  return {
+    id,
+    tick: value.tick,
+    kind,
+    summary,
+    ...(sourceRunId ? { sourceRunId } : {}),
+  };
 }
 
 function sanitizeRun(value: unknown): ResidentLifeRunView | null {

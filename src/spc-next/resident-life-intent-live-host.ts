@@ -21,6 +21,8 @@ export type ResidentLifeIntentLiveArrival = Readonly<
       residentId: string;
       status: "proposal";
       proposal: unknown;
+      /** Optional until every provider transport is upgraded to causal attribution. */
+      originReasonId?: string;
     }
   | {
       version: 1;
@@ -150,6 +152,11 @@ export class ResidentLifeIntentLiveHost {
       return this.registerErrorArrival(attempt, "invalid_response");
     }
 
+    const originReasonId = typeof raw.originReasonId === "string"
+      && attempt.context.reasons.some((reason) => reason.id === raw.originReasonId)
+      ? raw.originReasonId
+      : null;
+
     return this.registerArrival(attempt, Object.freeze({
       version: 1 as const,
       arrivalId: this.nextArrivalId(),
@@ -157,6 +164,7 @@ export class ResidentLifeIntentLiveHost {
       residentId: attempt.residentId,
       status: "proposal" as const,
       proposal: structuredClone(raw.proposal),
+      ...(originReasonId === null ? {} : { originReasonId }),
     }));
   }
 

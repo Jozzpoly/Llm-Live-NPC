@@ -1,5 +1,8 @@
 # SPC Next — Five-Resident Pressure Campaign
 
+> **CURRENT EXECUTION NOTICE (2026-09-18):** Keep this document as the resident-pressure/scenario donor map. Its historical "immediate order" is not binding after the unified five-resident runtime breakthrough. Current phase/order is owned by `docs/SPC_LIVING_WORLD_EXECUTION_PROGRAM.md`.
+
+
 Date: **2026-09-15**  
 Status: **LONG-HORIZON RESEARCH PROGRAM / NOT A FEATURE ROADMAP**
 

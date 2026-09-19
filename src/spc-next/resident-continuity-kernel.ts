@@ -1,3 +1,4 @@
+import { assertSpcIdentifier, deriveSpcIdentifier } from "./identity-contract";
 export type ResidentMatterStatus = "active" | "suspended" | "resolved" | "cancelled";
 export type ResidentRunOutcomeStatus = "succeeded" | "failed" | "blocked";
 export type ResidentSemanticProposalRevocationReason =
@@ -11,6 +12,8 @@ export interface ResidentKernelEvidence {
   tick: number;
   kind: string;
   summary: string;
+  /** Exact causal run provenance when this evidence records a factual run outcome. */
+  sourceRunId?: string;
 }
 
 /**
@@ -194,7 +197,7 @@ export class ResidentContinuityKernel {
     /** Legacy text-only callers may omit this while they migrate. */
     semanticIntent?: ResidentMatterIntent | null;
   }): ResidentMatter {
-    assertNonEmpty(input.id, "matter id");
+    assertSpcIdentifier(input.id, "matter id");
     assertNonEmpty(input.semanticCourse, "semantic course");
     if (input.semanticIntent) validateMatterIntent(input.semanticIntent);
     if (this.matters.has(input.id)) throw new Error(`matter already exists: ${input.id}`);
@@ -396,8 +399,8 @@ export class ResidentContinuityKernel {
   }
 
   bindRun(input: { matterId: string; taskId: string; runId: string }): ResidentTaskRunBinding {
-    assertNonEmpty(input.taskId, "task id");
-    assertNonEmpty(input.runId, "run id");
+    assertSpcIdentifier(input.taskId, "task id");
+    assertSpcIdentifier(input.runId, "run id");
     const matter = this.requireNonTerminalMatter(input.matterId);
     if (matter.status !== "active") throw new Error("cannot bind a run to a suspended matter");
     if (matter.activeRunId !== null) throw new Error(`matter already owns run: ${matter.activeRunId}`);
@@ -450,10 +453,11 @@ export class ResidentContinuityKernel {
     }
 
     const resultEvidence = this.recordEvidence({
-      id: `task-outcome:${binding.runId}:${outcome.tick}`,
+      id: deriveSpcIdentifier("task-outcome", binding.runId, String(outcome.tick)),
       tick: outcome.tick,
       kind: "task_outcome",
       summary: `${outcome.status}: ${outcome.summary}`,
+      sourceRunId: binding.runId,
     });
 
     matter.lastOutcomeEvidenceId = resultEvidence.id;
@@ -606,7 +610,7 @@ function restoreEvidencePins(
 ): void {
   const seen = new Set<string>();
   for (const pin of pins) {
-    assertNonEmpty(pin.matterId, "snapshot evidence pin matter id");
+    assertSpcIdentifier(pin.matterId, "snapshot evidence pin matter id");
     if (!matters.has(pin.matterId)) {
       throw new Error(`snapshot evidence pin references unknown matter: ${pin.matterId}`);
     }
@@ -658,7 +662,7 @@ function validateCommittedSnapshot(
 
   const usedRunIds = new Set<string>();
   for (const runId of snapshot.usedRunIds) {
-    assertNonEmpty(runId, "snapshot used run id");
+    assertSpcIdentifier(runId, "snapshot used run id");
     if (usedRunIds.has(runId)) {
       throw new Error(`duplicate snapshot used run id: ${runId}`);
     }
@@ -704,18 +708,18 @@ function validateCommittedSnapshot(
 }
 
 function validateSnapshotRunBinding(binding: ResidentTaskRunBinding): void {
-  assertNonEmpty(binding.runId, "snapshot run binding run id");
-  assertNonEmpty(binding.taskId, "snapshot run binding task id");
-  assertNonEmpty(binding.matterId, "snapshot run binding matter id");
+  assertSpcIdentifier(binding.runId, "snapshot run binding run id");
+  assertSpcIdentifier(binding.taskId, "snapshot run binding task id");
+  assertSpcIdentifier(binding.matterId, "snapshot run binding matter id");
   if (!Number.isSafeInteger(binding.semanticRevision) || binding.semanticRevision < 1) {
     throw new Error("snapshot run binding semanticRevision must be a positive safe integer");
   }
 }
 
 function validateSnapshotMatter(matter: ResidentMatter): void {
-  assertNonEmpty(matter.id, "snapshot matter id");
-  assertNonEmpty(matter.originEvidenceId, "snapshot matter origin evidence id");
-  assertNonEmpty(matter.semanticEvidenceId, "snapshot matter semantic evidence id");
+  assertSpcIdentifier(matter.id, "snapshot matter id");
+  assertSpcIdentifier(matter.originEvidenceId, "snapshot matter origin evidence id");
+  assertSpcIdentifier(matter.semanticEvidenceId, "snapshot matter semantic evidence id");
   assertNonEmpty(matter.semanticCourse, "snapshot matter semantic course");
   if (!Number.isSafeInteger(matter.semanticRevision) || matter.semanticRevision < 1) {
     throw new Error("snapshot matter semanticRevision must be a positive safe integer");
@@ -725,13 +729,13 @@ function validateSnapshotMatter(matter: ResidentMatter): void {
   }
   if (matter.semanticIntent) validateMatterIntent(matter.semanticIntent);
   if (matter.suspendedByMatterId !== null) {
-    assertNonEmpty(matter.suspendedByMatterId, "snapshot suspendedByMatterId");
+    assertSpcIdentifier(matter.suspendedByMatterId, "snapshot suspendedByMatterId");
   }
   if (matter.activeRunId !== null) {
-    assertNonEmpty(matter.activeRunId, "snapshot activeRunId");
+    assertSpcIdentifier(matter.activeRunId, "snapshot activeRunId");
   }
   if (matter.lastOutcomeEvidenceId !== null) {
-    assertNonEmpty(matter.lastOutcomeEvidenceId, "snapshot last outcome evidence id");
+    assertSpcIdentifier(matter.lastOutcomeEvidenceId, "snapshot last outcome evidence id");
   }
   if (matter.lastOutcomeSemanticRevision !== null
     && (!Number.isSafeInteger(matter.lastOutcomeSemanticRevision)
@@ -766,7 +770,10 @@ function validateMatterIntent(intent: ResidentMatterIntent): void {
 }
 
 function validateEvidence(evidence: ResidentKernelEvidence): void {
-  assertNonEmpty(evidence.id, "evidence id");
+  assertSpcIdentifier(evidence.id, "evidence id");
+  if (evidence.sourceRunId !== undefined) {
+    assertSpcIdentifier(evidence.sourceRunId, "evidence sourceRunId");
+  }
   assertNonEmpty(evidence.kind, "evidence kind");
   assertNonEmpty(evidence.summary, "evidence summary");
   if (!Number.isSafeInteger(evidence.tick) || evidence.tick < 0) {

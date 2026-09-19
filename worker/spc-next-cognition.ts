@@ -16,6 +16,10 @@ import type {
   ResidentPercept,
   Vec2,
 } from "../src/spc-next/contracts";
+import {
+  SPC_IDENTIFIER_MAX_LENGTH,
+  isSpcIdentifier,
+} from "../src/spc-next/identity-contract";
 import type { HearthCognitionEnv } from "./hearth-cognition";
 
 export interface SpcNextCognitionEnv extends HearthCognitionEnv {
@@ -96,7 +100,7 @@ const record = (value: unknown): value is Record<string, unknown> =>
 const finite = (value: unknown): value is number => typeof value === "number" && Number.isFinite(value);
 const safeInt = (value: unknown): value is number => typeof value === "number" && Number.isSafeInteger(value) && value >= 0;
 const identifier = (value: unknown): string | null =>
-  typeof value === "string" && /^[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}$/u.test(value) ? value : null;
+  isSpcIdentifier(value) ? value : null;
 const boundedText = (value: unknown, max: number): string | null => {
   if (typeof value !== "string" || value.length > max) return null;
   const text = value.trim();
@@ -374,7 +378,7 @@ export function sanitizeSpcNextContext(value: unknown): ResidentCognitionContext
 }
 
 const stringSchema = (maxLength: number) => ({ type: "string", minLength: 1, maxLength });
-const idSchema = stringSchema(128);
+const idSchema = stringSchema(SPC_IDENTIFIER_MAX_LENGTH);
 const nullable = (schema: unknown) => ({ anyOf: [schema, { type: "null" }] });
 const objectSchema = (properties: Record<string, unknown>) => ({
   type: "object", additionalProperties: false, properties, required: Object.keys(properties),

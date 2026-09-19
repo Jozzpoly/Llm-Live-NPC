@@ -4,7 +4,11 @@ import "./spc-next-research-style.css";
 import type { SpcCanonicalEvidenceSnapshotV1 } from "../evidence/spc-next-canonical-evidence-snapshot";
 import { FIVE_RESIDENT_ROLE_PRESSURES } from "../spc-next/five-resident-region";
 import type { ResidentPercept, ResidentTraceEvent, WorldOccurrence } from "../spc-next/contracts";
-import { SpcNextResearchScene, type SpcNextResearchFrame } from "./spc-next-research-scene";
+import {
+  SPC_PLAYER_SPEECH_RADIUS,
+  SpcNextResearchScene,
+  type SpcNextResearchFrame,
+} from "./spc-next-research-scene";
 
 const params = new URLSearchParams(location.search);
 const evidenceMode = params.get("evidence") === "1";
@@ -50,13 +54,29 @@ worldModeButton.type = "button";
 worldModeButton.className = "spc-world-mode-toggle";
 worldModeButton.textContent = "Tylko świat";
 worldModeButton.setAttribute("aria-pressed", "false");
+const chatForm = document.createElement("form");
+chatForm.className = "spc-chat-form";
+const chatInput = document.createElement("input");
+chatInput.className = "spc-chat-input";
+chatInput.type = "text";
+chatInput.maxLength = 220;
+chatInput.autocomplete = "off";
+chatInput.placeholder = "Wybierz SPC i naciśnij Enter…";
+chatInput.setAttribute("aria-label", "Powiedz coś wybranemu SPC");
+const chatSend = document.createElement("button");
+chatSend.type = "submit";
+chatSend.className = "spc-chat-send";
+chatSend.textContent = "Powiedz";
+chatForm.append(chatInput, chatSend);
+
 const headerActions = document.createElement("div");
 headerActions.className = "spc-header-actions";
-headerActions.append(stageNode, worldModeButton);
+headerActions.append(stageNode, chatForm, worldModeButton);
 header.append(headerActions);
 
 let scene: SpcNextResearchScene;
 let worldOnly = false;
+let lastFrame: SpcNextResearchFrame | null = null;
 
 function setWorldOnly(enabled: boolean): void {
   worldOnly = enabled;
@@ -68,6 +88,7 @@ function setWorldOnly(enabled: boolean): void {
 }
 
 function renderPanel(frame: SpcNextResearchFrame): void {
+  lastFrame = frame;
   const selected = frame.selectedDiagnostics;
   const selectedActor = frame.selectedResidentId
     ? frame.snapshot.actors.find((actor) => actor.id === frame.selectedResidentId) ?? null
@@ -106,6 +127,35 @@ function renderPanel(frame: SpcNextResearchFrame): void {
   const constraintLabel = motion?.constraints.length ? motion.constraints.join(" + ") : "—";
   const bodyState = resolvedSpeed > 1 ? "moving" : "still";
   const activityMismatch = Boolean(activity?.kind === "idle" && resolvedSpeed > 1);
+  const life = frame.selectedLife;
+  const focusedMatter = life?.body.focusedRunId
+    ? life.matters.find((matter) => matter.activeRun?.runId === life.body.focusedRunId) ?? null
+    : null;
+  const living = frame.livingDiagnostics;
+  const providerEvents = living?.recentProviderEvents.slice(-7).reverse().map((event) => `
+    <li>
+      <span class="spc-log-main">t${event.tick} · ${escapeHtml(event.status)} · ${escapeHtml(event.residentId)}</span>
+      <span class="spc-log-sub">${escapeHtml(event.detail)}</span>
+    </li>`).join("") ?? "";
+
+  const playerActor = frame.snapshot.actors.find((actor) => actor.id === "player.jozz") ?? null;
+  const selectedSpeechDistance = playerActor && selectedActor
+    ? Math.hypot(
+        selectedActor.position.x - playerActor.position.x,
+        selectedActor.position.y - playerActor.position.y,
+      )
+    : null;
+  const selectedCanHearPlayer = frame.selectedResidentId !== null
+    && selectedSpeechDistance !== null
+    && selectedSpeechDistance <= SPC_PLAYER_SPEECH_RADIUS;
+
+  chatInput.disabled = !selectedCanHearPlayer;
+  chatInput.placeholder = frame.selectedResidentId === null
+    ? "Wybierz SPC…"
+    : selectedCanHearPlayer
+      ? `Powiedz coś: ${selected?.publicState.name ?? frame.selectedResidentId}`
+      : `${selected?.publicState.name ?? frame.selectedResidentId} jest poza zasięgiem głosu — podejdź bliżej`;
+  chatSend.disabled = !selectedCanHearPlayer;
 
   debugNode.innerHTML = `
     <div class="workspace-header spc-research-header">
@@ -146,12 +196,28 @@ function renderPanel(frame: SpcNextResearchFrame): void {
             <div><dt>resolution</dt><dd class="motion-${motion?.resolution ?? "none"}">${escapeHtml(motion?.resolution ?? "—")}</dd></div>
             <div><dt>constraint</dt><dd>${escapeHtml(constraintLabel)}</dd></div>
             <div><dt>cognition queue</dt><dd>${selected.publicState.pendingCognitionReasonCount}</dd></div>
+            <div><dt>recovered matters</dt><dd>${life?.matters.length ?? "—"}</dd></div>
+            <div><dt>focused run</dt><dd>${escapeHtml(life?.body.focusedRunId ?? "—")}</dd></div>
+            <div><dt>semantic intent</dt><dd>${escapeHtml(focusedMatter?.semanticIntent?.kind ?? "—")}</dd></div>
             <div><dt>camera zoom</dt><dd>${frame.cameraZoom.toFixed(2)}×</dd></div>
           </dl>
+          ${focusedMatter ? `<p class="spc-activity-reason"><strong>causal matter:</strong> ${escapeHtml(focusedMatter.semanticCourse)}</p>` : ""}
           ${activityMismatch ? '<p class="debug-note"><strong>Projection mismatch:</strong> ciało jest w ruchu mimo legacy activity=idle. Legacy activity nie jest tutaj bieżącym execution authority.</p>' : ""}
           <p class="spc-activity-reason"><strong>legacy reason:</strong> ${escapeHtml(activity?.reason ?? "")}</p>
         ` : '<p class="spc-empty">Kliknij residenta w świecie albo wybierz go z listy.</p>'}
       </section>
+
+      ${living ? `
+      <section class="debug-section">
+        <h3 class="debug-section-title">Unified living runtime</h3>
+        <dl class="spc-facts">
+          <div><dt>recovered residents</dt><dd>${living.claimedResidentIds.length}/5</dd></div>
+          <div><dt>provider requests</dt><dd>${living.providerRequestCount}</dd></div>
+          <div><dt>provider in flight</dt><dd>${living.providerInFlightResidentIds.length}</dd></div>
+          <div><dt>arrival inbox</dt><dd>${living.providerInboxCount}</dd></div>
+        </dl>
+        <ol class="spc-log">${providerEvents || '<li class="spc-empty">Brak provider events.</li>'}</ol>
+      </section>` : ""}
 
       <section class="debug-section spc-legend">
         <h3 class="debug-section-title">Jak czytać mikroskop</h3>
@@ -264,6 +330,25 @@ if (evidenceMode) {
   });
 }
 
+chatForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const text = chatInput.value.trim();
+  const residentId = lastFrame?.selectedResidentId ?? null;
+  const player = lastFrame?.snapshot.actors.find((actor) => actor.id === "player.jozz") ?? null;
+  const resident = residentId
+    ? lastFrame?.snapshot.actors.find((actor) => actor.id === residentId) ?? null
+    : null;
+  const inSpeechRange = player && resident
+    ? Math.hypot(resident.position.x - player.position.x, resident.position.y - player.position.y)
+      <= SPC_PLAYER_SPEECH_RADIUS
+    : false;
+  if (!text || !residentId || !inSpeechRange) return;
+  scene.playerAddressResident(residentId, text);
+  chatInput.value = "";
+  chatInput.blur();
+  game.canvas.focus();
+});
+
 worldModeButton.addEventListener("click", () => {
   setWorldOnly(!worldOnly);
   game.scale.refresh();
@@ -271,6 +356,11 @@ worldModeButton.addEventListener("click", () => {
 window.addEventListener("keydown", (event) => {
   const target = event.target;
   if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement) return;
+  if (event.key === "Enter") {
+    event.preventDefault();
+    chatInput.focus();
+    return;
+  }
   if (event.key.toLowerCase() === "g") {
     setWorldOnly(!worldOnly);
     game.scale.refresh();

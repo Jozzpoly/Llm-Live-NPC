@@ -124,7 +124,10 @@ describe("SPC Next life-intent endpoint commitment contract", () => {
     let upstreamRequest: any = null;
     vi.stubGlobal("fetch", vi.fn(async (_url: string, init?: RequestInit) => {
       upstreamRequest = JSON.parse(String(init?.body));
-      return new Response(JSON.stringify(providerResponse(acceptedFieldsProposal)), {
+      return new Response(JSON.stringify(providerResponse({
+        originReasonId: "reason:mira:speech:120",
+        proposal: acceptedFieldsProposal,
+      })), {
         status: 200,
         headers: { "content-type": "application/json" },
       });
@@ -141,14 +144,17 @@ describe("SPC Next life-intent endpoint commitment contract", () => {
       name: "spc_next_resident_life_commitment",
       strict: true,
     });
-    expect(upstreamRequest.text.format.schema.properties).toHaveProperty("commitmentDecision");
-    expect(upstreamRequest.text.format.schema.properties).not.toHaveProperty("activityDirective");
+    expect(upstreamRequest.text.format.schema.properties).toHaveProperty("originReasonId");
+    expect(upstreamRequest.text.format.schema.properties).toHaveProperty("proposal");
+    expect(upstreamRequest.text.format.schema.properties.proposal.properties).toHaveProperty("commitmentDecision");
+    expect(upstreamRequest.text.format.schema.properties.proposal.properties).not.toHaveProperty("activityDirective");
     expect(upstreamRequest.instructions).toContain("commitmentDecision");
     expect(upstreamRequest.instructions).toContain("does not seize the body");
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toMatchObject({
       ok: true,
+      originReasonId: "reason:mira:speech:120",
       proposal: acceptedFieldsProposal,
       usage: { model: "gpt-5.6-luna", inputTokens: 200, outputTokens: 60, totalTokens: 260 },
     });

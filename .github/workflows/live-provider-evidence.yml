@@ -5,6 +5,7 @@ on:
     branches:
       - refoundation/spc-next-five-resident-world
       - research/i2-mira-live-cognition-bridge
+      - integration/spc-next-owner-living-runtime-v1
     paths:
       - "evidence/live-provider-request.json"
   workflow_dispatch:
@@ -37,7 +38,7 @@ jobs:
           const qualifiers = Array.isArray(request.qualifiers)
             ? request.qualifiers
             : ['lifecycle', 'interruption'];
-          const allowed = new Set(['lifecycle', 'interruption', 'life-choice', 'life-intent']);
+          const allowed = new Set(['lifecycle', 'interruption', 'life-choice', 'life-intent', 'unified-addressed']);
           if (qualifiers.length === 0 || qualifiers.some((value) => !allowed.has(value))) {
             throw new Error(`invalid live-provider qualifiers: ${JSON.stringify(qualifiers)}`);
           }
@@ -45,11 +46,12 @@ jobs:
           process.stdout.write(`RUN_INTERRUPTION=${qualifiers.includes('interruption') ? '1' : '0'}\n`);
           process.stdout.write(`RUN_LIFE_CHOICE=${qualifiers.includes('life-choice') ? '1' : '0'}\n`);
           process.stdout.write(`RUN_LIFE_INTENT=${qualifiers.includes('life-intent') ? '1' : '0'}\n`);
+          process.stdout.write(`RUN_UNIFIED_ADDRESSED=${qualifiers.includes('unified-addressed') ? '1' : '0'}\n`);
           process.stdout.write(`REQUESTED_QUALIFIERS=${qualifiers.join(',')}\n`);
           NODE
 
       - name: Locate runner Chrome
-        if: env.RUN_LIFECYCLE == '1' || env.RUN_INTERRUPTION == '1'
+        if: env.RUN_LIFECYCLE == '1' || env.RUN_INTERRUPTION == '1' || env.RUN_UNIFIED_ADDRESSED == '1'
         shell: bash
         run: |
           set -euo pipefail
@@ -162,7 +164,7 @@ jobs:
           exit 1
 
       - name: Preflight exact browser boundary without provider spend
-        if: env.RUN_LIFECYCLE == '1' || env.RUN_INTERRUPTION == '1'
+        if: env.RUN_LIFECYCLE == '1' || env.RUN_INTERRUPTION == '1' || env.RUN_UNIFIED_ADDRESSED == '1'
         env:
           LIVE_PROVIDER_PREFLIGHT_OUTPUT: evidence/live-provider/preflight.json
         run: node scripts/spc-browser-live-provider-preflight.mjs
@@ -190,6 +192,16 @@ jobs:
         env:
           LIVE_PROVIDER_OUTPUT: evidence/live-provider/live-provider-life-intent.json
         run: node scripts/spc-live-provider-life-intent-evidence.mjs
+
+      - name: Validate unified addressed-speech qualifier harness
+        if: env.RUN_UNIFIED_ADDRESSED == '1'
+        run: node --check scripts/spc-browser-unified-addressed-live-evidence.mjs
+
+      - name: Qualify real Luna unified addressed-speech path
+        if: env.RUN_UNIFIED_ADDRESSED == '1'
+        env:
+          LIVE_PROVIDER_OUTPUT: evidence/live-provider/live-provider-unified-addressed.json
+        run: node scripts/spc-browser-unified-addressed-live-evidence.mjs
 
       - name: Print live-provider evidence summary
         if: always()
@@ -226,6 +238,12 @@ jobs:
           echo "--- Resident life-intent provider evidence ---"
           if [ "${RUN_LIFE_INTENT:-0}" = "1" ]; then
             cat evidence/live-provider/live-provider-life-intent.json 2>/dev/null || true
+          else
+            echo "not requested in this run"
+          fi
+          echo "--- Unified addressed-speech live evidence ---"
+          if [ "${RUN_UNIFIED_ADDRESSED:-0}" = "1" ]; then
+            cat evidence/live-provider/live-provider-unified-addressed.json 2>/dev/null || true
           else
             echo "not requested in this run"
           fi

@@ -1,5 +1,6 @@
 import { ResidentCausalCommunicateCommitmentAuthority } from "./resident-causal-communicate-commitment";
 import { ResidentCausalOutcomeTravelCommitmentAuthority } from "./resident-causal-outcome-travel-commitment";
+import { ResidentCausalReasonCommitmentAuthority } from "./resident-causal-reason-commitment";
 import { ResidentCausalTravelCommitmentAuthority } from "./resident-causal-travel-commitment";
 import {
   ResidentContinuityKernel,
@@ -22,6 +23,7 @@ import type { RegionNavigationGraph } from "./region-navigation";
 import type { ResidentRuntime } from "./resident-runtime";
 import { ResidentWorldExecutionAuthority } from "./resident-world-execution-authority";
 import type { SpcWorldRuntime } from "./spc-world-runtime";
+import type { ResidentLifeSelfContext } from "./resident-life-self-context";
 import type { CognitionBatch } from "./contracts";
 
 export interface ResidentCausalLifeSnapshot {
@@ -42,6 +44,7 @@ export interface ResidentCausalLifeSubstrateOptions {
   world: SpcWorldRuntime;
   navigation: RegionNavigationGraph;
   identityNamespace?: string;
+  selfContext?: ResidentLifeSelfContext;
   snapshot?: ResidentCausalLifeSnapshot;
 }
 
@@ -70,6 +73,7 @@ export class ResidentCausalLifeSubstrate {
   readonly outcomeReviewBridge: ResidentLifeOutcomeReviewBridge;
   readonly travelCommitments: ResidentCausalTravelCommitmentAuthority;
   readonly communicateCommitments: ResidentCausalCommunicateCommitmentAuthority;
+  readonly reasonCommitments: ResidentCausalReasonCommitmentAuthority;
   readonly outcomeTravelCommitments: ResidentCausalOutcomeTravelCommitmentAuthority;
 
   private readonly effectiveIdentityNamespace: string | null;
@@ -127,7 +131,7 @@ export class ResidentCausalLifeSubstrate {
       this.arbitrator,
       options.world,
     );
-    this.lifeIntentOwner = new ResidentLifeIntentOwner(options.resident);
+    this.lifeIntentOwner = new ResidentLifeIntentOwner(options.resident, options.selfContext);
     this.choiceReviewBridge = new ResidentLifeChoiceReviewBridge(options.resident);
     this.outcomeReviewBridge = new ResidentLifeOutcomeReviewBridge(options.resident);
 
@@ -149,6 +153,10 @@ export class ResidentCausalLifeSubstrate {
       navigation: options.navigation,
     });
     this.communicateCommitments = new ResidentCausalCommunicateCommitmentAuthority(shared);
+    this.reasonCommitments = new ResidentCausalReasonCommitmentAuthority({
+      ...shared,
+      navigation: options.navigation,
+    });
     this.outcomeTravelCommitments = new ResidentCausalOutcomeTravelCommitmentAuthority({
       ...shared,
       navigation: options.navigation,
@@ -198,22 +206,36 @@ export class ResidentCausalLifeSubstrate {
     }));
   }
 
+  prepareLifeIntentAttempt(batch: CognitionBatch): PreparedResidentCausalLifeIntent | null {
+    if (batch.residentId !== this.options.residentId) {
+      throw new Error("resident causal life batch belongs to another resident");
+    }
+    if (this.lifeIntentOwner.state().activeAttemptId !== null) return null;
+
+    const attempt = this.lifeIntentOwner.prepare(
+      batch,
+      this.currentLifeView(),
+      this.options.world.tick,
+    );
+    if (!attempt) return null;
+    return {
+      batch: structuredClone(batch),
+      attempt,
+    };
+  }
+
   takeReadyLifeIntentAttempt(): PreparedResidentCausalLifeIntent | null {
     if (this.lifeIntentOwner.state().activeAttemptId !== null) return null;
 
     const batch = this.options.resident.takeCognitionBatch(this.options.world.tick);
     if (!batch) return null;
 
-    const attempt = this.lifeIntentOwner.prepare(batch, this.currentLifeView());
-    if (!attempt) {
+    const prepared = this.prepareLifeIntentAttempt(batch);
+    if (!prepared) {
       this.options.resident.requeueCognitionBatch(batch);
       throw new Error("resident causal life substrate intent owner refused a ready cognition batch");
     }
-
-    return {
-      batch: structuredClone(batch),
-      attempt,
-    };
+    return prepared;
   }
 }
 
