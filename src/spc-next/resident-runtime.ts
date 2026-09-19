@@ -117,20 +117,6 @@ export class ResidentRuntime {
     return this.scheduler.pendingSnapshot();
   }
 
-  /**
-   * Settle one exact pressure reason after resident-local intelligence has handled it.
-   * This does not imply semantic agreement; it only says no higher cognition request
-   * is required for this reason anymore.
-   */
-  settleCognitionReasonLocally(reasonId: string): boolean {
-    return this.scheduler.settleLocally(reasonId);
-  }
-
-  /** Close higher-cognition pressure supported by one locally handled percept. */
-  settlePerceptCognitionLocally(perceptId: string): CognitionReason[] {
-    return this.scheduler.settleLocallyByEvidence(perceptId);
-  }
-
   scheduleAdaptiveReview(tick: number, reviewAfterSeconds: number, fixedDeltaSeconds: number): void {
     if (!Number.isFinite(reviewAfterSeconds) || reviewAfterSeconds <= 0) {
       throw new Error("reviewAfterSeconds must be positive");
