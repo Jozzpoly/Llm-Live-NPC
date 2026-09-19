@@ -1,6 +1,15 @@
 import { describe, expect, it } from "vitest";
 import { sanitizeSpcNextLifeContextWithDiagnostic } from "../../worker/spc-next-life-context";
 import { FiveResidentUnifiedLivingRuntime } from "./five-resident-unified-living-runtime";
+import type { FiveResidentId } from "./five-resident-region";
+
+const RESIDENT_IDS = [
+  "resident.mira",
+  "resident.janek",
+  "resident.ida",
+  "resident.oren",
+  "resident.nela",
+] as const satisfies readonly FiveResidentId[];
 
 describe("unified resident life long-run Worker boundary", () => {
   it("keeps every outgoing five-resident provider context valid across repeated causal chapters", async () => {
@@ -12,6 +21,7 @@ describe("unified resident life long-run Worker boundary", () => {
     }> = [];
     let validatedRequests = 0;
     let latestValidatedTick = -1;
+    const explicitlyReviewedOutcomeIds = new Set<string>();
 
     const living = new FiveResidentUnifiedLivingRuntime({
       maxConcurrentCognition: 5,
@@ -96,6 +106,21 @@ describe("unified resident life long-run Worker boundary", () => {
 
     for (let step = 0; step < 5_000; step += 1) {
       living.advanceOneWorldTick();
+
+      // This is an explicit transport-stress policy owned by the test, not by the
+      // generic resident executor. Repeated chapters are requested only so Worker
+      // context validity can be requalified beyond the historical t1335 failure.
+      for (const residentId of RESIDENT_IDS) {
+        const life = living.life(residentId);
+        if (!life) continue;
+        for (const matter of life.currentLifeView().matters) {
+          const outcome = matter.lastOutcomeEvidence;
+          if (!outcome || explicitlyReviewedOutcomeIds.has(outcome.id)) continue;
+          explicitlyReviewedOutcomeIds.add(outcome.id);
+          life.outcomeReviewBridge.observe(outcome, living.world.tick);
+        }
+      }
+
       // Permit the same Promise/microtask boundary used by the browser pump without
       // adding wall-clock provider latency.
       await Promise.resolve();
