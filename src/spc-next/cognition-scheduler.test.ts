@@ -29,6 +29,28 @@ describe("CognitionScheduler anti-storm semantics", () => {
     expect(scheduler.takeReady(1)?.reasons[0]?.id).toBe("urgent");
   });
 
+  it("exposes pending pressure read-only without consuming or dispatching it", () => {
+    const scheduler = createDefaultCognitionScheduler("resident.mira", 0);
+    scheduler.note({
+      ...reason("observed", 10, 0.7),
+      evidenceIds: ["percept:local:1"],
+    });
+
+    expect(scheduler.pendingSnapshot()).toEqual([
+      expect.objectContaining({
+        id: "observed",
+        evidenceIds: ["percept:local:1"],
+      }),
+    ]);
+    expect(scheduler.pendingSnapshot()).toEqual([
+      expect.objectContaining({ id: "observed" }),
+    ]);
+    expect(scheduler.diagnostics()).toMatchObject({
+      pendingCount: 1,
+      lastRequestTick: null,
+    });
+  });
+
   it("gives five residents deterministic but non-identical initial quiet review deadlines", () => {
     const deadlines = ["mira", "janek", "ida", "oren", "nela"].map((name) =>
       createDefaultCognitionScheduler(`resident.${name}`, 0).diagnostics().nextQuietReviewTick,

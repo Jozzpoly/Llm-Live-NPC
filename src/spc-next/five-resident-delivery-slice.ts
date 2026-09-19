@@ -1,7 +1,8 @@
 import { ResidentContinuityKernel, type RunOutcomeReconciliationResult } from "./resident-continuity-kernel";
 import { ResidentMaterialKnowledge } from "./resident-material-knowledge";
-import { ResidentMaterialPickupExecutor, type ResidentMaterialPickupStep } from "./resident-material-pickup-executor";
-import { ResidentMaterialPlaceExecutor, type ResidentMaterialPlaceStep } from "./resident-material-place-executor";
+import type { ResidentMaterialPickupStep } from "./resident-material-pickup-executor";
+import type { ResidentMaterialPlaceStep } from "./resident-material-place-executor";
+import { ResidentLocalMaterialDeliveryRoutine } from "./resident-local-material-delivery-routine";
 import { ResidentWorldExecutionAuthority } from "./resident-world-execution-authority";
 import { createFiveResidentRegionWorld } from "./five-resident-region";
 import { SpcWorldRuntime } from "./spc-world-runtime";
@@ -48,45 +49,23 @@ export function createFiveResidentJanekDeliverySlice(): FiveResidentJanekDeliver
     originEvidenceId: origin.id,
     semanticCourse: "deliver the workshop crate to the crossroads storage point",
   });
-  kernel.bindRun({
-    matterId: "matter.janek.crate-delivery",
-    taskId: "task.janek.pickup-delivery-crate",
-    runId: "run.janek.pickup-delivery-crate",
-  });
-
   const materialKnowledge = new ResidentMaterialKnowledge(
     "resident.janek",
     ["crate.workshop.01"],
     world,
   );
   const authority = new ResidentWorldExecutionAuthority("resident.janek", kernel, world);
-  const pickup = new ResidentMaterialPickupExecutor(
-    "run.janek.pickup-delivery-crate",
-    "crate.workshop.01",
-    materialKnowledge,
-    authority,
-    world,
-  );
+  const routine = new ResidentLocalMaterialDeliveryRoutine({
+    matterId: "matter.janek.crate-delivery",
+    objectId: "crate.workshop.01",
+    destination: JANEK_CRATE_DELIVERY_DESTINATION,
+    pickupTaskId: "task.janek.pickup-delivery-crate",
+    pickupRunId: "run.janek.pickup-delivery-crate",
+    placeTaskId: "task.janek.place-delivery-crate",
+    placeRunId: "run.janek.place-delivery-crate",
+  }, kernel, materialKnowledge, authority, world);
 
-  let place: ResidentMaterialPlaceExecutor | null = null;
-  let pickupReconciled: RunOutcomeReconciliationResult | null = null;
-  let deliveryReconciled: RunOutcomeReconciliationResult | null = null;
   let executionHold: { runId: string; reason: string } | null = null;
-
-  function startDeliveryRun(): void {
-    kernel.bindRun({
-      matterId: "matter.janek.crate-delivery",
-      taskId: "task.janek.place-delivery-crate",
-      runId: "run.janek.place-delivery-crate",
-    });
-    place = new ResidentMaterialPlaceExecutor(
-      "run.janek.place-delivery-crate",
-      "crate.workshop.01",
-      JANEK_CRATE_DELIVERY_DESTINATION,
-      authority,
-      world,
-    );
-  }
 
   return {
     world,
@@ -94,28 +73,6 @@ export function createFiveResidentJanekDeliverySlice(): FiveResidentJanekDeliver
     materialKnowledge,
     authority,
     stepJanek(): FiveResidentJanekDeliveryStep {
-      if (!pickupReconciled) {
-        materialKnowledge.sample();
-        const local = pickup.step();
-        if (local.status === "succeeded") {
-          pickupReconciled = kernel.reconcileRunOutcome({
-            runId: local.runId,
-            tick: local.materialOutcome.tick,
-            status: "succeeded",
-            summary: `picked up ${local.materialOutcome.objectId} for delivery`,
-          });
-          if (pickupReconciled.status !== "recorded") {
-            return { status: "blocked", phase: "pickup", local: { status: "blocked", runId: local.runId, reason: "pickup reconciliation failed", materialOutcome: local.materialOutcome } };
-          }
-          startDeliveryRun();
-          return { status: "running", phase: "delivery", local: place!.step() };
-        }
-        if (local.status === "blocked") return { status: "blocked", phase: "pickup", local };
-        if (local.status === "authority_lost") return { status: "authority_lost", phase: "pickup", local };
-        return { status: "running", phase: "pickup", local };
-      }
-
-      if (!place) throw new Error("delivery run missing after pickup reconciliation");
       if (executionHold) {
         if (!kernel.canRunMutateWorld(executionHold.runId)) {
           return {
@@ -127,26 +84,47 @@ export function createFiveResidentJanekDeliverySlice(): FiveResidentJanekDeliver
         return { status: "execution_held", phase: "delivery", ...executionHold };
       }
 
-      const local = place.step();
-      if (local.status === "succeeded" && !deliveryReconciled) {
-        deliveryReconciled = kernel.reconcileRunOutcome({
-          runId: local.runId,
-          tick: local.materialOutcome.tick,
-          status: "succeeded",
-          summary: `placed ${local.materialOutcome.objectId} at the delivery destination`,
-        });
-        if (deliveryReconciled.status === "recorded") {
-          kernel.resolveMatter("matter.janek.crate-delivery");
-          return { status: "succeeded", phase: "delivered", local };
+      const local = routine.step();
+      if (local.status === "pickup_completed") {
+        // Preserve the historical Janek slice observation boundary: the call that
+        // completes pickup also exposes the newly started delivery phase. The shared
+        // routine itself keeps the cleaner explicit pickup boundary; this wrapper
+        // adapts only the donor's already-qualified public contract.
+        const delivery = routine.step();
+        if (delivery.status === "running" && delivery.phase === "delivery") {
+          return { status: "running", phase: "delivery", local: delivery.local };
         }
+        if (delivery.status === "blocked" && delivery.phase === "delivery") {
+          return { status: "blocked", phase: "delivery", local: delivery.local };
+        }
+        if (delivery.status === "authority_lost" && delivery.phase === "delivery") {
+          return { status: "authority_lost", phase: "delivery", local: delivery.local };
+        }
+        if (delivery.status === "succeeded") {
+          return { status: "succeeded", phase: "delivered", local: delivery.local };
+        }
+        throw new Error(`Janek delivery routine did not advance from pickup boundary: ${delivery.status}`);
       }
-      if (local.status === "blocked") return { status: "blocked", phase: "delivery", local };
-      if (local.status === "authority_lost") return { status: "authority_lost", phase: "delivery", local };
-      return { status: "running", phase: "delivery", local };
+      if (local.status === "running") {
+        return local.phase === "pickup"
+          ? { status: "running", phase: "pickup", local: local.local }
+          : { status: "running", phase: "delivery", local: local.local };
+      }
+      if (local.status === "blocked") {
+        return local.phase === "pickup"
+          ? { status: "blocked", phase: "pickup", local: local.local }
+          : { status: "blocked", phase: "delivery", local: local.local };
+      }
+      if (local.status === "authority_lost") {
+        return local.phase === "pickup"
+          ? { status: "authority_lost", phase: "pickup", local: local.local }
+          : { status: "authority_lost", phase: "delivery", local: local.local };
+      }
+      return { status: "succeeded", phase: "delivered", local: local.local };
     },
     holdJanekExecution(reason: string): boolean {
       const trimmedReason = reason.trim();
-      if (!trimmedReason || !pickupReconciled || !place || deliveryReconciled || executionHold) return false;
+      if (!trimmedReason || routine.phase() !== "delivery" || routine.deliveryReconciliation() || executionHold) return false;
       const matter = kernel.matter("matter.janek.crate-delivery");
       const runId = matter?.activeRunId;
       if (!runId || !kernel.canRunMutateWorld(runId)) return false;
@@ -168,10 +146,10 @@ export function createFiveResidentJanekDeliverySlice(): FiveResidentJanekDeliver
       return executionHold ? structuredClone(executionHold) : null;
     },
     pickupReconciliation(): RunOutcomeReconciliationResult | null {
-      return pickupReconciled ? structuredClone(pickupReconciled) : null;
+      return routine.pickupReconciliation();
     },
     deliveryReconciliation(): RunOutcomeReconciliationResult | null {
-      return deliveryReconciled ? structuredClone(deliveryReconciled) : null;
+      return routine.deliveryReconciliation();
     },
   };
 }

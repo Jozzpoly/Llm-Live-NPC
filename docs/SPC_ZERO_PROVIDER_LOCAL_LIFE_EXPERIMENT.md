@@ -1,7 +1,9 @@
 # SPC R1 — Zero-Provider Local-Life Experiment
 
-Status: **BINDING EXPERIMENT CONTRACT**
+Status: **LOCAL-LIFE PASS — CONTRACT SATISFIED**
 Date: **2026-09-20**
+Qualified source SHA: `69c40225fffaf0f97bdba95aaa36cfb1c9c3ba25`
+Evidence report: `docs/SPC_ZERO_PROVIDER_LOCAL_LIFE_R1_PASS.md`
 Parent authority: `docs/SPC_POST_STRESS_RECOVERY_PROGRAM.md`
 
 This experiment is intentionally narrow.
@@ -85,6 +87,24 @@ The resident may begin with authored private state and one or more legitimate ma
 
 The experiment may use deterministic scripted **World occurrences** as perturbations, because the World is allowed to change.
 Those perturbations must not directly command resident behavior.
+
+### Critical semantic boundary
+
+R1 does **not** solve cognition-pressure relevance/lifecycle. That belongs to R2.
+
+In particular:
+
+`local contact acknowledgement != semantic handling of addressed speech`.
+
+A resident may locally stop, orient and acknowledge an addressed speaker while the speech-content reason remains unresolved for later higher cognition. R1 should prove that the body/local life can continue coherently **despite** such retained pressure when provider cognition is disabled.
+
+Therefore R1 must not earn a PASS by deleting every pending reason. The useful invariant is narrower:
+
+- ordinary local life does not require dispatching provider requests;
+- background/body handling does not automatically claim semantic settlement;
+- unresolved pressure remains bounded/stable when no new causal evidence arrives;
+- a new real percept may add new pressure;
+- old pressure must not manufacture new World activity by itself.
 
 ---
 
@@ -370,9 +390,14 @@ The first code change should make the R1 failure observable, not make a grand ne
 
 ## 17. Promotion after R1
 
-If R1 passes:
-- reattack with Janek/material pressure;
-- then build R2 relevance/semantic metabolism from the failures observed;
+**R1 passed on 2026-09-20.**
+
+The shared local material and contact competences were reattacked through existing Janek deterministic and real-browser evidence during the R1 campaign and remained green.
+
+Current promotion path:
+- preserve R1 as the local-life baseline;
+- build **R2 relevance / semantic metabolism** from the pressure failures R1 intentionally exposed;
+- use Mira and Janek as complementary falsifiers;
 - only then reintroduce real Luna for situations the local organism cannot honestly resolve.
 
 If R1 fails:

@@ -51,6 +51,16 @@ export class CognitionScheduler {
     return this.pending.size;
   }
 
+  /**
+   * Read-only research/local-brain view of currently unresolved semantic pressure.
+   * This is not resident memory and does not mutate scheduling state.
+   */
+  pendingSnapshot(): CognitionReason[] {
+    return [...this.pending.values()]
+      .sort((a, b) => b.salience - a.salience || a.tick - b.tick || a.id.localeCompare(b.id))
+      .map((reason) => structuredClone(reason));
+  }
+
   scheduleQuietReviewAfter(tick: number, delayTicks: number): void {
     this.nextQuietReviewTick = this.quietReviewDeadline(tick, delayTicks);
   }

@@ -18,6 +18,7 @@ import {
   IDA_MESSAGE_MATTER_ID,
   createFiveResidentIdaMessageDeliverySlice,
 } from "../spc-next/five-resident-ida-message-delivery-slice";
+import { createZeroProviderLocalLifeSlice } from "../spc-next/zero-provider-local-life-slice";
 
 export type SpcNextResearchScenarioKind =
   | "baseline-delivery"
@@ -27,6 +28,7 @@ export type SpcNextResearchScenarioKind =
   | "missing-crate-live-provider"
   | "missing-crate-live-provider-interruption"
   | "ida-message-delivery"
+  | "zero-provider-local-life"
   | "unified-living";
 
 export interface SpcNextResearchScenario {
@@ -54,6 +56,7 @@ export function createSpcNextResearchScenario(kind: SpcNextResearchScenarioKind)
   if (kind === "missing-crate-live-provider") return createMissingCrateLiveProviderScenario();
   if (kind === "missing-crate-live-provider-interruption") return createMissingCrateLiveProviderInterruptionScenario();
   if (kind === "ida-message-delivery") return createIdaMessageDeliveryScenario();
+  if (kind === "zero-provider-local-life") return createZeroProviderLocalLifeScenario();
   if (kind === "unified-living") return createUnifiedLivingScenario();
   return createBaselineDeliveryScenario();
 }
@@ -67,6 +70,7 @@ export function researchScenarioKindFromSearch(search: string): SpcNextResearchS
   if (requested === "missing-crate-live-provider") return "missing-crate-live-provider";
   if (requested === "missing-crate-live-provider-interruption") return "missing-crate-live-provider-interruption";
   if (requested === "ida-message-delivery") return "ida-message-delivery";
+  if (requested === "zero-provider-local-life") return "zero-provider-local-life";
   if (requested === "unified-living") return "unified-living";
   throw new Error(`unknown SPC Next research scenario: ${requested}`);
 }
@@ -209,6 +213,26 @@ function createIdaMessageDeliveryScenario(): SpcNextResearchScenario {
       // I1 begins after legally acquired authored prehistory. The browser adapter
       // advances only the resident-owned social commitment execution; it does not
       // inject delivery, recipient identity or recipient position into the slice.
+      slice.advanceOneWorldTick();
+    },
+  };
+}
+
+
+function createZeroProviderLocalLifeScenario(): SpcNextResearchScenario {
+  const slice = createZeroProviderLocalLifeSlice();
+  return {
+    kind: "zero-provider-local-life",
+    evidenceScenarioId: "browser-zero-provider-local-life",
+    residentId: "resident.mira",
+    matterId: slice.mainMatterId,
+    world: slice.world,
+    kernel: slice.kernel,
+    materialKnowledge: slice.materialKnowledge,
+    authority: slice.authority,
+    advanceOneWorldTick(): void {
+      // This adapter advances the exact provider-free R1 organism. It does not
+      // inject life decisions, semantic settlement or provider output.
       slice.advanceOneWorldTick();
     },
   };

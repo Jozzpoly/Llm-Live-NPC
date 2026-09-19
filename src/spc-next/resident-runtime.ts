@@ -112,6 +112,11 @@ export class ResidentRuntime {
     return this.scheduler.diagnostics();
   }
 
+  /** Exact unresolved scheduler pressure, exposed for local-life research/control. */
+  pendingCognitionReasons(): CognitionReason[] {
+    return this.scheduler.pendingSnapshot();
+  }
+
   scheduleAdaptiveReview(tick: number, reviewAfterSeconds: number, fixedDeltaSeconds: number): void {
     if (!Number.isFinite(reviewAfterSeconds) || reviewAfterSeconds <= 0) {
       throw new Error("reviewAfterSeconds must be positive");
