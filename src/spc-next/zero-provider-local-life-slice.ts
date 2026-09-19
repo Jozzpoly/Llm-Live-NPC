@@ -231,7 +231,7 @@ export function createZeroProviderLocalLifeSlice() {
       attention = returnPhase === "settled"
         ? {
             kind: "quiet",
-            reason: "no unresolved local matter requires action after bounded contact",
+            reason: "no unresolved local embodied matter requires action after bounded contact; semantic pressure may remain pending",
           }
         : {
             kind: "matter",
@@ -276,7 +276,7 @@ export function createZeroProviderLocalLifeSlice() {
       phase = "settled";
       attention = {
         kind: "quiet",
-        reason: "basket matter is factually complete; no unresolved local reason requires action",
+        reason: "basket matter is factually complete; no unresolved local embodied matter requires action",
       };
       step = { status: "settled", tick: world.tick };
     } else {
