@@ -51,6 +51,31 @@ export class CognitionScheduler {
     return this.pending.size;
   }
 
+  /**
+   * Read-only research/local-brain view of currently unresolved semantic pressure.
+   * This is not resident memory and does not mutate scheduling state.
+   */
+  pendingSnapshot(): CognitionReason[] {
+    return [...this.pending.values()]
+      .sort((a, b) => b.salience - a.salience || a.tick - b.tick || a.id.localeCompare(b.id))
+      .map((reason) => structuredClone(reason));
+  }
+
+  /**
+   * Close a pending reason that has been fully handled by resident-local intelligence.
+   *
+   * This deliberately does not fabricate a cognition batch or advance request cadence.
+   * Full pressure lifecycle/supersession belongs to the later post-stress R2 campaign;
+   * R1 only needs an honest way for local competence to prove that higher cognition
+   * is no longer required for one exact reason.
+   */
+  settleLocally(reasonId: string): boolean {
+    if (typeof reasonId !== "string" || reasonId.trim().length === 0) {
+      throw new Error("cognition reason id must be non-empty");
+    }
+    return this.pending.delete(reasonId);
+  }
+
   scheduleQuietReviewAfter(tick: number, delayTicks: number): void {
     this.nextQuietReviewTick = this.quietReviewDeadline(tick, delayTicks);
   }
