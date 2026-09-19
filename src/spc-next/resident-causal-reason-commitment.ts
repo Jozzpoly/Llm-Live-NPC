@@ -27,7 +27,6 @@ const SELF_ORIGIN_REASON_KINDS = new Set<CognitionReason["kind"]>([
   "activity_completed",
   "activity_blocked",
   "uncertainty",
-  "quiet_review",
   "direct_world_change",
 ]);
 
@@ -82,9 +81,9 @@ interface CausalIdentity {
 
 /**
  * Resident-generic bridge from one exact non-speech cognition reason into durable
- * causal life. This is the bootstrap/autonomy seam for pressures such as authored
- * activity completion, quiet review, blockage, uncertainty or directly perceived
- * world change.
+ * causal life. This is the bootstrap/autonomy seam for explicit pressures such as
+ * authored activity completion, blockage, uncertainty or directly perceived world
+ * change. Passage of time / quiet review is deliberately not a causal origin.
  *
  * Heard speech is deliberately excluded. Speech-origin commitments must continue to
  * prove their exact private percept through the dedicated speech authorities.
