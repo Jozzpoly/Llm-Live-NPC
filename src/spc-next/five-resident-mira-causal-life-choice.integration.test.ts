@@ -23,8 +23,16 @@ describe("five-resident Mira causal life choice composition", () => {
 
     const batch = waitForChoiceReview(slice);
     expect(batch.reasons).toEqual([
-      expect.objectContaining({ kind: "quiet_review" }),
+      expect.objectContaining({
+        kind: "uncertainty",
+        evidenceIds: [FIELDS!.runId, WORKSHOP!.runId].sort((a, b) => a.localeCompare(b)),
+      }),
+      expect.objectContaining({
+        kind: "activity_completed",
+        evidenceIds: [completedHearth.outcomeEvidence.id],
+      }),
     ]);
+    expect(batch.reasons.some((reason) => reason.kind === "quiet_review")).toBe(false);
 
     const lifeAtChoice = captureResidentLifeCognitionView({
       kernel: slice.kernel,
