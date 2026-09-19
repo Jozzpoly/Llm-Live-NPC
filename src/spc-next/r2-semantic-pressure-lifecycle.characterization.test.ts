@@ -1,15 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createDefaultCognitionScheduler } from "./cognition-scheduler";
 import { DEFAULT_RESIDENT_PROFILE, type CognitionReason } from "./contracts";
-import { ResidentLifeIntentOwner } from "./resident-life-intent-owner";
-import type { ResidentLifeCognitionView } from "./resident-life-cognition-view";
 import { ResidentRuntime } from "./resident-runtime";
-
-const EMPTY_LIFE: ResidentLifeCognitionView = {
-  version: 1,
-  matters: [],
-  body: { focusedRunId: null, deferredRunIds: [] },
-};
 
 function reason(id: string, tick: number, summary: string): CognitionReason {
   return {
@@ -26,12 +18,12 @@ function runtime(id: string): ResidentRuntime {
   return new ResidentRuntime({
     ...DEFAULT_RESIDENT_PROFILE,
     id,
-    name: "R2 Lifecycle Characterization",
+    name: "R2 Lifecycle",
   });
 }
 
-describe("R2 pre-lifecycle semantic-pressure characterization", () => {
-  it("currently lets an older requeue overwrite newer coalesced pressure with the same reason id", () => {
+describe("R2 semantic-pressure lifecycle", () => {
+  it("never lets an older requeue overwrite newer coalesced pressure with the same reason id", () => {
     const scheduler = createDefaultCognitionScheduler("resident.r2-lifecycle-stale", 0);
     const oldReason = reason("reason:shared", 10, "older evidence");
     const newerReason = reason("reason:shared", 50, "newer evidence");
@@ -43,13 +35,16 @@ describe("R2 pre-lifecycle semantic-pressure characterization", () => {
     scheduler.note(newerReason);
     expect(scheduler.pendingSnapshot()).toEqual([newerReason]);
 
-    // Current bug: requeueing the older in-flight version replaces the newer one
-    // because scheduler.note() accepts equal salience regardless of causal tick.
-    scheduler.note(oldReason);
-    expect(scheduler.pendingSnapshot()).toEqual([oldReason]);
+    const staleRequeue = scheduler.note(oldReason);
+    expect(staleRequeue).toMatchObject({
+      status: "ignored_stale",
+      reason: oldReason,
+      retained: newerReason,
+    });
+    expect(scheduler.pendingSnapshot()).toEqual([newerReason]);
   });
 
-  it("currently loses every sibling reason after one successful semantic settlement", () => {
+  it("settles only the selected origin while retaining independent batch siblings", () => {
     const resident = runtime("resident.r2-lifecycle-siblings");
     const selected = reason("reason:selected", 0, "selected issue");
     const sibling = reason("reason:sibling", 0, "independent sibling issue");
@@ -60,32 +55,32 @@ describe("R2 pre-lifecycle semantic-pressure characterization", () => {
     expect(batch?.reasons).toHaveLength(2);
     if (!batch) return;
 
-    const owner = new ResidentLifeIntentOwner(resident);
-    const attempt = owner.prepare(batch, EMPTY_LIFE, 30);
-    expect(attempt).not.toBeNull();
-    if (!attempt) return;
+    expect(resident.semanticPressureLifecycleSnapshot()).toEqual(expect.arrayContaining([
+      expect.objectContaining({ reason: selected, status: "in_flight" }),
+      expect.objectContaining({ reason: sibling, status: "in_flight" }),
+    ]));
 
-    const settlement = owner.settleCommitmentIntent(
-      attempt,
-      {
-        version: 1,
-        commitmentDecision: { kind: "decline", reason: "decline only the selected issue" },
-        beliefs: [],
-        concerns: [],
-        reviewAfterSeconds: 30,
-      },
-      EMPTY_LIFE,
-      31,
-      () => ({ status: "accepted", intent: { kind: "no_commitment" as const } }),
-    );
-    expect(settlement.status).toBe("applied");
+    expect(resident.reconcileCognitionSettlement({
+      batch,
+      originReasonId: selected.id,
+      decision: "decline",
+      tick: 31,
+    })).toEqual({
+      settledReasonIds: [selected.id],
+      retainedReasonIds: [sibling.id],
+    });
 
-    // Current bug: there is no post-settlement per-reason reconciliation boundary,
-    // so the unrelated sibling vanishes together with the selected origin.
-    expect(resident.pendingCognitionReasons()).toEqual([]);
+    expect(resident.pendingCognitionReasons()).toEqual([sibling]);
+    expect(resident.semanticPressureLifecycleSnapshot()).toEqual(expect.arrayContaining([
+      expect.objectContaining({ reason: selected, status: "settled" }),
+      expect.objectContaining({ reason: sibling, status: "pending" }),
+    ]));
+
+    expect(resident.takeCognitionBatch(89)).toBeNull();
+    expect(resident.takeCognitionBatch(90)?.reasons).toEqual([sibling]);
   });
 
-  it("currently treats defer as if the unresolved reason had been settled", () => {
+  it("retains defer as unresolved pressure without making it eligible before its explicit review boundary", () => {
     const resident = runtime("resident.r2-lifecycle-defer");
     const deferred = reason("reason:defer-me", 0, "still unresolved");
     resident.promoteSemanticPressure(deferred);
@@ -94,27 +89,63 @@ describe("R2 pre-lifecycle semantic-pressure characterization", () => {
     expect(batch?.reasons).toEqual([deferred]);
     if (!batch) return;
 
-    const owner = new ResidentLifeIntentOwner(resident);
-    const attempt = owner.prepare(batch, EMPTY_LIFE, 30);
-    expect(attempt).not.toBeNull();
-    if (!attempt) return;
+    expect(resident.reconcileCognitionSettlement({
+      batch,
+      originReasonId: deferred.id,
+      decision: "defer",
+      tick: 31,
+      retainOriginUntilTick: 1_800,
+    })).toEqual({
+      settledReasonIds: [],
+      retainedReasonIds: [deferred.id],
+    });
 
-    const settlement = owner.settleCommitmentIntent(
-      attempt,
-      {
-        version: 1,
-        commitmentDecision: { kind: "defer", reason: "not yet" },
-        beliefs: [],
-        concerns: [],
-        reviewAfterSeconds: 30,
-      },
-      EMPTY_LIFE,
-      31,
-      () => ({ status: "accepted", intent: { kind: "no_commitment" as const } }),
-    );
-    expect(settlement.status).toBe("applied");
+    expect(resident.pendingCognitionReasons()).toEqual([deferred]);
+    expect(resident.semanticPressureLifecycleSnapshot()).toContainEqual(expect.objectContaining({
+      reason: deferred,
+      status: "pending",
+      notBeforeTick: 1_800,
+      detail: expect.stringContaining("defer keeps selected semantic pressure unresolved"),
+    }));
 
-    // Current bug: defer has no retained unresolved state; the reason is gone.
-    expect(resident.pendingCognitionReasons()).toEqual([]);
+    expect(resident.takeCognitionBatch(1_799)).toBeNull();
+    expect(resident.takeCognitionBatch(1_800)?.reasons).toEqual([deferred]);
+  });
+
+  it("cannot settle an older in-flight version over newer evidence that arrived during the request", () => {
+    const resident = runtime("resident.r2-lifecycle-newer-evidence");
+    const oldReason = reason("reason:coalesced", 0, "old evidence");
+    const newerReason = reason("reason:coalesced", 40, "new evidence during request");
+    resident.promoteSemanticPressure(oldReason);
+
+    const batch = resident.takeCognitionBatch(30);
+    expect(batch?.reasons).toEqual([oldReason]);
+    if (!batch) return;
+
+    resident.promoteSemanticPressure(newerReason);
+    expect(resident.pendingCognitionReasons()).toEqual([newerReason]);
+
+    expect(resident.reconcileCognitionSettlement({
+      batch,
+      originReasonId: oldReason.id,
+      decision: "accept",
+      tick: 45,
+    })).toEqual({
+      settledReasonIds: [oldReason.id],
+      retainedReasonIds: [],
+    });
+
+    // Mechanical return reports that the selected batch version was handled, but the
+    // lifecycle refuses to mark the newer coalesced version settled.
+    expect(resident.pendingCognitionReasons()).toEqual([newerReason]);
+    expect(resident.semanticPressureLifecycleSnapshot()).toContainEqual(expect.objectContaining({
+      reason: newerReason,
+      status: "pending",
+    }));
+    expect(resident.semanticPressureLifecycleEvents()).toContainEqual(expect.objectContaining({
+      kind: "stale_ignored",
+      reasonId: oldReason.id,
+      detail: expect.stringContaining("newer causal tick 40 remains unresolved"),
+    }));
   });
 });
