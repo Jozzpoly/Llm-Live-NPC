@@ -22,11 +22,14 @@ export interface ResidentLocalContactSnapshot {
   status: "none" | "active" | "completed";
   perceptId: string | null;
   sourceActorId: string | null;
+  direction: Vec2 | null;
   contactMatterId: string | null;
   contactRunId: string | null;
   interruptedMatterId: string | null;
   interruptedRunId: string | null;
   startedAtTick: number | null;
+  responseTick: number | null;
+  responseTick: number | null;
   responseOccurrenceId: string | null;
   completedAtTick: number | null;
   remainingHoldTicks: number;
@@ -151,6 +154,7 @@ export class ResidentLocalContactRoutine {
       interruptedRunId: interrupted?.runId ?? null,
       interruptedBinding,
       startedAtTick: this.world.tick,
+      responseTick: null,
       responseOccurrenceId: null,
       completedAtTick: null,
       remainingHoldTicks: this.options.holdTicks,
@@ -187,6 +191,7 @@ export class ResidentLocalContactRoutine {
       const speech = applied.occurrences.find((occurrence) => occurrence.kind === "speech");
       if (!speech) throw new Error("local contact response produced no factual speech");
       active.responded = true;
+      active.responseTick = this.world.tick;
       active.responseOccurrenceId = speech.id;
       return { status: "responded", snapshot: this.snapshot() };
     }
@@ -249,11 +254,13 @@ function emptySnapshot(): ResidentLocalContactSnapshot {
     status: "none",
     perceptId: null,
     sourceActorId: null,
+    direction: null,
     contactMatterId: null,
     contactRunId: null,
     interruptedMatterId: null,
     interruptedRunId: null,
     startedAtTick: null,
+    responseTick: null,
     responseOccurrenceId: null,
     completedAtTick: null,
     remainingHoldTicks: 0,
@@ -268,11 +275,13 @@ function snapshotActive(
     status,
     perceptId: active.perceptId,
     sourceActorId: active.sourceActorId,
+    direction: active.direction ? { ...active.direction } : null,
     contactMatterId: active.contactMatterId,
     contactRunId: active.contactRunId,
     interruptedMatterId: active.interruptedMatterId,
     interruptedRunId: active.interruptedRunId,
     startedAtTick: active.startedAtTick,
+    responseTick: active.responseTick,
     responseOccurrenceId: active.responseOccurrenceId,
     completedAtTick: active.completedAtTick,
     remainingHoldTicks: active.remainingHoldTicks,
