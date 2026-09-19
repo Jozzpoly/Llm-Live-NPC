@@ -36,8 +36,22 @@ describe("five-resident unified causal cognition host", () => {
     }
     expect(guard).toBeLessThan(1_500);
 
-    // Janek begins idle, so let his ordinary phased quiet review become due as well.
-    while (runtime.world.tick < 2_400) runtime.advanceOneWorldTick();
+    // This test qualifies the five-lane cognition host, not spontaneous reason
+    // generation. Janek's baseline is legitimately idle, so give that lane one
+    // explicit fixture-owned semantic choice instead of relying on a periodic
+    // quiet_review heartbeat.
+    const janekLife = runtime.life("resident.janek");
+    expect(janekLife).not.toBeNull();
+    janekLife?.resident.promoteSemanticPressure({
+      id: "reason:test:janek:five-lane-host",
+      tick: runtime.world.tick,
+      kind: "uncertainty",
+      salience: 0.8,
+      summary: "Fixture-owned explicit Janek choice for five-lane host qualification.",
+      evidenceIds: [],
+    });
+    const readyAfterTick = runtime.world.tick + 30;
+    while (runtime.world.tick < Math.max(2_400, readyAfterTick)) runtime.advanceOneWorldTick();
 
     expect(cognition.collectReadyBatches()).toBe(5);
 
