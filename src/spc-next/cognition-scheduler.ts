@@ -16,8 +16,30 @@ export interface CognitionScheduleDiagnostics {
   nextQuietReviewTick: number;
 }
 
+export type CognitionReasonNoteResult =
+  | { status: "inserted"; reason: CognitionReason; notBeforeTick: number }
+  | { status: "updated"; reason: CognitionReason; replaced: CognitionReason; notBeforeTick: number }
+  | { status: "unchanged"; reason: CognitionReason; notBeforeTick: number }
+  | { status: "ignored_stale"; reason: CognitionReason; retained: CognitionReason; notBeforeTick: number };
+
+export interface PendingCognitionReasonSnapshot {
+  reason: CognitionReason;
+  notBeforeTick: number;
+}
+
+/**
+ * Mechanical scheduler for already-established unresolved semantic pressure.
+ *
+ * R2 boundary:
+ * - this class does not decide whether an observation deserves semantic pressure;
+ * - passage of time cannot manufacture a CognitionReason;
+ * - a retained unresolved reason may have an eligibility/not-before time;
+ * - reason identity is monotonic by causal tick so an older requeue cannot overwrite
+ *   newer evidence with the same coalesced identity.
+ */
 export class CognitionScheduler {
   private readonly pending = new Map<string, CognitionReason>();
+  private readonly notBeforeTickByReasonId = new Map<string, number>();
   private lastRequestTick: number | null = null;
   private nextQuietReviewTick: number;
 
@@ -40,11 +62,81 @@ export class CognitionScheduler {
       + stablePhaseOffset(options.residentId, options.quietReviewIntervalTicks);
   }
 
-  note(reason: CognitionReason): void {
-    const existing = this.pending.get(reason.id);
-    if (!existing || existing.salience <= reason.salience || existing.tick <= reason.tick) {
-      this.pending.set(reason.id, structuredClone(reason));
+  note(
+    reason: CognitionReason,
+    options: { notBeforeTick?: number } = {},
+  ): CognitionReasonNoteResult {
+    const notBeforeTick = options.notBeforeTick ?? reason.tick;
+    if (!Number.isSafeInteger(notBeforeTick) || notBeforeTick < reason.tick) {
+      throw new Error("cognition reason notBeforeTick cannot precede its causal tick");
     }
+
+    const existing = this.pending.get(reason.id);
+    if (!existing) {
+      this.pending.set(reason.id, structuredClone(reason));
+      this.notBeforeTickByReasonId.set(reason.id, notBeforeTick);
+      return {
+        status: "inserted",
+        reason: structuredClone(reason),
+        notBeforeTick,
+      };
+    }
+
+    const existingNotBefore = this.notBeforeTickByReasonId.get(reason.id) ?? existing.tick;
+
+    // Same coalesced identity is versioned by causal tick. Never let an older
+    // in-flight/requeued copy resurrect over newer evidence.
+    if (reason.tick < existing.tick) {
+      return {
+        status: "ignored_stale",
+        reason: structuredClone(reason),
+        retained: structuredClone(existing),
+        notBeforeTick: existingNotBefore,
+      };
+    }
+
+    if (reason.tick > existing.tick) {
+      this.pending.set(reason.id, structuredClone(reason));
+      this.notBeforeTickByReasonId.set(reason.id, notBeforeTick);
+      return {
+        status: "updated",
+        reason: structuredClone(reason),
+        replaced: structuredClone(existing),
+        notBeforeTick,
+      };
+    }
+
+    const sameReason = JSON.stringify(existing) === JSON.stringify(reason);
+    const mergedNotBefore = Math.max(existingNotBefore, notBeforeTick);
+    if (sameReason) {
+      this.notBeforeTickByReasonId.set(reason.id, mergedNotBefore);
+      return {
+        status: "unchanged",
+        reason: structuredClone(existing),
+        notBeforeTick: mergedNotBefore,
+      };
+    }
+
+    // Same causal version may be re-evaluated with stronger salience. Preserve the
+    // stronger representation but never move eligibility earlier than an already
+    // explicit retention/defer boundary.
+    if (reason.salience > existing.salience) {
+      this.pending.set(reason.id, structuredClone(reason));
+      this.notBeforeTickByReasonId.set(reason.id, mergedNotBefore);
+      return {
+        status: "updated",
+        reason: structuredClone(reason),
+        replaced: structuredClone(existing),
+        notBeforeTick: mergedNotBefore,
+      };
+    }
+
+    this.notBeforeTickByReasonId.set(reason.id, mergedNotBefore);
+    return {
+      status: "unchanged",
+      reason: structuredClone(existing),
+      notBeforeTick: mergedNotBefore,
+    };
   }
 
   pendingCount(): number {
@@ -52,13 +144,24 @@ export class CognitionScheduler {
   }
 
   /**
-   * Read-only research/local-brain view of currently unresolved semantic pressure.
-   * This is not resident memory and does not mutate scheduling state.
+   * Read-only resident/local-brain view of currently unresolved semantic pressure.
+   * Includes pressure whose explicit retention window has not opened yet.
    */
   pendingSnapshot(): CognitionReason[] {
+    return this.pendingScheduleSnapshot().map((entry) => entry.reason);
+  }
+
+  pendingScheduleSnapshot(): PendingCognitionReasonSnapshot[] {
     return [...this.pending.values()]
-      .sort((a, b) => b.salience - a.salience || a.tick - b.tick || a.id.localeCompare(b.id))
-      .map((reason) => structuredClone(reason));
+      .map((reason) => ({
+        reason: structuredClone(reason),
+        notBeforeTick: this.notBeforeTickByReasonId.get(reason.id) ?? reason.tick,
+      }))
+      .sort((a, b) => (
+        b.reason.salience - a.reason.salience
+        || a.reason.tick - b.reason.tick
+        || a.reason.id.localeCompare(b.reason.id)
+      ));
   }
 
   scheduleQuietReviewAfter(tick: number, delayTicks: number): void {
@@ -66,9 +169,7 @@ export class CognitionScheduler {
   }
 
   /**
-   * Guarantee a cognition opportunity no later than the requested bound without
-   * postponing an already-earlier review. Event bridges use this; provider cadence
-   * may still deliberately replace the deadline through scheduleQuietReviewAfter().
+   * Local-maintenance deadline only. It cannot create a semantic reason.
    */
   ensureQuietReviewWithin(tick: number, delayTicks: number): void {
     const candidate = this.quietReviewDeadline(tick, delayTicks);
@@ -92,31 +193,38 @@ export class CognitionScheduler {
   }
 
   takeReady(tick: number): CognitionBatch | null {
-    const pending = [...this.pending.values()].sort(
-      (a, b) => b.salience - a.salience || a.tick - b.tick || a.id.localeCompare(b.id),
+    const eligible = this.pendingScheduleSnapshot().filter(
+      (entry) => entry.notBeforeTick <= tick,
     );
-    const maxSalience = pending[0]?.salience ?? 0;
-    const oldestPendingTick = pending.reduce((oldest, reason) => Math.min(oldest, reason.tick), Number.POSITIVE_INFINITY);
-    const elapsed = this.lastRequestTick === null ? Number.POSITIVE_INFINITY : tick - this.lastRequestTick;
+    const maxSalience = eligible[0]?.reason.salience ?? 0;
+    const oldestPendingTick = eligible.reduce(
+      (oldest, entry) => Math.min(oldest, entry.reason.tick),
+      Number.POSITIVE_INFINITY,
+    );
+    const elapsed = this.lastRequestTick === null
+      ? Number.POSITIVE_INFINITY
+      : tick - this.lastRequestTick;
 
-    const urgentReady = pending.length > 0
+    const urgentReady = eligible.length > 0
       && maxSalience >= this.options.urgentSalience
       && elapsed >= this.options.urgentMinIntervalTicks;
-    const normalReady = pending.length > 0
+    const normalReady = eligible.length > 0
       && tick - oldestPendingTick >= this.options.normalDebounceTicks
       && elapsed >= this.options.normalMinIntervalTicks;
-    // R2: passage of time is not itself unresolved semantic pressure.
-    // Quiet/local maintenance may still use nextQuietReviewTick as a diagnostic or
-    // local-brain deadline, but the semantic scheduler cannot fabricate a cognition
-    // batch while no explicit unresolved reason exists.
+
+    // Passage of time alone is not semantic pressure.
     if (!urgentReady && !normalReady) return null;
 
-    const reasons = pending.slice(0, this.options.maxReasonsPerBatch);
-    for (const reason of reasons) this.pending.delete(reason.id);
+    const reasons = eligible
+      .slice(0, this.options.maxReasonsPerBatch)
+      .map((entry) => entry.reason);
+    for (const reason of reasons) {
+      this.pending.delete(reason.id);
+      this.notBeforeTickByReasonId.delete(reason.id);
+    }
 
     this.lastRequestTick = tick;
-    // This is a safety fallback. A successfully admitted model proposal should replace
-    // this deadline via scheduleQuietReviewAfter().
+    // Retained for local-maintenance diagnostics/backward compatibility only.
     this.nextQuietReviewTick = tick
       + this.options.quietReviewIntervalTicks
       + stableMicroStagger(this.options.residentId, this.options.quietReviewIntervalTicks);
