@@ -1,4 +1,5 @@
 import type { ResidentPercept, Vec2, WorldOccurrence } from "./contracts";
+import { ResidentLocalContactRoutine, type ResidentLocalContactSnapshot } from "./resident-local-contact-routine";
 import {
   createFiveResidentJanekMissingCrateRecoverySlice,
   type FiveResidentJanekMissingCrateRecoveryStep,
@@ -36,19 +37,6 @@ export type FiveResidentJanekMissingCrateInterruptionStep =
   | { status: "interruption_holding"; interruption: MissingCrateInterruptionSnapshot }
   | { status: "interruption_resumed"; interruption: MissingCrateInterruptionSnapshot };
 
-interface ActiveInterruption {
-  addressedPerceptId: string;
-  addressedDirection: Vec2 | null;
-  interruptMatterId: string;
-  interruptRunId: string;
-  mainRunId: string;
-  startedAtTick: number;
-  responseTick: number | null;
-  responseOccurrenceId: string | null;
-  resumedAtTick: number | null;
-  remainingHoldTicks: number;
-  responded: boolean;
-}
 
 /**
  * First interruption/return pressure slice on top of the missing-crate recovery.
@@ -69,14 +57,21 @@ export function createFiveResidentJanekMissingCrateInterruptionSlice() {
     // search leg. The baseline scenario remains unchanged.
     playerStart: { x: 1_600, y: 620 },
   });
-  let active: ActiveInterruption | null = null;
-  let completed: MissingCrateInterruptionSnapshot | null = null;
+  const contactRoutine = new ResidentLocalContactRoutine(
+    JANEK_ID,
+    base.kernel,
+    base.authority,
+    base.world,
+    {
+      responseText: INTERRUPTION_RESPONSE,
+      holdTicks: INTERRUPTION_HOLD_TICKS,
+      responseRadius: PLAYER_CALL_RADIUS,
+    },
+  );
   const handledAddressedPercepts = new Set<string>();
 
   function snapshot(): MissingCrateInterruptionSnapshot {
-    if (active) return snapshotActive(active, "active");
-    if (completed) return structuredClone(completed);
-    return emptySnapshot();
+    return projectContactSnapshot(contactRoutine.snapshot());
   }
 
   function beginInterruption(percept: ResidentPercept): MissingCrateInterruptionSnapshot {
@@ -89,125 +84,25 @@ export function createFiveResidentJanekMissingCrateInterruptionSlice() {
       throw new Error("search run binding missing at interruption boundary");
     }
 
-    const suffix = `${percept.tick}:${percept.id.replaceAll(":", "-")}`;
-    const evidence = base.kernel.recordEvidence({
-      id: `evidence:janek:player-addressed:${suffix}`,
-      tick: percept.tick,
-      kind: "player_addressed_speech",
-      summary: `Addressed speech interrupted Janek: ${percept.text ?? percept.summary}`,
+    contactRoutine.begin(percept, {
+      matterId: MAIN_MATTER_ID,
+      runId: SEARCH_RUN_ID,
     });
-    const interruptMatterId = `matter.janek.player-contact:${suffix}`;
-    const interruptRunId = `run.janek.player-contact:${suffix}`;
-    base.kernel.openMatter({
-      id: interruptMatterId,
-      originEvidenceId: evidence.id,
-      semanticCourse: "briefly acknowledge the addressed player, then return to the interrupted search",
-    });
-    base.kernel.bindRun({
-      matterId: interruptMatterId,
-      taskId: `task.janek.player-contact:${suffix}`,
-      runId: interruptRunId,
-    });
-    base.kernel.suspendMatter(MAIN_MATTER_ID, interruptMatterId);
-    const revoked = base.authority.enforceMotionAuthority();
-    if (revoked.status !== "revoked" || revoked.runId !== SEARCH_RUN_ID) {
-      throw new Error("search motion authority was not revoked by the interruption");
-    }
-
-    active = {
-      addressedPerceptId: percept.id,
-      addressedDirection: percept.spatial.kind === "directional"
-        && Math.hypot(percept.spatial.direction.x, percept.spatial.direction.y) > 1e-9
-        ? { ...percept.spatial.direction }
-        : null,
-      interruptMatterId,
-      interruptRunId,
-      mainRunId: SEARCH_RUN_ID,
-      startedAtTick: base.world.tick,
-      responseTick: null,
-      responseOccurrenceId: null,
-      resumedAtTick: null,
-      remainingHoldTicks: INTERRUPTION_HOLD_TICKS,
-      responded: false,
-    };
     handledAddressedPercepts.add(percept.id);
     return snapshot();
   }
 
   function advanceInterruption(): FiveResidentJanekMissingCrateInterruptionStep {
-    if (!active) throw new Error("no active interruption");
+    const local = contactRoutine.step();
+    base.world.step();
 
-    if (!active.responded) {
-      const effects = active.addressedDirection
-        ? [
-            { kind: "motion" as const, desiredVelocity: { x: 0, y: 0 } },
-            { kind: "look" as const, direction: { ...active.addressedDirection } },
-            {
-              kind: "speech" as const,
-              text: INTERRUPTION_RESPONSE,
-              radius: PLAYER_CALL_RADIUS,
-              addressedActorIds: [PLAYER_ID],
-            },
-          ]
-        : [
-            { kind: "motion" as const, desiredVelocity: { x: 0, y: 0 } },
-            {
-              kind: "speech" as const,
-              text: INTERRUPTION_RESPONSE,
-              radius: PLAYER_CALL_RADIUS,
-              addressedActorIds: [PLAYER_ID],
-            },
-          ];
-      const applied = base.authority.apply({
-        runId: active.interruptRunId,
-        effects,
-      });
-      if (applied.status !== "applied") throw new Error(`interrupt response execution failed: ${applied.status}`);
-      const response = applied.occurrences.find((occurrence) => occurrence.kind === "speech") ?? null;
-      if (!response) throw new Error("interrupt response did not create a World speech occurrence");
-      active.responded = true;
-      active.responseTick = base.world.tick;
-      active.responseOccurrenceId = response.id;
-      base.world.step();
+    if (local.status === "responded") {
       return { status: "interruption_responded", interruption: snapshot() };
     }
-
-    if (active.remainingHoldTicks > 0) {
-      active.remainingHoldTicks -= 1;
-      base.world.step();
+    if (local.status === "holding") {
       return { status: "interruption_holding", interruption: snapshot() };
     }
-
-    const mainRunBindingBeforeResume = base.kernel.runBinding(active.mainRunId);
-    if (!mainRunBindingBeforeResume) throw new Error("interrupted search run binding disappeared during hold");
-
-    const reconciled = base.kernel.reconcileRunOutcome({
-      runId: active.interruptRunId,
-      tick: base.world.tick,
-      status: "succeeded",
-      summary: `acknowledged addressed player via ${active.responseOccurrenceId ?? "speech"}`,
-    });
-    if (reconciled.status !== "recorded") throw new Error("interrupt response reconciliation failed");
-    base.kernel.resolveMatter(active.interruptMatterId);
-    const revoked = base.authority.enforceMotionAuthority();
-    if (revoked.status !== "revoked" || revoked.runId !== active.interruptRunId) {
-      throw new Error("interrupt motion authority did not retire after response");
-    }
-    if (!base.kernel.resumeMatter(MAIN_MATTER_ID)) throw new Error("interrupted search matter failed to resume");
-
-    const mainRunBindingAfterResume = base.kernel.runBinding(active.mainRunId);
-    if (JSON.stringify(mainRunBindingAfterResume) !== JSON.stringify(mainRunBindingBeforeResume)) {
-      throw new Error("search run binding changed across bounded player interruption");
-    }
-    if (!base.kernel.canRunMutateWorld(active.mainRunId)) {
-      throw new Error("same search run did not regain World authority after interruption");
-    }
-
-    active.resumedAtTick = base.world.tick;
-    completed = snapshotActive(active, "completed");
-    active = null;
-    base.world.step();
-    return { status: "interruption_resumed", interruption: structuredClone(completed) };
+    return { status: "interruption_resumed", interruption: snapshot() };
   }
 
   function newestUnhandledAddressedSpeech(): ResidentPercept | null {
@@ -227,19 +122,19 @@ export function createFiveResidentJanekMissingCrateInterruptionSlice() {
     materialKnowledge: base.materialKnowledge,
     authority: base.authority,
     phase(): MissingCrateRecoveryPhase | "interrupted" {
-      return active ? "interrupted" : base.phase();
+      return contactRoutine.active() ? "interrupted" : base.phase();
     },
     interruption(): MissingCrateInterruptionSnapshot {
       return snapshot();
     },
     playerAddressJanek(text = "Janek, chwila!"): WorldOccurrence {
-      if (base.phase() !== "searching" || active) {
+      if (base.phase() !== "searching" || contactRoutine.active()) {
         throw new Error("player may interrupt this specimen only during active material search");
       }
       return base.world.speak(PLAYER_ID, text, PLAYER_CALL_RADIUS, [JANEK_ID]);
     },
     advanceOneWorldTick(): FiveResidentJanekMissingCrateInterruptionStep {
-      if (active) return advanceInterruption();
+      if (contactRoutine.active()) return advanceInterruption();
 
       const baseStep = base.advanceOneWorldTick();
       if (base.phase() === "searching") {
@@ -253,37 +148,20 @@ export function createFiveResidentJanekMissingCrateInterruptionSlice() {
   };
 }
 
-function emptySnapshot(): MissingCrateInterruptionSnapshot {
-  return {
-    status: "none",
-    addressedPerceptId: null,
-    addressedDirection: null,
-    interruptMatterId: null,
-    interruptRunId: null,
-    mainRunId: null,
-    startedAtTick: null,
-    responseTick: null,
-    responseOccurrenceId: null,
-    resumedAtTick: null,
-    remainingHoldTicks: 0,
-  };
-}
-
-function snapshotActive(
-  active: ActiveInterruption,
-  status: Exclude<MissingCrateInterruptionStatus, "none">,
+function projectContactSnapshot(
+  snapshot: ResidentLocalContactSnapshot,
 ): MissingCrateInterruptionSnapshot {
   return {
-    status,
-    addressedPerceptId: active.addressedPerceptId,
-    addressedDirection: active.addressedDirection ? { ...active.addressedDirection } : null,
-    interruptMatterId: active.interruptMatterId,
-    interruptRunId: active.interruptRunId,
-    mainRunId: active.mainRunId,
-    startedAtTick: active.startedAtTick,
-    responseTick: active.responseTick,
-    responseOccurrenceId: active.responseOccurrenceId,
-    resumedAtTick: active.resumedAtTick,
-    remainingHoldTicks: active.remainingHoldTicks,
+    status: snapshot.status,
+    addressedPerceptId: snapshot.perceptId,
+    addressedDirection: snapshot.direction ? { ...snapshot.direction } : null,
+    interruptMatterId: snapshot.contactMatterId,
+    interruptRunId: snapshot.contactRunId,
+    mainRunId: snapshot.interruptedRunId,
+    startedAtTick: snapshot.startedAtTick,
+    responseTick: snapshot.responseTick,
+    responseOccurrenceId: snapshot.responseOccurrenceId,
+    resumedAtTick: snapshot.completedAtTick,
+    remainingHoldTicks: snapshot.remainingHoldTicks,
   };
 }
