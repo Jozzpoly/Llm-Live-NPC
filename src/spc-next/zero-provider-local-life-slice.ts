@@ -153,14 +153,6 @@ export function createZeroProviderLocalLifeSlice() {
   const handledPercepts = new Set<string>();
   const localDecisions: ZeroProviderLocalDecision[] = [];
 
-  function settlePerceptReasonLocally(percept: ResidentPercept): { id: string | null; settled: boolean } {
-    const settled = resident.settlePerceptCognitionLocally(percept.id);
-    return {
-      id: settled[0]?.id ?? null,
-      settled: settled.length > 0,
-    };
-  }
-
   function processNewPercepts(): ZeroProviderLocalInterruptionSnapshot | null {
     const percepts = world.residentDiagnostics(RESIDENT_ID).recentPercepts;
     let started: ZeroProviderLocalInterruptionSnapshot | null = null;
@@ -178,22 +170,19 @@ export function createZeroProviderLocalLifeSlice() {
 
       const pendingForPercept = resident.pendingCognitionReasons()
         .find((reason) => reason.evidenceIds.includes(percept.id)) ?? null;
-      // Contact acknowledgement is not semantic handling of addressed speech.
-      // Keep its higher-cognition pressure unresolved while provider cognition is
-      // disabled; background/local-only evidence may be fully metabolized here.
-      const settled = shouldInterrupt
-        ? { id: pendingForPercept?.id ?? null, settled: false }
-        : settlePerceptReasonLocally(percept);
+      // R1 deliberately does not decide semantic settlement. A local bodily response
+      // can coexist with unresolved higher-cognition pressure; R2 will own the future
+      // lifecycle/relevance policy.
       localDecisions.push({
         tick: world.tick,
         perceptId: percept.id,
         occurrenceId: percept.occurrenceId,
         classification: shouldInterrupt ? "interrupt" : "background",
-        cognitionReasonId: settled.id,
-        cognitionReasonSettled: settled.settled,
+        cognitionReasonId: pendingForPercept?.id ?? null,
+        cognitionReasonSettled: false,
         summary: shouldInterrupt
           ? `local contact acknowledgement only; semantic speech pressure retained: ${percept.text}`
-          : `locally bounded/background: ${percept.summary}`,
+          : `local body ignores/backgrounds this percept without claiming semantic settlement: ${percept.summary}`,
       });
 
       if (shouldInterrupt) {
