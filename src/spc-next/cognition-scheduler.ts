@@ -61,41 +61,6 @@ export class CognitionScheduler {
       .map((reason) => structuredClone(reason));
   }
 
-  /**
-   * Close a pending reason that has been fully handled by resident-local intelligence.
-   *
-   * This deliberately does not fabricate a cognition batch or advance request cadence.
-   * Full pressure lifecycle/supersession belongs to the later post-stress R2 campaign;
-   * R1 only needs an honest way for local competence to prove that higher cognition
-   * is no longer required for one exact reason.
-   */
-  settleLocally(reasonId: string): boolean {
-    if (typeof reasonId !== "string" || reasonId.trim().length === 0) {
-      throw new Error("cognition reason id must be non-empty");
-    }
-    return this.pending.delete(reasonId);
-  }
-
-  /**
-   * Close all currently pending cognition pressure whose causal support includes
-   * one exact evidence id. Local embodied intelligence should normally use this
-   * boundary instead of depending on scheduler-specific reason identity formats.
-   */
-  settleLocallyByEvidence(evidenceId: string): CognitionReason[] {
-    if (typeof evidenceId !== "string" || evidenceId.trim().length === 0) {
-      throw new Error("cognition evidence id must be non-empty");
-    }
-    const settled: CognitionReason[] = [];
-    for (const [reasonId, reason] of this.pending) {
-      if (!reason.evidenceIds.includes(evidenceId)) continue;
-      this.pending.delete(reasonId);
-      settled.push(structuredClone(reason));
-    }
-    return settled.sort(
-      (a, b) => b.salience - a.salience || a.tick - b.tick || a.id.localeCompare(b.id),
-    );
-  }
-
   scheduleQuietReviewAfter(tick: number, delayTicks: number): void {
     this.nextQuietReviewTick = this.quietReviewDeadline(tick, delayTicks);
   }
