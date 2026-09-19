@@ -166,6 +166,55 @@ describe("post-stress R1 zero-provider local life", () => {
       kind: "quiet",
       reason: expect.stringContaining("no unresolved local reason"),
     });
+
+    // Quiet is not inertness: a later addressed contact wakes local attention without
+    // resurrecting the already-resolved basket matter or requiring higher cognition.
+    const lateCall = slice.playerSpeak("Mira?", true);
+    const quietWake = slice.advanceOneWorldTick();
+    expect(quietWake.status).toBe("interruption_started");
+    if (quietWake.status !== "interruption_started") {
+      throw new Error(`quiet resident did not expose local contact wakeup: ${quietWake.status}`);
+    }
+    expect(quietWake.interruption).toMatchObject({
+      status: "active",
+      mainRunId: null,
+    });
+    expect(slice.kernel.matter(slice.mainMatterId)).toMatchObject({
+      status: "resolved",
+      activeRunId: null,
+    });
+    expect(slice.localDecisions().find((decision) => decision.occurrenceId === lateCall.id)).toMatchObject({
+      classification: "interrupt",
+      cognitionReasonSettled: true,
+    });
+    expect(slice.pendingCognitionReasons()).toEqual([]);
+
+    const quietResponded = slice.advanceOneWorldTick();
+    expect(quietResponded.status).toBe("interruption_responded");
+    expect(residentActor(slice).position).toEqual(quietPosition);
+
+    let quietReturned = false;
+    let quietGuard = 0;
+    while (!quietReturned && quietGuard < 80) {
+      const step = slice.advanceOneWorldTick();
+      if (step.status === "interruption_resumed") quietReturned = true;
+      quietGuard += 1;
+    }
+    expect(quietReturned).toBe(true);
+    expect(slice.phase()).toBe("settled");
+    expect(slice.kernel.matter(slice.mainMatterId)).toMatchObject({
+      status: "resolved",
+      activeRunId: null,
+    });
+    expect(slice.attention()).toMatchObject({
+      kind: "quiet",
+      reason: expect.stringContaining("no unresolved local matter"),
+    });
+    expect(slice.pendingCognitionReasons()).toEqual([]);
+    expect(slice.world.materialObject(slice.objectId)?.location).toEqual({
+      kind: "free",
+      position: slice.destination,
+    });
   });
 
   it("replays the same bounded local-life arc deterministically", () => {
