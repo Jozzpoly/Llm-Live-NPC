@@ -30,6 +30,11 @@ import {
   ResidentSemanticPressureGate,
   type ResidentSemanticPressureDecision,
 } from "./resident-semantic-pressure-gate";
+import {
+  ResidentSemanticPressureLifecycle,
+  type ResidentSemanticPressureLifecycleEvent,
+  type ResidentSemanticPressureLifecycleState,
+} from "./resident-semantic-pressure-lifecycle";
 
 const ARRIVAL_DISTANCE = 18;
 const COMMUNICATION_DISTANCE = 80;
@@ -51,6 +56,17 @@ interface HeardActorCue {
   observerPosition: Vec2 | null;
 }
 
+export type ResidentSemanticSettlementDecision =
+  | "accept"
+  | "decline"
+  | "defer"
+  | "clarify";
+
+export interface ResidentSemanticSettlementReconciliation {
+  settledReasonIds: readonly string[];
+  retainedReasonIds: readonly string[];
+}
+
 export class ResidentRuntime {
   private activity: ResidentActivity;
   private readonly recentPercepts: ResidentPercept[] = [];
@@ -60,6 +76,7 @@ export class ResidentRuntime {
   private readonly recognizedActorIds = new Set<string>();
   private readonly mind: ResidentMind;
   private readonly semanticPressure: ResidentSemanticPressureGate;
+  private readonly semanticPressureLifecycle: ResidentSemanticPressureLifecycle;
   private cognitionSequence = 0;
   private routeWaypointIndex = 0;
   private currentRegionId: string | null = null;
@@ -75,6 +92,7 @@ export class ResidentRuntime {
   ) {
     this.mind = new ResidentMind(profile);
     this.semanticPressure = new ResidentSemanticPressureGate(profile.id, profile.traceLimit);
+    this.semanticPressureLifecycle = new ResidentSemanticPressureLifecycle(profile.id, profile.traceLimit);
     this.activity = {
       id: `activity:${profile.id}:idle:0`,
       kind: "idle",
@@ -125,6 +143,14 @@ export class ResidentRuntime {
 
   semanticPressureDecisions(): ResidentSemanticPressureDecision[] {
     return this.semanticPressure.recentDecisions();
+  }
+
+  semanticPressureLifecycleSnapshot(): ResidentSemanticPressureLifecycleState[] {
+    return this.semanticPressureLifecycle.snapshot();
+  }
+
+  semanticPressureLifecycleEvents(): ResidentSemanticPressureLifecycleEvent[] {
+    return this.semanticPressureLifecycle.eventSnapshot();
   }
 
   /**
@@ -326,9 +352,80 @@ export class ResidentRuntime {
     this.mind.applySemanticUpdates(proposal, tick, supportingPercepts);
   }
 
-  requeueCognitionBatch(batch: CognitionBatch): void {
+  requeueCognitionBatch(
+    batch: CognitionBatch,
+    transitionTick = batch.requestedAtTick,
+  ): void {
     if (batch.residentId !== this.profile.id) throw new Error("cognition batch belongs to another resident");
-    for (const reason of batch.reasons) this.scheduler.note(reason);
+    for (const reason of batch.reasons) {
+      this.scheduleSemanticReason(
+        reason,
+        transitionTick,
+        "requeued",
+        "cognition batch returned unresolved",
+      );
+    }
+  }
+
+  reconcileCognitionSettlement(input: {
+    batch: CognitionBatch;
+    originReasonId: string;
+    decision: ResidentSemanticSettlementDecision;
+    tick: number;
+    retainOriginUntilTick?: number;
+  }): ResidentSemanticSettlementReconciliation {
+    if (input.batch.residentId !== this.profile.id) {
+      throw new Error("cognition batch belongs to another resident");
+    }
+    if (!Number.isSafeInteger(input.tick) || input.tick < input.batch.requestedAtTick) {
+      throw new Error("semantic settlement tick cannot precede cognition dispatch");
+    }
+    const origin = input.batch.reasons.find((reason) => reason.id === input.originReasonId);
+    if (!origin) throw new Error("semantic settlement origin reason is missing from batch");
+
+    const settledReasonIds: string[] = [];
+    const retainedReasonIds: string[] = [];
+
+    for (const reason of input.batch.reasons) {
+      if (reason.id !== origin.id) {
+        this.scheduleSemanticReason(
+          reason,
+          input.tick,
+          "retained",
+          `batch sibling retained while ${origin.id} was selected`,
+        );
+        retainedReasonIds.push(reason.id);
+        continue;
+      }
+
+      if (input.decision === "defer" || input.decision === "clarify") {
+        const notBeforeTick = input.retainOriginUntilTick ?? input.tick;
+        if (!Number.isSafeInteger(notBeforeTick) || notBeforeTick < input.tick) {
+          throw new Error("retained semantic origin cannot become eligible before settlement");
+        }
+        this.scheduleSemanticReason(
+          reason,
+          input.tick,
+          "retained",
+          `${input.decision} keeps selected semantic pressure unresolved`,
+          notBeforeTick,
+        );
+        retainedReasonIds.push(reason.id);
+        continue;
+      }
+
+      this.semanticPressureLifecycle.settle(
+        reason,
+        input.tick,
+        `${input.decision} settled selected semantic pressure`,
+      );
+      settledReasonIds.push(reason.id);
+    }
+
+    return {
+      settledReasonIds,
+      retainedReasonIds,
+    };
   }
 
   fastStep(view: ResidentExecutionView): ResidentCommand {
@@ -349,6 +446,7 @@ export class ResidentRuntime {
   takeCognitionBatch(tick: number): CognitionBatch | null {
     const batch = this.scheduler.takeReady(tick);
     if (!batch) return null;
+    this.semanticPressureLifecycle.dispatch(batch, tick);
     this.appendTrace({
       tick,
       residentId: this.profile.id,
@@ -374,7 +472,12 @@ export class ResidentRuntime {
   }
 
   private noteCognitionReason(reason: CognitionReason): void {
-    this.scheduler.note(reason);
+    this.scheduleSemanticReason(
+      reason,
+      reason.tick,
+      "promoted",
+      "resident-local semantic pressure promoted",
+    );
     this.appendTrace({
       tick: reason.tick,
       residentId: this.profile.id,
@@ -382,6 +485,20 @@ export class ResidentRuntime {
       summary: reason.summary,
       refIds: [reason.id, ...reason.evidenceIds],
     });
+  }
+
+  private scheduleSemanticReason(
+    reason: CognitionReason,
+    transitionTick: number,
+    source: "promoted" | "requeued" | "retained",
+    detail: string,
+    notBeforeTick?: number,
+  ): void {
+    const result = this.scheduler.note(
+      reason,
+      notBeforeTick === undefined ? {} : { notBeforeTick },
+    );
+    this.semanticPressureLifecycle.note(result, transitionTick, source, detail);
   }
 
   private stepRoutedActivity(view: ResidentExecutionView): ResidentCommand {
