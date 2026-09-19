@@ -250,7 +250,8 @@ export function createZeroProviderLocalLifeSlice() {
     if (phase === "settled") {
       world.step();
       knowledge.sample();
-      processNewPercepts();
+      const started = processNewPercepts();
+      if (started) return { status: "interruption_started", interruption: started };
       return { status: "settled", tick: world.tick };
     }
 
