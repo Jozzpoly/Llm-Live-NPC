@@ -55,8 +55,20 @@ describe("unified resident life context Worker boundary", () => {
     }
     expect(guard).toBeLessThan(4_000);
 
-    // The factual outcome schedules another resident-owned review. Its exact
-    // context includes the resolved matter/evidence that the production Worker sees.
+    const resolvedMatter = life.currentLifeView().matters.find(
+      (matter) => matter.id === admitted.commitment!.matterId,
+    );
+    expect(resolvedMatter?.lastOutcomeEvidence).not.toBeNull();
+    if (!resolvedMatter?.lastOutcomeEvidence) return;
+
+    // This fixture explicitly asks for one post-outcome semantic interpretation
+    // because its purpose is Worker-context validation across chapters. Generic
+    // execution no longer treats expected success as automatic cognition pressure.
+    expect(life.outcomeReviewBridge.observe(
+      resolvedMatter.lastOutcomeEvidence,
+      runtime.world.tick,
+    ).status).toBe("scheduled");
+
     let next = null as ReturnType<FiveResidentCausalCognitionHost["startReadyRequests"]>[number] | null;
     guard = 0;
     while (!next && guard < 900) {
