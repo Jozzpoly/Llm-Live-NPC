@@ -296,10 +296,29 @@ export class FiveResidentCausalCognitionHost {
       });
     }
 
+    const decision = settlement.proposal.commitmentDecision.kind;
+    const retainOriginUntilTick = decision === "defer" || decision === "clarify"
+      ? this.runtime.world.tick + Math.max(
+          1,
+          Math.ceil(
+            settlement.proposal.reviewAfterSeconds
+              / this.runtime.world.options.fixedDeltaSeconds,
+          ),
+        )
+      : undefined;
+
+    life.resident.reconcileCognitionSettlement({
+      batch: local.prepared.batch,
+      originReasonId,
+      decision,
+      tick: this.runtime.world.tick,
+      ...(retainOriginUntilTick === undefined ? {} : { retainOriginUntilTick }),
+    });
+
     return {
       status: "applied",
       residentId: request.residentId,
-      decision: settlement.proposal.commitmentDecision.kind,
+      decision,
       commitment: commitment
         ? { matterId: commitment.matter.id, runId: commitment.runId }
         : null,
