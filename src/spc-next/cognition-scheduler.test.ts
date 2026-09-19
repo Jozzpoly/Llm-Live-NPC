@@ -29,28 +29,24 @@ describe("CognitionScheduler anti-storm semantics", () => {
     expect(scheduler.takeReady(1)?.reasons[0]?.id).toBe("urgent");
   });
 
-  it("lets local intelligence close exact pressure without fabricating a cognition request", () => {
+  it("exposes pending pressure read-only without consuming or dispatching it", () => {
     const scheduler = createDefaultCognitionScheduler("resident.mira", 0);
     scheduler.note({
-      ...reason("locally-handled", 10, 0.7),
+      ...reason("observed", 10, 0.7),
       evidenceIds: ["percept:local:1"],
     });
-    scheduler.note({
-      ...reason("unrelated", 10, 0.6),
-      evidenceIds: ["percept:other:1"],
-    });
 
-    expect(scheduler.pendingSnapshot()).toHaveLength(2);
-    expect(scheduler.settleLocallyByEvidence("percept:local:1")).toEqual([
-      expect.objectContaining({ id: "locally-handled", tick: 10 }),
+    expect(scheduler.pendingSnapshot()).toEqual([
+      expect.objectContaining({
+        id: "observed",
+        evidenceIds: ["percept:local:1"],
+      }),
     ]);
     expect(scheduler.pendingSnapshot()).toEqual([
-      expect.objectContaining({ id: "unrelated" }),
+      expect.objectContaining({ id: "observed" }),
     ]);
-    expect(scheduler.settleLocally("unrelated")).toBe(true);
-    expect(scheduler.pendingSnapshot()).toEqual([]);
     expect(scheduler.diagnostics()).toMatchObject({
-      pendingCount: 0,
+      pendingCount: 1,
       lastRequestTick: null,
     });
   });
