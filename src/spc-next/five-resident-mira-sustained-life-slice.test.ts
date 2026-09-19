@@ -62,7 +62,11 @@ describe("five-resident Mira sustained-life architecture pressure", () => {
       context: { currentRegionId: "workshop" },
     });
     expect(second.tick).toBeGreaterThan(resolved[0]!.tick);
-    expect(second.batch.reasons.some((reason) => reason.kind === "direct_world_change")).toBe(true);
+    expect(second.batch.reasons.some((reason) => (
+      reason.kind === "activity_completed"
+      && reason.summary.includes("Factual run outcome requires resident interpretation")
+    ))).toBe(true);
+    expect(second.batch.reasons.some((reason) => reason.kind === "quiet_review")).toBe(false);
 
     expect(resolved.map((entry) => entry.chapter)).toEqual([1, 2]);
     expect(slice.kernel.matter(MATTER_1)).toMatchObject({
