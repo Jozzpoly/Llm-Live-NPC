@@ -1,5 +1,5 @@
 import type { ResidentPercept, Vec2, WorldOccurrence } from "./contracts";
-import { MaterialObjectState } from "./material-world-state";
+import type { MaterialObjectState } from "./material-world-state";
 import { ResidentContinuityKernel, type ResidentTaskRunBinding } from "./resident-continuity-kernel";
 import { ResidentMaterialKnowledge } from "./resident-material-knowledge";
 import { ResidentMaterialPickupExecutor, type ResidentMaterialPickupStep } from "./resident-material-pickup-executor";
@@ -53,6 +53,7 @@ export interface ZeroProviderLocalInterruptionSnapshot {
 
 export type ZeroProviderLocalLifeStep =
   | { status: "running"; phase: "pickup"; local: ResidentMaterialPickupStep }
+  | { status: "pickup_completed"; tick: number }
   | { status: "running"; phase: "delivery"; local: ResidentMaterialPlaceStep }
   | { status: "interruption_started"; interruption: ZeroProviderLocalInterruptionSnapshot }
   | { status: "interruption_responded"; interruption: ZeroProviderLocalInterruptionSnapshot }
@@ -354,12 +355,16 @@ export function createZeroProviderLocalLifeSlice() {
       return { status: "settled", tick: world.tick };
     }
 
+    let step: ZeroProviderLocalLifeStep;
+
     if (phase === "pickup") {
       knowledge.sample();
       const local = pickup.step();
-      if (local.status === "authority_lost") return { status: "authority_lost", phase: "pickup" };
-      if (local.status === "blocked") return { status: "blocked", phase: "pickup", reason: local.reason };
-      if (local.status === "succeeded") {
+      if (local.status === "authority_lost") {
+        step = { status: "authority_lost", phase: "pickup" };
+      } else if (local.status === "blocked") {
+        step = { status: "blocked", phase: "pickup", reason: local.reason };
+      } else if (local.status === "succeeded") {
         const reconciled = kernel.reconcileRunOutcome({
           runId: local.runId,
           tick: local.materialOutcome.tick,
@@ -367,18 +372,22 @@ export function createZeroProviderLocalLifeSlice() {
           summary: "Mira picked up the workshop basket for her local matter.",
         });
         if (reconciled.status !== "recorded") {
-          return { status: "blocked", phase: "pickup", reason: "pickup outcome did not reconcile" };
+          step = { status: "blocked", phase: "pickup", reason: "pickup outcome did not reconcile" };
+        } else {
+          startDelivery();
+          step = { status: "pickup_completed", tick: world.tick };
         }
-        startDelivery();
+      } else {
+        step = { status: "running", phase: "pickup", local };
       }
-    }
-
-    if (phase === "delivery") {
+    } else {
       if (!place) throw new Error("R1 delivery phase has no local place executor");
       const local = place.step();
-      if (local.status === "authority_lost") return { status: "authority_lost", phase: "delivery" };
-      if (local.status === "blocked") return { status: "blocked", phase: "delivery", reason: local.reason };
-      if (local.status === "succeeded") {
+      if (local.status === "authority_lost") {
+        step = { status: "authority_lost", phase: "delivery" };
+      } else if (local.status === "blocked") {
+        step = { status: "blocked", phase: "delivery", reason: local.reason };
+      } else if (local.status === "succeeded") {
         const reconciled = kernel.reconcileRunOutcome({
           runId: local.runId,
           tick: local.materialOutcome.tick,
@@ -386,15 +395,19 @@ export function createZeroProviderLocalLifeSlice() {
           summary: "Mira put the workshop basket back beside the local shelf.",
         });
         if (reconciled.status !== "recorded") {
-          return { status: "blocked", phase: "delivery", reason: "place outcome did not reconcile" };
+          step = { status: "blocked", phase: "delivery", reason: "place outcome did not reconcile" };
+        } else {
+          kernel.resolveMatter(MAIN_MATTER_ID);
+          authority.enforceMotionAuthority();
+          phase = "settled";
+          attention = {
+            kind: "quiet",
+            reason: "basket matter is factually complete; no unresolved local reason requires action",
+          };
+          step = { status: "settled", tick: world.tick };
         }
-        kernel.resolveMatter(MAIN_MATTER_ID);
-        authority.enforceMotionAuthority();
-        phase = "settled";
-        attention = {
-          kind: "quiet",
-          reason: "basket matter is factually complete; no unresolved local reason requires action",
-        };
+      } else {
+        step = { status: "running", phase: "delivery", local };
       }
     }
 
@@ -404,11 +417,7 @@ export function createZeroProviderLocalLifeSlice() {
     if (started) return { status: "interruption_started", interruption: started };
 
     if (phase === "settled") return { status: "settled", tick: world.tick };
-    if (phase === "delivery") {
-      if (!place) throw new Error("R1 delivery executor disappeared");
-      return { status: "running", phase: "delivery", local: place.step() };
-    }
-    return { status: "running", phase: "pickup", local: pickup.step() };
+    return step;
   }
 
   function interruptionSnapshot(): ZeroProviderLocalInterruptionSnapshot {
