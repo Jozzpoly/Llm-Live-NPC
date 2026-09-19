@@ -13,7 +13,7 @@ const AUTHORED_SETTLE_TICK = 900;
 const LONG_WINDOW_TICK = 6_000;
 
 describe("five-resident sustained-life characterization", () => {
-  it("exposes the current plateau: bodies and authored activities stop while cognition remains requestable", () => {
+  it("exposes the current plateau while distinguishing real completion pressure from legitimate idle", () => {
     const world = createFiveResidentRegionWorld();
     world.step(AUTHORED_SETTLE_TICK);
 
@@ -49,19 +49,18 @@ describe("five-resident sustained-life characterization", () => {
       world.takeCognitionBatch(residentId),
     ])) as Record<(typeof RESIDENT_IDS)[number], ReturnType<typeof world.takeCognitionBatch>>;
 
-    for (const residentId of RESIDENT_IDS) {
-      expect(batches[residentId], `${residentId} should have a requestable cognition batch`).not.toBeNull();
-    }
-
     for (const residentId of ["resident.mira", "resident.ida", "resident.oren", "resident.nela"] as const) {
+      expect(batches[residentId], `${residentId} should retain factual completion pressure`).not.toBeNull();
       expect(batches[residentId]?.reasons.some((reason) => reason.kind === "activity_completed"), residentId)
         .toBe(true);
+      expect(batches[residentId]?.reasons.some((reason) => reason.kind === "quiet_review"), residentId)
+        .toBe(false);
     }
 
-    // Janek starts intentionally idle, so do not manufacture a fake completion
-    // requirement for him. By this late tick his scheduler must at minimum be due a
-    // quiet review if no stronger private/world pressure exists.
-    expect(batches["resident.janek"]?.reasons.length).toBeGreaterThan(0);
+    // Janek starts intentionally idle and receives no discrepancy in this specimen.
+    // Long passage of time must therefore remain legitimate quiet rather than create
+    // a synthetic provider heartbeat.
+    expect(batches["resident.janek"]).toBeNull();
   });
 });
 
