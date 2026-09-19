@@ -176,7 +176,14 @@ export function createZeroProviderLocalLifeSlice() {
         && phase !== "interrupted"
         && !contactRoutine.active();
 
-      const settled = settlePerceptReasonLocally(percept);
+      const pendingForPercept = resident.pendingCognitionReasons()
+        .find((reason) => reason.evidenceIds.includes(percept.id)) ?? null;
+      // Contact acknowledgement is not semantic handling of addressed speech.
+      // Keep its higher-cognition pressure unresolved while provider cognition is
+      // disabled; background/local-only evidence may be fully metabolized here.
+      const settled = shouldInterrupt
+        ? { id: pendingForPercept?.id ?? null, settled: false }
+        : settlePerceptReasonLocally(percept);
       localDecisions.push({
         tick: world.tick,
         perceptId: percept.id,
@@ -185,7 +192,7 @@ export function createZeroProviderLocalLifeSlice() {
         cognitionReasonId: settled.id,
         cognitionReasonSettled: settled.settled,
         summary: shouldInterrupt
-          ? `locally interrupt for addressed speech: ${percept.text}`
+          ? `local contact acknowledgement only; semantic speech pressure retained: ${percept.text}`
           : `locally bounded/background: ${percept.summary}`,
       });
 
