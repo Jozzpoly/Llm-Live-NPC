@@ -49,10 +49,13 @@ describe("Mira self-origin follow-up from factual outcome", () => {
     expect(providerReviewDeadline - slice.world.tick).toBeGreaterThan(30_000);
 
     const completedA = slice.completeFocusedMatter(acceptedA.matter.id);
-    const outcomeReviewDeadline = slice.mira.cognitionScheduleDiagnostics().nextQuietReviewTick;
-    expect(outcomeReviewDeadline).toBeLessThan(providerReviewDeadline);
-    expect(outcomeReviewDeadline).toBeGreaterThanOrEqual(completedA.worldTick + 60);
-    expect(outcomeReviewDeadline).toBeLessThanOrEqual(completedA.worldTick + 90);
+    expect(slice.mira.cognitionScheduleDiagnostics().nextQuietReviewTick).toBe(providerReviewDeadline);
+    expect(slice.mira.pendingCognitionReasons()).toContainEqual(expect.objectContaining({
+      kind: "activity_completed",
+      tick: completedA.worldTick,
+      evidenceIds: [completedA.outcomeEvidence.id],
+    }));
+    expect(slice.mira.pendingCognitionReasons().some((reason) => reason.kind === "quiet_review")).toBe(false);
     expect(completedA.outcomeEvidence.kind).toBe("task_outcome");
     expect(completedA.outcomeEvidence.summary).toContain("workshop");
 
