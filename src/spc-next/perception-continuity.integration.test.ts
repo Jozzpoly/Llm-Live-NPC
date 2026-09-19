@@ -89,12 +89,24 @@ describe("SPC perception continuity integration", () => {
     expect(sightUpdates.length).toBeGreaterThan(0);
     expect(sightUpdates.length).toBeLessThan(40);
 
-    const cognitionReasonSummaries = world.residentDiagnostics("resident.mira").trace
-      .filter((event) => event.kind === "cognition_reason")
-      .map((event) => event.summary);
-    expect(cognitionReasonSummaries.some((summary) => summary.includes("entered sight"))).toBe(true);
-    expect(cognitionReasonSummaries.some((summary) => summary.includes("left sight"))).toBe(true);
-    expect(cognitionReasonSummaries.some((summary) => summary.includes("moved while visible"))).toBe(false);
+    const visibilityPressure = resident.semanticPressureDecisions().filter(
+      (decision) => decision.code === "actor_visibility",
+    );
+    expect(visibilityPressure).toEqual([
+      expect.objectContaining({
+        evidenceId: enter.id,
+        disposition: "observation_only",
+      }),
+      expect.objectContaining({
+        evidenceId: exit.id,
+        disposition: "observation_only",
+      }),
+    ]);
+    expect(resident.pendingCognitionReasons()).toEqual([]);
+    expect(resident.semanticPressureDecisions().some(
+      (decision) => decision.disposition === "unresolved"
+        && decision.summary.includes("moved while visible"),
+    )).toBe(false);
   });
 
   it("does not let the fast execution sensor silently advance durable actor memory below the semantic sample threshold", () => {
