@@ -31,13 +31,23 @@ describe("CognitionScheduler anti-storm semantics", () => {
 
   it("lets local intelligence close exact pressure without fabricating a cognition request", () => {
     const scheduler = createDefaultCognitionScheduler("resident.mira", 0);
-    scheduler.note(reason("locally-handled", 10, 0.7));
+    scheduler.note({
+      ...reason("locally-handled", 10, 0.7),
+      evidenceIds: ["percept:local:1"],
+    });
+    scheduler.note({
+      ...reason("unrelated", 10, 0.6),
+      evidenceIds: ["percept:other:1"],
+    });
 
-    expect(scheduler.pendingSnapshot()).toEqual([
+    expect(scheduler.pendingSnapshot()).toHaveLength(2);
+    expect(scheduler.settleLocallyByEvidence("percept:local:1")).toEqual([
       expect.objectContaining({ id: "locally-handled", tick: 10 }),
     ]);
-    expect(scheduler.settleLocally("locally-handled")).toBe(true);
-    expect(scheduler.settleLocally("locally-handled")).toBe(false);
+    expect(scheduler.pendingSnapshot()).toEqual([
+      expect.objectContaining({ id: "unrelated" }),
+    ]);
+    expect(scheduler.settleLocally("unrelated")).toBe(true);
     expect(scheduler.pendingSnapshot()).toEqual([]);
     expect(scheduler.diagnostics()).toMatchObject({
       pendingCount: 0,
