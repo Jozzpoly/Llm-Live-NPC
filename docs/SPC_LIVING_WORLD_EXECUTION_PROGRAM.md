@@ -1,7 +1,18 @@
-# SPC Living World — Current Execution Program
+# SPC Living World — Pre-Stress Execution Program (Historical)
 
-Status: **CANONICAL CURRENT EXECUTION AUTHORITY**
-Updated: 2026-09-18
+Status: **SUPERSEDED / HISTORICAL PRE-STRESS SNAPSHOT**
+Originally current: 2026-09-18
+Superseded: 2026-09-20
+
+> **DO NOT USE THIS DOCUMENT AS CURRENT EXECUTION AUTHORITY.**
+>
+> The 18 September Owner/stress observation falsified the broader interpretation that the frozen candidate already constituted a credible living-resident system. The narrow causal/provider/browser qualifications recorded below remain historical evidence within scope.
+>
+> Current authority: `docs/SPC_POST_STRESS_RECOVERY_PROGRAM.md`
+>
+> Current first experiment: `docs/SPC_ZERO_PROVIDER_LOCAL_LIFE_EXPERIMENT.md`
+>
+> Frozen runtime `c1816785c89b5403889a7c57498843ecbbb69b97` is retained unchanged as a forensic failure specimen, not promoted as a current living-world candidate.
 Active integration branch: `integration/spc-next-owner-living-runtime-v1`
 Draft PR: **#141 — integration: five-resident owner living runtime v1**
 Frozen Owner-candidate runtime checkpoint:
