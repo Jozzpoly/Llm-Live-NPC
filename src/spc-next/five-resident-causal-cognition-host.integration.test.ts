@@ -24,6 +24,95 @@ const TARGETS: Readonly<Record<FiveResidentId, string>> = {
 };
 
 describe("five-resident unified causal cognition host", () => {
+  it("settles only the selected Janek origin and retains an independent sibling reason", () => {
+    const composition = createFiveResidentRegionComposition();
+    const runtime = new FiveResidentCausalLifeRuntime(composition);
+    const cognition = new FiveResidentCausalCognitionHost(runtime, 5);
+
+    let guard = 0;
+    while (runtime.claimedResidentIds().length < 5 && guard < 1_500) {
+      runtime.advanceOneWorldTick();
+      guard += 1;
+    }
+    expect(guard).toBeLessThan(1_500);
+
+    const janekLife = runtime.life("resident.janek");
+    expect(janekLife).not.toBeNull();
+    if (!janekLife) return;
+
+    const tick = runtime.world.tick;
+    janekLife.resident.promoteSemanticPressure({
+      id: "reason:test:janek:selected",
+      tick,
+      kind: "uncertainty",
+      salience: 0.8,
+      summary: "selected Janek issue",
+      evidenceIds: ["evidence:test:janek:selected"],
+    });
+    janekLife.resident.promoteSemanticPressure({
+      id: "reason:test:janek:sibling",
+      tick,
+      kind: "uncertainty",
+      salience: 0.7,
+      summary: "independent Janek sibling issue",
+      evidenceIds: ["evidence:test:janek:sibling"],
+    });
+
+    while (runtime.world.tick < tick + 30) runtime.advanceOneWorldTick();
+    expect(cognition.collectReadyBatches()).toBeGreaterThan(0);
+    const requests = cognition.startReadyRequests();
+    const janekRequest = requests.find((request) => request.residentId === "resident.janek");
+    expect(janekRequest).toBeDefined();
+    if (!janekRequest) return;
+    expect(janekRequest.batch.reasons).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: "reason:test:janek:selected" }),
+      expect.objectContaining({ id: "reason:test:janek:sibling" }),
+    ]));
+
+    expect(cognition.settleCommitment(
+      janekRequest,
+      {
+        version: 1,
+        commitmentDecision: {
+          kind: "decline",
+          reason: "decline only the selected issue",
+        },
+        beliefs: [],
+        concerns: [],
+        reviewAfterSeconds: 30,
+      },
+      "reason:test:janek:selected",
+    )).toMatchObject({
+      status: "applied",
+      residentId: "resident.janek",
+      decision: "decline",
+      commitment: null,
+    });
+
+    expect(janekLife.resident.pendingCognitionReasons()).toContainEqual(expect.objectContaining({
+      id: "reason:test:janek:sibling",
+    }));
+    expect(janekLife.resident.pendingCognitionReasons().some(
+      (reason) => reason.id === "reason:test:janek:selected",
+    )).toBe(false);
+
+    expect(janekLife.resident.semanticPressureLifecycleSnapshot()).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        reason: expect.objectContaining({ id: "reason:test:janek:selected" }),
+        status: "settled",
+      }),
+      expect.objectContaining({
+        reason: expect.objectContaining({ id: "reason:test:janek:sibling" }),
+        status: "pending",
+      }),
+    ]));
+
+    for (const request of requests) {
+      if (request === janekRequest) continue;
+      cognition.abandon(request, 1_000);
+    }
+  });
+
   it("fairly admits five resident commitments and executes them together in one World", () => {
     const composition = createFiveResidentRegionComposition();
     const runtime = new FiveResidentCausalLifeRuntime(composition);
