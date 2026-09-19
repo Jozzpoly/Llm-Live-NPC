@@ -29,7 +29,6 @@ export interface ResidentLocalContactSnapshot {
   interruptedRunId: string | null;
   startedAtTick: number | null;
   responseTick: number | null;
-  responseTick: number | null;
   responseOccurrenceId: string | null;
   completedAtTick: number | null;
   remainingHoldTicks: number;
@@ -243,6 +242,7 @@ interface ActiveLocalContact {
   interruptedRunId: string | null;
   interruptedBinding: ResidentTaskRunBinding | null;
   startedAtTick: number;
+  responseTick: number | null;
   responseOccurrenceId: string | null;
   completedAtTick: number | null;
   remainingHoldTicks: number;
