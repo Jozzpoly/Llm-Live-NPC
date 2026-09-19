@@ -12,42 +12,7 @@ const OUTCOME: ResidentKernelEvidence = {
 };
 
 describe("ResidentLifeOutcomeReviewBridge", () => {
-  it("turns a factual recovered-run outcome into one bounded near-term cognition opportunity", () => {
-    const resident = new ResidentRuntime({
-      id: "resident.mira",
-      name: "Mira",
-      ...DEFAULT_RESIDENT_PROFILE,
-    });
-    const bridge = new ResidentLifeOutcomeReviewBridge(resident);
-
-    const before = resident.cognitionScheduleDiagnostics().nextQuietReviewTick;
-    const observed = bridge.observe(OUTCOME, 100);
-    const after = resident.cognitionScheduleDiagnostics().nextQuietReviewTick;
-
-    expect(observed).toEqual({
-      status: "scheduled",
-      outcomeEvidenceId: OUTCOME.id,
-    });
-    expect(after).toBeLessThan(before);
-    // Default resident normal cadence is 60 ticks. The scheduler may add only its
-    // deterministic micro-stagger after the bridge's 0.25 s request.
-    expect(after).toBeGreaterThanOrEqual(160);
-    expect(after).toBeLessThanOrEqual(162);
-
-    let batch = null;
-    for (let tick = 100; tick <= 180 && !batch; tick += 1) {
-      batch = resident.takeCognitionBatch(tick);
-    }
-    expect(batch).not.toBeNull();
-    expect(batch?.reasons).toEqual([
-      expect.objectContaining({
-        kind: "quiet_review",
-        evidenceIds: [],
-      }),
-    ]);
-  });
-
-  it("is edge-triggered by exact outcome evidence id so repeated observation cannot starve reflection", () => {
+  it("turns factual task outcome evidence into one explicit activity_completed pressure", () => {
     const resident = new ResidentRuntime({
       id: "resident.mira",
       name: "Mira",
@@ -59,13 +24,40 @@ describe("ResidentLifeOutcomeReviewBridge", () => {
       status: "scheduled",
       outcomeEvidenceId: OUTCOME.id,
     });
-    const firstDeadline = resident.cognitionScheduleDiagnostics().nextQuietReviewTick;
+    expect(resident.pendingCognitionReasons()).toEqual([
+      expect.objectContaining({
+        kind: "activity_completed",
+        tick: 100,
+        salience: 0.65,
+        evidenceIds: [OUTCOME.id],
+      }),
+    ]);
 
+    expect(resident.takeCognitionBatch(129)).toBeNull();
+    expect(resident.takeCognitionBatch(130)?.reasons).toEqual([
+      expect.objectContaining({
+        kind: "activity_completed",
+        evidenceIds: [OUTCOME.id],
+      }),
+    ]);
+  });
+
+  it("is edge-triggered by exact outcome evidence id while distinct outcomes remain distinct pressure", () => {
+    const resident = new ResidentRuntime({
+      id: "resident.mira",
+      name: "Mira",
+      ...DEFAULT_RESIDENT_PROFILE,
+    });
+    const bridge = new ResidentLifeOutcomeReviewBridge(resident);
+
+    expect(bridge.observe(OUTCOME, 100)).toEqual({
+      status: "scheduled",
+      outcomeEvidenceId: OUTCOME.id,
+    });
     expect(bridge.observe(structuredClone(OUTCOME), 130)).toEqual({
       status: "already_scheduled",
       outcomeEvidenceId: OUTCOME.id,
     });
-    expect(resident.cognitionScheduleDiagnostics().nextQuietReviewTick).toBe(firstDeadline);
 
     const nextOutcome = {
       ...OUTCOME,
@@ -77,9 +69,11 @@ describe("ResidentLifeOutcomeReviewBridge", () => {
       status: "scheduled",
       outcomeEvidenceId: nextOutcome.id,
     });
-    // A second distinct factual outcome is new information, but it must not postpone
-    // the already guaranteed earlier opportunity to interpret outcome A.
-    expect(resident.cognitionScheduleDiagnostics().nextQuietReviewTick).toBe(firstDeadline);
+
+    expect(resident.pendingCognitionReasons()).toHaveLength(2);
+    expect(new Set(resident.pendingCognitionReasons().flatMap((reason) => reason.evidenceIds))).toEqual(
+      new Set([OUTCOME.id, nextOutcome.id]),
+    );
   });
 
   it("bounds remembered outcome ids so lifetime dedupe state cannot grow without limit", () => {
@@ -99,9 +93,6 @@ describe("ResidentLifeOutcomeReviewBridge", () => {
     expect(bridge.observe(outcomeA, 100).status).toBe("scheduled");
     expect(bridge.observe(outcomeB, 101).status).toBe("scheduled");
     expect(bridge.observe(outcomeC, 102).status).toBe("scheduled");
-
-    // A has left the bounded dedupe window. Re-observing it may schedule again rather
-    // than forcing the bridge to retain every outcome id for the resident's lifetime.
     expect(bridge.observe(outcomeA, 103)).toEqual({
       status: "scheduled",
       outcomeEvidenceId: outcomeA.id,
