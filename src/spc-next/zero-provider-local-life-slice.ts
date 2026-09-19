@@ -1,11 +1,15 @@
-import type { ResidentPercept, Vec2, WorldOccurrence } from "./contracts";
+import type { ResidentPercept, WorldOccurrence } from "./contracts";
 import type { MaterialObjectState } from "./material-world-state";
-import { ResidentContinuityKernel, type ResidentTaskRunBinding } from "./resident-continuity-kernel";
+import { ResidentContinuityKernel } from "./resident-continuity-kernel";
 import { ResidentMaterialKnowledge } from "./resident-material-knowledge";
 import {
   ResidentLocalMaterialDeliveryRoutine,
   type ResidentLocalMaterialDeliveryStep,
 } from "./resident-local-material-delivery-routine";
+import {
+  ResidentLocalContactRoutine,
+  type ResidentLocalContactSnapshot,
+} from "./resident-local-contact-routine";
 import { ResidentWorldExecutionAuthority } from "./resident-world-execution-authority";
 import { SpcWorldRuntime } from "./spc-world-runtime";
 
@@ -63,19 +67,6 @@ export type ZeroProviderLocalLifeStep =
   | { status: "blocked"; phase: "pickup" | "delivery"; reason: string }
   | { status: "authority_lost"; phase: "pickup" | "delivery" };
 
-interface ActiveInterruption {
-  interruptMatterId: string;
-  interruptRunId: string;
-  mainRunId: string;
-  mainBinding: ResidentTaskRunBinding;
-  addressedPerceptId: string;
-  addressedDirection: Vec2 | null;
-  startedAtTick: number;
-  responseOccurrenceId: string | null;
-  resumedAtTick: number | null;
-  remainingHoldTicks: number;
-  responded: boolean;
-}
 
 /**
  * R1 executable specimen: one resident keeps a mundane material matter alive with
@@ -141,15 +132,24 @@ export function createZeroProviderLocalLifeSlice() {
     placeTaskId: "task.mira.local-life.place-basket",
     placeRunId: PLACE_RUN_ID,
   }, kernel, knowledge, authority, world);
+  const contactRoutine = new ResidentLocalContactRoutine(
+    RESIDENT_ID,
+    kernel,
+    authority,
+    world,
+    {
+      responseText: LOCAL_RESPONSE,
+      holdTicks: INTERRUPTION_HOLD_TICKS,
+      responseRadius: 420,
+    },
+  );
   let phase: ZeroProviderLocalLifePhase = "pickup";
   let attention: ZeroProviderLocalAttention = {
     kind: "matter",
     matterId: MAIN_MATTER_ID,
     reason: "restore the workshop basket",
   };
-  let activeInterruption: ActiveInterruption | null = null;
-  let completedInterruption: ZeroProviderLocalInterruptionSnapshot | null = null;
-  let interruptSequence = 0;
+  let phaseBeforeContact: Exclude<ZeroProviderLocalLifePhase, "interrupted"> | null = null;
   const handledPercepts = new Set<string>();
   const localDecisions: ZeroProviderLocalDecision[] = [];
 
@@ -173,8 +173,8 @@ export function createZeroProviderLocalLifeSlice() {
         && percept.modality === "hearing"
         && percept.addressed
         && percept.text !== null
-        && phase === "delivery"
-        && activeInterruption === null;
+        && phase !== "interrupted"
+        && !contactRoutine.active();
 
       const settled = settlePerceptReasonLocally(percept);
       localDecisions.push({
@@ -199,50 +199,12 @@ export function createZeroProviderLocalLifeSlice() {
 
   function beginInterruption(percept: ResidentPercept): ZeroProviderLocalInterruptionSnapshot {
     const main = kernel.matter(MAIN_MATTER_ID);
-    if (!main || main.status !== "active" || main.activeRunId !== PLACE_RUN_ID) {
-      throw new Error("R1 local interruption requires active delivery run");
-    }
-    const mainBinding = kernel.runBinding(PLACE_RUN_ID);
-    if (!mainBinding) throw new Error("R1 local interruption lost delivery binding");
+    const interrupted = main?.status === "active" && main.activeRunId
+      ? { matterId: MAIN_MATTER_ID, runId: main.activeRunId }
+      : null;
 
-    const seq = interruptSequence++;
-    const evidence = kernel.recordEvidence({
-      id: `evidence.mira.local-life.interrupt.${percept.tick}.${seq}`,
-      tick: percept.tick,
-      kind: "local_addressed_contact",
-      summary: `Mira locally noticed addressed speech: ${percept.text ?? percept.summary}`,
-    });
-    const interruptMatterId = `matter.mira.local-life.contact.${percept.tick}.${seq}`;
-    const interruptRunId = `run.mira.local-life.contact.${percept.tick}.${seq}`;
-    kernel.openMatter({
-      id: interruptMatterId,
-      originEvidenceId: evidence.id,
-      semanticCourse: "briefly acknowledge nearby addressed contact, then return to the basket matter",
-    });
-    kernel.bindRun({
-      matterId: interruptMatterId,
-      taskId: `task.mira.local-life.contact.${percept.tick}.${seq}`,
-      runId: interruptRunId,
-    });
-    kernel.suspendMatter(MAIN_MATTER_ID, interruptMatterId);
-    authority.enforceMotionAuthority();
-
-    activeInterruption = {
-      interruptMatterId,
-      interruptRunId,
-      mainRunId: PLACE_RUN_ID,
-      mainBinding,
-      addressedPerceptId: percept.id,
-      addressedDirection: percept.spatial.kind === "directional"
-        && Math.hypot(percept.spatial.direction.x, percept.spatial.direction.y) > 1e-9
-        ? { ...percept.spatial.direction }
-        : null,
-      startedAtTick: world.tick,
-      responseOccurrenceId: null,
-      resumedAtTick: null,
-      remainingHoldTicks: INTERRUPTION_HOLD_TICKS,
-      responded: false,
-    };
+    phaseBeforeContact = phase === "interrupted" ? null : phase;
+    contactRoutine.begin(percept, interrupted);
     attention = {
       kind: "actor",
       actorId: percept.actorId,
@@ -253,78 +215,35 @@ export function createZeroProviderLocalLifeSlice() {
   }
 
   function advanceInterruption(): ZeroProviderLocalLifeStep {
-    if (!activeInterruption) throw new Error("R1 interruption phase has no active interruption");
+    const local = contactRoutine.step();
 
-    if (!activeInterruption.responded) {
-      const effects = [
-        { kind: "motion" as const, desiredVelocity: { x: 0, y: 0 } },
-        ...(activeInterruption.addressedDirection
-          ? [{ kind: "look" as const, direction: { ...activeInterruption.addressedDirection } }]
-          : []),
-        {
-          kind: "speech" as const,
-          text: LOCAL_RESPONSE,
-          radius: 420,
-          addressedActorIds: [PLAYER_ID],
-        },
-      ];
-      const applied = authority.apply({
-        runId: activeInterruption.interruptRunId,
-        effects,
-      });
-      if (applied.status !== "applied") {
-        throw new Error(`R1 local interruption response failed: ${applied.status}`);
-      }
-      const speech = applied.occurrences.find((occurrence) => occurrence.kind === "speech");
-      if (!speech) throw new Error("R1 local interruption produced no factual speech");
-      activeInterruption.responded = true;
-      activeInterruption.responseOccurrenceId = speech.id;
-      world.step();
-      knowledge.sample();
-      processNewPercepts();
-      return { status: "interruption_responded", interruption: interruptionSnapshot() };
+    if (local.status === "completed") {
+      const returnPhase = phaseBeforeContact ?? "settled";
+      phaseBeforeContact = null;
+      phase = returnPhase;
+      attention = returnPhase === "settled"
+        ? {
+            kind: "quiet",
+            reason: "no unresolved local matter requires action after bounded contact",
+          }
+        : {
+            kind: "matter",
+            matterId: MAIN_MATTER_ID,
+            reason: "return to the still-unfinished basket matter",
+          };
     }
 
-    if (activeInterruption.remainingHoldTicks > 0) {
-      activeInterruption.remainingHoldTicks -= 1;
-      world.step();
-      knowledge.sample();
-      processNewPercepts();
-      return { status: "interruption_holding", interruption: interruptionSnapshot() };
-    }
-
-    const reconciliation = kernel.reconcileRunOutcome({
-      runId: activeInterruption.interruptRunId,
-      tick: world.tick,
-      status: "succeeded",
-      summary: `locally acknowledged addressed contact via ${activeInterruption.responseOccurrenceId ?? "speech"}`,
-    });
-    if (reconciliation.status !== "recorded") {
-      throw new Error("R1 local interruption outcome did not reconcile");
-    }
-    kernel.resolveMatter(activeInterruption.interruptMatterId);
-    authority.enforceMotionAuthority();
-    if (!kernel.resumeMatter(MAIN_MATTER_ID)) {
-      throw new Error("R1 local interruption could not resume main matter");
-    }
-    const restored = kernel.runBinding(activeInterruption.mainRunId);
-    if (JSON.stringify(restored) !== JSON.stringify(activeInterruption.mainBinding)) {
-      throw new Error("R1 local interruption changed the exact pre-contact run binding");
-    }
-
-    activeInterruption.resumedAtTick = world.tick;
-    completedInterruption = snapshotActive(activeInterruption, "completed");
-    activeInterruption = null;
-    phase = "delivery";
-    attention = {
-      kind: "matter",
-      matterId: MAIN_MATTER_ID,
-      reason: "return to the still-unfinished basket matter",
-    };
     world.step();
     knowledge.sample();
     processNewPercepts();
-    return { status: "interruption_resumed", interruption: structuredClone(completedInterruption) };
+
+    if (local.status === "responded") {
+      return { status: "interruption_responded", interruption: interruptionSnapshot() };
+    }
+    if (local.status === "holding") {
+      return { status: "interruption_holding", interruption: interruptionSnapshot() };
+    }
+    return { status: "interruption_resumed", interruption: interruptionSnapshot() };
   }
 
   function stepMainLife(): ZeroProviderLocalLifeStep {
@@ -367,19 +286,7 @@ export function createZeroProviderLocalLifeSlice() {
   }
 
   function interruptionSnapshot(): ZeroProviderLocalInterruptionSnapshot {
-    if (activeInterruption) return snapshotActive(activeInterruption, "active");
-    if (completedInterruption) return structuredClone(completedInterruption);
-    return {
-      status: "none",
-      interruptMatterId: null,
-      interruptRunId: null,
-      mainRunId: null,
-      addressedPerceptId: null,
-      startedAtTick: null,
-      responseOccurrenceId: null,
-      resumedAtTick: null,
-      remainingHoldTicks: 0,
-    };
+    return projectContactSnapshot(contactRoutine.snapshot());
   }
 
   return {
@@ -401,26 +308,25 @@ export function createZeroProviderLocalLifeSlice() {
       return world.speak(PLAYER_ID, text, 420, addressed ? [RESIDENT_ID] : []);
     },
     advanceOneWorldTick(): ZeroProviderLocalLifeStep {
-      if (activeInterruption) return advanceInterruption();
+      if (contactRoutine.active()) return advanceInterruption();
       return stepMainLife();
     },
   };
 }
 
-function snapshotActive(
-  active: ActiveInterruption,
-  status: "active" | "completed",
+
+function projectContactSnapshot(
+  snapshot: ResidentLocalContactSnapshot,
 ): ZeroProviderLocalInterruptionSnapshot {
   return {
-    status,
-    interruptMatterId: active.interruptMatterId,
-    interruptRunId: active.interruptRunId,
-    mainRunId: active.mainRunId,
-    addressedPerceptId: active.addressedPerceptId,
-    startedAtTick: active.startedAtTick,
-    responseOccurrenceId: active.responseOccurrenceId,
-    resumedAtTick: active.resumedAtTick,
-    remainingHoldTicks: active.remainingHoldTicks,
+    status: snapshot.status,
+    interruptMatterId: snapshot.contactMatterId,
+    interruptRunId: snapshot.contactRunId,
+    mainRunId: snapshot.interruptedRunId,
+    addressedPerceptId: snapshot.perceptId,
+    startedAtTick: snapshot.startedAtTick,
+    responseOccurrenceId: snapshot.responseOccurrenceId,
+    resumedAtTick: snapshot.completedAtTick,
+    remainingHoldTicks: snapshot.remainingHoldTicks,
   };
 }
-
