@@ -16,9 +16,13 @@ Current execution / roadmap authority:
 
 **`docs/SPC_POST_STRESS_RECOVERY_PROGRAM.md`**
 
-Binding first recovery experiment:
+Qualified R1 local-life gate:
 
 **`docs/SPC_ZERO_PROVIDER_LOCAL_LIFE_EXPERIMENT.md`**
+
+R1 evidence report:
+
+**`docs/SPC_ZERO_PROVIDER_LOCAL_LIFE_R1_PASS.md`**
 
 The frozen first Owner-candidate runtime checkpoint is:
 
@@ -38,13 +42,14 @@ The major post-stress diagnosis is now **homeostasis / missing-middle intelligen
 
 Read in this order:
 
-1. **`docs/SPC_POST_STRESS_RECOVERY_PROGRAM.md`** — canonical post-stress objective, diagnosis, roadmap and `CONTINUE` semantics;
-2. **`docs/SPC_ZERO_PROVIDER_LOCAL_LIFE_EXPERIMENT.md`** — binding R1 experiment contract;
-3. **`docs/SPC_NEXT_OWNER_INTENT_AND_GAP_AUDIT.md`** — durable Owner/product guardrails and anti-drift intent;
-4. **`docs/SPC_FIVE_RESIDENT_PRESSURE_CAMPAIGN.md`** — resident pressure dimensions and scenario donors;
-5. **`docs/SPC_REOBSERVATION_FINDINGS_2026-09-16.md`** — evidence about oracle/instrumentation failures and the pre-unified composition gap;
-6. **`docs/SPC_LIVING_WORLD_EXECUTION_PROGRAM.md`** — historical pre-stress execution snapshot only;
-7. older Pass-2 / First Presence documents and `src/research` — donor invariants and evidence, not current execution authority.
+1. **`docs/SPC_POST_STRESS_RECOVERY_PROGRAM.md`** — canonical post-stress objective, current R2 gate, roadmap and `CONTINUE` semantics;
+2. **`docs/SPC_ZERO_PROVIDER_LOCAL_LIFE_R1_PASS.md`** — exact R1 qualification and nonclaims;
+3. **`docs/SPC_ZERO_PROVIDER_LOCAL_LIFE_EXPERIMENT.md`** — satisfied R1 experiment contract;
+4. **`docs/SPC_NEXT_OWNER_INTENT_AND_GAP_AUDIT.md`** — durable Owner/product guardrails and anti-drift intent;
+5. **`docs/SPC_FIVE_RESIDENT_PRESSURE_CAMPAIGN.md`** — resident pressure dimensions and scenario donors;
+6. **`docs/SPC_REOBSERVATION_FINDINGS_2026-09-16.md`** — evidence about oracle/instrumentation failures and the pre-unified composition gap;
+7. **`docs/SPC_LIVING_WORLD_EXECUTION_PROGRAM.md`** — historical pre-stress execution snapshot only;
+8. older Pass-2 / First Presence documents and `src/research` — donor invariants and evidence, not current execution authority.
 
 `docs/PROJECT_STATE.md`, `docs/FRESH_TAKEOVER.md`, `docs/SPC_NEXT_CURRENT_STATE_RECONCILIATION.md` and the old Architecture Recovery Gate are historically important but **must not be used as the current feature sequence**.
 
@@ -125,7 +130,9 @@ Use resident-life pressure:
 
 The previous **Owner Living Sandbox** promotion is superseded by post-stress evidence.
 
-The current recovery target is a **zero-provider local-life specimen**: one resident must sustain grounded causal continuity, interruption and consequence without provider cognition manufacturing life.
+R1 has earned **LOCAL-LIFE PASS**: one resident can sustain grounded causal continuity, interruption, factual consequence, legitimate quiet and later local wake without provider cognition manufacturing life.
+
+The current recovery target is **R2 resident relevance / semantic metabolism**: a noisy causal world must produce only the small, explainable set of unresolved semantic pressures that genuinely deserve higher cognition.
 
 ## Evidence language
 
@@ -168,9 +175,10 @@ Do not merge or declare broad Owner-ready quality merely because CI is green.
 Current order:
 
 **`POST-STRESS RECOVERY`**
-→ `R1 ZERO-PROVIDER LOCAL LIFE`
-→ `relevance / semantic metabolism`
-→ `reintroduce real Luna only after the local organism is worth escalating`.
+→ `R1 ZERO-PROVIDER LOCAL LIFE — PASS`
+→ **`R2 RELEVANCE / SEMANTIC METABOLISM — CURRENT`**
+→ `R3 causal personhood / R4 affordance pressure`
+→ `R5 reintroduce real Luna only after semantic escalation deserves to exist`.
 
 Later work must not rewrite the historical identity of the frozen `c181...` specimen.
 
