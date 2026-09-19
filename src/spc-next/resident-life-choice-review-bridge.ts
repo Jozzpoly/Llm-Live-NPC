@@ -1,8 +1,11 @@
+import { deriveSpcIdentifier } from "./identity-contract";
 import type { ResidentRuntime } from "./resident-runtime";
 import type { ResidentExecutionArbitration } from "./resident-execution-arbitrator";
 
 export interface ResidentLifeChoiceReviewBridgeOptions {
+  /** Historical compatibility only; R2 no longer manufactures quiet-review pressure from this delay. */
   reviewAfterSeconds?: number;
+  /** Historical compatibility only; R2 no longer manufactures quiet-review pressure from this cadence. */
   fixedDeltaSeconds?: number;
 }
 
@@ -11,41 +14,38 @@ export type ResidentLifeChoiceReviewObservation =
   | { status: "already_scheduled"; candidateRunIds: readonly string[] }
   | { status: "not_required" };
 
-const DEFAULT_REVIEW_AFTER_SECONDS = 0.25;
-const DEFAULT_FIXED_DELTA_SECONDS = 1 / 60;
-
 /**
- * Edge-triggered bridge from policy-free body arbitration to existing cognition cadence.
+ * Edge-triggered bridge from policy-free body arbitration to explicit semantic
+ * pressure.
  *
- * The arbitrator deliberately stops at `choice_required`; it must not rank unrelated
- * matters or know about model scheduling. This bridge adds only cognition pressure:
- * a newly observed ambiguity moves the resident's existing quiet-review deadline near
- * term. Re-observing the same unresolved candidate set does NOT move that deadline,
- * preventing an every-tick observer from starving cognition forever.
+ * A real `choice_required` boundary is itself the reason cognition may be needed.
+ * R2 therefore records one inspectable `uncertainty` reason instead of moving a
+ * quiet-review timer and hoping passage of time later fabricates a reason.
  *
- * It never chooses a candidate, opens/closes a matter, binds a run, or mutates World.
+ * Re-observing the same unresolved candidate set does not duplicate pressure.
+ * The bridge never ranks candidates, opens/closes a matter, binds a run or mutates World.
  */
 export class ResidentLifeChoiceReviewBridge {
   private activeAmbiguitySignature: string | null = null;
-  private readonly reviewAfterSeconds: number;
-  private readonly fixedDeltaSeconds: number;
 
   constructor(
-    private readonly resident: Pick<ResidentRuntime, "scheduleAdaptiveReview">,
+    private readonly resident: Pick<ResidentRuntime, "profile" | "promoteSemanticPressure">,
     options: ResidentLifeChoiceReviewBridgeOptions = {},
   ) {
-    this.reviewAfterSeconds = options.reviewAfterSeconds ?? DEFAULT_REVIEW_AFTER_SECONDS;
-    this.fixedDeltaSeconds = options.fixedDeltaSeconds ?? DEFAULT_FIXED_DELTA_SECONDS;
-    if (!Number.isFinite(this.reviewAfterSeconds) || this.reviewAfterSeconds <= 0) {
+    if (options.reviewAfterSeconds !== undefined
+      && (!Number.isFinite(options.reviewAfterSeconds) || options.reviewAfterSeconds <= 0)) {
       throw new Error("life choice reviewAfterSeconds must be positive and finite");
     }
-    if (!Number.isFinite(this.fixedDeltaSeconds) || this.fixedDeltaSeconds <= 0) {
+    if (options.fixedDeltaSeconds !== undefined
+      && (!Number.isFinite(options.fixedDeltaSeconds) || options.fixedDeltaSeconds <= 0)) {
       throw new Error("life choice fixedDeltaSeconds must be positive and finite");
     }
   }
 
   observe(arbitration: ResidentExecutionArbitration, tick: number): ResidentLifeChoiceReviewObservation {
-    if (!Number.isInteger(tick) || tick < 0) throw new Error("life choice observation tick must be a non-negative integer");
+    if (!Number.isInteger(tick) || tick < 0) {
+      throw new Error("life choice observation tick must be a non-negative integer");
+    }
 
     if (arbitration.status !== "choice_required") {
       this.activeAmbiguitySignature = null;
@@ -56,13 +56,24 @@ export class ResidentLifeChoiceReviewBridge {
     if (candidateRunIds.length < 2 || new Set(candidateRunIds).size !== candidateRunIds.length) {
       throw new Error("life choice review requires at least two distinct candidate runs");
     }
+
     const signature = candidateRunIds.join("\u0000");
     if (signature === this.activeAmbiguitySignature) {
       return { status: "already_scheduled", candidateRunIds };
     }
 
     this.activeAmbiguitySignature = signature;
-    this.resident.scheduleAdaptiveReview(tick, this.reviewAfterSeconds, this.fixedDeltaSeconds);
+    this.resident.promoteSemanticPressure({
+      id: deriveSpcIdentifier(
+        "reason-life-choice",
+        `${this.resident.profile.id}:${signature}`,
+      ),
+      tick,
+      kind: "uncertainty",
+      salience: 0.8,
+      summary: `Resident execution requires a semantic choice among ${candidateRunIds.join(", ")}.`,
+      evidenceIds: candidateRunIds,
+    });
     return { status: "scheduled", candidateRunIds };
   }
 
