@@ -91,9 +91,14 @@ describe("post-stress R1 zero-provider local life", () => {
     );
     expect(addressedDecision).toMatchObject({
       classification: "interrupt",
-      cognitionReasonSettled: true,
+      cognitionReasonSettled: false,
     });
-    expect(slice.pendingCognitionReasons()).toEqual([]);
+    expect(slice.pendingCognitionReasons()).toEqual([
+      expect.objectContaining({
+        kind: "heard_speech",
+        id: addressedDecision?.cognitionReasonId,
+      }),
+    ]);
     expect(slice.attention().kind).toBe("actor");
 
     const heldPosition = residentActor(slice).position;
@@ -161,7 +166,9 @@ describe("post-stress R1 zero-provider local life", () => {
       kind: "free",
       position: slice.destination,
     });
-    expect(slice.pendingCognitionReasons()).toEqual([]);
+    expect(slice.pendingCognitionReasons()).toEqual([
+      expect.objectContaining({ kind: "heard_speech" }),
+    ]);
     expect(slice.attention()).toMatchObject({
       kind: "quiet",
       reason: expect.stringContaining("no unresolved local reason"),
@@ -185,9 +192,12 @@ describe("post-stress R1 zero-provider local life", () => {
     });
     expect(slice.localDecisions().find((decision) => decision.occurrenceId === lateCall.id)).toMatchObject({
       classification: "interrupt",
-      cognitionReasonSettled: true,
+      cognitionReasonSettled: false,
     });
-    expect(slice.pendingCognitionReasons()).toEqual([]);
+    expect(slice.pendingCognitionReasons()).toEqual([
+      expect.objectContaining({ kind: "heard_speech" }),
+      expect.objectContaining({ kind: "heard_speech" }),
+    ]);
 
     const quietResponded = slice.advanceOneWorldTick();
     expect(quietResponded.status).toBe("interruption_responded");
@@ -210,7 +220,10 @@ describe("post-stress R1 zero-provider local life", () => {
       kind: "quiet",
       reason: expect.stringContaining("no unresolved local matter"),
     });
-    expect(slice.pendingCognitionReasons()).toEqual([]);
+    expect(slice.pendingCognitionReasons()).toEqual([
+      expect.objectContaining({ kind: "heard_speech" }),
+      expect.objectContaining({ kind: "heard_speech" }),
+    ]);
     expect(slice.world.materialObject(slice.objectId)?.location).toEqual({
       kind: "free",
       position: slice.destination,
@@ -249,6 +262,11 @@ describe("post-stress R1 zero-provider local life", () => {
           settled: decision.cognitionReasonSettled,
         })),
         actor: residentActor(slice),
+        pending: slice.pendingCognitionReasons().map((reason) => ({
+          id: reason.id,
+          kind: reason.kind,
+          evidenceIds: [...reason.evidenceIds],
+        })),
       };
     }
 
