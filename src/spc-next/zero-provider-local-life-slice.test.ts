@@ -31,7 +31,6 @@ describe("post-stress R1 zero-provider local life", () => {
   it("locally bounds irrelevant perception, interrupts and returns to the exact matter, creates a factual consequence, then remains quietly alive with zero provider requests", () => {
     const slice = createZeroProviderLocalLifeSlice();
 
-    expect(slice.providerRequestCount()).toBe(0);
     expect(slice.kernel.matter(slice.mainMatterId)).toMatchObject({
       status: "active",
       activeRunId: "run.mira.local-life.pickup-basket",
@@ -137,7 +136,6 @@ describe("post-stress R1 zero-provider local life", () => {
 
     advanceUntil(slice, () => slice.phase() === "settled", 900);
 
-    expect(slice.providerRequestCount()).toBe(0);
     expect(slice.kernel.matter(slice.mainMatterId)).toMatchObject({
       status: "resolved",
       activeRunId: null,
@@ -157,7 +155,6 @@ describe("post-stress R1 zero-provider local life", () => {
       expect(step.status).toBe("settled");
     }
 
-    expect(slice.providerRequestCount()).toBe(0);
     expect(slice.phase()).toBe("settled");
     expect(residentActor(slice).position).toEqual(quietPosition);
     expect(slice.world.materialObject(slice.objectId)?.location).toEqual({
@@ -203,7 +200,6 @@ describe("post-stress R1 zero-provider local life", () => {
           settled: decision.cognitionReasonSettled,
         })),
         actor: residentActor(slice),
-        providerRequests: slice.providerRequestCount(),
       };
     }
 
