@@ -14,7 +14,11 @@ Draft PR:
 
 Current execution / roadmap authority:
 
-**`docs/SPC_LIVING_WORLD_EXECUTION_PROGRAM.md`**
+**`docs/SPC_POST_STRESS_RECOVERY_PROGRAM.md`**
+
+Binding first recovery experiment:
+
+**`docs/SPC_ZERO_PROVIDER_LOCAL_LIFE_EXPERIMENT.md`**
 
 The frozen first Owner-candidate runtime checkpoint is:
 
@@ -24,24 +28,23 @@ Exact Owner preview:
 
 `https://441dfa93-llm-live-npc.jozzpoly.workers.dev/?spc=1&scenario=unified-living`
 
-This candidate has crossed from isolated five-resident substrate/slices into a **single real-Luna five-resident causal living runtime**. The candidate line is green in repository Check and full Browser Evidence; exact-preview live qualification passes the addressed-speech join from public World speech through private hearing/reason, real Luna origin attribution and resident-owned continuing commitment.
+The frozen candidate remains a valuable **causal/provider qualification specimen**, and its narrow green evidence remains useful. However the 18 September 2026 Owner/stress observation falsified the broader interpretation that this composition already constituted a credible living-resident system.
 
-A semantic regression discovered during qualification was also closed: local `Tak?` / contact acknowledgement is now explicitly **not** treated as acceptance, decline or fulfilment of the speech content. Real Luna re-qualification passed that boundary.
+The major post-stress diagnosis is now **homeostasis / missing-middle intelligence**: perception and factual outcomes can become cognition pressure too easily, while the local brain is too thin to metabolize ordinary life before semantic-provider escalation. The project therefore keeps the strong causal/epistemic substrate but reopens scheduling, relevance, local brain, personhood, context construction and authored affordance density aggressively.
 
-Normal non-evidence browser sanity on the exact preview reached **5/5 recovered residents** under continuing provider traffic with no visible provider/context error signal.
-
-This is **ready for Owner observation**, not an Owner-quality or final living-game PASS. The missing evidence plane is now the Owner's actual experience of the sandbox.
+`c1816785...` is preserved unchanged as an **immutable forensic failure specimen**, not a current Owner Living Sandbox candidate.
 
 ### Fresh takeover order
 
 Read in this order:
 
-1. **`docs/SPC_LIVING_WORLD_EXECUTION_PROGRAM.md`** — current objective, roadmap, current qualification boundary and `CONTINUE` semantics;
-2. **`docs/SPC_NEXT_OWNER_INTENT_AND_GAP_AUDIT.md`** — durable Owner/product guardrails and anti-drift intent;
-3. **`docs/SPC_FIVE_RESIDENT_PRESSURE_CAMPAIGN.md`** — resident pressure dimensions and scenario donors;
-4. **`docs/SPC_REOBSERVATION_FINDINGS_2026-09-16.md`** — evidence about oracle/instrumentation failures and the pre-unified composition gap;
-5. **`docs/SPC_NEXT_FIVE_RESIDENT_FOUNDATION.md`** — original refoundation commitments and five-resident design pressure;
-6. historical Pass-2 / First Presence documents and `src/research` — donor invariants and evidence, not current execution authority.
+1. **`docs/SPC_POST_STRESS_RECOVERY_PROGRAM.md`** — canonical post-stress objective, diagnosis, roadmap and `CONTINUE` semantics;
+2. **`docs/SPC_ZERO_PROVIDER_LOCAL_LIFE_EXPERIMENT.md`** — binding R1 experiment contract;
+3. **`docs/SPC_NEXT_OWNER_INTENT_AND_GAP_AUDIT.md`** — durable Owner/product guardrails and anti-drift intent;
+4. **`docs/SPC_FIVE_RESIDENT_PRESSURE_CAMPAIGN.md`** — resident pressure dimensions and scenario donors;
+5. **`docs/SPC_REOBSERVATION_FINDINGS_2026-09-16.md`** — evidence about oracle/instrumentation failures and the pre-unified composition gap;
+6. **`docs/SPC_LIVING_WORLD_EXECUTION_PROGRAM.md`** — historical pre-stress execution snapshot only;
+7. older Pass-2 / First Presence documents and `src/research` — donor invariants and evidence, not current execution authority.
 
 `docs/PROJECT_STATE.md`, `docs/FRESH_TAKEOVER.md`, `docs/SPC_NEXT_CURRENT_STATE_RECONCILIATION.md` and the old Architecture Recovery Gate are historically important but **must not be used as the current feature sequence**.
 
@@ -120,9 +123,9 @@ Use resident-life pressure:
 8. pressure the same architecture with other residents;
 9. generalize only after repeated need.
 
-The first credible **Owner Living Sandbox** is now frozen and ready for Owner observation.
+The previous **Owner Living Sandbox** promotion is superseded by post-stress evidence.
 
-Do not add another pre-Owner infrastructure campaign by inertia. Owner observation is now the primary missing development sensor.
+The current recovery target is a **zero-provider local-life specimen**: one resident must sustain grounded causal continuity, interruption and consequence without provider cognition manufacturing life.
 
 ## Evidence language
 
@@ -164,10 +167,11 @@ Do not merge or declare broad Owner-ready quality merely because CI is green.
 
 Current order:
 
-**`OWNER LIVING SANDBOX`**
-→ `collect Owner feel / behavior / causality observations`
-→ `re-plan Phase L1 from that evidence`.
+**`POST-STRESS RECOVERY`**
+→ `R1 ZERO-PROVIDER LOCAL LIFE`
+→ `relevance / semantic metabolism`
+→ `reintroduce real Luna only after the local organism is worth escalating`.
 
-Later documentation commits must not silently replace the frozen Owner runtime identity above.
+Later work must not rewrite the historical identity of the frozen `c181...` specimen.
 
-For all continuation decisions, use `docs/SPC_LIVING_WORLD_EXECUTION_PROGRAM.md`.
+For all continuation decisions, use `docs/SPC_POST_STRESS_RECOVERY_PROGRAM.md`.
