@@ -76,6 +76,26 @@ export class CognitionScheduler {
     return this.pending.delete(reasonId);
   }
 
+  /**
+   * Close all currently pending cognition pressure whose causal support includes
+   * one exact evidence id. Local embodied intelligence should normally use this
+   * boundary instead of depending on scheduler-specific reason identity formats.
+   */
+  settleLocallyByEvidence(evidenceId: string): CognitionReason[] {
+    if (typeof evidenceId !== "string" || evidenceId.trim().length === 0) {
+      throw new Error("cognition evidence id must be non-empty");
+    }
+    const settled: CognitionReason[] = [];
+    for (const [reasonId, reason] of this.pending) {
+      if (!reason.evidenceIds.includes(evidenceId)) continue;
+      this.pending.delete(reasonId);
+      settled.push(structuredClone(reason));
+    }
+    return settled.sort(
+      (a, b) => b.salience - a.salience || a.tick - b.tick || a.id.localeCompare(b.id),
+    );
+  }
+
   scheduleQuietReviewAfter(tick: number, delayTicks: number): void {
     this.nextQuietReviewTick = this.quietReviewDeadline(tick, delayTicks);
   }
