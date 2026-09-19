@@ -86,7 +86,24 @@ export function createFiveResidentJanekDeliverySlice(): FiveResidentJanekDeliver
 
       const local = routine.step();
       if (local.status === "pickup_completed") {
-        return { status: "running", phase: "pickup", local: local.local };
+        // Preserve the historical Janek slice observation boundary: the call that
+        // completes pickup also exposes the newly started delivery phase. The shared
+        // routine itself keeps the cleaner explicit pickup boundary; this wrapper
+        // adapts only the donor's already-qualified public contract.
+        const delivery = routine.step();
+        if (delivery.status === "running" && delivery.phase === "delivery") {
+          return { status: "running", phase: "delivery", local: delivery.local };
+        }
+        if (delivery.status === "blocked" && delivery.phase === "delivery") {
+          return { status: "blocked", phase: "delivery", local: delivery.local };
+        }
+        if (delivery.status === "authority_lost" && delivery.phase === "delivery") {
+          return { status: "authority_lost", phase: "delivery", local: delivery.local };
+        }
+        if (delivery.status === "succeeded") {
+          return { status: "succeeded", phase: "delivered", local: delivery.local };
+        }
+        throw new Error(`Janek delivery routine did not advance from pickup boundary: ${delivery.status}`);
       }
       if (local.status === "running") {
         return local.phase === "pickup"
