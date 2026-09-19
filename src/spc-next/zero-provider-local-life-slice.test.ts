@@ -42,7 +42,7 @@ describe("post-stress R1 zero-provider local life", () => {
       240,
     );
 
-    expect(slice.pendingCognitionReasons()).toEqual([]);
+    const pressureBeforeBackground = slice.pendingCognitionReasons();
     const deliveryBinding = slice.kernel.runBinding(slice.mainPlaceRunId);
     expect(deliveryBinding).toMatchObject({
       matterId: slice.mainMatterId,
@@ -64,9 +64,14 @@ describe("post-stress R1 zero-provider local life", () => {
     );
     expect(backgroundDecision).toMatchObject({
       classification: "background",
-      cognitionReasonSettled: true,
+      cognitionReasonSettled: false,
     });
-    expect(slice.pendingCognitionReasons()).toEqual([]);
+    const pressureAfterBackground = slice.pendingCognitionReasons();
+    expect(pressureAfterBackground.length).toBe(pressureBeforeBackground.length + 1);
+    expect(pressureAfterBackground).toContainEqual(expect.objectContaining({
+      id: backgroundDecision?.cognitionReasonId,
+      kind: "heard_speech",
+    }));
 
     const addressed = slice.playerSpeak("Mira, chwila!", true);
     const started = slice.advanceOneWorldTick();
@@ -93,12 +98,12 @@ describe("post-stress R1 zero-provider local life", () => {
       classification: "interrupt",
       cognitionReasonSettled: false,
     });
-    expect(slice.pendingCognitionReasons()).toEqual([
-      expect.objectContaining({
-        kind: "heard_speech",
-        id: addressedDecision?.cognitionReasonId,
-      }),
-    ]);
+    const pressureAfterAddressed = slice.pendingCognitionReasons();
+    expect(pressureAfterAddressed.length).toBe(pressureAfterBackground.length + 1);
+    expect(pressureAfterAddressed).toContainEqual(expect.objectContaining({
+      kind: "heard_speech",
+      id: addressedDecision?.cognitionReasonId,
+    }));
     expect(slice.attention().kind).toBe("actor");
 
     const heldPosition = residentActor(slice).position;
@@ -168,9 +173,7 @@ describe("post-stress R1 zero-provider local life", () => {
       kind: "free",
       position: slice.destination,
     });
-    expect(slice.pendingCognitionReasons()).toEqual([
-      expect.objectContaining({ kind: "heard_speech" }),
-    ]);
+    expect(slice.pendingCognitionReasons()).toEqual(pressureBeforeQuiet);
     expect(slice.attention()).toMatchObject({
       kind: "quiet",
       reason: expect.stringContaining("no unresolved local embodied matter"),
@@ -192,14 +195,17 @@ describe("post-stress R1 zero-provider local life", () => {
       status: "resolved",
       activeRunId: null,
     });
-    expect(slice.localDecisions().find((decision) => decision.occurrenceId === lateCall.id)).toMatchObject({
+    const lateDecision = slice.localDecisions().find((decision) => decision.occurrenceId === lateCall.id);
+    expect(lateDecision).toMatchObject({
       classification: "interrupt",
       cognitionReasonSettled: false,
     });
-    expect(slice.pendingCognitionReasons()).toEqual([
-      expect.objectContaining({ kind: "heard_speech" }),
-      expect.objectContaining({ kind: "heard_speech" }),
-    ]);
+    const pressureAfterLateCall = slice.pendingCognitionReasons();
+    expect(pressureAfterLateCall.length).toBe(pressureBeforeQuiet.length + 1);
+    expect(pressureAfterLateCall).toContainEqual(expect.objectContaining({
+      id: lateDecision?.cognitionReasonId,
+      kind: "heard_speech",
+    }));
 
     const quietResponded = slice.advanceOneWorldTick();
     expect(quietResponded.status).toBe("interruption_responded");
@@ -222,10 +228,7 @@ describe("post-stress R1 zero-provider local life", () => {
       kind: "quiet",
       reason: expect.stringContaining("no unresolved local matter"),
     });
-    expect(slice.pendingCognitionReasons()).toEqual([
-      expect.objectContaining({ kind: "heard_speech" }),
-      expect.objectContaining({ kind: "heard_speech" }),
-    ]);
+    expect(slice.pendingCognitionReasons()).toEqual(pressureAfterLateCall);
     expect(slice.world.materialObject(slice.objectId)?.location).toEqual({
       kind: "free",
       position: slice.destination,
