@@ -14,33 +14,61 @@ const profile: ResidentProfile = {
   traceLimit: 256,
 };
 
-describe("ResidentLifeChoiceReviewBridge with real cognition scheduler", () => {
-  it("turns a new choice boundary into one bounded near-term quiet review without every-tick deadline starvation", () => {
+describe("ResidentLifeChoiceReviewBridge with explicit R2 semantic pressure", () => {
+  it("turns one real multi-run ambiguity into one deduplicated uncertainty reason", () => {
     const resident = new ResidentRuntime(profile);
     const bridge = new ResidentLifeChoiceReviewBridge(resident);
-    const initialDeadline = resident.cognitionScheduleDiagnostics().nextQuietReviewTick;
     const ambiguity = {
       status: "choice_required" as const,
       candidateRunIds: ["run.mira.b", "run.mira.c"],
     };
 
-    expect(bridge.observe(ambiguity, 100).status).toBe("scheduled");
-    const scheduledDeadline = resident.cognitionScheduleDiagnostics().nextQuietReviewTick;
-    expect(scheduledDeadline).toBeGreaterThan(100);
-    expect(scheduledDeadline).toBeLessThan(initialDeadline);
-    expect(scheduledDeadline).toBeLessThanOrEqual(170);
+    expect(bridge.observe(ambiguity, 100)).toEqual({
+      status: "scheduled",
+      candidateRunIds: ["run.mira.b", "run.mira.c"],
+    });
+    expect(resident.pendingCognitionReasons()).toEqual([
+      expect.objectContaining({
+        kind: "uncertainty",
+        tick: 100,
+        salience: 0.8,
+        evidenceIds: ["run.mira.b", "run.mira.c"],
+      }),
+    ]);
 
-    for (let tick = 101; tick < scheduledDeadline; tick += 1) {
+    for (let tick = 101; tick < 130; tick += 1) {
       expect(bridge.observe(ambiguity, tick).status).toBe("already_scheduled");
-      expect(resident.cognitionScheduleDiagnostics().nextQuietReviewTick).toBe(scheduledDeadline);
+      expect(resident.pendingCognitionReasons()).toHaveLength(1);
       expect(resident.takeCognitionBatch(tick)).toBeNull();
     }
 
-    const batch = resident.takeCognitionBatch(scheduledDeadline);
-    expect(batch).not.toBeNull();
+    const batch = resident.takeCognitionBatch(130);
     expect(batch?.residentId).toBe(profile.id);
     expect(batch?.reasons).toEqual([
-      expect.objectContaining({ kind: "quiet_review", tick: scheduledDeadline }),
+      expect.objectContaining({
+        kind: "uncertainty",
+        evidenceIds: ["run.mira.b", "run.mira.c"],
+      }),
     ]);
+    expect(resident.pendingCognitionReasons()).toEqual([]);
+  });
+
+  it("allows the same candidate set to become pressure again only after the ambiguity actually clears", () => {
+    const resident = new ResidentRuntime(profile);
+    const bridge = new ResidentLifeChoiceReviewBridge(resident);
+    const ambiguity = {
+      status: "choice_required" as const,
+      candidateRunIds: ["run.mira.b", "run.mira.c"],
+    };
+
+    expect(bridge.observe(ambiguity, 10).status).toBe("scheduled");
+    expect(bridge.observe(ambiguity, 11).status).toBe("already_scheduled");
+    expect(bridge.observe({ status: "idle", candidateRunIds: [] }, 12).status).toBe("not_required");
+    expect(bridge.observe(ambiguity, 13).status).toBe("scheduled");
+
+    // Same deterministic reason identity is updated rather than duplicated while
+    // the first pressure is still pending.
+    expect(resident.pendingCognitionReasons()).toHaveLength(1);
+    expect(resident.pendingCognitionReasons()[0]?.tick).toBe(13);
   });
 });
