@@ -10,11 +10,11 @@ import { ResidentExecutionArbitrator } from "./resident-execution-arbitrator";
 import { ResidentExecutionFocusAuthority } from "./resident-execution-focus-authority";
 import { ResidentGroundedTravelExecutor } from "./resident-grounded-travel-executor";
 import { ResidentLifeChoiceOwner } from "./resident-life-choice-owner";
+import { ResidentLifeChoiceReviewBridge } from "./resident-life-choice-review-bridge";
 import { captureResidentLifeCognitionView } from "./resident-life-cognition-view";
 import { ResidentWorldExecutionAuthority } from "./resident-world-execution-authority";
 
 const MIRA_ID = "resident.mira";
-const FIXED_DELTA_SECONDS = 1 / 60;
 const MAX_AUTHORED_STEPS = 1_200;
 const MAX_TRAVEL_STEPS = 2_000;
 const MAX_REVIEW_STEPS = 180;
@@ -35,6 +35,7 @@ describe("five-resident Mira multi-matter life composition", () => {
     const focus = new ResidentExecutionFocusAuthority(kernel);
     const arbitrator = new ResidentExecutionArbitrator(kernel, focus);
     const choiceOwner = new ResidentLifeChoiceOwner(mira);
+    const choiceReviewBridge = new ResidentLifeChoiceReviewBridge(mira);
 
     // Do not install recovered execution authority while Mira's authored opening is
     // still running: claiming it intentionally disables the legacy fastStep path.
@@ -51,8 +52,6 @@ describe("five-resident Mira multi-matter life composition", () => {
     );
     expect(firstSettlement.status).toBe("applied");
     if (firstSettlement.status !== "applied") return;
-    mira.scheduleAdaptiveReview(world.tick, firstSettlement.intent.reviewAfterSeconds, FIXED_DELTA_SECONDS);
-
     openMatterAndRun(kernel, A, world.tick, "first post-authored resident matter");
     expect(arbitrator.request(A.runId)).toEqual({ status: "acquired", runId: A.runId });
     const authority = new ResidentWorldExecutionAuthority(MIRA_ID, arbitrator, world);
@@ -68,7 +67,12 @@ describe("five-resident Mira multi-matter life composition", () => {
 
     driveRun(world, kernel, authority, A, destination(navigation, A.targetRegionId));
     kernel.resolveMatter(A.matterId);
-    expect(arbitrator.reconcile()).toEqual({ status: "choice_required", candidateRunIds: [B.runId, C.runId] });
+    const arbitrationAfterA = arbitrator.reconcile();
+    expect(arbitrationAfterA).toEqual({ status: "choice_required", candidateRunIds: [B.runId, C.runId] });
+    expect(choiceReviewBridge.observe(arbitrationAfterA, world.tick)).toEqual({
+      status: "scheduled",
+      candidateRunIds: [B.runId, C.runId],
+    });
     expect(focus.focusedRun()).toBeNull();
     expect(authority.enforceMotionAuthority()).toEqual({ status: "revoked", runId: A.runId });
 
@@ -80,9 +84,15 @@ describe("five-resident Mira multi-matter life composition", () => {
     });
     expect(lifeAtChoice.body).toEqual({ focusedRunId: null, deferredRunIds: [B.runId, C.runId] });
 
-    // Reuse the resident's scheduler instead of inventing a parallel priority loop.
-    mira.scheduleAdaptiveReview(world.tick, 0.25, FIXED_DELTA_SECONDS);
+    // The ambiguity itself is the semantic pressure; passage of time only satisfies
+    // the scheduler's ordinary debounce and does not invent the reason.
     const choiceBatch = waitForReviewBatch(world, mira);
+    expect(choiceBatch.reasons).toEqual([
+      expect.objectContaining({
+        kind: "uncertainty",
+        evidenceIds: [B.runId, C.runId],
+      }),
+    ]);
     const choiceAttempt = choiceOwner.prepare(choiceBatch, lifeAtChoice)!;
     expect(choiceAttempt.context.localActivity.kind).toBe("idle");
     expect(choiceAttempt.context.life.body.focusedRunId).toBeNull();
@@ -108,6 +118,11 @@ describe("five-resident Mira multi-matter life composition", () => {
 
     expect(kernel.matter(choice.decision.matterId)?.activeRunId).toBe(B.runId);
     expect(arbitrator.choose(B.runId)).toEqual({ status: "acquired", runId: B.runId });
+    expect(choiceReviewBridge.observe({
+      status: "focused",
+      runId: B.runId,
+      deferredRunIds: [C.runId],
+    }, world.tick)).toEqual({ status: "not_required" });
     expect(arbitrator.deferredRunIds()).toEqual([C.runId]);
 
     const beforeB = miraPosition(world);
