@@ -112,9 +112,15 @@ describe("SPC World phase contract before authority extraction", () => {
     expect(actor.position.x).toBeCloseTo(505, 8);
     expect(world.regionAt(actor.position)?.id).toBe("east");
 
-    const regionReason = world.residentDiagnostics("resident.mira").trace.find((event) =>
-      event.kind === "cognition_reason" && event.summary.includes("Entered region: East")
+    const mira = world.residentRuntime("resident.mira");
+    const regionDecision = mira.semanticPressureDecisions().find(
+      (decision) => decision.code === "region_transition",
     );
-    expect(regionReason?.tick).toBe(1);
+    expect(regionDecision).toMatchObject({
+      tick: 1,
+      disposition: "observation_only",
+      cognitionReason: null,
+    });
+    expect(mira.pendingCognitionReasons()).toEqual([]);
   });
 });
