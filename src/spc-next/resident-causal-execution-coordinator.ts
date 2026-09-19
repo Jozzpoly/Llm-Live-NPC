@@ -428,8 +428,12 @@ export class ResidentCausalExecutionCoordinator {
     if (resolveMatter) {
       this.life.kernel.resolveMatter(matter.id);
       this.restoreExactInterruptedContinuity(matter.id);
+    } else {
+      // R2: a blocked/non-terminal run is a real discrepancy. An expected successful
+      // terminal outcome remains factual resident/kernel history but does not
+      // automatically manufacture a new semantic problem.
+      this.life.outcomeReviewBridge.observe(reconciled.evidence, this.life.world.tick);
     }
-    this.life.outcomeReviewBridge.observe(reconciled.evidence, this.life.world.tick);
 
     const arbitration = this.life.arbitrator.reconcile();
     const choiceReview = this.life.choiceReviewBridge.observe(arbitration, this.life.world.tick);
