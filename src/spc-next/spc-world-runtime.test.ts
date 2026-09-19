@@ -131,7 +131,9 @@ describe("SPC Next five-resident world foundation", () => {
     }
 
     expect(world.takeCognitionBatch("resident.mira")).toBeNull();
-    expect(world.residentRuntime("resident.mira").pendingCognitionReasons()).toEqual([]);
+    expect(world.publicSnapshot().residents.find(
+      (resident) => resident.id === "resident.mira",
+    )?.pendingCognitionReasonCount).toBe(0);
     expect(world.tick).toBe(180);
   });
 
