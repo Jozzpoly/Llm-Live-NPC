@@ -26,6 +26,10 @@ import {
   resolveResidentPerceptIdentity,
   type ResidentPerceptIngress,
 } from "./resident-percept-identity";
+import {
+  ResidentSemanticPressureGate,
+  type ResidentSemanticPressureDecision,
+} from "./resident-semantic-pressure-gate";
 
 const ARRIVAL_DISTANCE = 18;
 const COMMUNICATION_DISTANCE = 80;
@@ -55,6 +59,7 @@ export class ResidentRuntime {
   private readonly lastHeardActorCues = new Map<string, HeardActorCue>();
   private readonly recognizedActorIds = new Set<string>();
   private readonly mind: ResidentMind;
+  private readonly semanticPressure: ResidentSemanticPressureGate;
   private cognitionSequence = 0;
   private routeWaypointIndex = 0;
   private currentRegionId: string | null = null;
@@ -69,6 +74,7 @@ export class ResidentRuntime {
     private readonly scheduler: CognitionScheduler = createDefaultCognitionScheduler(profile.id),
   ) {
     this.mind = new ResidentMind(profile);
+    this.semanticPressure = new ResidentSemanticPressureGate(profile.id, profile.traceLimit);
     this.activity = {
       id: `activity:${profile.id}:idle:0`,
       kind: "idle",
@@ -115,6 +121,10 @@ export class ResidentRuntime {
   /** Exact unresolved scheduler pressure, exposed for local-life research/control. */
   pendingCognitionReasons(): CognitionReason[] {
     return this.scheduler.pendingSnapshot();
+  }
+
+  semanticPressureDecisions(): ResidentSemanticPressureDecision[] {
+    return this.semanticPressure.recentDecisions();
   }
 
   scheduleAdaptiveReview(tick: number, reviewAfterSeconds: number, fixedDeltaSeconds: number): void {
@@ -222,8 +232,8 @@ export class ResidentRuntime {
         refIds: [percept.id, percept.occurrenceId],
       });
 
-      const reason = this.reasonFromPercept(percept);
-      if (reason) this.noteCognitionReason(reason);
+      const pressure = this.semanticPressure.considerPercept(percept);
+      if (pressure.cognitionReason) this.noteCognitionReason(pressure.cognitionReason);
     }
   }
 
@@ -244,16 +254,12 @@ export class ResidentRuntime {
     if (region) this.mind.discoverRegion(region, tick);
     if (!changed || initial) return;
 
-    this.noteCognitionReason({
-      id: `reason:${this.profile.id}:region:${nextRegionId ?? "none"}:${tick}`,
+    const pressure = this.semanticPressure.considerRegionTransition(
       tick,
-      kind: "direct_world_change",
-      salience: 0.35,
-      summary: region
-        ? `Entered region: ${region.label}`
-        : `Left authored region: ${previousRegionId ?? "none"}`,
-      evidenceIds: [],
-    });
+      previousRegionId,
+      nextRegionId,
+    );
+    if (pressure.cognitionReason) this.noteCognitionReason(pressure.cognitionReason);
   }
 
   /** Compatibility wrapper for existing callers that already resolved a concrete region. */
@@ -525,46 +531,6 @@ export class ResidentRuntime {
     this.activityRevisionValue += 1;
     this.lastMovementTraceSignature = null;
     this.lastBlockedSignature = null;
-  }
-
-  private reasonFromPercept(percept: ResidentPercept): CognitionReason | null {
-    if (percept.phenomenon === "speech" && percept.modality === "hearing" && percept.text) {
-      return {
-        id: `reason:${this.profile.id}:speech:${percept.occurrenceId}`,
-        tick: percept.tick,
-        kind: "heard_speech",
-        salience: percept.addressed ? 1 : 0.4,
-        summary: percept.addressed
-          ? `Speech addressed to me: ${percept.text}`
-          : `Overheard speech: ${percept.text}`,
-        evidenceIds: [percept.id],
-      };
-    }
-
-    if (percept.phenomenon === "interaction" || percept.phenomenon === "system") {
-      return {
-        id: `reason:${this.profile.id}:world:${percept.occurrenceId}`,
-        tick: percept.tick,
-        kind: "direct_world_change",
-        salience: 0.45,
-        summary: `Observed world change: ${percept.summary}`,
-        evidenceIds: [percept.id],
-      };
-    }
-
-    if (percept.phenomenon === "actor_sight_enter" || percept.phenomenon === "actor_sight_exit") {
-      return {
-        id: `reason:${this.profile.id}:sight:${percept.occurrenceId}`,
-        tick: percept.tick,
-        kind: "direct_world_change",
-        salience: percept.phenomenon === "actor_sight_enter" ? 0.2 : 0.3,
-        summary: percept.summary,
-        evidenceIds: [percept.id],
-      };
-    }
-
-    // Routine sight samples and movement evidence update causal memory but do not manufacture LLM traffic.
-    return null;
   }
 
   private trimPercepts(): void {
