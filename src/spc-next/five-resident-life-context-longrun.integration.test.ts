@@ -11,6 +11,7 @@ describe("unified resident life long-run Worker boundary", () => {
       matterStates: Array<{ id: string; status: string; bodyState: string | null }>;
     }> = [];
     let validatedRequests = 0;
+    let latestValidatedTick = -1;
 
     const living = new FiveResidentUnifiedLivingRuntime({
       maxConcurrentCognition: 5,
@@ -40,6 +41,7 @@ describe("unified resident life long-run Worker boundary", () => {
         }
 
         validatedRequests += 1;
+        latestValidatedTick = Math.max(latestValidatedTick, contextTick(raw));
         const context = checked.context;
         const originReasonId = context.reasons[0]?.id;
         if (!originReasonId) throw new Error("long-run fixture lacks cognition reason");
@@ -101,13 +103,19 @@ describe("unified resident life long-run Worker boundary", () => {
     for (let index = 0; index < 8; index += 1) await Promise.resolve();
     living.advanceOneWorldTick();
 
-    // The original transport drift first failed at t1335 and then poisoned every
-    // later review. Five thousand ticks crosses that frontier repeatedly while
-    // remaining a bounded CI qualification rather than a wall-clock endurance test.
-    expect(validatedRequests).toBeGreaterThan(20);
+    // The original transport drift first failed at t1335 and then poisoned later
+    // contexts. R2 must still cross that frontier, but request count is no longer a
+    // quality target: only explicit causal pressure may generate provider work.
+    expect(validatedRequests).toBeGreaterThan(5);
+    expect(latestValidatedTick).toBeGreaterThan(1_335);
     expect(validationFailures).toEqual([]);
     expect(living.diagnostics().recentProviderEvents.some(
       (event) => event.detail.includes("invalid_life_intent_context"),
     )).toBe(false);
   }, 15_000);
 });
+
+
+function contextTick(raw: any): number {
+  return Number.isSafeInteger(raw?.tick) && raw.tick >= 0 ? raw.tick : -1;
+}
