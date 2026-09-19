@@ -294,7 +294,12 @@ Required:
 Do not optimize cognition quality in R0.
 This phase exists so later evidence is trustworthy.
 
-### Phase R1 — zero-provider local-life specimen
+### Phase R1 — zero-provider local-life specimen — **PASS**
+
+Qualified 2026-09-20 at source SHA `69c40225fffaf0f97bdba95aaa36cfb1c9c3ba25`.
+
+Evidence authority:
+`docs/SPC_ZERO_PROVIDER_LOCAL_LIFE_R1_PASS.md`.
 
 Goal:
 prove that one resident can have ordinary causal continuity without an LLM manufacturing life.
@@ -459,26 +464,33 @@ Primary question:
 
 ## 7. Immediate experiment gate
 
-The next implementation target is not a scheduler patch.
+**R1 — LOCAL-LIFE PASS.**
 
-It is:
+The next implementation target is now:
 
-**R1 — ZERO-PROVIDER LOCAL-LIFE SPECIMEN**
+**R2 — RESIDENT RELEVANCE / SEMANTIC METABOLISM**
 
-R1 must answer all of these:
+R1 established that local embodied life can continue without provider cognition manufacturing continuity.
+It also intentionally exposed the next failure:
 
-1. Does the resident retain at least one continuing matter through ordinary time?
-2. Can local behavior progress that matter without provider cognition?
-3. Can an unrelated local event be perceived without automatically hijacking life?
-4. Can an interruption temporarily redirect attention/body and then return?
-5. Can the resident produce a factual World consequence?
-6. Does that consequence alter later local behavior?
-7. Can the resident become still for a justified reason without becoming dead?
-8. Can instrumentation explain why the resident is active or inactive without serving as hidden authority?
-9. Can the same experiment run for a long deterministic window without accumulating semantic-pressure debt?
-10. Can this happen without random wandering/chatter?
+- ordinary perception can still become pending cognition pressure too eagerly;
+- local bodily handling does not yet answer whether semantic pressure should exist;
+- unresolved reasons currently have insufficient lifecycle semantics;
+- provider dispatch must remain disabled while that boundary is redesigned.
 
-Until this gate is credible, broad five-resident LLM work is premature.
+R2 must answer:
+
+1. Which percepts deserve no semantic pressure at all?
+2. Which pressure is already explained by a current matter/routine?
+3. Which pressure is duplicate, stale, superseded or already settled?
+4. Which pressure can remain pending without interrupting body life?
+5. Which pressure genuinely requires higher semantic judgement?
+6. Can many perceptions produce only a small, explainable unresolved set?
+7. Can pressure lifetime be reconstructed causally without becoming an immortal event backlog?
+
+Do **not** solve R2 with a global cooldown, TTL-only patch or request cap.
+Do **not** reintroduce Luna merely to classify everything.
+The next gate is the missing middle intelligence itself.
 
 ---
 
@@ -601,16 +613,31 @@ When prose conflicts with live evidence, live evidence wins and prose must be co
 
 ## 13. Current work order
 
-1. freeze and label the pre-stress candidate as a forensic specimen;
-2. correct repository/PR authority so no future takeover resumes the invalid Owner-Sandbox plan;
-3. establish R1 experiment contract;
-4. create a new recovery implementation line from the corrected integration history;
-5. inspect the current resident runtime/local-brain seams;
-6. implement the smallest honest zero-provider local-life specimen;
-7. qualify it before reintroducing semantic-provider cognition.
+Completed:
+1. preserve `c181...` as the forensic failure specimen;
+2. correct post-stress repository authority;
+3. establish and execute R1;
+4. qualify R1 deterministically and in real Chromium;
+5. extract shared local material/contact competence and reattack through Janek donors.
 
-The next milestone is **not** "scheduler fixed".
+Current:
+6. **R2 — characterize and then build resident relevance / semantic metabolism.**
+
+Immediate method:
+- first create executable pressure characterization showing where current `percept -> cognition reason` behavior overproduces unresolved pressure;
+- distinguish body/local handling from semantic settlement;
+- define lifecycle semantics only from observed pressure classes;
+- preserve R1 local-life behavior while reducing false semantic pressure;
+- use Mira and Janek as complementary pressure cases.
+
+Later:
+7. R3 causal personhood;
+8. R4 dense authored affordance surface;
+9. R5 provider semantic escalation;
+10. R6+ multi-resident/homeostasis/endurance sequence.
+
+The next milestone is **not** "fewer requests".
 
 It is:
 
-> **One resident can live locally, remain itself through interruption and consequence, and require zero provider calls merely to continue existing.**
+> **A resident can perceive a noisy world, keep living locally, and retain only the small set of semantic pressures that actually deserve unresolved cognition.**
