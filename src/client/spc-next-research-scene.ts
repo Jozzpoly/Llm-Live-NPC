@@ -260,6 +260,27 @@ export class SpcNextResearchScene extends Phaser.Scene {
     return this.manualWorldControl;
   }
 
+  runEvidenceScenarioAction(actionId: string): unknown {
+    if (!this.manualWorldControl) {
+      throw new Error("scenario evidence actions are available only in evidence control mode");
+    }
+    if (!this.created) throw new Error("SPC research scene is not ready for evidence actions");
+    if (!actionId.trim()) throw new Error("scenario evidence action id must be non-empty");
+    if (!this.scenario.evidenceAction) {
+      throw new Error(`scenario ${this.scenario.kind} exposes no evidence action`);
+    }
+
+    const result = this.scenario.evidenceAction(actionId);
+    this.snapshot = this.world.publicSnapshot();
+    this.captureNewSpeechOccurrences();
+    this.syncActorViews();
+    this.syncMaterialViews();
+    this.syncSpeechViews();
+    this.drawResearchOverlay();
+    this.pushFrame(true);
+    return result;
+  }
+
   stepEvidenceWorld(steps = 1): SpcNextResearchFrame {
     if (!this.manualWorldControl) {
       throw new Error("manual World stepping is available only in evidence control mode");
