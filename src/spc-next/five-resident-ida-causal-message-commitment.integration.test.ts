@@ -6,6 +6,9 @@ import { ResidentContinuityKernel } from "./resident-continuity-kernel";
 import { ResidentExecutionArbitrator } from "./resident-execution-arbitrator";
 import { ResidentExecutionFocusAuthority } from "./resident-execution-focus-authority";
 import { captureResidentLifeCognitionView } from "./resident-life-cognition-view";
+import { deriveResidentLifeChoiceCandidateSupports } from "./resident-life-choice-causal-support";
+import { ResidentLifeChoiceOwner } from "./resident-life-choice-owner";
+import { ResidentLifeChoiceReviewBridge } from "./resident-life-choice-review-bridge";
 import { ResidentLifeIntentOwner } from "./resident-life-intent-owner";
 import { ResidentMessageDeliveryExecutor } from "./resident-message-delivery-executor";
 import { ResidentWorldExecutionAuthority } from "./resident-world-execution-authority";
@@ -150,6 +153,36 @@ describe("Ida cognition-native causal message commitment", () => {
     expect(accepted.focusClaim).toEqual({ status: "acquired", runId: accepted.runId });
     expect(kernel.canRunMutateWorld(accepted.runId)).toBe(true);
 
+    const obligationLife = captureResidentLifeCognitionView({
+      kernel,
+      focus,
+      arbitrator,
+      matterIds: causal.acceptedMatterIds(),
+    });
+    expect(obligationLife.matters).toContainEqual(expect.objectContaining({
+      id: accepted.matter.id,
+      originEvidence: expect.objectContaining({
+        kind: "accepted_social_commitment",
+      }),
+    }));
+    expect(deriveResidentLifeChoiceCandidateSupports(
+      obligationLife,
+      [accepted.matter.id],
+    )).toEqual([
+      expect.objectContaining({
+        matterId: accepted.matter.id,
+        facts: expect.arrayContaining([
+          expect.objectContaining({
+            evidenceId: obligationLife.matters.find(
+              (matter) => matter.id === accepted.matter.id,
+            )?.originEvidence?.id,
+            evidenceKind: "accepted_social_commitment",
+            relation: "open_social_responsibility",
+          }),
+        ]),
+      }),
+    ]);
+
     const durableIntent = accepted.matter.semanticIntent;
     expect(durableIntent?.kind).toBe("communicate_actor");
     if (!durableIntent || durableIntent.kind !== "communicate_actor") {
@@ -200,7 +233,255 @@ describe("Ida cognition-native causal message commitment", () => {
       status: "resolved",
       activeRunId: null,
     });
+
+    const fulfilledLife = captureResidentLifeCognitionView({
+      kernel,
+      focus,
+      arbitrator,
+      matterIds: causal.acceptedMatterIds(),
+    });
+    const fulfilledSupport = deriveResidentLifeChoiceCandidateSupports(
+      fulfilledLife,
+      [accepted.matter.id],
+    );
+    expect(fulfilledSupport[0]?.facts).toEqual([
+      expect.objectContaining({
+        evidenceKind: "task_outcome",
+        relation: "last_outcome",
+        summary: expect.stringContaining("succeeded:"),
+      }),
+    ]);
+    expect(fulfilledSupport[0]?.facts.some(
+      (fact) => fact.relation === "open_social_responsibility",
+    )).toBe(false);
+    expect(fulfilledSupport[0]?.facts.some(
+      (fact) => fact.evidenceKind === "accepted_social_commitment",
+    )).toBe(false);
   });
+
+  it("puts a real open social responsibility beside an ordinary continuing matter at the exact B/C choice boundary", () => {
+    const composition = createFiveResidentRegionComposition({
+      playerStart: { x: 3_000, y: 900 },
+    });
+    const { world } = composition;
+    const ida = composition.runtimes[IDA_ID];
+    establishIdaJanekContact(world, ida);
+
+    const kernel = new ResidentContinuityKernel();
+    const focus = new ResidentExecutionFocusAuthority(kernel);
+    const arbitrator = new ResidentExecutionArbitrator(kernel, focus);
+    const worldAuthority = new ResidentWorldExecutionAuthority(IDA_ID, arbitrator, world);
+    const lifeIntentOwner = new ResidentLifeIntentOwner(ida);
+    const causal = new ResidentCausalCommunicateCommitmentAuthority({
+      residentId: IDA_ID,
+      resident: ida,
+      world,
+      kernel,
+      arbitrator,
+      authority: worldAuthority,
+    });
+
+    const current = openFixtureMatter(
+      kernel,
+      "matter.ida.r3.current",
+      "task.ida.r3.current",
+      "run.ida.r3.current",
+      world.tick,
+      "finish the current local errand",
+    );
+    const ordinary = openFixtureMatter(
+      kernel,
+      "matter.ida.r3.ordinary",
+      "task.ida.r3.ordinary",
+      "run.ida.r3.ordinary",
+      world.tick,
+      "inspect an ordinary familiar settlement concern",
+    );
+    expect(arbitrator.request(current.runId)).toEqual({
+      status: "acquired",
+      runId: current.runId,
+    });
+    expect(arbitrator.request(ordinary.runId)).toMatchObject({
+      status: "busy",
+      runId: ordinary.runId,
+      focusedRunId: current.runId,
+    });
+
+    if (distanceSquared(actorPosition(world, PLAYER_ID), actorPosition(world, IDA_ID)) > 300 ** 2) {
+      movePlayerNear(world, actorPosition(world, IDA_ID));
+    }
+
+    const occurrence = world.speak(
+      PLAYER_ID,
+      `Ida, proszę przekaż Jankowi dokładnie: "${MESSAGE}"`,
+      420,
+      [IDA_ID],
+    );
+    world.step();
+
+    let speechBatch = ida.takeCognitionBatch(world.tick);
+    for (let step = 0; step < 240 && !speechBatch; step += 1) {
+      world.step();
+      speechBatch = ida.takeCognitionBatch(world.tick);
+    }
+    expect(speechBatch).not.toBeNull();
+    if (!speechBatch) return;
+
+    const speechLife = captureResidentLifeCognitionView({
+      kernel,
+      focus,
+      arbitrator,
+      matterIds: [current.matterId, ordinary.matterId],
+    });
+    const speechAttempt = lifeIntentOwner.prepare(speechBatch, speechLife);
+    expect(speechAttempt).not.toBeNull();
+    if (!speechAttempt) return;
+
+    const proposal = {
+      version: 1 as const,
+      commitmentDecision: {
+        kind: "accept" as const,
+        reason: "I accept responsibility for delivering the exact message to Janek",
+        intent: {
+          kind: "communicate" as const,
+          goal: "deliver the accepted message to Janek",
+          targetActorId: JANEK_ID,
+          targetRegionId: null,
+          targetPosition: null,
+          text: MESSAGE,
+        },
+      },
+      beliefs: [],
+      concerns: [],
+      reviewAfterSeconds: 30,
+    };
+
+    const speechSettlement = lifeIntentOwner.settleCommitmentIntent(
+      speechAttempt,
+      proposal,
+      captureResidentLifeCognitionView({
+        kernel,
+        focus,
+        arbitrator,
+        matterIds: [current.matterId, ordinary.matterId],
+      }),
+      world.tick,
+      (admittedProposal, providerContext) => causal.groundPrivateSpeechCommitment({
+        attempt: speechAttempt,
+        occurrence,
+        proposal: admittedProposal,
+        providerContext,
+        groundingContext: ida.cognitionContext(speechBatch),
+      }),
+    );
+    expect(speechSettlement.status).toBe("applied");
+    if (speechSettlement.status !== "applied") return;
+
+    const obligation = causal.materializePrivateSpeechCommitment({
+      attempt: speechAttempt,
+      occurrence,
+      proposal: speechSettlement.proposal,
+      intent: speechSettlement.intent,
+    });
+    expect(obligation.focusClaim).toMatchObject({
+      status: "busy",
+      runId: obligation.runId,
+      focusedRunId: current.runId,
+    });
+    expect(arbitrator.deferredRunIds()).toEqual(
+      [obligation.runId, ordinary.runId].sort((a, b) => a.localeCompare(b)),
+    );
+
+    // A is only the temporary body occupant. Once it ends, B/C become the real
+    // semantic choice; neither is allowed to leapfrog because it arrived later.
+    kernel.cancelMatter(current.matterId);
+    kernel.retireRun(current.runId);
+    const arbitration = arbitrator.reconcile();
+    expect(arbitration).toEqual({
+      status: "choice_required",
+      candidateRunIds: [obligation.runId, ordinary.runId].sort((a, b) => a.localeCompare(b)),
+    });
+
+    const choiceReview = new ResidentLifeChoiceReviewBridge(ida);
+    expect(choiceReview.observe(arbitration, world.tick).status).toBe("scheduled");
+
+    let choiceBatch = ida.takeCognitionBatch(world.tick);
+    for (let step = 0; step < 120 && !choiceBatch; step += 1) {
+      world.step();
+      choiceBatch = ida.takeCognitionBatch(world.tick);
+    }
+    expect(choiceBatch).not.toBeNull();
+    if (!choiceBatch) return;
+
+    const choiceLife = captureResidentLifeCognitionView({
+      kernel,
+      focus,
+      arbitrator,
+      matterIds: [obligation.matter.id, ordinary.matterId],
+    });
+    const choiceOwner = new ResidentLifeChoiceOwner(ida);
+    const choiceAttempt = choiceOwner.prepare(choiceBatch, choiceLife);
+    expect(choiceAttempt).not.toBeNull();
+    if (!choiceAttempt) return;
+
+    const obligationSupport = choiceAttempt.candidateSupports.find(
+      (candidate) => candidate.matterId === obligation.matter.id,
+    );
+    const ordinarySupport = choiceAttempt.candidateSupports.find(
+      (candidate) => candidate.matterId === ordinary.matterId,
+    );
+    expect(obligationSupport?.facts).toContainEqual(expect.objectContaining({
+      evidenceKind: "accepted_social_commitment",
+      relation: "open_social_responsibility",
+    }));
+    expect(ordinarySupport?.facts).toContainEqual(expect.objectContaining({
+      evidenceKind: "life_context",
+      relation: "matter_origin",
+    }));
+
+    const obligationEvidenceId = obligationSupport?.facts.find(
+      (fact) => fact.relation === "open_social_responsibility",
+    )?.evidenceId;
+    expect(obligationEvidenceId).toBeDefined();
+
+    const chosen = choiceOwner.settle(
+      choiceAttempt,
+      {
+        version: 1,
+        decision: {
+          kind: "focus_matter",
+          matterId: obligation.matter.id,
+          reason: "honor the already accepted responsibility to Janek before the ordinary concern",
+          supportEvidenceIds: [obligationEvidenceId!],
+          reviewAfterSeconds: 20,
+        },
+      },
+      choiceLife,
+      world.tick,
+    );
+    expect(chosen).toMatchObject({
+      status: "applied",
+      decision: {
+        kind: "focus_matter",
+        matterId: obligation.matter.id,
+        supportEvidenceIds: [obligationEvidenceId],
+      },
+    });
+
+    expect(arbitrator.choose(obligation.runId)).toEqual({
+      status: "acquired",
+      runId: obligation.runId,
+    });
+    expect(focus.focusedRun()).toBe(obligation.runId);
+    expect(arbitrator.deferredRunIds()).toEqual([ordinary.runId]);
+
+    expect(ida.semanticPressureLifecycleSnapshot()).toContainEqual(expect.objectContaining({
+      reason: expect.objectContaining({ id: choiceAttempt.originReasonId }),
+      status: "settled",
+    }));
+  });
+
+
 });
 
 function establishIdaJanekContact(
@@ -298,4 +579,27 @@ function idleActivity(id: string): ResidentActivity {
     speed: null,
     reason: "hold after legal contact prehistory",
   };
+}
+
+function openFixtureMatter(
+  kernel: ResidentContinuityKernel,
+  matterId: string,
+  taskId: string,
+  runId: string,
+  tick: number,
+  semanticCourse: string,
+) {
+  const origin = kernel.recordEvidence({
+    id: `evidence:${matterId}:origin`,
+    tick,
+    kind: "life_context",
+    summary: `${matterId} is a real ordinary continuing resident matter.`,
+  });
+  kernel.openMatter({
+    id: matterId,
+    originEvidenceId: origin.id,
+    semanticCourse,
+  });
+  kernel.bindRun({ matterId, taskId, runId });
+  return { matterId, taskId, runId, originEvidenceId: origin.id };
 }

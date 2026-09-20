@@ -17,9 +17,9 @@ import {
   type ResidentGroundedTravelStep,
 } from "./resident-grounded-travel-executor";
 import { ResidentWorldExecutionAuthority } from "./resident-world-execution-authority";
+import { ResidentLifeOutcomeReviewBridge } from "./resident-life-outcome-review-bridge";
 
 const MIRA_ID = "resident.mira";
-const FIXED_DELTA_SECONDS = 1 / 60;
 const RESEARCH_PLAYER_START = { x: 700, y: 700 } as const;
 
 const CHAPTERS = [
@@ -117,6 +117,7 @@ export function createFiveResidentMiraSustainedLifeSlice(): FiveResidentMiraSust
   const cognitionOwner = new ResidentCognitionOwner(mira, new CognitionGrounder(navigation));
   const kernel = new ResidentContinuityKernel();
   const executionFocus = new ResidentExecutionFocusAuthority(kernel);
+  const outcomeReviewBridge = new ResidentLifeOutcomeReviewBridge(mira);
 
   let phase: MiraSustainedLifePhase = "authored_opening";
   let chapterIndex = 0;
@@ -156,6 +157,7 @@ export function createFiveResidentMiraSustainedLifeSlice(): FiveResidentMiraSust
         if (reconciled.status !== "recorded") {
           throw new Error(`sustained-life chapter ${chapter.index} could not reconcile factual arrival`);
         }
+        outcomeReviewBridge.observe(reconciled.evidence, world.tick);
         kernel.resolveMatter(chapter.matterId);
         executionFocus.sync();
         worldAuthority.enforceMotionAuthority();
@@ -216,7 +218,6 @@ export function createFiveResidentMiraSustainedLifeSlice(): FiveResidentMiraSust
         throw new Error(`sustained-life chapter ${chapter.index} cognition was not admitted: ${settlement.status}`);
       }
 
-      mira.scheduleAdaptiveReview(world.tick, settlement.intent.reviewAfterSeconds, FIXED_DELTA_SECONDS);
       const origin = kernel.recordEvidence({
         id: `evidence:mira:sustained:${chapter.index}:${world.tick}`,
         tick: world.tick,

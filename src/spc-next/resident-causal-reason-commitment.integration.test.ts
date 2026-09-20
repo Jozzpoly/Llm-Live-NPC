@@ -37,7 +37,11 @@ describe("resident causal self-origin bootstrap", () => {
     });
     const execution = new ResidentCausalExecutionCoordinator(life);
 
-    const prepared = life.takeReadyLifeIntentAttempt();
+    let prepared = life.takeReadyLifeIntentAttempt();
+    for (let step = 0; !prepared && step < 60; step += 1) {
+      world.step();
+      prepared = life.takeReadyLifeIntentAttempt();
+    }
     expect(prepared).not.toBeNull();
     if (!prepared) return;
 

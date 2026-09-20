@@ -59,10 +59,14 @@ describe("SPC Next authoritative resident region truth", () => {
       id: "hearth",
       knowledge: "visited",
     }));
-    expect(resident.diagnostics().trace).toContainEqual(expect.objectContaining({
-      kind: "cognition_reason",
-      summary: "Left authored region: hearth",
+    expect(resident.semanticPressureDecisions()).toContainEqual(expect.objectContaining({
+      tick: expect.any(Number),
+      disposition: "observation_only",
+      code: "region_transition",
+      cognitionReason: null,
+      summary: expect.stringContaining("hearth -> none"),
     }));
+    expect(resident.pendingCognitionReasons()).toEqual([]);
 
     world.setResidentActivity("resident.mira", travel("activity:return-hearth", 60, 100));
     world.step(70);

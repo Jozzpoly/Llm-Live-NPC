@@ -27,8 +27,6 @@ const profile: ResidentProfile = {
 function setupAmbiguity() {
   const resident = new ResidentRuntime(profile);
   resident.enterRegion({ id: "hearth", label: "Hearth", minX: 0, minY: 0, maxX: 1_400, maxY: 1_500 }, 0, true);
-  resident.ingestPercepts([addressedSpeech(1)]);
-  const batch = resident.takeCognitionBatch(1)!;
 
   const kernel = new ResidentContinuityKernel();
   const focus = new ResidentExecutionFocusAuthority(kernel);
@@ -47,6 +45,15 @@ function setupAmbiguity() {
     status: "choice_required",
     candidateRunIds: [B.runId, C.runId],
   });
+  resident.promoteSemanticPressure({
+    id: "reason:test:live-composition:ambiguity",
+    tick: 1,
+    kind: "uncertainty",
+    salience: 0.8,
+    summary: "B and C require the same currently-free body.",
+    evidenceIds: [B.runId, C.runId],
+  });
+  const batch = resident.takeCognitionBatch(31)!;
 
   const owner = new ResidentLifeChoiceOwner(resident);
   const life = captureResidentLifeCognitionView({ kernel, focus, arbitrator, matterIds: MATTER_IDS });
@@ -96,6 +103,7 @@ function proposal(matterId = B.matterId) {
       kind: "focus_matter",
       matterId,
       reason: "give this current commitment the free body next",
+      supportEvidenceIds: [`evidence:${matterId}:1`],
       reviewAfterSeconds: 8,
     },
   };

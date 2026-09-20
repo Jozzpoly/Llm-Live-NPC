@@ -1,8 +1,11 @@
+import { deriveSpcIdentifier } from "./identity-contract";
 import type { ResidentKernelEvidence } from "./resident-continuity-kernel";
 import type { ResidentRuntime } from "./resident-runtime";
 
 export interface ResidentLifeOutcomeReviewBridgeOptions {
+  /** Historical compatibility only; explicit outcome pressure no longer needs a quiet-review delay. */
   reviewAfterSeconds?: number;
+  /** Historical compatibility only; explicit outcome pressure no longer needs a quiet-review cadence. */
   fixedDeltaSeconds?: number;
   rememberedOutcomeLimit?: number;
 }
@@ -11,37 +14,35 @@ export type ResidentLifeOutcomeReviewObservation =
   | { status: "scheduled"; outcomeEvidenceId: string }
   | { status: "already_scheduled"; outcomeEvidenceId: string };
 
-const DEFAULT_REVIEW_AFTER_SECONDS = 0.25;
-const DEFAULT_FIXED_DELTA_SECONDS = 1 / 60;
 const DEFAULT_REMEMBERED_OUTCOME_LIMIT = 128;
 
 /**
- * Edge-triggered bridge from an already factual recovered-run outcome into the
- * resident's existing cognition cadence.
+ * Edge-triggered bridge from an already factual recovered-run outcome into explicit
+ * resident semantic pressure.
  *
- * Kernel evidence remains continuity truth, not a percept and not a cognition reason.
- * This bridge therefore creates no synthetic evidence and exposes no semantic/body
- * authority. It merely ensures that a newly observed factual outcome gets one bounded
- * near-term opportunity to be interpreted through the ordinary resident-life context.
+ * Kernel outcome evidence is already the causal reason. R2 therefore promotes one
+ * bounded `activity_completed` pressure tied to that exact evidence instead of
+ * moving a quiet-review timer.
+ *
+ * The bridge does not interpret the outcome, create synthetic evidence or mutate
+ * body/World authority.
  */
 export class ResidentLifeOutcomeReviewBridge {
   private readonly observedOutcomeEvidenceIds = new Set<string>();
   private readonly observedOutcomeOrder: string[] = [];
-  private readonly reviewAfterSeconds: number;
-  private readonly fixedDeltaSeconds: number;
   private readonly rememberedOutcomeLimit: number;
 
   constructor(
-    private readonly resident: Pick<ResidentRuntime, "ensureAdaptiveReview">,
+    private readonly resident: Pick<ResidentRuntime, "promoteSemanticPressure">,
     options: ResidentLifeOutcomeReviewBridgeOptions = {},
   ) {
-    this.reviewAfterSeconds = options.reviewAfterSeconds ?? DEFAULT_REVIEW_AFTER_SECONDS;
-    this.fixedDeltaSeconds = options.fixedDeltaSeconds ?? DEFAULT_FIXED_DELTA_SECONDS;
     this.rememberedOutcomeLimit = options.rememberedOutcomeLimit ?? DEFAULT_REMEMBERED_OUTCOME_LIMIT;
-    if (!Number.isFinite(this.reviewAfterSeconds) || this.reviewAfterSeconds <= 0) {
+    if (options.reviewAfterSeconds !== undefined
+      && (!Number.isFinite(options.reviewAfterSeconds) || options.reviewAfterSeconds <= 0)) {
       throw new Error("life outcome reviewAfterSeconds must be positive and finite");
     }
-    if (!Number.isFinite(this.fixedDeltaSeconds) || this.fixedDeltaSeconds <= 0) {
+    if (options.fixedDeltaSeconds !== undefined
+      && (!Number.isFinite(options.fixedDeltaSeconds) || options.fixedDeltaSeconds <= 0)) {
       throw new Error("life outcome fixedDeltaSeconds must be positive and finite");
     }
     if (!Number.isSafeInteger(this.rememberedOutcomeLimit) || this.rememberedOutcomeLimit < 1) {
@@ -76,11 +77,16 @@ export class ResidentLifeOutcomeReviewBridge {
       const evicted = this.observedOutcomeOrder.shift();
       if (evicted !== undefined) this.observedOutcomeEvidenceIds.delete(evicted);
     }
-    this.resident.ensureAdaptiveReview(
+
+    this.resident.promoteSemanticPressure({
+      id: deriveSpcIdentifier("reason-life-outcome", outcomeEvidence.id),
       tick,
-      this.reviewAfterSeconds,
-      this.fixedDeltaSeconds,
-    );
+      kind: "activity_completed",
+      salience: 0.65,
+      summary: `Factual run outcome requires resident interpretation: ${outcomeEvidence.summary}`,
+      evidenceIds: [outcomeEvidence.id],
+    });
+
     return { status: "scheduled", outcomeEvidenceId: outcomeEvidence.id };
   }
 }

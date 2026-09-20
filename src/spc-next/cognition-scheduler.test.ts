@@ -51,7 +51,7 @@ describe("CognitionScheduler anti-storm semantics", () => {
     });
   });
 
-  it("gives five residents deterministic but non-identical initial quiet review deadlines", () => {
+  it("keeps deterministic but non-identical local-maintenance deadlines without making them semantic pressure", () => {
     const deadlines = ["mira", "janek", "ida", "oren", "nela"].map((name) =>
       createDefaultCognitionScheduler(`resident.${name}`, 0).diagnostics().nextQuietReviewTick,
     );
@@ -59,9 +59,16 @@ describe("CognitionScheduler anti-storm semantics", () => {
     expect(new Set(deadlines).size).toBe(5);
     expect(Math.min(...deadlines)).toBeGreaterThanOrEqual(1_800);
     expect(Math.max(...deadlines)).toBeLessThan(2_250);
+
+    for (const name of ["mira", "janek", "ida", "oren", "nela"]) {
+      const scheduler = createDefaultCognitionScheduler(`resident.${name}`, 0);
+      const deadline = scheduler.diagnostics().nextQuietReviewTick;
+      expect(scheduler.takeReady(deadline)).toBeNull();
+      expect(scheduler.diagnostics().lastRequestTick).toBeNull();
+    }
   });
 
-  it("lets an accepted adaptive review deadline replace the fallback schedule", () => {
+  it("lets adaptive local-maintenance deadlines move without fabricating semantic cognition", () => {
     const scheduler = createDefaultCognitionScheduler("resident.mira", 0);
     scheduler.scheduleQuietReviewAfter(100, 5_400);
     const scheduled = scheduler.diagnostics().nextQuietReviewTick;
@@ -69,6 +76,9 @@ describe("CognitionScheduler anti-storm semantics", () => {
     expect(scheduled).toBeGreaterThanOrEqual(5_500);
     expect(scheduled).toBeLessThan(5_530);
     expect(scheduler.takeReady(scheduled - 1)).toBeNull();
-    expect(scheduler.takeReady(scheduled)?.reasons[0]?.kind).toBe("quiet_review");
+    expect(scheduler.takeReady(scheduled)).toBeNull();
+
+    scheduler.note(reason("real-pressure", scheduled, 0.9));
+    expect(scheduler.takeReady(scheduled)?.reasons[0]?.id).toBe("real-pressure");
   });
 });

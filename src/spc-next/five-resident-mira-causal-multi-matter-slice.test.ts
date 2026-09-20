@@ -94,7 +94,6 @@ describe("five-resident Mira causal multi-matter acquisition", () => {
       deferredRunIds: [FIELDS!.runId, WORKSHOP!.runId].sort((a, b) => a.localeCompare(b)),
     });
 
-    const reviewBeforeChoice = slice.mira.cognitionScheduleDiagnostics().nextQuietReviewTick;
     const completedA = slice.completeFocusedMatter(HEARTH!.matterId);
     expect(completedA.arbitration).toEqual({
       status: "choice_required",
@@ -104,7 +103,17 @@ describe("five-resident Mira causal multi-matter acquisition", () => {
       status: "scheduled",
       candidateRunIds: [FIELDS!.runId, WORKSHOP!.runId].sort((a, b) => a.localeCompare(b)),
     });
-    expect(slice.mira.cognitionScheduleDiagnostics().nextQuietReviewTick).toBeLessThan(reviewBeforeChoice);
+    expect(slice.mira.pendingCognitionReasons()).toEqual([
+      expect.objectContaining({
+        kind: "uncertainty",
+        evidenceIds: [FIELDS!.runId, WORKSHOP!.runId].sort((a, b) => a.localeCompare(b)),
+      }),
+      expect.objectContaining({
+        kind: "activity_completed",
+        evidenceIds: [completedA.outcomeEvidence.id],
+      }),
+    ]);
+    expect(slice.mira.pendingCognitionReasons().some((reason) => reason.kind === "quiet_review")).toBe(false);
     expect(slice.kernel.matter(HEARTH!.matterId)).toMatchObject({ status: "resolved", activeRunId: null });
     expect(slice.kernel.matter(WORKSHOP!.matterId)).toMatchObject({ status: "active", activeRunId: WORKSHOP!.runId });
     expect(slice.kernel.matter(FIELDS!.matterId)).toMatchObject({ status: "active", activeRunId: FIELDS!.runId });

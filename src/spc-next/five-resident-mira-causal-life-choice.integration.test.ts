@@ -23,8 +23,16 @@ describe("five-resident Mira causal life choice composition", () => {
 
     const batch = waitForChoiceReview(slice);
     expect(batch.reasons).toEqual([
-      expect.objectContaining({ kind: "quiet_review" }),
+      expect.objectContaining({
+        kind: "uncertainty",
+        evidenceIds: [FIELDS!.runId, WORKSHOP!.runId].sort((a, b) => a.localeCompare(b)),
+      }),
+      expect.objectContaining({
+        kind: "activity_completed",
+        evidenceIds: [completedHearth.outcomeEvidence.id],
+      }),
     ]);
+    expect(batch.reasons.some((reason) => reason.kind === "quiet_review")).toBe(false);
 
     const lifeAtChoice = captureResidentLifeCognitionView({
       kernel: slice.kernel,
@@ -46,6 +54,10 @@ describe("five-resident Mira causal life choice composition", () => {
       WORKSHOP!.matterId,
     ].sort((a, b) => a.localeCompare(b)));
     expect(attempt.context.life).toEqual(lifeAtChoice);
+    const workshopSupport = attempt.candidateSupports.find(
+      (candidate) => candidate.matterId === WORKSHOP!.matterId,
+    )?.facts[0]?.evidenceId;
+    expect(workshopSupport).toBeDefined();
 
     const currentLife = captureResidentLifeCognitionView({
       kernel: slice.kernel,
@@ -59,6 +71,7 @@ describe("five-resident Mira causal life choice composition", () => {
         kind: "focus_matter",
         matterId: WORKSHOP!.matterId,
         reason: "continue with the accepted workshop request before the fields request",
+        supportEvidenceIds: [workshopSupport!],
         reviewAfterSeconds: 30,
       },
     }, currentLife);

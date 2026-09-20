@@ -143,8 +143,14 @@ describe("ResidentCausalExecutionCoordinator", () => {
       }),
     }));
 
+    // Expected success is durable factual history, not automatically a new
+    // semantic problem. No timer or outcome bridge is allowed to manufacture one.
+    expect(ida.pendingCognitionReasons().some((reason) =>
+      reason.evidenceIds.includes(terminal.outcomeEvidence.id)
+    )).toBe(false);
+
     const reviewAfterCompletion = ida.cognitionScheduleDiagnostics().nextQuietReviewTick;
-    expect(reviewAfterCompletion).toBeLessThanOrEqual(reviewBeforeCompletion);
+    expect(reviewAfterCompletion).toBe(reviewBeforeCompletion);
   });
 
   it("executes and reconciles a generic Ida communicate matter without a bespoke delivery vertical", () => {
@@ -270,6 +276,9 @@ describe("ResidentCausalExecutionCoordinator", () => {
     });
     expect(life.focus.focusedRun()).toBeNull();
     expect(life.worldAuthority.motionOwner()).toBeNull();
+    expect(ida.pendingCognitionReasons().some((reason) =>
+      reason.evidenceIds.includes(terminal.outcomeEvidence.id)
+    )).toBe(false);
   });
 
   it("reconciles blocked Ida communication without resolving the durable matter or oracle-tracking Janek", () => {
@@ -414,6 +423,11 @@ describe("ResidentCausalExecutionCoordinator", () => {
     expect(life.worldAuthority.motionOwner()).toBeNull();
     expect(ida.cognitionScheduleDiagnostics().nextQuietReviewTick)
       .toBeLessThanOrEqual(reviewBeforeBlockedOutcome);
+    expect(ida.pendingCognitionReasons()).toContainEqual(expect.objectContaining({
+      kind: "activity_completed",
+      evidenceIds: [terminal.outcomeEvidence.id],
+      summary: expect.stringContaining("Factual run outcome requires resident interpretation"),
+    }));
 
     expect(life.kernel.matter(accepted.matter.id)).toMatchObject({
       lastOutcomeSemanticRevision: 1,

@@ -193,7 +193,7 @@ export class ResidentCausalCommunicateCommitmentAuthority {
     const origin = this.options.kernel.recordEvidence({
       id: `evidence:${this.identityNamespace}:accepted-${identity.evidenceKey}:${originPercept.tick}`,
       tick: originPercept.tick,
-      kind: "accepted_cognition_commitment",
+      kind: "accepted_social_commitment",
       summary: `${input.intent.semanticCourse}; origin occurrence ${originPercept.occurrenceId}`,
     });
     const matter = this.options.kernel.openMatter({

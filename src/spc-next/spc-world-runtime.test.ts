@@ -130,7 +130,10 @@ describe("SPC Next five-resident world foundation", () => {
       expect(actor!.position.x).toBeGreaterThan(before.get(id)!);
     }
 
-    expect(world.takeCognitionBatch("resident.mira")).not.toBeNull();
+    expect(world.takeCognitionBatch("resident.mira")).toBeNull();
+    expect(world.publicSnapshot().residents.find(
+      (resident) => resident.id === "resident.mira",
+    )?.pendingCognitionReasonCount).toBe(0);
     expect(world.tick).toBe(180);
   });
 

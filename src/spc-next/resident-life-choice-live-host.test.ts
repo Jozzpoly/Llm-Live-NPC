@@ -23,8 +23,15 @@ const profile: ResidentProfile = {
 function setup() {
   const resident = new ResidentRuntime(profile);
   resident.enterRegion({ id: "hearth", label: "Hearth", minX: 0, minY: 0, maxX: 1_400, maxY: 1_500 }, 0, true);
-  resident.ingestPercepts([addressedSpeech("initial", 1)]);
-  const batch = resident.takeCognitionBatch(1)!;
+  resident.promoteSemanticPressure({
+    id: "reason:test:life-choice-host:ambiguity",
+    tick: 1,
+    kind: "uncertainty",
+    salience: 0.8,
+    summary: "B and C require the same currently-free body.",
+    evidenceIds: ["run.mira.b", "run.mira.c"],
+  });
+  const batch = resident.takeCognitionBatch(31)!;
   const owner = new ResidentLifeChoiceOwner(resident);
   const life = lifeView();
   const attempt = owner.prepare(batch, life)!;
@@ -56,14 +63,20 @@ function lifeView(): ResidentLifeCognitionView {
 }
 
 function matter(id: string, runId: string) {
+  const evidence = {
+    id: `evidence:life-choice-host:${id}`,
+    tick: 0,
+    kind: "life_context",
+    summary: `${id} is a grounded continuing matter.`,
+  };
   return {
     id,
     status: "active" as const,
     semanticRevision: 1,
     semanticCourse: `continue ${id}`,
     suspendedByMatterId: null,
-    originEvidence: null,
-    semanticEvidence: null,
+    originEvidence: evidence,
+    semanticEvidence: evidence,
     lastOutcomeEvidence: null,
     activeRun: {
       runId,
@@ -82,6 +95,7 @@ function proposal(matterId = "matter.mira.b") {
       kind: "focus_matter",
       matterId,
       reason: "give this continuing matter the free body next",
+      supportEvidenceIds: [`evidence:life-choice-host:${matterId}`],
       reviewAfterSeconds: 8,
     },
   };
@@ -172,7 +186,7 @@ describe("ResidentLifeChoiceLiveHost transport/admission boundary", () => {
       abandonment: "abandoned",
     });
     expect(owner.state().activeAttemptId).toBeNull();
-    expect(resident.takeCognitionBatch(61)?.reasons[0]?.id).toBe(batch.reasons[0]!.id);
+    expect(resident.takeCognitionBatch(91)?.reasons[0]?.id).toBe(batch.reasons[0]!.id);
   });
 
   it("rejects cloned arrival authority without consuming the exact host-owned arrival", async () => {
