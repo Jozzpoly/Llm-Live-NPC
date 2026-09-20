@@ -14,6 +14,11 @@ import {
 } from "./resident-local-material-delivery-routine";
 import { ResidentMaterialKnowledge } from "./resident-material-knowledge";
 import {
+  ResidentMaterialMatterRelevanceBridge,
+  materialAbsencePressureReasonId,
+  sampleRecognizedMaterialObservation,
+} from "./resident-material-matter-relevance-bridge";
+import {
   ResidentMaterialPickupExecutor,
   type ResidentMaterialPickupStep,
 } from "./resident-material-pickup-executor";
@@ -31,6 +36,7 @@ export const R4_PRIMARY_MATTER_ID = "matter.janek.r4.missing-crate";
 export const R4_SECONDARY_MATTER_ID = "matter.janek.r4.return-basket";
 
 export const R4_PRIMARY_RUN_ID = "run.janek.r4.pickup-last-known-crate";
+export const R4_PRIMARY_REACQUIRED_RUN_ID = "run.janek.r4.pickup-reacquired-crate";
 export const R4_SECONDARY_PICKUP_RUN_ID = "run.janek.r4.pickup-basket";
 export const R4_SECONDARY_PLACE_RUN_ID = "run.janek.r4.place-basket";
 
@@ -40,7 +46,8 @@ const SECONDARY_START = Object.freeze({ x: 1_100, y: 550 });
 export const R4_SECONDARY_DESTINATION = Object.freeze({ x: 1_450, y: 500 });
 const IRRELEVANT_START = Object.freeze({ x: 1_180, y: 650 });
 const RELOCATOR_MAX_SPEED = 80_000;
-const RELOCATOR_HIDDEN_VELOCITY = Object.freeze({ x: 72_000, y: 24_000 });
+const RELOCATOR_HIDDEN_VELOCITY = Object.freeze({ x: 78_000, y: 36_000 });
+export const R4_PRIMARY_REVEAL_POSITION = Object.freeze({ x: 1_550, y: 650 });
 const RETREAT_GUARD = 420;
 
 export type R4DenseWorkshopStep =
@@ -63,8 +70,15 @@ export type R4DenseWorkshopStep =
       local: Extract<ResidentLocalMaterialDeliveryStep, { status: "succeeded" }>;
       arbitration: ResidentExecutionArbitration;
     }
-  | { status: "authority_lost"; phase: "primary" | "secondary" }
-  | { status: "blocked"; phase: "secondary"; reason: string };
+  | {
+      status: "primary_reactivated";
+      evidence: ResidentKernelEvidence;
+      arbitrationRequest: ReturnType<ResidentExecutionArbitrator["request"]>;
+    }
+  | { status: "primary_reacquired_running"; local: ResidentMaterialPickupStep }
+  | { status: "primary_resolved"; local: Extract<ResidentMaterialPickupStep, { status: "succeeded" }> }
+  | { status: "authority_lost"; phase: "primary" | "secondary" | "primary_reacquired" }
+  | { status: "blocked"; phase: "secondary" | "primary_reacquired"; reason: string };
 
 export interface R4HiddenRelocation {
   from: Vec2;
@@ -190,6 +204,11 @@ export function createR4DenseWorkshopSlice() {
     id: R4_PRIMARY_MATTER_ID,
     originEvidenceId: primaryOrigin.id,
     semanticCourse: "retrieve the familiar workshop crate from its last-known bench position",
+    semanticIntent: {
+      kind: "acquire_material_object",
+      goal: "have the familiar workshop crate in hand",
+      objectId: R4_PRIMARY_OBJECT_ID,
+    },
   });
   kernel.bindRun({
     matterId: R4_PRIMARY_MATTER_ID,
@@ -212,6 +231,7 @@ export function createR4DenseWorkshopSlice() {
   const focus = new ResidentExecutionFocusAuthority(kernel);
   const arbitrator = new ResidentExecutionArbitrator(kernel, focus);
   const authority = new ResidentWorldExecutionAuthority(RESIDENT_ID, arbitrator, world);
+  const materialRelevance = new ResidentMaterialMatterRelevanceBridge(resident, kernel);
 
   const primaryFocus = arbitrator.request(R4_PRIMARY_RUN_ID);
   if (primaryFocus.status !== "acquired") {
@@ -246,6 +266,10 @@ export function createR4DenseWorkshopSlice() {
   let primaryReconciliation: RunOutcomeReconciliationResult | null = null;
   let checkedAbsenceEvidence: ResidentKernelEvidence | null = null;
   let secondaryResolved = false;
+  let revealApplied = false;
+  let primaryReacquiredExecutor: ResidentMaterialPickupExecutor | null = null;
+  let primaryReactivationEvidence: ResidentKernelEvidence | null = null;
+  let primaryResolved = false;
 
   function relocatePrimaryHidden(): R4HiddenRelocation {
     if (relocationApplied) throw new Error("R4 hidden primary relocation already applied");
@@ -280,9 +304,9 @@ export function createR4DenseWorkshopSlice() {
     });
     if (place.status !== "succeeded") throw new Error("R4 relocator failed to place primary object");
 
-    // The final relocation point is outside sight from both Janek's retreat body and
-    // the stale remembered position. Keep the fixture stopped there; R4-B tests
-    // checked absence rather than further relocator movement.
+    // The final relocation point is outside sight from Janek's retreat, stale
+    // inspection point and later B destination. R4-C therefore gets a separate,
+    // explicit later World-change boundary instead of accidental reacquisition.
     world.setActorMotionIntent(RELOCATOR_ID, { x: 0, y: 0 });
 
     knowledge.sample();
@@ -334,7 +358,7 @@ export function createR4DenseWorkshopSlice() {
       });
       kernel.advanceSemanticContext(R4_PRIMARY_MATTER_ID, checkedAbsenceEvidence.id);
       resident.promoteSemanticPressure({
-        id: `reason:${RESIDENT_ID}:r4:checked-absence:${R4_PRIMARY_OBJECT_ID}`,
+        id: materialAbsencePressureReasonId(RESIDENT_ID, R4_PRIMARY_OBJECT_ID),
         tick: checkedAbsenceEvidence.tick,
         kind: "uncertainty",
         salience: 0.9,
@@ -358,6 +382,153 @@ export function createR4DenseWorkshopSlice() {
       reconciliation: structuredClone(primaryReconciliation),
       arbitration: structuredClone(arbitration),
     };
+  }
+
+  function revealPrimaryNearby(): R4HiddenRelocation {
+    if (!relocationApplied || !primaryBlocked || !secondaryResolved) {
+      throw new Error("R4 primary reveal requires completed hidden/block/alternate history");
+    }
+    if (revealApplied) throw new Error("R4 primary reveal already applied");
+    if (primaryResolved) throw new Error("R4 primary matter is already resolved");
+
+    const before = world.materialObject(R4_PRIMARY_OBJECT_ID);
+    if (!before || before.location.kind !== "free") {
+      throw new Error("R4 primary object is not free before reveal");
+    }
+    const privateBefore = knowledge.observation(R4_PRIMARY_OBJECT_ID);
+    if (!privateBefore || privateBefore.currentlyVisible) {
+      throw new Error("R4 primary reveal requires still-stale private knowledge");
+    }
+
+    const relocator = world.publicSnapshot().actors.find((actor) => actor.id === RELOCATOR_ID);
+    if (!relocator) throw new Error("R4 relocator actor missing before reveal");
+    const tickBefore = world.tick;
+
+    const pickup = world.attemptMaterialAction(RELOCATOR_ID, {
+      kind: "pickup",
+      objectId: R4_PRIMARY_OBJECT_ID,
+    });
+    if (pickup.status !== "succeeded") throw new Error("R4 relocator failed to pick up primary object for reveal");
+
+    const dt = world.options.fixedDeltaSeconds;
+    world.setActorMotionIntent(RELOCATOR_ID, {
+      x: (R4_PRIMARY_REVEAL_POSITION.x - relocator.position.x) / dt,
+      y: (R4_PRIMARY_REVEAL_POSITION.y - relocator.position.y) / dt,
+    });
+    world.step();
+    world.setActorMotionIntent(RELOCATOR_ID, { x: 0, y: 0 });
+
+    const movedRelocator = world.publicSnapshot().actors.find((actor) => actor.id === RELOCATOR_ID);
+    if (!movedRelocator) throw new Error("R4 relocator disappeared during reveal");
+    const place = world.attemptMaterialAction(RELOCATOR_ID, {
+      kind: "place",
+      objectId: R4_PRIMARY_OBJECT_ID,
+      position: movedRelocator.position,
+    });
+    if (place.status !== "succeeded") throw new Error("R4 relocator failed to place primary object for reveal");
+
+    // Do not sample here. R4-C requires the resident's next ordinary local-life tick
+    // to acquire the changed truth through its own sight.
+    const privateAfter = knowledge.observation(R4_PRIMARY_OBJECT_ID);
+    if (JSON.stringify(privateAfter) !== JSON.stringify(privateBefore)) {
+      throw new Error("R4 reveal rewrote private material knowledge before resident sampling");
+    }
+
+    revealApplied = true;
+    const after = world.materialObject(R4_PRIMARY_OBJECT_ID);
+    if (!after || after.location.kind !== "free") {
+      throw new Error("R4 revealed primary lost free World truth");
+    }
+
+    return {
+      from: { ...before.location.position },
+      to: { ...after.location.position },
+      tickBefore,
+      tickAfter: world.tick,
+    };
+  }
+
+  function observeAndMaybeReactivatePrimary(): R4DenseWorkshopStep | null {
+    const sampled = sampleRecognizedMaterialObservation(knowledge, R4_PRIMARY_OBJECT_ID);
+    const relevance = materialRelevance.observeReacquisition(
+      sampled.previous,
+      sampled.current,
+      captureResidentLifeCognitionView({
+        kernel,
+        focus,
+        arbitrator,
+        matterIds: [R4_PRIMARY_MATTER_ID, R4_SECONDARY_MATTER_ID],
+      }),
+    );
+    if (relevance.status !== "reactivatable") return null;
+
+    kernel.bindRun({
+      matterId: relevance.matterId,
+      taskId: "task.janek.r4.pickup-reacquired-crate",
+      runId: R4_PRIMARY_REACQUIRED_RUN_ID,
+    });
+    const arbitrationRequest = arbitrator.request(R4_PRIMARY_REACQUIRED_RUN_ID);
+    if (arbitrationRequest.status === "rejected" || arbitrationRequest.status === "busy") {
+      throw new Error(`R4 reacquired primary run did not enter legal body demand: ${arbitrationRequest.status}`);
+    }
+
+    primaryReactivationEvidence = relevance.evidence;
+    primaryReacquiredExecutor = new ResidentMaterialPickupExecutor(
+      R4_PRIMARY_REACQUIRED_RUN_ID,
+      R4_PRIMARY_OBJECT_ID,
+      knowledge,
+      authority,
+      world,
+    );
+
+    return {
+      status: "primary_reactivated",
+      evidence: structuredClone(relevance.evidence),
+      arbitrationRequest: structuredClone(arbitrationRequest),
+    };
+  }
+
+  function advanceReacquiredPrimary(): R4DenseWorkshopStep {
+    if (!primaryReacquiredExecutor) throw new Error("R4 primary reacquisition has no executor");
+    knowledge.sample();
+    const local = primaryReacquiredExecutor.step();
+
+    if (local.status === "authority_lost") {
+      world.step();
+      return { status: "authority_lost", phase: "primary_reacquired" };
+    }
+    if (local.status === "blocked") {
+      const reconciliation = kernel.reconcileRunOutcome({
+        runId: R4_PRIMARY_REACQUIRED_RUN_ID,
+        tick: world.tick,
+        status: "blocked",
+        summary: local.reason,
+      });
+      if (reconciliation.status !== "recorded") {
+        throw new Error("R4 reacquired primary blocked outcome did not reconcile");
+      }
+      world.step();
+      return { status: "blocked", phase: "primary_reacquired", reason: local.reason };
+    }
+    if (local.status === "running") {
+      world.step();
+      return { status: "primary_reacquired_running", local };
+    }
+
+    const reconciliation = kernel.reconcileRunOutcome({
+      runId: R4_PRIMARY_REACQUIRED_RUN_ID,
+      tick: local.materialOutcome.tick,
+      status: "succeeded",
+      summary: `picked up ${local.materialOutcome.objectId} after legal private reacquisition`,
+    });
+    if (reconciliation.status !== "recorded") {
+      throw new Error("R4 reacquired primary success did not reconcile");
+    }
+    kernel.resolveMatter(R4_PRIMARY_MATTER_ID);
+    authority.enforceMotionAuthority();
+    primaryResolved = true;
+    world.step();
+    return { status: "primary_resolved", local };
   }
 
   function advanceSecondary(): R4DenseWorkshopStep {
@@ -409,8 +580,11 @@ export function createR4DenseWorkshopSlice() {
     primaryMatterId: R4_PRIMARY_MATTER_ID,
     secondaryMatterId: R4_SECONDARY_MATTER_ID,
     relocatePrimaryHidden,
+    revealPrimaryNearby,
     primaryBlocked: () => primaryBlocked,
     secondaryResolved: () => secondaryResolved,
+    primaryResolved: () => primaryResolved,
+    primaryReactivationEvidence: () => primaryReactivationEvidence ? structuredClone(primaryReactivationEvidence) : null,
     checkedAbsenceEvidence: () => checkedAbsenceEvidence ? structuredClone(checkedAbsenceEvidence) : null,
     currentLifeView: () => captureResidentLifeCognitionView({
       kernel,
@@ -423,8 +597,13 @@ export function createR4DenseWorkshopSlice() {
         throw new Error("R4 hidden primary relocation must be applied before recovered execution begins");
       }
 
+      const reactivated = observeAndMaybeReactivatePrimary();
+      if (reactivated) {
+        world.step();
+        return reactivated;
+      }
+
       if (!primaryBlocked) {
-        knowledge.sample();
         const local = primaryExecutor.step();
         if (local.status === "authority_lost") {
           world.step();
@@ -436,6 +615,7 @@ export function createR4DenseWorkshopSlice() {
       }
 
       if (!secondaryResolved) return advanceSecondary();
+      if (primaryReacquiredExecutor && !primaryResolved) return advanceReacquiredPrimary();
 
       world.step();
       return {
