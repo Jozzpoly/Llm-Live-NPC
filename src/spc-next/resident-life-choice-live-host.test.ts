@@ -23,8 +23,15 @@ const profile: ResidentProfile = {
 function setup() {
   const resident = new ResidentRuntime(profile);
   resident.enterRegion({ id: "hearth", label: "Hearth", minX: 0, minY: 0, maxX: 1_400, maxY: 1_500 }, 0, true);
-  resident.ingestPercepts([addressedSpeech("initial", 1)]);
-  const batch = resident.takeCognitionBatch(1)!;
+  resident.promoteSemanticPressure({
+    id: "reason:test:life-choice-host:ambiguity",
+    tick: 1,
+    kind: "uncertainty",
+    salience: 0.8,
+    summary: "B and C require the same currently-free body.",
+    evidenceIds: ["run.mira.b", "run.mira.c"],
+  });
+  const batch = resident.takeCognitionBatch(31)!;
   const owner = new ResidentLifeChoiceOwner(resident);
   const life = lifeView();
   const attempt = owner.prepare(batch, life)!;
