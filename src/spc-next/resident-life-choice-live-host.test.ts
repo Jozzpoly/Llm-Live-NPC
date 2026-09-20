@@ -186,7 +186,7 @@ describe("ResidentLifeChoiceLiveHost transport/admission boundary", () => {
       abandonment: "abandoned",
     });
     expect(owner.state().activeAttemptId).toBeNull();
-    expect(resident.takeCognitionBatch(61)?.reasons[0]?.id).toBe(batch.reasons[0]!.id);
+    expect(resident.takeCognitionBatch(91)?.reasons[0]?.id).toBe(batch.reasons[0]!.id);
   });
 
   it("rejects cloned arrival authority without consuming the exact host-owned arrival", async () => {
