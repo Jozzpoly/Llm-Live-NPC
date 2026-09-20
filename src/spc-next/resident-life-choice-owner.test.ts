@@ -31,13 +31,30 @@ function addressedSpeech(id: string, tick: number, text = "Mira, chwila!"): Resi
   };
 }
 
-function setup() {
+function setup(options: { siblingPressure?: boolean } = {}) {
   const resident = new ResidentRuntime(profile);
   resident.enterRegion({ id: "hearth", label: "Hearth", minX: 0, minY: 0, maxX: 1_400, maxY: 1_500 }, 0, true);
-  resident.ingestPercepts([addressedSpeech("initial", 1)]);
-  const batch = resident.takeCognitionBatch(1);
-  if (!batch) throw new Error("expected initial cognition batch");
-  return { resident, batch, owner: new ResidentLifeChoiceOwner(resident) };
+  resident.promoteSemanticPressure({
+    id: "reason:test:life-choice:ambiguity",
+    tick: 1,
+    kind: "uncertainty",
+    salience: 0.8,
+    summary: "B and C require the same currently-free body.",
+    evidenceIds: ["run.mira.b", "run.mira.c"],
+  });
+  if (options.siblingPressure) {
+    resident.promoteSemanticPressure({
+      id: "reason:test:life-choice:sibling-outcome",
+      tick: 1,
+      kind: "activity_completed",
+      salience: 0.65,
+      summary: "An independent factual outcome also remains unresolved.",
+      evidenceIds: ["evidence:test:sibling-outcome"],
+    });
+  }
+  const batch = resident.takeCognitionBatch(31);
+  if (!batch) throw new Error("expected exact life-choice cognition batch");
+  return { resident, batch, owner: new ResidentLifeChoiceOwner(resident, 1 / 60) };
 }
 
 function lifeView(): ResidentLifeCognitionView {
@@ -55,14 +72,20 @@ function lifeView(): ResidentLifeCognitionView {
 }
 
 function matter(id: string, runId: string, semanticCourse: string) {
+  const evidence = {
+    id: `evidence:choice-origin:${id}`,
+    tick: 0,
+    kind: "life_context",
+    summary: `${id} is an already-grounded continuing resident matter.`,
+  };
   return {
     id,
     status: "active" as const,
     semanticRevision: 1,
     semanticCourse,
     suspendedByMatterId: null,
-    originEvidence: null,
-    semanticEvidence: null,
+    originEvidence: evidence,
+    semanticEvidence: evidence,
     lastOutcomeEvidence: null,
     activeRun: {
       runId,
@@ -81,6 +104,7 @@ function choose(matterId = "matter.mira.b") {
       kind: "focus_matter",
       matterId,
       reason: "this matter should receive the free body next",
+      supportEvidenceIds: [`evidence:choice-origin:${matterId}`],
       reviewAfterSeconds: 8,
     },
   };
@@ -122,18 +146,47 @@ describe("ResidentLifeChoiceOwner", () => {
         kind: "focus_matter",
         matterId: "matter.mira.c",
         reason: "this matter should receive the free body next",
+        supportEvidenceIds: ["evidence:choice-origin:matter.mira.c"],
         reviewAfterSeconds: 8,
       },
     });
     expect(owner.state().activeAttemptId).toBeNull();
   });
 
-  it("accepts an explicit defer-all decision without silently choosing a matter", () => {
-    const { owner, batch } = setup();
+  it("settles only the exact ambiguity reason and retains independent sibling pressure", () => {
+    const { resident, owner, batch } = setup({ siblingPressure: true });
     const life = lifeView();
     const attempt = owner.prepare(batch, life)!;
 
-    expect(owner.settle(attempt, deferAll(), life)).toEqual({
+    expect(batch.reasons).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: "reason:test:life-choice:ambiguity" }),
+      expect.objectContaining({ id: "reason:test:life-choice:sibling-outcome" }),
+    ]));
+    expect(attempt.originReasonId).toBe("reason:test:life-choice:ambiguity");
+
+    expect(owner.settle(attempt, choose(), life, 32).status).toBe("applied");
+
+    expect(resident.pendingCognitionReasons()).toEqual([
+      expect.objectContaining({ id: "reason:test:life-choice:sibling-outcome" }),
+    ]);
+    expect(resident.semanticPressureLifecycleSnapshot()).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        reason: expect.objectContaining({ id: "reason:test:life-choice:ambiguity" }),
+        status: "settled",
+      }),
+      expect.objectContaining({
+        reason: expect.objectContaining({ id: "reason:test:life-choice:sibling-outcome" }),
+        status: "pending",
+      }),
+    ]));
+  });
+
+  it("accepts an explicit defer-all decision without silently choosing a matter", () => {
+    const { resident, owner, batch } = setup();
+    const life = lifeView();
+    const attempt = owner.prepare(batch, life)!;
+
+    expect(owner.settle(attempt, deferAll(), life, 32)).toEqual({
       status: "applied",
       decision: {
         kind: "defer_all",
@@ -141,6 +194,22 @@ describe("ResidentLifeChoiceOwner", () => {
         reviewAfterSeconds: 3,
       },
     });
+    expect(resident.pendingCognitionReasons()).toContainEqual(expect.objectContaining({
+      id: attempt.originReasonId,
+      kind: "uncertainty",
+    }));
+    expect(resident.semanticPressureLifecycleSnapshot()).toContainEqual(expect.objectContaining({
+      reason: expect.objectContaining({ id: attempt.originReasonId }),
+      status: "pending",
+      notBeforeTick: 212,
+    }));
+    expect(resident.takeCognitionBatch(211)).toBeNull();
+    expect(resident.takeCognitionBatch(212)?.reasons).toEqual([
+      expect.objectContaining({
+        id: attempt.originReasonId,
+        kind: "uncertainty",
+      }),
+    ]);
   });
 
   it("rejects a fabricated matter choice and requeues the causal batch", () => {
@@ -151,7 +220,7 @@ describe("ResidentLifeChoiceOwner", () => {
       status: "rejected",
       reason: "proposal_invalid",
     });
-    expect(resident.takeCognitionBatch(61)?.reasons.some((reason) => reason.id === batch.reasons[0]?.id)).toBe(true);
+    expect(resident.takeCognitionBatch(91)?.reasons.some((reason) => reason.id === batch.reasons[0]?.id)).toBe(true);
   });
 
   it("rejects a cloned attempt handle while preserving the real attempt authority", () => {
@@ -169,7 +238,7 @@ describe("ResidentLifeChoiceOwner", () => {
     const { resident, owner, batch } = setup();
     const life = lifeView();
     const attempt = owner.prepare(batch, life)!;
-    resident.ingestPercepts([addressedSpeech("newer", 2, "Mira, jednak zaczekaj!")]);
+    resident.ingestPercepts([addressedSpeech("newer", 32, "Mira, jednak zaczekaj!")]);
 
     expect(owner.settle(attempt, choose(), life)).toEqual({
       status: "stale",
@@ -190,7 +259,7 @@ describe("ResidentLifeChoiceOwner", () => {
       text: null,
       speed: null,
       reason: "newer local execution state",
-    }, 2);
+    }, 32);
 
     expect(owner.settle(attempt, choose(), life)).toEqual({
       status: "stale",
@@ -218,7 +287,7 @@ describe("ResidentLifeChoiceOwner", () => {
 
     expect(owner.abandon(attempt)).toBe(true);
     expect(owner.abandon(attempt)).toBe(false);
-    expect(resident.takeCognitionBatch(61)?.reasons.some((reason) => reason.id === batch.reasons[0]?.id)).toBe(true);
+    expect(resident.takeCognitionBatch(91)?.reasons.some((reason) => reason.id === batch.reasons[0]?.id)).toBe(true);
   });
 
   it("refuses to create a semantic choice when the body is occupied or fewer than two legal deferred matters remain", () => {

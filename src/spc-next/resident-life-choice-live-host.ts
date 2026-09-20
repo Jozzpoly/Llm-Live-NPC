@@ -162,7 +162,7 @@ export class ResidentLifeChoiceLiveHost {
     this.admittedArrivals.add(arrival);
 
     if (arrival.status === "provider_error") {
-      const abandoned = this.owner.abandon(authority.attempt);
+      const abandoned = this.owner.abandon(authority.attempt, admissionTick);
       this.recordAdmission(
         arrival,
         admissionTick,
@@ -177,7 +177,12 @@ export class ResidentLifeChoiceLiveHost {
       };
     }
 
-    const settlement = this.owner.settle(authority.attempt, arrival.proposal, currentLife);
+    const settlement = this.owner.settle(
+      authority.attempt,
+      arrival.proposal,
+      currentLife,
+      admissionTick,
+    );
     if (settlement.status === "applied") {
       this.recordAdmission(arrival, admissionTick, "applied", settlement.decision.kind);
       return { status: "applied", admissionTick, settlement };

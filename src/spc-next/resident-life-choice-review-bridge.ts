@@ -23,13 +23,18 @@ export type ResidentLifeChoiceReviewObservation =
  * quiet-review timer and hoping passage of time later fabricates a reason.
  *
  * Re-observing the same unresolved candidate set does not duplicate pressure.
+ * A changed candidate set supersedes the same resident-scoped ambiguity reason instead
+ * of creating a second event that could later resurrect obsolete B/C truth.
  * The bridge never ranks candidates, opens/closes a matter, binds a run or mutates World.
  */
 export class ResidentLifeChoiceReviewBridge {
   private activeAmbiguitySignature: string | null = null;
 
   constructor(
-    private readonly resident: Pick<ResidentRuntime, "profile" | "promoteSemanticPressure">,
+    private readonly resident: Pick<
+      ResidentRuntime,
+      "profile" | "promoteSemanticPressure" | "invalidateSemanticPressure"
+    >,
     options: ResidentLifeChoiceReviewBridgeOptions = {},
   ) {
     if (options.reviewAfterSeconds !== undefined
@@ -48,6 +53,13 @@ export class ResidentLifeChoiceReviewBridge {
     }
 
     if (arbitration.status !== "choice_required") {
+      if (this.activeAmbiguitySignature !== null) {
+        this.resident.invalidateSemanticPressure(
+          this.reasonId(),
+          tick,
+          "resident execution no longer requires a multi-matter semantic choice",
+        );
+      }
       this.activeAmbiguitySignature = null;
       return { status: "not_required" };
     }
@@ -64,10 +76,7 @@ export class ResidentLifeChoiceReviewBridge {
 
     this.activeAmbiguitySignature = signature;
     this.resident.promoteSemanticPressure({
-      id: deriveSpcIdentifier(
-        "reason-life-choice",
-        `${this.resident.profile.id}:${signature}`,
-      ),
+      id: this.reasonId(),
       tick,
       kind: "uncertainty",
       salience: 0.8,
@@ -81,5 +90,12 @@ export class ResidentLifeChoiceReviewBridge {
     return this.activeAmbiguitySignature === null
       ? []
       : this.activeAmbiguitySignature.split("\u0000");
+  }
+
+  private reasonId(): string {
+    return deriveSpcIdentifier(
+      "reason-life-choice",
+      this.resident.profile.id,
+    );
   }
 }

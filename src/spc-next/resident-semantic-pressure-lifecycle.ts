@@ -10,6 +10,7 @@ export type ResidentSemanticPressureLifecycleEventKind =
   | "promoted"
   | "superseded"
   | "stale_ignored"
+  | "settled_requeue_ignored"
   | "dispatched"
   | "requeued"
   | "retained"
@@ -63,6 +64,7 @@ export class ResidentSemanticPressureLifecycle {
     detail: string,
   ): void {
     assertTick(transitionTick, "semantic pressure transition tick");
+    const previousState = this.states.get(result.reason.id);
 
     if (result.status === "ignored_stale") {
       this.append({
@@ -76,14 +78,34 @@ export class ResidentSemanticPressureLifecycle {
       return;
     }
 
-    if (result.status === "updated") {
+    if (result.status === "ignored_settled") {
+      this.append({
+        tick: transitionTick,
+        residentId: this.residentId,
+        reasonId: result.reason.id,
+        reasonTick: result.reason.tick,
+        kind: "settled_requeue_ignored",
+        detail: `${detail}; causal version <= locally settled tick ${result.settledReasonTick}`,
+      });
+      return;
+    }
+
+    const supersededTick = previousState
+      && previousState.status !== "settled"
+      && previousState.reason.tick < result.reason.tick
+      ? previousState.reason.tick
+      : result.status === "updated"
+        ? result.replaced.tick
+        : null;
+
+    if (supersededTick !== null) {
       this.append({
         tick: transitionTick,
         residentId: this.residentId,
         reasonId: result.reason.id,
         reasonTick: result.reason.tick,
         kind: "superseded",
-        detail: `${detail}; replaced causal tick ${result.replaced.tick}`,
+        detail: `${detail}; replaced causal tick ${supersededTick}`,
       });
     } else {
       this.append({

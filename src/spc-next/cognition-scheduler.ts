@@ -20,7 +20,8 @@ export type CognitionReasonNoteResult =
   | { status: "inserted"; reason: CognitionReason; notBeforeTick: number }
   | { status: "updated"; reason: CognitionReason; replaced: CognitionReason; notBeforeTick: number }
   | { status: "unchanged"; reason: CognitionReason; notBeforeTick: number }
-  | { status: "ignored_stale"; reason: CognitionReason; retained: CognitionReason; notBeforeTick: number };
+  | { status: "ignored_stale"; reason: CognitionReason; retained: CognitionReason; notBeforeTick: number }
+  | { status: "ignored_settled"; reason: CognitionReason; settledReasonTick: number };
 
 export interface PendingCognitionReasonSnapshot {
   reason: CognitionReason;
@@ -37,9 +38,12 @@ export interface PendingCognitionReasonSnapshot {
  * - reason identity is monotonic by causal tick so an older requeue cannot overwrite
  *   newer evidence with the same coalesced identity.
  */
+const SETTLED_REASON_TOMBSTONE_LIMIT = 256;
+
 export class CognitionScheduler {
   private readonly pending = new Map<string, CognitionReason>();
   private readonly notBeforeTickByReasonId = new Map<string, number>();
+  private readonly settledReasonTickById = new Map<string, number>();
   private lastRequestTick: number | null = null;
   private nextQuietReviewTick: number;
 
@@ -69,6 +73,19 @@ export class CognitionScheduler {
     const notBeforeTick = options.notBeforeTick ?? reason.tick;
     if (!Number.isSafeInteger(notBeforeTick) || notBeforeTick < reason.tick) {
       throw new Error("cognition reason notBeforeTick cannot precede its causal tick");
+    }
+
+    const settledReasonTick = this.settledReasonTickById.get(reason.id);
+    if (settledReasonTick !== undefined) {
+      if (reason.tick <= settledReasonTick) {
+        return {
+          status: "ignored_settled",
+          reason: structuredClone(reason),
+          settledReasonTick,
+        };
+      }
+      // A genuinely newer causal version may reopen the same coalesced identity.
+      this.settledReasonTickById.delete(reason.id);
     }
 
     const existing = this.pending.get(reason.id);
@@ -141,6 +158,46 @@ export class CognitionScheduler {
 
   pendingCount(): number {
     return this.pending.size;
+  }
+
+  /**
+   * Locally invalidate one exact semantic-pressure version.
+   *
+   * The tombstone prevents an older in-flight batch from resurrecting the same
+   * coalesced reason after local causal truth has already settled it. A genuinely
+   * newer causal version (higher reason.tick) may reopen the identity.
+   */
+  settle(reason: CognitionReason): {
+    status: "settled" | "newer_pending_retained";
+    reason: CognitionReason;
+    newerPending?: CognitionReason;
+  } {
+    const pending = this.pending.get(reason.id);
+    if (pending && pending.tick > reason.tick) {
+      return {
+        status: "newer_pending_retained",
+        reason: structuredClone(reason),
+        newerPending: structuredClone(pending),
+      };
+    }
+
+    if (pending) {
+      this.pending.delete(reason.id);
+      this.notBeforeTickByReasonId.delete(reason.id);
+    }
+
+    const previous = this.settledReasonTickById.get(reason.id) ?? Number.NEGATIVE_INFINITY;
+    if (reason.tick > previous) {
+      this.settledReasonTickById.delete(reason.id);
+      this.settledReasonTickById.set(reason.id, reason.tick);
+      while (this.settledReasonTickById.size > SETTLED_REASON_TOMBSTONE_LIMIT) {
+        const oldest = this.settledReasonTickById.keys().next().value as string | undefined;
+        if (oldest === undefined) break;
+        this.settledReasonTickById.delete(oldest);
+      }
+    }
+
+    return { status: "settled", reason: structuredClone(reason) };
   }
 
   /**

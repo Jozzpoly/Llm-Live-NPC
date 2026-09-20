@@ -1,5 +1,10 @@
 import type { ResidentLifeCognitionContext } from "../src/spc-next/resident-life-cognition-context";
 import type { ResidentLifeChoiceDecision } from "../src/spc-next/resident-life-choice-owner";
+import {
+  allowedChoiceSupportEvidenceIds,
+  deriveResidentLifeChoiceCandidateSupports,
+  type ResidentLifeChoiceCandidateSupport,
+} from "../src/spc-next/resident-life-choice-causal-support";
 import type { HearthCognitionEnv } from "./hearth-cognition";
 import type { SpcNextCognitionEnv } from "./spc-next-cognition";
 import { sanitizeSpcNextLifeContext } from "./spc-next-life-context";
@@ -13,6 +18,7 @@ export interface SpcNextLifeChoiceEnv extends HearthCognitionEnv, SpcNextCogniti
 export interface SanitizedSpcNextLifeChoiceRequest {
   context: ResidentLifeCognitionContext;
   candidateMatterIds: readonly string[];
+  candidateSupports: readonly ResidentLifeChoiceCandidateSupport[];
 }
 
 export interface SpcNextLifeChoiceUsage {
@@ -43,6 +49,8 @@ Choose exactly one of two bounded outcomes:
 A choice is semantic priority only. It does not move the resident, complete a task, create a World fact, prove an outcome, change a route, or grant execution authority. The local system will revalidate and execute separately after admission.
 
 Use the resident's reasons, private percepts, concerns, beliefs, known actors/regions, semantic courses and resident-life evidence when useful. Do not infer hidden World truth. Do not invent matter ids, run ids, facts, evidence or completed outcomes. A run marked canMutateWorld means it currently has resident semantic authority to attempt factual execution; it does not mean the task succeeded.
+
+The input also contains choiceSupport, a read-only projection of causal facts that existed before this decision. For focus_matter, cite one or more supportEvidenceIds from the selected matter's choiceSupport entry. Do not cite evidence from another matter and do not invent evidence. The support citation proves causal grounding; it does not force one candidate to win.
 
 If the available context does not justify choosing among the candidates, defer_all is valid. Set reviewAfterSeconds from 0.25 to 600 according to how soon the ambiguity deserves reconsideration. Do not mechanically poll.
 
@@ -79,15 +87,19 @@ export function sanitizeSpcNextLifeChoiceContext(value: unknown): SanitizedSpcNe
   if (candidateRunIds.size !== context.life.body.deferredRunIds.length) return null;
   if (context.life.body.deferredRunIds.some((runId) => !candidateRunIds.has(runId))) return null;
 
+  const candidateSupports = deriveResidentLifeChoiceCandidateSupports(context.life, candidateMatterIds);
+
   return {
     context: structuredClone(context),
     candidateMatterIds,
+    candidateSupports: structuredClone(candidateSupports),
   };
 }
 
 export function extractSpcNextLifeChoiceDecision(
   result: unknown,
   candidateMatterIds: readonly string[],
+  candidateSupports: readonly ResidentLifeChoiceCandidateSupport[],
 ): ResidentLifeChoiceDecision | null {
   if (!record(result) || result.status !== "completed" || !Array.isArray(result.output) || result.output.length > 16) return null;
   let text: string | null = null;
@@ -116,9 +128,36 @@ export function extractSpcNextLifeChoiceDecision(
     ? decision.reviewAfterSeconds : null;
   if (!reason || reviewAfterSeconds === null) return null;
   if (decision.kind === "focus_matter") {
-    if (!hasOnlyKeys(decision, ["kind", "matterId", "reason", "reviewAfterSeconds"])) return null;
+    if (!hasOnlyKeys(decision, [
+      "kind",
+      "matterId",
+      "reason",
+      "supportEvidenceIds",
+      "reviewAfterSeconds",
+    ])) return null;
     if (typeof decision.matterId !== "string" || !candidateMatterIds.includes(decision.matterId)) return null;
-    return { kind: "focus_matter", matterId: decision.matterId, reason, reviewAfterSeconds };
+
+    const allowedSupport = new Set(
+      allowedChoiceSupportEvidenceIds(candidateSupports, decision.matterId),
+    );
+    if (!Array.isArray(decision.supportEvidenceIds)
+      || decision.supportEvidenceIds.length < 1
+      || decision.supportEvidenceIds.length > 8) return null;
+    const supportEvidenceIds: string[] = [];
+    for (const evidenceId of decision.supportEvidenceIds) {
+      if (typeof evidenceId !== "string"
+        || !allowedSupport.has(evidenceId)
+        || supportEvidenceIds.includes(evidenceId)) return null;
+      supportEvidenceIds.push(evidenceId);
+    }
+
+    return {
+      kind: "focus_matter",
+      matterId: decision.matterId,
+      reason,
+      supportEvidenceIds,
+      reviewAfterSeconds,
+    };
   }
   if (decision.kind === "defer_all") {
     if (!hasOnlyKeys(decision, ["kind", "reason", "reviewAfterSeconds"])) return null;
@@ -127,21 +166,37 @@ export function extractSpcNextLifeChoiceDecision(
   return null;
 }
 
-function decisionSchema(candidateMatterIds: readonly string[]) {
+function decisionSchema(
+  candidateMatterIds: readonly string[],
+  candidateSupports: readonly ResidentLifeChoiceCandidateSupport[],
+) {
   const stringSchema = (maxLength: number) => ({ type: "string", minLength: 1, maxLength });
   const objectSchema = (properties: Record<string, unknown>) => ({
     type: "object", additionalProperties: false, properties, required: Object.keys(properties),
   });
+  const focusVariants = candidateMatterIds.flatMap((matterId) => {
+    const supportIds = allowedChoiceSupportEvidenceIds(candidateSupports, matterId);
+    if (supportIds.length === 0) return [];
+    return [objectSchema({
+      kind: { type: "string", enum: ["focus_matter"] },
+      matterId: { type: "string", enum: [matterId] },
+      reason: stringSchema(MAX_REASON_LENGTH),
+      supportEvidenceIds: {
+        type: "array",
+        minItems: 1,
+        maxItems: Math.min(8, supportIds.length),
+        uniqueItems: true,
+        items: { type: "string", enum: supportIds },
+      },
+      reviewAfterSeconds: { type: "number", minimum: 0.25, maximum: 600 },
+    })];
+  });
+
   return objectSchema({
     version: { type: "integer", enum: [1] },
     decision: {
       anyOf: [
-        objectSchema({
-          kind: { type: "string", enum: ["focus_matter"] },
-          matterId: { type: "string", enum: [...candidateMatterIds] },
-          reason: stringSchema(MAX_REASON_LENGTH),
-          reviewAfterSeconds: { type: "number", minimum: 0.25, maximum: 600 },
-        }),
+        ...focusVariants,
         objectSchema({
           kind: { type: "string", enum: ["defer_all"] },
           reason: stringSchema(MAX_REASON_LENGTH),
@@ -217,13 +272,19 @@ export async function handleSpcNextLifeChoice(request: Request, env: SpcNextLife
         max_output_tokens: config.maxOutputTokens,
         store: false,
         instructions: SYSTEM_PROMPT,
-        input: [{ role: "user", content: JSON.stringify(sanitized.context) }],
+        input: [{
+          role: "user",
+          content: JSON.stringify({
+            ...sanitized.context,
+            choiceSupport: sanitized.candidateSupports,
+          }),
+        }],
         text: {
           format: {
             type: "json_schema",
             name: "spc_next_resident_life_choice",
             strict: true,
-            schema: decisionSchema(sanitized.candidateMatterIds),
+            schema: decisionSchema(sanitized.candidateMatterIds, sanitized.candidateSupports),
           },
         },
       }),
@@ -243,7 +304,11 @@ export async function handleSpcNextLifeChoice(request: Request, env: SpcNextLife
     catch {
       return json({ ok: false, code: "invalid_upstream_body", usage: observedUsage(null, config.model, Date.now() - started) }, 502);
     }
-    const decision = extractSpcNextLifeChoiceDecision(result, sanitized.candidateMatterIds);
+    const decision = extractSpcNextLifeChoiceDecision(
+      result,
+      sanitized.candidateMatterIds,
+      sanitized.candidateSupports,
+    );
     const usage = observedUsage(result, config.model, Date.now() - started);
     if (!decision) return json({ ok: false, code: "invalid_life_choice_output", usage }, 502);
     return json({ ok: true, proposal: { version: 1, decision }, usage });

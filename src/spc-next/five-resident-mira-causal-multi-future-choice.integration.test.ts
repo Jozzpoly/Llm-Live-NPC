@@ -89,24 +89,35 @@ describe("Mira fully causal multi-future life choice", () => {
       }),
     ]));
 
-    const owner = new ResidentLifeChoiceOwner(slice.mira);
+    const owner = new ResidentLifeChoiceOwner(slice.mira, slice.world.options.fixedDeltaSeconds);
     const attempt = owner.prepare(batch, lifeAtChoice);
     expect(attempt).not.toBeNull();
     if (!attempt) return;
     expect(attempt.candidateMatterIds).toEqual([matterB, matterC].sort((left, right) => left.localeCompare(right)));
+    const matterCSupport = attempt.candidateSupports.find(
+      (candidate) => candidate.matterId === matterC,
+    )?.facts[0]?.evidenceId;
+    expect(matterCSupport).toBeDefined();
 
     const limiter = { async limit() { return { success: true }; } };
     const upstream = vi.fn(async (_url: string, init?: RequestInit) => {
       const body = JSON.parse(String(init?.body));
-      const focusSchema = body.text.format.schema.properties.decision.anyOf[0];
-      const matterEnum = focusSchema.properties.matterId.enum;
-      expect(matterEnum).toEqual(attempt.candidateMatterIds);
-      expect(focusSchema.properties).not.toHaveProperty("runId");
-      expect(focusSchema.properties).not.toHaveProperty("taskId");
+      const focusSchemas = body.text.format.schema.properties.decision.anyOf.filter(
+        (variant: any) => variant.properties?.kind?.enum?.includes("focus_matter"),
+      );
+      expect(focusSchemas.map((variant: any) => variant.properties.matterId.enum[0]).sort())
+        .toEqual([...attempt.candidateMatterIds].sort());
+      const cSchema = focusSchemas.find(
+        (variant: any) => variant.properties.matterId.enum[0] === matterC,
+      );
+      expect(cSchema.properties.supportEvidenceIds.items.enum).toContain(matterCSupport);
+      expect(cSchema.properties).not.toHaveProperty("runId");
+      expect(cSchema.properties).not.toHaveProperty("taskId");
       return openAiChoiceResponse({
         kind: "focus_matter",
         matterId: matterC,
         reason: "handle the accepted fields matter before the hearth matter",
+        supportEvidenceIds: [matterCSupport!],
         reviewAfterSeconds: 20,
       });
     });
@@ -205,13 +216,17 @@ describe("Mira fully causal multi-future life choice", () => {
     expect(slice.focus.focusedRun()).toBeNull();
 
     const choiceBatch = waitForChoiceCognitionOpportunity(slice);
-    const choiceOwner = new ResidentLifeChoiceOwner(slice.mira);
+    const choiceOwner = new ResidentLifeChoiceOwner(slice.mira, slice.world.options.fixedDeltaSeconds);
     const choiceAttempt = choiceOwner.prepare(choiceBatch, slice.currentLifeView());
     expect(choiceAttempt).not.toBeNull();
     if (!choiceAttempt) return;
     expect(choiceAttempt.candidateMatterIds).toEqual(
       [matterB, matterC].sort((left, right) => left.localeCompare(right)),
     );
+    const oldMatterCSupport = choiceAttempt.candidateSupports.find(
+      (candidate) => candidate.matterId === matterC,
+    )?.facts[0]?.evidenceId;
+    expect(oldMatterCSupport).toBeDefined();
 
     let releaseProvider!: (response: Response) => void;
     const pendingProvider = new Promise<Response>((resolve) => {
@@ -265,10 +280,30 @@ describe("Mira fully causal multi-future life choice", () => {
     });
     expect(slice.choiceReviewBridge.activeCandidateRunIds()).toEqual(currentCandidates);
 
+    const supersededAmbiguity = slice.mira.semanticPressureLifecycleSnapshot().find(
+      (entry) => entry.reason.id === choiceAttempt.originReasonId,
+    );
+    expect(supersededAmbiguity).toMatchObject({
+      status: "pending",
+      reason: {
+        id: choiceAttempt.originReasonId,
+        evidenceIds: currentCandidates,
+      },
+    });
+    expect(supersededAmbiguity?.reason.tick).toBeGreaterThan(
+      choiceAttempt.batch.reasons.find((reason) => reason.id === choiceAttempt.originReasonId)?.tick ?? -1,
+    );
+    expect(slice.mira.semanticPressureLifecycleEvents()).toContainEqual(expect.objectContaining({
+      reasonId: choiceAttempt.originReasonId,
+      reasonTick: supersededAmbiguity?.reason.tick,
+      kind: "superseded",
+    }));
+
     releaseProvider(openAiChoiceResponse({
       kind: "focus_matter",
       matterId: matterC,
       reason: "old B/C frame preferred fields C",
+      supportEvidenceIds: [oldMatterCSupport!],
       reviewAfterSeconds: 20,
     }));
     const oldArrival = await oldArrivalPromise;
@@ -289,6 +324,20 @@ describe("Mira fully causal multi-future life choice", () => {
       status: "active",
       activeRunId: runD,
     });
+    expect(slice.mira.semanticPressureLifecycleSnapshot()).toContainEqual(expect.objectContaining({
+      status: "pending",
+      reason: expect.objectContaining({
+        id: choiceAttempt.originReasonId,
+        evidenceIds: currentCandidates,
+      }),
+    }));
+    expect(slice.mira.semanticPressureLifecycleEvents()).toContainEqual(expect.objectContaining({
+      reasonId: choiceAttempt.originReasonId,
+      reasonTick: choiceAttempt.batch.reasons.find(
+        (reason) => reason.id === choiceAttempt.originReasonId,
+      )?.tick,
+      kind: "stale_ignored",
+    }));
   });
 });
 
@@ -473,6 +522,7 @@ function openAiChoiceResponse(decision: {
   kind: "focus_matter";
   matterId: string;
   reason: string;
+  supportEvidenceIds: readonly string[];
   reviewAfterSeconds: number;
 }) {
   return new Response(JSON.stringify({

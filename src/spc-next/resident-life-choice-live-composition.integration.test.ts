@@ -27,8 +27,6 @@ const profile: ResidentProfile = {
 function setupAmbiguity() {
   const resident = new ResidentRuntime(profile);
   resident.enterRegion({ id: "hearth", label: "Hearth", minX: 0, minY: 0, maxX: 1_400, maxY: 1_500 }, 0, true);
-  resident.ingestPercepts([addressedSpeech(1)]);
-  const batch = resident.takeCognitionBatch(1)!;
 
   const kernel = new ResidentContinuityKernel();
   const focus = new ResidentExecutionFocusAuthority(kernel);
@@ -47,8 +45,17 @@ function setupAmbiguity() {
     status: "choice_required",
     candidateRunIds: [B.runId, C.runId],
   });
+  resident.promoteSemanticPressure({
+    id: "reason:test:live-composition:ambiguity",
+    tick: 1,
+    kind: "uncertainty",
+    salience: 0.8,
+    summary: "B and C require the same currently-free body.",
+    evidenceIds: [B.runId, C.runId],
+  });
+  const batch = resident.takeCognitionBatch(31)!;
 
-  const owner = new ResidentLifeChoiceOwner(resident);
+  const owner = new ResidentLifeChoiceOwner(resident, 1 / 60);
   const life = captureResidentLifeCognitionView({ kernel, focus, arbitrator, matterIds: MATTER_IDS });
   const attempt = owner.prepare(batch, life)!;
   return { resident, batch, kernel, focus, arbitrator, owner, life, attempt };
@@ -96,6 +103,7 @@ function proposal(matterId = B.matterId) {
       kind: "focus_matter",
       matterId,
       reason: "give this current commitment the free body next",
+      supportEvidenceIds: [`evidence:${matterId}:1`],
       reviewAfterSeconds: 8,
     },
   };
@@ -127,7 +135,7 @@ describe("resident-life live choice + execution arbitration composition", () => 
       arbitrator: state.arbitrator,
       matterIds: MATTER_IDS,
     });
-    const admitted = host.admit(arrival, 2, currentLife);
+    const admitted = host.admit(arrival, 32, currentLife);
     expect(admitted).toMatchObject({
       status: "applied",
       settlement: { decision: { kind: "focus_matter", matterId: B.matterId } },
@@ -162,9 +170,9 @@ describe("resident-life live choice + execution arbitration composition", () => 
       arbitrator: state.arbitrator,
       matterIds: MATTER_IDS,
     });
-    expect(host.admit(arrival, 2, changedLife)).toEqual({
+    expect(host.admit(arrival, 32, changedLife)).toEqual({
       status: "stale",
-      admissionTick: 2,
+      admissionTick: 32,
       settlement: { status: "stale", reason: "resident_life_changed_during_request" },
     });
     expect(state.focus.focusedRun()).toBeNull();

@@ -172,6 +172,33 @@ export class ResidentRuntime {
     this.noteCognitionReason(reason);
   }
 
+  /**
+   * Settle currently unresolved pressure from newer resident-local causal truth.
+   *
+   * This is not a semantic provider decision. It is used when the objective reason
+   * for an already-promoted issue disappears locally (for example its owning matter
+   * becomes terminal). Scheduler tombstones ensure an older in-flight/requeued batch
+   * cannot resurrect the settled causal version.
+   */
+  invalidateSemanticPressure(reasonId: string, tick: number, detail: string): boolean {
+    if (!reasonId.trim()) throw new Error("semantic pressure reason id must be non-empty");
+    if (!Number.isSafeInteger(tick) || tick < 0) {
+      throw new Error("semantic pressure invalidation tick must be a non-negative safe integer");
+    }
+    if (!detail.trim()) throw new Error("semantic pressure invalidation detail must be non-empty");
+
+    const state = this.semanticPressureLifecycle.snapshot().find(
+      (entry) => entry.reason.id === reasonId,
+    );
+    if (!state || state.status === "settled") return false;
+
+    const settled = this.scheduler.settle(state.reason);
+    if (settled.status === "newer_pending_retained") return false;
+
+    this.semanticPressureLifecycle.settle(state.reason, tick, detail);
+    return true;
+  }
+
   scheduleAdaptiveReview(tick: number, reviewAfterSeconds: number, fixedDeltaSeconds: number): void {
     if (!Number.isFinite(reviewAfterSeconds) || reviewAfterSeconds <= 0) {
       throw new Error("reviewAfterSeconds must be positive");
@@ -414,6 +441,7 @@ export class ResidentRuntime {
         continue;
       }
 
+      this.scheduler.settle(reason);
       this.semanticPressureLifecycle.settle(
         reason,
         input.tick,

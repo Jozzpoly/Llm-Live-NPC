@@ -23,9 +23,16 @@ const profile: ResidentProfile = {
 function setup() {
   const resident = new ResidentRuntime(profile);
   resident.enterRegion({ id: "hearth", label: "Hearth", minX: 0, minY: 0, maxX: 1_400, maxY: 1_500 }, 0, true);
-  resident.ingestPercepts([addressedSpeech("initial", 1)]);
-  const batch = resident.takeCognitionBatch(1)!;
-  const owner = new ResidentLifeChoiceOwner(resident);
+  resident.promoteSemanticPressure({
+    id: "reason:test:life-choice-host:ambiguity",
+    tick: 1,
+    kind: "uncertainty",
+    salience: 0.8,
+    summary: "B and C require the same currently-free body.",
+    evidenceIds: ["run.mira.b", "run.mira.c"],
+  });
+  const batch = resident.takeCognitionBatch(31)!;
+  const owner = new ResidentLifeChoiceOwner(resident, 1 / 60);
   const life = lifeView();
   const attempt = owner.prepare(batch, life)!;
   return { resident, batch, owner, life, attempt };
@@ -56,14 +63,20 @@ function lifeView(): ResidentLifeCognitionView {
 }
 
 function matter(id: string, runId: string) {
+  const evidence = {
+    id: `evidence:life-choice-host:${id}`,
+    tick: 0,
+    kind: "life_context",
+    summary: `${id} is a grounded continuing matter.`,
+  };
   return {
     id,
     status: "active" as const,
     semanticRevision: 1,
     semanticCourse: `continue ${id}`,
     suspendedByMatterId: null,
-    originEvidence: null,
-    semanticEvidence: null,
+    originEvidence: evidence,
+    semanticEvidence: evidence,
     lastOutcomeEvidence: null,
     activeRun: {
       runId,
@@ -82,6 +95,7 @@ function proposal(matterId = "matter.mira.b") {
       kind: "focus_matter",
       matterId,
       reason: "give this continuing matter the free body next",
+      supportEvidenceIds: [`evidence:life-choice-host:${matterId}`],
       reviewAfterSeconds: 8,
     },
   };
@@ -117,9 +131,9 @@ describe("ResidentLifeChoiceLiveHost transport/admission boundary", () => {
     expect(host.pendingArrivals()).toBe(1);
     expect(host.recentAdmissions()).toEqual([]);
 
-    expect(host.admit(arrival, 2, life)).toMatchObject({
+    expect(host.admit(arrival, 32, life)).toMatchObject({
       status: "applied",
-      admissionTick: 2,
+      admissionTick: 32,
       settlement: { decision: { kind: "focus_matter", matterId: "matter.mira.b" } },
     });
     expect(owner.state().activeAttemptId).toBeNull();
@@ -127,7 +141,7 @@ describe("ResidentLifeChoiceLiveHost transport/admission boundary", () => {
     expect(host.recentAdmissions()).toEqual([expect.objectContaining({
       sequence: 0,
       arrivalId: arrival.arrivalId,
-      admissionTick: 2,
+      admissionTick: 32,
       outcomeStatus: "applied",
       detail: "focus_matter",
     })]);
@@ -142,9 +156,9 @@ describe("ResidentLifeChoiceLiveHost transport/admission boundary", () => {
     mutable.semanticRevision = 2;
     mutable.semanticCourse = "B changed while the provider answer was waiting for admission";
 
-    expect(host.admit(arrival, 3, changed)).toEqual({
+    expect(host.admit(arrival, 33, changed)).toEqual({
       status: "stale",
-      admissionTick: 3,
+      admissionTick: 33,
       settlement: { status: "stale", reason: "resident_life_changed_during_request" },
     });
     expect(owner.state().activeAttemptId).toBeNull();
@@ -165,14 +179,14 @@ describe("ResidentLifeChoiceLiveHost transport/admission boundary", () => {
     expect(owner.state().activeAttemptId).toBe(attempt.id);
     expect(resident.publicState().pendingCognitionReasonCount).toBe(0);
 
-    expect(host.admit(arrival, 2, life)).toEqual({
+    expect(host.admit(arrival, 32, life)).toEqual({
       status: "provider_error",
-      admissionTick: 2,
+      admissionTick: 32,
       code: "network",
       abandonment: "abandoned",
     });
     expect(owner.state().activeAttemptId).toBeNull();
-    expect(resident.takeCognitionBatch(61)?.reasons[0]?.id).toBe(batch.reasons[0]!.id);
+    expect(resident.takeCognitionBatch(91)?.reasons[0]?.id).toBe(batch.reasons[0]!.id);
   });
 
   it("rejects cloned arrival authority without consuming the exact host-owned arrival", async () => {
@@ -181,9 +195,9 @@ describe("ResidentLifeChoiceLiveHost transport/admission boundary", () => {
     const arrival = proposalArrival(await host.request(attempt));
     const cloned = structuredClone(arrival);
 
-    expect(host.admit(cloned, 2, life)).toEqual({ status: "arrival_rejected", reason: "unknown_arrival" });
+    expect(host.admit(cloned, 32, life)).toEqual({ status: "arrival_rejected", reason: "unknown_arrival" });
     expect(owner.state().activeAttemptId).toBe(attempt.id);
     expect(host.pendingArrivals()).toBe(1);
-    expect(host.admit(arrival, 3, life).status).toBe("applied");
+    expect(host.admit(arrival, 33, life).status).toBe("applied");
   });
 });
