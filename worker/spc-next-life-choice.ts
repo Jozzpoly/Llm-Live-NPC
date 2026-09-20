@@ -88,7 +88,6 @@ export function sanitizeSpcNextLifeChoiceContext(value: unknown): SanitizedSpcNe
   if (context.life.body.deferredRunIds.some((runId) => !candidateRunIds.has(runId))) return null;
 
   const candidateSupports = deriveResidentLifeChoiceCandidateSupports(context.life, candidateMatterIds);
-  if (candidateSupports.some((candidate) => candidate.facts.length === 0)) return null;
 
   return {
     context: structuredClone(context),
@@ -175,26 +174,29 @@ function decisionSchema(
   const objectSchema = (properties: Record<string, unknown>) => ({
     type: "object", additionalProperties: false, properties, required: Object.keys(properties),
   });
+  const focusVariants = candidateMatterIds.flatMap((matterId) => {
+    const supportIds = allowedChoiceSupportEvidenceIds(candidateSupports, matterId);
+    if (supportIds.length === 0) return [];
+    return [objectSchema({
+      kind: { type: "string", enum: ["focus_matter"] },
+      matterId: { type: "string", enum: [matterId] },
+      reason: stringSchema(MAX_REASON_LENGTH),
+      supportEvidenceIds: {
+        type: "array",
+        minItems: 1,
+        maxItems: Math.min(8, supportIds.length),
+        uniqueItems: true,
+        items: { type: "string", enum: supportIds },
+      },
+      reviewAfterSeconds: { type: "number", minimum: 0.25, maximum: 600 },
+    })];
+  });
+
   return objectSchema({
     version: { type: "integer", enum: [1] },
     decision: {
       anyOf: [
-        ...candidateMatterIds.map((matterId) => {
-          const supportIds = allowedChoiceSupportEvidenceIds(candidateSupports, matterId);
-          return objectSchema({
-            kind: { type: "string", enum: ["focus_matter"] },
-            matterId: { type: "string", enum: [matterId] },
-            reason: stringSchema(MAX_REASON_LENGTH),
-            supportEvidenceIds: {
-              type: "array",
-              minItems: 1,
-              maxItems: Math.min(8, supportIds.length),
-              uniqueItems: true,
-              items: { type: "string", enum: supportIds },
-            },
-            reviewAfterSeconds: { type: "number", minimum: 0.25, maximum: 600 },
-          });
-        }),
+        ...focusVariants,
         objectSchema({
           kind: { type: "string", enum: ["defer_all"] },
           reason: stringSchema(MAX_REASON_LENGTH),
