@@ -347,6 +347,8 @@ function createR4MiraOrdinaryLifeScenario(): SpcNextResearchScenario {
 }
 
 
+const R5_BROWSER_NEWER_ATTENTION_PROMPT = "Mira, jednak chwila — najpierw odpowiedz, czy słyszysz zmianę.";
+
 function createR5MiraSemanticEscalationScenario(): SpcNextResearchScenario {
   let releaseProvider: (() => void) | null = null;
   const providerContexts: unknown[] = [];
@@ -423,6 +425,9 @@ function createR5MiraSemanticEscalationScenario(): SpcNextResearchScenario {
     evidenceAction(actionId: string): unknown {
       if (actionId === "snapshot") return snapshot();
       if (actionId === "ida-address-mira") return slice.idaAddressMira();
+      if (actionId === "ida-address-mira-newer") {
+        return slice.idaAddressMira(R5_BROWSER_NEWER_ATTENTION_PROMPT);
+      }
       if (actionId === "release-provider") {
         const release = releaseProvider;
         if (!release) throw new Error("R5 browser provider is not waiting for release");
