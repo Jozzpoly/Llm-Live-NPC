@@ -13,14 +13,17 @@ const JANEK_ID = "resident.janek";
 const PRIMARY_MATTER_ID = "matter.janek.r4.missing-crate";
 const SECONDARY_MATTER_ID = "matter.janek.r4.return-basket";
 const PRIMARY_RUN_ID = "run.janek.r4.pickup-last-known-crate";
+const PRIMARY_REACQUIRED_RUN_ID = "run.janek.r4.pickup-reacquired-crate";
 const SECONDARY_PICKUP_RUN_ID = "run.janek.r4.pickup-basket";
 const PRIMARY_OBJECT_ID = "crate.r4.remembered";
 const SECONDARY_OBJECT_ID = "basket.r4.available";
 const IRRELEVANT_OBJECT_ID = "stool.r4.background";
 const PRIMARY_REMEMBERED = { x: 500, y: 500 };
 const SECONDARY_DESTINATION = { x: 1450, y: 500 };
+const PRIMARY_REVEAL_POSITION = { x: 1550, y: 650 };
 const MAX_TO_BLOCKED = 1_000;
 const MAX_TO_RESOLVED = 1_400;
+const MAX_TO_PRIMARY_RESOLVED = 900;
 const QUIET_TICKS = 600;
 const STEP_CHUNK = 4;
 const REPEAT_COUNT = 2;
@@ -224,7 +227,44 @@ async function run() {
       && first.quiet.after.body?.focusedRunId === null
     ), first?.quiet ?? null);
 
-    for (const key of ["relocatedHash", "blockedHash", "resolvedHash", "quietHash"]) {
+    assert(report, "later explicit World reveal changes A truth without pre-sampling private rewrite", Boolean(
+      first?.revealBoundary?.primaryWorld?.location?.kind === "free"
+      && nearPosition(first.revealBoundary.primaryWorld.location.position, PRIMARY_REVEAL_POSITION, 1e-6)
+      && stableJson(first.revealBoundary.primaryKnowledge) === stableJson(first.quiet.after.primaryKnowledge)
+      && first.revealBoundary.primary?.status === "active"
+      && first.revealBoundary.primary?.activeRun === null
+      && first.revealBoundary.pendingCognitionReasonCount >= 1
+    ), { reveal: first?.reveal ?? null, boundary: first?.revealBoundary ?? null });
+
+    assert(report, "next ordinary local tick legally reacquires A and restores exact material execution without provider choice", Boolean(
+      first?.reactivated?.primaryKnowledge?.currentlyVisible === true
+      && nearPosition(first.reactivated.primaryKnowledge.lastKnownPosition, PRIMARY_REVEAL_POSITION, 1e-6)
+      && first.reactivated.primary?.status === "active"
+      && first.reactivated.primary?.semanticIntent?.kind === "acquire_material_object"
+      && first.reactivated.primary?.semanticIntent?.objectId === PRIMARY_OBJECT_ID
+      && first.reactivated.primary?.semanticEvidence?.kind === "material_reacquired"
+      && first.reactivated.primary?.activeRun?.runId === PRIMARY_REACQUIRED_RUN_ID
+      && first.reactivated.body?.focusedRunId === PRIMARY_REACQUIRED_RUN_ID
+      && first.reactivated.pendingCognitionReasonCount === 0
+    ), first?.reactivated ?? null);
+
+    assert(report, "reacquired A completes the same durable material goal while B and C remain stable", Boolean(
+      first?.primaryResolved?.primary?.status === "resolved"
+      && first.primaryResolved.primary?.activeRun === null
+      && first.primaryResolved.primaryWorld?.location?.kind === "held"
+      && first.primaryResolved.primaryWorld?.location?.actorId === JANEK_ID
+      && first.primaryResolved.secondary?.status === "resolved"
+      && first.primaryResolved.secondaryWorld?.location?.kind === "free"
+      && nearPosition(first.primaryResolved.secondaryWorld.location.position, SECONDARY_DESTINATION)
+      && stableJson(first.primaryResolved.irrelevantWorld) === stableJson(first.quiet.after.irrelevantWorld)
+      && first.primaryResolved.actionFacts?.length === 3
+      && first.primaryResolved.actionFacts.at(-1)?.runId === PRIMARY_REACQUIRED_RUN_ID
+      && first.primaryResolved.actionFacts.at(-1)?.kind === "material_pickup"
+      && first.primaryResolved.actionFacts.at(-1)?.objectId === PRIMARY_OBJECT_ID
+      && first.primaryResolved.actionFacts.at(-1)?.code === "picked_up"
+    ), first?.primaryResolved ?? null);
+
+    for (const key of ["relocatedHash", "blockedHash", "resolvedHash", "quietHash", "revealBoundaryHash", "reactivatedHash", "primaryResolvedHash"]) {
       const hashes = report.runs.map((entry) => entry[key]);
       assert(report, `${key} is deterministic across real-Chrome reloads`, hashes.every((hash) => hash === hashes[0]), hashes);
     }
@@ -236,6 +276,9 @@ async function run() {
       && first.visualEvidence?.blockedAlternate?.bytes > 10_000
       && first.visualEvidence?.resolved?.bytes > 10_000
       && first.visualEvidence?.quiet?.bytes > 10_000
+      && first.visualEvidence?.revealBoundary?.bytes > 10_000
+      && first.visualEvidence?.reactivated?.bytes > 10_000
+      && first.visualEvidence?.primaryResolved?.bytes > 10_000
     ), first?.visualEvidence ?? null);
 
     report.finishedAt = new Date().toISOString();
@@ -323,6 +366,49 @@ async function captureRun(cdp, runIndex) {
     canonical,
   );
 
+  const reveal = await scenarioAction(cdp, "reveal-primary-nearby");
+  canonical = await canonicalSnapshot(cdp);
+  frame = await evidenceSnapshot(cdp);
+  const revealBoundary = summarize(canonical, frame);
+  if (visualEvidence) visualEvidence.revealBoundary = await captureFrozenScreenshot(
+    cdp,
+    "r4-dense-workshop-05-world-reveal-private-stale.png",
+    canonical,
+  );
+
+  frame = await stepEvidence(cdp, 1);
+  canonical = await canonicalSnapshot(cdp);
+  const reactivated = summarize(canonical, frame);
+  if (reactivated.primary?.activeRun?.runId !== PRIMARY_REACQUIRED_RUN_ID) {
+    throw new Error(`run ${runIndex}: legal material reacquisition did not reactivate the primary run`);
+  }
+  if (visualEvidence) visualEvidence.reactivated = await captureFrozenScreenshot(
+    cdp,
+    "r4-dense-workshop-06-primary-reactivated.png",
+    canonical,
+  );
+
+  let primaryResolved = null;
+  stepped = 0;
+  while (!primaryResolved && stepped < MAX_TO_PRIMARY_RESOLVED) {
+    const chunk = Math.min(STEP_CHUNK, MAX_TO_PRIMARY_RESOLVED - stepped);
+    frame = await stepEvidence(cdp, chunk);
+    canonical = await canonicalSnapshot(cdp);
+    const current = summarize(canonical, frame);
+    if (current.primary?.status === "resolved"
+      && current.primaryWorld?.location?.kind === "held"
+      && current.primaryWorld.location.actorId === JANEK_ID) {
+      primaryResolved = current;
+    }
+    stepped += chunk;
+  }
+  if (!primaryResolved) throw new Error(`run ${runIndex}: reacquired primary matter did not resolve`);
+  if (visualEvidence) visualEvidence.primaryResolved = await captureFrozenScreenshot(
+    cdp,
+    "r4-dense-workshop-07-primary-resolved.png",
+    canonical,
+  );
+
   return {
     runIndex,
     initial,
@@ -330,10 +416,17 @@ async function captureRun(cdp, runIndex) {
     blocked,
     resolved,
     quiet,
+    reveal,
+    revealBoundary,
+    reactivated,
+    primaryResolved,
     relocatedHash: hashJson(projectDeterministic(relocated)),
     blockedHash: hashJson(projectDeterministic(blocked)),
     resolvedHash: hashJson(projectDeterministic(resolved)),
     quietHash: hashJson(projectDeterministic(quiet)),
+    revealBoundaryHash: hashJson(projectDeterministic(revealBoundary)),
+    reactivatedHash: hashJson(projectDeterministic(reactivated)),
+    primaryResolvedHash: hashJson(projectDeterministic(primaryResolved)),
     visualEvidence,
   };
 }
@@ -375,7 +468,7 @@ async function navigateEvidence(cdp) {
   await cdp.send("Page.navigate", { url: `${BASE_URL}/?spc=1&evidence=1&scenario=r4-dense-workshop` });
   await waitUntil(async () => await evaluate(
     cdp,
-    `Boolean(window.__SPC_EVIDENCE__?.ready?.() && document.querySelector("canvas"))`,
+    `Boolean(window.__SPC_EVIDENCE__?.ready?.() && typeof window.__SPC_EVIDENCE__?.scenarioAction === "function" && document.querySelector("canvas"))`,
   ), 20_000, "R4 dense-workshop evidence scene");
 }
 
@@ -399,6 +492,9 @@ async function captureFrozenScreenshot(cdp, fileName, canonicalBefore) {
 
 async function evidenceSnapshot(cdp) { return await evaluate(cdp, `window.__SPC_EVIDENCE__.snapshot()`); }
 async function canonicalSnapshot(cdp) { return await evaluate(cdp, `window.__SPC_EVIDENCE__.canonicalSnapshot()`); }
+async function scenarioAction(cdp, actionId) {
+  return await evaluate(cdp, `window.__SPC_EVIDENCE__.scenarioAction(${JSON.stringify(actionId)})`);
+}
 async function stepEvidence(cdp, steps) {
   return await evaluate(cdp, `window.__SPC_EVIDENCE__.stepWorld(${JSON.stringify(steps)})`, 60_000);
 }
