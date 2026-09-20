@@ -16,6 +16,7 @@ on:
       - "scripts/spc-browser-r4-mira-ordinary-life-evidence.mjs"
       - "scripts/spc-browser-r5-mira-semantic-escalation-evidence.mjs"
       - "scripts/spc-browser-r5-mira-stale-attention-evidence.mjs"
+      - "scripts/spc-browser-r5-mira-provider-outcomes-evidence.mjs"
       - "scripts/analyze-spc-browser-evidence.mjs"
       - "index.html"
       - "package.json"
@@ -167,6 +168,14 @@ jobs:
           SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: node scripts/spc-browser-r5-mira-stale-attention-evidence.mjs
 
+      - name: Qualify R5-C provider outcomes in real Chromium
+        if: success()
+        env:
+          EVIDENCE_BASE_URL: http://127.0.0.1:4173
+          R5_MIRA_PROVIDER_OUTCOMES_OUTPUT: evidence/browser/r5-mira-provider-outcomes.json
+          SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: node scripts/spc-browser-r5-mira-provider-outcomes-evidence.mjs
+
       - name: Print evidence summary
         if: always()
         shell: bash
@@ -240,6 +249,12 @@ jobs:
             cat evidence/browser/r5-mira-stale-attention.json
           else
             echo "r5-mira-stale-attention.json missing"
+          fi
+          echo "--- R5-C Mira provider-outcomes evidence ---"
+          if [ -f evidence/browser/r5-mira-provider-outcomes.json ]; then
+            cat evidence/browser/r5-mira-provider-outcomes.json
+          else
+            echo "r5-mira-provider-outcomes.json missing"
           fi
 
       - name: Upload browser evidence artifact
