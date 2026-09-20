@@ -54,7 +54,7 @@ function setup(options: { siblingPressure?: boolean } = {}) {
   }
   const batch = resident.takeCognitionBatch(31);
   if (!batch) throw new Error("expected exact life-choice cognition batch");
-  return { resident, batch, owner: new ResidentLifeChoiceOwner(resident) };
+  return { resident, batch, owner: new ResidentLifeChoiceOwner(resident, 1 / 60) };
 }
 
 function lifeView(): ResidentLifeCognitionView {
