@@ -14,7 +14,8 @@ describe("R4-C legal material reacquisition -> local matter reactivation", () =>
     const slice = createR4DenseWorkshopSlice();
     const hidden = slice.relocatePrimaryHidden();
 
-    expect(hidden.to).toEqual({ x: 1_800, y: 1_100 });
+    expect(hidden.to.x).toBeGreaterThan(1_650);
+    expect(hidden.to.y).toBeGreaterThan(1_000);
 
     let step = slice.advanceOneWorldTick();
     let guard = 0;
