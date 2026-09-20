@@ -60,6 +60,22 @@ describe("five resident Janek missing-crate semantic pressure", () => {
       kind: "task_outcome",
     });
 
+    expect(slice.resident.pendingCognitionReasons()).toEqual([
+      expect.objectContaining({
+        id: "reason:resident.janek:checked-absence:crate.workshop.01",
+        kind: "uncertainty",
+        salience: 0.9,
+        evidenceIds: [state.checkedAbsenceEvidence.id],
+      }),
+    ]);
+    expect(slice.resident.semanticPressureLifecycleSnapshot()).toContainEqual(expect.objectContaining({
+      reason: expect.objectContaining({
+        id: "reason:resident.janek:checked-absence:crate.workshop.01",
+        evidenceIds: [state.checkedAbsenceEvidence.id],
+      }),
+      status: "pending",
+    }));
+
     const actualCrate = slice.world.materialObject("crate.workshop.01");
     expect(actualCrate?.location.kind).toBe("free");
     if (!actualCrate || actualCrate.location.kind !== "free") throw new Error("crate did not remain in World");
