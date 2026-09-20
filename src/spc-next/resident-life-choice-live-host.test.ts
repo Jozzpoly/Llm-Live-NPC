@@ -133,7 +133,7 @@ describe("ResidentLifeChoiceLiveHost transport/admission boundary", () => {
 
     expect(host.admit(arrival, 32, life)).toMatchObject({
       status: "applied",
-      admissionTick: 2,
+      admissionTick: 32,
       settlement: { decision: { kind: "focus_matter", matterId: "matter.mira.b" } },
     });
     expect(owner.state().activeAttemptId).toBeNull();
@@ -141,7 +141,7 @@ describe("ResidentLifeChoiceLiveHost transport/admission boundary", () => {
     expect(host.recentAdmissions()).toEqual([expect.objectContaining({
       sequence: 0,
       arrivalId: arrival.arrivalId,
-      admissionTick: 2,
+      admissionTick: 32,
       outcomeStatus: "applied",
       detail: "focus_matter",
     })]);
@@ -158,7 +158,7 @@ describe("ResidentLifeChoiceLiveHost transport/admission boundary", () => {
 
     expect(host.admit(arrival, 33, changed)).toEqual({
       status: "stale",
-      admissionTick: 3,
+      admissionTick: 33,
       settlement: { status: "stale", reason: "resident_life_changed_during_request" },
     });
     expect(owner.state().activeAttemptId).toBeNull();
@@ -181,7 +181,7 @@ describe("ResidentLifeChoiceLiveHost transport/admission boundary", () => {
 
     expect(host.admit(arrival, 32, life)).toEqual({
       status: "provider_error",
-      admissionTick: 2,
+      admissionTick: 32,
       code: "network",
       abandonment: "abandoned",
     });
