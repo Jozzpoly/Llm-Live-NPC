@@ -180,6 +180,11 @@ describe("R2 semantic-pressure lifecycle", () => {
     );
     resident.promoteSemanticPressure(genuinelyNewer);
     expect(resident.pendingCognitionReasons()).toEqual([genuinelyNewer]);
+    expect(resident.semanticPressureLifecycleEvents()).toContainEqual(expect.objectContaining({
+      kind: "promoted",
+      reasonId: genuinelyNewer.id,
+      reasonTick: genuinelyNewer.tick,
+    }));
   });
 
   it("cannot settle an older in-flight version over newer evidence that arrived during the request", () => {
