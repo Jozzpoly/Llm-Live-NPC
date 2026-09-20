@@ -307,6 +307,8 @@ R1/R2/R3 gates retain veto.
 
 ## 11. R4-A — executable baseline characterization
 
+Status: **COMPLETE**
+
 Before adding affordances, formalize the current gap.
 
 Required facts:
@@ -324,6 +326,8 @@ It records why R4 exists.
 ---
 
 ## 12. R4-B — zero-provider dense-workshop specimen
+
+Status: **QUALIFIED PASS** — source `5548231763718f868186dd5c07877c65969f7f88`
 
 Provider cognition remains disabled.
 
@@ -347,7 +351,11 @@ A useful result would demonstrate:
 
 ## 13. R4-C — changed World / causal reactivation
 
-After B is qualified:
+Status: **QUALIFIED PASS** — source `423c9ba1eaafdc9064136ed0a1a3c71b7b19b2ca`
+
+Qualified evidence includes external World mutation without knowledge leak, ordinary private material reacquisition, structured `acquire_material_object` relevance, stale-pressure settlement, fresh exact local run and factual pickup completion with zero provider requests.
+
+Original pressure contract:
 
 - alter one material fact through an external or other-actor causal path;
 - resident must not know immediately;
@@ -360,6 +368,8 @@ After B is qualified:
 ---
 
 ## 14. R4-D — second resident falsifier
+
+Status: **CURRENT / OPEN**
 
 Do not qualify the architecture on Janek alone.
 
@@ -435,15 +445,25 @@ If not, adding more content is not the answer.
 
 ## 17. Immediate work order
 
-1. add an executable R4-A baseline characterization without changing runtime behavior;
-2. map exactly which R1/Janek donors can be composed provider-free and which still require semantic admission;
-3. design the smallest R4-B dense-workshop state using existing mechanisms first;
-4. identify the first truly missing primitive, if any;
-5. only then implement that smallest primitive/specimen;
-6. reattack R1/R2/R3 gates immediately after composition;
-7. qualify in deterministic and browser evidence before expanding the affordance set;
-8. use the first result to decide whether a generic affordance abstraction is justified.
+R4-A/B/C are complete within their qualified boundaries.
 
-First milestone:
+Current work is **R4-D only**:
 
-> **The resident has more than one causally grounded local way for life to continue, and one blocked path no longer implies deadness or provider-manufactured purpose.**
+1. recover Mira-specific ordinary-life pressure from existing R1/R3/five-resident donors;
+2. identify which R4-B/C mechanisms are genuinely resident-generic and which encode Janek/work assumptions;
+3. design the smallest Mira specimen in a compact authored space;
+4. include several nearby facts while requiring that only resident-relevant ones affect matters/action;
+5. make legitimate quiet an acceptable and observable outcome;
+6. keep the player outside the causal center of the specimen;
+7. keep provider cognition disabled;
+8. first falsify the current shared substrate before adding any Mira-specific primitive;
+9. if a missing primitive is proven, add only that bounded seam;
+10. reattack R1/R2/R3 and Janek R4-B/C evidence;
+11. qualify Mira deterministically and in real Chromium;
+12. only then decide whether R4 as a whole deserves PASS.
+
+Current falsifier:
+
+> **Can Mira use the same denser authored causal substrate as ordinary life, with selective resident-relative relevance and genuine quiet, without degenerating into a random chore machine?**
+
+R4 remains incomplete until this is answered.
