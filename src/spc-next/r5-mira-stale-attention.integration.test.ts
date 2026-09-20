@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { CAUSAL_STALE_RETRY_TICKS } from "./resident-causal-cognition-retry-policy";
 import type { ResidentLifeIntentProposal } from "./resident-life-intent-contract";
 import {
   R5_IDA_ID,
@@ -10,7 +11,7 @@ import {
 const SPEECH_A = "Mira, odpowiesz mi, czy zostaniesz chwilę przy stole?";
 const SPEECH_B = "Mira, jednak chwila — najpierw odpowiedz, czy słyszysz zmianę.";
 const PROVIDER_LATENCY_BEFORE_NEW_ATTENTION = 60;
-const STALE_RETRY_DELAY_TICKS = 15;
+const STALE_RETRY_DELAY_TICKS = CAUSAL_STALE_RETRY_TICKS;
 
 describe("R5-B stale provider answer after newer addressed attention", () => {
   it("rejects the old proposal, preserves both causal pressures and does not retry before the bounded stale window", async () => {
@@ -143,7 +144,10 @@ describe("R5-B stale provider answer after newer addressed attention", () => {
     // Important anti-hot-loop boundary. Provider A had already been in flight longer
     // than the scheduler's urgent min interval, so scheduler cadence alone cannot
     // protect this edge. A stale admission needs a fresh retry-not-before window.
-    expect(slice.diagnostics().providerRequestCount).toBe(1);
+    expect(slice.diagnostics()).toMatchObject({
+      providerRequestCount: 1,
+      providerRetryNotBeforeTick: slice.world.tick + STALE_RETRY_DELAY_TICKS,
+    });
     expect(fetcher).toHaveBeenCalledTimes(1);
 
     for (let index = 0; index < STALE_RETRY_DELAY_TICKS - 1; index += 1) {
