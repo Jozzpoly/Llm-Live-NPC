@@ -4,6 +4,11 @@ import {
   type ResidentLifeCognitionContext,
 } from "./resident-life-cognition-context";
 import type { ResidentLifeCognitionView } from "./resident-life-cognition-view";
+import {
+  allowedChoiceSupportEvidenceIds,
+  deriveResidentLifeChoiceCandidateSupports,
+  type ResidentLifeChoiceCandidateSupport,
+} from "./resident-life-choice-causal-support";
 import { ResidentRuntime, type ResidentCognitionRevision } from "./resident-runtime";
 
 export type ResidentLifeChoiceDecision =
@@ -11,6 +16,7 @@ export type ResidentLifeChoiceDecision =
       kind: "focus_matter";
       matterId: string;
       reason: string;
+      supportEvidenceIds: readonly string[];
       reviewAfterSeconds: number;
     }
   | {
@@ -25,6 +31,7 @@ export interface ResidentLifeChoiceAttempt {
   readonly batch: CognitionBatch;
   readonly context: ResidentLifeCognitionContext;
   readonly candidateMatterIds: readonly string[];
+  readonly candidateSupports: readonly ResidentLifeChoiceCandidateSupport[];
   readonly revision: ResidentCognitionRevision;
   readonly lifeFingerprint: string;
 }
@@ -73,6 +80,13 @@ export class ResidentLifeChoiceOwner {
     }
     assertAllDeferredRunsRepresented(life, candidateMatterIds);
 
+    const candidateSupports = deriveResidentLifeChoiceCandidateSupports(life, candidateMatterIds);
+    for (const candidate of candidateSupports) {
+      if (candidate.facts.length === 0) {
+        throw new Error(`resident life choice candidate lacks causal support: ${candidate.matterId}`);
+      }
+    }
+
     const privateContext = this.resident.cognitionContext(batch);
     const context = composeResidentLifeCognitionContext(privateContext, life);
     const attempt: ResidentLifeChoiceAttempt = {
@@ -81,6 +95,7 @@ export class ResidentLifeChoiceOwner {
       batch: structuredClone(batch),
       context: structuredClone(context),
       candidateMatterIds: [...candidateMatterIds],
+      candidateSupports: structuredClone(candidateSupports),
       revision: this.resident.cognitionRevision(),
       lifeFingerprint: fingerprintLife(life),
     };
@@ -103,7 +118,11 @@ export class ResidentLifeChoiceOwner {
     if (attempt !== this.activeAttempt) return { status: "rejected", reason: "unknown_attempt" };
     this.activeAttempt = null;
 
-    const decision = parseChoice(rawProposal, attempt.candidateMatterIds);
+    const decision = parseChoice(
+      rawProposal,
+      attempt.candidateMatterIds,
+      attempt.candidateSupports,
+    );
     if (!decision) {
       this.resident.requeueCognitionBatch(attempt.batch);
       return { status: "rejected", reason: "proposal_invalid" };
@@ -163,6 +182,7 @@ function assertAllDeferredRunsRepresented(
 function parseChoice(
   raw: unknown,
   candidateMatterIds: readonly string[],
+  candidateSupports: readonly ResidentLifeChoiceCandidateSupport[],
 ): ResidentLifeChoiceDecision | null {
   if (!isRecord(raw) || raw.version !== 1 || !isRecord(raw.decision)) return null;
   if (!hasOnlyKeys(raw, ["version", "decision"])) return null;
@@ -173,12 +193,35 @@ function parseChoice(
   if (!reason || reviewAfterSeconds === null) return null;
 
   if (kind === "focus_matter") {
-    if (!hasOnlyKeys(decision, ["kind", "matterId", "reason", "reviewAfterSeconds"])) return null;
+    if (!hasOnlyKeys(decision, [
+      "kind",
+      "matterId",
+      "reason",
+      "supportEvidenceIds",
+      "reviewAfterSeconds",
+    ])) return null;
     if (typeof decision.matterId !== "string" || !candidateMatterIds.includes(decision.matterId)) return null;
+
+    const allowedSupport = new Set(
+      allowedChoiceSupportEvidenceIds(candidateSupports, decision.matterId),
+    );
+    if (!Array.isArray(decision.supportEvidenceIds)
+      || decision.supportEvidenceIds.length < 1
+      || decision.supportEvidenceIds.length > 8) return null;
+
+    const supportEvidenceIds: string[] = [];
+    for (const evidenceId of decision.supportEvidenceIds) {
+      if (typeof evidenceId !== "string"
+        || !allowedSupport.has(evidenceId)
+        || supportEvidenceIds.includes(evidenceId)) return null;
+      supportEvidenceIds.push(evidenceId);
+    }
+
     return {
       kind: "focus_matter",
       matterId: decision.matterId,
       reason,
+      supportEvidenceIds,
       reviewAfterSeconds,
     };
   }
