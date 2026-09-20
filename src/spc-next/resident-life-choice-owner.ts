@@ -1,4 +1,4 @@
-import type { CognitionBatch } from "./contracts";
+import type { CognitionBatch, CognitionReason } from "./contracts";
 import {
   composeResidentLifeCognitionContext,
   type ResidentLifeCognitionContext,
@@ -32,6 +32,7 @@ export interface ResidentLifeChoiceAttempt {
   readonly context: ResidentLifeCognitionContext;
   readonly candidateMatterIds: readonly string[];
   readonly candidateSupports: readonly ResidentLifeChoiceCandidateSupport[];
+  readonly originReasonId: string;
   readonly revision: ResidentCognitionRevision;
   readonly lifeFingerprint: string;
 }
@@ -80,6 +81,11 @@ export class ResidentLifeChoiceOwner {
     }
     assertAllDeferredRunsRepresented(life, candidateMatterIds);
 
+    const originReason = exactChoiceOriginReason(batch, life, candidateMatterIds);
+    if (!originReason) {
+      throw new Error("resident life choice requires exact ambiguity pressure");
+    }
+
     const candidateSupports = deriveResidentLifeChoiceCandidateSupports(life, candidateMatterIds);
 
     const privateContext = this.resident.cognitionContext(batch);
@@ -91,6 +97,7 @@ export class ResidentLifeChoiceOwner {
       context: structuredClone(context),
       candidateMatterIds: [...candidateMatterIds],
       candidateSupports: structuredClone(candidateSupports),
+      originReasonId: originReason.id,
       revision: this.resident.cognitionRevision(),
       lifeFingerprint: fingerprintLife(life),
     };
@@ -98,10 +105,14 @@ export class ResidentLifeChoiceOwner {
     return attempt;
   }
 
-  abandon(attempt: ResidentLifeChoiceAttempt): boolean {
+  abandon(
+    attempt: ResidentLifeChoiceAttempt,
+    transitionTick = attempt.batch.requestedAtTick,
+  ): boolean {
     if (attempt !== this.activeAttempt) return false;
+    assertSettlementTick(transitionTick, attempt.batch.requestedAtTick);
     this.activeAttempt = null;
-    this.resident.requeueCognitionBatch(attempt.batch);
+    this.resident.requeueCognitionBatch(attempt.batch, transitionTick);
     return true;
   }
 
@@ -109,8 +120,10 @@ export class ResidentLifeChoiceOwner {
     attempt: ResidentLifeChoiceAttempt,
     rawProposal: unknown,
     currentLife: ResidentLifeCognitionView,
+    settlementTick = attempt.batch.requestedAtTick,
   ): ResidentLifeChoiceSettlement {
     if (attempt !== this.activeAttempt) return { status: "rejected", reason: "unknown_attempt" };
+    assertSettlementTick(settlementTick, attempt.batch.requestedAtTick);
     this.activeAttempt = null;
 
     const decision = parseChoice(
@@ -119,23 +132,30 @@ export class ResidentLifeChoiceOwner {
       attempt.candidateSupports,
     );
     if (!decision) {
-      this.resident.requeueCognitionBatch(attempt.batch);
+      this.resident.requeueCognitionBatch(attempt.batch, settlementTick);
       return { status: "rejected", reason: "proposal_invalid" };
     }
 
     const currentRevision = this.resident.cognitionRevision();
     if (currentRevision.attention !== attempt.revision.attention) {
-      this.resident.requeueCognitionBatch(attempt.batch);
+      this.resident.requeueCognitionBatch(attempt.batch, settlementTick);
       return { status: "stale", reason: "newer_addressed_attention" };
     }
     if (currentRevision.activity !== attempt.revision.activity) {
-      this.resident.requeueCognitionBatch(attempt.batch);
+      this.resident.requeueCognitionBatch(attempt.batch, settlementTick);
       return { status: "stale", reason: "local_activity_changed_during_request" };
     }
     if (fingerprintLife(currentLife) !== attempt.lifeFingerprint) {
-      this.resident.requeueCognitionBatch(attempt.batch);
+      this.resident.requeueCognitionBatch(attempt.batch, settlementTick);
       return { status: "stale", reason: "resident_life_changed_during_request" };
     }
+
+    this.resident.reconcileCognitionSettlement({
+      batch: attempt.batch,
+      originReasonId: attempt.originReasonId,
+      decision: decision.kind === "focus_matter" ? "accept" : "defer",
+      tick: settlementTick,
+    });
 
     return { status: "applied", decision };
   }
@@ -152,6 +172,26 @@ function candidateMatters(life: ResidentLifeCognitionView): string[] {
       && matter.activeRun.bodyState === "deferred")
     .map((matter) => matter.id)
     .sort((a, b) => a.localeCompare(b));
+}
+
+function exactChoiceOriginReason(
+  batch: CognitionBatch,
+  life: ResidentLifeCognitionView,
+  candidateMatterIds: readonly string[],
+): CognitionReason | null {
+  const candidateRunIds = life.matters
+    .filter((matter) => candidateMatterIds.includes(matter.id))
+    .map((matter) => matter.activeRun?.runId ?? null)
+    .filter((runId): runId is string => runId !== null)
+    .sort((a, b) => a.localeCompare(b));
+
+  const matches = batch.reasons.filter((reason) => {
+    if (reason.kind !== "uncertainty") return false;
+    const evidenceIds = [...reason.evidenceIds].sort((a, b) => a.localeCompare(b));
+    return evidenceIds.length === candidateRunIds.length
+      && evidenceIds.every((id, index) => id === candidateRunIds[index]);
+  });
+  return matches.length === 1 ? matches[0]! : null;
 }
 
 function assertAllDeferredRunsRepresented(
@@ -258,4 +298,11 @@ function boundedNumber(value: unknown, min: number, max: number): number | null 
   return typeof value === "number" && Number.isFinite(value) && value >= min && value <= max
     ? value
     : null;
+}
+
+
+function assertSettlementTick(tick: number, requestedAtTick: number): void {
+  if (!Number.isSafeInteger(tick) || tick < requestedAtTick) {
+    throw new Error("resident life choice settlement tick cannot precede cognition dispatch");
+  }
 }
