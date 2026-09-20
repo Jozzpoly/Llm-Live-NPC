@@ -89,7 +89,7 @@ describe("Mira fully causal multi-future life choice", () => {
       }),
     ]));
 
-    const owner = new ResidentLifeChoiceOwner(slice.mira);
+    const owner = new ResidentLifeChoiceOwner(slice.mira, slice.world.options.fixedDeltaSeconds);
     const attempt = owner.prepare(batch, lifeAtChoice);
     expect(attempt).not.toBeNull();
     if (!attempt) return;
@@ -216,7 +216,7 @@ describe("Mira fully causal multi-future life choice", () => {
     expect(slice.focus.focusedRun()).toBeNull();
 
     const choiceBatch = waitForChoiceCognitionOpportunity(slice);
-    const choiceOwner = new ResidentLifeChoiceOwner(slice.mira);
+    const choiceOwner = new ResidentLifeChoiceOwner(slice.mira, slice.world.options.fixedDeltaSeconds);
     const choiceAttempt = choiceOwner.prepare(choiceBatch, slice.currentLifeView());
     expect(choiceAttempt).not.toBeNull();
     if (!choiceAttempt) return;
