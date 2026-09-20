@@ -23,6 +23,7 @@ import {
   createR4DenseWorkshopSlice,
   R4_PRIMARY_MATTER_ID,
 } from "../spc-next/r4-dense-workshop-slice";
+import { createR4MiraOrdinaryLifeSlice } from "../spc-next/r4-mira-ordinary-life-slice";
 
 export type SpcNextResearchScenarioKind =
   | "baseline-delivery"
@@ -34,6 +35,7 @@ export type SpcNextResearchScenarioKind =
   | "ida-message-delivery"
   | "zero-provider-local-life"
   | "r4-dense-workshop"
+  | "r4-mira-ordinary-life"
   | "unified-living";
 
 export interface SpcNextResearchScenario {
@@ -65,6 +67,7 @@ export function createSpcNextResearchScenario(kind: SpcNextResearchScenarioKind)
   if (kind === "ida-message-delivery") return createIdaMessageDeliveryScenario();
   if (kind === "zero-provider-local-life") return createZeroProviderLocalLifeScenario();
   if (kind === "r4-dense-workshop") return createR4DenseWorkshopScenario();
+  if (kind === "r4-mira-ordinary-life") return createR4MiraOrdinaryLifeScenario();
   if (kind === "unified-living") return createUnifiedLivingScenario();
   return createBaselineDeliveryScenario();
 }
@@ -80,6 +83,7 @@ export function researchScenarioKindFromSearch(search: string): SpcNextResearchS
   if (requested === "ida-message-delivery") return "ida-message-delivery";
   if (requested === "zero-provider-local-life") return "zero-provider-local-life";
   if (requested === "r4-dense-workshop") return "r4-dense-workshop";
+  if (requested === "r4-mira-ordinary-life") return "r4-mira-ordinary-life";
   if (requested === "unified-living") return "unified-living";
   throw new Error(`unknown SPC Next research scenario: ${requested}`);
 }
@@ -277,6 +281,58 @@ function createR4DenseWorkshopScenario(): SpcNextResearchScenario {
         return;
       }
       slice.advanceOneWorldTick();
+    },
+  };
+}
+
+function createR4MiraOrdinaryLifeScenario(): SpcNextResearchScenario {
+  const slice = createR4MiraOrdinaryLifeSlice();
+
+  function evidenceSnapshot() {
+    const world = slice.world.publicSnapshot();
+    const mira = world.actors.find((actor) => actor.id === "resident.mira") ?? null;
+    const ida = world.actors.find((actor) => actor.id === "resident.ida") ?? null;
+    return {
+      tick: slice.world.tick,
+      miraPosition: mira?.position ?? null,
+      idaPosition: ida?.position ?? null,
+      activeMatterIds: slice.activeMatterIds(),
+      pendingCognitionReasons: slice.pendingCognitionReasons(),
+      contact: slice.contact.snapshot(),
+      miraMotionOwner: slice.authority.motionOwner(),
+      miraActionFacts: slice.authority.recentActionFacts(),
+      idaActionFacts: slice.idaAuthority.recentActionFacts(),
+      idaMatters: slice.idaKernel.snapshotCommittedState().matters,
+      materialKnowledge: slice.materialKnowledge.snapshot(),
+      materialObjects: slice.world.materialObjects(),
+    };
+  }
+
+  return {
+    kind: "r4-mira-ordinary-life",
+    evidenceScenarioId: "browser-r4-mira-ordinary-life",
+    residentId: "resident.mira",
+    // R4-D deliberately begins without a Mira matter. Canonical evidence accepts a
+    // non-empty lookup id and projects matter:null, which is exactly the boundary
+    // under test rather than a synthetic continuity object.
+    matterId: "matter.mira.r4d.none",
+    world: slice.world,
+    kernel: slice.kernel,
+    materialKnowledge: slice.materialKnowledge,
+    authority: slice.authority,
+    evidenceAction(actionId: string): unknown {
+      if (actionId === "snapshot") return evidenceSnapshot();
+      if (actionId === "ida-relocate-background") return slice.idaRelocateBackgroundObject();
+      if (actionId === "ida-ambient-speech") return slice.idaSpeak("Ładny spokój.", false);
+      if (actionId === "ida-address-mira") return slice.beginIdaAddressedContact("Mira?");
+      throw new Error(`unknown R4-D Mira ordinary-life evidence action: ${actionId}`);
+    },
+    advanceOneWorldTick(): void {
+      if (slice.contact.active()) {
+        slice.advanceContactOneWorldTick();
+        return;
+      }
+      slice.advanceQuietOneWorldTick();
     },
   };
 }
