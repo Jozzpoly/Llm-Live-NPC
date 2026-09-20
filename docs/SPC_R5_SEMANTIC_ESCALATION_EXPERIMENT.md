@@ -279,7 +279,10 @@ This is still deterministic provider transport evidence, not real-Luna quality e
 
 ## 8. R5-B — stale/newer-attention attack
 
-Status: **CURRENT / OPEN**
+Status: **QUALIFIED PASS** — source `b0aa10c43ae833fdec95f86d2caa0b7343ba451e`
+
+Evidence authority:
+`docs/SPC_R5B_STALE_ATTENTION_PASS.md`
 
 R5-A is qualified at source `58f225e0090110edf75dbe4aaf1bf057ec8f590e`.
 Evidence authority: `docs/SPC_R5A_SEMANTIC_ESCALATION_PASS.md`.
@@ -300,7 +303,9 @@ Do not implement R5-B merely to add another test before R5-A is clean.
 
 ## 9. R5-C — provider errors and explicit retention
 
-Only after the main success path is understood.
+Status: **CURRENT / OPEN**
+
+R5-A and R5-B are qualified. R5-C now pressures non-success semantic outcomes and provider failure homeostasis.
 
 Pressure:
 - network/HTTP/invalid response;
@@ -357,19 +362,18 @@ If a thinner reuse path exists, prefer it.
 
 ## 13. Immediate work order
 
-R5-A is closed as a bounded PASS.
+R5-A and R5-B are closed as bounded PASSes.
 
-Current work is R5-B:
+Current work is R5-C:
 
-1. preserve the qualified R5-A specimen unchanged;
-2. begin first provider request from addressed speech A;
-3. while A is in flight, inject addressed speech B through legal resident World authority;
-4. prove resident attention revision advances and B becomes separate unresolved pressure;
-5. release provider result A;
-6. prove completion remains inert until admission boundary;
-7. admission must return `stale/newer_addressed_attention`;
-8. prove no matter/run/World consequence from A survives;
-9. prove A and B remain safely represented by the pressure lifecycle;
-10. enforce a bounded retry window rather than same-tick provider hot-loop;
-11. after the retry boundary, allow one new cognition attempt from the current pressure state;
-12. only after deterministic qualification add the same stale attack to real Chromium.
+1. preserve the qualified R5-A/R5-B causal paths;
+2. use the same compact Mira/Ida no-player organism;
+3. qualify provider error as explicit unresolved requeue + provider-error retry window;
+4. qualify `decline` as exact-origin settlement with no matter and long quiet;
+5. qualify `defer` as exact-origin retention with explicit not-before eligibility;
+6. qualify `clarify` as exact-origin retention with explicit not-before eligibility and no fake spoken question unless separately authorized;
+7. prove no outcome creates ghost matter/run/reply;
+8. prove unrelated sibling reasons are not accidentally settled;
+9. distinguish provider transport failure from valid semantic non-accept decisions;
+10. after deterministic qualification, add the smallest real-Chromium coverage needed to defend lifecycle/homeostasis;
+11. only after R5-C decide whether bounded real-Luna judgement testing is justified.
