@@ -328,9 +328,14 @@ Do not use random wandering, random chatter or cosmetic activity churn to satisf
 The binding experiment contract is:
 `docs/SPC_ZERO_PROVIDER_LOCAL_LIFE_EXPERIMENT.md`.
 
-### Phase R2 — resident relevance / semantic metabolism
+### Phase R2 — resident relevance / semantic metabolism — **PASS**
 
-Goal:
+Qualified 2026-09-20 at source SHA `f0cd892a7915dbe5a382bcdd60966415e4544604`.
+
+Evidence authority:
+`docs/SPC_R2_SEMANTIC_METABOLISM_PASS.md`.
+
+Goal achieved within the bounded R2 claim:
 insert a real decision boundary between perception and higher cognition.
 
 A resident must be able to classify incoming change relative to:
@@ -620,24 +625,25 @@ Completed:
 4. qualify R1 deterministically and in real Chromium;
 5. extract shared local material/contact competence and reattack through Janek donors.
 
+Completed:
+6. **R2 — resident relevance / semantic metabolism — PASS.**
+
 Current:
-6. **R2 — characterize and then build resident relevance / semantic metabolism.**
+7. **R3 — causal personhood.**
 
 Immediate method:
-- first create executable pressure characterization showing where current `percept -> cognition reason` behavior overproduces unresolved pressure;
-- distinguish body/local handling from semantic settlement;
-- define lifecycle semantics only from observed pressure classes;
-- preserve R1 local-life behavior while reducing false semantic pressure;
-- use Mira and Janek as complementary pressure cases.
+- characterize where current resident-specific motivation exists only as authored `role/drives` prose or unconstrained provider reason strings;
+- use Mira first;
+- pressure real choices between simultaneously legal matters/opportunities;
+- introduce only the smallest persistent private causal state demanded by those failures;
+- make that state affect relevance/choice without becoming a generic needs simulator;
+- preserve the R2 rule that raw observation does not become semantic pressure merely because something happened.
 
 Later:
-7. R3 causal personhood;
 8. R4 dense authored affordance surface;
 9. R5 provider semantic escalation;
 10. R6+ multi-resident/homeostasis/endurance sequence.
 
-The next milestone is **not** "fewer requests".
+The next milestone is:
 
-It is:
-
-> **A resident can perceive a noisy world, keep living locally, and retain only the small set of semantic pressures that actually deserve unresolved cognition.**
+> **The same world evidence produces meaningfully different resident concern because of persistent private causal history/state, not because a prompt says what personality to roleplay.**
