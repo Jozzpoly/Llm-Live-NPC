@@ -25,7 +25,8 @@ describe("R4-B dense workshop local-life composition", () => {
 
     const relocation = slice.relocatePrimaryHidden();
     expect(relocation.from).toEqual({ x: 500, y: 500 });
-    expect(relocation.to.x).toBeLessThan(200);
+    expect(relocation.to.x).toBeGreaterThan(1_600);
+    expect(relocation.to.y).toBeGreaterThan(800);
 
     const privateAfter = slice.knowledge.observation(R4_PRIMARY_OBJECT_ID);
     expect(privateAfter).toEqual(privateBefore);
