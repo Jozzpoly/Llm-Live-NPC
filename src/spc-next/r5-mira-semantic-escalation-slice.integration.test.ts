@@ -15,13 +15,17 @@ const EXECUTION_GUARD = 600;
 
 describe("R5-A Mira semantic escalation", () => {
   it("turns one addressed speech reason into one inert-latency provider request, one grounded reply commitment, and quiet", async () => {
-    let releaseProvider: (() => void) | null = null;
+    let providerReleaseInstalled = false;
+    let releaseProvider: () => void = () => {
+      throw new Error("R5 fixture provider release was not installed");
+    };
     let frozenContext: any = null;
 
     const fetcher = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
       frozenContext = JSON.parse(String(init?.body));
       await new Promise<void>((resolve) => {
         releaseProvider = resolve;
+        providerReleaseInstalled = true;
       });
 
       const originReasonId = frozenContext?.reasons?.[0]?.id;
@@ -168,8 +172,8 @@ describe("R5-A Mira semantic escalation", () => {
       }),
     ]));
 
-    expect(releaseProvider).not.toBeNull();
-    releaseProvider?.();
+    expect(providerReleaseInstalled).toBe(true);
+    releaseProvider();
     await flushMicrotasks();
 
     // Wall-clock completion alone is inert.
