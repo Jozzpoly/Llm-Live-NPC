@@ -213,7 +213,7 @@ describe("R2 first semantic-pressure metabolism boundary", () => {
     ]);
   });
 
-  it("still promotes explicit observed interaction/system change as unresolved pending later causal explanation", () => {
+  it("keeps observed interaction/system change as evidence until resident-relative relevance is explicitly established", () => {
     const runtime = resident("resident.r2-world-change");
     const percept: ResidentPercept = {
       id: "percept:r2:system:1",
@@ -224,23 +224,36 @@ describe("R2 first semantic-pressure metabolism boundary", () => {
       actorId: null,
       subjectId: "door.workshop",
       spatial: { kind: "exact", position: { x: 50, y: 50 } },
-      summary: "The workshop door state changed unexpectedly.",
+      summary: "The workshop door state changed.",
       text: null,
       addressed: false,
     };
 
     runtime.ingestPercepts([percept], { x: 0, y: 0 });
 
-    expect(runtime.pendingCognitionReasons()).toEqual([
-      expect.objectContaining({
-        kind: "direct_world_change",
-        evidenceIds: [percept.id],
-      }),
-    ]);
+    expect(runtime.pendingCognitionReasons()).toEqual([]);
     expect(runtime.semanticPressureDecisions()).toEqual([
       expect.objectContaining({
-        disposition: "unresolved",
+        disposition: "observation_only",
         code: "world_change",
+        cognitionReason: null,
+      }),
+    ]);
+
+    runtime.promoteSemanticPressure({
+      id: "reason:resident.r2-world-change:door-blocks-own-matter",
+      tick: percept.tick,
+      kind: "direct_world_change",
+      salience: 0.8,
+      summary: "Explicit fixture relevance: the changed door conflicts with my active route/matter.",
+      evidenceIds: [percept.id],
+    });
+
+    expect(runtime.pendingCognitionReasons()).toEqual([
+      expect.objectContaining({
+        id: "reason:resident.r2-world-change:door-blocks-own-matter",
+        kind: "direct_world_change",
+        evidenceIds: [percept.id],
       }),
     ]);
   });
