@@ -86,7 +86,7 @@ describe("ResidentLifeChoiceReviewBridge with explicit R2 semantic pressure", ()
       kind: "superseded",
     }));
 
-    const batch = resident.takeCognitionBatch(40);
+    const batch = resident.takeCognitionBatch(41);
     expect(batch?.reasons).toEqual([
       expect.objectContaining({
         id: original?.id,
