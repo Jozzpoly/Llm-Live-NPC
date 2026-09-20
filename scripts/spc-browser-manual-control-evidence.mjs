@@ -15,6 +15,28 @@ const CRATE_ID = "crate.workshop.01";
 mkdirSync(dirname(OUTPUT_FILE), { recursive: true });
 const sleep = (ms) => new Promise((resolveSleep) => setTimeout(resolveSleep, ms));
 
+async function stopChrome(chrome) {
+  if (chrome.exitCode !== null) return;
+  chrome.kill("SIGTERM");
+  for (let attempt = 0; attempt < 20 && chrome.exitCode === null; attempt += 1) {
+    await sleep(50);
+  }
+  if (chrome.exitCode !== null) return;
+  chrome.kill("SIGKILL");
+  for (let attempt = 0; attempt < 20 && chrome.exitCode === null; attempt += 1) {
+    await sleep(50);
+  }
+}
+
+function removeChromeProfile(userDataDir) {
+  rmSync(userDataDir, {
+    recursive: true,
+    force: true,
+    maxRetries: 10,
+    retryDelay: 100,
+  });
+}
+
 function chromeExecutable() {
   const candidates = [
     process.env.CHROME_PATH,
@@ -262,10 +284,8 @@ async function run() {
     if (report.outcome !== "PASS") process.exitCode = 1;
   } finally {
     cdp?.close();
-    chrome.kill("SIGTERM");
-    await sleep(120);
-    if (!chrome.killed) chrome.kill("SIGKILL");
-    rmSync(userDataDir, { recursive: true, force: true });
+    await stopChrome(chrome);
+    removeChromeProfile(userDataDir);
   }
 }
 
