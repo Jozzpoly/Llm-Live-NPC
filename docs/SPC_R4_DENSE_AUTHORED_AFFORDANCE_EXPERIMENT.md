@@ -1,10 +1,12 @@
 # SPC R4 — Dense Authored Affordance Experiment
 
-Status: **BINDING CURRENT R4 EXPERIMENT CONTRACT**
+Status: **R4 QUALIFIED PASS — PRESERVED EXPERIMENT CONTRACT**
 Date: **2026-09-20**
 Parent authority: `docs/SPC_POST_STRESS_RECOVERY_PROGRAM.md`
 R3 baseline: `docs/SPC_R3_CAUSAL_PERSONHOOD_PASS.md`
 R3 qualified checkpoint: `27ee3e1d1ca15a528c239d6df23563a2f820a015`
+R4 qualified checkpoint: `0f7945d74db6b4ed6044f5d636b3c4696dce5201`
+R4-D evidence authority: `docs/SPC_R4D_MIRA_ORDINARY_LIFE_PASS.md`
 
 ## 1. R4 question
 
@@ -369,7 +371,7 @@ Original pressure contract:
 
 ## 14. R4-D — second resident falsifier
 
-Status: **CURRENT / OPEN — ORDINARY-LIFE NEGATIVE-CAPABILITY FALSIFIER**
+Status: **QUALIFIED PASS** — source `0f7945d74db6b4ed6044f5d636b3c4696dce5201`
 
 Do not qualify the architecture on Janek alone.
 
@@ -546,28 +548,31 @@ If not, adding more content is not the answer.
 
 ---
 
-## 17. Immediate work order
+## 17. R4 qualification verdict
 
-R4-A/B/C are complete within their qualified boundaries.
+**R4 overall: QUALIFIED PASS** at source `0f7945d74db6b4ed6044f5d636b3c4696dce5201`.
 
-Current work is **R4-D only**, now split by evidence pressure rather than content count:
+Evidence authority for the second-resident falsifier:
 
-1. characterize existing Mira donors and reject travel ping-pong, player-authored commitment queues and the R1 basket chore as sufficient R4-D evidence;
-2. implement the smallest provider-free Mira ordinary-life specimen with another resident plus several nearby material facts;
-3. first prove a long quiet/background interval in which legal perception and nearby causal change do not manufacture matters, actions or semantic pressure;
-4. then introduce one physically valid addressed contact from the other resident;
-5. reuse the shared local-contact routine and preserve the distinction between bodily acknowledgement and semantic settlement;
-6. require body idleness after the local contact run unless a separate resident-owned demand exists;
-7. require the addressed semantic reason to remain singular/stable rather than echoing;
-8. keep the player outside the causal center and keep provider cognition disabled;
-9. add no Mira-specific core policy and no generic preference/needs/planner framework;
-10. if the shared substrate fails, identify the exact missing resident-generic seam before changing architecture;
-11. reattack R1/R2/R3 and Janek R4-B/C evidence after any runtime change;
-12. qualify the Mira specimen deterministically first, then in real Chromium;
-13. only then decide whether R4 as a whole deserves PASS.
+`docs/SPC_R4D_MIRA_ORDINARY_LIFE_PASS.md`
 
-Current falsifier:
+The promotion claim is deliberately bounded.
 
-> **Can Mira remain coherently alive inside a dense, changing local World without converting affordance availability into a chore queue, and still wake correctly for genuine non-player contact through the same shared causal substrate?**
+R4 has established that a modest authored causal surface can support both:
 
-R4 remains incomplete until this is answered.
+- grounded action and continuation when a resident has a real reason to care;
+- grounded non-action when nearby affordances have no resident-owned significance.
+
+R4 therefore closes on the earned principle:
+
+> **affordance availability is not resident significance, resident significance is not automatically demand, and demand is not execution authority.**
+
+The unresolved R4-D addressed-speech reason is intentionally **not** repaired inside R4.
+
+It is the first clean input to R5.
+
+Next recovery target:
+
+**R5 — LLM AS SEMANTIC ESCALATION**
+
+Do not extend R4 by adding more objects, chores, Mira-specific policy or provider behavior.
