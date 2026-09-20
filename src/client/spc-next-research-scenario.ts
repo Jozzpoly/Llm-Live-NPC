@@ -50,6 +50,8 @@ export interface SpcNextResearchScenario {
   readonly canonicalEvidenceSupported?: boolean;
   readonly residentLifeView?: (residentId: string) => ResidentLifeCognitionView | null;
   readonly livingDiagnostics?: () => FiveResidentLivingRuntimeDiagnostics | null;
+  /** Optional evidence-only explicit causal boundary for a bounded research fixture. */
+  readonly evidenceAction?: (actionId: string) => unknown;
   /** Advances exactly one authoritative World tick. */
   advanceOneWorldTick(): void;
 }
@@ -261,6 +263,10 @@ function createR4DenseWorkshopScenario(): SpcNextResearchScenario {
     authority: slice.authority,
     residentLifeView(residentId: string): ResidentLifeCognitionView | null {
       return residentId === "resident.janek" ? slice.currentLifeView() : null;
+    },
+    evidenceAction(actionId: string): unknown {
+      if (actionId === "reveal-primary-nearby") return slice.revealPrimaryNearby();
+      throw new Error(`unknown R4 dense-workshop evidence action: ${actionId}`);
     },
     advanceOneWorldTick(): void {
       // Keep the adversarial relocation on an explicit first browser-controlled
