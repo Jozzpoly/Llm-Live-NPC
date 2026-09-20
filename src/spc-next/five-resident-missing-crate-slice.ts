@@ -7,7 +7,8 @@ import { distanceSquared, type ResidentActivity, type Vec2 } from "./contracts";
 import { ResidentMaterialKnowledge } from "./resident-material-knowledge";
 import { ResidentMaterialPickupExecutor, type ResidentMaterialPickupStep } from "./resident-material-pickup-executor";
 import { ResidentWorldExecutionAuthority } from "./resident-world-execution-authority";
-import { createFiveResidentRegionWorld } from "./five-resident-region";
+import { createFiveResidentRegionComposition } from "./five-resident-region";
+import type { ResidentRuntime } from "./resident-runtime";
 import { SpcWorldRuntime } from "./spc-world-runtime";
 
 const JANEK_ID = "resident.janek";
@@ -46,6 +47,7 @@ export interface FiveResidentJanekHiddenRelocation {
 
 export interface FiveResidentJanekMissingCrateSlice {
   world: SpcWorldRuntime;
+  resident: ResidentRuntime;
   kernel: ResidentContinuityKernel;
   materialKnowledge: ResidentMaterialKnowledge;
   authority: ResidentWorldExecutionAuthority;
@@ -76,7 +78,9 @@ export function createFiveResidentJanekMissingCrateStagedSlice(
     throw new Error("hiddenRelocationSpeed must be positive and finite");
   }
 
-  const world = createFiveResidentRegionWorld({ playerStart: options.playerStart });
+  const composition = createFiveResidentRegionComposition({ playerStart: options.playerStart });
+  const world = composition.world;
+  const resident = composition.runtimes[JANEK_ID];
   const materialKnowledge = new ResidentMaterialKnowledge(JANEK_ID, [CRATE_ID], world);
 
   // Legal acquisition happens while Janek is physically beside the familiar crate.
@@ -156,6 +160,7 @@ export function createFiveResidentJanekMissingCrateStagedSlice(
 
   return {
     world,
+    resident,
     kernel,
     materialKnowledge,
     authority,
@@ -244,6 +249,19 @@ export function createFiveResidentJanekMissingCrateStagedSlice(
           summary: `Checked (${checked.checkedPosition.x}, ${checked.checkedPosition.y}); the familiar workshop crate is not visible there now.`,
         });
         kernel.advanceSemanticContext("matter.janek.missing-crate", pressureEvidence.id);
+
+        // R2: checked absence is a real resident-relative discrepancy. Promote the
+        // exact private/material evidence through the same runtime pressure lifecycle
+        // used by speech, ambiguity and other semantic causes. The reason identity is
+        // object-coalesced so a newer checked absence can supersede an older version.
+        resident.promoteSemanticPressure({
+          id: `reason:${JANEK_ID}:checked-absence:${CRATE_ID}`,
+          tick: pressureEvidence.tick,
+          kind: "uncertainty",
+          salience: 0.9,
+          summary: `Expected familiar material object is absent: ${pressureEvidence.summary}`,
+          evidenceIds: [pressureEvidence.id],
+        });
       }
 
       return {
