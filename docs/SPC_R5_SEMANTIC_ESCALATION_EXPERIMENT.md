@@ -103,7 +103,7 @@ The R5 path must remain reason-native until semantic judgement actually warrants
 
 ## 5. R5-A — one semantic discrepancy, one causal commitment
 
-Status: **CURRENT / OPEN**
+Status: **QUALIFIED PASS** — source `58f225e0090110edf75dbe4aaf1bf057ec8f590e`
 
 R5-A is deliberately small.
 
@@ -279,7 +279,10 @@ This is still deterministic provider transport evidence, not real-Luna quality e
 
 ## 8. R5-B — stale/newer-attention attack
 
-Only after R5-A PASS.
+Status: **CURRENT / OPEN**
+
+R5-A is qualified at source `58f225e0090110edf75dbe4aaf1bf057ec8f590e`.
+Evidence authority: `docs/SPC_R5A_SEMANTIC_ESCALATION_PASS.md`.
 
 Inject a second addressed speech after provider request start but before admission.
 
@@ -354,16 +357,19 @@ If a thinner reuse path exists, prefer it.
 
 ## 13. Immediate work order
 
-1. preserve R4 specimens unchanged;
-2. build the compact Mira/Ida R5-A composition on recovered causal-life substrate;
-3. pressure the existing local-contact/body boundary only as much as R5-A actually needs;
-4. extract the smallest resident-generic cognition seam from existing five-resident logic if direct reuse is impossible;
-5. use deterministic delayed provider transport;
-6. prove request in-flight and arrival-inert boundaries;
-7. admit one communicate commitment from exact speech origin;
-8. execute it to one factual World speech outcome;
-9. settle the source reason;
-10. prove 600-tick post-settlement quiet;
-11. reattack all earlier deterministic gates;
-12. add real-Chromium R5-A evidence;
-13. only then decide whether R5-A deserves PASS and whether R5-B should begin.
+R5-A is closed as a bounded PASS.
+
+Current work is R5-B:
+
+1. preserve the qualified R5-A specimen unchanged;
+2. begin first provider request from addressed speech A;
+3. while A is in flight, inject addressed speech B through legal resident World authority;
+4. prove resident attention revision advances and B becomes separate unresolved pressure;
+5. release provider result A;
+6. prove completion remains inert until admission boundary;
+7. admission must return `stale/newer_addressed_attention`;
+8. prove no matter/run/World consequence from A survives;
+9. prove A and B remain safely represented by the pressure lifecycle;
+10. enforce a bounded retry window rather than same-tick provider hot-loop;
+11. after the retry boundary, allow one new cognition attempt from the current pressure state;
+12. only after deterministic qualification add the same stale attack to real Chromium.
