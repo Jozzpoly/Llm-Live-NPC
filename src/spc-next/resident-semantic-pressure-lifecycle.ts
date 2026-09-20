@@ -90,7 +90,9 @@ export class ResidentSemanticPressureLifecycle {
       return;
     }
 
-    const supersededTick = previousState && previousState.reason.tick < result.reason.tick
+    const supersededTick = previousState
+      && previousState.status !== "settled"
+      && previousState.reason.tick < result.reason.tick
       ? previousState.reason.tick
       : result.status === "updated"
         ? result.replaced.tick
