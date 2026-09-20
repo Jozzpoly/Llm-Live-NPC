@@ -32,7 +32,7 @@ function setup() {
     evidenceIds: ["run.mira.b", "run.mira.c"],
   });
   const batch = resident.takeCognitionBatch(31)!;
-  const owner = new ResidentLifeChoiceOwner(resident);
+  const owner = new ResidentLifeChoiceOwner(resident, 1 / 60);
   const life = lifeView();
   const attempt = owner.prepare(batch, life)!;
   return { resident, batch, owner, life, attempt };
