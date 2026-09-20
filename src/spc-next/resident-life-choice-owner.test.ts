@@ -55,14 +55,20 @@ function lifeView(): ResidentLifeCognitionView {
 }
 
 function matter(id: string, runId: string, semanticCourse: string) {
+  const evidence = {
+    id: `evidence:choice-origin:${id}`,
+    tick: 0,
+    kind: "life_context",
+    summary: `${id} is an already-grounded continuing resident matter.`,
+  };
   return {
     id,
     status: "active" as const,
     semanticRevision: 1,
     semanticCourse,
     suspendedByMatterId: null,
-    originEvidence: null,
-    semanticEvidence: null,
+    originEvidence: evidence,
+    semanticEvidence: evidence,
     lastOutcomeEvidence: null,
     activeRun: {
       runId,
@@ -81,6 +87,7 @@ function choose(matterId = "matter.mira.b") {
       kind: "focus_matter",
       matterId,
       reason: "this matter should receive the free body next",
+      supportEvidenceIds: [`evidence:choice-origin:${matterId}`],
       reviewAfterSeconds: 8,
     },
   };
