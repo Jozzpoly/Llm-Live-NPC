@@ -10,6 +10,7 @@ export type ResidentSemanticPressureLifecycleEventKind =
   | "promoted"
   | "superseded"
   | "stale_ignored"
+  | "settled_requeue_ignored"
   | "dispatched"
   | "requeued"
   | "retained"
@@ -72,6 +73,18 @@ export class ResidentSemanticPressureLifecycle {
         reasonTick: result.reason.tick,
         kind: "stale_ignored",
         detail,
+      });
+      return;
+    }
+
+    if (result.status === "ignored_settled") {
+      this.append({
+        tick: transitionTick,
+        residentId: this.residentId,
+        reasonId: result.reason.id,
+        reasonTick: result.reason.tick,
+        kind: "settled_requeue_ignored",
+        detail: `${detail}; causal version <= locally settled tick ${result.settledReasonTick}`,
       });
       return;
     }
