@@ -354,25 +354,29 @@ Qualification question:
 
 > Can a noisy World produce many perceptions while only a small, explainable subset becomes unresolved semantic pressure?
 
-### Phase R3 — causal personhood
+### Phase R3 — causal personhood — **PASS**
 
-Goal:
-make resident-specific concern arise increasingly from private state instead of provider roleplay.
+Qualified 2026-09-20 at source SHA `14028a8075ca725260c658e35a1cb4d87fff9e08`.
 
-Pressure first with Mira.
+Evidence authority:
+`docs/SPC_R3_CAUSAL_PERSONHOOD_PASS.md`.
 
-Candidate state dimensions may include:
-- obligations;
-- preferences;
-- relationships;
-- ownership;
-- comfort/inconvenience;
-- personal unfinished matters;
-- confidence/uncertainty;
-- remembered commitments;
-- recurring local habits.
+Bounded goal achieved:
 
-Promote only dimensions that demonstrably improve resident behavior.
+> resident-relative significance and a legitimate competing-matter choice can be traced to persistent private causal history that existed before the decision, rather than being supplied only by role prose or a provider-authored post-hoc reason.
+
+R3 deliberately did **not** generalize this into a universal personality system.
+
+Key retained conclusions:
+- existing continuity state is already part of the resident's causal self;
+- same evidence can acquire different significance because of different private history;
+- real accepted social responsibility has a system-owned origin and nonterminal lifecycle;
+- choice rationale must cite exact pre-existing support for the selected matter;
+- generic provider-authored concern prose is not personhood authority;
+- generic matter origin alone still does not explain broad preference;
+- R2 pressure lifecycle, defer timing, supersession and invalidation remain authoritative through the choice layer.
+
+Broad preferences, aversions, relationships, habits, ownership psychology and other personhood dimensions remain future pressures and must be earned by concrete failures rather than added speculatively.
 
 ### Phase R4 — dense authored affordance surface
 
@@ -469,34 +473,57 @@ Primary question:
 
 ## 7. Immediate experiment gate
 
-**R1 — LOCAL-LIFE PASS.**
+**R1 — LOCAL LIFE: PASS.**
 
-The next implementation target is now:
+**R2 — SEMANTIC METABOLISM: PASS.**
 
-**R2 — RESIDENT RELEVANCE / SEMANTIC METABOLISM**
+**R3 — FIRST CAUSAL-PERSONHOOD MILESTONE: PASS.**
 
-R1 established that local embodied life can continue without provider cognition manufacturing continuity.
-It also intentionally exposed the next failure:
+Current recovery target:
 
-- ordinary perception can still become pending cognition pressure too eagerly;
-- local bodily handling does not yet answer whether semantic pressure should exist;
-- unresolved reasons currently have insufficient lifecycle semantics;
-- provider dispatch must remain disabled while that boundary is redesigned.
+**R4 — DENSE AUTHORED AFFORDANCE SURFACE — DESIGN / PRESSURE DISCOVERY BEFORE IMPLEMENTATION**
 
-R2 must answer:
+R1 proved that local embodied life can continue without provider cognition manufacturing continuity.
 
-1. Which percepts deserve no semantic pressure at all?
-2. Which pressure is already explained by a current matter/routine?
-3. Which pressure is duplicate, stale, superseded or already settled?
-4. Which pressure can remain pending without interrupting body life?
-5. Which pressure genuinely requires higher semantic judgement?
-6. Can many perceptions produce only a small, explainable unresolved set?
-7. Can pressure lifetime be reconstructed causally without becoming an immortal event backlog?
+R2 proved that noisy perception need not become semantic pressure and established explicit unresolved-pressure lifecycle semantics.
 
-Do **not** solve R2 with a global cooldown, TTL-only patch or request cap.
-Do **not** reintroduce Luna merely to classify everything.
-The next gate is the missing middle intelligence itself.
+R3 proved that resident-owned private causal history can change significance and provide inspectable support for a legitimate competing-matter choice without making provider roleplay the only cause.
 
+The next bottleneck is different:
+
+> **Do residents have enough dense, authored, materially meaningful reality for their local brain and causal self to have useful things to perceive, know, attempt, fail at, manipulate, recover from and continue — without travel/communication becoming the default outlet?**
+
+R4 must not be solved by:
+- enlarging the map;
+- adding decorative content;
+- creating many object types without resident use;
+- dumping generic interactions into the World;
+- using provider-generated activity to compensate for sparse affordances;
+- importing First Hearth or another donor wholesale;
+- selecting a general gameplay framework before a resident-life pressure demands it.
+
+Before R4 implementation, establish one or more compact pressure specimens that can discriminate among candidate affordances.
+
+Strong donor candidates include:
+- checked absence and search;
+- deliberate looking / attention / facing;
+- pickup / carry / place;
+- material work with factual state change;
+- obstruction and local recovery;
+- actor contact and reacquisition;
+- affordances whose use depends on resident knowledge rather than omniscient World lookup.
+
+Janek is a strong material-work falsifier; Mira remains a necessary ordinary-life anti-service-NPC falsifier.
+
+The R4 promotion question is not:
+
+> How many interactions exist?
+
+It is:
+
+> **Did the added affordance density create better resident-local life, choices, competence and causal consequences without reopening provider churn or turning the World into a feature catalogue?**
+
+Do not start a large content campaign until that bounded R4 experiment is designed.
 ---
 
 ## 8. Evidence hierarchy after the stress failure
@@ -599,17 +626,21 @@ Current recovery order:
 1. **`docs/SPC_POST_STRESS_RECOVERY_PROGRAM.md`**
    - canonical execution authority after the 18 September failure;
 2. latest explicit Owner correction;
-3. **`docs/SPC_ZERO_PROVIDER_LOCAL_LIFE_EXPERIMENT.md`**
-   - binding R1 experiment contract once implementation begins;
-4. **`docs/SPC_NEXT_OWNER_INTENT_AND_GAP_AUDIT.md`**
+3. **`docs/SPC_R3_CAUSAL_PERSONHOOD_PASS.md`**
+   - qualified R3 evidence boundary and non-claims;
+4. **`docs/SPC_R2_SEMANTIC_METABOLISM_PASS.md`**
+   - qualified R2 semantic-metabolism evidence boundary;
+5. **`docs/SPC_ZERO_PROVIDER_LOCAL_LIFE_R1_PASS.md`**
+   - qualified R1 zero-provider local-life evidence boundary;
+6. **`docs/SPC_NEXT_OWNER_INTENT_AND_GAP_AUDIT.md`**
    - durable Owner/product guardrails;
-5. **`docs/SPC_FIVE_RESIDENT_PRESSURE_CAMPAIGN.md`**
+7. **`docs/SPC_FIVE_RESIDENT_PRESSURE_CAMPAIGN.md`**
    - resident pressure donor map;
-6. **`docs/SPC_REOBSERVATION_FINDINGS_2026-09-16.md`**
+8. **`docs/SPC_REOBSERVATION_FINDINGS_2026-09-16.md`**
    - contract/oracle lessons;
-7. **`docs/SPC_LIVING_WORLD_EXECUTION_PROGRAM.md`**
+9. **`docs/SPC_LIVING_WORLD_EXECUTION_PROGRAM.md`**
    - historical pre-stress execution snapshot only;
-8. older recovery/pass documents
+10. older recovery/experiment documents
    - historical evidence/donors, not current execution authority.
 
 When prose conflicts with live evidence, live evidence wins and prose must be corrected.
@@ -621,29 +652,31 @@ When prose conflicts with live evidence, live evidence wins and prose must be co
 Completed:
 1. preserve `c181...` as the forensic failure specimen;
 2. correct post-stress repository authority;
-3. establish and execute R1;
-4. qualify R1 deterministically and in real Chromium;
-5. extract shared local material/contact competence and reattack through Janek donors.
-
-Completed:
-6. **R2 — resident relevance / semantic metabolism — PASS.**
+3. **R1 — zero-provider local life — PASS**;
+4. **R2 — resident relevance / semantic metabolism — PASS**;
+5. **R3 — bounded causal-personhood milestone — PASS** at source SHA `14028a8075ca725260c658e35a1cb4d87fff9e08`.
 
 Current:
-7. **R3 — causal personhood.**
+6. **R4 — dense authored affordance surface.**
 
 Immediate method:
-- characterize where current resident-specific motivation exists only as authored `role/drives` prose or unconstrained provider reason strings;
-- use Mira first;
-- pressure real choices between simultaneously legal matters/opportunities;
-- introduce only the smallest persistent private causal state demanded by those failures;
-- make that state affect relevance/choice without becoming a generic needs simulator;
-- preserve the R2 rule that raw observation does not become semantic pressure merely because something happened.
+- do not begin with a content list;
+- characterize where sparse reality still forces travel/communicate to become generic outlets;
+- identify the smallest compact authored micro-world that creates several grounded resident-local options and constraints;
+- pressure material work, search/checked absence, object manipulation, attention/facing and local recovery as candidate donors;
+- use Janek for material competence and Mira for ordinary-life/personhood pressure;
+- reuse existing World truth, private knowledge, continuity, R1 local-life and R2/R3 relevance/lifecycle instead of building parallel systems;
+- compare simple authored affordances against deeper generic mechanisms and require evidence before generalizing;
+- preserve legitimate stillness and zero-provider continuity;
+- keep LLM semantic escalation out of the critical path until R4 local reality is worth escalating.
 
 Later:
-8. R4 dense authored affordance surface;
-9. R5 provider semantic escalation;
-10. R6+ multi-resident/homeostasis/endurance sequence.
+7. R5 provider semantic escalation;
+8. R6 complementary resident falsifiers;
+9. R7 five-resident homeostasis;
+10. R8 bounded real-Luna campaigns;
+11. R9 endurance stress tests.
 
 The next milestone is:
 
-> **The same world evidence produces meaningfully different resident concern because of persistent private causal history/state, not because a prompt says what personality to roleplay.**
+> **A compact authored world gives residents enough grounded material/social affordance density that ordinary local life becomes richer and more causally expressive without provider activity manufacturing purpose.**
