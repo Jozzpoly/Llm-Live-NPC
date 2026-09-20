@@ -523,11 +523,11 @@ A higher action rate is not automatically better.
 
 ---
 
-## 16. R4 PASS direction
+## 16. R4 PASS criteria — satisfied within bounded claim
 
-Do not pre-freeze a final architecture.
+Do not interpret qualification as a frozen final architecture.
 
-A future R4 PASS must at minimum defend:
+The qualified R4 evidence defends:
 
 - a compact authored surface materially denser than the current baseline;
 - multiple grounded local possibilities using shared mechanisms;
@@ -540,11 +540,13 @@ A future R4 PASS must at minimum defend:
 - no generic content/task churn is used to simulate life;
 - R1/R2/R3 nonregression.
 
-The deeper promotion question is:
+The deeper promotion question was:
 
 > **Did a small increase in authored causal reality produce a disproportionately richer resident-local life surface?**
 
-If not, adding more content is not the answer.
+Within the R4 evidence boundary, the answer is yes: the same small causal substrate supports blocked work, alternate work, private reacquisition, selective non-significance, non-player contact and legitimate quiet without generic task churn.
+
+This is a bounded research promotion, not a claim that content density or ordinary life is solved globally.
 
 ---
 
