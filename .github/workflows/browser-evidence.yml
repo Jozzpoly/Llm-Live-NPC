@@ -13,6 +13,7 @@ on:
       - "scripts/spc-browser-ida-message-delivery-evidence.mjs"
       - "scripts/spc-browser-zero-provider-local-life-evidence.mjs"
       - "scripts/spc-browser-r4-dense-workshop-evidence.mjs"
+      - "scripts/spc-browser-r4-mira-ordinary-life-evidence.mjs"
       - "scripts/analyze-spc-browser-evidence.mjs"
       - "index.html"
       - "package.json"
@@ -140,6 +141,14 @@ jobs:
           SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: node scripts/spc-browser-r4-dense-workshop-evidence.mjs
 
+      - name: Qualify R4-D Mira ordinary life in real Chromium
+        if: success()
+        env:
+          EVIDENCE_BASE_URL: http://127.0.0.1:4173
+          R4_MIRA_ORDINARY_LIFE_OUTPUT: evidence/browser/r4-mira-ordinary-life.json
+          SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: node scripts/spc-browser-r4-mira-ordinary-life-evidence.mjs
+
       - name: Print evidence summary
         if: always()
         shell: bash
@@ -195,6 +204,12 @@ jobs:
             cat evidence/browser/r4-dense-workshop.json
           else
             echo "r4-dense-workshop.json missing"
+          fi
+          echo "--- R4-D Mira ordinary-life evidence ---"
+          if [ -f evidence/browser/r4-mira-ordinary-life.json ]; then
+            cat evidence/browser/r4-mira-ordinary-life.json
+          else
+            echo "r4-mira-ordinary-life.json missing"
           fi
 
       - name: Upload browser evidence artifact
