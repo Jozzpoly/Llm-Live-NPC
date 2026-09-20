@@ -97,6 +97,10 @@ describe("five-resident Mira multi-matter life composition", () => {
     expect(choiceAttempt.context.localActivity.kind).toBe("idle");
     expect(choiceAttempt.context.life.body.focusedRunId).toBeNull();
     expect(choiceAttempt.candidateMatterIds).toEqual([B.matterId, C.matterId]);
+    const bSupport = choiceAttempt.candidateSupports.find(
+      (candidate) => candidate.matterId === B.matterId,
+    )?.facts[0]?.evidenceId;
+    expect(bSupport).toBeDefined();
 
     const currentLife = captureResidentLifeCognitionView({
       kernel,
@@ -110,6 +114,7 @@ describe("five-resident Mira multi-matter life composition", () => {
         kind: "focus_matter",
         matterId: B.matterId,
         reason: "return to the hearth before checking the fields",
+        supportEvidenceIds: [bSupport!],
         reviewAfterSeconds: 8,
       },
     }, currentLife);
