@@ -1,7 +1,9 @@
 # SPC R2 — Resident Relevance / Semantic Metabolism Experiment
 
-Status: **BINDING CURRENT R2 EXPERIMENT CONTRACT**
+Status: **QUALIFIED / HISTORICAL R2 EXPERIMENT CONTRACT**
 Date: **2026-09-20**
+Qualified source: `f0cd892a7915dbe5a382bcdd60966415e4544604`
+PASS authority: `docs/SPC_R2_SEMANTIC_METABOLISM_PASS.md`
 Parent authority: `docs/SPC_POST_STRESS_RECOVERY_PROGRAM.md`
 R1 baseline: `docs/SPC_ZERO_PROVIDER_LOCAL_LIFE_R1_PASS.md`
 
