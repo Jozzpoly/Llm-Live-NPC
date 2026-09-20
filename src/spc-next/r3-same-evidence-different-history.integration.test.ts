@@ -46,7 +46,7 @@ describe("R3 same evidence / different private history", () => {
     expect(obligated.semanticPressureDecisions()).toContainEqual(expect.objectContaining({
       evidenceId: sight.id,
       disposition: "observation_only",
-      code: "sight_churn",
+      code: "actor_visibility",
       cognitionReason: null,
     }));
     expect(obligated.pendingCognitionReasons()).toEqual([]);
