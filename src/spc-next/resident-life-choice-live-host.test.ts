@@ -131,7 +131,7 @@ describe("ResidentLifeChoiceLiveHost transport/admission boundary", () => {
     expect(host.pendingArrivals()).toBe(1);
     expect(host.recentAdmissions()).toEqual([]);
 
-    expect(host.admit(arrival, 2, life)).toMatchObject({
+    expect(host.admit(arrival, 32, life)).toMatchObject({
       status: "applied",
       admissionTick: 2,
       settlement: { decision: { kind: "focus_matter", matterId: "matter.mira.b" } },
@@ -156,7 +156,7 @@ describe("ResidentLifeChoiceLiveHost transport/admission boundary", () => {
     mutable.semanticRevision = 2;
     mutable.semanticCourse = "B changed while the provider answer was waiting for admission";
 
-    expect(host.admit(arrival, 3, changed)).toEqual({
+    expect(host.admit(arrival, 33, changed)).toEqual({
       status: "stale",
       admissionTick: 3,
       settlement: { status: "stale", reason: "resident_life_changed_during_request" },
@@ -195,9 +195,9 @@ describe("ResidentLifeChoiceLiveHost transport/admission boundary", () => {
     const arrival = proposalArrival(await host.request(attempt));
     const cloned = structuredClone(arrival);
 
-    expect(host.admit(cloned, 2, life)).toEqual({ status: "arrival_rejected", reason: "unknown_arrival" });
+    expect(host.admit(cloned, 32, life)).toEqual({ status: "arrival_rejected", reason: "unknown_arrival" });
     expect(owner.state().activeAttemptId).toBe(attempt.id);
     expect(host.pendingArrivals()).toBe(1);
-    expect(host.admit(arrival, 3, life).status).toBe("applied");
+    expect(host.admit(arrival, 33, life).status).toBe("applied");
   });
 });
