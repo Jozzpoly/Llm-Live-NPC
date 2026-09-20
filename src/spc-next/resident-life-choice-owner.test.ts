@@ -201,7 +201,15 @@ describe("ResidentLifeChoiceOwner", () => {
     expect(resident.semanticPressureLifecycleSnapshot()).toContainEqual(expect.objectContaining({
       reason: expect.objectContaining({ id: attempt.originReasonId }),
       status: "pending",
+      notBeforeTick: 212,
     }));
+    expect(resident.takeCognitionBatch(211)).toBeNull();
+    expect(resident.takeCognitionBatch(212)?.reasons).toEqual([
+      expect.objectContaining({
+        id: attempt.originReasonId,
+        kind: "uncertainty",
+      }),
+    ]);
   });
 
   it("rejects a fabricated matter choice and requeues the causal batch", () => {
