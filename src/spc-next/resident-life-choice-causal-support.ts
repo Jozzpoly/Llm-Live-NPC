@@ -62,12 +62,12 @@ export function allowedChoiceSupportEvidenceIds(
 
 function supportFacts(matter: ResidentLifeMatterView): ResidentLifeChoiceSupportFact[] {
   const facts: ResidentLifeChoiceSupportFact[] = [];
-  const seen = new Set<string>();
+  const seenEvidenceIds = new Set<string>();
 
   if (matter.originEvidence) {
     addFact(
       facts,
-      seen,
+      seenEvidenceIds,
       matter.originEvidence,
       matter.status === "active" && matter.originEvidence.kind === "accepted_social_commitment"
         ? "open_social_responsibility"
@@ -76,13 +76,13 @@ function supportFacts(matter: ResidentLifeMatterView): ResidentLifeChoiceSupport
   }
 
   if (matter.semanticEvidence) {
-    addFact(facts, seen, matter.semanticEvidence, "current_semantic_context");
+    addFact(facts, seenEvidenceIds, matter.semanticEvidence, "current_semantic_context");
   }
 
   if (matter.lastOutcomeEvidence) {
     addFact(
       facts,
-      seen,
+      seenEvidenceIds,
       matter.lastOutcomeEvidence,
       matter.lastOutcomeEvidence.summary.startsWith("blocked:")
         ? "blocked_outcome"
@@ -99,13 +99,12 @@ function supportFacts(matter: ResidentLifeMatterView): ResidentLifeChoiceSupport
 
 function addFact(
   facts: ResidentLifeChoiceSupportFact[],
-  seen: Set<string>,
+  seenEvidenceIds: Set<string>,
   evidence: ResidentLifeEvidenceView,
   relation: ResidentLifeChoiceSupportRelation,
 ): void {
-  const identity = `${relation}\u0000${evidence.id}`;
-  if (seen.has(identity)) return;
-  seen.add(identity);
+  if (seenEvidenceIds.has(evidence.id)) return;
+  seenEvidenceIds.add(evidence.id);
   facts.push({
     evidenceId: evidence.id,
     evidenceTick: evidence.tick,
