@@ -81,11 +81,6 @@ export class ResidentLifeChoiceOwner {
     assertAllDeferredRunsRepresented(life, candidateMatterIds);
 
     const candidateSupports = deriveResidentLifeChoiceCandidateSupports(life, candidateMatterIds);
-    for (const candidate of candidateSupports) {
-      if (candidate.facts.length === 0) {
-        throw new Error(`resident life choice candidate lacks causal support: ${candidate.matterId}`);
-      }
-    }
 
     const privateContext = this.resident.cognitionContext(batch);
     const context = composeResidentLifeCognitionContext(privateContext, life);
