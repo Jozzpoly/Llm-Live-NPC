@@ -44,6 +44,39 @@ describe("R2 semantic-pressure lifecycle", () => {
     expect(scheduler.pendingSnapshot()).toEqual([newerReason]);
   });
 
+  it("records a newer version as superseding the same reason even when the older version is already in flight", () => {
+    const resident = runtime("resident.r2-lifecycle-inflight-supersession");
+    const oldReason = reason("reason:shared-inflight", 10, "older in-flight ambiguity");
+    const newerReason = reason("reason:shared-inflight", 50, "newer causal version");
+
+    resident.promoteSemanticPressure(oldReason);
+    const batch = resident.takeCognitionBatch(40);
+    expect(batch?.reasons).toEqual([oldReason]);
+    if (!batch) return;
+
+    resident.promoteSemanticPressure(newerReason);
+
+    expect(resident.pendingCognitionReasons()).toEqual([newerReason]);
+    expect(resident.semanticPressureLifecycleSnapshot()).toContainEqual(expect.objectContaining({
+      reason: newerReason,
+      status: "pending",
+    }));
+    expect(resident.semanticPressureLifecycleEvents()).toContainEqual(expect.objectContaining({
+      kind: "superseded",
+      reasonId: newerReason.id,
+      reasonTick: newerReason.tick,
+      detail: expect.stringContaining("replaced causal tick 10"),
+    }));
+
+    resident.requeueCognitionBatch(batch, 55);
+    expect(resident.pendingCognitionReasons()).toEqual([newerReason]);
+    expect(resident.semanticPressureLifecycleEvents()).toContainEqual(expect.objectContaining({
+      kind: "stale_ignored",
+      reasonId: oldReason.id,
+      reasonTick: oldReason.tick,
+    }));
+  });
+
   it("settles only the selected origin while retaining independent batch siblings", () => {
     const resident = runtime("resident.r2-lifecycle-siblings");
     const selected = reason("reason:selected", 0, "selected issue");
