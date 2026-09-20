@@ -369,32 +369,135 @@ Original pressure contract:
 
 ## 14. R4-D — second resident falsifier
 
-Status: **CURRENT / OPEN**
+Status: **CURRENT / OPEN — ORDINARY-LIFE NEGATIVE-CAPABILITY FALSIFIER**
 
 Do not qualify the architecture on Janek alone.
 
-Likely pairing:
+Janek is deliberately a strong material-work pressure fixture. That makes him useful, but it also creates a dangerous false-positive route:
 
-### Janek
-Pressures:
+> a system can look coherent around Janek while still treating every resident as a queue of chores.
+
+R4-D must attack the opposite side with Mira.
+
+### 14.1 Core hypothesis
+
+The next falsifier is not:
+
+> can Mira be given several more authored things to do?
+
+It is:
+
+> **Can Mira inhabit the same dense authored causal substrate without treating available affordances as obligations, while still waking correctly for a genuinely resident-relevant local event?**
+
+A dense World must support both action **and non-action**.
+
+The following distinction is now binding:
+
+- **affordance availability** — something can physically be perceived/manipulated;
+- **resident significance** — this resident has a causal reason for it to matter now;
+- **resident demand** — an unresolved matter/continuity actually requires action;
+- **execution** — an exact authorized run may mutate World.
+
+R4-D must prove that the first does not silently imply the second or third.
+
+### 14.2 First Mira specimen: ordinary quiet inside an active nearby World
+
+Provider cognition remains disabled.
+
+The smallest useful specimen should begin with:
+
+- Mira embodied in a compact authored space;
+- another resident physically present;
+- several nearby recognized/manipulable material facts;
+- **no pre-authored Mira chore queue merely to make the scene look alive**;
+- player absent from the causal center (and preferably absent from the specimen entirely).
+
+The nearby World may produce truthful low-intensity change, for example:
+
+- another resident manipulates a material object;
+- another resident performs an observable local interaction;
+- ambient/unaddressed speech occurs;
+- actor visibility changes.
+
+Mira must legally perceive the relevant evidence while:
+
+- no material object becomes a matter merely because it is visible;
+- no changed object becomes a repair/return chore merely because it moved;
+- ambient social evidence does not become semantic pressure merely to manufacture activity;
+- no random movement/chatter/task generation appears;
+- no provider request is needed to justify stillness;
+- private material knowledge remains truthful;
+- stable quiet remains distinguishable from a dead runtime.
+
+This is a **negative-capability** proof: the resident is allowed not to care.
+
+### 14.3 Direct non-player contact is the wake boundary, not the player
+
+After a defended quiet/background interval, a physically hearable addressed contact from another resident may cross the relevance boundary.
+
+Reuse `ResidentLocalContactRoutine` before inventing anything new.
+
+Required boundary:
+
+- the source actor is another resident, not the player;
+- exact private addressed-hearing evidence exists;
+- local body/attention may orient and acknowledge through shared competence;
+- no provider is required for that bounded physical/social acknowledgement;
+- the acknowledgement does **not** pretend to semantically answer arbitrary speech content;
+- any unresolved semantic speech pressure remains explicit rather than being falsely settled;
+- after the bounded local contact run ends, body authority returns to idle unless some separate resident-owned demand exists;
+- one contact must not manufacture repeated contact runs or semantic echo traffic.
+
+Important evidence boundary:
+
+> R4-D's legitimate-quiet proof is the provider-free interval before unresolved addressed semantic content exists.
+
+If the addressed contact leaves semantic pressure unresolved, the post-contact body may be physically quiet while semantic work remains pending. Do not mislabel that state as full semantic quiet. That boundary belongs to R5 unless a later experiment earns a narrower local semantic settlement rule.
+
+### 14.4 What this falsifies
+
+R4-D should fail the current shared substrate if any of these are true:
+
+- visible/manipulable objects automatically become chores;
+- nearby World changes automatically become resident matters;
+- Mira needs bespoke resident-ID policy to ignore ordinary background facts;
+- non-player addressed contact cannot use the shared local-contact competence;
+- local acknowledgement requires provider cognition despite already-grounded physical meaning;
+- contact creates runaway/repeated local work;
+- the only way to show “life” is to seed additional travel/material tasks.
+
+Do **not** repair a failure by adding:
+- a Mira personality prompt;
+- arbitrary preferences/aversions;
+- a generic needs simulator;
+- random routine generation;
+- a new planner/affordance framework.
+
+If a genuinely missing seam is exposed, add only the smallest resident-generic mechanism justified by the failure.
+
+### 14.5 Complementary R4 interpretation
+
+Janek pressures:
 - material work;
 - checked absence;
 - stale knowledge;
-- recovery;
+- local alternative execution;
+- causal reacquisition;
 - object consequences.
 
-### Mira
-Pressures:
-- ordinary local life;
-- multiple low-intensity matters;
-- contact without player centrality;
-- legitimate quiet;
-- not becoming a chore bot.
+Mira pressures:
+- ordinary presence;
+- selective non-significance;
+- active nearby World without chore generation;
+- non-player social wake;
+- bounded local acknowledgement;
+- legitimate quiet/body idleness.
 
-The same World/knowledge/continuity/local-competence seams must serve both.
+Together they test the same principle from opposite directions:
+
+> **causal affordances should enlarge the resident's possibility space without automatically enlarging the resident's obligation queue.**
 
 No core resident-ID policy.
-
 ---
 
 ## 15. Candidate metrics — research only
@@ -447,23 +550,24 @@ If not, adding more content is not the answer.
 
 R4-A/B/C are complete within their qualified boundaries.
 
-Current work is **R4-D only**:
+Current work is **R4-D only**, now split by evidence pressure rather than content count:
 
-1. recover Mira-specific ordinary-life pressure from existing R1/R3/five-resident donors;
-2. identify which R4-B/C mechanisms are genuinely resident-generic and which encode Janek/work assumptions;
-3. design the smallest Mira specimen in a compact authored space;
-4. include several nearby facts while requiring that only resident-relevant ones affect matters/action;
-5. make legitimate quiet an acceptable and observable outcome;
-6. keep the player outside the causal center of the specimen;
-7. keep provider cognition disabled;
-8. first falsify the current shared substrate before adding any Mira-specific primitive;
-9. if a missing primitive is proven, add only that bounded seam;
-10. reattack R1/R2/R3 and Janek R4-B/C evidence;
-11. qualify Mira deterministically and in real Chromium;
-12. only then decide whether R4 as a whole deserves PASS.
+1. characterize existing Mira donors and reject travel ping-pong, player-authored commitment queues and the R1 basket chore as sufficient R4-D evidence;
+2. implement the smallest provider-free Mira ordinary-life specimen with another resident plus several nearby material facts;
+3. first prove a long quiet/background interval in which legal perception and nearby causal change do not manufacture matters, actions or semantic pressure;
+4. then introduce one physically valid addressed contact from the other resident;
+5. reuse the shared local-contact routine and preserve the distinction between bodily acknowledgement and semantic settlement;
+6. require body idleness after the local contact run unless a separate resident-owned demand exists;
+7. require the addressed semantic reason to remain singular/stable rather than echoing;
+8. keep the player outside the causal center and keep provider cognition disabled;
+9. add no Mira-specific core policy and no generic preference/needs/planner framework;
+10. if the shared substrate fails, identify the exact missing resident-generic seam before changing architecture;
+11. reattack R1/R2/R3 and Janek R4-B/C evidence after any runtime change;
+12. qualify the Mira specimen deterministically first, then in real Chromium;
+13. only then decide whether R4 as a whole deserves PASS.
 
 Current falsifier:
 
-> **Can Mira use the same denser authored causal substrate as ordinary life, with selective resident-relative relevance and genuine quiet, without degenerating into a random chore machine?**
+> **Can Mira remain coherently alive inside a dense, changing local World without converting affordance availability into a chore queue, and still wake correctly for genuine non-player contact through the same shared causal substrate?**
 
 R4 remains incomplete until this is answered.
