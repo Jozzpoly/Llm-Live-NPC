@@ -168,7 +168,7 @@ describe("R5-A Mira semantic escalation", () => {
     expect(slice.mira.semanticPressureLifecycleSnapshot()).toEqual(expect.arrayContaining([
       expect.objectContaining({
         reason: expect.objectContaining({ id: originReasonId }),
-        status: "dispatched",
+        status: "in_flight",
       }),
     ]));
 
