@@ -95,14 +95,21 @@ describe("R2 five-resident provider homeostasis", () => {
     expect(afterQuiet.cognition.queuedResidents).toEqual([]);
     expect(afterQuiet.cognition.activeRequestCount).toBe(0);
 
+    const requestedResidentIds = new Set(observedRequests.map((request) => request.residentId));
     for (const residentId of afterQuiet.claimedResidentIds) {
       const life = living.life(residentId);
       expect(life?.resident.pendingCognitionReasons(), residentId).toEqual([]);
-      expect(life?.resident.cognitionScheduleDiagnostics().lastRequestTick).not.toBeNull();
+      const lastRequestTick = life?.resident.cognitionScheduleDiagnostics().lastRequestTick ?? null;
+      if (requestedResidentIds.has(residentId)) {
+        expect(lastRequestTick, residentId).not.toBeNull();
+      } else {
+        expect(lastRequestTick, residentId).toBeNull();
+      }
     }
 
-    // Janek's authored baseline is legitimate idle. He must not need a provider call
+    // Janek's authored baseline is legitimate idle. He must remain fully request-free
     // merely because the other residents completed authored opening activities.
-    expect(observedRequests.some((request) => request.residentId === "resident.janek")).toBe(false);
+    expect(requestedResidentIds.has("resident.janek")).toBe(false);
+    expect(living.life("resident.janek")?.resident.cognitionScheduleDiagnostics().lastRequestTick).toBeNull();
   }, 15_000);
 });
