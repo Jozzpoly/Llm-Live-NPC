@@ -7,6 +7,7 @@ import { ResidentExecutionArbitrator } from "./resident-execution-arbitrator";
 import { ResidentExecutionFocusAuthority } from "./resident-execution-focus-authority";
 import { captureResidentLifeCognitionView } from "./resident-life-cognition-view";
 import { ResidentLifeIntentOwner } from "./resident-life-intent-owner";
+import { ResidentMatterRelevanceBridge } from "./resident-matter-relevance-bridge";
 import { ResidentMessageDeliveryExecutor } from "./resident-message-delivery-executor";
 import { ResidentWorldExecutionAuthority } from "./resident-world-execution-authority";
 
@@ -94,6 +95,62 @@ describe("Ida cognition-native social commitment relational epistemics", () => {
     });
     expect(fixture.focus.focusedRun()).toBeNull();
     expect(fixture.worldAuthority.motionOwner()).toBeNull();
+
+    const lifeAfterBlockedDelivery = captureResidentLifeCognitionView({
+      kernel: fixture.kernel,
+      focus: fixture.focus,
+      arbitrator: fixture.arbitrator,
+      matterIds: fixture.causal.acceptedMatterIds(),
+    });
+    expect(lifeAfterBlockedDelivery.matters).toContainEqual(expect.objectContaining({
+      id: fixture.accepted.matter.id,
+      status: "active",
+      semanticIntent: expect.objectContaining({
+        kind: "communicate_actor",
+        targetActorId: JANEK_ID,
+      }),
+      lastOutcomeEvidence: expect.objectContaining({
+        kind: "task_outcome",
+        summary: expect.stringContaining("blocked:"),
+      }),
+    }));
+
+    const relevance = new ResidentMatterRelevanceBridge(fixture.ida);
+    const blockedTick = fixture.world.tick;
+    moveJanekBackIntoIdaSight(fixture.world, fixture.ida);
+
+    const returnPercept = fixture.ida.diagnostics().recentPercepts
+      .filter((percept) => (
+        percept.tick > blockedTick
+        && percept.phenomenon === "actor_sight_enter"
+        && percept.actorId === JANEK_ID
+      ))
+      .at(-1);
+    expect(returnPercept).toBeDefined();
+    if (!returnPercept) return;
+
+    // R2 still owns ingress: Janek's return is truthful private observation first.
+    expect(fixture.ida.semanticPressureDecisions()).toContainEqual(expect.objectContaining({
+      evidenceId: returnPercept.id,
+      disposition: "observation_only",
+      code: "actor_visibility",
+      cognitionReason: null,
+    }));
+
+    // R3 adds significance only because Ida already owns an unresolved obligation
+    // whose exact structured target is Janek and whose last factual attempt blocked.
+    expect(relevance.observe(returnPercept, lifeAfterBlockedDelivery)).toMatchObject({
+      status: "promoted",
+      matterId: fixture.accepted.matter.id,
+      evidenceId: returnPercept.id,
+    });
+    expect(fixture.ida.pendingCognitionReasons()).toContainEqual(expect.objectContaining({
+      kind: "uncertainty",
+      evidenceIds: expect.arrayContaining([
+        returnPercept.id,
+        fixture.accepted.matter.id,
+      ]),
+    }));
   });
 });
 
@@ -244,6 +301,27 @@ function relocateJanekOutsideIdaKnowledge(
     world.step();
   }
   throw new Error("hidden Janek relocation exceeded guard");
+}
+
+function moveJanekBackIntoIdaSight(
+  world: ReturnType<typeof createFiveResidentRegionComposition>["world"],
+  ida: ReturnType<typeof createFiveResidentRegionComposition>["runtimes"]["resident.ida"],
+) {
+  const target = actorPosition(world, IDA_ID);
+  world.setResidentActivity(
+    JANEK_ID,
+    travelActivity("janek-r3-return", target, "return into Ida's private sight after the blocked obligation"),
+  );
+
+  for (let step = 0; step < MAX_STEPS; step += 1) {
+    world.step();
+    if (knownJanek(ida, world.tick)?.currentlyVisible) {
+      world.setResidentActivity(JANEK_ID, idleActivity("janek-r3-visible-hold"));
+      world.step();
+      return;
+    }
+  }
+  throw new Error("Janek did not return into Ida's private sight");
 }
 
 function knownJanek(
