@@ -28,7 +28,7 @@ export type ResidentMaterialMatterRelevanceObservation =
  * without relying on provider output or timer heuristics.
  */
 export function materialAbsencePressureReasonId(residentId: string, objectId: string): string {
-  return deriveSpcIdentifier("reason-material-absence", `${residentId}|${objectId}`);
+  return deriveSpcIdentifier("reason_material_absence", `${residentId}|${objectId}`);
 }
 
 /**
@@ -76,7 +76,7 @@ export class ResidentMaterialMatterRelevanceBridge {
     const matter = matches[0]!;
     const evidence = this.kernel.recordEvidence({
       id: deriveSpcIdentifier(
-        "material-reacquired",
+        "material_reacquired",
         `${this.resident.profile.id}|${matter.id}|${objectId}`,
         String(current.observedAtTick),
       ),
