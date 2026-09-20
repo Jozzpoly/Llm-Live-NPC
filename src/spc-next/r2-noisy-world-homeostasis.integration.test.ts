@@ -22,6 +22,12 @@ describe("R2 noisy-world semantic homeostasis", () => {
         maxSpeed: index === 0 ? 48_000 : 140,
       });
       slice.world.speak(id, `ambient stranger line ${index}`, 420, []);
+      slice.world.emitInteraction(
+        id,
+        `object.ambient-${index}`,
+        `ambient interaction ${index}`,
+        420,
+      );
     }
 
     const first = slice.advanceOneWorldTick();
@@ -37,7 +43,20 @@ describe("R2 noisy-world semantic homeostasis", () => {
       percept.phenomenon === "actor_sight_enter"
       && strangerIds.includes(percept.actorId ?? "")
     ).length).toBeGreaterThanOrEqual(strangerIds.length);
+    expect(firstPercepts.filter((percept) =>
+      percept.phenomenon === "interaction"
+      && percept.summary.startsWith("ambient interaction")
+    )).toHaveLength(strangerIds.length);
     expect(slice.pendingCognitionReasons()).toEqual([]);
+
+    const worldChangeDecisions = slice.resident.semanticPressureDecisions().filter(
+      (decision) => decision.code === "world_change",
+    );
+    expect(worldChangeDecisions).toHaveLength(strangerIds.length);
+    expect(worldChangeDecisions.every((decision) =>
+      decision.disposition === "observation_only"
+      && decision.cognitionReason === null
+    )).toBe(true);
 
     // The normal participant is now privately recognized by sight. Repeated
     // unaddressed speech from that same recognized actor may be socially relevant,
