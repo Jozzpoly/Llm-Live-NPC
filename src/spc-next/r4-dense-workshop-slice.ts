@@ -38,7 +38,8 @@ const RETREAT_TARGET = Object.freeze({ x: 1_100, y: 500 });
 const SECONDARY_START = Object.freeze({ x: 1_100, y: 550 });
 export const R4_SECONDARY_DESTINATION = Object.freeze({ x: 1_450, y: 500 });
 const IRRELEVANT_START = Object.freeze({ x: 1_180, y: 650 });
-const RELOCATOR_SPEED = 24_000;
+const RELOCATOR_MAX_SPEED = 80_000;
+const RELOCATOR_HIDDEN_VELOCITY = Object.freeze({ x: 72_000, y: 24_000 });
 const RETREAT_GUARD = 420;
 
 export type R4DenseWorkshopStep =
@@ -89,14 +90,14 @@ export interface R4HiddenRelocation {
  */
 export function createR4DenseWorkshopSlice() {
   const world = new SpcWorldRuntime({
-    bounds: { minX: 0, minY: 0, maxX: 1_600, maxY: 1_000 },
+    bounds: { minX: 0, minY: 0, maxX: 2_000, maxY: 1_200 },
     regions: [{
       id: "r4-workshop",
       label: "R4 Workshop",
       minX: 0,
       minY: 0,
-      maxX: 1_600,
-      maxY: 1_000,
+      maxX: 2_000,
+      maxY: 1_200,
     }],
     anchors: [
       { id: "anchor.r4.bench", label: "Workshop Bench", kind: "work", position: { ...PRIMARY_START }, radius: 42 },
@@ -254,14 +255,14 @@ export function createR4DenseWorkshopSlice() {
     }
 
     const tickBefore = world.tick;
-    world.addPlayer(RELOCATOR_ID, before.location.position, { maxSpeed: RELOCATOR_SPEED });
+    world.addPlayer(RELOCATOR_ID, before.location.position, { maxSpeed: RELOCATOR_MAX_SPEED });
     const pickup = world.attemptMaterialAction(RELOCATOR_ID, {
       kind: "pickup",
       objectId: R4_PRIMARY_OBJECT_ID,
     });
     if (pickup.status !== "succeeded") throw new Error("R4 relocator failed to pick up primary object");
 
-    world.setActorMotionIntent(RELOCATOR_ID, { x: -RELOCATOR_SPEED, y: 0 });
+    world.setActorMotionIntent(RELOCATOR_ID, { ...RELOCATOR_HIDDEN_VELOCITY });
     world.step();
     world.setActorMotionIntent(RELOCATOR_ID, { x: 0, y: 0 });
 
@@ -274,8 +275,10 @@ export function createR4DenseWorkshopSlice() {
     });
     if (place.status !== "succeeded") throw new Error("R4 relocator failed to place primary object");
 
-    // Leave the fixture moving away from the future checked-absence location.
-    world.setActorMotionIntent(RELOCATOR_ID, { x: 0, y: RELOCATOR_SPEED });
+    // The final relocation point is outside sight from both Janek's retreat body and
+    // the stale remembered position. Keep the fixture stopped there; R4-B tests
+    // checked absence rather than further relocator movement.
+    world.setActorMotionIntent(RELOCATOR_ID, { x: 0, y: 0 });
 
     knowledge.sample();
     const privateAfter = knowledge.observation(R4_PRIMARY_OBJECT_ID);
