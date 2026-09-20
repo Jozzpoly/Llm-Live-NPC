@@ -221,7 +221,7 @@ function setupIdenticalAmbiguity() {
   if (!batch) throw new Error("R3 characterization did not produce a ready ambiguity batch");
 
   const life = lifeView();
-  const owner = new ResidentLifeChoiceOwner(resident);
+  const owner = new ResidentLifeChoiceOwner(resident, 1 / 60);
   const attempt = owner.prepare(batch, life);
   if (!attempt) throw new Error("R3 characterization could not prepare a life-choice attempt");
 
