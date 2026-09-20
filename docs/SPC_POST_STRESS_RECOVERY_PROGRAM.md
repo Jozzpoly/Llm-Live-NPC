@@ -378,9 +378,17 @@ Key retained conclusions:
 
 Broad preferences, aversions, relationships, habits, ownership psychology and other personhood dimensions remain future pressures and must be earned by concrete failures rather than added speculatively.
 
-### Phase R4 — dense authored affordance surface
+### Phase R4 — dense authored affordance surface — **PASS**
 
-Goal:
+Qualified 2026-09-20 at source SHA `0f7945d74db6b4ed6044f5d636b3c4696dce5201`.
+
+Evidence authority:
+`docs/SPC_R4D_MIRA_ORDINARY_LIFE_PASS.md`.
+
+Bounded result:
+causal affordance density can produce both grounded local action and grounded non-action without automatically converting nearby World possibility into chores or provider pressure.
+
+Goal achieved within the bounded R4 claim:
 give residents enough grounded reality that travel/communicate are no longer the default semantic outlet.
 
 Recover proven donors only when demanded:
@@ -479,53 +487,41 @@ Primary question:
 
 **R3 — FIRST CAUSAL-PERSONHOOD MILESTONE: PASS.**
 
-**R4-A — BASELINE AFFORDANCE CHARACTERIZATION: COMPLETE.**
+**R4 — DENSE AUTHORED AFFORDANCE SURFACE: QUALIFIED PASS**
+at source SHA `0f7945d74db6b4ed6044f5d636b3c4696dce5201`.
 
-**R4-B — DENSE WORKSHOP / ALTERNATE LOCAL LIFE: QUALIFIED PASS**
-at source SHA `5548231763718f868186dd5c07877c65969f7f88`.
+R4 qualification now includes:
 
-**R4-C — CHANGED WORLD / LEGAL MATERIAL REACQUISITION: QUALIFIED PASS**
-at source SHA `423c9ba1eaafdc9064136ed0a1a3c71b7b19b2ca`.
+- R4-A baseline affordance characterization;
+- R4-B Janek blocked-path / alternate provider-free local life;
+- R4-C changed-World / legal private material reacquisition / local reactivation;
+- R4-D Mira ordinary-life negative capability in deterministic and real-Chromium evidence.
 
-**R4 overall: NOT YET PASS.**
+The R4-D terminal boundary is deliberately unresolved semantically:
 
-Current recovery target:
+- local bodily acknowledgement has completed;
+- body authority is idle;
+- one exact addressed-speech `CognitionReason` remains;
+- no synthetic matter was created merely to make that reason fit an API;
+- no provider has been invoked.
 
-**R4-D — SECOND-RESIDENT / MIRA AFFORDANCE FALSIFIER**
+**Current recovery target: R5 — LLM AS SEMANTIC ESCALATION.**
 
-Janek has now defended the first material causal-affordance loop:
+The first R5 falsifier must answer:
 
-- one blocked resident-owned matter can coexist with another grounded local matter;
-- the alternate matter can create factual World consequences without provider novelty;
-- an irrelevant nearby material fact can remain irrelevant;
-- legitimate quiet survives after local work ends;
-- later external World truth can change without rewriting resident knowledge;
-- ordinary private material perception can legally reacquire that truth;
-- structured matter-relative relevance can reactivate the same durable goal locally;
-- obsolete checked-absence pressure can settle instead of recursively generating cognition;
-- the existing material competence can complete the factual outcome.
+> **Can one genuine unresolved semantic reason escalate exactly once to higher cognition, remain causally inert during provider latency, be admitted only at an explicit resident/World boundary, produce only locally grounded durable meaning/action, settle or explicitly retain the originating pressure, and return to quiet without manufacturing another provider request?**
 
-The remaining R4 problem is deliberately different.
+R5 must reuse existing reason/batch cognition and causal-life authority before inventing new provider infrastructure.
 
-Janek is an unusually strong material-work resident. A system can look coherent around him while still degenerating into a task/chore machine for ordinary residents.
+In particular:
 
-Mira must therefore attack the opposite side:
-
-> **Can the same World / private-knowledge / continuity / relevance / local-competence substrate support ordinary low-intensity life without making visible objects into chores, making the player the center, or manufacturing motion merely to look alive?**
-
-R4-D must preserve:
-
-- zero-provider critical path;
-- legitimate stillness;
-- resident-owned matters rather than random task generation;
-- nearby affordances that may remain unused;
-- private evidence rather than omniscient World lookup;
-- no resident-ID behavior policy in shared core;
-- no “Mira personality prompt” as substitute for causal history/state.
-
-R4-D should try to reuse the R4-B/C seams before inventing another affordance architecture.
-
-Do not promote R4 merely because Janek now has a strong material specimen.
+- do not create a fake matter merely because older semantic-provider plumbing is matter-scoped;
+- prefer the existing resident cognition/life-intent path for a reason-native escalation;
+- provider output is semantic proposal, never World authority;
+- network completion is inert until explicit admission;
+- local grounding retains veto;
+- passage of time alone cannot create another semantic reason;
+- one completed causal version must not recursively request cognition again.
 
 ---
 
@@ -630,18 +626,20 @@ Current recovery order:
    - canonical execution authority after the 18 September failure;
 2. latest explicit Owner correction;
 3. **`docs/SPC_R4_DENSE_AUTHORED_AFFORDANCE_EXPERIMENT.md`**
-   - binding R4 experiment contract and anti-cheat boundary;
-4. **`docs/SPC_R4C_MATERIAL_REACQUISITION_PASS.md`**
+   - preserved R4 experiment contract and anti-cheat boundary;
+4. **`docs/SPC_R4D_MIRA_ORDINARY_LIFE_PASS.md`**
+   - qualified second-resident ordinary-life / negative-capability evidence;
+5. **`docs/SPC_R4C_MATERIAL_REACQUISITION_PASS.md`**
    - qualified changed-World / private reacquisition / local reactivation evidence;
-5. **`docs/SPC_R4B_DENSE_WORKSHOP_PASS.md`**
+6. **`docs/SPC_R4B_DENSE_WORKSHOP_PASS.md`**
    - qualified blocked-path / alternate-local-life evidence;
-6. **`docs/SPC_R3_CAUSAL_PERSONHOOD_PASS.md`**
+7. **`docs/SPC_R3_CAUSAL_PERSONHOOD_PASS.md`**
    - qualified R3 evidence boundary and non-claims;
-7. **`docs/SPC_R2_SEMANTIC_METABOLISM_PASS.md`**
+8. **`docs/SPC_R2_SEMANTIC_METABOLISM_PASS.md`**
    - qualified R2 semantic-metabolism evidence boundary;
-8. **`docs/SPC_ZERO_PROVIDER_LOCAL_LIFE_R1_PASS.md`**
+9. **`docs/SPC_ZERO_PROVIDER_LOCAL_LIFE_R1_PASS.md`**
    - qualified R1 zero-provider local-life evidence boundary;
-9. **`docs/SPC_NEXT_OWNER_INTENT_AND_GAP_AUDIT.md`**
+10. **`docs/SPC_NEXT_OWNER_INTENT_AND_GAP_AUDIT.md`**
    - durable Owner/product guardrails;
 10. **`docs/SPC_FIVE_RESIDENT_PRESSURE_CAMPAIGN.md`**
     - resident pressure donor map;
