@@ -19,6 +19,11 @@ import {
   createFiveResidentIdaMessageDeliverySlice,
 } from "../spc-next/five-resident-ida-message-delivery-slice";
 import { createZeroProviderLocalLifeSlice } from "../spc-next/zero-provider-local-life-slice";
+import {
+  createR4DenseWorkshopSlice,
+  R4_PRIMARY_MATTER_ID,
+} from "../spc-next/r4-dense-workshop-slice";
+import { createR4MiraOrdinaryLifeSlice } from "../spc-next/r4-mira-ordinary-life-slice";
 
 export type SpcNextResearchScenarioKind =
   | "baseline-delivery"
@@ -29,6 +34,8 @@ export type SpcNextResearchScenarioKind =
   | "missing-crate-live-provider-interruption"
   | "ida-message-delivery"
   | "zero-provider-local-life"
+  | "r4-dense-workshop"
+  | "r4-mira-ordinary-life"
   | "unified-living";
 
 export interface SpcNextResearchScenario {
@@ -45,6 +52,8 @@ export interface SpcNextResearchScenario {
   readonly canonicalEvidenceSupported?: boolean;
   readonly residentLifeView?: (residentId: string) => ResidentLifeCognitionView | null;
   readonly livingDiagnostics?: () => FiveResidentLivingRuntimeDiagnostics | null;
+  /** Optional evidence-only explicit causal boundary for a bounded research fixture. */
+  readonly evidenceAction?: (actionId: string) => unknown;
   /** Advances exactly one authoritative World tick. */
   advanceOneWorldTick(): void;
 }
@@ -57,6 +66,8 @@ export function createSpcNextResearchScenario(kind: SpcNextResearchScenarioKind)
   if (kind === "missing-crate-live-provider-interruption") return createMissingCrateLiveProviderInterruptionScenario();
   if (kind === "ida-message-delivery") return createIdaMessageDeliveryScenario();
   if (kind === "zero-provider-local-life") return createZeroProviderLocalLifeScenario();
+  if (kind === "r4-dense-workshop") return createR4DenseWorkshopScenario();
+  if (kind === "r4-mira-ordinary-life") return createR4MiraOrdinaryLifeScenario();
   if (kind === "unified-living") return createUnifiedLivingScenario();
   return createBaselineDeliveryScenario();
 }
@@ -71,6 +82,8 @@ export function researchScenarioKindFromSearch(search: string): SpcNextResearchS
   if (requested === "missing-crate-live-provider-interruption") return "missing-crate-live-provider-interruption";
   if (requested === "ida-message-delivery") return "ida-message-delivery";
   if (requested === "zero-provider-local-life") return "zero-provider-local-life";
+  if (requested === "r4-dense-workshop") return "r4-dense-workshop";
+  if (requested === "r4-mira-ordinary-life") return "r4-mira-ordinary-life";
   if (requested === "unified-living") return "unified-living";
   throw new Error(`unknown SPC Next research scenario: ${requested}`);
 }
@@ -234,6 +247,92 @@ function createZeroProviderLocalLifeScenario(): SpcNextResearchScenario {
       // This adapter advances the exact provider-free R1 organism. It does not
       // inject life decisions, semantic settlement or provider output.
       slice.advanceOneWorldTick();
+    },
+  };
+}
+
+
+function createR4DenseWorkshopScenario(): SpcNextResearchScenario {
+  const slice = createR4DenseWorkshopSlice();
+  let relocated = false;
+
+  return {
+    kind: "r4-dense-workshop",
+    evidenceScenarioId: "browser-r4-dense-workshop",
+    residentId: "resident.janek",
+    matterId: R4_PRIMARY_MATTER_ID,
+    world: slice.world,
+    kernel: slice.kernel,
+    materialKnowledge: slice.knowledge,
+    authority: slice.authority,
+    residentLifeView(residentId: string): ResidentLifeCognitionView | null {
+      return residentId === "resident.janek" ? slice.currentLifeView() : null;
+    },
+    evidenceAction(actionId: string): unknown {
+      if (actionId === "reveal-primary-nearby") return slice.revealPrimaryNearby();
+      throw new Error(`unknown R4 dense-workshop evidence action: ${actionId}`);
+    },
+    advanceOneWorldTick(): void {
+      // Keep the adversarial relocation on an explicit first browser-controlled
+      // boundary. Later ticks are entirely the provider-free R4 local organism.
+      if (!relocated) {
+        slice.relocatePrimaryHidden();
+        relocated = true;
+        return;
+      }
+      slice.advanceOneWorldTick();
+    },
+  };
+}
+
+function createR4MiraOrdinaryLifeScenario(): SpcNextResearchScenario {
+  const slice = createR4MiraOrdinaryLifeSlice();
+
+  function evidenceSnapshot() {
+    const world = slice.world.publicSnapshot();
+    const mira = world.actors.find((actor) => actor.id === "resident.mira") ?? null;
+    const ida = world.actors.find((actor) => actor.id === "resident.ida") ?? null;
+    return {
+      tick: slice.world.tick,
+      miraPosition: mira?.position ?? null,
+      idaPosition: ida?.position ?? null,
+      activeMatterIds: slice.activeMatterIds(),
+      pendingCognitionReasons: slice.pendingCognitionReasons(),
+      contact: slice.contact.snapshot(),
+      miraMotionOwner: slice.authority.motionOwner(),
+      miraActionFacts: slice.authority.recentActionFacts(),
+      idaActionFacts: slice.idaAuthority.recentActionFacts(),
+      idaMatters: slice.idaKernel.snapshotCommittedState().matters,
+      materialKnowledge: slice.materialKnowledge.snapshot(),
+      materialObjects: slice.world.materialObjects(),
+    };
+  }
+
+  return {
+    kind: "r4-mira-ordinary-life",
+    evidenceScenarioId: "browser-r4-mira-ordinary-life",
+    residentId: "resident.mira",
+    // R4-D deliberately begins without a Mira matter. Canonical evidence accepts a
+    // non-empty lookup id and projects matter:null, which is exactly the boundary
+    // under test rather than a synthetic continuity object.
+    matterId: "matter.mira.r4d.none",
+    world: slice.world,
+    kernel: slice.kernel,
+    materialKnowledge: slice.materialKnowledge,
+    authority: slice.authority,
+    evidenceAction(actionId: string): unknown {
+      if (actionId === "snapshot") return evidenceSnapshot();
+      if (actionId === "ida-relocate-background") return slice.idaRelocateBackgroundObject();
+      if (actionId === "ida-ambient-speech") return slice.idaSpeak("Ładny spokój.", false);
+      if (actionId === "ida-address-mira") return slice.beginIdaAddressedContact("Mira?");
+      throw new Error(`unknown R4-D Mira ordinary-life evidence action: ${actionId}`);
+    },
+    advanceOneWorldTick(): void {
+      if (slice.contact.active()) {
+        slice.advanceContactOneWorldTick();
+        return;
+      }
+      slice.advanceQuietOneWorldTick();
     },
   };
 }

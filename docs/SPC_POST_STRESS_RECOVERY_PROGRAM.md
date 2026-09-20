@@ -378,9 +378,17 @@ Key retained conclusions:
 
 Broad preferences, aversions, relationships, habits, ownership psychology and other personhood dimensions remain future pressures and must be earned by concrete failures rather than added speculatively.
 
-### Phase R4 — dense authored affordance surface
+### Phase R4 — dense authored affordance surface — **PASS**
 
-Goal:
+Qualified 2026-09-20 at source SHA `0f7945d74db6b4ed6044f5d636b3c4696dce5201`.
+
+Evidence authority:
+`docs/SPC_R4D_MIRA_ORDINARY_LIFE_PASS.md`.
+
+Bounded result:
+causal affordance density can produce both grounded local action and grounded non-action without automatically converting nearby World possibility into chores or provider pressure.
+
+Goal achieved within the bounded R4 claim:
 give residents enough grounded reality that travel/communicate are no longer the default semantic outlet.
 
 Recover proven donors only when demanded:
@@ -479,51 +487,42 @@ Primary question:
 
 **R3 — FIRST CAUSAL-PERSONHOOD MILESTONE: PASS.**
 
-Current recovery target:
+**R4 — DENSE AUTHORED AFFORDANCE SURFACE: QUALIFIED PASS**
+at source SHA `0f7945d74db6b4ed6044f5d636b3c4696dce5201`.
 
-**R4 — DENSE AUTHORED AFFORDANCE SURFACE — DESIGN / PRESSURE DISCOVERY BEFORE IMPLEMENTATION**
+R4 qualification now includes:
 
-R1 proved that local embodied life can continue without provider cognition manufacturing continuity.
+- R4-A baseline affordance characterization;
+- R4-B Janek blocked-path / alternate provider-free local life;
+- R4-C changed-World / legal private material reacquisition / local reactivation;
+- R4-D Mira ordinary-life negative capability in deterministic and real-Chromium evidence.
 
-R2 proved that noisy perception need not become semantic pressure and established explicit unresolved-pressure lifecycle semantics.
+The R4-D terminal boundary is deliberately unresolved semantically:
 
-R3 proved that resident-owned private causal history can change significance and provide inspectable support for a legitimate competing-matter choice without making provider roleplay the only cause.
+- local bodily acknowledgement has completed;
+- body authority is idle;
+- one exact addressed-speech `CognitionReason` remains;
+- no synthetic matter was created merely to make that reason fit an API;
+- no provider has been invoked.
 
-The next bottleneck is different:
+**Current recovery target: R5 — LLM AS SEMANTIC ESCALATION.**
 
-> **Do residents have enough dense, authored, materially meaningful reality for their local brain and causal self to have useful things to perceive, know, attempt, fail at, manipulate, recover from and continue — without travel/communication becoming the default outlet?**
+The first R5 falsifier must answer:
 
-R4 must not be solved by:
-- enlarging the map;
-- adding decorative content;
-- creating many object types without resident use;
-- dumping generic interactions into the World;
-- using provider-generated activity to compensate for sparse affordances;
-- importing First Hearth or another donor wholesale;
-- selecting a general gameplay framework before a resident-life pressure demands it.
+> **Can one genuine unresolved semantic reason escalate exactly once to higher cognition, remain causally inert during provider latency, be admitted only at an explicit resident/World boundary, produce only locally grounded durable meaning/action, settle or explicitly retain the originating pressure, and return to quiet without manufacturing another provider request?**
 
-Before R4 implementation, establish one or more compact pressure specimens that can discriminate among candidate affordances.
+R5 must reuse existing reason/batch cognition and causal-life authority before inventing new provider infrastructure.
 
-Strong donor candidates include:
-- checked absence and search;
-- deliberate looking / attention / facing;
-- pickup / carry / place;
-- material work with factual state change;
-- obstruction and local recovery;
-- actor contact and reacquisition;
-- affordances whose use depends on resident knowledge rather than omniscient World lookup.
+In particular:
 
-Janek is a strong material-work falsifier; Mira remains a necessary ordinary-life anti-service-NPC falsifier.
+- do not create a fake matter merely because older semantic-provider plumbing is matter-scoped;
+- prefer the existing resident cognition/life-intent path for a reason-native escalation;
+- provider output is semantic proposal, never World authority;
+- network completion is inert until explicit admission;
+- local grounding retains veto;
+- passage of time alone cannot create another semantic reason;
+- one completed causal version must not recursively request cognition again.
 
-The R4 promotion question is not:
-
-> How many interactions exist?
-
-It is:
-
-> **Did the added affordance density create better resident-local life, choices, competence and causal consequences without reopening provider churn or turning the World into a feature catalogue?**
-
-Do not start a large content campaign until that bounded R4 experiment is designed.
 ---
 
 ## 8. Evidence hierarchy after the stress failure
@@ -626,22 +625,30 @@ Current recovery order:
 1. **`docs/SPC_POST_STRESS_RECOVERY_PROGRAM.md`**
    - canonical execution authority after the 18 September failure;
 2. latest explicit Owner correction;
-3. **`docs/SPC_R3_CAUSAL_PERSONHOOD_PASS.md`**
+3. **`docs/SPC_R4_DENSE_AUTHORED_AFFORDANCE_EXPERIMENT.md`**
+   - preserved R4 experiment contract and anti-cheat boundary;
+4. **`docs/SPC_R4D_MIRA_ORDINARY_LIFE_PASS.md`**
+   - qualified second-resident ordinary-life / negative-capability evidence;
+5. **`docs/SPC_R4C_MATERIAL_REACQUISITION_PASS.md`**
+   - qualified changed-World / private reacquisition / local reactivation evidence;
+6. **`docs/SPC_R4B_DENSE_WORKSHOP_PASS.md`**
+   - qualified blocked-path / alternate-local-life evidence;
+7. **`docs/SPC_R3_CAUSAL_PERSONHOOD_PASS.md`**
    - qualified R3 evidence boundary and non-claims;
-4. **`docs/SPC_R2_SEMANTIC_METABOLISM_PASS.md`**
+8. **`docs/SPC_R2_SEMANTIC_METABOLISM_PASS.md`**
    - qualified R2 semantic-metabolism evidence boundary;
-5. **`docs/SPC_ZERO_PROVIDER_LOCAL_LIFE_R1_PASS.md`**
+9. **`docs/SPC_ZERO_PROVIDER_LOCAL_LIFE_R1_PASS.md`**
    - qualified R1 zero-provider local-life evidence boundary;
-6. **`docs/SPC_NEXT_OWNER_INTENT_AND_GAP_AUDIT.md`**
+10. **`docs/SPC_NEXT_OWNER_INTENT_AND_GAP_AUDIT.md`**
    - durable Owner/product guardrails;
-7. **`docs/SPC_FIVE_RESIDENT_PRESSURE_CAMPAIGN.md`**
-   - resident pressure donor map;
-8. **`docs/SPC_REOBSERVATION_FINDINGS_2026-09-16.md`**
-   - contract/oracle lessons;
-9. **`docs/SPC_LIVING_WORLD_EXECUTION_PROGRAM.md`**
-   - historical pre-stress execution snapshot only;
-10. older recovery/experiment documents
-   - historical evidence/donors, not current execution authority.
+10. **`docs/SPC_FIVE_RESIDENT_PRESSURE_CAMPAIGN.md`**
+    - resident pressure donor map;
+11. **`docs/SPC_REOBSERVATION_FINDINGS_2026-09-16.md`**
+    - contract/oracle lessons;
+12. **`docs/SPC_LIVING_WORLD_EXECUTION_PROGRAM.md`**
+    - historical pre-stress execution snapshot only;
+13. older recovery/experiment documents
+    - historical evidence/donors, not current execution authority.
 
 When prose conflicts with live evidence, live evidence wins and prose must be corrected.
 
@@ -654,29 +661,40 @@ Completed:
 2. correct post-stress repository authority;
 3. **R1 — zero-provider local life — PASS**;
 4. **R2 — resident relevance / semantic metabolism — PASS**;
-5. **R3 — bounded causal-personhood milestone — PASS** at source SHA `14028a8075ca725260c658e35a1cb4d87fff9e08`.
+5. **R3 — bounded causal-personhood milestone — PASS**;
+6. **R4-A — sparse-baseline affordance characterization — COMPLETE**;
+7. **R4-B — dense-workshop alternate local life — QUALIFIED PASS**
+   at source SHA `5548231763718f868186dd5c07877c65969f7f88`;
+8. **R4-C — changed World / legal material reacquisition — QUALIFIED PASS**
+   at source SHA `423c9ba1eaafdc9064136ed0a1a3c71b7b19b2ca`.
 
 Current:
-6. **R4 — dense authored affordance surface.**
+
+9. **R4-D — second-resident / Mira falsifier.**
 
 Immediate method:
-- do not begin with a content list;
-- characterize where sparse reality still forces travel/communicate to become generic outlets;
-- identify the smallest compact authored micro-world that creates several grounded resident-local options and constraints;
-- pressure material work, search/checked absence, object manipulation, attention/facing and local recovery as candidate donors;
-- use Janek for material competence and Mira for ordinary-life/personhood pressure;
-- reuse existing World truth, private knowledge, continuity, R1 local-life and R2/R3 relevance/lifecycle instead of building parallel systems;
-- compare simple authored affordances against deeper generic mechanisms and require evidence before generalizing;
-- preserve legitimate stillness and zero-provider continuity;
-- keep LLM semantic escalation out of the critical path until R4 local reality is worth escalating.
+
+- begin from Mira's ordinary-life failure modes, not from a list of new objects;
+- reuse the same World/private-knowledge/continuity/relevance/arbitration seams where they actually fit;
+- construct a compact low-intensity specimen with multiple authored facts, only some of which are resident-relevant;
+- preserve the possibility that the correct state is quiet;
+- require resident-owned causal reasons before material/social facts become matters;
+- keep the player non-central to the specimen;
+- do not manufacture novelty, random chores or periodic movement;
+- do not use provider cognition in the critical path;
+- actively search for Janek-specific assumptions hiding inside supposedly shared R4 mechanisms;
+- if Mira requires a different primitive, prove the failure before adding it;
+- qualify deterministic + browser evidence and retain R1/R2/R3/R4-B/C vetoes.
+
+R4 promotion remains blocked until the second-resident falsifier is defended.
 
 Later:
-7. R5 provider semantic escalation;
-8. R6 complementary resident falsifiers;
-9. R7 five-resident homeostasis;
-10. R8 bounded real-Luna campaigns;
-11. R9 endurance stress tests.
+10. R5 provider semantic escalation;
+11. R6 complementary resident falsifiers;
+12. R7 five-resident homeostasis;
+13. R8 bounded real-Luna campaigns;
+14. R9 endurance stress tests.
 
 The next milestone is:
 
-> **A compact authored world gives residents enough grounded material/social affordance density that ordinary local life becomes richer and more causally expressive without provider activity manufacturing purpose.**
+> **Mira can inhabit the same denser causal substrate without becoming a chore bot or player-service NPC, while nearby authored possibilities remain selective, resident-relative and compatible with legitimate quiet.**

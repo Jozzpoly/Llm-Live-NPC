@@ -105,6 +105,9 @@ export class SpcNextResearchScene extends Phaser.Scene {
     this.scenario = createSpcNextResearchScenario(scenarioKind);
     this.world = this.scenario.world;
     this.snapshot = this.world.publicSnapshot();
+    if (!this.snapshot.residents.some((resident) => resident.id === this.selectedResidentId)) {
+      this.selectedResidentId = this.snapshot.residents[0]?.id ?? null;
+    }
   }
 
   create(): void {
@@ -257,6 +260,27 @@ export class SpcNextResearchScene extends Phaser.Scene {
     return this.manualWorldControl;
   }
 
+  runEvidenceScenarioAction(actionId: string): unknown {
+    if (!this.manualWorldControl) {
+      throw new Error("scenario evidence actions are available only in evidence control mode");
+    }
+    if (!this.created) throw new Error("SPC research scene is not ready for evidence actions");
+    if (!actionId.trim()) throw new Error("scenario evidence action id must be non-empty");
+    if (!this.scenario.evidenceAction) {
+      throw new Error(`scenario ${this.scenario.kind} exposes no evidence action`);
+    }
+
+    const result = this.scenario.evidenceAction(actionId);
+    this.snapshot = this.world.publicSnapshot();
+    this.captureNewSpeechOccurrences();
+    this.syncActorViews();
+    this.syncMaterialViews();
+    this.syncSpeechViews();
+    this.drawResearchOverlay();
+    this.pushFrame(true);
+    return result;
+  }
+
   stepEvidenceWorld(steps = 1): SpcNextResearchFrame {
     if (!this.manualWorldControl) {
       throw new Error("manual World stepping is available only in evidence control mode");
@@ -283,6 +307,10 @@ export class SpcNextResearchScene extends Phaser.Scene {
   }
 
   private applyPlayerControl(): void {
+    // Some causal research specimens intentionally remove the player from the
+    // organism under test. Rendering/manual evidence must not reintroduce a hidden
+    // player requirement merely because the shared research shell has controls.
+    if (!this.snapshot.actors.some((actor) => actor.id === PLAYER_ID)) return;
     if (textEntryActive()) {
       this.world.setActorMotionIntent(PLAYER_ID, { x: 0, y: 0 });
       return;

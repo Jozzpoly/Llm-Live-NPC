@@ -35,9 +35,23 @@ export interface ResidentCommunicateActorMatterIntent {
   text: string;
 }
 
+/**
+ * Durable resident meaning for an already-grounded material commitment.
+ *
+ * This is intentionally not an action language or search plan. It records only that
+ * the continuing matter is about acquiring one recognized material identity. Concrete
+ * pickup/search/navigation runs remain separately grounded execution.
+ */
+export interface ResidentAcquireMaterialObjectMatterIntent {
+  kind: "acquire_material_object";
+  goal: string;
+  objectId: string;
+}
+
 export type ResidentMatterIntent =
   | ResidentTravelRegionMatterIntent
-  | ResidentCommunicateActorMatterIntent;
+  | ResidentCommunicateActorMatterIntent
+  | ResidentAcquireMaterialObjectMatterIntent;
 
 export interface ResidentMatter {
   id: string;
@@ -765,6 +779,9 @@ function validateMatterIntent(intent: ResidentMatterIntent): void {
     case "communicate_actor":
       assertNonEmpty(intent.targetActorId, "matter intent target actor id");
       assertNonEmpty(intent.text, "matter intent message text");
+      return;
+    case "acquire_material_object":
+      assertNonEmpty(intent.objectId, "matter intent material object id");
       return;
   }
 }
