@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import type { ResidentLifeCognitionView } from "./resident-life-cognition-view";
 import { ResidentLifeChoiceOwner } from "./resident-life-choice-owner";
+import { deriveResidentLifeChoiceCandidateSupports } from "./resident-life-choice-causal-support";
 import { ResidentRuntime } from "./resident-runtime";
 import { DEFAULT_RESIDENT_PROFILE } from "./contracts";
 
@@ -34,6 +35,37 @@ function setup() {
 }
 
 describe("R3 resident-life choice causal support", () => {
+  it("keeps an accepted social responsibility open while its matter is suspended, then removes that relation once terminal", () => {
+    const life = lifeView();
+    const obligation = life.matters.find((matter) => matter.id === B);
+    if (!obligation) throw new Error("R3 obligation fixture missing");
+
+    const suspended = structuredClone(life) as ResidentLifeCognitionView;
+    const suspendedObligation = suspended.matters.find((matter) => matter.id === B)! as {
+      status: "active" | "suspended" | "resolved" | "cancelled";
+      suspendedByMatterId: string | null;
+    };
+    suspendedObligation.status = "suspended";
+    suspendedObligation.suspendedByMatterId = "matter.mira.r3.interruption";
+
+    expect(deriveSupport(suspended, B)).toContainEqual(expect.objectContaining({
+      evidenceId: B_EVIDENCE,
+      relation: "open_social_responsibility",
+    }));
+
+    const resolved = structuredClone(life) as ResidentLifeCognitionView;
+    const resolvedObligation = resolved.matters.find((matter) => matter.id === B)! as {
+      status: "active" | "suspended" | "resolved" | "cancelled";
+      suspendedByMatterId: string | null;
+    };
+    resolvedObligation.status = "resolved";
+    resolvedObligation.suspendedByMatterId = null;
+
+    expect(deriveSupport(resolved, B).some(
+      (fact) => fact.relation === "open_social_responsibility",
+    )).toBe(false);
+  });
+
   it("projects an existing accepted social responsibility as causal support without creating a new personality store", () => {
     const { attempt } = setup();
 
@@ -228,4 +260,8 @@ function lifeView(): ResidentLifeCognitionView {
       deferredRunIds: ["run.mira.r3.obligation", "run.mira.r3.ordinary"],
     },
   };
+}
+
+function deriveSupport(life: ResidentLifeCognitionView, matterId: string) {
+  return deriveResidentLifeChoiceCandidateSupports(life, [matterId])[0]?.facts ?? [];
 }
