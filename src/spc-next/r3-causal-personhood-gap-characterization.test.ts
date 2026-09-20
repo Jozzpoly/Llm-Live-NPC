@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
-import type { CognitionBatch, ResidentProfile } from "./contracts";
+import type { CognitionBatch, ResidentPercept, ResidentProfile } from "./contracts";
 import { FIVE_RESIDENT_LIFE_SELF } from "./five-resident-life-self";
 import type { ResidentLifeCognitionView } from "./resident-life-cognition-view";
 import { ResidentLifeChoiceOwner } from "./resident-life-choice-owner";
+import { ResidentLifeIntentOwner } from "./resident-life-intent-owner";
 import { ResidentRuntime } from "./resident-runtime";
 
 const PROFILE: ResidentProfile = {
@@ -75,6 +76,82 @@ describe("R3 pre-personhood choice characterization", () => {
     // candidate authority/freshness, not a resident-owned causal reason for priority.
     expect(chooseWorkshop.status).toBe("applied");
     expect(chooseFields.status).toBe("applied");
+  });
+
+  it("accepts a provider-authored obligation-like concern whose only provenance is semantically unrelated private evidence", () => {
+    const resident = new ResidentRuntime(PROFILE);
+    resident.enterRegion(
+      { id: "hearth", label: "Hearth", minX: 0, minY: 0, maxX: 1_400, maxY: 1_500 },
+      0,
+      true,
+    );
+
+    const greeting: ResidentPercept = {
+      id: "percept:r3:neutral-greeting",
+      occurrenceId: "occurrence:r3:neutral-greeting",
+      tick: 1,
+      phenomenon: "speech",
+      modality: "hearing",
+      actorId: "player.jozz",
+      subjectId: null,
+      spatial: {
+        kind: "directional",
+        direction: { x: 1, y: 0 },
+        distanceBand: "near",
+      },
+      summary: "Jozz says a neutral greeting.",
+      text: "Mira, dzień dobry.",
+      addressed: true,
+    };
+    resident.ingestPercepts([greeting]);
+
+    const batch = resident.takeCognitionBatch(1);
+    expect(batch).not.toBeNull();
+    if (!batch) return;
+
+    const owner = new ResidentLifeIntentOwner(resident);
+    const attempt = owner.prepare(batch, emptyLife(), 1);
+    expect(attempt).not.toBeNull();
+    if (!attempt) return;
+
+    const settlement = owner.settleCommitmentIntent(
+      attempt,
+      {
+        version: 1,
+        commitmentDecision: {
+          kind: "decline",
+          reason: "the greeting creates no new embodied commitment",
+        },
+        beliefs: [],
+        concerns: [{
+          id: "concern:mira:invented-obligation",
+          summary: "I promised Janek that I would repair his tools before dusk.",
+          priority: 0.95,
+          status: "open",
+          evidenceIds: [greeting.id],
+        }],
+        reviewAfterSeconds: 30,
+      },
+      emptyLife(),
+      2,
+      () => ({ status: "accepted", intent: { kind: "no_commitment" as const } }),
+    );
+
+    expect(settlement.status).toBe("applied");
+    expect(resident.cognitionContext({
+      residentId: resident.profile.id,
+      requestedAtTick: 2,
+      reasons: [],
+    }).concerns).toContainEqual(expect.objectContaining({
+      id: "concern:mira:invented-obligation",
+      summary: "I promised Janek that I would repair his tools before dusk.",
+      evidenceIds: [greeting.id],
+    }));
+
+    // Provenance is real, but the claimed promise was never present in the evidence.
+    // Therefore generic provider-authored concern text cannot itself be the R3 causal
+    // personhood authority for promises/obligations.
+    expect(greeting.text).toBe("Mira, dzień dobry.");
   });
 
   it("shows that Mira has authored role/drives prose but current life-choice cognition receives no structured self context", () => {
@@ -172,5 +249,14 @@ function choice(matterId: string, reason: string) {
       reason,
       reviewAfterSeconds: 8,
     },
+  };
+}
+
+
+function emptyLife(): ResidentLifeCognitionView {
+  return {
+    version: 1,
+    matters: [],
+    body: { focusedRunId: null, deferredRunIds: [] },
   };
 }
