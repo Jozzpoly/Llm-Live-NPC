@@ -107,12 +107,25 @@ describe("ResidentLifeChoiceReviewBridge with explicit R2 semantic pressure", ()
 
     expect(bridge.observe(ambiguity, 10).status).toBe("scheduled");
     expect(bridge.observe(ambiguity, 11).status).toBe("already_scheduled");
-    expect(bridge.observe({ status: "idle" }, 12).status).toBe("not_required");
-    expect(bridge.observe(ambiguity, 13).status).toBe("scheduled");
 
-    // Same deterministic reason identity is updated rather than duplicated while
-    // the first pressure is still pending.
+    const originalId = resident.pendingCognitionReasons()[0]?.id;
+    expect(bridge.observe({ status: "idle" }, 12).status).toBe("not_required");
+    expect(resident.pendingCognitionReasons()).toEqual([]);
+    expect(resident.semanticPressureLifecycleSnapshot()).toContainEqual(expect.objectContaining({
+      reason: expect.objectContaining({ id: originalId, tick: 10 }),
+      status: "settled",
+    }));
+    expect(resident.takeCognitionBatch(40)).toBeNull();
+
+    expect(bridge.observe(ambiguity, 41).status).toBe("scheduled");
+
+    // The same resident-scoped ambiguity identity can acquire a newer causal version
+    // after the old version was explicitly settled by local truth.
     expect(resident.pendingCognitionReasons()).toHaveLength(1);
-    expect(resident.pendingCognitionReasons()[0]?.tick).toBe(13);
+    expect(resident.pendingCognitionReasons()[0]).toMatchObject({
+      id: originalId,
+      tick: 41,
+      evidenceIds: ["run.mira.b", "run.mira.c"],
+    });
   });
 });
