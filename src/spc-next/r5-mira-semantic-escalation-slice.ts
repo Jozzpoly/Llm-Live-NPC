@@ -10,6 +10,11 @@ import {
   ResidentCausalCognitionLane,
   type ResidentCausalCognitionRequest,
 } from "./resident-causal-cognition-lane";
+import {
+  CAUSAL_PROVIDER_ERROR_RETRY_TICKS,
+  CAUSAL_REJECT_RETRY_TICKS,
+  CAUSAL_STALE_RETRY_TICKS,
+} from "./resident-causal-cognition-retry-policy";
 import { ResidentCausalExecutionCoordinator, type ResidentCausalExecutionStep } from "./resident-causal-execution-coordinator";
 import { ResidentCausalLifeSubstrate } from "./resident-causal-life-substrate";
 import { ResidentContinuityKernel } from "./resident-continuity-kernel";
@@ -44,6 +49,7 @@ export interface R5SemanticEscalationDiagnostics {
   providerRequestCount: number;
   providerInFlightRequestId: string | null;
   providerInboxCount: number;
+  providerRetryNotBeforeTick: number;
   pendingReasonIds: readonly string[];
   matterIds: readonly string[];
   focusedRunId: string | null;
@@ -120,6 +126,7 @@ export function createR5MiraSemanticEscalationSlice(fetcher: CognitionFetch) {
   const recentProviderEvents: R5SemanticProviderEvent[] = [];
   let providerInFlight: ResidentCausalCognitionRequest | null = null;
   let providerRequestCount = 0;
+  let providerRetryNotBeforeTick = 0;
   let providerEventSequence = 0;
 
   function recordProviderEvent(
@@ -141,6 +148,7 @@ export function createR5MiraSemanticEscalationSlice(fetcher: CognitionFetch) {
 
   function startProviderIfReady(): void {
     if (providerInFlight || providerInbox.length > 0) return;
+    if (world.tick < providerRetryNotBeforeTick) return;
     const request = cognition.takeReadyRequest();
     if (!request) return;
 
@@ -173,12 +181,20 @@ export function createR5MiraSemanticEscalationSlice(fetcher: CognitionFetch) {
       const admission = transport.admit(arrival, cognition);
       admissions.push(admission);
       if (admission.status === "provider_error") {
+        providerRetryNotBeforeTick = world.tick + CAUSAL_PROVIDER_ERROR_RETRY_TICKS;
         recordProviderEvent(
           "provider_error",
           arrival.requestId,
           admission.code + (admission.detail ? ": " + admission.detail : ""),
         );
       } else {
+        if (admission.status === "applied") {
+          providerRetryNotBeforeTick = 0;
+        } else if (admission.status === "stale") {
+          providerRetryNotBeforeTick = world.tick + CAUSAL_STALE_RETRY_TICKS;
+        } else {
+          providerRetryNotBeforeTick = world.tick + CAUSAL_REJECT_RETRY_TICKS;
+        }
         recordProviderEvent(
           "admitted",
           arrival.requestId,
@@ -265,6 +281,7 @@ export function createR5MiraSemanticEscalationSlice(fetcher: CognitionFetch) {
       providerRequestCount,
       providerInFlightRequestId: providerInFlight?.id ?? null,
       providerInboxCount: providerInbox.length,
+      providerRetryNotBeforeTick,
       pendingReasonIds: mira.pendingCognitionReasons()
         .map((reason) => reason.id)
         .sort((left, right) => left.localeCompare(right)),
