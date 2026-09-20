@@ -69,7 +69,8 @@ function supportFacts(matter: ResidentLifeMatterView): ResidentLifeChoiceSupport
       facts,
       seenEvidenceIds,
       matter.originEvidence,
-      matter.status === "active" && matter.originEvidence.kind === "accepted_social_commitment"
+      (matter.status === "active" || matter.status === "suspended")
+        && matter.originEvidence.kind === "accepted_social_commitment"
         ? "open_social_responsibility"
         : "matter_origin",
     );
