@@ -19,6 +19,10 @@ import {
   createFiveResidentIdaMessageDeliverySlice,
 } from "../spc-next/five-resident-ida-message-delivery-slice";
 import { createZeroProviderLocalLifeSlice } from "../spc-next/zero-provider-local-life-slice";
+import {
+  createR4DenseWorkshopSlice,
+  R4_PRIMARY_MATTER_ID,
+} from "../spc-next/r4-dense-workshop-slice";
 
 export type SpcNextResearchScenarioKind =
   | "baseline-delivery"
@@ -29,6 +33,7 @@ export type SpcNextResearchScenarioKind =
   | "missing-crate-live-provider-interruption"
   | "ida-message-delivery"
   | "zero-provider-local-life"
+  | "r4-dense-workshop"
   | "unified-living";
 
 export interface SpcNextResearchScenario {
@@ -57,6 +62,7 @@ export function createSpcNextResearchScenario(kind: SpcNextResearchScenarioKind)
   if (kind === "missing-crate-live-provider-interruption") return createMissingCrateLiveProviderInterruptionScenario();
   if (kind === "ida-message-delivery") return createIdaMessageDeliveryScenario();
   if (kind === "zero-provider-local-life") return createZeroProviderLocalLifeScenario();
+  if (kind === "r4-dense-workshop") return createR4DenseWorkshopScenario();
   if (kind === "unified-living") return createUnifiedLivingScenario();
   return createBaselineDeliveryScenario();
 }
@@ -71,6 +77,7 @@ export function researchScenarioKindFromSearch(search: string): SpcNextResearchS
   if (requested === "missing-crate-live-provider-interruption") return "missing-crate-live-provider-interruption";
   if (requested === "ida-message-delivery") return "ida-message-delivery";
   if (requested === "zero-provider-local-life") return "zero-provider-local-life";
+  if (requested === "r4-dense-workshop") return "r4-dense-workshop";
   if (requested === "unified-living") return "unified-living";
   throw new Error(`unknown SPC Next research scenario: ${requested}`);
 }
@@ -233,6 +240,36 @@ function createZeroProviderLocalLifeScenario(): SpcNextResearchScenario {
     advanceOneWorldTick(): void {
       // This adapter advances the exact provider-free R1 organism. It does not
       // inject life decisions, semantic settlement or provider output.
+      slice.advanceOneWorldTick();
+    },
+  };
+}
+
+
+function createR4DenseWorkshopScenario(): SpcNextResearchScenario {
+  const slice = createR4DenseWorkshopSlice();
+  let relocated = false;
+
+  return {
+    kind: "r4-dense-workshop",
+    evidenceScenarioId: "browser-r4-dense-workshop",
+    residentId: "resident.janek",
+    matterId: R4_PRIMARY_MATTER_ID,
+    world: slice.world,
+    kernel: slice.kernel,
+    materialKnowledge: slice.knowledge,
+    authority: slice.authority,
+    residentLifeView(residentId: string): ResidentLifeCognitionView | null {
+      return residentId === "resident.janek" ? slice.currentLifeView() : null;
+    },
+    advanceOneWorldTick(): void {
+      // Keep the adversarial relocation on an explicit first browser-controlled
+      // boundary. Later ticks are entirely the provider-free R4 local organism.
+      if (!relocated) {
+        slice.relocatePrimaryHidden();
+        relocated = true;
+        return;
+      }
       slice.advanceOneWorldTick();
     },
   };
