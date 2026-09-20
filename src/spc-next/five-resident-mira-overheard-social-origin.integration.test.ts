@@ -141,7 +141,7 @@ describe("Mira resident-origin matter from overheard social pressure", () => {
     expect(accepted.focusClaim).toEqual({ status: "acquired", runId: accepted.runId });
     expect(accepted.context.recentPercepts.find((percept) => percept.id === heard!.id)?.addressed).toBe(false);
     expect(slice.kernel.originEvidence(accepted.matter.id)).toMatchObject({
-      kind: "accepted_social_commitment",
+      kind: "accepted_cognition_commitment",
     });
     expect(slice.kernel.originEvidence(accepted.matter.id)?.summary).toContain(occurrence.id);
     expect(slice.privateContext().beliefs).toContainEqual(expect.objectContaining({
