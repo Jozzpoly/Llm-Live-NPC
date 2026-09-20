@@ -34,7 +34,7 @@ describe("five-resident Mira multi-matter life composition", () => {
     const kernel = new ResidentContinuityKernel();
     const focus = new ResidentExecutionFocusAuthority(kernel);
     const arbitrator = new ResidentExecutionArbitrator(kernel, focus);
-    const choiceOwner = new ResidentLifeChoiceOwner(mira);
+    const choiceOwner = new ResidentLifeChoiceOwner(mira, world.options.fixedDeltaSeconds);
     const choiceReviewBridge = new ResidentLifeChoiceReviewBridge(mira);
 
     // Do not install recovered execution authority while Mira's authored opening is
