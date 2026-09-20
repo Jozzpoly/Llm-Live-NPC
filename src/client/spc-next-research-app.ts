@@ -306,6 +306,7 @@ if (evidenceMode) {
       snapshot(): SpcNextResearchFrame;
       canonicalSnapshot(): SpcCanonicalEvidenceSnapshotV1;
       stepWorld(steps?: number): SpcNextResearchFrame;
+      scenarioAction(actionId: string): unknown;
       addressResident(residentId: string, text?: string): WorldOccurrence;
     }>;
   };
@@ -319,6 +320,7 @@ if (evidenceMode) {
       snapshot: () => scene.currentFrame(),
       canonicalSnapshot: () => scene.currentCanonicalEvidenceSnapshot(),
       stepWorld: (steps = 1) => scene.stepEvidenceWorld(steps),
+      scenarioAction: (actionId: string) => scene.runEvidenceScenarioAction(actionId),
       addressResident: (residentId: string, text = "Hej!") => {
         // Evidence that inspects a private resident plane must bind observation to
         // the addressed resident on every replay. Selection is presentation-only;
