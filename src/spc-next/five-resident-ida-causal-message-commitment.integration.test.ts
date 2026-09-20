@@ -419,7 +419,7 @@ describe("Ida cognition-native causal message commitment", () => {
       arbitrator,
       matterIds: [obligation.matter.id, ordinary.matterId],
     });
-    const choiceOwner = new ResidentLifeChoiceOwner(ida);
+    const choiceOwner = new ResidentLifeChoiceOwner(ida, world.options.fixedDeltaSeconds);
     const choiceAttempt = choiceOwner.prepare(choiceBatch, choiceLife);
     expect(choiceAttempt).not.toBeNull();
     if (!choiceAttempt) return;
