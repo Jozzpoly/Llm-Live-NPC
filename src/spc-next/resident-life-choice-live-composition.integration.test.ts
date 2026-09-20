@@ -96,6 +96,7 @@ function proposal(matterId = B.matterId) {
       kind: "focus_matter",
       matterId,
       reason: "give this current commitment the free body next",
+      supportEvidenceIds: [`evidence:${matterId}:1`],
       reviewAfterSeconds: 8,
     },
   };
