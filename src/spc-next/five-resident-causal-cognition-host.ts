@@ -5,12 +5,19 @@ import {
   type ResidentCausalCognitionRequest,
   type ResidentCausalCognitionSettlement,
 } from "./resident-causal-cognition-lane";
+import {
+  CAUSAL_PROVIDER_ERROR_RETRY_TICKS,
+  CAUSAL_REJECT_RETRY_TICKS,
+  CAUSAL_STALE_RETRY_TICKS,
+} from "./resident-causal-cognition-retry-policy";
 import { FiveResidentCausalLifeRuntime } from "./five-resident-causal-life-runtime";
 import type { FiveResidentId } from "./five-resident-region";
 
-export const CAUSAL_STALE_RETRY_TICKS = 15;
-export const CAUSAL_REJECT_RETRY_TICKS = 60;
-export const CAUSAL_PROVIDER_ERROR_RETRY_TICKS = 120;
+export {
+  CAUSAL_PROVIDER_ERROR_RETRY_TICKS,
+  CAUSAL_REJECT_RETRY_TICKS,
+  CAUSAL_STALE_RETRY_TICKS,
+} from "./resident-causal-cognition-retry-policy";
 
 export interface FiveResidentCausalCognitionRequest extends ResidentCausalCognitionRequest {
   readonly residentId: FiveResidentId;
