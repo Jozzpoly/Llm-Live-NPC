@@ -182,7 +182,7 @@ describe("ResidentLifeChoiceOwner", () => {
   });
 
   it("accepts an explicit defer-all decision without silently choosing a matter", () => {
-    const { owner, batch } = setup();
+    const { resident, owner, batch } = setup();
     const life = lifeView();
     const attempt = owner.prepare(batch, life)!;
 
