@@ -64,6 +64,7 @@ export class ResidentSemanticPressureLifecycle {
     detail: string,
   ): void {
     assertTick(transitionTick, "semantic pressure transition tick");
+    const previousState = this.states.get(result.reason.id);
 
     if (result.status === "ignored_stale") {
       this.append({
@@ -89,14 +90,20 @@ export class ResidentSemanticPressureLifecycle {
       return;
     }
 
-    if (result.status === "updated") {
+    const supersededTick = previousState && previousState.reason.tick < result.reason.tick
+      ? previousState.reason.tick
+      : result.status === "updated"
+        ? result.replaced.tick
+        : null;
+
+    if (supersededTick !== null) {
       this.append({
         tick: transitionTick,
         residentId: this.residentId,
         reasonId: result.reason.id,
         reasonTick: result.reason.tick,
         kind: "superseded",
-        detail: `${detail}; replaced causal tick ${result.replaced.tick}`,
+        detail: `${detail}; replaced causal tick ${supersededTick}`,
       });
     } else {
       this.append({
