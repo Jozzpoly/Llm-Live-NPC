@@ -79,7 +79,7 @@ describe("R2 first semantic-pressure metabolism boundary", () => {
     )).toBe(true);
   });
 
-  it("coalesces repeated overheard speech from one privately recognized actor into one social pressure", () => {
+  it("keeps repeated overheard speech from one privately recognized actor as social evidence until relevance is established", () => {
     const runtime = resident("resident.r2-known-social");
 
     // Recognition is earned through sight first. Hearing does not acquire identity by itself.
@@ -97,26 +97,37 @@ describe("R2 first semantic-pressure metabolism boundary", () => {
       addressed: false,
     }], { x: 0, y: 0 });
 
-    expect(runtime.pendingCognitionReasons()).toEqual([]);
-
     for (let index = 1; index <= 8; index += 1) {
       runtime.ingestPercepts([speechPercept(index, false)], { x: 0, y: 0 });
     }
 
-    const pending = runtime.pendingCognitionReasons();
-    expect(pending).toHaveLength(1);
-    expect(pending[0]).toMatchObject({
-      kind: "heard_speech",
-      salience: 0.55,
-      evidenceIds: ["percept:r2:speech:8"],
-    });
-    expect(pending[0]?.id).toContain("ambient-social:actor.ambient-speaker");
-
+    expect(runtime.pendingCognitionReasons()).toEqual([]);
     const socialDecisions = runtime.semanticPressureDecisions().filter(
       (decision) => decision.code === "known_social_speech",
     );
     expect(socialDecisions).toHaveLength(8);
-    expect(socialDecisions.every((decision) => decision.disposition === "unresolved")).toBe(true);
+    expect(socialDecisions.every((decision) =>
+      decision.disposition === "observation_only"
+      && decision.cognitionReason === null
+    )).toBe(true);
+
+    // A separate resident-relative relevance layer may still promote exact private
+    // evidence later. Identity alone is no longer that policy.
+    const latest = socialDecisions.at(-1)!;
+    runtime.promoteSemanticPressure({
+      id: "reason:resident.r2-known-social:explicit-relevance",
+      tick: latest.tick,
+      kind: "heard_speech",
+      salience: 0.7,
+      summary: "Explicit fixture relevance: this overheard statement affects an active resident concern.",
+      evidenceIds: [latest.evidenceId!],
+    });
+    expect(runtime.pendingCognitionReasons()).toEqual([
+      expect.objectContaining({
+        id: "reason:resident.r2-known-social:explicit-relevance",
+        evidenceIds: [latest.evidenceId],
+      }),
+    ]);
   });
 
   it("keeps addressed speech as one explicit unresolved issue while ambient chatter remains observation-only", () => {
