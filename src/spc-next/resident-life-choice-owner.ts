@@ -64,7 +64,14 @@ export class ResidentLifeChoiceOwner {
   private activeAttempt: ResidentLifeChoiceAttempt | null = null;
   private sequence = 0;
 
-  constructor(private readonly resident: ResidentRuntime) {}
+  constructor(
+    private readonly resident: ResidentRuntime,
+    private readonly fixedDeltaSeconds: number,
+  ) {
+    if (!Number.isFinite(fixedDeltaSeconds) || fixedDeltaSeconds <= 0) {
+      throw new Error("resident life choice fixedDeltaSeconds must be positive and finite");
+    }
+  }
 
   prepare(batch: CognitionBatch, life: ResidentLifeCognitionView): ResidentLifeChoiceAttempt | null {
     if (this.activeAttempt) return null;
@@ -150,11 +157,19 @@ export class ResidentLifeChoiceOwner {
       return { status: "stale", reason: "resident_life_changed_during_request" };
     }
 
+    const retainOriginUntilTick = decision.kind === "defer_all"
+      ? settlementTick + Math.max(
+          1,
+          Math.ceil(decision.reviewAfterSeconds / this.fixedDeltaSeconds),
+        )
+      : undefined;
+
     this.resident.reconcileCognitionSettlement({
       batch: attempt.batch,
       originReasonId: attempt.originReasonId,
       decision: decision.kind === "focus_matter" ? "accept" : "defer",
       tick: settlementTick,
+      ...(retainOriginUntilTick === undefined ? {} : { retainOriginUntilTick }),
     });
 
     return { status: "applied", decision };
