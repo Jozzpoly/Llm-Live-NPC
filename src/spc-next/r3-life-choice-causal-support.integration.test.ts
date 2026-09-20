@@ -27,7 +27,7 @@ function setup() {
   if (!batch) throw new Error("R3 causal-support fixture did not produce a choice batch");
 
   const life = lifeView();
-  const owner = new ResidentLifeChoiceOwner(resident);
+  const owner = new ResidentLifeChoiceOwner(resident, 1 / 60);
   const attempt = owner.prepare(batch, life);
   if (!attempt) throw new Error("R3 causal-support fixture did not prepare a choice attempt");
   return { resident, batch, life, owner, attempt };
