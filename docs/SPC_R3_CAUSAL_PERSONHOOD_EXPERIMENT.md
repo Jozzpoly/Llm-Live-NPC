@@ -1,9 +1,34 @@
 # SPC R3 — Causal Personhood Experiment
 
-Status: **BINDING CURRENT R3 EXPERIMENT CONTRACT**
+Status: **QUALIFIED HISTORICAL R3 EXPERIMENT CONTRACT — PASS**
 Date: **2026-09-20**
 Parent authority: `docs/SPC_POST_STRESS_RECOVERY_PROGRAM.md`
 R2 baseline: `docs/SPC_R2_SEMANTIC_METABOLISM_PASS.md`
+R3 qualification: `docs/SPC_R3_CAUSAL_PERSONHOOD_PASS.md`
+Qualified source SHA: `14028a8075ca725260c658e35a1cb4d87fff9e08`
+
+## Qualification result
+
+This contract has completed its bounded experiment cycle.
+
+**PASS** at source SHA `14028a8075ca725260c658e35a1cb4d87fff9e08`.
+
+The authoritative result, defended evidence and non-claims are in:
+
+`docs/SPC_R3_CAUSAL_PERSONHOOD_PASS.md`
+
+Do not continue the old R3 work order mechanically.
+
+The canonical recovery program has advanced to **R4 — dense authored affordance surface**.
+
+The R3 contract remains valuable as the falsification history explaining why:
+- role/drives prose is not causal personhood;
+- provider-authored concern text is not self-state authority;
+- private continuity/history may causally alter relevance;
+- competing-matter choice requires pre-existing support;
+- responsibility and ambiguity require explicit lifecycle semantics.
+
+---
 
 ## 1. R3 question
 
@@ -251,17 +276,21 @@ A future R3 PASS must at minimum demonstrate:
 - no resident-name special case;
 - R1/R2 causal/local-life/homeostasis invariants preserved.
 
-## 12. Immediate work order
+## 12. Historical work order
+
+The sequence below describes the R3 campaign that produced the qualified result. It is no longer the current execution queue.
 
 1. executable characterization of arbitrary legal multi-matter preference;
 2. prove the authored `self` prose boundary precisely;
 3. recover whether existing matter/concern/belief state can already carry the needed causal distinction;
-4. only then introduce the smallest missing private-state primitive;
+4. introduce only the smallest missing private-state interpretation;
 5. attack with same-evidence/different-history twins;
-6. connect the earned state to R2 relevance rather than directly to body action;
+6. connect earned state to R2 relevance rather than directly to body action;
 7. reattack multi-matter choice;
 8. decide whether the first primitive deserves generalization.
 
-First milestone:
+Result:
 
-> **A resident priority/significance difference can be traced to a persistent private causal fact that existed before the decision.**
+> **The first milestone passed without introducing a generic personality store: resident-owned continuity/history was sufficient for the first causal-personhood effect.**
+
+Current execution authority is R4 in `docs/SPC_POST_STRESS_RECOVERY_PROGRAM.md`.
