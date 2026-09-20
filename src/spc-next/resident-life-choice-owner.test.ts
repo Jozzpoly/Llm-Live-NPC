@@ -129,6 +129,7 @@ describe("ResidentLifeChoiceOwner", () => {
         kind: "focus_matter",
         matterId: "matter.mira.c",
         reason: "this matter should receive the free body next",
+        supportEvidenceIds: ["evidence:choice-origin:matter.mira.c"],
         reviewAfterSeconds: 8,
       },
     });
