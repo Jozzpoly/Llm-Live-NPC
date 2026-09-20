@@ -151,6 +151,24 @@ describe("R2 noisy-world semantic homeostasis", () => {
     expect(slice.resident.cognitionScheduleDiagnostics().lastRequestTick).toBeNull();
   });
 
+  it("replays the same noisy local-life campaign to the same causal/pressure end state", () => {
+    const first = deterministicNoisyReplay();
+    const second = deterministicNoisyReplay();
+
+    expect(second).toEqual(first);
+    expect(first.phase).toBe("settled");
+    expect(first.matterStatus).toBe("resolved");
+    expect(first.pendingReasons).toEqual([
+      expect.objectContaining({
+        kind: "heard_speech",
+        salience: 1,
+      }),
+    ]);
+    expect(first.lifecycle.some((entry) => entry.status === "pending")).toBe(true);
+    expect(first.pressureDecisionCounts.observationOnly).toBeGreaterThan(0);
+    expect(first.pressureDecisionCounts.unresolved).toBe(1);
+  });
+
   it("promotes Janek checked material absence as one real discrepancy without event amplification", () => {
     const slice = createFiveResidentJanekMissingCrateSlice();
 
@@ -191,3 +209,73 @@ describe("R2 noisy-world semantic homeostasis", () => {
     expect(slice.resident.cognitionScheduleDiagnostics().lastRequestTick).toBeNull();
   });
 });
+
+
+function deterministicNoisyReplay() {
+  const slice = createZeroProviderLocalLifeSlice();
+
+  for (let index = 0; index < 6; index += 1) {
+    const id = `player.replay-ambient-${index}`;
+    slice.world.addPlayer(id, {
+      x: 800 + (index % 3) * 20,
+      y: 570 + Math.floor(index / 3) * 20,
+    });
+    slice.world.speak(id, `replay ambient speech ${index}`, 420, []);
+    slice.world.emitInteraction(
+      id,
+      `object.replay-${index}`,
+      `replay ambient interaction ${index}`,
+      420,
+    );
+  }
+  slice.advanceOneWorldTick();
+
+  for (let index = 0; index < 8; index += 1) {
+    slice.playerSpeak(`replay background player line ${index}`, false);
+    slice.advanceOneWorldTick();
+  }
+
+  slice.playerSpeak("Mira, replay contact.", true);
+  const started = slice.advanceOneWorldTick();
+  if (started.status !== "interruption_started") {
+    throw new Error(`deterministic replay failed to start contact: ${started.status}`);
+  }
+
+  let guard = 0;
+  while (slice.phase() !== "settled" && guard < MAX_LOCAL_LIFE_STEPS) {
+    const step = slice.advanceOneWorldTick();
+    if (step.status === "blocked" || step.status === "authority_lost") {
+      throw new Error(`deterministic replay local life failed: ${step.status}`);
+    }
+    guard += 1;
+  }
+  if (slice.phase() !== "settled") throw new Error("deterministic replay did not settle");
+
+  for (let tick = 0; tick < 600; tick += 1) slice.advanceOneWorldTick();
+
+  const decisions = slice.resident.semanticPressureDecisions();
+  const matter = slice.kernel.matter(slice.mainMatterId);
+  return {
+    tick: slice.world.tick,
+    phase: slice.phase(),
+    attention: slice.attention(),
+    matterStatus: matter?.status ?? null,
+    matterActiveRunId: matter?.activeRunId ?? null,
+    objectLocation: slice.world.materialObject(slice.objectId)?.location ?? null,
+    pendingReasons: slice.pendingCognitionReasons(),
+    lifecycle: slice.resident.semanticPressureLifecycleSnapshot(),
+    localDecisions: slice.localDecisions(),
+    pressureDecisionCounts: {
+      observationOnly: decisions.filter((decision) => decision.disposition === "observation_only").length,
+      unresolved: decisions.filter((decision) => decision.disposition === "unresolved").length,
+    },
+    pressureDecisionSignature: decisions.map((decision) => ({
+      tick: decision.tick,
+      evidenceId: decision.evidenceId,
+      occurrenceId: decision.occurrenceId,
+      disposition: decision.disposition,
+      code: decision.code,
+      reasonId: decision.cognitionReason?.id ?? null,
+    })),
+  };
+}
