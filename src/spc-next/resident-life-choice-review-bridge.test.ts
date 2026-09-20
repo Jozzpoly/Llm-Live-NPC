@@ -7,6 +7,7 @@ function createHarness() {
   const promoteSemanticPressure = vi.fn((reason: CognitionReason) => {
     promoted.push(structuredClone(reason));
   });
+  const invalidateSemanticPressure = vi.fn(() => true);
   const bridge = new ResidentLifeChoiceReviewBridge({
     profile: {
       id: "resident.mira",
@@ -19,8 +20,9 @@ function createHarness() {
       traceLimit: 256,
     },
     promoteSemanticPressure,
+    invalidateSemanticPressure,
   });
-  return { bridge, promoted, promoteSemanticPressure };
+  return { bridge, promoted, promoteSemanticPressure, invalidateSemanticPressure };
 }
 
 describe("ResidentLifeChoiceReviewBridge", () => {
@@ -58,13 +60,19 @@ describe("ResidentLifeChoiceReviewBridge", () => {
   });
 
   it("re-arms only after ambiguity clears and promotes again if the choice later reappears", () => {
-    const { bridge, promoteSemanticPressure } = createHarness();
+    const { bridge, promoteSemanticPressure, invalidateSemanticPressure } = createHarness();
 
     expect(bridge.observe({
       status: "choice_required",
       candidateRunIds: ["run.a", "run.b"],
     }, 10).status).toBe("scheduled");
     expect(bridge.observe({ status: "idle" }, 11)).toEqual({ status: "not_required" });
+    expect(invalidateSemanticPressure).toHaveBeenCalledTimes(1);
+    expect(invalidateSemanticPressure).toHaveBeenCalledWith(
+      promotedReasonId(promoteSemanticPressure),
+      11,
+      "resident execution no longer requires a multi-matter semantic choice",
+    );
     expect(bridge.activeCandidateRunIds()).toEqual([]);
 
     expect(bridge.observe({
@@ -75,7 +83,7 @@ describe("ResidentLifeChoiceReviewBridge", () => {
   });
 
   it("treats a changed candidate set as new pressure but ignores focused and auto-handoff states", () => {
-    const { bridge, promoteSemanticPressure } = createHarness();
+    const { bridge, promoteSemanticPressure, invalidateSemanticPressure } = createHarness();
 
     expect(bridge.observe({
       status: "choice_required",
@@ -96,5 +104,12 @@ describe("ResidentLifeChoiceReviewBridge", () => {
     }, 32)).toEqual({ status: "not_required" });
     expect(bridge.observe({ status: "acquired_deferred", runId: "run.c" }, 33)).toEqual({ status: "not_required" });
     expect(promoteSemanticPressure).toHaveBeenCalledTimes(2);
+    expect(invalidateSemanticPressure).toHaveBeenCalledTimes(1);
   });
 });
+
+function promotedReasonId(promoteSemanticPressure: ReturnType<typeof vi.fn>): string {
+  const reason = promoteSemanticPressure.mock.calls[0]?.[0] as CognitionReason | undefined;
+  if (!reason) throw new Error("choice bridge never promoted a reason");
+  return reason.id;
+}
