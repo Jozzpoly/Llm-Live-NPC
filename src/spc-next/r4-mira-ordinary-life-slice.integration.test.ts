@@ -44,32 +44,36 @@ describe("R4-D Mira ordinary-life negative capability", () => {
 
     const moved = slice.idaRelocateBackgroundObject();
     expect(moved.pickup).toMatchObject({
-      status: "succeeded",
-      code: "picked_up",
-      actorId: R4D_IDA_ID,
-      objectId: R4D_MOVED_OBJECT_ID,
+      status: "resolved",
+      materialOutcome: {
+        status: "succeeded",
+        code: "picked_up",
+        actorId: R4D_IDA_ID,
+        objectId: R4D_MOVED_OBJECT_ID,
+      },
     });
     expect(moved.place).toMatchObject({
-      status: "succeeded",
-      code: "placed",
-      actorId: R4D_IDA_ID,
-      objectId: R4D_MOVED_OBJECT_ID,
-    });
-    expect(moved.percept).toMatchObject({
-      phenomenon: "interaction",
-      modality: "sight",
-      actorId: R4D_IDA_ID,
-      subjectId: R4D_MOVED_OBJECT_ID,
-      addressed: false,
+      status: "resolved",
+      materialOutcome: {
+        status: "succeeded",
+        code: "placed",
+        actorId: R4D_IDA_ID,
+        objectId: R4D_MOVED_OBJECT_ID,
+      },
     });
     expect(slice.materialKnowledge.observation(R4D_MOVED_OBJECT_ID)).toMatchObject({
       objectId: R4D_MOVED_OBJECT_ID,
       lastKnownPosition: R4D_MOVED_OBJECT_END,
       currentlyVisible: true,
     });
+    expect(slice.idaAuthority.recentActionFacts()).toHaveLength(2);
+    expect(slice.idaKernel.snapshotCommittedState().matters.every(
+      (matter) => matter.status === "resolved",
+    )).toBe(true);
 
-    // A truthful nearby material change is observed, but without resident-owned
-    // significance it does not become a Mira matter, action or semantic demand.
+    // A truthful nearby material change is privately reacquired, but without
+    // resident-owned significance it does not become a Mira matter, action or
+    // semantic demand.
     expect(slice.activeMatterIds()).toEqual([]);
     expect(slice.pendingCognitionReasons()).toEqual([]);
     expect(slice.authority.recentActionFacts()).toEqual([]);
