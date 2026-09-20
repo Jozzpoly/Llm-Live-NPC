@@ -105,6 +105,9 @@ export class SpcNextResearchScene extends Phaser.Scene {
     this.scenario = createSpcNextResearchScenario(scenarioKind);
     this.world = this.scenario.world;
     this.snapshot = this.world.publicSnapshot();
+    if (!this.snapshot.residents.some((resident) => resident.id === this.selectedResidentId)) {
+      this.selectedResidentId = this.snapshot.residents[0]?.id ?? null;
+    }
   }
 
   create(): void {
