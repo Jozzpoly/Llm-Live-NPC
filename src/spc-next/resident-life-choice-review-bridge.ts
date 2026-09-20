@@ -31,7 +31,10 @@ export class ResidentLifeChoiceReviewBridge {
   private activeAmbiguitySignature: string | null = null;
 
   constructor(
-    private readonly resident: Pick<ResidentRuntime, "profile" | "promoteSemanticPressure">,
+    private readonly resident: Pick<
+      ResidentRuntime,
+      "profile" | "promoteSemanticPressure" | "invalidateSemanticPressure"
+    >,
     options: ResidentLifeChoiceReviewBridgeOptions = {},
   ) {
     if (options.reviewAfterSeconds !== undefined
@@ -50,6 +53,13 @@ export class ResidentLifeChoiceReviewBridge {
     }
 
     if (arbitration.status !== "choice_required") {
+      if (this.activeAmbiguitySignature !== null) {
+        this.resident.invalidateSemanticPressure(
+          this.reasonId(),
+          tick,
+          "resident execution no longer requires a multi-matter semantic choice",
+        );
+      }
       this.activeAmbiguitySignature = null;
       return { status: "not_required" };
     }
@@ -66,10 +76,7 @@ export class ResidentLifeChoiceReviewBridge {
 
     this.activeAmbiguitySignature = signature;
     this.resident.promoteSemanticPressure({
-      id: deriveSpcIdentifier(
-        "reason-life-choice",
-        this.resident.profile.id,
-      ),
+      id: this.reasonId(),
       tick,
       kind: "uncertainty",
       salience: 0.8,
@@ -83,5 +90,12 @@ export class ResidentLifeChoiceReviewBridge {
     return this.activeAmbiguitySignature === null
       ? []
       : this.activeAmbiguitySignature.split("\u0000");
+  }
+
+  private reasonId(): string {
+    return deriveSpcIdentifier(
+      "reason-life-choice",
+      this.resident.profile.id,
+    );
   }
 }
