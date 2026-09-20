@@ -45,7 +45,7 @@ describe("five-resident Mira causal life choice composition", () => {
       deferredRunIds: [FIELDS!.runId, WORKSHOP!.runId].sort((a, b) => a.localeCompare(b)),
     });
 
-    const choiceOwner = new ResidentLifeChoiceOwner(slice.mira);
+    const choiceOwner = new ResidentLifeChoiceOwner(slice.mira, slice.world.options.fixedDeltaSeconds);
     const attempt = choiceOwner.prepare(batch, lifeAtChoice);
     expect(attempt).not.toBeNull();
     if (!attempt) return;
