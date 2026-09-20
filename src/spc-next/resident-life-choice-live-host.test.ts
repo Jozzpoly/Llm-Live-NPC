@@ -56,14 +56,20 @@ function lifeView(): ResidentLifeCognitionView {
 }
 
 function matter(id: string, runId: string) {
+  const evidence = {
+    id: `evidence:life-choice-host:${id}`,
+    tick: 0,
+    kind: "life_context",
+    summary: `${id} is a grounded continuing matter.`,
+  };
   return {
     id,
     status: "active" as const,
     semanticRevision: 1,
     semanticCourse: `continue ${id}`,
     suspendedByMatterId: null,
-    originEvidence: null,
-    semanticEvidence: null,
+    originEvidence: evidence,
+    semanticEvidence: evidence,
     lastOutcomeEvidence: null,
     activeRun: {
       runId,
@@ -82,6 +88,7 @@ function proposal(matterId = "matter.mira.b") {
       kind: "focus_matter",
       matterId,
       reason: "give this continuing matter the free body next",
+      supportEvidenceIds: [`evidence:life-choice-host:${matterId}`],
       reviewAfterSeconds: 8,
     },
   };
