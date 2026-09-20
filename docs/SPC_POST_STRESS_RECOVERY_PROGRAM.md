@@ -411,8 +411,14 @@ R5-A one-reason / one-provider / one-grounded-consequence / return-to-quiet:
 Evidence authority:
 `docs/SPC_R5A_SEMANTIC_ESCALATION_PASS.md`.
 
+R5-B stale/newer-attention safety:
+**QUALIFIED PASS** at source SHA `b0aa10c43ae833fdec95f86d2caa0b7343ba451e`.
+
+Evidence authority:
+`docs/SPC_R5B_STALE_ATTENTION_PASS.md`.
+
 Current R5 gate:
-**R5-B — stale/newer-attention safety**.
+**R5-C — provider failure and explicit semantic retention/settlement outcomes**.
 
 Goal:
 reintroduce the provider into a resident who already lives locally.
