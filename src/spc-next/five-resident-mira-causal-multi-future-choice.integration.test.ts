@@ -280,6 +280,25 @@ describe("Mira fully causal multi-future life choice", () => {
     });
     expect(slice.choiceReviewBridge.activeCandidateRunIds()).toEqual(currentCandidates);
 
+    const supersededAmbiguity = slice.mira.semanticPressureLifecycleSnapshot().find(
+      (entry) => entry.reason.id === choiceAttempt.originReasonId,
+    );
+    expect(supersededAmbiguity).toMatchObject({
+      status: "pending",
+      reason: {
+        id: choiceAttempt.originReasonId,
+        evidenceIds: currentCandidates,
+      },
+    });
+    expect(supersededAmbiguity?.reason.tick).toBeGreaterThan(
+      choiceAttempt.batch.reasons.find((reason) => reason.id === choiceAttempt.originReasonId)?.tick ?? -1,
+    );
+    expect(slice.mira.semanticPressureLifecycleEvents()).toContainEqual(expect.objectContaining({
+      reasonId: choiceAttempt.originReasonId,
+      reasonTick: supersededAmbiguity?.reason.tick,
+      kind: "superseded",
+    }));
+
     releaseProvider(openAiChoiceResponse({
       kind: "focus_matter",
       matterId: matterC,
@@ -305,6 +324,20 @@ describe("Mira fully causal multi-future life choice", () => {
       status: "active",
       activeRunId: runD,
     });
+    expect(slice.mira.semanticPressureLifecycleSnapshot()).toContainEqual(expect.objectContaining({
+      status: "pending",
+      reason: expect.objectContaining({
+        id: choiceAttempt.originReasonId,
+        evidenceIds: currentCandidates,
+      }),
+    }));
+    expect(slice.mira.semanticPressureLifecycleEvents()).toContainEqual(expect.objectContaining({
+      reasonId: choiceAttempt.originReasonId,
+      reasonTick: choiceAttempt.batch.reasons.find(
+        (reason) => reason.id === choiceAttempt.originReasonId,
+      )?.tick,
+      kind: "stale_ignored",
+    }));
   });
 });
 
