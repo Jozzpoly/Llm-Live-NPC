@@ -179,7 +179,7 @@ describe("ResidentLifeChoiceLiveHost transport/admission boundary", () => {
     expect(owner.state().activeAttemptId).toBe(attempt.id);
     expect(resident.publicState().pendingCognitionReasonCount).toBe(0);
 
-    expect(host.admit(arrival, 2, life)).toEqual({
+    expect(host.admit(arrival, 32, life)).toEqual({
       status: "provider_error",
       admissionTick: 2,
       code: "network",
