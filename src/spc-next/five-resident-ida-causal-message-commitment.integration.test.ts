@@ -231,6 +231,24 @@ describe("Ida cognition-native causal message commitment", () => {
       status: "resolved",
       activeRunId: null,
     });
+
+    const fulfilledLife = captureResidentLifeCognitionView({
+      kernel,
+      focus,
+      arbitrator,
+      matterIds: causal.acceptedMatterIds(),
+    });
+    const fulfilledSupport = deriveResidentLifeChoiceCandidateSupports(
+      fulfilledLife,
+      [accepted.matter.id],
+    );
+    expect(fulfilledSupport[0]?.facts).toContainEqual(expect.objectContaining({
+      evidenceKind: "accepted_social_commitment",
+      relation: "matter_origin",
+    }));
+    expect(fulfilledSupport[0]?.facts.some(
+      (fact) => fact.relation === "open_social_responsibility",
+    )).toBe(false);
   });
 });
 
