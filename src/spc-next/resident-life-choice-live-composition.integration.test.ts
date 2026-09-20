@@ -172,7 +172,7 @@ describe("resident-life live choice + execution arbitration composition", () => 
     });
     expect(host.admit(arrival, 32, changedLife)).toEqual({
       status: "stale",
-      admissionTick: 2,
+      admissionTick: 32,
       settlement: { status: "stale", reason: "resident_life_changed_during_request" },
     });
     expect(state.focus.focusedRun()).toBeNull();
