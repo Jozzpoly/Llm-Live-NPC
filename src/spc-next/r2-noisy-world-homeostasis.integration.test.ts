@@ -50,22 +50,15 @@ describe("R2 noisy-world semantic homeostasis", () => {
       expect(local.status).not.toBe("authority_lost");
     }
 
-    const socialPressure = slice.pendingCognitionReasons().filter(
-      (reason) => reason.id === "reason:resident.mira:ambient-social:player.jozz",
+    expect(slice.pendingCognitionReasons()).toEqual([]);
+    const socialDecisions = slice.resident.semanticPressureDecisions().filter(
+      (decision) => decision.code === "known_social_speech",
     );
-    expect(socialPressure).toHaveLength(1);
-    expect(socialPressure[0]).toMatchObject({
-      kind: "heard_speech",
-      salience: 0.55,
-      summary: "Overheard recognized actor: background player line 15",
-    });
-    expect(socialPressure[0]?.evidenceIds).toHaveLength(1);
-
-    const socialLifecycle = slice.resident.semanticPressureLifecycleEvents().filter(
-      (event) => event.reasonId === "reason:resident.mira:ambient-social:player.jozz",
-    );
-    expect(socialLifecycle.filter((event) => event.kind === "superseded").length)
-      .toBeGreaterThanOrEqual(10);
+    expect(socialDecisions).toHaveLength(16);
+    expect(socialDecisions.every((decision) =>
+      decision.disposition === "observation_only"
+      && decision.cognitionReason === null
+    )).toBe(true);
 
     // Real visibility churn remains perception truth but does not become a semantic
     // queue. Sight is sampled before integration, hence out -> exit -> return -> enter
@@ -84,7 +77,7 @@ describe("R2 noisy-world semantic homeostasis", () => {
     expect(churnPercepts.some((percept) => percept.phenomenon === "actor_sight_exit")).toBe(true);
     expect(churnPercepts.filter((percept) => percept.phenomenon === "actor_sight_enter").length)
       .toBeGreaterThanOrEqual(2);
-    expect(slice.pendingCognitionReasons()).toHaveLength(1);
+    expect(slice.pendingCognitionReasons()).toHaveLength(0);
 
     // One genuinely addressed contact must survive the same metabolism gate and may
     // interrupt the body locally without pretending that "Tak?" settled its meaning.
@@ -99,7 +92,7 @@ describe("R2 noisy-world semantic homeostasis", () => {
       classification: "interrupt",
       cognitionReasonSettled: false,
     });
-    expect(slice.pendingCognitionReasons()).toHaveLength(2);
+    expect(slice.pendingCognitionReasons()).toHaveLength(1);
     expect(slice.pendingCognitionReasons()).toContainEqual(expect.objectContaining({
       id: addressedDecision?.cognitionReasonId,
       kind: "heard_speech",
@@ -125,7 +118,7 @@ describe("R2 noisy-world semantic homeostasis", () => {
     });
 
     const pressureAtQuiet = slice.pendingCognitionReasons();
-    expect(pressureAtQuiet).toHaveLength(2);
+    expect(pressureAtQuiet).toHaveLength(1);
     expect(pressureAtQuiet.some((reason) => reason.kind === "quiet_review")).toBe(false);
     const perceptCountAtQuiet = slice.resident.diagnostics().recentPercepts.length;
 
