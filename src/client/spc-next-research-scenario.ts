@@ -349,8 +349,11 @@ function createR4MiraOrdinaryLifeScenario(): SpcNextResearchScenario {
 
 const R5_BROWSER_NEWER_ATTENTION_PROMPT = "Mira, jednak chwila — najpierw odpowiedz, czy słyszysz zmianę.";
 
+type R5BrowserProviderMode = "accept" | "error" | "decline" | "defer" | "clarify";
+
 function createR5MiraSemanticEscalationScenario(): SpcNextResearchScenario {
   let releaseProvider: (() => void) | null = null;
+  let providerMode: R5BrowserProviderMode = "accept";
   const providerContexts: unknown[] = [];
 
   const fetcher = async (_input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
@@ -365,27 +368,74 @@ function createR5MiraSemanticEscalationScenario(): SpcNextResearchScenario {
       throw new Error("R5 browser fixture provider received no exact origin reason");
     }
 
+    if (providerMode === "error") {
+      return new Response(JSON.stringify({
+        ok: false,
+        code: "global_limit",
+        secretDiagnostic: "must-not-cross-client-boundary",
+      }), {
+        status: 429,
+        headers: { "content-type": "application/json" },
+      });
+    }
+
+    const proposal = providerMode === "decline"
+      ? {
+          version: 1,
+          commitmentDecision: {
+            kind: "decline",
+            reason: "I heard Ida but choose not to accept a continuing commitment.",
+          },
+          beliefs: [],
+          concerns: [],
+          reviewAfterSeconds: 30,
+        }
+      : providerMode === "defer"
+        ? {
+            version: 1,
+            commitmentDecision: {
+              kind: "defer",
+              reason: "Keep this semantic pressure unresolved for later review.",
+            },
+            beliefs: [],
+            concerns: [],
+            reviewAfterSeconds: 1,
+          }
+        : providerMode === "clarify"
+          ? {
+              version: 1,
+              commitmentDecision: {
+                kind: "clarify",
+                reason: "The semantic content is not specific enough to accept or decline.",
+                question: "Ida, co dokładnie masz na myśli?",
+              },
+              beliefs: [],
+              concerns: [],
+              reviewAfterSeconds: 0.5,
+            }
+          : {
+              version: 1,
+              commitmentDecision: {
+                kind: "accept",
+                reason: "Ida addressed me directly and I choose to answer her once.",
+                intent: {
+                  kind: "communicate",
+                  goal: "answer Ida's direct question with one bounded reply",
+                  targetActorId: R5_IDA_ID,
+                  targetRegionId: null,
+                  targetPosition: null,
+                  text: R5_MIRA_SEMANTIC_REPLY,
+                },
+              },
+              beliefs: [],
+              concerns: [],
+              reviewAfterSeconds: 30,
+            };
+
     return new Response(JSON.stringify({
       ok: true,
       originReasonId,
-      proposal: {
-        version: 1,
-        commitmentDecision: {
-          kind: "accept",
-          reason: "Ida addressed me directly and I choose to answer her once.",
-          intent: {
-            kind: "communicate",
-            goal: "answer Ida's direct question with one bounded reply",
-            targetActorId: R5_IDA_ID,
-            targetRegionId: null,
-            targetPosition: null,
-            text: R5_MIRA_SEMANTIC_REPLY,
-          },
-        },
-        beliefs: [],
-        concerns: [],
-        reviewAfterSeconds: 30,
-      },
+      proposal,
     }), {
       status: 200,
       headers: { "content-type": "application/json" },
@@ -404,6 +454,7 @@ function createR5MiraSemanticEscalationScenario(): SpcNextResearchScenario {
       semanticPressure: slice.mira.semanticPressureLifecycleSnapshot(),
       miraPosition: mira?.position ?? null,
       idaPosition: ida?.position ?? null,
+      providerMode,
       providerContexts: structuredClone(providerContexts),
       recentOccurrences: slice.world.diagnostics().recentOccurrences,
     };
@@ -427,6 +478,26 @@ function createR5MiraSemanticEscalationScenario(): SpcNextResearchScenario {
       if (actionId === "ida-address-mira") return slice.idaAddressMira();
       if (actionId === "ida-address-mira-newer") {
         return slice.idaAddressMira(R5_BROWSER_NEWER_ATTENTION_PROMPT);
+      }
+      if (actionId === "provider-mode-accept") {
+        providerMode = "accept";
+        return { providerMode };
+      }
+      if (actionId === "provider-mode-error") {
+        providerMode = "error";
+        return { providerMode };
+      }
+      if (actionId === "provider-mode-decline") {
+        providerMode = "decline";
+        return { providerMode };
+      }
+      if (actionId === "provider-mode-defer") {
+        providerMode = "defer";
+        return { providerMode };
+      }
+      if (actionId === "provider-mode-clarify") {
+        providerMode = "clarify";
+        return { providerMode };
       }
       if (actionId === "release-provider") {
         const release = releaseProvider;
