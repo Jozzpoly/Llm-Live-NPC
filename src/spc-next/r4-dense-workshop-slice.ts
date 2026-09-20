@@ -108,6 +108,10 @@ export function createR4DenseWorkshopSlice() {
     fixedDeltaSeconds: 1 / 60,
   });
 
+  // Research participant remains physically present but outside Janek's local
+  // workshop relevance/sight so the browser host can reuse normal player controls
+  // without making the player the center of this provider-free specimen.
+  world.addPlayer("player.jozz", { x: 1_850, y: 100 }, { maxSpeed: 150 });
   const resident = world.addResident(RESIDENT_ID, "Janek", { ...PRIMARY_START });
   world.familiarizeResidentWithRegions(RESIDENT_ID, ["r4-workshop"]);
 
