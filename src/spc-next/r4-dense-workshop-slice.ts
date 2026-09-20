@@ -7,6 +7,7 @@ import {
 } from "./resident-continuity-kernel";
 import { ResidentExecutionArbitrator, type ResidentExecutionArbitration } from "./resident-execution-arbitrator";
 import { ResidentExecutionFocusAuthority } from "./resident-execution-focus-authority";
+import { captureResidentLifeCognitionView } from "./resident-life-cognition-view";
 import {
   ResidentLocalMaterialDeliveryRoutine,
   type ResidentLocalMaterialDeliveryStep,
@@ -407,6 +408,12 @@ export function createR4DenseWorkshopSlice() {
     primaryBlocked: () => primaryBlocked,
     secondaryResolved: () => secondaryResolved,
     checkedAbsenceEvidence: () => checkedAbsenceEvidence ? structuredClone(checkedAbsenceEvidence) : null,
+    currentLifeView: () => captureResidentLifeCognitionView({
+      kernel,
+      focus,
+      arbitrator,
+      matterIds: [R4_PRIMARY_MATTER_ID, R4_SECONDARY_MATTER_ID],
+    }),
     advanceOneWorldTick(): R4DenseWorkshopStep {
       if (!relocationApplied) {
         throw new Error("R4 hidden primary relocation must be applied before recovered execution begins");
