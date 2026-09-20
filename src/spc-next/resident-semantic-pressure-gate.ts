@@ -40,8 +40,9 @@ export interface ResidentSemanticPressureDecision {
  * - observation_only does NOT erase private percept/history state;
  * - addressed speech remains unresolved because local acknowledgement cannot
  *   honestly settle its semantic content;
- * - explicit interaction/system changes remain unresolved for now and will be
- *   reattacked by later causal-explanation stages.
+ * - raw interaction/system occurrences remain observation-only; a separate
+ *   resident-relative relevance/discrepancy layer must promote them if they actually
+ *   create unresolved semantic work.
  */
 export class ResidentSemanticPressureGate {
   private readonly recent: ResidentSemanticPressureDecision[] = [];
@@ -105,24 +106,16 @@ export class ResidentSemanticPressureGate {
     }
 
     if (percept.phenomenon === "interaction" || percept.phenomenon === "system") {
-      decision = {
+      return this.record({
         tick: percept.tick,
         residentId: this.residentId,
         evidenceId: percept.id,
         occurrenceId: percept.occurrenceId,
-        disposition: "unresolved",
+        disposition: "observation_only",
         code: "world_change",
-        summary: "Observed explicit world change remains unresolved pending causal explanation.",
-        cognitionReason: {
-          id: `reason:${this.residentId}:world:${percept.occurrenceId}`,
-          tick: percept.tick,
-          kind: "direct_world_change",
-          salience: 0.45,
-          summary: `Observed world change: ${percept.summary}`,
-          evidenceIds: [percept.id],
-        },
-      };
-      return this.record(decision);
+        summary: "Observed world change remains private evidence until resident-relative relevance or discrepancy is established.",
+        cognitionReason: null,
+      });
     }
 
     if (percept.phenomenon === "actor_sight_enter" || percept.phenomenon === "actor_sight_exit") {
