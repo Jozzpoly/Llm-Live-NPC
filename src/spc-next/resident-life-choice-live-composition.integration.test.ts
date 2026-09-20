@@ -135,7 +135,7 @@ describe("resident-life live choice + execution arbitration composition", () => 
       arbitrator: state.arbitrator,
       matterIds: MATTER_IDS,
     });
-    const admitted = host.admit(arrival, 2, currentLife);
+    const admitted = host.admit(arrival, 32, currentLife);
     expect(admitted).toMatchObject({
       status: "applied",
       settlement: { decision: { kind: "focus_matter", matterId: B.matterId } },
@@ -170,7 +170,7 @@ describe("resident-life live choice + execution arbitration composition", () => 
       arbitrator: state.arbitrator,
       matterIds: MATTER_IDS,
     });
-    expect(host.admit(arrival, 2, changedLife)).toEqual({
+    expect(host.admit(arrival, 32, changedLife)).toEqual({
       status: "stale",
       admissionTick: 2,
       settlement: { status: "stale", reason: "resident_life_changed_during_request" },
