@@ -57,8 +57,7 @@ export class ResidentMatterRelevanceBridge {
 
     const reasonId = deriveSpcIdentifier(
       "reason-matter-relevance",
-      this.resident.profile.id,
-      matter.id,
+      `${this.resident.profile.id}:${matter.id}`,
     );
     this.activeReasonByMatterId.set(matter.id, reasonId);
     this.resident.promoteSemanticPressure({
