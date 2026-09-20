@@ -55,7 +55,7 @@ function setupAmbiguity() {
   });
   const batch = resident.takeCognitionBatch(31)!;
 
-  const owner = new ResidentLifeChoiceOwner(resident);
+  const owner = new ResidentLifeChoiceOwner(resident, 1 / 60);
   const life = captureResidentLifeCognitionView({ kernel, focus, arbitrator, matterIds: MATTER_IDS });
   const attempt = owner.prepare(batch, life)!;
   return { resident, batch, kernel, focus, arbitrator, owner, life, attempt };
