@@ -30,7 +30,8 @@ const FIELDS = {
 } as const;
 
 describe("R3 pre-personhood choice characterization", () => {
-  it("admits opposite legal preferences from identical private/causal truth using only different provider reason strings", () => {
+  it("closes free-form rationale fabrication but shows that generic causal support alone still does not create personhood priority", () => {
+    const unsupported = setupIdenticalAmbiguity();
     const workshopState = setupIdenticalAmbiguity();
     const fieldsState = setupIdenticalAmbiguity();
 
@@ -39,12 +40,31 @@ describe("R3 pre-personhood choice characterization", () => {
       FIELDS.matterId,
       WORKSHOP.matterId,
     ].sort((a, b) => a.localeCompare(b)));
+    expect(workshopState.attempt.candidateSupports).toEqual(fieldsState.attempt.candidateSupports);
+
+    // The old R3 failure is now closed: prose alone cannot claim a causal preference.
+    expect(unsupported.owner.settle(
+      unsupported.attempt,
+      {
+        version: 1,
+        decision: {
+          kind: "focus_matter",
+          matterId: WORKSHOP.matterId,
+          reason: "I simply prefer the workshop.",
+          reviewAfterSeconds: 8,
+        },
+      },
+      unsupported.life,
+    )).toEqual({
+      status: "rejected",
+      reason: "proposal_invalid",
+    });
 
     const chooseWorkshop = workshopState.owner.settle(
       workshopState.attempt,
       choice(
         WORKSHOP.matterId,
-        "I choose the workshop because I currently prefer the workshop.",
+        "I choose the workshop and cite its real pre-existing matter origin.",
       ),
       workshopState.life,
     );
@@ -52,28 +72,31 @@ describe("R3 pre-personhood choice characterization", () => {
       fieldsState.attempt,
       choice(
         FIELDS.matterId,
-        "I choose the fields because I currently prefer the fields.",
+        "I choose the fields and cite its real pre-existing matter origin.",
       ),
       fieldsState.life,
     );
 
-    expect(chooseWorkshop).toEqual({
+    expect(chooseWorkshop).toMatchObject({
       status: "applied",
-      decision: expect.objectContaining({
+      decision: {
         kind: "focus_matter",
         matterId: WORKSHOP.matterId,
-      }),
+        supportEvidenceIds: [originEvidenceId(WORKSHOP.matterId)],
+      },
     });
-    expect(chooseFields).toEqual({
+    expect(chooseFields).toMatchObject({
       status: "applied",
-      decision: expect.objectContaining({
+      decision: {
         kind: "focus_matter",
         matterId: FIELDS.matterId,
-      }),
+        supportEvidenceIds: [originEvidenceId(FIELDS.matterId)],
+      },
     });
 
-    // Both opposite preferences are equally legal because current admission proves
-    // candidate authority/freshness, not a resident-owned causal reason for priority.
+    // This remains an R3 gap, not a PASS: both candidates have equally generic
+    // matter-origin support. Causal citation prevents invented rationale but does not
+    // itself explain why this resident should prefer one legal matter over the other.
     expect(chooseWorkshop.status).toBe("applied");
     expect(chooseFields.status).toBe("applied");
   });
@@ -215,8 +238,18 @@ function lifeView(): ResidentLifeCognitionView {
     semanticRevision: 1,
     semanticCourse,
     suspendedByMatterId: null,
-    originEvidence: null,
-    semanticEvidence: null,
+    originEvidence: {
+      id: originEvidenceId(spec.matterId),
+      tick: 1,
+      kind: "life_context",
+      summary: `${spec.matterId} has a real but generic continuing-life origin.`,
+    },
+    semanticEvidence: {
+      id: originEvidenceId(spec.matterId),
+      tick: 1,
+      kind: "life_context",
+      summary: `${spec.matterId} has a real but generic continuing-life origin.`,
+    },
     lastOutcomeEvidence: null,
     activeRun: {
       runId: spec.runId,
@@ -247,9 +280,14 @@ function choice(matterId: string, reason: string) {
       kind: "focus_matter",
       matterId,
       reason,
+      supportEvidenceIds: [originEvidenceId(matterId)],
       reviewAfterSeconds: 8,
     },
   };
+}
+
+function originEvidenceId(matterId: string): string {
+  return `evidence:r3:generic-origin:${matterId}`;
 }
 
 
