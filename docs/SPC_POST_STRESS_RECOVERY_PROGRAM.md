@@ -403,7 +403,16 @@ Recover proven donors only when demanded:
 
 Prefer a small world where most places/objects matter over a huge empty map.
 
-### Phase R5 — LLM as semantic escalation
+### Phase R5 — LLM as semantic escalation — **IN PROGRESS**
+
+R5-A one-reason / one-provider / one-grounded-consequence / return-to-quiet:
+**QUALIFIED PASS** at source SHA `58f225e0090110edf75dbe4aaf1bf057ec8f590e`.
+
+Evidence authority:
+`docs/SPC_R5A_SEMANTIC_ESCALATION_PASS.md`.
+
+Current R5 gate:
+**R5-B — stale/newer-attention safety**.
 
 Goal:
 reintroduce the provider into a resident who already lives locally.
