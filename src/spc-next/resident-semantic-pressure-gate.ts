@@ -84,17 +84,10 @@ export class ResidentSemanticPressureGate {
           residentId: this.residentId,
           evidenceId: percept.id,
           occurrenceId: percept.occurrenceId,
-          disposition: "unresolved",
+          disposition: "observation_only",
           code: "known_social_speech",
-          summary: "Unaddressed speech from a privately recognized actor becomes one coalesced social pressure for that actor.",
-          cognitionReason: {
-            id: `reason:${this.residentId}:ambient-social:${percept.actorId}`,
-            tick: percept.tick,
-            kind: "heard_speech",
-            salience: 0.55,
-            summary: `Overheard recognized actor: ${percept.text}`,
-            evidenceIds: [percept.id],
-          },
+          summary: "Unaddressed speech from a privately recognized actor remains private social evidence until resident-relative relevance is established.",
+          cognitionReason: null,
         };
       } else {
         decision = {
