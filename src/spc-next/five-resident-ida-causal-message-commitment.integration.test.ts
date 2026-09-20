@@ -242,12 +242,18 @@ describe("Ida cognition-native causal message commitment", () => {
       fulfilledLife,
       [accepted.matter.id],
     );
-    expect(fulfilledSupport[0]?.facts).toContainEqual(expect.objectContaining({
-      evidenceKind: "accepted_social_commitment",
-      relation: "matter_origin",
-    }));
+    expect(fulfilledSupport[0]?.facts).toEqual([
+      expect.objectContaining({
+        evidenceKind: "task_outcome",
+        relation: "last_outcome",
+        summary: expect.stringContaining("succeeded:"),
+      }),
+    ]);
     expect(fulfilledSupport[0]?.facts.some(
       (fact) => fact.relation === "open_social_responsibility",
+    )).toBe(false);
+    expect(fulfilledSupport[0]?.facts.some(
+      (fact) => fact.evidenceKind === "accepted_social_commitment",
     )).toBe(false);
   });
 });
