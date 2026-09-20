@@ -51,8 +51,7 @@ describe("Mira resident-origin matter from overheard social pressure", () => {
     );
     slice.world.step();
 
-    const prepared = waitForLifeIntent(slice);
-    const heard = prepared.attempt.context.recentPercepts.find(
+    const heard = slice.privateContext().recentPercepts.find(
       (percept) => percept.occurrenceId === occurrence.id,
     );
     expect(heard).toMatchObject({
@@ -62,6 +61,24 @@ describe("Mira resident-origin matter from overheard social pressure", () => {
       addressed: false,
       text: occurrence.text,
     });
+    expect(slice.mira.pendingCognitionReasons().some(
+      (reason) => reason.evidenceIds.includes(heard!.id),
+    )).toBe(false);
+
+    // This vertical deliberately establishes resident-relative relevance: Mira knows
+    // Janek, is physically present at the workshop, and the experiment asks whether
+    // she can choose to make his stated problem her own. The shared gate does NOT
+    // infer that every utterance by a known actor deserves cognition.
+    slice.mira.promoteSemanticPressure({
+      id: `reason:mira:explicit-social-relevance:${occurrence.id}`,
+      tick: heard!.tick,
+      kind: "heard_speech",
+      salience: 0.75,
+      summary: "Explicit social-origin fixture: Janek's overheard tool problem is relevant to Mira here.",
+      evidenceIds: [heard!.id],
+    });
+
+    const prepared = waitForLifeIntent(slice);
     expect(prepared.batch.reasons.some((reason) => (
       reason.kind === "heard_speech" && reason.evidenceIds.includes(heard!.id)
     ))).toBe(true);
