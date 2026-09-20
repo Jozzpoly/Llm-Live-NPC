@@ -307,6 +307,10 @@ export class SpcNextResearchScene extends Phaser.Scene {
   }
 
   private applyPlayerControl(): void {
+    // Some causal research specimens intentionally remove the player from the
+    // organism under test. Rendering/manual evidence must not reintroduce a hidden
+    // player requirement merely because the shared research shell has controls.
+    if (!this.snapshot.actors.some((actor) => actor.id === PLAYER_ID)) return;
     if (textEntryActive()) {
       this.world.setActorMotionIntent(PLAYER_ID, { x: 0, y: 0 });
       return;
