@@ -133,7 +133,8 @@ describe("R5-B stale provider answer after newer addressed attention", () => {
     expect(slice.mira.semanticPressureLifecycleSnapshot()).toEqual(expect.arrayContaining([
       expect.objectContaining({
         reason: expect.objectContaining({ id: reasonA.id }),
-        status: "requeued",
+        status: "pending",
+        detail: "cognition batch returned unresolved",
       }),
       expect.objectContaining({
         reason: expect.objectContaining({ id: reasonB.id }),
