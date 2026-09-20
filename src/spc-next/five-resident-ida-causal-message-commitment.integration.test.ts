@@ -6,6 +6,7 @@ import { ResidentContinuityKernel } from "./resident-continuity-kernel";
 import { ResidentExecutionArbitrator } from "./resident-execution-arbitrator";
 import { ResidentExecutionFocusAuthority } from "./resident-execution-focus-authority";
 import { captureResidentLifeCognitionView } from "./resident-life-cognition-view";
+import { deriveResidentLifeChoiceCandidateSupports } from "./resident-life-choice-causal-support";
 import { ResidentLifeIntentOwner } from "./resident-life-intent-owner";
 import { ResidentMessageDeliveryExecutor } from "./resident-message-delivery-executor";
 import { ResidentWorldExecutionAuthority } from "./resident-world-execution-authority";
@@ -149,6 +150,36 @@ describe("Ida cognition-native causal message commitment", () => {
     });
     expect(accepted.focusClaim).toEqual({ status: "acquired", runId: accepted.runId });
     expect(kernel.canRunMutateWorld(accepted.runId)).toBe(true);
+
+    const obligationLife = captureResidentLifeCognitionView({
+      kernel,
+      focus,
+      arbitrator,
+      matterIds: causal.acceptedMatterIds(),
+    });
+    expect(obligationLife.matters).toContainEqual(expect.objectContaining({
+      id: accepted.matter.id,
+      originEvidence: expect.objectContaining({
+        kind: "accepted_social_commitment",
+      }),
+    }));
+    expect(deriveResidentLifeChoiceCandidateSupports(
+      obligationLife,
+      [accepted.matter.id],
+    )).toEqual([
+      expect.objectContaining({
+        matterId: accepted.matter.id,
+        facts: expect.arrayContaining([
+          expect.objectContaining({
+            evidenceId: obligationLife.matters.find(
+              (matter) => matter.id === accepted.matter.id,
+            )?.originEvidence?.id,
+            evidenceKind: "accepted_social_commitment",
+            relation: "open_social_responsibility",
+          }),
+        ]),
+      }),
+    ]);
 
     const durableIntent = accepted.matter.semanticIntent;
     expect(durableIntent?.kind).toBe("communicate_actor");
