@@ -100,8 +100,15 @@ function focusB() {
     kind: "focus_matter",
     matterId: B,
     reason: "finish the nearer settlement commitment first",
+    supportEvidenceIds: ["evidence:b"],
     reviewAfterSeconds: 12,
   };
+}
+
+function candidateSupports() {
+  const sanitized = sanitizeSpcNextLifeChoiceContext(context);
+  if (!sanitized) throw new Error("fixture life-choice context failed sanitization");
+  return sanitized.candidateSupports;
 }
 
 afterEach(() => vi.unstubAllGlobals());
@@ -156,18 +163,36 @@ describe("SPC Next resident-life choice Worker", () => {
   });
 
   it("extracts only a bounded choice among supplied matters or an explicit defer-all", () => {
-    expect(extractSpcNextLifeChoiceDecision(responseBody(focusB()), [B, C])).toEqual(focusB());
+    expect(extractSpcNextLifeChoiceDecision(
+      responseBody(focusB()),
+      [B, C],
+      candidateSupports(),
+    )).toEqual(focusB());
     expect(extractSpcNextLifeChoiceDecision(responseBody({
       kind: "defer_all",
       reason: "the available evidence does not justify choosing yet",
       reviewAfterSeconds: 3,
-    }), [B, C])).toEqual({
+    }), [B, C], candidateSupports())).toEqual({
       kind: "defer_all",
       reason: "the available evidence does not justify choosing yet",
       reviewAfterSeconds: 3,
     });
-    expect(extractSpcNextLifeChoiceDecision(responseBody({ ...focusB(), matterId: "matter.mira.fabricated" }), [B, C])).toBeNull();
-    expect(extractSpcNextLifeChoiceDecision(responseBody({ ...focusB(), completed: true }), [B, C])).toBeNull();
+    expect(extractSpcNextLifeChoiceDecision(
+      responseBody({ ...focusB(), matterId: "matter.mira.fabricated" }),
+      [B, C],
+      candidateSupports(),
+    )).toBeNull();
+    expect(extractSpcNextLifeChoiceDecision(
+      responseBody({ ...focusB(), completed: true }),
+      [B, C],
+      candidateSupports(),
+    )).toBeNull();
+
+    expect(extractSpcNextLifeChoiceDecision(
+      responseBody({ ...focusB(), supportEvidenceIds: ["evidence:c:origin"] }),
+      [B, C],
+      candidateSupports(),
+    )).toBeNull();
   });
 
   it("sends the resident-life contract upstream with a dynamic candidate-only schema", async () => {
@@ -182,7 +207,11 @@ describe("SPC Next resident-life choice Worker", () => {
       expect(modelInput.contract).toBe("resident_life_cognition_v1");
       expect(modelInput.localActivity.kind).toBe("idle");
       expect(modelInput.life.body).toEqual(context.life.body);
-      expect(body.text.format.schema.properties.decision.anyOf[0].properties.matterId.enum).toEqual([B, C]);
+      expect(modelInput.choiceSupport).toEqual(candidateSupports());
+      expect(body.text.format.schema.properties.decision.anyOf[0].properties.matterId.enum).toEqual([B]);
+      expect(body.text.format.schema.properties.decision.anyOf[0].properties.supportEvidenceIds.items.enum)
+        .toEqual(["evidence:b"]);
+      expect(body.text.format.schema.properties.decision.anyOf[1].properties.matterId.enum).toEqual([C]);
       return new Response(JSON.stringify(responseBody(focusB())), {
         status: 200,
         headers: { "content-type": "application/json" },
