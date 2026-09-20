@@ -180,6 +180,16 @@ export class ResidentCausalExecutionCoordinator {
     if (intent.kind === "communicate_actor") {
       return this.stepCommunicate(matter, runId);
     }
+    if (intent.kind === "acquire_material_object") {
+      // Material acquisition currently has its own resident-local competence /
+      // relevance path. Do not silently route it through travel/social execution.
+      return {
+        status: "unsupported_intent",
+        matterId: matter.id,
+        runId,
+        intentKind: intent.kind,
+      };
+    }
 
     const exhaustiveIntent: never = intent;
     return exhaustiveIntent;
