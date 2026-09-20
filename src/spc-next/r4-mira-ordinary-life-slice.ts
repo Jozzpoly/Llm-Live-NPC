@@ -7,7 +7,10 @@ import {
   type ResidentLocalContactStep,
 } from "./resident-local-contact-routine";
 import { ResidentMaterialKnowledge } from "./resident-material-knowledge";
-import {\n  ResidentWorldExecutionAuthority,\n  type ResidentWorldActionResolution,\n} from "./resident-world-execution-authority";
+import {
+  ResidentWorldExecutionAuthority,
+  type ResidentWorldActionResolution,
+} from "./resident-world-execution-authority";
 import { SpcWorldRuntime } from "./spc-world-runtime";
 
 export const R4D_MIRA_ID = "resident.mira";
