@@ -23,6 +23,8 @@ export type ResidentLifeChoiceReviewObservation =
  * quiet-review timer and hoping passage of time later fabricates a reason.
  *
  * Re-observing the same unresolved candidate set does not duplicate pressure.
+ * A changed candidate set supersedes the same resident-scoped ambiguity reason instead
+ * of creating a second event that could later resurrect obsolete B/C truth.
  * The bridge never ranks candidates, opens/closes a matter, binds a run or mutates World.
  */
 export class ResidentLifeChoiceReviewBridge {
@@ -66,7 +68,7 @@ export class ResidentLifeChoiceReviewBridge {
     this.resident.promoteSemanticPressure({
       id: deriveSpcIdentifier(
         "reason-life-choice",
-        `${this.resident.profile.id}:${signature}`,
+        this.resident.profile.id,
       ),
       tick,
       kind: "uncertainty",
