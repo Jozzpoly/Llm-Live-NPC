@@ -2,6 +2,7 @@ import type { ResidentContinuityKernel } from "../spc-next/resident-continuity-k
 import type { ResidentMaterialKnowledge } from "../spc-next/resident-material-knowledge";
 import type { ResidentWorldExecutionAuthority } from "../spc-next/resident-world-execution-authority";
 import type { ResidentLifeCognitionView } from "../spc-next/resident-life-cognition-view";
+import { createCognitionFetchHardBudget } from "../spc-next/cognition-fetch-hard-budget";
 import {
   FiveResidentUnifiedLivingRuntime,
   type FiveResidentLivingRuntimeDiagnostics,
@@ -24,6 +25,12 @@ import {
   R4_PRIMARY_MATTER_ID,
 } from "../spc-next/r4-dense-workshop-slice";
 import { createR4MiraOrdinaryLifeSlice } from "../spc-next/r4-mira-ordinary-life-slice";
+import {
+  R5_IDA_ID,
+  R5_MIRA_ID,
+  R5_MIRA_SEMANTIC_REPLY,
+  createR5MiraSemanticEscalationSlice,
+} from "../spc-next/r5-mira-semantic-escalation-slice";
 
 export type SpcNextResearchScenarioKind =
   | "baseline-delivery"
@@ -36,6 +43,8 @@ export type SpcNextResearchScenarioKind =
   | "zero-provider-local-life"
   | "r4-dense-workshop"
   | "r4-mira-ordinary-life"
+  | "r5-mira-semantic-escalation"
+  | "r5-mira-live-semantic-escalation"
   | "unified-living";
 
 export interface SpcNextResearchScenario {
@@ -68,6 +77,8 @@ export function createSpcNextResearchScenario(kind: SpcNextResearchScenarioKind)
   if (kind === "zero-provider-local-life") return createZeroProviderLocalLifeScenario();
   if (kind === "r4-dense-workshop") return createR4DenseWorkshopScenario();
   if (kind === "r4-mira-ordinary-life") return createR4MiraOrdinaryLifeScenario();
+  if (kind === "r5-mira-semantic-escalation") return createR5MiraSemanticEscalationScenario();
+  if (kind === "r5-mira-live-semantic-escalation") return createR5MiraLiveSemanticEscalationScenario();
   if (kind === "unified-living") return createUnifiedLivingScenario();
   return createBaselineDeliveryScenario();
 }
@@ -84,6 +95,8 @@ export function researchScenarioKindFromSearch(search: string): SpcNextResearchS
   if (requested === "zero-provider-local-life") return "zero-provider-local-life";
   if (requested === "r4-dense-workshop") return "r4-dense-workshop";
   if (requested === "r4-mira-ordinary-life") return "r4-mira-ordinary-life";
+  if (requested === "r5-mira-semantic-escalation") return "r5-mira-semantic-escalation";
+  if (requested === "r5-mira-live-semantic-escalation") return "r5-mira-live-semantic-escalation";
   if (requested === "unified-living") return "unified-living";
   throw new Error(`unknown SPC Next research scenario: ${requested}`);
 }
@@ -333,6 +346,278 @@ function createR4MiraOrdinaryLifeScenario(): SpcNextResearchScenario {
         return;
       }
       slice.advanceQuietOneWorldTick();
+    },
+  };
+}
+
+
+const R5_BROWSER_NEWER_ATTENTION_PROMPT = "Mira, jednak chwila — najpierw odpowiedz, czy słyszysz zmianę.";
+
+type R5BrowserProviderMode = "accept" | "error" | "decline" | "defer" | "clarify";
+
+function createR5MiraSemanticEscalationScenario(): SpcNextResearchScenario {
+  let releaseProvider: (() => void) | null = null;
+  let providerMode: R5BrowserProviderMode = "accept";
+  const providerContexts: unknown[] = [];
+
+  const fetcher = async (_input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+    const context = JSON.parse(String(init?.body));
+    providerContexts.push(structuredClone(context));
+    await new Promise<void>((resolve) => {
+      releaseProvider = resolve;
+    });
+
+    const originReasonId = context?.reasons?.[0]?.id;
+    if (typeof originReasonId !== "string") {
+      throw new Error("R5 browser fixture provider received no exact origin reason");
+    }
+
+    if (providerMode === "error") {
+      return new Response(JSON.stringify({
+        ok: false,
+        code: "global_limit",
+        secretDiagnostic: "must-not-cross-client-boundary",
+      }), {
+        status: 429,
+        headers: { "content-type": "application/json" },
+      });
+    }
+
+    const proposal = providerMode === "decline"
+      ? {
+          version: 1,
+          commitmentDecision: {
+            kind: "decline",
+            reason: "I heard Ida but choose not to accept a continuing commitment.",
+          },
+          beliefs: [],
+          concerns: [],
+          reviewAfterSeconds: 30,
+        }
+      : providerMode === "defer"
+        ? {
+            version: 1,
+            commitmentDecision: {
+              kind: "defer",
+              reason: "Keep this semantic pressure unresolved for later review.",
+            },
+            beliefs: [],
+            concerns: [],
+            reviewAfterSeconds: 1,
+          }
+        : providerMode === "clarify"
+          ? {
+              version: 1,
+              commitmentDecision: {
+                kind: "clarify",
+                reason: "The semantic content is not specific enough to accept or decline.",
+                question: "Ida, co dokładnie masz na myśli?",
+              },
+              beliefs: [],
+              concerns: [],
+              reviewAfterSeconds: 0.5,
+            }
+          : {
+              version: 1,
+              commitmentDecision: {
+                kind: "accept",
+                reason: "Ida addressed me directly and I choose to answer her once.",
+                intent: {
+                  kind: "communicate",
+                  goal: "answer Ida's direct question with one bounded reply",
+                  targetActorId: R5_IDA_ID,
+                  targetRegionId: null,
+                  targetPosition: null,
+                  text: R5_MIRA_SEMANTIC_REPLY,
+                },
+              },
+              beliefs: [],
+              concerns: [],
+              reviewAfterSeconds: 30,
+            };
+
+    return new Response(JSON.stringify({
+      ok: true,
+      originReasonId,
+      proposal,
+    }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
+  };
+
+  const slice = createR5MiraSemanticEscalationSlice(fetcher);
+
+  function snapshot() {
+    const world = slice.world.publicSnapshot();
+    const mira = world.actors.find((actor) => actor.id === R5_MIRA_ID) ?? null;
+    const ida = world.actors.find((actor) => actor.id === R5_IDA_ID) ?? null;
+    return {
+      diagnostics: slice.diagnostics(),
+      life: slice.life.currentLifeView(),
+      semanticPressure: slice.mira.semanticPressureLifecycleSnapshot(),
+      miraPosition: mira?.position ?? null,
+      idaPosition: ida?.position ?? null,
+      providerMode,
+      providerContexts: structuredClone(providerContexts),
+      recentOccurrences: slice.world.diagnostics().recentOccurrences,
+    };
+  }
+
+  return {
+    kind: "r5-mira-semantic-escalation",
+    evidenceScenarioId: "browser-r5-mira-semantic-escalation",
+    residentId: R5_MIRA_ID,
+    // R5 begins reason-native; no matter exists until admitted semantic judgement.
+    matterId: "matter.mira.r5.none",
+    world: slice.world,
+    kernel: slice.life.kernel,
+    materialKnowledge: null,
+    authority: slice.life.worldAuthority,
+    residentLifeView(residentId: string): ResidentLifeCognitionView | null {
+      return residentId === R5_MIRA_ID ? slice.life.currentLifeView() : null;
+    },
+    evidenceAction(actionId: string): unknown {
+      if (actionId === "snapshot") return snapshot();
+      if (actionId === "ida-address-mira") return slice.idaAddressMira();
+      if (actionId === "ida-address-mira-newer") {
+        return slice.idaAddressMira(R5_BROWSER_NEWER_ATTENTION_PROMPT);
+      }
+      if (actionId === "provider-mode-accept") {
+        providerMode = "accept";
+        return { providerMode };
+      }
+      if (actionId === "provider-mode-error") {
+        providerMode = "error";
+        return { providerMode };
+      }
+      if (actionId === "provider-mode-decline") {
+        providerMode = "decline";
+        return { providerMode };
+      }
+      if (actionId === "provider-mode-defer") {
+        providerMode = "defer";
+        return { providerMode };
+      }
+      if (actionId === "provider-mode-clarify") {
+        providerMode = "clarify";
+        return { providerMode };
+      }
+      if (actionId === "release-provider") {
+        const release = releaseProvider;
+        if (!release) throw new Error("R5 browser provider is not waiting for release");
+        releaseProvider = null;
+        release();
+        return { released: true, tick: slice.world.tick };
+      }
+      throw new Error(`unknown R5 Mira semantic-escalation evidence action: ${actionId}`);
+    },
+    advanceOneWorldTick(): void {
+      slice.advanceOneWorldTick();
+    },
+  };
+}
+
+
+interface R5LiveProviderObservation {
+  sequence: number;
+  startedAtTick: number;
+  completedAtTick: number;
+  status: number | null;
+  elapsedMs: number;
+  body: unknown;
+  transportError: string | null;
+}
+
+function createR5MiraLiveSemanticEscalationScenario(): SpcNextResearchScenario {
+  const providerObservations: R5LiveProviderObservation[] = [];
+  let observationSequence = 0;
+
+  const observedUpstream = async (
+    input: RequestInfo | URL,
+    init?: RequestInit,
+  ): Promise<Response> => {
+    const startedAtTick = slice.world.tick;
+    const startedAt = performance.now();
+    try {
+      const response = await fetch(input, init);
+      let body: unknown = null;
+      try {
+        body = await response.clone().json();
+      } catch {
+        body = null;
+      }
+      providerObservations.push({
+        sequence: observationSequence++,
+        startedAtTick,
+        completedAtTick: slice.world.tick,
+        status: response.status,
+        elapsedMs: performance.now() - startedAt,
+        body: structuredClone(body),
+        transportError: null,
+      });
+      return response;
+    } catch (error) {
+      providerObservations.push({
+        sequence: observationSequence++,
+        startedAtTick,
+        completedAtTick: slice.world.tick,
+        status: null,
+        elapsedMs: performance.now() - startedAt,
+        body: null,
+        transportError: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
+  };
+
+  // The real-provider experiment owns a literal one-upstream-request budget.
+  // Any local retry after the first call receives a synthetic bounded 429 before
+  // network IO, so this scene cannot recreate the September unattended spend loop.
+  const providerBudget = createCognitionFetchHardBudget(observedUpstream, 1);
+  const slice = createR5MiraSemanticEscalationSlice(
+    providerBudget.fetch,
+    { providerRuntimeMode: "five-resident-causal-v1" },
+  );
+  let lastWorldTick: ReturnType<typeof slice.advanceOneWorldTick> | null = null;
+
+  function snapshot() {
+    const world = slice.world.publicSnapshot();
+    const mira = world.actors.find((actor) => actor.id === R5_MIRA_ID) ?? null;
+    const ida = world.actors.find((actor) => actor.id === R5_IDA_ID) ?? null;
+    return {
+      diagnostics: slice.diagnostics(),
+      life: slice.life.currentLifeView(),
+      semanticPressure: slice.mira.semanticPressureLifecycleSnapshot(),
+      cognitionRevision: slice.mira.cognitionRevision(),
+      miraPosition: mira?.position ?? null,
+      idaPosition: ida?.position ?? null,
+      providerBudget: providerBudget.snapshot(),
+      providerObservations: structuredClone(providerObservations),
+      lastAdmissions: structuredClone(lastWorldTick?.admissions ?? []),
+      recentOccurrences: slice.world.diagnostics().recentOccurrences,
+    };
+  }
+
+  return {
+    kind: "r5-mira-live-semantic-escalation",
+    evidenceScenarioId: "browser-r5-mira-live-semantic-escalation",
+    residentId: R5_MIRA_ID,
+    matterId: "matter.mira.r5.live.none",
+    world: slice.world,
+    kernel: slice.life.kernel,
+    materialKnowledge: null,
+    authority: slice.life.worldAuthority,
+    residentLifeView(residentId: string): ResidentLifeCognitionView | null {
+      return residentId === R5_MIRA_ID ? slice.life.currentLifeView() : null;
+    },
+    evidenceAction(actionId: string): unknown {
+      if (actionId === "snapshot") return snapshot();
+      if (actionId === "ida-address-mira") return slice.idaAddressMira();
+      throw new Error(`unknown R5 Mira live semantic-escalation evidence action: ${actionId}`);
+    },
+    advanceOneWorldTick(): void {
+      lastWorldTick = slice.advanceOneWorldTick();
     },
   };
 }

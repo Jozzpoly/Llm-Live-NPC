@@ -1,9 +1,9 @@
 {
-  "version": 17,
-  "pr": 141,
+  "version": 18,
+  "pr": 147,
   "qualifiers": [
-    "unified-addressed"
+    "r5-judgement"
   ],
-  "purpose": "Final apparatus closure for the unified addressed-speech Owner gate. The immediately previous exact run already passed the semantic regression itself: real gpt-5.6-luna independently accepted the addressed request as a communicate commitment and did not mistake local contact acknowledgement for semantic handling. It failed only because the no-focused-run reporting branch referenced a stale responseOccurrence variable after the evidence refactor. Re-run the same generic participant path with no product behavior changes. PASS requires real <=420 voice range, factual World.speak, exact private speech percept/reason, exact provider originReasonId, semantic acknowledgement-vs-content guard, explicit admission/settlement, five-resident runtime health, and conditional local interruption/exact-return evidence only when a focused mutable run actually exists at contact. Do not retry for a preferred semantic decision.",
-  "requestedAtUtc": "2026-09-18T13:31:00Z"
+  "purpose": "Bounded one-shot real GPT-5.6 Luna semantic judgement through the qualified R5 Mira/Ida no-player organism. The experiment has an explicit local hard upstream request budget of exactly 1. After the real judgement is admitted through the existing resident/World boundary, a fresh second addressed-speech demand intentionally attacks the safety membrane; PASS requires that the second cognition attempt is blocked locally before network I/O, with only one real provider observation total. This is a provider-specific judgement/causality qualifier, not a broad five-resident autonomy or stress test. Do not retry merely to obtain a preferred semantic decision.",
+  "requestedAtUtc": "2026-09-21T17:58:00Z"
 }
