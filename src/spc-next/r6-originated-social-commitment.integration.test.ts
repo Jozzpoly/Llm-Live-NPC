@@ -93,6 +93,7 @@ describe("R6 resident-originated standing social commitment", () => {
         activeRunId: null,
         semanticIntent: {
           kind: "standing_social_commitment",
+          goal: PROMISE_GOAL,
           counterpartyActorId: R5_IDA_ID,
           commitment: PROMISE_MEANING,
         },
