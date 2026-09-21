@@ -96,6 +96,9 @@ describe("R6-C cross-resident standing-social-continuation genericity", () => {
       }],
     });
     expect(speechResult.status).toBe("applied");
+    if (speechResult.status !== "applied") {
+      throw new Error("R6-C Nela factual speech lost exact World authority");
+    }
     expect(speechResult.occurrences).toHaveLength(1);
 
     const nelaOutcome = nelaKernel.reconcileRunOutcome({
