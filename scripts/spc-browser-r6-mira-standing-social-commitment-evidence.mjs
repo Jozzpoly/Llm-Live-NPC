@@ -243,7 +243,7 @@ async function run() {
     assert(report, "only after factual self speech does a run-free standing social commitment enter resident continuity", Boolean(
       standing
       && standing.status === "active"
-      && standing.activeRun === null
+      && standing.activeRunId === null
       && standing.semanticIntent?.counterpartyActorId === IDA_ID
       && first.standing.life.body.focusedRunId === null
       && first.standing.standingMatterId === standing.id
