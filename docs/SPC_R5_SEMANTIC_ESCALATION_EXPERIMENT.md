@@ -1,6 +1,6 @@
 # SPC R5 — Semantic Escalation Experiment
 
-Status: **BINDING CURRENT R5 EXPERIMENT CONTRACT**
+Status: **QUALIFIED HISTORICAL R5 CONTRACT — PASS AS CAUSAL SEMANTIC-ESCALATION SUBSTRATE**
 Date opened: **2026-09-20**
 Parent qualified R4 checkpoint: `65300fa0ad8aadab00e22602f42af21d46d836ba`
 Parent R4 evidence source: `0f7945d74db6b4ed6044f5d636b3c4696dce5201`
@@ -322,7 +322,13 @@ A failure must not create immediate hot-loop retry.
 
 ## 10. Real Luna boundary
 
-Status: **NEXT / BOUNDED PROVIDER-SPECIFIC JUDGEMENT GATE**
+Status: **QUALIFIED CAUSAL PASS / SEMANTIC FIDELITY FINDING**
+
+Qualified source:
+`3122baabd64fdf57cc178f29ee98b81b9b8071af`
+
+Evidence authority:
+`docs/SPC_R5_REAL_LUNA_CAUSAL_BOUNDARY_PASS.md`
 
 Do not spend real-provider budget merely because transport works.
 
@@ -404,3 +410,23 @@ Current work was R5-C:
 9. distinguish provider transport failure from valid semantic non-accept decisions;
 10. after deterministic qualification, add the smallest real-Chromium coverage needed to defend lifecycle/homeostasis;
 11. only after R5-C decide whether bounded real-Luna judgement testing is justified.
+
+
+## 14. R5 promotion decision
+
+R5 is complete within the bounded recovery claim.
+
+Qualified evidence now covers:
+
+- R5-A success/homeostasis;
+- R5-B stale/newer-attention safety;
+- R5-C non-success/error outcomes;
+- one exact real GPT-5.6 Luna escalation through the same causal membrane;
+- a literal one-upstream-request hard budget attacked by a second legitimate cognition demand.
+
+Do not continue R5 by accumulating provider examples.
+
+The live probe produced a material semantic finding: `communicate` can carry natural-language promises about future behavior that are not represented by the communicate matter itself. Preserve that finding. Do not cosmetically prompt it away and call personhood solved.
+
+Current execution authority advances to:
+**R6 — complementary resident falsifiers / ordinary personhood.**
