@@ -452,24 +452,10 @@ function createR5MiraSemanticEscalationScenario(): SpcNextResearchScenario {
 
   const slice = createR5MiraSemanticEscalationSlice(fetcher);
 
-  function currentStandingMatter() {
-    if (observedStandingMatterId) {
-      return slice.life.kernel.matter(observedStandingMatterId);
-    }
-    const projected = slice.life.currentLifeView().matters.find(
-      (matter) => matter.semanticIntent?.kind === "standing_social_commitment"
-        && matter.semanticIntent.counterpartyActorId === R5_IDA_ID,
-    ) ?? null;
-    if (!projected) return null;
-    observedStandingMatterId = projected.id;
-    return slice.life.kernel.matter(projected.id);
-  }
-
   function snapshot() {
     const world = slice.world.publicSnapshot();
     const mira = world.actors.find((actor) => actor.id === R5_MIRA_ID) ?? null;
     const ida = world.actors.find((actor) => actor.id === R5_IDA_ID) ?? null;
-    const standingMatter = currentStandingMatter();
     return {
       diagnostics: slice.diagnostics(),
       life: slice.life.currentLifeView(),
@@ -800,6 +786,19 @@ function createR6MiraStandingSocialCommitmentScenario(): SpcNextResearchScenario
     }
   }
 
+  function currentStandingMatter() {
+    if (observedStandingMatterId) {
+      return slice.life.kernel.matter(observedStandingMatterId);
+    }
+    const projected = slice.life.currentLifeView().matters.find(
+      (matter) => matter.semanticIntent?.kind === "standing_social_commitment"
+        && matter.semanticIntent.counterpartyActorId === R5_IDA_ID,
+    ) ?? null;
+    if (!projected) return null;
+    observedStandingMatterId = projected.id;
+    return slice.life.kernel.matter(projected.id);
+  }
+
   function snapshot() {
     const world = slice.world.publicSnapshot();
     const mira = world.actors.find((actor) => actor.id === R5_MIRA_ID) ?? null;
@@ -809,6 +808,7 @@ function createR6MiraStandingSocialCommitmentScenario(): SpcNextResearchScenario
       requestedAtTick: slice.world.tick,
       reasons: [],
     }).knownActors.find((actor) => actor.id === R5_IDA_ID) ?? null;
+    const standingMatter = currentStandingMatter();
     return {
       diagnostics: slice.diagnostics(),
       life: slice.life.currentLifeView(),
