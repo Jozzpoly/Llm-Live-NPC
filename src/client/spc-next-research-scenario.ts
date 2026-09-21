@@ -2,6 +2,7 @@ import type { ResidentContinuityKernel } from "../spc-next/resident-continuity-k
 import type { ResidentMaterialKnowledge } from "../spc-next/resident-material-knowledge";
 import type { ResidentWorldExecutionAuthority } from "../spc-next/resident-world-execution-authority";
 import type { ResidentLifeCognitionView } from "../spc-next/resident-life-cognition-view";
+import { createCognitionFetchHardBudget } from "../spc-next/cognition-fetch-hard-budget";
 import {
   FiveResidentUnifiedLivingRuntime,
   type FiveResidentLivingRuntimeDiagnostics,
@@ -43,6 +44,7 @@ export type SpcNextResearchScenarioKind =
   | "r4-dense-workshop"
   | "r4-mira-ordinary-life"
   | "r5-mira-semantic-escalation"
+  | "r5-mira-live-semantic-escalation"
   | "unified-living";
 
 export interface SpcNextResearchScenario {
@@ -76,6 +78,7 @@ export function createSpcNextResearchScenario(kind: SpcNextResearchScenarioKind)
   if (kind === "r4-dense-workshop") return createR4DenseWorkshopScenario();
   if (kind === "r4-mira-ordinary-life") return createR4MiraOrdinaryLifeScenario();
   if (kind === "r5-mira-semantic-escalation") return createR5MiraSemanticEscalationScenario();
+  if (kind === "r5-mira-live-semantic-escalation") return createR5MiraLiveSemanticEscalationScenario();
   if (kind === "unified-living") return createUnifiedLivingScenario();
   return createBaselineDeliveryScenario();
 }
@@ -93,6 +96,7 @@ export function researchScenarioKindFromSearch(search: string): SpcNextResearchS
   if (requested === "r4-dense-workshop") return "r4-dense-workshop";
   if (requested === "r4-mira-ordinary-life") return "r4-mira-ordinary-life";
   if (requested === "r5-mira-semantic-escalation") return "r5-mira-semantic-escalation";
+  if (requested === "r5-mira-live-semantic-escalation") return "r5-mira-live-semantic-escalation";
   if (requested === "unified-living") return "unified-living";
   throw new Error(`unknown SPC Next research scenario: ${requested}`);
 }
@@ -510,6 +514,110 @@ function createR5MiraSemanticEscalationScenario(): SpcNextResearchScenario {
     },
     advanceOneWorldTick(): void {
       slice.advanceOneWorldTick();
+    },
+  };
+}
+
+
+interface R5LiveProviderObservation {
+  sequence: number;
+  startedAtTick: number;
+  completedAtTick: number;
+  status: number | null;
+  elapsedMs: number;
+  body: unknown;
+  transportError: string | null;
+}
+
+function createR5MiraLiveSemanticEscalationScenario(): SpcNextResearchScenario {
+  const providerObservations: R5LiveProviderObservation[] = [];
+  let observationSequence = 0;
+
+  const observedUpstream = async (
+    input: RequestInfo | URL,
+    init?: RequestInit,
+  ): Promise<Response> => {
+    const startedAtTick = slice.world.tick;
+    const startedAt = performance.now();
+    try {
+      const response = await fetch(input, init);
+      let body: unknown = null;
+      try {
+        body = await response.clone().json();
+      } catch {
+        body = null;
+      }
+      providerObservations.push({
+        sequence: observationSequence++,
+        startedAtTick,
+        completedAtTick: slice.world.tick,
+        status: response.status,
+        elapsedMs: performance.now() - startedAt,
+        body: structuredClone(body),
+        transportError: null,
+      });
+      return response;
+    } catch (error) {
+      providerObservations.push({
+        sequence: observationSequence++,
+        startedAtTick,
+        completedAtTick: slice.world.tick,
+        status: null,
+        elapsedMs: performance.now() - startedAt,
+        body: null,
+        transportError: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
+  };
+
+  // The real-provider experiment owns a literal one-upstream-request budget.
+  // Any local retry after the first call receives a synthetic bounded 429 before
+  // network IO, so this scene cannot recreate the September unattended spend loop.
+  const providerBudget = createCognitionFetchHardBudget(observedUpstream, 1);
+  const slice = createR5MiraSemanticEscalationSlice(
+    providerBudget.fetch,
+    { providerRuntimeMode: "five-resident-causal-v1" },
+  );
+  let lastWorldTick: ReturnType<typeof slice.advanceOneWorldTick> | null = null;
+
+  function snapshot() {
+    const world = slice.world.publicSnapshot();
+    const mira = world.actors.find((actor) => actor.id === R5_MIRA_ID) ?? null;
+    const ida = world.actors.find((actor) => actor.id === R5_IDA_ID) ?? null;
+    return {
+      diagnostics: slice.diagnostics(),
+      life: slice.life.currentLifeView(),
+      semanticPressure: slice.mira.semanticPressureLifecycleSnapshot(),
+      cognitionRevision: slice.mira.cognitionRevision(),
+      miraPosition: mira?.position ?? null,
+      idaPosition: ida?.position ?? null,
+      providerBudget: providerBudget.snapshot(),
+      providerObservations: structuredClone(providerObservations),
+      lastAdmissions: structuredClone(lastWorldTick?.admissions ?? []),
+      recentOccurrences: slice.world.diagnostics().recentOccurrences,
+    };
+  }
+
+  return {
+    kind: "r5-mira-live-semantic-escalation",
+    evidenceScenarioId: "browser-r5-mira-live-semantic-escalation",
+    residentId: R5_MIRA_ID,
+    matterId: "matter.mira.r5.live.none",
+    world: slice.world,
+    kernel: slice.life.kernel,
+    materialKnowledge: null,
+    authority: slice.life.worldAuthority,
+    residentLifeView(residentId: string): ResidentLifeCognitionView | null {
+      return residentId === R5_MIRA_ID ? slice.life.currentLifeView() : null;
+    },
+    evidenceAction(actionId: string): unknown {
+      if (actionId === "snapshot") return snapshot();
+      if (actionId === "ida-address-mira") return slice.idaAddressMira();
+      throw new Error(`unknown R5 Mira live semantic-escalation evidence action: ${actionId}`);
+    },
+    advanceOneWorldTick(): void {
+      lastWorldTick = slice.advanceOneWorldTick();
     },
   };
 }
