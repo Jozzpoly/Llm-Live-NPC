@@ -276,6 +276,9 @@ async function run() {
       first?.releaseAction?.matter?.status === "resolved"
       && first.releaseAction?.reconciliation?.invalidatedReasonIds?.length === 1
       && standingMatter(first.released)?.status === "resolved"
+      && first.released.life.matters.every(
+        (matter) => matter.semanticIntent?.kind !== "standing_social_commitment",
+      )
       && first.released.pendingReasons.length === 0
       && first.released.provider.providerRequestCount === 1
       && first.released.recentOccurrences.length === first.returnedRelevant.recentOccurrences.length
@@ -289,6 +292,9 @@ async function run() {
       && first.secondReturn.provider.providerRequestCount === 1
       && first.secondReturn.pendingReasons.length === 0
       && standingMatter(first.secondReturn)?.status === "resolved"
+      && first.secondReturn.life.matters.every(
+        (matter) => matter.semanticIntent?.kind !== "standing_social_commitment",
+      )
     ), first?.secondReturn ?? null);
 
     for (const key of [
@@ -537,6 +543,7 @@ async function captureState(cdp) {
     idaPosition: scenario.idaPosition,
     knownIda: scenario.knownIda,
     standingMatterId: scenario.standingMatterId,
+    standingMatter: scenario.standingMatter,
     prepared: scenario.prepared,
     activeRelevanceMatterIds: scenario.activeRelevanceMatterIds ?? [],
     relevanceEvents: scenario.relevanceEvents ?? [],
@@ -557,10 +564,12 @@ function activeCommunicateMatter(state) {
 }
 
 function standingMatter(state) {
-  return state?.life?.matters?.find(
-    (matter) => matter.semanticIntent?.kind === "standing_social_commitment"
-      && matter.semanticIntent?.counterpartyActorId === IDA_ID,
-  ) ?? null;
+  return state?.standingMatter
+    ?? state?.life?.matters?.find(
+      (matter) => matter.semanticIntent?.kind === "standing_social_commitment"
+        && matter.semanticIntent?.counterpartyActorId === IDA_ID,
+    )
+    ?? null;
 }
 
 async function navigateEvidence(cdp) {
