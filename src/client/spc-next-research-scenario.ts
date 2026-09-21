@@ -453,11 +453,16 @@ function createR5MiraSemanticEscalationScenario(): SpcNextResearchScenario {
   const slice = createR5MiraSemanticEscalationSlice(fetcher);
 
   function currentStandingMatter() {
+    if (observedStandingMatterId) {
+      return slice.life.kernel.matter(observedStandingMatterId);
+    }
     const projected = slice.life.currentLifeView().matters.find(
       (matter) => matter.semanticIntent?.kind === "standing_social_commitment"
         && matter.semanticIntent.counterpartyActorId === R5_IDA_ID,
     ) ?? null;
-    return projected ? slice.life.kernel.matter(projected.id) : null;
+    if (!projected) return null;
+    observedStandingMatterId = projected.id;
+    return slice.life.kernel.matter(projected.id);
   }
 
   function snapshot() {
@@ -647,6 +652,7 @@ function createR6MiraStandingSocialCommitmentScenario(): SpcNextResearchScenario
   let releaseProvider: (() => void) | null = null;
   const providerContexts: unknown[] = [];
   let lastWorldTick: ReturnType<ReturnType<typeof createR5MiraSemanticEscalationSlice>["advanceOneWorldTick"]> | null = null;
+  let observedStandingMatterId: string | null = null;
   let idaMotionSequence = 0;
   let idaMotion: {
     matterId: string;
