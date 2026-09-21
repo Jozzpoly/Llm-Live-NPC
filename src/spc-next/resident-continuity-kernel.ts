@@ -48,10 +48,25 @@ export interface ResidentAcquireMaterialObjectMatterIntent {
   objectId: string;
 }
 
+/**
+ * Resident-owned standing social responsibility created by the resident's own
+ * factually observed speech act. It deliberately owns no body execution method.
+ *
+ * The natural-language commitment remains bounded resident meaning, while the exact
+ * counterparty gives later resident-relative relevance a structured causal handle.
+ */
+export interface ResidentStandingSocialCommitmentMatterIntent {
+  kind: "standing_social_commitment";
+  goal: string;
+  counterpartyActorId: string;
+  commitment: string;
+}
+
 export type ResidentMatterIntent =
   | ResidentTravelRegionMatterIntent
   | ResidentCommunicateActorMatterIntent
-  | ResidentAcquireMaterialObjectMatterIntent;
+  | ResidentAcquireMaterialObjectMatterIntent
+  | ResidentStandingSocialCommitmentMatterIntent;
 
 export interface ResidentMatter {
   id: string;
@@ -782,6 +797,10 @@ function validateMatterIntent(intent: ResidentMatterIntent): void {
       return;
     case "acquire_material_object":
       assertNonEmpty(intent.objectId, "matter intent material object id");
+      return;
+    case "standing_social_commitment":
+      assertNonEmpty(intent.counterpartyActorId, "standing social commitment counterparty actor id");
+      assertNonEmpty(intent.commitment, "standing social commitment meaning");
       return;
   }
 }
