@@ -2,6 +2,8 @@ import type { ResidentContinuityKernel } from "../spc-next/resident-continuity-k
 import type { ResidentMaterialKnowledge } from "../spc-next/resident-material-knowledge";
 import type { ResidentWorldExecutionAuthority } from "../spc-next/resident-world-execution-authority";
 import type { ResidentLifeCognitionView } from "../spc-next/resident-life-cognition-view";
+import { ResidentMatterRelevanceBridge } from "../spc-next/resident-matter-relevance-bridge";
+import type { PreparedResidentOriginatedSocialCommitment } from "../spc-next/resident-originated-social-commitment";
 import { createCognitionFetchHardBudget } from "../spc-next/cognition-fetch-hard-budget";
 import {
   FiveResidentUnifiedLivingRuntime,
@@ -45,6 +47,7 @@ export type SpcNextResearchScenarioKind =
   | "r4-mira-ordinary-life"
   | "r5-mira-semantic-escalation"
   | "r5-mira-live-semantic-escalation"
+  | "r6-mira-standing-social-commitment"
   | "unified-living";
 
 export interface SpcNextResearchScenario {
@@ -79,6 +82,7 @@ export function createSpcNextResearchScenario(kind: SpcNextResearchScenarioKind)
   if (kind === "r4-mira-ordinary-life") return createR4MiraOrdinaryLifeScenario();
   if (kind === "r5-mira-semantic-escalation") return createR5MiraSemanticEscalationScenario();
   if (kind === "r5-mira-live-semantic-escalation") return createR5MiraLiveSemanticEscalationScenario();
+  if (kind === "r6-mira-standing-social-commitment") return createR6MiraStandingSocialCommitmentScenario();
   if (kind === "unified-living") return createUnifiedLivingScenario();
   return createBaselineDeliveryScenario();
 }
@@ -97,6 +101,7 @@ export function researchScenarioKindFromSearch(search: string): SpcNextResearchS
   if (requested === "r4-mira-ordinary-life") return "r4-mira-ordinary-life";
   if (requested === "r5-mira-semantic-escalation") return "r5-mira-semantic-escalation";
   if (requested === "r5-mira-live-semantic-escalation") return "r5-mira-live-semantic-escalation";
+  if (requested === "r6-mira-standing-social-commitment") return "r6-mira-standing-social-commitment";
   if (requested === "unified-living") return "unified-living";
   throw new Error(`unknown SPC Next research scenario: ${requested}`);
 }
@@ -621,6 +626,292 @@ function createR5MiraLiveSemanticEscalationScenario(): SpcNextResearchScenario {
     },
   };
 }
+
+
+const R6_PROMISE_TEXT = "Tak, zostanę przy tobie jeszcze chwilę.";
+const R6_PROMISE_GOAL = "pozostać dostępną dla Idy jeszcze przez chwilę";
+const R6_PROMISE_MEANING = "Zobowiązałam się wobec Idy, że pozostanę z nią jeszcze chwilę.";
+const R6_IDA_AWAY_X = 1_500;
+const R6_IDA_HOME_X = 900;
+const R6_IDA_MOTION_SPEED = 115;
+
+function createR6MiraStandingSocialCommitmentScenario(): SpcNextResearchScenario {
+  let releaseProvider: (() => void) | null = null;
+  const providerContexts: unknown[] = [];
+  let lastWorldTick: ReturnType<ReturnType<typeof createR5MiraSemanticEscalationSlice>["advanceOneWorldTick"]> | null = null;
+  let prepared: PreparedResidentOriginatedSocialCommitment | null = null;
+  let standingMatterId: string | null = null;
+  let idaMotionSequence = 0;
+  let idaMotion: {
+    matterId: string;
+    runId: string;
+    targetX: number;
+    direction: -1 | 1;
+  } | null = null;
+  const processedSightPercepts = new Set<string>();
+  const relevanceEvents: unknown[] = [];
+  const relevance = new ResidentMatterRelevanceBridgePlaceholder();
+
+  const fetcher = async (_input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+    const context = JSON.parse(String(init?.body));
+    providerContexts.push(structuredClone(context));
+    await new Promise<void>((resolve) => {
+      releaseProvider = resolve;
+    });
+
+    const originReasonId = context?.reasons?.[0]?.id;
+    if (typeof originReasonId !== "string") {
+      throw new Error("R6 browser fixture provider received no exact origin reason");
+    }
+
+    return new Response(JSON.stringify({
+      ok: true,
+      originReasonId,
+      proposal: {
+        version: 1,
+        commitmentDecision: {
+          kind: "accept",
+          reason: "Ida addressed me directly and I choose to make one explicit social commitment.",
+          intent: {
+            kind: "communicate",
+            goal: "tell Ida that I will remain with her for a while",
+            targetActorId: R5_IDA_ID,
+            targetRegionId: null,
+            targetPosition: null,
+            text: R6_PROMISE_TEXT,
+          },
+        },
+        beliefs: [],
+        concerns: [],
+        reviewAfterSeconds: 30,
+      },
+    }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
+  };
+
+  const slice = createR5MiraSemanticEscalationSlice(fetcher);
+  const relevanceBridge = new ResidentMatterRelevanceBridge(slice.mira);
+
+  // Placeholder exists only to keep declaration order explicit above the slice.
+  void relevance;
+
+  function startIdaMotion(targetX: number): { matterId: string; runId: string; targetX: number } {
+    if (idaMotion) throw new Error("R6 Ida motion already active");
+    const actor = slice.world.publicSnapshot().actors.find((candidate) => candidate.id === R5_IDA_ID);
+    if (!actor) throw new Error("R6 Ida actor missing");
+    const delta = targetX - actor.position.x;
+    if (Math.abs(delta) < 1) return { matterId: "", runId: "", targetX };
+
+    const sequence = idaMotionSequence++;
+    const evidence = slice.idaKernel.recordEvidence({
+      id: `evidence.ida.r6.motion.${sequence}`,
+      tick: slice.world.tick,
+      kind: "life_context",
+      summary: `Ida already decided to move toward x=${targetX} in the bounded R6 fixture.`,
+    });
+    const matterId = `matter.ida.r6.motion.${sequence}`;
+    const runId = `run.ida.r6.motion.${sequence}`;
+    slice.idaKernel.openMatter({
+      id: matterId,
+      originEvidenceId: evidence.id,
+      semanticCourse: `move to bounded R6 fixture position x=${targetX}`,
+    });
+    slice.idaKernel.bindRun({
+      matterId,
+      taskId: `task.ida.r6.motion.${sequence}`,
+      runId,
+    });
+    idaMotion = {
+      matterId,
+      runId,
+      targetX,
+      direction: delta < 0 ? -1 : 1,
+    };
+    return { matterId, runId, targetX };
+  }
+
+  function applyIdaMotionFrame(): void {
+    if (!idaMotion) return;
+    const applied = slice.idaAuthority.apply({
+      runId: idaMotion.runId,
+      effects: [{
+        kind: "motion",
+        desiredVelocity: { x: idaMotion.direction * R6_IDA_MOTION_SPEED, y: 0 },
+      }],
+    });
+    if (applied.status !== "applied") {
+      throw new Error("R6 Ida motion lost exact resident execution authority");
+    }
+  }
+
+  function finishIdaMotionIfReached(): void {
+    if (!idaMotion) return;
+    const actor = slice.world.publicSnapshot().actors.find((candidate) => candidate.id === R5_IDA_ID);
+    if (!actor) throw new Error("R6 Ida actor missing after World step");
+    const reached = idaMotion.direction > 0
+      ? actor.position.x >= idaMotion.targetX
+      : actor.position.x <= idaMotion.targetX;
+    if (!reached) return;
+
+    const current = idaMotion;
+    const reconciled = slice.idaKernel.reconcileRunOutcome({
+      runId: current.runId,
+      tick: slice.world.tick,
+      status: "succeeded",
+      summary: `Ida factually reached the bounded R6 motion target x=${current.targetX}.`,
+    });
+    if (reconciled.status !== "recorded") {
+      throw new Error("R6 Ida motion run did not reconcile");
+    }
+    slice.idaKernel.resolveMatter(current.matterId);
+    slice.idaAuthority.enforceMotionAuthority();
+    idaMotion = null;
+  }
+
+  function observeNewIdaSight(): void {
+    const privateContext = slice.mira.cognitionContext({
+      residentId: R5_MIRA_ID,
+      requestedAtTick: slice.world.tick,
+      reasons: [],
+    });
+    for (const percept of privateContext.recentPercepts) {
+      if (processedSightPercepts.has(percept.id)) continue;
+      if (percept.phenomenon !== "actor_sight_enter" || percept.actorId !== R5_IDA_ID) continue;
+      processedSightPercepts.add(percept.id);
+      relevanceEvents.push({
+        tick: slice.world.tick,
+        percept: structuredClone(percept),
+        result: relevanceBridge.observe(percept, slice.life.currentLifeView()),
+      });
+    }
+  }
+
+  function snapshot() {
+    const world = slice.world.publicSnapshot();
+    const mira = world.actors.find((actor) => actor.id === R5_MIRA_ID) ?? null;
+    const ida = world.actors.find((actor) => actor.id === R5_IDA_ID) ?? null;
+    const knownIda = slice.mira.cognitionContext({
+      residentId: R5_MIRA_ID,
+      requestedAtTick: slice.world.tick,
+      reasons: [],
+    }).knownActors.find((actor) => actor.id === R5_IDA_ID) ?? null;
+    return {
+      diagnostics: slice.diagnostics(),
+      life: slice.life.currentLifeView(),
+      semanticPressure: slice.mira.semanticPressureLifecycleSnapshot(),
+      miraPosition: mira?.position ?? null,
+      idaPosition: ida?.position ?? null,
+      knownIda,
+      providerContexts: structuredClone(providerContexts),
+      lastWorldTick: structuredClone(lastWorldTick),
+      standingMatterId,
+      prepared: prepared !== null,
+      activeRelevanceMatterIds: relevanceBridge.activeMatterIds(),
+      relevanceEvents: structuredClone(relevanceEvents),
+      idaMotion: idaMotion ? structuredClone(idaMotion) : null,
+      recentOccurrences: slice.world.diagnostics().recentOccurrences,
+    };
+  }
+
+  return {
+    kind: "r6-mira-standing-social-commitment",
+    evidenceScenarioId: "browser-r6-mira-standing-social-commitment",
+    residentId: R5_MIRA_ID,
+    matterId: "matter.mira.r6.standing.none",
+    world: slice.world,
+    kernel: slice.life.kernel,
+    materialKnowledge: null,
+    authority: slice.life.worldAuthority,
+    residentLifeView(residentId: string): ResidentLifeCognitionView | null {
+      return residentId === R5_MIRA_ID ? slice.life.currentLifeView() : null;
+    },
+    evidenceAction(actionId: string): unknown {
+      if (actionId === "snapshot") return snapshot();
+      if (actionId === "ida-address-mira") return slice.idaAddressMira();
+      if (actionId === "release-provider") {
+        const release = releaseProvider;
+        if (!release) throw new Error("R6 browser provider is not waiting for release");
+        releaseProvider = null;
+        release();
+        return { released: true, tick: slice.world.tick };
+      }
+      if (actionId === "prepare-standing") {
+        if (prepared) throw new Error("R6 standing commitment already prepared");
+        const source = slice.life.currentLifeView().matters.find((matter) => (
+          matter.status === "active"
+          && matter.semanticIntent?.kind === "communicate_actor"
+          && matter.semanticIntent.targetActorId === R5_IDA_ID
+          && matter.semanticIntent.text === R6_PROMISE_TEXT
+          && matter.activeRun !== null
+        )) ?? null;
+        if (!source?.activeRun) throw new Error("R6 no active promised communicate matter to prepare");
+        prepared = slice.life.originatedSocialCommitments.prepareFromCommunicateMatter({
+          sourceMatterId: source.id,
+          counterpartyActorId: R5_IDA_ID,
+          expectedSpeechText: R6_PROMISE_TEXT,
+          goal: R6_PROMISE_GOAL,
+          commitment: R6_PROMISE_MEANING,
+        });
+        return {
+          sourceMatterId: prepared.sourceMatterId,
+          sourceRunId: prepared.sourceRunId,
+          counterpartyActorId: prepared.counterpartyActorId,
+        };
+      }
+      if (actionId === "materialize-standing") {
+        if (!prepared) throw new Error("R6 standing commitment was not prepared");
+        const speech = [...slice.world.diagnostics().recentOccurrences].reverse().find(
+          (occurrence) => occurrence.kind === "speech"
+            && occurrence.actorId === R5_MIRA_ID
+            && occurrence.text === R6_PROMISE_TEXT
+            && occurrence.addressedActorIds.includes(R5_IDA_ID),
+        ) ?? null;
+        if (!speech) throw new Error("R6 promised factual speech not found");
+        const materialized = slice.life.originatedSocialCommitments.materializeAfterFactualSpeech(
+          prepared,
+          speech.id,
+        );
+        prepared = null;
+        standingMatterId = materialized.matter.id;
+        return {
+          standingMatterId,
+          occurrenceId: speech.id,
+          originEvidenceId: materialized.originEvidence.id,
+        };
+      }
+      if (actionId === "ida-move-away") return startIdaMotion(R6_IDA_AWAY_X);
+      if (actionId === "ida-move-back") return startIdaMotion(R6_IDA_HOME_X);
+      if (actionId === "release-standing") {
+        if (!standingMatterId) throw new Error("R6 no standing commitment to release");
+        const released = slice.life.originatedSocialCommitments.release({
+          matterId: standingMatterId,
+          tick: slice.world.tick,
+          reason: "Mira no longer treats this standing commitment as open.",
+        });
+        const reconciliation = relevanceBridge.reconcile(
+          slice.life.currentLifeView(),
+          slice.world.tick,
+        );
+        return {
+          matter: released.matter,
+          releaseEvidence: released.releaseEvidence,
+          reconciliation,
+        };
+      }
+      throw new Error(`unknown R6 Mira standing-social-commitment evidence action: ${actionId}`);
+    },
+    advanceOneWorldTick(): void {
+      applyIdaMotionFrame();
+      lastWorldTick = slice.advanceOneWorldTick();
+      finishIdaMotionIfReached();
+      observeNewIdaSight();
+    },
+  };
+}
+
+class ResidentMatterRelevanceBridgePlaceholder {}
 
 
 function createUnifiedLivingScenario(): SpcNextResearchScenario {
