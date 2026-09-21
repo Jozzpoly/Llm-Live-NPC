@@ -85,8 +85,12 @@ describe("R6-A current future-social-meaning gap characterization", () => {
     // that the second sentence makes a future behavioral commitment.
     expect(ordinary.matter.semanticIntent?.kind).toBe("communicate_actor");
     expect(promise.matter.semanticIntent?.kind).toBe("communicate_actor");
-    expect(ordinary.matter.semanticIntent?.text).toBe(ORDINARY_REPLY);
-    expect(promise.matter.semanticIntent?.text).toBe(FUTURE_PROMISE_REPLY);
+    if (ordinary.matter.semanticIntent?.kind !== "communicate_actor"
+      || promise.matter.semanticIntent?.kind !== "communicate_actor") {
+      throw new Error("R6 characterization expected communicate_actor twins");
+    }
+    expect(ordinary.matter.semanticIntent.text).toBe(ORDINARY_REPLY);
+    expect(promise.matter.semanticIntent.text).toBe(FUTURE_PROMISE_REPLY);
     expect(ordinary.matter.semanticCourse).not.toBe(promise.matter.semanticCourse);
 
     expect(ordinary.providerCalls).toBe(1);
