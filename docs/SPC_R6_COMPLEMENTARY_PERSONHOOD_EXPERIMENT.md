@@ -135,73 +135,68 @@ Both must use shared generic architecture.
 No:
 `if (residentId === "resident.mira")`.
 
-## 6. R6-A — executable characterization before new state
+## 6. R6-A — resident-originated standing social commitment
 
-Status: **CURRENT / OPEN**
+Status: **QUALIFIED / BOUNDED PASS — 2026-09-21**
 
-R6-A must make the present gaps executable.
+Qualification record:
+`docs/SPC_R6A_STANDING_SOCIAL_COMMITMENT_PASS.md`
 
-### A. Future social meaning can evaporate after factual speech
+R6-A first made the R5 future-promise gap executable, then introduced the smallest bounded private-state primitive justified by that failure.
 
-Reproduce the R5 real-Luna semantic shape deterministically:
+The qualified causal chain is:
 
-- one grounded Ida addressed speech;
-- provider accepts a `communicate` intent;
-- response text contains a future behavioral commitment;
-- factual World speech succeeds;
-- communicate matter resolves;
-- originating semantic reason settles.
+1. one exact addressed Ida speech creates one resident-owned semantic attempt;
+2. a provider-shaped decision accepts one grounded `communicate` matter/run;
+3. a standing-commitment capability can be prepared only while that exact communicate run is live;
+4. provider completion and semantic preparation alone create no standing history;
+5. Mira factually speaks the promised sentence through World authority;
+6. the communicate run resolves from exact factual outcome provenance;
+7. only then can the prepared capability materialize one private `standing_social_commitment`;
+8. that matter owns no run and no body authority;
+9. it persists while Ida physically leaves;
+10. the same later Ida sight-enter becomes resident-relative semantic pressure because of that exact private history;
+11. private release resolves the commitment and locally invalidates the derived pressure without manufacturing a World fact;
+12. an equivalent later Ida sight-enter is again observation-only.
 
-Then prove:
+This qualifies one bounded causal-personhood effect beyond provider prose and beyond the terminal communicate obligation.
 
-- no second durable resident matter represents the promised future behavior;
-- no open responsibility represents that promise;
-- no later resident-life view can distinguish:
-  - “Mira factually promised to stay”
-  from
-  - “Mira merely uttered an ordinary sentence”,
-  except through raw historical speech text.
+It does **not** qualify:
+- full R6;
+- general promise understanding;
+- automatic inference of commitments from arbitrary speech text;
+- preferences, aversions, trust, resentment, habit or self-interest;
+- cross-resident behavioral genericity of this new primitive;
+- ordinary Owner-observed aliveness.
 
-This is characterization, not a demand to implement a generic promise ontology.
+Authored `role/drives` remain non-authoritative exactly as established by R3.
 
-### B. Authored role/drives remain non-authoritative
+## 7. Current frontier after R6-A
 
-Reuse R3 evidence rather than duplicating it.
+Do **not** generalize this into a universal personality store.
 
-The R6 contract explicitly inherits:
+The current R6-A browser specimen still requires experiment-owned knowledge to invoke:
+- `prepare-standing`;
+- `materialize-standing`.
 
-- changing `role/drives` prose is not proof of acquired preference;
-- provider reasoning from prose is not causal self state;
-- generic provider concern/belief text is not personhood authority.
+The normal `ResidentLifeIntentProposal` contract can accept one grounded `ProposedActivity`, but it cannot currently express:
 
-### C. Current continuity is strong but narrow
+> this accepted factual communication is also intended to create one bounded standing social commitment if and only if the resident actually says it.
 
-R3 already proves open resident-owned matters can change later significance.
+Therefore the next R6 pressure is **native causal expressivity**, not another personality feature.
 
-R6 must identify what is still missing once:
-- an obligation is terminal;
-- a spoken future commitment has no structured continuation;
-- ordinary optional behavior has no active matter forcing relevance.
+The next experiment must determine the smallest resident-generic seam that can carry this durable semantic continuation through the normal life-intent/admission path while preserving all R6-A boundaries:
 
-## 7. First candidate vertical after characterization
+- no promise inference from text alone;
+- no provider-authored commitment as its own cause;
+- exact origin reason;
+- exact live communicate matter/run;
+- factual self speech before materialization;
+- no direct body authority;
+- explicit release/termination;
+- fail closed on ambiguity or stale authority.
 
-Do **not** commit to a universal personality store yet.
-
-The preferred first pressure is a bounded resident-private **personal stake / social commitment** with exact causal origin and lifecycle.
-
-Why this candidate is strong:
-
-- the live R5 failure already demands it;
-- it connects speech, continuity, self-interest and relationship history;
-- it can be falsified without inventing hunger/fun/social meters;
-- it can later support refusal, resentment, trust or preference only if those become separately earned.
-
-Possible bounded shapes include:
-- a promise/responsibility created by the resident's own factual speech;
-- a resident-private stake in an object/place/actor created by factual history;
-- an explicit release/fulfilment/supersession path.
-
-The first executable characterization decides which minimal primitive is actually missing.
+Cross-resident genericity must also be attacked before the broader first R6 milestone is promoted.
 
 ## 8. Anti-cheat rules
 
@@ -257,15 +252,23 @@ Only then decide whether the next pressure should be:
 
 ## 11. Immediate work order
 
-1. freeze R5 qualified sources and do not spend more Luna merely for examples;
-2. make the unrepresented-future-promise gap executable;
-3. inspect existing continuity/evidence primitives for reuse before creating a new store;
-4. identify the smallest missing private-state seam;
-5. build one twin/history falsifier;
-6. connect it to significance/choice, not directly to body commands;
-7. reattack ordinary non-action;
-8. reattack Janek material continuity;
-9. only after the first evidence cycle decide whether the primitive deserves generalization.
+Completed through R6-A:
+- R5 qualified sources remain frozen;
+- the future-promise gap is executable;
+- existing continuity/evidence machinery was reused rather than replaced;
+- one minimal `standing_social_commitment` primitive has exact origin and lifecycle;
+- a same-current-evidence/history twin changes significance;
+- real Chromium qualified persistence, release and observation-only return;
+- earlier Janek/material/browser vetoes remained green.
+
+Current order:
+1. characterize the normal life-intent expressivity gap exposed by R6-A;
+2. make the smallest resident-generic continuation seam executable;
+3. prove it cannot mint standing history from text, provider completion or forged/stale authority;
+4. attack the same primitive with a second resident/genericity falsifier;
+5. reattack ordinary non-action / refusal with resident-owned causal history;
+6. keep Janek material continuity as complementary veto;
+7. only then decide whether the next earned pressure is preference/aversion, relationship history, ownership/control, habit or self-interest.
 
 ## 12. Owner-observed target
 
