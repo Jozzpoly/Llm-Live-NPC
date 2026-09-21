@@ -417,8 +417,14 @@ R5-B stale/newer-attention safety:
 Evidence authority:
 `docs/SPC_R5B_STALE_ATTENTION_PASS.md`.
 
+R5-C provider failure and explicit semantic retention/settlement outcomes:
+**QUALIFIED PASS** at source SHA `7256ccad2f82d99cbb89668b64ebdaf23f48f484`.
+
+Evidence authority:
+`docs/SPC_R5C_PROVIDER_OUTCOMES_PASS.md`.
+
 Current R5 gate:
-**R5-C — provider failure and explicit semantic retention/settlement outcomes**.
+**bounded real-provider semantic judgement**, with an experiment-owned hard request budget before any broader unattended provider runtime is allowed.
 
 Goal:
 reintroduce the provider into a resident who already lives locally.
