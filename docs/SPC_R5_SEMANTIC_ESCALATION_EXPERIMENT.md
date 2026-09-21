@@ -303,7 +303,10 @@ Do not implement R5-B merely to add another test before R5-A is clean.
 
 ## 9. R5-C — provider errors and explicit retention
 
-Status: **CURRENT / OPEN**
+Status: **QUALIFIED PASS** — source `7256ccad2f82d99cbb89668b64ebdaf23f48f484`
+
+Evidence authority:
+`docs/SPC_R5C_PROVIDER_OUTCOMES_PASS.md`
 
 R5-A and R5-B are qualified. R5-C now pressures non-success semantic outcomes and provider failure homeostasis.
 
@@ -319,6 +322,8 @@ A failure must not create immediate hot-loop retry.
 
 ## 10. Real Luna boundary
 
+Status: **NEXT / BOUNDED PROVIDER-SPECIFIC JUDGEMENT GATE**
+
 Do not spend real-provider budget merely because transport works.
 
 A bounded real-Luna campaign belongs after:
@@ -330,6 +335,13 @@ A bounded real-Luna campaign belongs after:
 - raw request reason and settlement are inspectable.
 
 Then test judgement quality, not infrastructure existence.
+
+The September runaway adds one more hard requirement:
+
+- the first real-provider experiment must be structurally incapable of becoming an unattended request loop;
+- use an explicit tiny request budget enforced by the experiment/runtime itself;
+- do not treat the OpenAI project spend limit as the runtime kill-switch;
+- do not enable broad five-resident real-provider autonomy merely because the one-shot judgement probe passes.
 
 ## 11. Anti-cheat / anti-regression rules
 
@@ -362,9 +374,24 @@ If a thinner reuse path exists, prefer it.
 
 ## 13. Immediate work order
 
-R5-A and R5-B are closed as bounded PASSes.
+R5-A, R5-B and R5-C are closed as bounded PASSes.
 
-Current work is R5-C:
+Current work is the first bounded real-provider judgement gate:
+
+1. preserve deterministic R5-A/B/C specimens unchanged;
+2. reuse the exact reason-native `/api/spc-next/life-intent` path rather than a separate prompt toy;
+3. build an experiment-owned hard request budget so a bug cannot recurse into an unattended provider loop;
+4. start from one genuine no-player Mira/Ida addressed-speech reason;
+5. allow exactly one real provider judgement for the primary specimen;
+6. capture exact private context, selected origin, structured decision, usage and latency;
+7. apply the result only through the already-qualified local admission boundary;
+8. classify semantic quality separately from causal legality;
+9. re-run a small bounded matrix only if the first call is causally clean and the hard budget remains armed;
+10. do not promote to broad five-resident real-provider runtime from this gate alone.
+
+Historical R5-C work order retained below for provenance:
+
+Current work was R5-C:
 
 1. preserve the qualified R5-A/R5-B causal paths;
 2. use the same compact Mira/Ida no-player organism;
