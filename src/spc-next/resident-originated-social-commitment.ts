@@ -140,7 +140,13 @@ export class ResidentOriginatedSocialCommitmentAuthority {
 
     const source = this.options.kernel.matter(authority.sourceMatterId);
     const outcome = source?.lastOutcomeEvidenceId
-      ? this.options.kernel.lastOutcomeEvidence(source.id)
+      ? (
+          this.options.kernel.lastOutcomeEvidence(source.id)
+          ?? this.options.kernel.recentEvidenceSnapshot().find(
+            (evidence) => evidence.id === source.lastOutcomeEvidenceId,
+          )
+          ?? null
+        )
       : null;
     if (!source
       || source.status !== "resolved"
