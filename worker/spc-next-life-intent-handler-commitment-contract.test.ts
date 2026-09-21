@@ -150,9 +150,12 @@ describe("SPC Next life-intent endpoint commitment contract", () => {
     expect(upstreamRequest.text.format.schema.properties.proposal.properties).not.toHaveProperty("activityDirective");
     const commitmentVariants = upstreamRequest.text.format.schema.properties.proposal
       .properties.commitmentDecision.anyOf;
-    expect(commitmentVariants.some((variant: any) => (
+    const standingVariant = commitmentVariants.find((variant: any) => (
       variant.properties?.standingSocialCommitment
-    ))).toBe(true);
+    ));
+    expect(standingVariant).toBeTruthy();
+    expect(Object.keys(standingVariant.properties.standingSocialCommitment.properties))
+      .toEqual(["goal"]);
     expect(upstreamRequest.instructions).toContain("commitmentDecision");
     expect(upstreamRequest.instructions).toContain("does not seize the body");
     expect(upstreamRequest.instructions).toContain("standingSocialCommitment");

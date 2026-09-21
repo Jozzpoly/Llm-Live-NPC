@@ -8,7 +8,6 @@ import {
 
 const PROMISE_TEXT = "Tak, zostanę przy tobie jeszcze chwilę.";
 const PROMISE_GOAL = "pozostać dostępną dla Idy jeszcze przez chwilę";
-const PROMISE_MEANING = "Zobowiązałam się wobec Idy, że pozostanę z nią jeszcze chwilę.";
 const EXECUTION_GUARD = 600;
 
 describe("R6-B native life-intent standing social continuation", () => {
@@ -35,7 +34,6 @@ describe("R6-B native life-intent standing social continuation", () => {
           },
           standingSocialCommitment: {
             goal: PROMISE_GOAL,
-            commitment: PROMISE_MEANING,
           },
         },
         beliefs: [],
@@ -86,7 +84,6 @@ describe("R6-B native life-intent standing social continuation", () => {
         text: PROMISE_TEXT,
         standingSocialCommitment: {
           goal: PROMISE_GOAL,
-          commitment: PROMISE_MEANING,
         },
       },
     });
@@ -126,7 +123,7 @@ describe("R6-B native life-intent standing social continuation", () => {
         kind: "standing_social_commitment",
         goal: PROMISE_GOAL,
         counterpartyActorId: R5_IDA_ID,
-        commitment: PROMISE_MEANING,
+        commitment: PROMISE_TEXT,
       },
       originEvidence: {
         kind: "resident_originated_social_commitment",

@@ -58,7 +58,7 @@ Supported accepted intents use the bounded semantic vocabulary:
 - follow: commit to seeking/following one KNOWN actor using acquired contact evidence;
 - communicate: commit to seeking physical contact with one KNOWN actor and speaking the supplied natural Polish text only after contact.
 
-For accept+communicate only, use standingSocialCommitment when the resident deliberately intends that exact future speech to create one continuing social responsibility after it is factually spoken. The field contains only goal and commitment. Omit it for ordinary acknowledgement or conversation. It does not make the promise true, does not grant body authority and does not create standing history by itself; local causality may materialize it only after the exact speech actually succeeds.
+For accept+communicate only, use standingSocialCommitment when the resident deliberately intends that exact future speech to create one continuing social responsibility after it is factually spoken. The field contains only goal. Omit it for ordinary acknowledgement or conversation. The exact supplied speech text becomes the durable commitment wording only if that speech factually succeeds; do not provide a second paraphrased commitment claim. The declaration does not make the promise true, does not grant body authority and does not create standing history by itself.
 
 Do not output trajectories, routes, execution steps, matter ids to invent, run ids to invent, body-focus decisions, or claims that an action already happened. The local system owns execution and will re-ground any accepted semantic destination or target from current state at admission time.
 
@@ -242,11 +242,9 @@ function strictCommitmentProposalShape(value: unknown): boolean {
         || decision.intent.targetActorId === null
         || decision.intent.text === null
         || !record(decision.standingSocialCommitment)
-        || !hasExactKeys(decision.standingSocialCommitment, ["goal", "commitment"])
+        || !hasExactKeys(decision.standingSocialCommitment, ["goal"])
         || typeof decision.standingSocialCommitment.goal !== "string"
-        || !decision.standingSocialCommitment.goal.trim()
-        || typeof decision.standingSocialCommitment.commitment !== "string"
-        || !decision.standingSocialCommitment.commitment.trim()) return false;
+        || !decision.standingSocialCommitment.goal.trim()) return false;
     }
   } else if (decision.kind === "decline" || decision.kind === "defer") {
     if (!hasExactKeys(decision, ["kind", "reason"])) return false;
@@ -326,7 +324,6 @@ const concernsSchema = { type: "array", maxItems: 8, items: objectSchema({
 }) };
 const standingSocialCommitmentSchema = objectSchema({
   goal: stringSchema(1200),
-  commitment: stringSchema(1200),
 });
 const proposalSchema = objectSchema({
   version: { type: "integer", enum: [1] },

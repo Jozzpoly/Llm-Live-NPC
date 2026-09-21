@@ -140,7 +140,7 @@ export class ResidentOriginatedSocialCommitmentAuthority {
       counterpartyActorId: source.semanticIntent.targetActorId,
       expectedSpeechText: source.semanticIntent.text,
       goal: source.semanticIntent.standingSocialCommitment.goal,
-      commitment: source.semanticIntent.standingSocialCommitment.commitment,
+      commitment: source.semanticIntent.text,
     });
   }
 

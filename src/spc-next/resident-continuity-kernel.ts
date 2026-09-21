@@ -29,8 +29,12 @@ export interface ResidentTravelRegionMatterIntent {
 }
 
 export interface ResidentStandingSocialCommitmentDescriptor {
+  /**
+   * Semantic purpose of explicitly making the communication durable.
+   * The durable commitment text itself is the exact factual speech text, not a
+   * second provider-authored paraphrase.
+   */
   goal: string;
-  commitment: string;
 }
 
 export interface ResidentCommunicateActorMatterIntent {
@@ -809,10 +813,6 @@ function validateMatterIntent(intent: ResidentMatterIntent): void {
         assertNonEmpty(
           intent.standingSocialCommitment.goal,
           "standing social continuation goal",
-        );
-        assertNonEmpty(
-          intent.standingSocialCommitment.commitment,
-          "standing social continuation meaning",
         );
       }
       return;

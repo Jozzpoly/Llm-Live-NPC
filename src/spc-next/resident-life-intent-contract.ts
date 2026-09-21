@@ -93,9 +93,8 @@ export function parseResidentLifeIntentProposal(
     if (hasStandingSocialCommitment) {
       const rawStanding = decision.standingSocialCommitment;
       if (!isRecord(rawStanding)
-        || !hasExactKeys(rawStanding, ["goal", "commitment"])
+        || !hasExactKeys(rawStanding, ["goal"])
         || !isBoundedString(rawStanding.goal, 1_200)
-        || !isBoundedString(rawStanding.commitment, 1_200)
         || validated.activityDirective.activity.kind !== "communicate"
         || validated.activityDirective.activity.targetActorId === null
         || validated.activityDirective.activity.text === null) {
@@ -103,7 +102,6 @@ export function parseResidentLifeIntentProposal(
       }
       standingSocialCommitment = {
         goal: rawStanding.goal,
-        commitment: rawStanding.commitment,
       };
     }
 

@@ -629,7 +629,6 @@ function createR5MiraLiveSemanticEscalationScenario(): SpcNextResearchScenario {
 
 const R6_PROMISE_TEXT = "Tak, zostanę przy tobie jeszcze chwilę.";
 const R6_PROMISE_GOAL = "pozostać dostępną dla Idy jeszcze przez chwilę";
-const R6_PROMISE_MEANING = "Zobowiązałam się wobec Idy, że pozostanę z nią jeszcze chwilę.";
 const R6_IDA_AWAY_X = 1_500;
 const R6_IDA_HOME_X = 900;
 const R6_IDA_MOTION_SPEED = 115;
@@ -679,7 +678,6 @@ function createR6MiraStandingSocialCommitmentScenario(): SpcNextResearchScenario
           },
           standingSocialCommitment: {
             goal: R6_PROMISE_GOAL,
-            commitment: R6_PROMISE_MEANING,
           },
         },
         beliefs: [],

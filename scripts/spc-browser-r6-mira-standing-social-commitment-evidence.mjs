@@ -222,7 +222,7 @@ async function run() {
     assert(report, "native life intent carries explicit standing semantics without creating standing history before execution", Boolean(
       communicate
       && communicate.semanticIntent?.standingSocialCommitment?.goal
-      && communicate.semanticIntent?.standingSocialCommitment?.commitment
+      && !Object.hasOwn(communicate.semanticIntent?.standingSocialCommitment ?? {}, "commitment")
       && first.admitted.standingMatterId === null
       && first.admitted.life.matters.every(
         (matter) => matter.semanticIntent?.kind !== "standing_social_commitment",
@@ -241,6 +241,7 @@ async function run() {
       && standing.status === "active"
       && standing.activeRunId === null
       && standing.semanticIntent?.counterpartyActorId === IDA_ID
+      && standing.semanticIntent?.commitment === PROMISE_TEXT
       && standing.originEvidenceId
       && first.standing.standingMatterId === standing.id
       && first.standing.life.body.focusedRunId === null
