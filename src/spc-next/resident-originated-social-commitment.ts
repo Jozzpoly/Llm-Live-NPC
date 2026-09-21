@@ -12,6 +12,23 @@ export interface ResidentOriginatedSocialCommitmentOptions {
   identityNamespace?: string;
 }
 
+export interface PreparedResidentOriginatedSocialCommitment {
+  readonly residentId: string;
+  readonly sourceMatterId: string;
+  readonly sourceRunId: string;
+  readonly sourceSemanticRevision: number;
+  readonly counterpartyActorId: string;
+  readonly expectedSpeechText: string;
+  readonly goal: string;
+  readonly commitment: string;
+}
+
+interface PreparedAuthority {
+  sourceMatterId: string;
+  sourceRunId: string;
+  sourceSemanticRevision: number;
+}
+
 export interface MaterializedResidentOriginatedSocialCommitment {
   matter: ResidentMatter;
   originEvidence: ResidentKernelEvidence;
@@ -27,20 +44,29 @@ export interface ReleasedResidentOriginatedSocialCommitment {
  * Resident-generic authority for a standing social commitment created by the
  * resident's own factual speech act.
  *
- * This class deliberately does NOT infer promises from text and does NOT decide that
- * a resident should commit. A caller must already own the semantic decision.
+ * It deliberately does NOT infer promises from text.
  *
- * Its authority is narrower:
- * - verify the exact speech occurrence exists in World history;
- * - verify this resident factually spoke it;
- * - verify the named counterparty was explicitly addressed;
- * - only then turn an admitted structured commitment into resident continuity.
+ * The authority is two-phase:
  *
- * The resulting matter has no run and therefore no body authority.
+ * 1. prepareFromCommunicateMatter() can issue an opaque semantic capability only
+ *    while one exact already-grounded communicate_actor matter/run is live;
+ * 2. materializeAfterFactualSpeech() consumes that exact capability only after the
+ *    matching resident speech actually exists in World and the source run has
+ *    factually completed through the continuity kernel.
+ *
+ * A real speech string by itself therefore cannot be retrospectively decorated with
+ * arbitrary standing personhood state, and a semantic decision by itself cannot create
+ * history before the resident actually says it.
+ *
+ * The resulting standing matter owns no run and therefore no body authority.
  */
 export class ResidentOriginatedSocialCommitmentAuthority {
   private readonly matterScope: ResidentLifeMatterScope;
   private readonly identityNamespace: string;
+  private readonly prepared = new WeakMap<
+    PreparedResidentOriginatedSocialCommitment,
+    PreparedAuthority
+  >();
 
   constructor(private readonly options: ResidentOriginatedSocialCommitmentOptions) {
     if (!options.residentId.trim()) throw new Error("residentId must be non-empty");
@@ -50,33 +76,101 @@ export class ResidentOriginatedSocialCommitmentAuthority {
     );
   }
 
-  materializeAfterFactualSpeech(input: {
-    occurrenceId: string;
-    expectedSpeechText: string;
+  prepareFromCommunicateMatter(input: {
+    sourceMatterId: string;
     counterpartyActorId: string;
+    expectedSpeechText: string;
     goal: string;
     commitment: string;
-  }): MaterializedResidentOriginatedSocialCommitment {
-    assertNonEmpty(input.occurrenceId, "social commitment occurrence id");
-    assertNonEmpty(input.expectedSpeechText, "social commitment speech text");
+  }): PreparedResidentOriginatedSocialCommitment {
+    assertNonEmpty(input.sourceMatterId, "social commitment source matter id");
     assertNonEmpty(input.counterpartyActorId, "social commitment counterparty actor id");
+    assertNonEmpty(input.expectedSpeechText, "social commitment speech text");
     assertNonEmpty(input.goal, "social commitment goal");
     assertNonEmpty(input.commitment, "social commitment meaning");
 
+    const source = this.options.kernel.matter(input.sourceMatterId);
+    if (!source
+      || source.status !== "active"
+      || source.activeRunId === null
+      || source.semanticIntent?.kind !== "communicate_actor"
+      || source.semanticIntent.targetActorId !== input.counterpartyActorId
+      || source.semanticIntent.text !== input.expectedSpeechText) {
+      throw new Error(
+        "standing social commitment preparation requires one exact active communicate matter/run",
+      );
+    }
+
+    const capability = Object.freeze({
+      residentId: this.options.residentId,
+      sourceMatterId: source.id,
+      sourceRunId: source.activeRunId,
+      sourceSemanticRevision: source.semanticRevision,
+      counterpartyActorId: input.counterpartyActorId,
+      expectedSpeechText: input.expectedSpeechText,
+      goal: input.goal,
+      commitment: input.commitment,
+    }) satisfies PreparedResidentOriginatedSocialCommitment;
+
+    this.prepared.set(capability, {
+      sourceMatterId: source.id,
+      sourceRunId: source.activeRunId,
+      sourceSemanticRevision: source.semanticRevision,
+    });
+    return capability;
+  }
+
+  materializeAfterFactualSpeech(
+    capability: PreparedResidentOriginatedSocialCommitment,
+    occurrenceId: string,
+  ): MaterializedResidentOriginatedSocialCommitment {
+    assertNonEmpty(occurrenceId, "social commitment occurrence id");
+    const authority = this.prepared.get(capability);
+    if (!authority
+      || capability.residentId !== this.options.residentId
+      || capability.sourceMatterId !== authority.sourceMatterId
+      || capability.sourceRunId !== authority.sourceRunId
+      || capability.sourceSemanticRevision !== authority.sourceSemanticRevision) {
+      throw new Error("standing social commitment lacks exact prepared semantic authority");
+    }
+
+    // One capability is single-use even when later factual validation fails. A caller
+    // must prepare a new causal attempt rather than replaying an old semantic token.
+    this.prepared.delete(capability);
+
+    const source = this.options.kernel.matter(authority.sourceMatterId);
+    const outcome = source?.lastOutcomeEvidenceId
+      ? this.options.kernel.lastOutcomeEvidence(source.id)
+      : null;
+    if (!source
+      || source.status !== "resolved"
+      || source.semanticRevision !== authority.sourceSemanticRevision
+      || source.activeRunId !== null
+      || source.semanticIntent?.kind !== "communicate_actor"
+      || source.semanticIntent.targetActorId !== capability.counterpartyActorId
+      || source.semanticIntent.text !== capability.expectedSpeechText
+      || source.lastOutcomeSemanticRevision !== authority.sourceSemanticRevision
+      || !outcome
+      || outcome.sourceRunId !== authority.sourceRunId
+      || !outcome.summary.includes("factually delivered speech")) {
+      throw new Error("standing social commitment source communication did not factually complete");
+    }
+
     const occurrence = this.options.world.diagnostics().recentOccurrences.find(
-      (candidate) => candidate.id === input.occurrenceId,
+      (candidate) => candidate.id === occurrenceId,
     ) ?? null;
     if (!occurrence
       || occurrence.kind !== "speech"
       || occurrence.actorId !== this.options.residentId
-      || occurrence.text !== input.expectedSpeechText
-      || !occurrence.addressedActorIds.includes(input.counterpartyActorId)) {
+      || occurrence.text !== capability.expectedSpeechText
+      || !occurrence.addressedActorIds.includes(capability.counterpartyActorId)
+      || !outcome.summary.includes(occurrence.id)) {
       throw new Error("standing social commitment lacks exact factual resident speech origin");
     }
 
     const matterId = deriveSpcIdentifier(
       "matter-social-commitment",
-      `${this.identityNamespace}:${occurrence.id}:${input.counterpartyActorId}`,
+      `${this.identityNamespace}:${occurrence.id}:${capability.counterpartyActorId}`,
     );
     if (this.options.kernel.matter(matterId)) {
       throw new Error(`standing social commitment already exists: ${matterId}`);
@@ -85,23 +179,24 @@ export class ResidentOriginatedSocialCommitmentAuthority {
     const originEvidence = this.options.kernel.recordEvidence({
       id: deriveSpcIdentifier(
         "evidence-social-commitment",
-        `${this.identityNamespace}:${occurrence.id}:${input.counterpartyActorId}`,
+        `${this.identityNamespace}:${occurrence.id}:${capability.counterpartyActorId}`,
       ),
       tick: occurrence.tick,
       kind: "resident_originated_social_commitment",
       summary:
-        `${this.options.residentId} factually addressed ${input.counterpartyActorId} through ${occurrence.id} and created standing commitment: ${input.commitment}`,
+        `${this.options.residentId} factually addressed ${capability.counterpartyActorId} through ${occurrence.id} and created standing commitment: ${capability.commitment}`,
+      sourceRunId: authority.sourceRunId,
     });
 
     const matter = this.options.kernel.openMatter({
       id: matterId,
       originEvidenceId: originEvidence.id,
-      semanticCourse: `${input.goal} · ${input.commitment}`,
+      semanticCourse: `${capability.goal} · ${capability.commitment}`,
       semanticIntent: {
         kind: "standing_social_commitment",
-        goal: input.goal,
-        counterpartyActorId: input.counterpartyActorId,
-        commitment: input.commitment,
+        goal: capability.goal,
+        counterpartyActorId: capability.counterpartyActorId,
+        commitment: capability.commitment,
       },
     });
     this.matterScope.track(matter.id);
