@@ -403,7 +403,7 @@ Recover proven donors only when demanded:
 
 Prefer a small world where most places/objects matter over a huge empty map.
 
-### Phase R5 — LLM as semantic escalation — **IN PROGRESS**
+### Phase R5 — LLM as semantic escalation — **QUALIFIED PASS**
 
 R5-A one-reason / one-provider / one-grounded-consequence / return-to-quiet:
 **QUALIFIED PASS** at source SHA `58f225e0090110edf75dbe4aaf1bf057ec8f590e`.
@@ -423,8 +423,16 @@ R5-C provider failure and explicit semantic retention/settlement outcomes:
 Evidence authority:
 `docs/SPC_R5C_PROVIDER_OUTCOMES_PASS.md`.
 
-Current R5 gate:
-**bounded real-provider semantic judgement**, with an experiment-owned hard request budget before any broader unattended provider runtime is allowed.
+Real-provider causal boundary:
+**QUALIFIED PASS** at source SHA `3122baabd64fdf57cc178f29ee98b81b9b8071af`.
+
+Evidence authority:
+`docs/SPC_R5_REAL_LUNA_CAUSAL_BOUNDARY_PASS.md`.
+
+The single real Luna result also exposed a semantic fidelity debt:
+a `communicate` action can speak a future promise that does not exist as durable resident state. Broad judgement/personhood quality is therefore not promoted from the green causal result.
+
+**Current recovery target: R6 — complementary resident falsifiers / ordinary personhood.**
 
 Goal:
 reintroduce the provider into a resident who already lives locally.
@@ -526,7 +534,9 @@ The R4-D terminal boundary is deliberately unresolved semantically:
 - no synthetic matter was created merely to make that reason fit an API;
 - no provider has been invoked.
 
-**Current recovery target: R5 — LLM AS SEMANTIC ESCALATION.**
+**R5 — LLM AS SEMANTIC ESCALATION: QUALIFIED PASS.**
+
+**Current recovery target: R6 — COMPLEMENTARY RESIDENT FALSIFIERS / ORDINARY PERSONHOOD.**
 
 The first R5 falsifier must answer:
 
