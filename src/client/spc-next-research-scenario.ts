@@ -803,6 +803,7 @@ function createR6MiraStandingSocialCommitmentScenario(): SpcNextResearchScenario
       providerContexts: structuredClone(providerContexts),
       lastWorldTick: structuredClone(lastWorldTick),
       standingMatterId,
+      standingMatter: standingMatterId ? slice.life.kernel.matter(standingMatterId) : null,
       prepared: prepared !== null,
       activeRelevanceMatterIds: relevanceBridge.activeMatterIds(),
       relevanceEvents: structuredClone(relevanceEvents),
