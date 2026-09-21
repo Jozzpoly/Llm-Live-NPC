@@ -13,7 +13,7 @@ const EXECUTION_GUARD = 480;
 
 describe("R6 resident-originated standing social commitment", () => {
   it("materializes only after exact factual self speech, persists without body authority, and can be privately released", async () => {
-    const { slice, speechOccurrence } = await runPromisedReply();
+    const { slice, speechOccurrence, prepared, invalidPrepared, duplicatePrepared } = await runPromisedReply();
 
     const resolvedSpeechMatter = slice.life.currentLifeView().matters[0];
     expect(resolvedSpeechMatter).toMatchObject({
@@ -27,22 +27,17 @@ describe("R6 resident-originated standing social commitment", () => {
     });
     expect(slice.life.currentLifeView().matters).toHaveLength(1);
 
-    // A fabricated or stale occurrence id cannot create resident history.
-    expect(() => slice.life.originatedSocialCommitments.materializeAfterFactualSpeech({
-      occurrenceId: "occurrence:does-not-exist",
-      expectedSpeechText: PROMISE_TEXT,
-      counterpartyActorId: R5_IDA_ID,
-      goal: PROMISE_GOAL,
-      commitment: PROMISE_MEANING,
-    })).toThrow("standing social commitment lacks exact factual resident speech origin");
+    // A prepared semantic capability still cannot create history from a fabricated
+    // occurrence. The invalid attempt is single-use.
+    expect(() => slice.life.originatedSocialCommitments.materializeAfterFactualSpeech(
+      invalidPrepared,
+      "occurrence:does-not-exist",
+    )).toThrow("standing social commitment lacks exact factual resident speech origin");
 
-    const materialized = slice.life.originatedSocialCommitments.materializeAfterFactualSpeech({
-      occurrenceId: speechOccurrence.id,
-      expectedSpeechText: PROMISE_TEXT,
-      counterpartyActorId: R5_IDA_ID,
-      goal: PROMISE_GOAL,
-      commitment: PROMISE_MEANING,
-    });
+    const materialized = slice.life.originatedSocialCommitments.materializeAfterFactualSpeech(
+      prepared,
+      speechOccurrence.id,
+    );
 
     expect(materialized.originEvidence).toMatchObject({
       tick: speechOccurrence.tick,
@@ -100,13 +95,10 @@ describe("R6 resident-originated standing social commitment", () => {
       }),
     ]));
 
-    expect(() => slice.life.originatedSocialCommitments.materializeAfterFactualSpeech({
-      occurrenceId: speechOccurrence.id,
-      expectedSpeechText: PROMISE_TEXT,
-      counterpartyActorId: R5_IDA_ID,
-      goal: PROMISE_GOAL,
-      commitment: PROMISE_MEANING,
-    })).toThrow("standing social commitment already exists");
+    expect(() => slice.life.originatedSocialCommitments.materializeAfterFactualSpeech(
+      duplicatePrepared,
+      speechOccurrence.id,
+    )).toThrow("standing social commitment already exists");
 
     const beforeReleaseOccurrences = slice.world.diagnostics().recentOccurrences.length;
     const released = slice.life.originatedSocialCommitments.release({
@@ -143,24 +135,29 @@ describe("R6 resident-originated standing social commitment", () => {
     )).toBe(false);
   });
 
-  it("rejects a real speech occurrence when actor/text/counterparty provenance does not match", async () => {
-    const { slice, speechOccurrence } = await runPromisedReply();
+  it("rejects preparation that does not match the exact live communicate matter and rejects forged capabilities", async () => {
+    const { slice, speechOccurrence, sourceMatterId } = await runPromisedReply();
 
-    expect(() => slice.life.originatedSocialCommitments.materializeAfterFactualSpeech({
-      occurrenceId: speechOccurrence.id,
-      expectedSpeechText: "different text",
+    // Once factual execution is over the source communicate matter is terminal, so
+    // no retrospective semantic capability can be minted from the speech.
+    expect(() => slice.life.originatedSocialCommitments.prepareFromCommunicateMatter({
+      sourceMatterId,
+      expectedSpeechText: PROMISE_TEXT,
       counterpartyActorId: R5_IDA_ID,
       goal: PROMISE_GOAL,
       commitment: PROMISE_MEANING,
-    })).toThrow();
+    })).toThrow("standing social commitment preparation requires one exact active communicate matter/run");
 
     expect(() => slice.life.originatedSocialCommitments.materializeAfterFactualSpeech({
-      occurrenceId: speechOccurrence.id,
+      residentId: R5_MIRA_ID,
+      sourceMatterId,
+      sourceRunId: "run.forged",
+      sourceSemanticRevision: 1,
+      counterpartyActorId: R5_IDA_ID,
       expectedSpeechText: PROMISE_TEXT,
-      counterpartyActorId: "resident.someone-else",
       goal: PROMISE_GOAL,
       commitment: PROMISE_MEANING,
-    })).toThrow();
+    }, speechOccurrence.id)).toThrow("standing social commitment lacks exact prepared semantic authority");
   });
 });
 
@@ -213,6 +210,18 @@ async function runPromisedReply() {
     throw new Error("R6 promise fixture did not admit communicate matter");
   }
 
+  const sourceMatterId = admission.commitment.matterId;
+  const prepare = () => slice.life.originatedSocialCommitments.prepareFromCommunicateMatter({
+    sourceMatterId,
+    expectedSpeechText: PROMISE_TEXT,
+    counterpartyActorId: R5_IDA_ID,
+    goal: PROMISE_GOAL,
+    commitment: PROMISE_MEANING,
+  });
+  const prepared = prepare();
+  const invalidPrepared = prepare();
+  const duplicatePrepared = prepare();
+
   for (let index = 0; index < EXECUTION_GUARD; index += 1) {
     slice.advanceOneWorldTick();
     if (slice.life.kernel.matter(admission.commitment.matterId)?.status === "resolved") break;
@@ -227,7 +236,14 @@ async function runPromisedReply() {
   );
   expect(occurrences).toHaveLength(1);
 
-  return { slice, speechOccurrence: occurrences[0]! };
+  return {
+    slice,
+    speechOccurrence: occurrences[0]!,
+    sourceMatterId,
+    prepared,
+    invalidPrepared,
+    duplicatePrepared,
+  };
 }
 
 async function flushMicrotasks(): Promise<void> {
