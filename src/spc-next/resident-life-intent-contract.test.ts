@@ -128,7 +128,6 @@ describe("ResidentLifeIntentProposal contract", () => {
         },
         standingSocialCommitment: {
           goal: "remain available to Jozz for a while",
-          commitment: "I committed to remain here with Jozz for a while.",
         },
       },
       ...semanticUpdates,
