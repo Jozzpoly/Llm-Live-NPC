@@ -73,7 +73,14 @@ export interface R5SemanticWorldTick {
  *
  * No player actor exists in this composition.
  */
-export function createR5MiraSemanticEscalationSlice(fetcher: CognitionFetch) {
+export interface R5MiraSemanticEscalationSliceOptions {
+  readonly providerRuntimeMode?: string | null;
+}
+
+export function createR5MiraSemanticEscalationSlice(
+  fetcher: CognitionFetch,
+  options: R5MiraSemanticEscalationSliceOptions = {},
+) {
   const world = new SpcWorldRuntime({
     bounds: { minX: 0, minY: 0, maxX: 1_600, maxY: 1_000 },
     regions: [{
@@ -110,6 +117,7 @@ export function createR5MiraSemanticEscalationSlice(fetcher: CognitionFetch) {
   const transport = new ResidentCausalProviderTransport(
     "/api/spc-next/life-intent",
     fetcher,
+    { runtimeMode: options.providerRuntimeMode ?? null },
   );
 
   // Ida's fixture speech is still a real resident World effect under exact run
