@@ -219,34 +219,31 @@ async function run() {
       && communicate.activeRun?.runId === first.admitted.life.body.focusedRunId
     ), { arrival: first?.arrival, admitted: first?.admitted });
 
-    assert(report, "standing semantic capability is prepared only while the promised communicate run is live", Boolean(
-      first?.prepared?.prepared === true
-      && first.preparedAction?.sourceMatterId === communicate?.id
-      && first.preparedAction?.sourceRunId === communicate?.activeRun?.runId
-      && first.preparedAction?.counterpartyActorId === IDA_ID
-      && first.prepared.life.matters.every((matter) => matter.semanticIntent?.kind !== "standing_social_commitment")
-    ), { prepared: first?.prepared, action: first?.preparedAction });
-
-    assert(report, "Mira factually speaks the promise exactly once before standing history exists", Boolean(
-      first?.resolvedSpeech?.promiseSpeechCount === 1
-      && first.resolvedSpeech.promiseSpeech?.actorId === MIRA_ID
-      && first.resolvedSpeech.promiseSpeech?.text === PROMISE_TEXT
-      && first.resolvedSpeech.promiseSpeech?.addressedActorIds?.includes(IDA_ID)
-      && first.resolvedSpeech.life.matters.some(
-        (matter) => matter.id === communicate?.id && matter.status === "resolved" && matter.activeRun === null,
-      )
-      && first.resolvedSpeech.life.matters.every(
+    assert(report, "native life intent carries explicit standing semantics without creating standing history before execution", Boolean(
+      communicate
+      && communicate.semanticIntent?.standingSocialCommitment?.goal
+      && communicate.semanticIntent?.standingSocialCommitment?.commitment
+      && first.admitted.standingMatterId === null
+      && first.admitted.life.matters.every(
         (matter) => matter.semanticIntent?.kind !== "standing_social_commitment",
       )
-    ), first?.resolvedSpeech ?? null);
+    ), first?.admitted ?? null);
 
-    assert(report, "only after factual self speech does a run-free standing social commitment enter resident continuity", Boolean(
-      standing
+    assert(report, "factual self speech and exact run completion materialize one run-free standing social commitment through the native path", Boolean(
+      first?.standing?.promiseSpeechCount === 1
+      && first.standing.promiseSpeech?.actorId === MIRA_ID
+      && first.standing.promiseSpeech?.text === PROMISE_TEXT
+      && first.standing.promiseSpeech?.addressedActorIds?.includes(IDA_ID)
+      && first.standing.life.matters.some(
+        (matter) => matter.id === communicate?.id && matter.status === "resolved" && matter.activeRun === null,
+      )
+      && standing
       && standing.status === "active"
       && standing.activeRunId === null
       && standing.semanticIntent?.counterpartyActorId === IDA_ID
-      && first.standing.life.body.focusedRunId === null
+      && standing.originEvidenceId
       && first.standing.standingMatterId === standing.id
+      && first.standing.life.body.focusedRunId === null
       && first.standing.provider.providerRequestCount === 1
       && first.standing.pendingReasons.length === 0
     ), first?.standing ?? null);
@@ -302,8 +299,6 @@ async function run() {
       "requestStartedHash",
       "arrivalHash",
       "admittedHash",
-      "preparedHash",
-      "resolvedSpeechHash",
       "standingHash",
       "awayHash",
       "returnedRelevantHash",
@@ -373,11 +368,9 @@ async function captureRun(cdp, runIndex) {
 
   await stepEvidence(cdp, 1);
   const admitted = await captureState(cdp);
-  const preparedAction = await scenarioAction(cdp, "prepare-standing");
-  const prepared = await captureState(cdp);
 
-  let resolvedSpeech = null;
-  for (let index = 0; index < EXECUTION_GUARD && !resolvedSpeech; index += 1) {
+  let standing = null;
+  for (let index = 0; index < EXECUTION_GUARD && !standing; index += 1) {
     await stepEvidence(cdp, 1);
     const candidate = await captureState(cdp);
     const communicate = candidate.life.matters.find(
@@ -385,14 +378,16 @@ async function captureRun(cdp, runIndex) {
         && matter.semanticIntent?.targetActorId === IDA_ID
         && matter.semanticIntent?.text === PROMISE_TEXT,
     );
-    if (communicate?.status === "resolved" && candidate.promiseSpeechCount === 1) {
-      resolvedSpeech = candidate;
+    const nativeStanding = standingMatter(candidate);
+    if (communicate?.status === "resolved"
+      && candidate.promiseSpeechCount === 1
+      && nativeStanding?.status === "active") {
+      standing = candidate;
     }
   }
-  if (!resolvedSpeech) throw new Error(`run ${runIndex}: promised speech did not factually resolve`);
-
-  const materializedAction = await scenarioAction(cdp, "materialize-standing");
-  const standing = await captureState(cdp);
+  if (!standing) {
+    throw new Error(`run ${runIndex}: native promised speech did not materialize standing history`);
+  }
   if (visualEvidence) {
     visualEvidence.standing = await captureFrozenScreenshot(
       cdp,
@@ -479,10 +474,6 @@ async function captureRun(cdp, runIndex) {
     requestStarted,
     arrival,
     admitted,
-    preparedAction,
-    prepared,
-    resolvedSpeech,
-    materializedAction,
     standing,
     away,
     returnedRelevant,
@@ -497,9 +488,7 @@ async function captureRun(cdp, runIndex) {
     requestStartedHash: hashJson(projectDeterministic(requestStarted)),
     arrivalHash: hashJson(projectDeterministic(arrival)),
     admittedHash: hashJson(projectDeterministic(admitted)),
-    preparedHash: hashJson(projectDeterministic({ preparedAction, prepared })),
-    resolvedSpeechHash: hashJson(projectDeterministic(resolvedSpeech)),
-    standingHash: hashJson(projectDeterministic({ materializedAction, standing })),
+    standingHash: hashJson(projectDeterministic(standing)),
     awayHash: hashJson(projectDeterministic(away)),
     returnedRelevantHash: hashJson(projectDeterministic(returnedRelevant)),
     releasedHash: hashJson(projectDeterministic({ releaseAction, released })),
@@ -544,7 +533,6 @@ async function captureState(cdp) {
     knownIda: scenario.knownIda,
     standingMatterId: scenario.standingMatterId,
     standingMatter: scenario.standingMatter,
-    prepared: scenario.prepared,
     activeRelevanceMatterIds: scenario.activeRelevanceMatterIds ?? [],
     relevanceEvents: scenario.relevanceEvents ?? [],
     idaMotion: scenario.idaMotion,

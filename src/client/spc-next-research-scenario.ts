@@ -3,7 +3,6 @@ import type { ResidentMaterialKnowledge } from "../spc-next/resident-material-kn
 import type { ResidentWorldExecutionAuthority } from "../spc-next/resident-world-execution-authority";
 import type { ResidentLifeCognitionView } from "../spc-next/resident-life-cognition-view";
 import { ResidentMatterRelevanceBridge } from "../spc-next/resident-matter-relevance-bridge";
-import type { PreparedResidentOriginatedSocialCommitment } from "../spc-next/resident-originated-social-commitment";
 import { createCognitionFetchHardBudget } from "../spc-next/cognition-fetch-hard-budget";
 import {
   FiveResidentUnifiedLivingRuntime,
@@ -453,10 +452,19 @@ function createR5MiraSemanticEscalationScenario(): SpcNextResearchScenario {
 
   const slice = createR5MiraSemanticEscalationSlice(fetcher);
 
+  function currentStandingMatter() {
+    const projected = slice.life.currentLifeView().matters.find(
+      (matter) => matter.semanticIntent?.kind === "standing_social_commitment"
+        && matter.semanticIntent.counterpartyActorId === R5_IDA_ID,
+    ) ?? null;
+    return projected ? slice.life.kernel.matter(projected.id) : null;
+  }
+
   function snapshot() {
     const world = slice.world.publicSnapshot();
     const mira = world.actors.find((actor) => actor.id === R5_MIRA_ID) ?? null;
     const ida = world.actors.find((actor) => actor.id === R5_IDA_ID) ?? null;
+    const standingMatter = currentStandingMatter();
     return {
       diagnostics: slice.diagnostics(),
       life: slice.life.currentLifeView(),
@@ -639,8 +647,6 @@ function createR6MiraStandingSocialCommitmentScenario(): SpcNextResearchScenario
   let releaseProvider: (() => void) | null = null;
   const providerContexts: unknown[] = [];
   let lastWorldTick: ReturnType<ReturnType<typeof createR5MiraSemanticEscalationSlice>["advanceOneWorldTick"]> | null = null;
-  let prepared: PreparedResidentOriginatedSocialCommitment | null = null;
-  let standingMatterId: string | null = null;
   let idaMotionSequence = 0;
   let idaMotion: {
     matterId: string;
@@ -678,6 +684,10 @@ function createR6MiraStandingSocialCommitmentScenario(): SpcNextResearchScenario
             targetRegionId: null,
             targetPosition: null,
             text: R6_PROMISE_TEXT,
+          },
+          standingSocialCommitment: {
+            goal: R6_PROMISE_GOAL,
+            commitment: R6_PROMISE_MEANING,
           },
         },
         beliefs: [],
@@ -802,9 +812,8 @@ function createR6MiraStandingSocialCommitmentScenario(): SpcNextResearchScenario
       knownIda,
       providerContexts: structuredClone(providerContexts),
       lastWorldTick: structuredClone(lastWorldTick),
-      standingMatterId,
-      standingMatter: standingMatterId ? slice.life.kernel.matter(standingMatterId) : null,
-      prepared: prepared !== null,
+      standingMatterId: standingMatter?.id ?? null,
+      standingMatter,
       activeRelevanceMatterIds: relevanceBridge.activeMatterIds(),
       relevanceEvents: structuredClone(relevanceEvents),
       idaMotion: idaMotion ? structuredClone(idaMotion) : null,
@@ -834,56 +843,13 @@ function createR6MiraStandingSocialCommitmentScenario(): SpcNextResearchScenario
         release();
         return { released: true, tick: slice.world.tick };
       }
-      if (actionId === "prepare-standing") {
-        if (prepared) throw new Error("R6 standing commitment already prepared");
-        const source = slice.life.currentLifeView().matters.find((matter) => (
-          matter.status === "active"
-          && matter.semanticIntent?.kind === "communicate_actor"
-          && matter.semanticIntent.targetActorId === R5_IDA_ID
-          && matter.semanticIntent.text === R6_PROMISE_TEXT
-          && matter.activeRun !== null
-        )) ?? null;
-        if (!source?.activeRun) throw new Error("R6 no active promised communicate matter to prepare");
-        prepared = slice.life.originatedSocialCommitments.prepareFromCommunicateMatter({
-          sourceMatterId: source.id,
-          counterpartyActorId: R5_IDA_ID,
-          expectedSpeechText: R6_PROMISE_TEXT,
-          goal: R6_PROMISE_GOAL,
-          commitment: R6_PROMISE_MEANING,
-        });
-        return {
-          sourceMatterId: prepared.sourceMatterId,
-          sourceRunId: prepared.sourceRunId,
-          counterpartyActorId: prepared.counterpartyActorId,
-        };
-      }
-      if (actionId === "materialize-standing") {
-        if (!prepared) throw new Error("R6 standing commitment was not prepared");
-        const speech = [...slice.world.diagnostics().recentOccurrences].reverse().find(
-          (occurrence) => occurrence.kind === "speech"
-            && occurrence.actorId === R5_MIRA_ID
-            && occurrence.text === R6_PROMISE_TEXT
-            && occurrence.addressedActorIds.includes(R5_IDA_ID),
-        ) ?? null;
-        if (!speech) throw new Error("R6 promised factual speech not found");
-        const materialized = slice.life.originatedSocialCommitments.materializeAfterFactualSpeech(
-          prepared,
-          speech.id,
-        );
-        prepared = null;
-        standingMatterId = materialized.matter.id;
-        return {
-          standingMatterId,
-          occurrenceId: speech.id,
-          originEvidenceId: materialized.originEvidence.id,
-        };
-      }
       if (actionId === "ida-move-away") return startIdaMotion(R6_IDA_AWAY_X);
       if (actionId === "ida-move-back") return startIdaMotion(R6_IDA_HOME_X);
       if (actionId === "release-standing") {
-        if (!standingMatterId) throw new Error("R6 no standing commitment to release");
+        const standingMatter = currentStandingMatter();
+        if (!standingMatter) throw new Error("R6 no standing commitment to release");
         const released = slice.life.originatedSocialCommitments.release({
-          matterId: standingMatterId,
+          matterId: standingMatter.id,
           tick: slice.world.tick,
           reason: "Mira no longer treats this standing commitment as open.",
         });
