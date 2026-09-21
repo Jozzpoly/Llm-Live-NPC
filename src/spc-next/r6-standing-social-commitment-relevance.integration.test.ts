@@ -131,6 +131,16 @@ async function createSpecimen(withStandingHistory: boolean) {
     throw new Error("R6 significance fixture did not admit communicate matter");
   }
 
+  const prepared = withStandingHistory
+    ? slice.life.originatedSocialCommitments.prepareFromCommunicateMatter({
+        sourceMatterId: admission.commitment.matterId,
+        expectedSpeechText: PROMISE_TEXT,
+        counterpartyActorId: R5_IDA_ID,
+        goal: PROMISE_GOAL,
+        commitment: PROMISE_MEANING,
+      })
+    : null;
+
   for (let index = 0; index < EXECUTION_GUARD; index += 1) {
     slice.advanceOneWorldTick();
     if (slice.life.kernel.matter(admission.commitment.matterId)?.status === "resolved") break;
@@ -145,13 +155,11 @@ async function createSpecimen(withStandingHistory: boolean) {
   if (!speech) throw new Error("R6 significance fixture produced no factual Mira speech");
 
   if (withStandingHistory) {
-    standingMatterId = slice.life.originatedSocialCommitments.materializeAfterFactualSpeech({
-      occurrenceId: speech.id,
-      expectedSpeechText: PROMISE_TEXT,
-      counterpartyActorId: R5_IDA_ID,
-      goal: PROMISE_GOAL,
-      commitment: PROMISE_MEANING,
-    }).matter.id;
+    if (!prepared) throw new Error("R6 significance fixture lost prepared commitment authority");
+    standingMatterId = slice.life.originatedSocialCommitments.materializeAfterFactualSpeech(
+      prepared,
+      speech.id,
+    ).matter.id;
   }
 
   // The current observation presented to the relevance boundary is intentionally
