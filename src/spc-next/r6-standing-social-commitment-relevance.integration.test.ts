@@ -1,6 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 import type { ResidentPercept } from "./contracts";
 import { ResidentMatterRelevanceBridge } from "./resident-matter-relevance-bridge";
+import { ResidentContinuityKernel } from "./resident-continuity-kernel";
+import { ResidentExecutionArbitrator } from "./resident-execution-arbitrator";
+import { ResidentExecutionFocusAuthority } from "./resident-execution-focus-authority";
+import { captureResidentLifeCognitionView } from "./resident-life-cognition-view";
+import { ResidentRuntime } from "./resident-runtime";
 import type { ResidentLifeIntentProposal } from "./resident-life-intent-contract";
 import {
   R5_IDA_ID,
@@ -79,6 +84,62 @@ describe("R6 standing social commitment resident-relative significance", () => {
       status: "not_relevant",
       evidenceId: laterEquivalentEvidence.id,
     });
+  });
+  it("fails closed when two different open resident matters make the same actor relevant", () => {
+    const resident = new ResidentRuntime({
+      id: R5_MIRA_ID,
+      name: "Mira",
+      hearingRadius: 420,
+      sightRadius: 520,
+      maxSpeed: 115,
+      brainIntervalTicks: 3,
+      memoryLimit: 128,
+      traceLimit: 256,
+    });
+    const kernel = new ResidentContinuityKernel();
+
+    for (const suffix of ["a", "b"]) {
+      const origin = kernel.recordEvidence({
+        id: `evidence:r6:standing-ambiguity:${suffix}`,
+        tick: suffix === "a" ? 1 : 2,
+        kind: "resident_originated_social_commitment",
+        summary: `Distinct resident-owned standing commitment ${suffix} toward Ida.`,
+      });
+      kernel.openMatter({
+        id: `matter.mira.r6.standing-ambiguity.${suffix}`,
+        originEvidenceId: origin.id,
+        semanticCourse: `standing relation ${suffix} toward Ida`,
+        semanticIntent: {
+          kind: "standing_social_commitment",
+          goal: `keep commitment ${suffix} in mind`,
+          counterpartyActorId: R5_IDA_ID,
+          commitment: `distinct commitment ${suffix}`,
+        },
+      });
+    }
+
+    const focus = new ResidentExecutionFocusAuthority(kernel);
+    const arbitrator = new ResidentExecutionArbitrator(kernel, focus);
+    const life = captureResidentLifeCognitionView({
+      kernel,
+      focus,
+      arbitrator,
+      matterIds: [
+        "matter.mira.r6.standing-ambiguity.a",
+        "matter.mira.r6.standing-ambiguity.b",
+      ],
+    });
+
+    const percept = sightEnter("percept:r6:ida-ambiguous", 30);
+    resident.ingestPercepts([percept]);
+    const bridge = new ResidentMatterRelevanceBridge(resident);
+
+    expect(bridge.observe(percept, life)).toEqual({
+      status: "not_relevant",
+      evidenceId: percept.id,
+    });
+    expect(bridge.activeMatterIds()).toEqual([]);
+    expect(resident.pendingCognitionReasons()).toEqual([]);
   });
 });
 
