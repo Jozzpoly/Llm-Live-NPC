@@ -120,6 +120,30 @@ export class ResidentOriginatedSocialCommitmentAuthority {
     return capability;
   }
 
+  /**
+   * Normal resident-life path: consume only continuation semantics that were already
+   * resident-owned inside the live communicate matter before factual speech.
+   * No caller may supply new promise meaning at execution time.
+   */
+  prepareDeclaredFromCommunicateMatter(input: {
+    sourceMatterId: string;
+  }): PreparedResidentOriginatedSocialCommitment {
+    const source = this.options.kernel.matter(input.sourceMatterId);
+    if (source?.semanticIntent?.kind !== "communicate_actor"
+      || source.semanticIntent.standingSocialCommitment === undefined) {
+      throw new Error(
+        "standing social commitment source communicate matter has no declared continuation",
+      );
+    }
+    return this.prepareFromCommunicateMatter({
+      sourceMatterId: source.id,
+      counterpartyActorId: source.semanticIntent.targetActorId,
+      expectedSpeechText: source.semanticIntent.text,
+      goal: source.semanticIntent.standingSocialCommitment.goal,
+      commitment: source.semanticIntent.standingSocialCommitment.commitment,
+    });
+  }
+
   materializeAfterFactualSpeech(
     capability: PreparedResidentOriginatedSocialCommitment,
     occurrenceId: string,

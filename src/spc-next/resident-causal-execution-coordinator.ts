@@ -280,14 +280,28 @@ export class ResidentCausalExecutionCoordinator {
       );
     }
 
+    const preparedStanding = intent.standingSocialCommitment
+      ? this.life.originatedSocialCommitments.prepareDeclaredFromCommunicateMatter({
+          sourceMatterId: matter.id,
+        })
+      : null;
+
     this.clearExecution(runId);
-    return this.finishRun(
+    const completed = this.finishRun(
       matter,
       runId,
       "succeeded",
       `${runId} factually delivered speech to ${state.targetActorId} through ${local.occurrence.id}`,
       true,
     );
+
+    if (preparedStanding) {
+      this.life.originatedSocialCommitments.materializeAfterFactualSpeech(
+        preparedStanding,
+        local.occurrence.id,
+      );
+    }
+    return completed;
   }
 
   private createCommunicateExecution(

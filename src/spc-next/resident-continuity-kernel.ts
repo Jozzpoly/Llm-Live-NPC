@@ -28,11 +28,22 @@ export interface ResidentTravelRegionMatterIntent {
   targetRegionId: string;
 }
 
+export interface ResidentStandingSocialCommitmentDescriptor {
+  goal: string;
+  commitment: string;
+}
+
 export interface ResidentCommunicateActorMatterIntent {
   kind: "communicate_actor";
   goal: string;
   targetActorId: string;
   text: string;
+  /**
+   * Optional semantic continuation declared before factual speech.
+   * It has no authority on its own and may become standing history only after the
+   * exact communicate run factually delivers that speech.
+   */
+  standingSocialCommitment?: ResidentStandingSocialCommitmentDescriptor;
 }
 
 /**
@@ -794,6 +805,16 @@ function validateMatterIntent(intent: ResidentMatterIntent): void {
     case "communicate_actor":
       assertNonEmpty(intent.targetActorId, "matter intent target actor id");
       assertNonEmpty(intent.text, "matter intent message text");
+      if (intent.standingSocialCommitment !== undefined) {
+        assertNonEmpty(
+          intent.standingSocialCommitment.goal,
+          "standing social continuation goal",
+        );
+        assertNonEmpty(
+          intent.standingSocialCommitment.commitment,
+          "standing social continuation meaning",
+        );
+      }
       return;
     case "acquire_material_object":
       assertNonEmpty(intent.objectId, "matter intent material object id");

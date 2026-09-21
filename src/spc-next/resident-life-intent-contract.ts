@@ -5,9 +5,19 @@ import {
   type ProposedActivity,
   type ResidentCognitionContext,
 } from "./cognition-contract";
+import type { ResidentStandingSocialCommitmentDescriptor } from "./resident-continuity-kernel";
 
 export type ResidentLifeCommitmentDecision =
-  | { kind: "accept"; reason: string; intent: ProposedActivity }
+  | {
+      kind: "accept";
+      reason: string;
+      intent: ProposedActivity;
+      /**
+       * Explicit future social meaning attached to this accepted communication.
+       * Absence means ordinary communication; speech text alone never implies it.
+       */
+      standingSocialCommitment?: ResidentStandingSocialCommitmentDescriptor;
+    }
   | { kind: "decline"; reason: string }
   | { kind: "defer"; reason: string }
   | { kind: "clarify"; reason: string; question: string };
@@ -56,7 +66,14 @@ export function parseResidentLifeIntentProposal(
   if (!isBoundedString(decision.kind, 32) || !isBoundedString(decision.reason, 1_200)) return null;
 
   if (decision.kind === "accept") {
-    if (!hasExactKeys(decision, ["kind", "reason", "intent"]) || !isRecord(decision.intent)) return null;
+    const hasStandingSocialCommitment = Object.hasOwn(
+      decision,
+      "standingSocialCommitment",
+    );
+    const acceptKeys = hasStandingSocialCommitment
+      ? ["kind", "reason", "intent", "standingSocialCommitment"] as const
+      : ["kind", "reason", "intent"] as const;
+    if (!hasExactKeys(decision, acceptKeys) || !isRecord(decision.intent)) return null;
     if (!hasExactKeys(decision.intent, INTENT_KEYS)) return null;
 
     const validated = parseResidentCognitionProposal({
@@ -72,12 +89,33 @@ export function parseResidentLifeIntentProposal(
     }, context);
     if (!validated || validated.activityDirective.kind !== "replace") return null;
 
+    let standingSocialCommitment: ResidentStandingSocialCommitmentDescriptor | undefined;
+    if (hasStandingSocialCommitment) {
+      const rawStanding = decision.standingSocialCommitment;
+      if (!isRecord(rawStanding)
+        || !hasExactKeys(rawStanding, ["goal", "commitment"])
+        || !isBoundedString(rawStanding.goal, 1_200)
+        || !isBoundedString(rawStanding.commitment, 1_200)
+        || validated.activityDirective.activity.kind !== "communicate"
+        || validated.activityDirective.activity.targetActorId === null
+        || validated.activityDirective.activity.text === null) {
+        return null;
+      }
+      standingSocialCommitment = {
+        goal: rawStanding.goal,
+        commitment: rawStanding.commitment,
+      };
+    }
+
     return {
       version: 1,
       commitmentDecision: {
         kind: "accept",
         reason: validated.activityDirective.reason,
         intent: structuredClone(validated.activityDirective.activity),
+        ...(standingSocialCommitment
+          ? { standingSocialCommitment: structuredClone(standingSocialCommitment) }
+          : {}),
       },
       beliefs: structuredClone(validated.beliefs),
       concerns: structuredClone(validated.concerns),

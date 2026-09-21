@@ -138,6 +138,9 @@ export class ResidentCausalCommunicateCommitmentAuthority {
       return { status: "rejected", detail: `commitment already accepted: ${identity.matterId}` };
     }
 
+    const standingSocialCommitment = decision.standingSocialCommitment
+      ? Object.freeze(structuredClone(decision.standingSocialCommitment))
+      : undefined;
     const intent = Object.freeze({
       originPerceptId: originPercept.id,
       semanticCourse: `${decision.reason} · ${decision.intent.goal}`,
@@ -146,6 +149,7 @@ export class ResidentCausalCommunicateCommitmentAuthority {
         goal: decision.intent.goal,
         targetActorId,
         text: decision.intent.text,
+        ...(standingSocialCommitment ? { standingSocialCommitment } : {}),
       }),
     }) satisfies GroundedResidentCausalCommunicateCommitmentIntent;
 

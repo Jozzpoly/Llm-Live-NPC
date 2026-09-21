@@ -97,6 +97,62 @@ describe("ResidentLifeIntentProposal contract", () => {
     });
   });
 
+  it("accepts an explicit standing social continuation only on grounded communication", () => {
+    const socialContext: ResidentCognitionContext = {
+      ...context,
+      knownActors: [{
+        id: "player.jozz",
+        label: "player.jozz",
+        lastKnownPosition: { x: 12, y: 4 },
+        lastObservedTick: 120,
+        currentlyVisible: true,
+        visibilityChangedTick: 120,
+        lastHeardDirection: { x: 1, y: 0 },
+        lastHeardDistanceBand: "near",
+        lastHeardTick: 120,
+      }],
+    };
+
+    const proposal = {
+      version: 1,
+      commitmentDecision: {
+        kind: "accept",
+        reason: "I choose to make one explicit promise to the person who addressed me.",
+        intent: {
+          kind: "communicate",
+          goal: "tell Jozz that I will remain here for a while",
+          targetActorId: "player.jozz",
+          targetRegionId: null,
+          targetPosition: null,
+          text: "Tak, zostanę tu jeszcze chwilę.",
+        },
+        standingSocialCommitment: {
+          goal: "remain available to Jozz for a while",
+          commitment: "I committed to remain here with Jozz for a while.",
+        },
+      },
+      ...semanticUpdates,
+    } as const;
+
+    expect(parseResidentLifeIntentProposal(proposal, socialContext)?.commitmentDecision)
+      .toEqual(proposal.commitmentDecision);
+
+    expect(parseResidentLifeIntentProposal({
+      ...proposal,
+      commitmentDecision: {
+        ...proposal.commitmentDecision,
+        intent: {
+          kind: "travel",
+          goal: "visit the familiar fields later",
+          targetActorId: null,
+          targetRegionId: "fields",
+          targetPosition: null,
+          text: null,
+        },
+      },
+    }, socialContext)).toBeNull();
+  });
+
   it("represents decline, defer and clarification independently from body directives", () => {
     expect(parseResidentLifeIntentProposal({
       version: 1,

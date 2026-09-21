@@ -58,6 +58,8 @@ Supported accepted intents use the bounded semantic vocabulary:
 - follow: commit to seeking/following one KNOWN actor using acquired contact evidence;
 - communicate: commit to seeking physical contact with one KNOWN actor and speaking the supplied natural Polish text only after contact.
 
+For accept+communicate only, use standingSocialCommitment when the resident deliberately intends that exact future speech to create one continuing social responsibility after it is factually spoken. The field contains only goal and commitment. Omit it for ordinary acknowledgement or conversation. It does not make the promise true, does not grant body authority and does not create standing history by itself; local causality may materialize it only after the exact speech actually succeeds.
+
 Do not output trajectories, routes, execution steps, matter ids to invent, run ids to invent, body-focus decisions, or claims that an action already happened. The local system owns execution and will re-ground any accepted semantic destination or target from current state at admission time.
 
 Use only causally acquired private evidence. Do not infer hidden World truth. A statement heard from any actor proves only that the statement was heard. Cite only evidence IDs present in this context. A hearing cue is directional/rough-distance information, not an exact coordinate. If actorId is null on speech, the speaker is unrecognized; never reconstruct identity from wording or context. Known remembered positions may be stale. Unknown actors, regions, coordinates, objects, outcomes and evidence must not be invented.
@@ -229,8 +231,23 @@ function strictCommitmentProposalShape(value: unknown): boolean {
   const decision = value.commitmentDecision;
   if (!record(decision)) return false;
   if (decision.kind === "accept") {
-    if (!hasExactKeys(decision, ["kind", "reason", "intent"]) || !record(decision.intent)) return false;
+    const hasStandingSocialCommitment = Object.hasOwn(decision, "standingSocialCommitment");
+    const keys = hasStandingSocialCommitment
+      ? ["kind", "reason", "intent", "standingSocialCommitment"]
+      : ["kind", "reason", "intent"];
+    if (!hasExactKeys(decision, keys) || !record(decision.intent)) return false;
     if (!strictActivityShape(decision.intent)) return false;
+    if (hasStandingSocialCommitment) {
+      if (decision.intent.kind !== "communicate"
+        || decision.intent.targetActorId === null
+        || decision.intent.text === null
+        || !record(decision.standingSocialCommitment)
+        || !hasExactKeys(decision.standingSocialCommitment, ["goal", "commitment"])
+        || typeof decision.standingSocialCommitment.goal !== "string"
+        || !decision.standingSocialCommitment.goal.trim()
+        || typeof decision.standingSocialCommitment.commitment !== "string"
+        || !decision.standingSocialCommitment.commitment.trim()) return false;
+    }
   } else if (decision.kind === "decline" || decision.kind === "defer") {
     if (!hasExactKeys(decision, ["kind", "reason"])) return false;
   } else if (decision.kind === "clarify") {
@@ -307,6 +324,10 @@ const concernsSchema = { type: "array", maxItems: 8, items: objectSchema({
   status: { type: "string", enum: ["open", "resolved"] },
   evidenceIds: evidenceSchema,
 }) };
+const standingSocialCommitmentSchema = objectSchema({
+  goal: stringSchema(1200),
+  commitment: stringSchema(1200),
+});
 const proposalSchema = objectSchema({
   version: { type: "integer", enum: [1] },
   commitmentDecision: {
@@ -315,6 +336,12 @@ const proposalSchema = objectSchema({
         kind: { type: "string", enum: ["accept"] },
         reason: stringSchema(1200),
         intent: activitySchema,
+      }),
+      objectSchema({
+        kind: { type: "string", enum: ["accept"] },
+        reason: stringSchema(1200),
+        intent: activitySchema,
+        standingSocialCommitment: standingSocialCommitmentSchema,
       }),
       objectSchema({ kind: { type: "string", enum: ["decline"] }, reason: stringSchema(1200) }),
       objectSchema({ kind: { type: "string", enum: ["defer"] }, reason: stringSchema(1200) }),
