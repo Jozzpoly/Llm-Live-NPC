@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 import type { ResidentLifeIntentProposal } from "./resident-life-intent-contract";
+import { ResidentContinuityKernel } from "./resident-continuity-kernel";
+import { ResidentExecutionArbitrator } from "./resident-execution-arbitrator";
+import { ResidentExecutionFocusAuthority } from "./resident-execution-focus-authority";
+import { captureResidentLifeCognitionView } from "./resident-life-cognition-view";
 import {
   R5_IDA_ID,
   R5_MIRA_ID,
@@ -133,6 +137,49 @@ describe("R6 resident-originated standing social commitment", () => {
       (occurrence) => occurrence.tick === released.releaseEvidence.tick
         && occurrence.summary.includes("released"),
     )).toBe(false);
+  });
+
+  it("survives committed snapshot reconstruction as private standing history without body authority", async () => {
+    const { slice, speechOccurrence, prepared } = await runPromisedReply();
+    const materialized = slice.life.originatedSocialCommitments.materializeAfterFactualSpeech(
+      prepared,
+      speechOccurrence.id,
+    );
+
+    const committed = slice.life.snapshotCommittedLife();
+    const restoredKernel = new ResidentContinuityKernel({
+      committedSnapshot: committed.kernel,
+    });
+    const restoredFocus = new ResidentExecutionFocusAuthority(restoredKernel);
+    const restoredArbitrator = new ResidentExecutionArbitrator(restoredKernel, restoredFocus);
+    const restoredLife = captureResidentLifeCognitionView({
+      kernel: restoredKernel,
+      focus: restoredFocus,
+      arbitrator: restoredArbitrator,
+      matterIds: committed.matterIds,
+    });
+
+    expect(restoredLife.matters).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: materialized.matter.id,
+        status: "active",
+        semanticIntent: {
+          kind: "standing_social_commitment",
+          goal: PROMISE_GOAL,
+          counterpartyActorId: R5_IDA_ID,
+          commitment: PROMISE_MEANING,
+        },
+        activeRun: null,
+      }),
+    ]));
+    expect(restoredLife.body).toEqual({
+      focusedRunId: null,
+      deferredRunIds: [],
+    });
+    expect(restoredKernel.originEvidence(materialized.matter.id)).toMatchObject({
+      kind: "resident_originated_social_commitment",
+      sourceRunId: prepared.sourceRunId,
+    });
   });
 
   it("rejects preparation that does not match the exact live communicate matter and rejects forged capabilities", async () => {
