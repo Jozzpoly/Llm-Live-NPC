@@ -650,7 +650,6 @@ function createR6MiraStandingSocialCommitmentScenario(): SpcNextResearchScenario
   } | null = null;
   const processedSightPercepts = new Set<string>();
   const relevanceEvents: unknown[] = [];
-  const relevance = new ResidentMatterRelevanceBridgePlaceholder();
 
   const fetcher = async (_input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     const context = JSON.parse(String(init?.body));
@@ -693,9 +692,6 @@ function createR6MiraStandingSocialCommitmentScenario(): SpcNextResearchScenario
 
   const slice = createR5MiraSemanticEscalationSlice(fetcher);
   const relevanceBridge = new ResidentMatterRelevanceBridge(slice.mira);
-
-  // Placeholder exists only to keep declaration order explicit above the slice.
-  void relevance;
 
   function startIdaMotion(targetX: number): { matterId: string; runId: string; targetX: number } {
     if (idaMotion) throw new Error("R6 Ida motion already active");
@@ -911,7 +907,6 @@ function createR6MiraStandingSocialCommitmentScenario(): SpcNextResearchScenario
   };
 }
 
-class ResidentMatterRelevanceBridgePlaceholder {}
 
 
 function createUnifiedLivingScenario(): SpcNextResearchScenario {
