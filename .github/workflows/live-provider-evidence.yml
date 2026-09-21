@@ -6,6 +6,7 @@ on:
       - refoundation/spc-next-five-resident-world
       - research/i2-mira-live-cognition-bridge
       - integration/spc-next-owner-living-runtime-v1
+      - recovery/spc-post-stress-semantic-escalation-r5
     paths:
       - "evidence/live-provider-request.json"
   workflow_dispatch:
@@ -38,7 +39,7 @@ jobs:
           const qualifiers = Array.isArray(request.qualifiers)
             ? request.qualifiers
             : ['lifecycle', 'interruption'];
-          const allowed = new Set(['lifecycle', 'interruption', 'life-choice', 'life-intent', 'unified-addressed']);
+          const allowed = new Set(['lifecycle', 'interruption', 'life-choice', 'life-intent', 'unified-addressed', 'r5-judgement']);
           if (qualifiers.length === 0 || qualifiers.some((value) => !allowed.has(value))) {
             throw new Error(`invalid live-provider qualifiers: ${JSON.stringify(qualifiers)}`);
           }
@@ -47,11 +48,12 @@ jobs:
           process.stdout.write(`RUN_LIFE_CHOICE=${qualifiers.includes('life-choice') ? '1' : '0'}\n`);
           process.stdout.write(`RUN_LIFE_INTENT=${qualifiers.includes('life-intent') ? '1' : '0'}\n`);
           process.stdout.write(`RUN_UNIFIED_ADDRESSED=${qualifiers.includes('unified-addressed') ? '1' : '0'}\n`);
+          process.stdout.write(`RUN_R5_JUDGEMENT=${qualifiers.includes('r5-judgement') ? '1' : '0'}\n`);
           process.stdout.write(`REQUESTED_QUALIFIERS=${qualifiers.join(',')}\n`);
           NODE
 
       - name: Locate runner Chrome
-        if: env.RUN_LIFECYCLE == '1' || env.RUN_INTERRUPTION == '1' || env.RUN_UNIFIED_ADDRESSED == '1'
+        if: env.RUN_LIFECYCLE == '1' || env.RUN_INTERRUPTION == '1' || env.RUN_UNIFIED_ADDRESSED == '1' || env.RUN_R5_JUDGEMENT == '1'
         shell: bash
         run: |
           set -euo pipefail
@@ -203,6 +205,16 @@ jobs:
           LIVE_PROVIDER_OUTPUT: evidence/live-provider/live-provider-unified-addressed.json
         run: node scripts/spc-browser-unified-addressed-live-evidence.mjs
 
+      - name: Validate R5 one-shot judgement qualifier harness
+        if: env.RUN_R5_JUDGEMENT == '1'
+        run: node --check scripts/spc-browser-r5-mira-live-judgement-evidence.mjs
+
+      - name: Qualify one-shot real Luna R5 judgement
+        if: env.RUN_R5_JUDGEMENT == '1'
+        env:
+          LIVE_PROVIDER_OUTPUT: evidence/live-provider/r5-mira-live-judgement.json
+        run: node scripts/spc-browser-r5-mira-live-judgement-evidence.mjs
+
       - name: Print live-provider evidence summary
         if: always()
         shell: bash
@@ -244,6 +256,12 @@ jobs:
           echo "--- Unified addressed-speech live evidence ---"
           if [ "${RUN_UNIFIED_ADDRESSED:-0}" = "1" ]; then
             cat evidence/live-provider/live-provider-unified-addressed.json 2>/dev/null || true
+          else
+            echo "not requested in this run"
+          fi
+          echo "--- R5 one-shot real-Luna judgement evidence ---"
+          if [ "${RUN_R5_JUDGEMENT:-0}" = "1" ]; then
+            cat evidence/live-provider/r5-mira-live-judgement.json 2>/dev/null || true
           else
             echo "not requested in this run"
           fi
