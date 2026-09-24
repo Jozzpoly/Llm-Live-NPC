@@ -6,11 +6,11 @@ Experimental web laboratory for **persistent embodied residents whose cognition 
 
 Active integration line:
 
-`integration/spc-next-owner-living-runtime-v1`
+`recovery/spc-post-stress-complementary-personhood-r6`
 
 Draft PR:
 
-**#141 — integration: five-resident owner living runtime v1**
+**#148 — recovery: R6 complementary resident personhood (draft/open)**
 
 Current execution / roadmap authority:
 
@@ -42,8 +42,10 @@ The major post-stress diagnosis is now **homeostasis / missing-middle intelligen
 
 Read in this order:
 
-1. **`docs/SPC_POST_STRESS_RECOVERY_PROGRAM.md`** — canonical post-stress objective, current R2 gate, roadmap and `CONTINUE` semantics;
-2. **`docs/SPC_ZERO_PROVIDER_LOCAL_LIFE_R1_PASS.md`** — exact R1 qualification and nonclaims;
+1. **`docs/SPC_POST_STRESS_RECOVERY_PROGRAM.md`** — canonical post-stress objective, promotion boundaries and `CONTINUE` semantics;
+2. **`docs/SPC_R6_COMPLEMENTARY_PERSONHOOD_EXPERIMENT.md`** — binding current R6 experiment contract and current frontier;
+3. **`docs/SPC_R6B_NATIVE_STANDING_SOCIAL_CONTINUATION_PASS.md`** — latest qualified bounded R6 mechanism evidence;
+4. **`docs/SPC_ZERO_PROVIDER_LOCAL_LIFE_R1_PASS.md`** — exact R1 qualification and nonclaims;
 3. **`docs/SPC_ZERO_PROVIDER_LOCAL_LIFE_EXPERIMENT.md`** — satisfied R1 experiment contract;
 4. **`docs/SPC_NEXT_OWNER_INTENT_AND_GAP_AUDIT.md`** — durable Owner/product guardrails and anti-drift intent;
 5. **`docs/SPC_FIVE_RESIDENT_PRESSURE_CAMPAIGN.md`** — resident pressure dimensions and scenario donors;
@@ -132,7 +134,7 @@ The previous **Owner Living Sandbox** promotion is superseded by post-stress evi
 
 R1 has earned **LOCAL-LIFE PASS**: one resident can sustain grounded causal continuity, interruption, factual consequence, legitimate quiet and later local wake without provider cognition manufacturing life.
 
-The current recovery target is **R2 resident relevance / semantic metabolism**: a noisy causal world must produce only the small, explainable set of unresolved semantic pressures that genuinely deserve higher cognition.
+The current recovery target is **R6 complementary resident personhood**. R1–R5 remain qualified only in their documented scopes. R6-A and R6-B are bounded qualified passes; the cross-resident Oren→Nela chain is mechanically green in the current domain suite, while broader R6 / browser-generic personhood / Owner-observed ordinary aliveness remain unproven.
 
 ## Evidence language
 
@@ -168,7 +170,7 @@ They are valuable because they preserve earned behavior and falsifiers. They do 
 
 ## Current promotion boundary
 
-PR #141 remains draft.
+PR #148 remains draft/open.
 
 Do not merge or declare broad Owner-ready quality merely because CI is green.
 
@@ -176,9 +178,13 @@ Current order:
 
 **`POST-STRESS RECOVERY`**
 → `R1 ZERO-PROVIDER LOCAL LIFE — PASS`
-→ **`R2 RELEVANCE / SEMANTIC METABOLISM — CURRENT`**
-→ `R3 causal personhood / R4 affordance pressure`
-→ `R5 reintroduce real Luna only after semantic escalation deserves to exist`.
+→ `R2 RELEVANCE / SEMANTIC METABOLISM — PASS`
+→ `R3 FIRST CAUSAL-PERSONHOOD MILESTONE — PASS`
+→ `R4 DENSE AUTHORED AFFORDANCE SURFACE — QUALIFIED PASS`
+→ `R5 SEMANTIC ESCALATION / REAL LUNA BOUNDARY — QUALIFIED PASS`
+→ **`R6 COMPLEMENTARY RESIDENT PERSONHOOD — CURRENT`**.
+
+Current R6 evidence must remain split by plane: R6-A/B are bounded qualified passes; the Oren→Nela cross-resident path is deterministic/domain evidence on current HEAD, not yet a broad R6 or Owner-observed personhood promotion.
 
 Later work must not rewrite the historical identity of the frozen `c181...` specimen.
 
