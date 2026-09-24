@@ -188,7 +188,9 @@ describe("R6 standing social commitment endogenous release", () => {
     });
     expect(life.currentLifeView().body).toEqual(beforeBody);
 
-    const releaseEvidence = life.kernel.semanticEvidence(STANDING_ID);
+    const releaseEvidence = life.kernel.recentEvidenceSnapshot().find(
+      (evidence) => evidence.kind === "resident_released_social_commitment",
+    ) ?? null;
     expect(releaseEvidence).toMatchObject({
       kind: "resident_released_social_commitment",
     });
