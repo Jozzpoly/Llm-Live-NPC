@@ -1,4 +1,4 @@
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 
 const BASE_URL = process.env.LIVE_PROVIDER_BASE_URL;
@@ -17,110 +17,16 @@ if (!BASE_URL) throw new Error("LIVE_PROVIDER_BASE_URL is required");
 if (!SOURCE_SHA) throw new Error("SOURCE_SHA is required");
 mkdirSync(dirname(OUTPUT_FILE), { recursive: true });
 
-function standingMatter() {
-  return {
-    id: "matter.oren.r6.standing.nela",
-    status: "active",
-    semanticRevision: 1,
-    semanticCourse:
-      "pozostać tutaj przy Neli jeszcze przez chwilę · Tak, zostanę tutaj przy tobie jeszcze chwilę.",
-    semanticIntent: {
-      kind: "standing_social_commitment",
-      goal: "pozostać tutaj przy Neli jeszcze przez chwilę",
-      counterpartyActorId: "resident.nela",
-      commitment: "Tak, zostanę tutaj przy tobie jeszcze chwilę.",
-    },
-    suspendedByMatterId: null,
-    originEvidence: {
-      id: "evidence:oren:r6:standing:nela",
-      tick: 100,
-      kind: "resident_originated_social_commitment",
-      summary:
-        "Oren factually addressed Nela and created the standing commitment: Tak, zostanę tutaj przy tobie jeszcze chwilę.",
-      sourceRunId: "run.oren.r6.promise-nela",
-    },
-    semanticEvidence: null,
-    lastOutcomeEvidence: null,
-    activeRun: null,
-  };
-}
+const FIXTURE = JSON.parse(
+  readFileSync(new URL("../evidence/r6-history-choice-twin-context.json", import.meta.url), "utf8"),
+);
 
-function context(withHistory) {
-  return {
-    contract: "resident_life_cognition_v1",
-    resident: { id: "resident.oren", name: "Oren" },
-    tick: 140,
-    currentRegionId: "commons",
-    reasons: [{
-      id: ORIGIN_REASON_ID,
-      tick: 140,
-      kind: "heard_speech",
-      salience: 0.9,
-      summary: "Ida directly asked Oren to leave now for the workshop to help with a heavy crate.",
-      evidenceIds: ["percept:oren:r6:ida-workshop-request:140"],
-    }],
-    localActivity: {
-      id: "activity:resident.oren:idle:r6-history-choice",
-      kind: "idle",
-      targetActorId: null,
-      targetPosition: null,
-      text: null,
-      speed: null,
-      reason: "Oren currently has no body-owning local activity.",
-    },
-    recentPercepts: [{
-      id: "percept:oren:r6:ida-workshop-request:140",
-      occurrenceId: "occurrence:ida:r6:workshop-request:140",
-      tick: 140,
-      phenomenon: "speech",
-      modality: "hearing",
-      actorId: "resident.ida",
-      subjectId: null,
-      spatial: {
-        kind: "directional",
-        direction: { x: 1, y: 0 },
-        distanceBand: "near",
-      },
-      summary: "Ida directly asks Oren to go with her to the workshop now.",
-      text: "Oren, chodź teraz ze mną do warsztatu. Potrzebuję twojej pomocy przy ciężkiej skrzyni; wrócimy od razu.",
-      addressed: true,
-    }],
-    concerns: [],
-    beliefs: [],
-    knownActors: [
-      {
-        id: "resident.ida",
-        label: "Ida",
-        lastKnownPosition: null,
-        lastObservedTick: null,
-        currentlyVisible: false,
-        visibilityChangedTick: null,
-        lastHeardDirection: { x: 1, y: 0 },
-        lastHeardDistanceBand: "near",
-        lastHeardTick: 140,
-      },
-      {
-        id: "resident.nela",
-        label: "Nela",
-        lastKnownPosition: null,
-        lastObservedTick: null,
-        currentlyVisible: false,
-        visibilityChangedTick: null,
-        lastHeardDirection: { x: -1, y: 0 },
-        lastHeardDistanceBand: "near",
-        lastHeardTick: 100,
-      },
-    ],
-    knownRegions: [
-      { id: "commons", label: "Commons", knowledge: "visited", lastVisitedTick: 140 },
-      { id: WORKSHOP_ID, label: "Workshop", knowledge: "familiar", lastVisitedTick: 90 },
-    ],
-    life: {
-      version: 1,
-      matters: withHistory ? [standingMatter()] : [],
-      body: { focusedRunId: null, deferredRunIds: [] },
-    },
-  };
+function context(label) {
+  const value = FIXTURE?.[label];
+  if (!value || typeof value !== "object") {
+    throw new Error(`missing R6 history-choice fixture context: ${label}`);
+  }
+  return JSON.parse(JSON.stringify(value));
 }
 
 const report = {
@@ -239,8 +145,8 @@ async function run() {
     throw new Error("R6 history-choice spend-free preflight failed; no provider request attempted");
   }
 
-  const controlContext = context(false);
-  const historyContext = context(true);
+  const controlContext = context("control");
+  const historyContext = context("history");
 
   const controlStable = structuredClone(controlContext);
   const historyStable = structuredClone(historyContext);

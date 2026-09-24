@@ -1,9 +1,9 @@
 {
-  "version": 19,
+  "version": 20,
   "pr": 148,
   "qualifiers": [
     "r6-history-choice-twin"
   ],
-  "purpose": "R6 ordinary-personhood falsifier: exactly two real GPT-5.6 Luna judgements receive identical current Oren/Ida private context. The only intended semantic difference is an active resident-owned standing commitment to remain here with Nela. No retries for preferred semantics. A history variant that accepts immediate travel away is a material personhood-fidelity failure; equal/non-travel outcomes are inconclusive rather than promoted.",
-  "requestedAtUtc": "2026-09-24T20:53:30Z"
+  "purpose": "Retry of the R6 ordinary-personhood history-choice twin after the first attempt failed locally before inference because the shared fixture incorrectly marked a familiar region with a lastVisitedTick. Both exact twin payloads now come from one repository fixture and are required to pass the real Worker sanitizer deterministically before live execution. Still exactly two GPT-5.6 Luna calls maximum and no semantic retry for preferred output.",
+  "requestedAtUtc": "2026-09-24T21:05:00Z"
 }
