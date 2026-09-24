@@ -146,6 +146,7 @@ export class ResidentCausalCognitionLane {
       this.life.world.tick,
       (proposal, providerContext) => {
         if (proposal.commitmentDecision.kind === "release_standing") {
+          const releaseDecision = proposal.commitmentDecision;
           if (originReason.kind !== "heard_speech") {
             return {
               status: "rejected",
@@ -157,7 +158,7 @@ export class ResidentCausalCognitionLane {
             return { status: "rejected", detail: "standing release speech occurrence unavailable" };
           }
           const matter = providerContext.life.matters.find(
-            (candidate) => candidate.id === proposal.commitmentDecision.matterId,
+            (candidate) => candidate.id === releaseDecision.matterId,
           ) ?? null;
           if (!matter
             || (matter.status !== "active" && matter.status !== "suspended")
@@ -181,7 +182,7 @@ export class ResidentCausalCognitionLane {
               kind: "release_standing",
               matterId: matter.id,
               occurrence,
-              reason: proposal.commitmentDecision.reason,
+              reason: releaseDecision.reason,
             },
           };
         }
