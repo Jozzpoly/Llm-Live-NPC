@@ -232,6 +232,20 @@ function sanitizeMatterIntent(value: unknown): ResidentMatterIntent | null {
     return { kind: "communicate_actor", goal, targetActorId, text };
   }
 
+  if (value.kind === "standing_social_commitment") {
+    if (!hasOnlyKeys(value, ["kind", "goal", "counterpartyActorId", "commitment"])) return null;
+    const goal = boundedText(value.goal, 1_200);
+    const counterpartyActorId = identifier(value.counterpartyActorId);
+    const commitment = boundedText(value.commitment, 1_200);
+    if (!goal || !counterpartyActorId || !commitment) return null;
+    return {
+      kind: "standing_social_commitment",
+      goal,
+      counterpartyActorId,
+      commitment,
+    };
+  }
+
   return null;
 }
 

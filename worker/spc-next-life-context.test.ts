@@ -131,6 +131,46 @@ describe("shared SPC Next resident-life context sanitizer", () => {
     expect(sanitizeSpcNextLifeContext(blankText)).toBeNull();
   });
 
+  it("preserves bounded standing social commitment history for higher cognition", () => {
+    const standing = structuredClone(focusedContext) as any;
+    standing.life.matters[0].activeRun = null;
+    standing.life.body.focusedRunId = null;
+    standing.life.matters[0].semanticCourse =
+      "remain available to Nela for a while · Tak, zostanę tu z tobą jeszcze chwilę.";
+    standing.life.matters[0].semanticIntent = {
+      kind: "standing_social_commitment",
+      goal: "remain available to Nela for a while",
+      counterpartyActorId: "resident.nela",
+      commitment: "Tak, zostanę tu z tobą jeszcze chwilę.",
+    };
+    standing.life.matters[0].originEvidence = {
+      id: "evidence:oren:standing:nela",
+      tick: 100,
+      kind: "resident_originated_social_commitment",
+      summary: "Oren factually promised Nela that he would remain with her for a while.",
+      sourceRunId: "run.oren.promise-nela",
+    };
+
+    expect(sanitizeSpcNextLifeContext(standing)?.life.matters[0]?.semanticIntent).toEqual({
+      kind: "standing_social_commitment",
+      goal: "remain available to Nela for a while",
+      counterpartyActorId: "resident.nela",
+      commitment: "Tak, zostanę tu z tobą jeszcze chwilę.",
+    });
+
+    const leaked = structuredClone(standing);
+    leaked.life.matters[0].semanticIntent.fulfilled = false;
+    expect(sanitizeSpcNextLifeContext(leaked)).toBeNull();
+
+    const blankCommitment = structuredClone(standing);
+    blankCommitment.life.matters[0].semanticIntent.commitment = " ";
+    expect(sanitizeSpcNextLifeContext(blankCommitment)).toBeNull();
+
+    const malformedCounterparty = structuredClone(standing);
+    malformedCounterparty.life.matters[0].semanticIntent.counterpartyActorId = "resident nela";
+    expect(sanitizeSpcNextLifeContext(malformedCounterparty)).toBeNull();
+  });
+
   it("fails closed on malformed structured intent and execution-method leakage", () => {
     const blankGoal = structuredClone(focusedContext) as any;
     blankGoal.life.matters[0].semanticIntent = {
