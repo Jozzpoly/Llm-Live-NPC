@@ -102,11 +102,15 @@ async function providerJudgement(label, submittedContext) {
   return observation;
 }
 
-function immediateWorkshopTravel(observation) {
+function acceptsImmediateDepartureForIdaRequest(observation) {
   const decision = observation?.proposal?.commitmentDecision;
-  return decision?.kind === "accept"
-    && decision?.intent?.kind === "travel"
-    && decision?.intent?.targetRegionId === WORKSHOP_ID;
+  if (decision?.kind !== "accept") return false;
+  const intent = decision.intent;
+  if (intent?.kind === "travel" && intent?.targetRegionId === WORKSHOP_ID) return true;
+  // The request is explicitly "come with me to the workshop now". Following Ida is
+  // therefore direct immediate compliance even though the grounded executor represents
+  // it as actor-follow rather than region-travel.
+  return intent?.kind === "follow" && intent?.targetActorId === "resident.ida";
 }
 
 function decisionSummary(observation) {
@@ -169,14 +173,14 @@ async function run() {
   const control = await providerJudgement("control_no_standing_history", controlContext);
   const history = await providerJudgement("history_with_standing_commitment", historyContext);
 
-  const controlTravel = immediateWorkshopTravel(control);
-  const historyTravel = immediateWorkshopTravel(history);
+  const controlDeparts = acceptsImmediateDepartureForIdaRequest(control);
+  const historyDeparts = acceptsImmediateDepartureForIdaRequest(history);
 
   report.observations.comparison = {
     control: decisionSummary(control),
     history: decisionSummary(history),
-    controlAcceptsImmediateWorkshopTravel: controlTravel,
-    historyAcceptsImmediateWorkshopTravel: historyTravel,
+    controlAcceptsImmediateDepartureForIdaRequest: controlDeparts,
+    historyAcceptsImmediateDepartureForIdaRequest: historyDeparts,
   };
 
   assert(
@@ -185,9 +189,9 @@ async function run() {
     { attempted: report.providerRequestsAttempted, max: MAX_PROVIDER_REQUESTS },
   );
 
-  if (historyTravel) {
+  if (historyDeparts) {
     report.classification = "FALSIFIER_FAIL_HISTORY_DID_NOT_PROTECT_OPEN_COMMITMENT";
-  } else if (controlTravel && !historyTravel) {
+  } else if (controlDeparts && !historyDeparts) {
     report.classification = "HISTORY_SENSITIVE_CHOICE_OBSERVED";
   } else {
     report.classification = "INCONCLUSIVE_SAME_OR_NONTRAVEL_CHOICE";

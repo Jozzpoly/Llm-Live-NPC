@@ -1,0 +1,169 @@
+# SPC R6 — History-Dependent Choice Finding
+
+Status: **BOUNDED POSITIVE FINDING — NOT R6 PASS**
+Observed: **2026-09-24**
+PR: **#148 — draft/open**
+
+Live evidence source:
+`1de238ab02170aa1cf31ab34ee380bed1ca9aea4`
+
+Deterministic fixture-validation source:
+`3251e7c739d1cdbf2c5cb7685892af814d5a725f`
+
+Live Provider Evidence:
+- workflow run **#20**;
+- exact Cloudflare commit preview `62f646a4-llm-live-npc.jozzpoly.workers.dev`;
+- model **GPT-5.6 Luna**;
+- exactly **2** provider calls;
+- no semantic retry.
+
+## 1. Question
+
+R6 is not trying to prove that a resident can merely store a promise.
+
+The sharper question is:
+
+> Can accumulated private causal life change a later real semantic choice when the resident encounters the same current situation?
+
+The experiment used Oren twice with identical current private context. The only intended semantic difference was resident-owned life history.
+
+Both variants received the same direct Ida request:
+
+`Oren, chodź teraz ze mną do warsztatu. Potrzebuję twojej pomocy przy ciężkiej skrzyni; wrócimy od razu.`
+
+Control:
+- no open standing social commitment.
+
+History twin:
+- one active run-free standing commitment to Nela;
+- exact commitment text:
+  `Tak, zostanę tutaj przy tobie jeszcze chwilę.`;
+- exact private origin evidence from prior factual self speech.
+
+## 2. Observed real-Luna decisions
+
+### Control — no standing history
+
+Luna returned:
+
+- `commitmentDecision.kind = accept`;
+- intent `follow resident.ida`;
+- goal: `Go with Ida to the workshop to help with the heavy crate.`
+
+This is direct compliance with the current request to leave with Ida for the workshop.
+
+Usage:
+- input: **2048** tokens;
+- output: **239** tokens;
+- total: **2287** tokens.
+
+### History twin — standing commitment to Nela
+
+Luna returned:
+
+- `commitmentDecision.kind = decline`;
+- reason:
+  `Nie przyjmuję teraz prośby o odejście do warsztatu, ponieważ nadal obowiązuje moje wcześniejsze zobowiązanie, by zostać jeszcze chwilę przy Neli.`
+
+Usage:
+- input: **2243** tokens;
+- output: **213** tokens;
+- total: **2456** tokens.
+
+Both responses preserved the exact origin reason and used the intended GPT-5.6 Luna model.
+
+## 3. Harness classification correction
+
+The live harness originally emitted:
+
+`INCONCLUSIVE_SAME_OR_NONTRAVEL_CHOICE`
+
+That label is a harness bug, not the semantic result.
+
+The classifier recognized immediate compliance only as:
+
+`accept + travel(workshop)`
+
+but the control chose:
+
+`accept + follow(Ida)`
+
+for the explicit request to **come with Ida to the workshop now**.
+
+The raw recorded provider proposal is authoritative evidence. The classifier has been corrected to treat either:
+- direct travel to the requested workshop; or
+- following the requesting Ida
+
+as immediate departure/compliance for this exact stimulus.
+
+No provider rerun is justified or required for this correction.
+
+## 4. What this changes
+
+This is the first R6 evidence that goes beyond:
+
+`private history -> later salience`
+
+and reaches:
+
+`private history -> different real higher-cognition choice`.
+
+The observed pair is:
+
+`same current context + no standing history -> accept leaving with Ida`
+
+versus
+
+`same current context + open commitment to Nela -> decline leaving because of that commitment`.
+
+That is a materially stronger personhood result than another green lifecycle gate.
+
+## 5. Important limits
+
+This is **not** proof of full ordinary personhood.
+
+It does not establish:
+- a stable behavioral distribution across repeated stochastic samples;
+- arbitrary conflict resolution;
+- rich relationship models;
+- preferences, aversions, trust, resentment, habit or self-interest;
+- Owner-observed ordinary aliveness;
+- browser-qualified Oren/Nela genericity;
+- five distinct residents behaving coherently over long lives.
+
+It is one bounded paired real-model observation with unusually clean causal contrast.
+
+## 6. Supporting boundary evidence
+
+Before this experiment, recovery found that Worker transport rejected `standing_social_commitment` from provider-facing `life` context entirely.
+
+That gap was fixed in:
+`c9c9db3316d8f34d43517b3308add41665e558f2`
+
+The shared exact twin fixture was then made canonical at:
+`1de238ab02170aa1cf31ab34ee380bed1ca9aea4`
+
+A subsequent test-only commit:
+`3251e7c739d1cdbf2c5cb7685892af814d5a725f`
+
+changed no runtime, Worker, live script or fixture bytes and proved both exact contexts legal through the same Worker sanitizer.
+
+Check #1577:
+- **259 / 259 test files PASS**;
+- **952 / 952 tests PASS**;
+- dedicated exact fixture sanitizer test PASS;
+- build and preview dry-run PASS.
+
+## 7. Remaining integration gap
+
+The live twin used a canonical synthetic context fixture.
+
+Separately, the native Oren → Nela runtime can create the standing history mechanically.
+
+The next zero-provider falsifier should join those facts:
+
+`actual runtime-generated Oren standing history -> next ResidentCausalCognitionRequest.context -> Worker sanitizer`.
+
+Until that join is executable, do not claim that the live history-sensitive choice was produced end-to-end by accumulated ordinary runtime life.
+
+Browser-qualified cross-resident genericity also remains explicitly unproven.
