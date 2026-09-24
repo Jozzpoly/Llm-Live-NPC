@@ -7,6 +7,7 @@ on:
       - research/i2-mira-live-cognition-bridge
       - integration/spc-next-owner-living-runtime-v1
       - recovery/spc-post-stress-semantic-escalation-r5
+      - recovery/spc-post-stress-complementary-personhood-r6
     paths:
       - "evidence/live-provider-request.json"
   workflow_dispatch:
@@ -39,7 +40,7 @@ jobs:
           const qualifiers = Array.isArray(request.qualifiers)
             ? request.qualifiers
             : ['lifecycle', 'interruption'];
-          const allowed = new Set(['lifecycle', 'interruption', 'life-choice', 'life-intent', 'unified-addressed', 'r5-judgement']);
+          const allowed = new Set(['lifecycle', 'interruption', 'life-choice', 'life-intent', 'unified-addressed', 'r5-judgement', 'r6-history-choice-twin']);
           if (qualifiers.length === 0 || qualifiers.some((value) => !allowed.has(value))) {
             throw new Error(`invalid live-provider qualifiers: ${JSON.stringify(qualifiers)}`);
           }
@@ -49,6 +50,7 @@ jobs:
           process.stdout.write(`RUN_LIFE_INTENT=${qualifiers.includes('life-intent') ? '1' : '0'}\n`);
           process.stdout.write(`RUN_UNIFIED_ADDRESSED=${qualifiers.includes('unified-addressed') ? '1' : '0'}\n`);
           process.stdout.write(`RUN_R5_JUDGEMENT=${qualifiers.includes('r5-judgement') ? '1' : '0'}\n`);
+          process.stdout.write(`RUN_R6_HISTORY_CHOICE_TWIN=${qualifiers.includes('r6-history-choice-twin') ? '1' : '0'}\n`);
           process.stdout.write(`REQUESTED_QUALIFIERS=${qualifiers.join(',')}\n`);
           NODE
 
@@ -215,6 +217,12 @@ jobs:
           LIVE_PROVIDER_OUTPUT: evidence/live-provider/r5-mira-live-judgement.json
         run: node scripts/spc-browser-r5-mira-live-judgement-evidence.mjs
 
+      - name: Qualify R6 history-dependent choice twin with real Luna
+        if: env.RUN_R6_HISTORY_CHOICE_TWIN == '1'
+        env:
+          LIVE_PROVIDER_OUTPUT: evidence/live-provider/r6-history-choice-twin.json
+        run: node scripts/spc-live-provider-r6-history-choice-twin-evidence.mjs
+
       - name: Print live-provider evidence summary
         if: always()
         shell: bash
@@ -262,6 +270,13 @@ jobs:
           echo "--- R5 one-shot real-Luna judgement evidence ---"
           if [ "${RUN_R5_JUDGEMENT:-0}" = "1" ]; then
             cat evidence/live-provider/r5-mira-live-judgement.json 2>/dev/null || true
+          else
+            echo "not requested in this run"
+          fi
+
+          echo "--- R6 history-dependent choice twin evidence ---"
+          if [ "${RUN_R6_HISTORY_CHOICE_TWIN:-0}" = "1" ]; then
+            cat evidence/live-provider/r6-history-choice-twin.json 2>/dev/null || true
           else
             echo "not requested in this run"
           fi
