@@ -345,5 +345,132 @@ describe("R6-C cross-resident standing-social-continuation genericity", () => {
         }),
       }),
     ]));
+
+    // Deterministically mirror the already-observed live twin's history-respecting
+    // non-departure only to settle this exact Ida pressure and continue the lifecycle
+    // specimen. This is not additional evidence about model judgement quality.
+    if (!nextSpeechOrigin) {
+      throw new Error("R6 generated-history join lost Ida speech origin before settlement");
+    }
+    expect(cognition.settleCommitment(nextRequest, {
+      version: 1,
+      commitmentDecision: {
+        kind: "decline",
+        reason: "I keep the already-open standing commitment to Nela.",
+      },
+      beliefs: [],
+      concerns: [],
+      reviewAfterSeconds: 30,
+    }, nextSpeechOrigin.id)).toEqual({
+      status: "applied",
+      residentId: OREN_ID,
+      decision: "decline",
+      commitment: null,
+    });
+    expect(life.kernel.matter(standing.id)?.status).toBe("active");
+
+    // Now give that exact generated history a factual lifecycle exit from its own
+    // counterparty. The normal cognition lane must resolve the existing matter; no
+    // experiment-owned direct release call is allowed.
+    const nelaReleaseOrigin = nelaKernel.recordEvidence({
+      id: "evidence.nela.r6.generic.release",
+      tick: world.tick,
+      kind: "life_context",
+      summary: "Nela already decided to release Oren from the standing commitment.",
+    });
+    const nelaReleaseMatterId = "matter.nela.r6.generic.release";
+    const nelaReleaseRunId = "run.nela.r6.generic.release";
+    nelaKernel.openMatter({
+      id: nelaReleaseMatterId,
+      originEvidenceId: nelaReleaseOrigin.id,
+      semanticCourse: "release Oren from remaining here",
+    });
+    nelaKernel.bindRun({
+      matterId: nelaReleaseMatterId,
+      taskId: "task.nela.r6.generic.release",
+      runId: nelaReleaseRunId,
+    });
+    const nelaReleaseSpeech = nelaAuthority.apply({
+      runId: nelaReleaseRunId,
+      effects: [{
+        kind: "speech",
+        text: "Dzięki, możesz już iść. Nie musisz już ze mną zostawać.",
+        radius: 420,
+        addressedActorIds: [OREN_ID],
+      }],
+    });
+    expect(nelaReleaseSpeech.status).toBe("applied");
+    if (nelaReleaseSpeech.status !== "applied") {
+      throw new Error("R6 generated-history lifecycle lost Nela release speech authority");
+    }
+    expect(nelaKernel.reconcileRunOutcome({
+      runId: nelaReleaseRunId,
+      tick: world.tick,
+      status: "succeeded",
+      summary: "Nela factually released Oren from remaining here.",
+    }).status).toBe("recorded");
+    nelaKernel.resolveMatter(nelaReleaseMatterId);
+    world.step();
+
+    let releaseRequest = cognition.takeReadyRequest();
+    for (let index = 0; index < COGNITION_GUARD && !releaseRequest; index += 1) {
+      execution.stepFocusedRun();
+      world.step();
+      releaseRequest = cognition.takeReadyRequest();
+    }
+    expect(releaseRequest).not.toBeNull();
+    if (!releaseRequest) {
+      throw new Error("R6 generated-history lifecycle produced no release cognition request");
+    }
+
+    const releaseReason = releaseRequest.batch.reasons.find(
+      (reason) => reason.kind === "heard_speech"
+        && reason.evidenceIds.some((id) => (
+          releaseRequest!.context.recentPercepts.some(
+            (percept) => percept.id === id
+              && percept.actorId === NELA_ID
+              && percept.text === "Dzięki, możesz już iść. Nie musisz już ze mną zostawać.",
+          )
+        )),
+    ) ?? null;
+    expect(releaseReason).not.toBeNull();
+    if (!releaseReason) {
+      throw new Error("R6 generated-history lifecycle lacked exact Nela release reason");
+    }
+
+    const preReleaseBody = life.currentLifeView().body;
+    expect(cognition.settleCommitment(releaseRequest, {
+      version: 1,
+      commitmentDecision: {
+        kind: "release_standing",
+        reason: "Nela explicitly released me from the standing responsibility.",
+        matterId: standing.id,
+      },
+      beliefs: [],
+      concerns: [],
+      reviewAfterSeconds: 30,
+    }, releaseReason.id)).toEqual({
+      status: "applied",
+      residentId: OREN_ID,
+      decision: "release_standing",
+      commitment: null,
+    });
+
+    expect(life.kernel.matter(standing.id)).toMatchObject({
+      status: "resolved",
+      activeRunId: null,
+      semanticIntent: {
+        kind: "standing_social_commitment",
+        counterpartyActorId: NELA_ID,
+        commitment: OREN_PROMISE,
+      },
+    });
+    expect(life.currentLifeView().body).toEqual(preReleaseBody);
+    expect(life.kernel.recentEvidenceSnapshot()).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        kind: "resident_released_social_commitment",
+        summary: expect.stringContaining(nelaReleaseSpeech.occurrences[0]!.id),
+      }),
+    ]));
   });
 });
