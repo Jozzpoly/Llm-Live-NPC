@@ -239,6 +239,44 @@ export class ResidentOriginatedSocialCommitmentAuthority {
   }
 
   /**
+   * Releases one exact standing commitment only after factual addressed speech from
+   * that commitment's own counterparty. Language interpretation remains higher-level
+   * cognition; this authority proves only the private matter and World-origin match.
+   */
+  releaseAfterCounterpartySpeech(input: {
+    matterId: string;
+    occurrenceId: string;
+    tick: number;
+    reason: string;
+  }): ReleasedResidentOriginatedSocialCommitment {
+    assertNonEmpty(input.occurrenceId, "social commitment release occurrence id");
+    const matter = this.options.kernel.matter(input.matterId);
+    if (!matter
+      || (matter.status !== "active" && matter.status !== "suspended")
+      || matter.semanticIntent?.kind !== "standing_social_commitment") {
+      throw new Error("counterparty release requires one open standing social commitment");
+    }
+
+    const occurrence = this.options.world.diagnostics().recentOccurrences.find(
+      (candidate) => candidate.id === input.occurrenceId,
+    ) ?? null;
+    if (!occurrence
+      || occurrence.kind !== "speech"
+      || occurrence.actorId !== matter.semanticIntent.counterpartyActorId
+      || !occurrence.addressedActorIds.includes(this.options.residentId)) {
+      throw new Error(
+        "standing social commitment release lacks exact factual counterparty speech origin",
+      );
+    }
+
+    return this.release({
+      matterId: matter.id,
+      tick: input.tick,
+      reason: `${input.reason} · factual counterparty speech ${occurrence.id}`,
+    });
+  }
+
+  /**
    * Explicitly releases the resident's own standing commitment.
    *
    * This is a private resident-state transition, not proof that the counterparty

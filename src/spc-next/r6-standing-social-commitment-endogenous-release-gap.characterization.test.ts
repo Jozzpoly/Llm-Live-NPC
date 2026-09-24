@@ -13,8 +13,8 @@ const STANDING_ID = "matter.oren.r6.release-gap";
 const STANDING_GOAL = "pozostać przy Neli jeszcze przez chwilę";
 const STANDING_TEXT = "Tak, zostanę tutaj przy tobie jeszcze chwilę.";
 
-describe("R6 standing social commitment endogenous-release gap characterization", () => {
-  it("shows higher cognition can review the standing history but current life-intent settlement cannot end it", () => {
+describe("R6 standing social commitment endogenous release", () => {
+  it("lets exact factual counterparty release speech end the standing matter without body or World authority", () => {
     const world = new SpcWorldRuntime({
       bounds: { minX: 0, minY: 0, maxX: 800, maxY: 600 },
       regions: [{
@@ -157,16 +157,13 @@ describe("R6 standing social commitment endogenous-release gap characterization"
       }),
     ]));
 
-    // Higher cognition can now legally settle the release cue and explicitly state that
-    // no new commitment should be created because the old responsibility is over. The
-    // current contract still has no authority field targeting an existing standing
-    // matter, so the old responsibility remains active unchanged.
+    const beforeBody = life.currentLifeView().body;
     const settlement = cognition.settleCommitment(request, {
       version: 1,
       commitmentDecision: {
-        kind: "decline",
-        reason:
-          "Nela zwolniła mnie z wcześniejszego zobowiązania; nie tworzę z tego nowej sprawy.",
+        kind: "release_standing",
+        reason: "Nela explicitly released me from the responsibility to remain here.",
+        matterId: STANDING_ID,
       },
       beliefs: [],
       concerns: [],
@@ -176,12 +173,11 @@ describe("R6 standing social commitment endogenous-release gap characterization"
     expect(settlement).toEqual({
       status: "applied",
       residentId: OREN_ID,
-      decision: "decline",
+      decision: "release_standing",
       commitment: null,
     });
     expect(life.kernel.matter(STANDING_ID)).toMatchObject({
-      status: "active",
-      semanticRevision: 1,
+      status: "resolved",
       activeRunId: null,
       semanticIntent: {
         kind: "standing_social_commitment",
@@ -190,11 +186,135 @@ describe("R6 standing social commitment endogenous-release gap characterization"
         commitment: STANDING_TEXT,
       },
     });
+    expect(life.currentLifeView().body).toEqual(beforeBody);
 
-    // Characterization verdict: explicit release authority exists locally on
-    // originatedSocialCommitments, but normal higher cognition cannot currently
-    // express that lifecycle transition. Without another direct caller the
-    // time-bounded-sounding responsibility is therefore semantically sticky.
-    expect(typeof life.originatedSocialCommitments.release).toBe("function");
+    const releaseEvidence = life.kernel.semanticEvidence(STANDING_ID);
+    expect(releaseEvidence).toMatchObject({
+      kind: "resident_released_social_commitment",
+    });
+    expect(releaseEvidence?.summary).toContain(releaseSpeech.occurrences[0]!.id);
   });
+
+  it("rejects release when the factual speech came from another actor than the standing counterparty", () => {
+    const world = new SpcWorldRuntime({
+      bounds: { minX: 0, minY: 0, maxX: 800, maxY: 600 },
+      regions: [{
+        id: REGION_ID,
+        label: "R6 Release Gap Room",
+        minX: 0,
+        minY: 0,
+        maxX: 800,
+        maxY: 600,
+      }],
+      anchors: [],
+      chunkSize: 128,
+      fixedDeltaSeconds: 1 / 60,
+    });
+    const oren = world.addResident(OREN_ID, "Oren", { x: 400, y: 300 });
+    const idaId = "resident.ida";
+    world.addResident(idaId, "Ida", { x: 460, y: 300 });
+    world.familiarizeResidentWithRegions(OREN_ID, [REGION_ID]);
+    world.familiarizeResidentWithRegions(idaId, [REGION_ID]);
+
+    const life = new ResidentCausalLifeSubstrate({
+      residentId: OREN_ID,
+      resident: oren,
+      world,
+      navigation: new RegionNavigationGraph(
+        [{ id: REGION_ID, destinationPoint: { x: 400, y: 300 } }],
+        [],
+      ),
+      identityNamespace: "oren-r6-release-wrong-counterparty",
+    });
+    const cognition = new ResidentCausalCognitionLane(life);
+    const origin = life.kernel.recordEvidence({
+      id: "evidence.oren.r6.release-wrong.origin",
+      tick: world.tick,
+      kind: "resident_originated_social_commitment",
+      summary: "Oren has one standing commitment to Nela.",
+    });
+    life.kernel.openMatter({
+      id: STANDING_ID,
+      originEvidenceId: origin.id,
+      semanticCourse: `${STANDING_GOAL} · ${STANDING_TEXT}`,
+      semanticIntent: {
+        kind: "standing_social_commitment",
+        goal: STANDING_GOAL,
+        counterpartyActorId: NELA_ID,
+        commitment: STANDING_TEXT,
+      },
+    });
+    life.matterScope.track(STANDING_ID);
+
+    const idaKernel = new ResidentContinuityKernel();
+    const idaAuthority = new ResidentWorldExecutionAuthority(idaId, idaKernel, world);
+    world.step();
+    const speechOrigin = idaKernel.recordEvidence({
+      id: "evidence.ida.r6.false-release",
+      tick: world.tick,
+      kind: "life_context",
+      summary: "Ida decided to tell Oren that he may leave.",
+    });
+    const speechMatterId = "matter.ida.r6.false-release";
+    const speechRunId = "run.ida.r6.false-release";
+    idaKernel.openMatter({
+      id: speechMatterId,
+      originEvidenceId: speechOrigin.id,
+      semanticCourse: "tell Oren he may leave",
+    });
+    idaKernel.bindRun({
+      matterId: speechMatterId,
+      taskId: "task.ida.r6.false-release",
+      runId: speechRunId,
+    });
+    const speech = idaAuthority.apply({
+      runId: speechRunId,
+      effects: [{
+        kind: "speech",
+        text: "Możesz już iść.",
+        radius: 420,
+        addressedActorIds: [OREN_ID],
+      }],
+    });
+    expect(speech.status).toBe("applied");
+    if (speech.status !== "applied") throw new Error("R6 wrong-counterparty speech lost authority");
+    expect(idaKernel.reconcileRunOutcome({
+      runId: speechRunId,
+      tick: world.tick,
+      status: "succeeded",
+      summary: "Ida factually addressed Oren.",
+    }).status).toBe("recorded");
+    idaKernel.resolveMatter(speechMatterId);
+    world.step();
+
+    const request = cognition.takeReadyRequest();
+    expect(request).not.toBeNull();
+    if (!request) throw new Error("R6 wrong-counterparty falsifier produced no cognition request");
+    const reason = request.batch.reasons.find((candidate) => candidate.kind === "heard_speech");
+    expect(reason).toBeDefined();
+    if (!reason) throw new Error("R6 wrong-counterparty falsifier lacked speech origin");
+
+    expect(cognition.settleCommitment(request, {
+      version: 1,
+      commitmentDecision: {
+        kind: "release_standing",
+        reason: "Ida says I may leave.",
+        matterId: STANDING_ID,
+      },
+      beliefs: [],
+      concerns: [],
+      reviewAfterSeconds: 30,
+    }, reason.id)).toMatchObject({
+      status: "rejected",
+      residentId: OREN_ID,
+      reason: "intent_rejected",
+      detail: "standing release origin is not factual addressed speech from its counterparty",
+    });
+
+    expect(life.kernel.matter(STANDING_ID)).toMatchObject({
+      status: "active",
+      activeRunId: null,
+    });
+  });
+
 });

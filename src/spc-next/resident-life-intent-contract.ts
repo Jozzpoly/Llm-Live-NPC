@@ -20,7 +20,12 @@ export type ResidentLifeCommitmentDecision =
     }
   | { kind: "decline"; reason: string }
   | { kind: "defer"; reason: string }
-  | { kind: "clarify"; reason: string; question: string };
+  | { kind: "clarify"; reason: string; question: string }
+  | {
+      kind: "release_standing";
+      reason: string;
+      matterId: string;
+    };
 
 export interface ResidentLifeIntentProposal {
   version: 1;
@@ -145,6 +150,24 @@ export function parseResidentLifeIntentProposal(
         kind: "clarify",
         reason: decision.reason,
         question: decision.question,
+      },
+      beliefs: structuredClone(validated.beliefs),
+      concerns: structuredClone(validated.concerns),
+      reviewAfterSeconds: validated.reviewAfterSeconds,
+    };
+  }
+
+  if (decision.kind === "release_standing") {
+    if (!hasExactKeys(decision, ["kind", "reason", "matterId"])
+      || !isBoundedString(decision.matterId, 128)) return null;
+    const validated = validateSemanticUpdatesOnly(value, context, decision.reason);
+    if (!validated) return null;
+    return {
+      version: 1,
+      commitmentDecision: {
+        kind: "release_standing",
+        reason: decision.reason,
+        matterId: decision.matterId,
       },
       beliefs: structuredClone(validated.beliefs),
       concerns: structuredClone(validated.concerns),

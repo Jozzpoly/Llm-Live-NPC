@@ -186,6 +186,34 @@ describe("ResidentLifeIntentProposal contract", () => {
     });
   });
 
+  it("represents one bounded standing-commitment release without body authority", () => {
+    const parsed = parseResidentLifeIntentProposal({
+      version: 1,
+      commitmentDecision: {
+        kind: "release_standing",
+        reason: "the counterparty explicitly released this standing responsibility",
+        matterId: "matter.mira.standing.jozz",
+      },
+      ...semanticUpdates,
+    }, context);
+
+    expect(parsed?.commitmentDecision).toEqual({
+      kind: "release_standing",
+      reason: "the counterparty explicitly released this standing responsibility",
+      matterId: "matter.mira.standing.jozz",
+    });
+
+    expect(parseResidentLifeIntentProposal({
+      version: 1,
+      commitmentDecision: {
+        kind: "release_standing",
+        reason: "malformed release",
+        matterId: "",
+      },
+      ...semanticUpdates,
+    }, context)).toBeNull();
+  });
+
   it("rejects an accepted target outside the resident's private known-world context", () => {
     expect(parseResidentLifeIntentProposal({
       version: 1,

@@ -50,6 +50,7 @@ commitmentDecision kinds:
 - decline: consciously do not accept the new pressure as a commitment.
 - defer: leave the pressure undecided for a later review; do not invent an accepted task.
 - clarify: the pressure cannot be responsibly decided without clarification; provide one concise natural-language question.
+- release_standing: end one exact open standing social commitment already present in life when the selected current reason genuinely justifies ending it. Supply the exact matterId from life. This creates no new task, gives no body authority and proves no external World outcome.
 
 Supported accepted intents use the bounded semantic vocabulary:
 - idle: deliberately accept no new bodily task;
@@ -57,6 +58,8 @@ Supported accepted intents use the bounded semantic vocabulary:
 - investigate: commit to physically inspecting one KNOWN region or an exact position already grounded by visual/private evidence;
 - follow: commit to seeking/following one KNOWN actor using acquired contact evidence;
 - communicate: commit to seeking physical contact with one KNOWN actor and speaking the supplied natural Polish text only after contact.
+
+For release_standing, only target an exact open life matter whose semanticIntent.kind is standing_social_commitment. When the selected reason is heard speech, local admission will additionally require factual addressed speech from that standing commitment's own counterparty; do not use another actor's statement to release it.
 
 For accept+communicate only, use standingSocialCommitment when the resident deliberately intends that exact future speech to create one continuing social responsibility after it is factually spoken. The field contains only goal. Omit it for ordinary acknowledgement or conversation. The exact supplied speech text becomes the durable commitment wording only if that speech factually succeeds; do not provide a second paraphrased commitment claim. The declaration does not make the promise true, does not grant body authority and does not create standing history by itself.
 
@@ -250,6 +253,10 @@ function strictCommitmentProposalShape(value: unknown): boolean {
     if (!hasExactKeys(decision, ["kind", "reason"])) return false;
   } else if (decision.kind === "clarify") {
     if (!hasExactKeys(decision, ["kind", "reason", "question"])) return false;
+  } else if (decision.kind === "release_standing") {
+    if (!hasExactKeys(decision, ["kind", "reason", "matterId"])
+      || typeof decision.matterId !== "string"
+      || !decision.matterId.trim()) return false;
   } else {
     return false;
   }
@@ -346,6 +353,11 @@ const proposalSchema = objectSchema({
         kind: { type: "string", enum: ["clarify"] },
         reason: stringSchema(1200),
         question: stringSchema(1200),
+      }),
+      objectSchema({
+        kind: { type: "string", enum: ["release_standing"] },
+        reason: stringSchema(1200),
+        matterId: idSchema,
       }),
     ],
   },
