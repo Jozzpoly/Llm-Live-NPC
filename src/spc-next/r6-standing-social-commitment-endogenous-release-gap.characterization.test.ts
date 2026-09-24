@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { ResidentCausalCognitionLane } from "./resident-causal-cognition-lane";
 import { ResidentCausalLifeSubstrate } from "./resident-causal-life-substrate";
+import { ResidentContinuityKernel } from "./resident-continuity-kernel";
+import { ResidentWorldExecutionAuthority } from "./resident-world-execution-authority";
 import { RegionNavigationGraph } from "./region-navigation";
 import { SpcWorldRuntime } from "./spc-world-runtime";
 
@@ -63,22 +65,83 @@ describe("R6 standing social commitment endogenous-release gap characterization"
     });
     life.matterScope.track(STANDING_ID);
 
-    // This is a legitimate adaptive review, not a fabricated event-specific pressure.
-    // One World tick is enough because reviewAfterSeconds equals fixedDeltaSeconds.
+    // R2 deliberately made maintenance deadlines non-semantic: passage of time alone
+    // cannot manufacture cognition pressure. This protects provider homeostasis, but it
+    // also means a time-bounded-sounding standing commitment cannot reconsider itself.
     oren.scheduleAdaptiveReview(
       world.tick,
       world.options.fixedDeltaSeconds,
       world.options.fixedDeltaSeconds,
     );
+    const reviewDeadline = oren.cognitionScheduleDiagnostics().nextQuietReviewTick;
+    while (world.tick < reviewDeadline) world.step();
+
+    expect(cognition.takeReadyRequest()).toBeNull();
+    expect(life.kernel.matter(STANDING_ID)).toMatchObject({
+      status: "active",
+      activeRunId: null,
+    });
+
+    // Give the resident a real causal release cue instead of fabricating timer pressure.
+    // Nela enters ordinary World truth, is privately perceived, then factually addresses
+    // Oren under her own exact run authority.
+    world.addResident(NELA_ID, "Nela", { x: 460, y: 300 });
+    world.familiarizeResidentWithRegions(NELA_ID, [REGION_ID]);
+    const nelaKernel = new ResidentContinuityKernel();
+    const nelaAuthority = new ResidentWorldExecutionAuthority(NELA_ID, nelaKernel, world);
+    world.step();
+
+    const nelaOrigin = nelaKernel.recordEvidence({
+      id: "evidence.nela.r6.release-cue",
+      tick: world.tick,
+      kind: "life_context",
+      summary: "Nela already decided to release Oren from the prior social commitment.",
+    });
+    const nelaMatterId = "matter.nela.r6.release-cue";
+    const nelaRunId = "run.nela.r6.release-cue";
+    nelaKernel.openMatter({
+      id: nelaMatterId,
+      originEvidenceId: nelaOrigin.id,
+      semanticCourse: "tell Oren he no longer needs to remain here",
+    });
+    nelaKernel.bindRun({
+      matterId: nelaMatterId,
+      taskId: "task.nela.r6.release-cue",
+      runId: nelaRunId,
+    });
+    const releaseSpeech = nelaAuthority.apply({
+      runId: nelaRunId,
+      effects: [{
+        kind: "speech",
+        text: "Dzięki, możesz już iść. Nie musisz już zostawać ze mną.",
+        radius: 420,
+        addressedActorIds: [OREN_ID],
+      }],
+    });
+    expect(releaseSpeech.status).toBe("applied");
+    if (releaseSpeech.status !== "applied") {
+      throw new Error("R6 release-gap characterization lost Nela speech authority");
+    }
+    expect(nelaKernel.reconcileRunOutcome({
+      runId: nelaRunId,
+      tick: world.tick,
+      status: "succeeded",
+      summary: "Nela factually released Oren from needing to remain.",
+    }).status).toBe("recorded");
+    nelaKernel.resolveMatter(nelaMatterId);
     world.step();
 
     const request = cognition.takeReadyRequest();
     expect(request).not.toBeNull();
-    if (!request) throw new Error("R6 release-gap characterization expected a quiet review");
+    if (!request) throw new Error("R6 release-gap characterization expected Nela release cue");
 
-    const review = request.batch.reasons.find((reason) => reason.kind === "quiet_review") ?? null;
-    expect(review).not.toBeNull();
-    if (!review) throw new Error("R6 release-gap characterization lacked quiet-review origin");
+    const releaseCue = request.batch.reasons.find(
+      (reason) => reason.kind === "heard_speech",
+    ) ?? null;
+    expect(releaseCue).not.toBeNull();
+    if (!releaseCue) {
+      throw new Error("R6 release-gap characterization lacked factual release-cue origin");
+    }
 
     expect(request.context.life.matters).toEqual(expect.arrayContaining([
       expect.objectContaining({
@@ -94,21 +157,21 @@ describe("R6 standing social commitment endogenous-release gap characterization"
       }),
     ]));
 
-    // Higher cognition can semantically conclude that no new commitment should be
-    // created because the old "while" is over. This is a fully legal settlement.
-    // The current contract, however, has no authority field that targets an existing
-    // standing matter, so the old responsibility remains active unchanged.
+    // Higher cognition can now legally settle the release cue and explicitly state that
+    // no new commitment should be created because the old responsibility is over. The
+    // current contract still has no authority field targeting an existing standing
+    // matter, so the old responsibility remains active unchanged.
     const settlement = cognition.settleCommitment(request, {
       version: 1,
       commitmentDecision: {
         kind: "decline",
         reason:
-          "Nie tworzę nowego zobowiązania; uważam, że obiecana chwila przy Neli już minęła.",
+          "Nela zwolniła mnie z wcześniejszego zobowiązania; nie tworzę z tego nowej sprawy.",
       },
       beliefs: [],
       concerns: [],
       reviewAfterSeconds: 30,
-    }, review.id);
+    }, releaseCue.id);
 
     expect(settlement).toEqual({
       status: "applied",
