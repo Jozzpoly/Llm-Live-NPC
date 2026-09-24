@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { sanitizeSpcNextLifeContextWithDiagnostic } from "../../worker/spc-next-life-context";
 import { ResidentCausalCognitionLane } from "./resident-causal-cognition-lane";
 import { ResidentCausalExecutionCoordinator } from "./resident-causal-execution-coordinator";
 import { ResidentCausalLifeSubstrate } from "./resident-causal-life-substrate";
@@ -10,8 +11,10 @@ import { SpcWorldRuntime } from "./spc-world-runtime";
 
 const OREN_ID = "resident.oren";
 const NELA_ID = "resident.nela";
+const IDA_ID = "resident.ida";
 const REGION_ID = "r6-generic-room";
 const NELA_PROMPT = "Oren, zostaniesz tu ze mną jeszcze chwilę?";
+const IDA_REQUEST = "Oren, chodź teraz ze mną do warsztatu. Potrzebuję twojej pomocy przy ciężkiej skrzyni; wrócimy od razu.";
 const OREN_PROMISE = "Tak, zostanę tu z tobą jeszcze chwilę.";
 const OREN_STANDING_GOAL = "pozostać dostępnym dla Neli jeszcze przez chwilę";
 const EXECUTION_GUARD = 600;
@@ -36,8 +39,10 @@ describe("R6-C cross-resident standing-social-continuation genericity", () => {
 
     const oren = world.addResident(OREN_ID, "Oren", { x: 700, y: 500 });
     world.addResident(NELA_ID, "Nela", { x: 820, y: 500 });
+    world.addResident(IDA_ID, "Ida", { x: 980, y: 500 });
     world.familiarizeResidentWithRegions(OREN_ID, [REGION_ID]);
     world.familiarizeResidentWithRegions(NELA_ID, [REGION_ID]);
+    world.familiarizeResidentWithRegions(IDA_ID, [REGION_ID]);
 
     const navigation = new RegionNavigationGraph(
       [{ id: REGION_ID, destinationPoint: { x: 700, y: 500 } }],
@@ -57,6 +62,8 @@ describe("R6-C cross-resident standing-social-continuation genericity", () => {
     // run authority. Only Oren's response semantics are the variable under test.
     const nelaKernel = new ResidentContinuityKernel();
     const nelaAuthority = new ResidentWorldExecutionAuthority(NELA_ID, nelaKernel, world);
+    const idaKernel = new ResidentContinuityKernel();
+    const idaAuthority = new ResidentWorldExecutionAuthority(IDA_ID, idaKernel, world);
 
     // Establish ordinary private sight/identity before the addressed speech.
     world.step();
@@ -233,5 +240,110 @@ describe("R6-C cross-resident standing-social-continuation genericity", () => {
     expect(standing.semanticIntent.commitment).toBe(orenSpeeches[0]!.text);
     expect(standing.semanticIntent.commitment).not.toContain("Mira");
     expect(standing.semanticIntent.commitment).not.toContain("Ida");
+
+    // Join the mechanical genericity result to the provider-facing cognition plane.
+    // Ida's new request is another factual resident World effect. The standing history
+    // in the next Oren request must come from the life substrate above, not from a
+    // hand-authored provider fixture.
+    const idaOrigin = idaKernel.recordEvidence({
+      id: "evidence.ida.r6.history-choice.address",
+      tick: world.tick,
+      kind: "life_context",
+      summary: "Ida already decided to ask Oren for immediate workshop help.",
+    });
+    const idaMatterId = "matter.ida.r6.history-choice.address";
+    const idaRunId = "run.ida.r6.history-choice.address";
+    idaKernel.openMatter({
+      id: idaMatterId,
+      originEvidenceId: idaOrigin.id,
+      semanticCourse: "ask Oren to leave now for the workshop",
+    });
+    idaKernel.bindRun({
+      matterId: idaMatterId,
+      taskId: "task.ida.r6.history-choice.address",
+      runId: idaRunId,
+    });
+    const idaSpeech = idaAuthority.apply({
+      runId: idaRunId,
+      effects: [{
+        kind: "speech",
+        text: IDA_REQUEST,
+        radius: 420,
+        addressedActorIds: [OREN_ID],
+      }],
+    });
+    expect(idaSpeech.status).toBe("applied");
+    if (idaSpeech.status !== "applied") {
+      throw new Error("R6 generated-history join lost Ida's exact speech authority");
+    }
+    expect(idaSpeech.occurrences).toHaveLength(1);
+    expect(idaKernel.reconcileRunOutcome({
+      runId: idaRunId,
+      tick: world.tick,
+      status: "succeeded",
+      summary: "Ida factually asked Oren for immediate workshop help.",
+    }).status).toBe("recorded");
+    idaKernel.resolveMatter(idaMatterId);
+
+    world.step();
+
+    let nextRequest = cognition.takeReadyRequest();
+    for (let index = 0; index < COGNITION_GUARD && !nextRequest; index += 1) {
+      execution.stepFocusedRun();
+      world.step();
+      nextRequest = cognition.takeReadyRequest();
+    }
+    expect(nextRequest).not.toBeNull();
+    if (!nextRequest) {
+      throw new Error("R6 generated-history join produced no next Oren cognition request");
+    }
+
+    const nextSpeechOrigin = nextRequest.batch.reasons.find(
+      (reason) => reason.kind === "heard_speech"
+        && reason.evidenceIds.some((id) => (
+          nextRequest!.context.recentPercepts.some(
+            (percept) => percept.id === id
+              && percept.actorId === IDA_ID
+              && percept.text === IDA_REQUEST,
+          )
+        )),
+    ) ?? null;
+    expect(nextSpeechOrigin).not.toBeNull();
+
+    const requestStanding = nextRequest.context.life.matters.find(
+      (matter) => matter.semanticIntent?.kind === "standing_social_commitment"
+        && matter.semanticIntent.counterpartyActorId === NELA_ID,
+    ) ?? null;
+    expect(requestStanding).toMatchObject({
+      id: standing.id,
+      status: "active",
+      activeRun: null,
+      semanticIntent: {
+        kind: "standing_social_commitment",
+        goal: OREN_STANDING_GOAL,
+        counterpartyActorId: NELA_ID,
+        commitment: OREN_PROMISE,
+      },
+      originEvidence: {
+        kind: "resident_originated_social_commitment",
+        sourceRunId: admitted.commitment.runId,
+      },
+    });
+
+    const workerBoundary = sanitizeSpcNextLifeContextWithDiagnostic(nextRequest.context);
+    expect(workerBoundary.diagnostic).toBeNull();
+    expect(workerBoundary.context).not.toBeNull();
+    expect(workerBoundary.context?.life.matters).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: standing.id,
+        status: "active",
+        activeRun: null,
+        semanticIntent: expect.objectContaining({
+          kind: "standing_social_commitment",
+          counterpartyActorId: NELA_ID,
+          commitment: OREN_PROMISE,
+        }),
+      }),
+    ]));
   });
 });
