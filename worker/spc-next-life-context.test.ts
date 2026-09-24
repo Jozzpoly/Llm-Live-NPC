@@ -129,6 +129,31 @@ describe("shared SPC Next resident-life context sanitizer", () => {
     const blankText = structuredClone(communicate);
     blankText.life.matters[0].semanticIntent.text = " ";
     expect(sanitizeSpcNextLifeContext(blankText)).toBeNull();
+
+    const withStandingContinuation = structuredClone(communicate);
+    withStandingContinuation.life.matters[0].semanticIntent.standingSocialCommitment = {
+      goal: "remain available to Janek after this exact factual message",
+    };
+    expect(
+      sanitizeSpcNextLifeContext(withStandingContinuation)?.life.matters[0]?.semanticIntent,
+    ).toEqual({
+      kind: "communicate_actor",
+      goal: "find Janek and deliver the accepted message",
+      targetActorId: "resident.janek",
+      text: "Mira says the field well needs checking before dusk.",
+      standingSocialCommitment: {
+        goal: "remain available to Janek after this exact factual message",
+      },
+    });
+
+    const independentPromiseLeak = structuredClone(withStandingContinuation);
+    independentPromiseLeak.life.matters[0].semanticIntent.standingSocialCommitment.commitment =
+      "provider-authored second promise wording must not cross this boundary";
+    expect(sanitizeSpcNextLifeContext(independentPromiseLeak)).toBeNull();
+
+    const blankStandingGoal = structuredClone(withStandingContinuation);
+    blankStandingGoal.life.matters[0].semanticIntent.standingSocialCommitment.goal = " ";
+    expect(sanitizeSpcNextLifeContext(blankStandingGoal)).toBeNull();
   });
 
   it("preserves bounded standing social commitment history for higher cognition", () => {
