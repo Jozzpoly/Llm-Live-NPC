@@ -1,13 +1,8 @@
-import { readFileSync } from "node:fs";
+import fixtureJson from "../evidence/r6-history-choice-twin-context.json?raw";
 import { describe, expect, it } from "vitest";
 import { sanitizeSpcNextLifeContextWithDiagnostic } from "./spc-next-life-context";
 
-const fixture = JSON.parse(
-  readFileSync(
-    new URL("../evidence/r6-history-choice-twin-context.json", import.meta.url),
-    "utf8",
-  ),
-);
+const fixture = JSON.parse(fixtureJson);
 
 describe("R6 history-choice live-provider fixture boundary", () => {
   it("keeps both exact twin contexts legal and different only by resident-owned life history", () => {
