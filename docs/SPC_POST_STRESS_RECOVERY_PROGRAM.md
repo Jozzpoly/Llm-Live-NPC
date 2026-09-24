@@ -516,43 +516,33 @@ Primary question:
 
 **R3 — FIRST CAUSAL-PERSONHOOD MILESTONE: PASS.**
 
-**R4 — DENSE AUTHORED AFFORDANCE SURFACE: QUALIFIED PASS**
-at source SHA `0f7945d74db6b4ed6044f5d636b3c4696dce5201`.
+**R4 — DENSE AUTHORED AFFORDANCE SURFACE: QUALIFIED PASS.**
 
-R4 qualification now includes:
+**R5 — LLM AS SEMANTIC ESCALATION / REAL LUNA CAUSAL BOUNDARY: QUALIFIED PASS.**
 
-- R4-A baseline affordance characterization;
-- R4-B Janek blocked-path / alternate provider-free local life;
-- R4-C changed-World / legal private material reacquisition / local reactivation;
-- R4-D Mira ordinary-life negative capability in deterministic and real-Chromium evidence.
+**Current recovery target: R6 — COMPLEMENTARY RESIDENT PERSONHOOD.**
 
-The R4-D terminal boundary is deliberately unresolved semantically:
+Current R6 evidence is deliberately split by plane:
 
-- local bodily acknowledgement has completed;
-- body authority is idle;
-- one exact addressed-speech `CognitionReason` remains;
-- no synthetic matter was created merely to make that reason fit an API;
-- no provider has been invoked.
+- **R6-A — resident-originated standing social commitment: QUALIFIED BOUNDED PASS** at its documented qualified source;
+- **R6-B — native standing social continuation: QUALIFIED BOUNDED PASS** at source `54fe9fbe2f615d4dd37e5f4e6a0577d2c359d3da`;
+- **R6-C cross-resident Oren → Nela genericity falsifier: deterministic/domain evidence GREEN on current branch HEAD `94f78b8feac70fd62c3e8e95895e8d6f39cc6f03`**, with Check #1569 completed successfully;
+- Browser Evidence #793 on the same source is also green, but its dedicated R6 browser specimen is still the Mira/Ida native standing-social-commitment path plus legacy vetoes. It does **not** independently qualify the Oren→Nela cross-resident chain.
 
-**R5 — LLM AS SEMANTIC ESCALATION: QUALIFIED PASS.**
+Therefore do **not** promote:
 
-**Current recovery target: R6 — COMPLEMENTARY RESIDENT FALSIFIERS / ORDINARY PERSONHOOD.**
+- a broad R6 PASS;
+- browser-qualified cross-resident personhood;
+- five distinct living people;
+- Owner-observed ordinary aliveness.
 
-The first R5 falsifier must answer:
+The active evidence boundary is:
 
-> **Can one genuine unresolved semantic reason escalate exactly once to higher cognition, remain causally inert during provider latency, be admitted only at an explicit resident/World boundary, produce only locally grounded durable meaning/action, settle or explicitly retain the originating pressure, and return to quiet without manufacturing another provider request?**
+> determine whether cross-resident genericity survives the required browser/real-runtime plane, then reassess whether the first broader R6 milestone is actually earned.
 
-R5 must reuse existing reason/batch cognition and causal-life authority before inventing new provider infrastructure.
+Only after that reassessment should the campaign select the next personhood pressure such as refusal/non-action from accumulated history, preference/aversion, relationship history, ownership/control, habit or self-interest.
 
-In particular:
-
-- do not create a fake matter merely because older semantic-provider plumbing is matter-scoped;
-- prefer the existing resident cognition/life-intent path for a reason-native escalation;
-- provider output is semantic proposal, never World authority;
-- network completion is inert until explicit admission;
-- local grounding retains veto;
-- passage of time alone cannot create another semantic reason;
-- one completed causal version must not recursively request cognition again.
+Do not manufacture the next dimension merely to continue the roadmap.
 
 ---
 
@@ -653,33 +643,26 @@ Do not interpret `continue` as permission to merge to main.
 
 Current recovery order:
 
-1. **`docs/SPC_POST_STRESS_RECOVERY_PROGRAM.md`**
-   - canonical execution authority after the 18 September failure;
-2. latest explicit Owner correction;
-3. **`docs/SPC_R4_DENSE_AUTHORED_AFFORDANCE_EXPERIMENT.md`**
-   - preserved R4 experiment contract and anti-cheat boundary;
-4. **`docs/SPC_R4D_MIRA_ORDINARY_LIFE_PASS.md`**
-   - qualified second-resident ordinary-life / negative-capability evidence;
-5. **`docs/SPC_R4C_MATERIAL_REACQUISITION_PASS.md`**
-   - qualified changed-World / private reacquisition / local reactivation evidence;
-6. **`docs/SPC_R4B_DENSE_WORKSHOP_PASS.md`**
-   - qualified blocked-path / alternate-local-life evidence;
-7. **`docs/SPC_R3_CAUSAL_PERSONHOOD_PASS.md`**
-   - qualified R3 evidence boundary and non-claims;
-8. **`docs/SPC_R2_SEMANTIC_METABOLISM_PASS.md`**
-   - qualified R2 semantic-metabolism evidence boundary;
-9. **`docs/SPC_ZERO_PROVIDER_LOCAL_LIFE_R1_PASS.md`**
-   - qualified R1 zero-provider local-life evidence boundary;
-10. **`docs/SPC_NEXT_OWNER_INTENT_AND_GAP_AUDIT.md`**
-   - durable Owner/product guardrails;
-10. **`docs/SPC_FIVE_RESIDENT_PRESSURE_CAMPAIGN.md`**
-    - resident pressure donor map;
-11. **`docs/SPC_REOBSERVATION_FINDINGS_2026-09-16.md`**
-    - contract/oracle lessons;
-12. **`docs/SPC_LIVING_WORLD_EXECUTION_PROGRAM.md`**
-    - historical pre-stress execution snapshot only;
-13. older recovery/experiment documents
-    - historical evidence/donors, not current execution authority.
+1. **latest explicit Owner correction**
+   - outranks product-level interpretations for the same claim;
+2. **`docs/SPC_POST_STRESS_RECOVERY_PROGRAM.md`**
+   - canonical post-stress execution authority;
+3. **`docs/SPC_R6_COMPLEMENTARY_PERSONHOOD_EXPERIMENT.md`**
+   - binding current R6 experiment contract;
+4. **`docs/SPC_R6B_NATIVE_STANDING_SOCIAL_CONTINUATION_PASS.md`**
+   - latest qualified bounded R6 mechanism evidence;
+5. **`docs/SPC_R6A_STANDING_SOCIAL_COMMITMENT_PASS.md`**
+   - earlier bounded R6-A evidence and nonclaims;
+6. **R5 evidence documents**
+   - semantic escalation, stale attention, provider outcomes and real-Luna causal boundary;
+7. **R4 / R3 / R2 / R1 qualified evidence documents**
+   - preserved scoped evidence, not current feature sequence;
+8. **`docs/SPC_NEXT_OWNER_INTENT_AND_GAP_AUDIT.md`**, pressure/re-observation documents
+   - durable Owner/product guardrails and donor evidence;
+9. **`docs/SPC_LIVING_WORLD_EXECUTION_PROGRAM.md`** and older recovery/Pass-2 documents
+   - historical evidence only.
+
+`docs/PROJECT_STATE.md`, `docs/FRESH_TAKEOVER.md`, `docs/SPC_NEXT_CURRENT_STATE_RECONCILIATION.md` and older architecture-recovery documents must **not** be used as the current feature sequence.
 
 When prose conflicts with live evidence, live evidence wins and prose must be corrected.
 
@@ -687,45 +670,33 @@ When prose conflicts with live evidence, live evidence wins and prose must be co
 
 ## 13. Current work order
 
-Completed:
-1. preserve `c181...` as the forensic failure specimen;
-2. correct post-stress repository authority;
-3. **R1 — zero-provider local life — PASS**;
-4. **R2 — resident relevance / semantic metabolism — PASS**;
-5. **R3 — bounded causal-personhood milestone — PASS**;
-6. **R4-A — sparse-baseline affordance characterization — COMPLETE**;
-7. **R4-B — dense-workshop alternate local life — QUALIFIED PASS**
-   at source SHA `5548231763718f868186dd5c07877c65969f7f88`;
-8. **R4-C — changed World / legal material reacquisition — QUALIFIED PASS**
-   at source SHA `423c9ba1eaafdc9064136ed0a1a3c71b7b19b2ca`.
+Completed and retained only within their documented scopes:
+
+1. preserve `c181...` as the immutable composition-level failure specimen;
+2. R1 zero-provider local life — PASS;
+3. R2 semantic metabolism — PASS;
+4. R3 first causal-personhood milestone — PASS;
+5. R4 dense authored affordance surface — QUALIFIED PASS;
+6. R5 semantic escalation / provider safety / real-Luna causal boundary — QUALIFIED PASS;
+7. R6-A standing social commitment — QUALIFIED BOUNDED PASS;
+8. R6-B native standing social continuation — QUALIFIED BOUNDED PASS;
+9. Oren → Nela cross-resident genericity falsifier — deterministic/domain GREEN on current HEAD.
 
 Current:
 
-9. **R4-D — second-resident / Mira falsifier.**
+> **R6 cross-resident browser/runtime genericity + first broader-milestone reassessment.**
 
 Immediate method:
 
-- begin from Mira's ordinary-life failure modes, not from a list of new objects;
-- reuse the same World/private-knowledge/continuity/relevance/arbitration seams where they actually fit;
-- construct a compact low-intensity specimen with multiple authored facts, only some of which are resident-relevant;
-- preserve the possibility that the correct state is quiet;
-- require resident-owned causal reasons before material/social facts become matters;
-- keep the player non-central to the specimen;
-- do not manufacture novelty, random chores or periodic movement;
-- do not use provider cognition in the critical path;
-- actively search for Janek-specific assumptions hiding inside supposedly shared R4 mechanisms;
-- if Mira requires a different primitive, prove the failure before adding it;
-- qualify deterministic + browser evidence and retain R1/R2/R3/R4-B/C vetoes.
+- keep the exact Oren/Nela deterministic chain as the falsifier, not as product proof;
+- obtain/inspect the missing browser-level genericity evidence without weakening the contract;
+- preserve R1–R5 vetoes and material/local-life competence;
+- if the cross-resident path fails, classify the exact causal break rather than adapting the oracle to green;
+- if it survives, reassess the claim budget before opening the next personhood dimension;
+- keep full R6 / five living residents / Owner-observed ordinary personhood **UNPROVEN**;
+- do not prepare an Owner gate merely because R6 machinery is green;
+- do not merge PR #148 by CI inertia.
 
-R4 promotion remains blocked until the second-resident falsifier is defended.
+The next milestone is not “more R6 code”. It is:
 
-Later:
-10. R5 provider semantic escalation;
-11. R6 complementary resident falsifiers;
-12. R7 five-resident homeostasis;
-13. R8 bounded real-Luna campaigns;
-14. R9 endurance stress tests.
-
-The next milestone is:
-
-> **Mira can inhabit the same denser causal substrate without becoming a chore bot or player-service NPC, while nearby authored possibilities remain selective, resident-relative and compatible with legitimate quiet.**
+> **the first broader personhood claim whose causal origin, lifecycle, significance and genericity survive every evidence plane required by its own contract without being inflated into Owner-observed life.**
