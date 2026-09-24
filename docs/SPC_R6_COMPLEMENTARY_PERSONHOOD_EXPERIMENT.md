@@ -282,25 +282,33 @@ Only then decide whether the next pressure should be:
 
 ## 11. Immediate work order
 
-Completed through R6-B:
+Completed / retained within scope:
+
 - R5 qualified sources remain frozen;
 - the future-promise gap is executable;
 - existing continuity/evidence machinery was reused rather than replaced;
-- one minimal `standing_social_commitment` primitive has exact origin and lifecycle;
-- a same-current-evidence/history twin changes significance;
-- R6-A real Chromium qualified persistence, release and observation-only return;
-- normal life-intent can explicitly carry a standing continuation without experiment-owned materialization actions;
-- provider arrival/declaration cannot mint standing history before factual speech;
-- durable commitment wording is anchored to exact factual speech rather than a second provider-authored claim;
-- dedicated native R6 Chromium qualification is independent from the long legacy-browser budget;
-- legacy browser vetoes through R5-C remain green on the R6-B qualified source.
+- R6-A qualified one resident-originated standing social commitment with exact origin/lifecycle;
+- R6-B removed experiment-owned standing-history materialization from the normal causal path and anchored durable wording to exact factual self speech;
+- R6-A/B native real-Chromium qualification and legacy R1–R5 browser vetoes are green on their qualified sources;
+- current HEAD `94f78b8feac70fd62c3e8e95895e8d6f39cc6f03` contains the Oren → Nela cross-resident falsifier;
+- Check #1569 is green on that HEAD, so the same native factual-speech → standing-history chain is mechanically demonstrated for a second resident identity/counterparty.
+
+Current evidence boundary:
+
+- the Oren → Nela result is **deterministic/domain genericity evidence**;
+- Browser Evidence #793 is green on the same source but the dedicated R6 browser specimen still exercises Mira/Ida, not Oren/Nela;
+- therefore **browser-qualified cross-resident genericity remains UNPROVEN**;
+- the broader first R6 milestone remains unpromoted;
+- full R6 / Owner-observed ordinary personhood remains UNPROVEN.
 
 Current order:
-1. attack the same native primitive with a second resident/genericity falsifier;
-2. if genericity survives, reassess whether the first broader R6 milestone is earned;
-3. reattack ordinary non-action / refusal with accumulated resident-owned history;
-4. keep Janek material continuity as complementary veto;
-5. only then decide whether the next earned pressure is preference/aversion, relationship history, ownership/control, habit or self-interest.
+
+1. pressure the Oren → Nela genericity chain through the browser/real-runtime plane without adding resident-name policy or weakening the contract;
+2. if it survives, reassess whether the first broader R6 milestone is earned under the original promotion criteria;
+3. only after that select the next personhood pressure;
+4. retain refusal/non-action from accumulated history as a strong candidate, not a precommitted roadmap step;
+5. keep Janek material continuity as complementary veto;
+6. do not prepare an Owner gate or merge PR #148 merely because machine evidence is green.
 
 ## 12. Owner-observed target
 
