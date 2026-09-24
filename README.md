@@ -45,13 +45,14 @@ Read in this order:
 1. **`docs/SPC_POST_STRESS_RECOVERY_PROGRAM.md`** — canonical post-stress objective, promotion boundaries and `CONTINUE` semantics;
 2. **`docs/SPC_R6_COMPLEMENTARY_PERSONHOOD_EXPERIMENT.md`** — binding current R6 experiment contract and current frontier;
 3. **`docs/SPC_R6B_NATIVE_STANDING_SOCIAL_CONTINUATION_PASS.md`** — latest qualified bounded R6 mechanism evidence;
-4. **`docs/SPC_ZERO_PROVIDER_LOCAL_LIFE_R1_PASS.md`** — exact R1 qualification and nonclaims;
-3. **`docs/SPC_ZERO_PROVIDER_LOCAL_LIFE_EXPERIMENT.md`** — satisfied R1 experiment contract;
-4. **`docs/SPC_NEXT_OWNER_INTENT_AND_GAP_AUDIT.md`** — durable Owner/product guardrails and anti-drift intent;
-5. **`docs/SPC_FIVE_RESIDENT_PRESSURE_CAMPAIGN.md`** — resident pressure dimensions and scenario donors;
-6. **`docs/SPC_REOBSERVATION_FINDINGS_2026-09-16.md`** — evidence about oracle/instrumentation failures and the pre-unified composition gap;
-7. **`docs/SPC_LIVING_WORLD_EXECUTION_PROGRAM.md`** — historical pre-stress execution snapshot only;
-8. older Pass-2 / First Presence documents and `src/research` — donor invariants and evidence, not current execution authority.
+4. **`docs/SPC_R6A_STANDING_SOCIAL_COMMITMENT_PASS.md`** — earlier bounded R6-A evidence and nonclaims;
+5. **`docs/SPC_ZERO_PROVIDER_LOCAL_LIFE_R1_PASS.md`** — exact R1 qualification and nonclaims;
+6. **`docs/SPC_ZERO_PROVIDER_LOCAL_LIFE_EXPERIMENT.md`** — satisfied R1 experiment contract;
+7. **`docs/SPC_NEXT_OWNER_INTENT_AND_GAP_AUDIT.md`** — durable Owner/product guardrails and anti-drift intent;
+8. **`docs/SPC_FIVE_RESIDENT_PRESSURE_CAMPAIGN.md`** — resident pressure dimensions and scenario donors;
+9. **`docs/SPC_REOBSERVATION_FINDINGS_2026-09-16.md`** — evidence about oracle/instrumentation failures and the pre-unified composition gap;
+10. **`docs/SPC_LIVING_WORLD_EXECUTION_PROGRAM.md`** — historical pre-stress execution snapshot only;
+11. older Pass-2 / First Presence documents and `src/research` — donor invariants and evidence, not current execution authority.
 
 `docs/PROJECT_STATE.md`, `docs/FRESH_TAKEOVER.md`, `docs/SPC_NEXT_CURRENT_STATE_RECONCILIATION.md` and the old Architecture Recovery Gate are historically important but **must not be used as the current feature sequence**.
 
