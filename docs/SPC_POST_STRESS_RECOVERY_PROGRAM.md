@@ -524,25 +524,35 @@ Primary question:
 
 Current R6 evidence is deliberately split by plane:
 
-- **R6-A — resident-originated standing social commitment: QUALIFIED BOUNDED PASS** at its documented qualified source;
+- **R6-A — resident-originated standing social commitment: QUALIFIED BOUNDED PASS** at its documented source;
 - **R6-B — native standing social continuation: QUALIFIED BOUNDED PASS** at source `54fe9fbe2f615d4dd37e5f4e6a0577d2c359d3da`;
-- **R6-C cross-resident Oren → Nela genericity falsifier: deterministic/domain evidence GREEN on current branch HEAD `94f78b8feac70fd62c3e8e95895e8d6f39cc6f03`**, with Check #1569 completed successfully;
-- Browser Evidence #793 on the same source is also green, but its dedicated R6 browser specimen is still the Mira/Ida native standing-social-commitment path plus legacy vetoes. It does **not** independently qualify the Oren→Nela cross-resident chain.
+- **R6-C Oren → Nela generated-history genericity: deterministic/domain GREEN** — the second resident can create the same class of factual-speech-grounded standing history and carry it into later higher cognition;
+- **R6 history-dependent real-model choice: BOUNDED POSITIVE FINDING** — in the exact two-call GPT-5.6 Luna twin, control Oren accepted leaving with Ida while the history twin declined specifically because his earlier Nela commitment still bound him;
+- **R6 standing lifecycle release: deterministic/domain GREEN** on code source `da76300c78236c6c8d87277159c0d105f987f62a` — factual addressed release speech from the exact counterparty can resolve the exact generated standing matter through normal cognition admission, while another actor cannot release it;
+- **Check #1587: PASS** — 260 / 260 files, 955 / 955 tests, typecheck/build/preview green;
+- **Browser Evidence #811: PASS as regression evidence**, including the dedicated Mira/Ida R6 specimen and legacy R1–R5 vetoes.
+
+Evidence limits remain explicit:
+
+- the real Luna twin used a canonical synthetic context; the runtime-generated-history → Worker join is deterministic, not a second paid end-to-end live run;
+- the dedicated R6 browser specimen still exercises Mira/Ida, so **browser-qualified Oren/Nela genericity remains UNPROVEN**;
+- `release_standing` proves one narrow counterparty-grounded social exit, not arbitrary fulfilment or timer expiry;
+- one paired real-model observation is not a stable behavior distribution;
+- no machine result here is Owner-observed ordinary aliveness.
 
 Therefore do **not** promote:
 
 - a broad R6 PASS;
 - browser-qualified cross-resident personhood;
+- general social-contract intelligence;
 - five distinct living people;
 - Owner-observed ordinary aliveness.
 
-The active evidence boundary is:
+The active research boundary is no longer merely “can the standing mechanism run for a second resident?”. It is:
 
-> determine whether cross-resident genericity survives the required browser/real-runtime plane, then reassess whether the first broader R6 milestone is actually earned.
+> **Can accumulated private life increasingly generate coherent ordinary choice and non-action for the resident's own reasons — including when nobody is issuing a fresh direct request — while the already-earned causal, homeostatic and material boundaries remain intact?**
 
-Only after that reassessment should the campaign select the next personhood pressure such as refusal/non-action from accumulated history, preference/aversion, relationship history, ownership/control, habit or self-interest.
-
-Do not manufacture the next dimension merely to continue the roadmap.
+Browser Oren/Nela genericity remains a genuine missing promotion plane and must be obtained or the promotion contract explicitly revised before a claim that requires it. It must not be mistaken for the highest-information research question merely because it is easy to make green.
 
 ---
 
@@ -680,23 +690,25 @@ Completed and retained only within their documented scopes:
 6. R5 semantic escalation / provider safety / real-Luna causal boundary — QUALIFIED PASS;
 7. R6-A standing social commitment — QUALIFIED BOUNDED PASS;
 8. R6-B native standing social continuation — QUALIFIED BOUNDED PASS;
-9. Oren → Nela cross-resident genericity falsifier — deterministic/domain GREEN on current HEAD.
+9. Oren → Nela generated standing history and later Worker-context join — deterministic/domain GREEN;
+10. bounded real-Luna history-dependent Oren choice — POSITIVE FINDING, not R6 PASS;
+11. exact counterparty-grounded release of the generated standing matter through normal cognition — deterministic/domain GREEN.
 
 Current:
 
-> **R6 cross-resident browser/runtime genericity + first broader-milestone reassessment.**
+> **R6 ordinary-personhood pressure after the first real history-sensitive choice.**
 
 Immediate method:
 
-- keep the exact Oren/Nela deterministic chain as the falsifier, not as product proof;
-- obtain/inspect the missing browser-level genericity evidence without weakening the contract;
-- preserve R1–R5 vetoes and material/local-life competence;
-- if the cross-resident path fails, classify the exact causal break rather than adapting the oracle to green;
-- if it survives, reassess the claim budget before opening the next personhood dimension;
+- do not spend more provider calls to replay the already-observed twin merely for a green harness label;
+- keep the live finding, deterministic generated-history join and deterministic release lifecycle as separate evidence planes;
+- retain browser Oren/Nela genericity as an honest missing promotion-plane requirement; do not substitute the Mira browser specimen;
+- choose the next personhood falsifier for information gain, with priority on resident-owned coherent choice/non-action when no fresh direct request tells the resident what to do;
+- do not add a generic personality/needs system before a concrete resident-life failure demands it;
+- preserve Janek/material continuity, zero-provider life, semantic metabolism and provider-homeostasis as vetoes;
 - keep full R6 / five living residents / Owner-observed ordinary personhood **UNPROVEN**;
-- do not prepare an Owner gate merely because R6 machinery is green;
-- do not merge PR #148 by CI inertia.
+- do not prepare an Owner gate or merge PR #148 by CI inertia.
 
-The next milestone is not “more R6 code”. It is:
+The next milestone is not “more personhood fields”. It is:
 
-> **the first broader personhood claim whose causal origin, lifecycle, significance and genericity survive every evidence plane required by its own contract without being inflated into Owner-observed life.**
+> **more of the resident's behavior becoming causally explainable by a life that existed before the current prompt — while remaining free to end, revise, ignore and continue that life through grounded reality.**

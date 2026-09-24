@@ -208,25 +208,65 @@ R6-B preserves the qualified R6-A lifecycle/significance effects:
 
 R6-B is not full R6 and does not yet qualify cross-resident behavioral genericity.
 
-## 7.1 Current frontier — cross-resident genericity
+## 7.1 R6-C — cross-resident generated-history integration
 
-The implementation is resident-generic by construction, but that is not sufficient evidence.
+Status: **DETERMINISTIC CAUSAL EVIDENCE GREEN — NOT BROWSER-QUALIFIED**
 
-The next bounded falsifier must run the same native causal chain through a second resident without using the Mira/R5 fixture or resident-name policy:
+The second-resident falsifier now runs the native standing-history chain through Oren rather than Mira:
 
-`different resident -> normal causal cognition admission -> factual self speech -> own standing history`.
+`Nela factual request -> Oren normal cognition admission -> Oren factual self speech -> Oren standing history`.
 
-This must prove:
-- different resident id and identity namespace;
+That exact runtime-generated Oren matter is then carried into a later cognition episode caused by factual Ida speech. The next `ResidentCausalCognitionRequest.context.life` contains the generated standing commitment, and the same Worker sanitizer used by the live endpoint accepts that exact context.
+
+This proves more than resident-name-generic code:
+- different resident identity and namespace;
 - different counterparty;
 - exact private origin;
-- normal resident-generic life-intent/cognition authority;
-- no standing history before factual speech;
-- durable commitment text exactly equals that resident's factual speech;
-- run-free standing matter after source completion;
-- no Mira-specific helper or policy.
+- factual self speech before standing history;
+- durable wording equal to factual speech;
+- run-free standing matter;
+- generated history present in later higher-cognition context;
+- Worker boundary preserves it without fixture-owned reconstruction.
 
-Only after this can the broader first R6 milestone claim generic-across-residents support.
+The bounded real-Luna history-choice twin remains a separate evidence plane. It used a canonical synthetic twin context rather than sending the runtime-generated object over the network. Its observed choice contrast is real evidence, but those two facts must not be conflated into a single end-to-end live-provider run.
+
+Browser-qualified Oren/Nela genericity also remains **UNPROVEN**. Browser Evidence #811 is green on code source `da76300c78236c6c8d87277159c0d105f987f62a`, but the dedicated R6 Chromium specimen still exercises the Mira/Ida native standing-commitment path.
+
+## 7.2 R6 standing lifecycle — exact counterparty release
+
+Status: **DETERMINISTIC BOUNDED EXTENSION GREEN — NOT A BROAD SOCIAL-CONTRACT PASS**
+
+R6 exposed a material lifecycle failure after history-sensitive choice became real: an open standing commitment could influence cognition but normal higher cognition had no legal way to end that existing matter. A resident could understand “Nela released me” yet remain causally stuck with the old responsibility.
+
+The smallest earned lifecycle seam is now `release_standing`.
+
+It is deliberately narrow:
+- it targets one exact open run-free `standing_social_commitment` already present in resident `life`;
+- the selected cognition origin must be exact heard speech;
+- the factual speaker must be that standing matter's own counterparty;
+- the speech must be addressed to the resident;
+- ordinary stale-life admission guards still apply;
+- the transition creates no new task, run, body authority or World fact;
+- it resolves only resident-private responsibility and records release evidence;
+- a different actor cannot release another actor's standing commitment.
+
+On code source `da76300c78236c6c8d87277159c0d105f987f62a`, Check #1587 passes **260 / 260 test files and 955 / 955 tests**, including:
+- the original Oren→Nela generated-history chain;
+- generated history reaching later cognition/Worker context;
+- factual Nela release speech resolving that same generated Oren matter through the normal cognition lane;
+- body state unchanged by release;
+- exact release evidence retained in committed/recent history;
+- wrong-counterparty release rejected.
+
+Browser Evidence #811 also remains green as regression evidence, including the dedicated Mira R6 specimen and the earlier R1–R5 browser vetoes. It does **not** independently qualify this Oren release path.
+
+This seam does not solve:
+- automatic time-based expiry of “for a while”;
+- arbitrary fulfilment inference;
+- third-party release;
+- general contract law/social norm understanding;
+- whether a resident should release for every semantically plausible utterance;
+- Owner-observed ordinary life.
 
 ## 8. Anti-cheat rules
 
@@ -285,34 +325,36 @@ Only then decide whether the next pressure should be:
 Completed / retained within scope:
 
 - R5 qualified sources remain frozen;
-- the future-promise gap is executable;
-- existing continuity/evidence machinery was reused rather than replaced;
-- R6-A qualified one resident-originated standing social commitment with exact origin/lifecycle;
-- R6-B removed experiment-owned standing-history materialization from the normal causal path and anchored durable wording to exact factual self speech;
-- native Oren → Nela deterministic/domain genericity is green;
-- recovery explicitly confirmed that the dedicated R6 browser specimen still exercises Mira/Ida, so **browser-qualified Oren → Nela genericity remains UNPROVEN**;
-- recovery found and fixed a real Worker-boundary gap that previously prevented `standing_social_commitment` from reaching higher cognition at all;
-- one bounded real-GPT-5.6-Luna twin now shows **history-sensitive choice**: without standing history Oren accepts leaving with Ida; with the standing commitment to Nela he declines specifically because that prior commitment still binds him;
-- the live classifier initially mislabeled that pair because it treated `follow Ida` as non-departure; raw provider output exposes the bug and no semantic rerun is needed;
-- exact shared twin payloads are deterministically legal through the Worker sanitizer on Check #1577.
+- R6-A and R6-B remain bounded qualified mechanism passes;
+- native Oren→Nela standing-history generation is deterministic/domain green;
+- the Worker boundary now preserves `standing_social_commitment` instead of silently rejecting the new R6 private history;
+- the bounded two-call GPT-5.6 Luna twin observed **history-sensitive choice**: control Oren accepted leaving with Ida, while otherwise-identical Oren with the standing commitment declined specifically because the Nela commitment still bound him;
+- the live job's original red label was a classifier defect (`follow Ida` was mistakenly treated as non-departure), verified from the raw recorded proposals; no semantic rerun was performed;
+- actual runtime-generated Oren standing history now reaches the next normal cognition request and crosses the Worker sanitizer;
+- one exact factual Nela release cue can now resolve that exact generated standing matter through normal cognition admission via `release_standing`;
+- wrong-counterparty release is rejected;
+- Check #1587 is green on code source `da76300c78236c6c8d87277159c0d105f987f62a`: **260 / 260 files, 955 / 955 tests**, typecheck/build/preview PASS;
+- Browser Evidence #811 is green on the same code source as regression evidence.
 
 Current evidence boundary:
 
-- accumulated private causal history has now changed one real higher-cognition choice, not merely salience;
-- this is one bounded paired model observation, not a distributional or full-personhood result;
-- the live twin used a canonical synthetic context, while native runtime history generation and real-model choice have not yet been joined end-to-end;
-- browser-qualified cross-resident genericity remains UNPROVEN;
-- the broader first R6 milestone remains unpromoted;
-- full R6 / Owner-observed ordinary personhood remains UNPROVEN.
+- R6 now has one bounded real-model example of `private causal history -> different semantic choice`, not merely salience;
+- the live choice twin is still one paired observation, not a behavior distribution;
+- live Luna received a canonical synthetic twin context; runtime-generated history reaches the same Worker contract deterministically, but no additional paid rerun was made merely to restage the already-observed choice;
+- the generated standing matter now has a bounded endogenous social exit when its own counterparty factually releases it;
+- time-based/self-derived fulfilment and broader social lifecycle remain unresolved;
+- browser-qualified Oren/Nela genericity remains **UNPROVEN** because the R6 browser specimen is still Mira/Ida;
+- the first broader R6 milestone remains **unpromoted** under its current browser/genericity promotion contract;
+- full R6, five distinct living people and Owner-observed ordinary personhood remain **UNPROVEN**.
 
 Current order:
 
-1. join **actual runtime-generated Oren standing history** into the next real `ResidentCausalCognitionRequest.context` and prove that exact context crosses the Worker sanitizer;
-2. use that result to decide whether an end-to-end live choice rerun is informative enough to justify provider spend;
-3. keep browser Oren → Nela genericity as a separate evidence-plane gap rather than treating Mira browser PASS as its substitute;
-4. continue attacking refusal/non-action from accumulated history instead of adding personality prose;
-5. keep Janek material continuity as complementary veto;
-6. do not prepare an Owner gate or merge PR #148 merely because machine evidence is green.
+1. do **not** rerun the two-call Luna twin merely to turn the old harness label green or duplicate the same semantic observation;
+2. keep browser Oren/Nela genericity as a real missing promotion plane, but do not confuse filling that bookkeeping gap with discovering more personhood;
+3. the next high-information personhood pressure should attack the Owner question more directly: can accumulated private life produce coherent choice/non-action when nobody is issuing a fresh direct request, rather than another prompt-shaped reaction;
+4. before any broader R6 promotion, either obtain honest browser evidence for the claimed generic cross-resident path or explicitly revise the promotion contract for a reason grounded in evidence — never substitute Mira browser PASS silently;
+5. keep Janek material/local-life continuity as complementary veto;
+6. do not prepare an Owner gate or merge PR #148 by CI inertia.
 
 ## 12. Owner-observed target
 

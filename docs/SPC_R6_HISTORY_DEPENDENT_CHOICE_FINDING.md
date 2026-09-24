@@ -154,16 +154,56 @@ Check #1577:
 - dedicated exact fixture sanitizer test PASS;
 - build and preview dry-run PASS.
 
-## 7. Remaining integration gap
+## 7. Follow-up integration evidence
 
-The live twin used a canonical synthetic context fixture.
+The original live twin used a canonical synthetic context fixture. That limitation remains important: no later provider rerun is being reinterpreted as if the live request had originated directly from the full runtime.
 
-Separately, the native Oren → Nela runtime can create the standing history mechanically.
+However the previously missing zero-provider join is now executable:
 
-The next zero-provider falsifier should join those facts:
+`actual runtime-generated Oren standing history -> later factual Ida pressure -> ResidentCausalCognitionRequest.context.life -> Worker sanitizer`.
 
-`actual runtime-generated Oren standing history -> next ResidentCausalCognitionRequest.context -> Worker sanitizer`.
+The generated Oren matter is the same kind of run-free `standing_social_commitment` used by the twin and is preserved by the live Worker boundary without hand-authored reconstruction.
 
-Until that join is executable, do not claim that the live history-sensitive choice was produced end-to-end by accumulated ordinary runtime life.
+A second concrete gap then became visible: standing history could affect choice but could not be ended by the normal cognition path even after its own counterparty factually released the resident. That gap is now closed deterministically by the narrow `release_standing` seam:
 
-Browser-qualified cross-resident genericity also remains explicitly unproven.
+`factual addressed speech from exact counterparty -> higher-cognition release decision -> local exact-matter admission -> private standing matter resolved`.
+
+On code source:
+`da76300c78236c6c8d87277159c0d105f987f62a`
+
+Check #1587:
+- **260 / 260 test files PASS**;
+- **955 / 955 tests PASS**;
+- typecheck/build/preview PASS.
+
+Browser Evidence #811:
+- PASS as non-regression evidence;
+- dedicated R6 browser specimen remains Mira/Ida;
+- therefore it does not qualify Oren/Nela browser genericity or the new Oren release lifecycle directly.
+
+No extra paid Luna call was used for this lifecycle closure.
+
+## 8. Current claim boundary
+
+What is now supported:
+
+- one bounded real-Luna observation where private standing history changed Oren's later semantic choice;
+- deterministic native generation of that class of history by Oren from factual self speech;
+- deterministic propagation of runtime-generated history into the next higher-cognition/Worker context;
+- deterministic lifecycle termination of the exact generated standing matter after factual release speech from its own counterparty;
+- rejection of a release attempt grounded in another actor's speech;
+- no direct body or World authority from personhood state or its release.
+
+What remains unproven:
+
+- an end-to-end real-provider request whose context object was produced directly by the runtime-generated Oren chain;
+- browser-qualified Oren/Nela genericity;
+- time-based or self-derived fulfilment of social commitments;
+- stable stochastic behavior across repeated model samples;
+- rich preferences, relationships, habit or self-interest;
+- coherent endogenous ordinary choice when nobody makes a fresh direct request;
+- five distinct living residents over time;
+- Owner-observed ordinary aliveness;
+- full R6.
+
+The next research step should be chosen for information gain about ordinary personhood, not to accumulate another green gate.

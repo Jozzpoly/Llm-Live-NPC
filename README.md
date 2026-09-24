@@ -44,15 +44,16 @@ Read in this order:
 
 1. **`docs/SPC_POST_STRESS_RECOVERY_PROGRAM.md`** — canonical post-stress objective, promotion boundaries and `CONTINUE` semantics;
 2. **`docs/SPC_R6_COMPLEMENTARY_PERSONHOOD_EXPERIMENT.md`** — binding current R6 experiment contract and current frontier;
-3. **`docs/SPC_R6B_NATIVE_STANDING_SOCIAL_CONTINUATION_PASS.md`** — latest qualified bounded R6 mechanism evidence;
-4. **`docs/SPC_R6A_STANDING_SOCIAL_COMMITMENT_PASS.md`** — earlier bounded R6-A evidence and nonclaims;
-5. **`docs/SPC_ZERO_PROVIDER_LOCAL_LIFE_R1_PASS.md`** — exact R1 qualification and nonclaims;
-6. **`docs/SPC_ZERO_PROVIDER_LOCAL_LIFE_EXPERIMENT.md`** — satisfied R1 experiment contract;
-7. **`docs/SPC_NEXT_OWNER_INTENT_AND_GAP_AUDIT.md`** — durable Owner/product guardrails and anti-drift intent;
-8. **`docs/SPC_FIVE_RESIDENT_PRESSURE_CAMPAIGN.md`** — resident pressure dimensions and scenario donors;
-9. **`docs/SPC_REOBSERVATION_FINDINGS_2026-09-16.md`** — evidence about oracle/instrumentation failures and the pre-unified composition gap;
-10. **`docs/SPC_LIVING_WORLD_EXECUTION_PROGRAM.md`** — historical pre-stress execution snapshot only;
-11. older Pass-2 / First Presence documents and `src/research` — donor invariants and evidence, not current execution authority.
+3. **`docs/SPC_R6_HISTORY_DEPENDENT_CHOICE_FINDING.md`** — bounded real-Luna evidence that private standing history changed Oren's later choice, plus current integration/lifecycle limits;
+4. **`docs/SPC_R6B_NATIVE_STANDING_SOCIAL_CONTINUATION_PASS.md`** — latest formally qualified bounded R6 mechanism evidence;
+5. **`docs/SPC_R6A_STANDING_SOCIAL_COMMITMENT_PASS.md`** — earlier bounded R6-A evidence and nonclaims;
+6. **`docs/SPC_ZERO_PROVIDER_LOCAL_LIFE_R1_PASS.md`** — exact R1 qualification and nonclaims;
+7. **`docs/SPC_ZERO_PROVIDER_LOCAL_LIFE_EXPERIMENT.md`** — satisfied R1 experiment contract;
+8. **`docs/SPC_NEXT_OWNER_INTENT_AND_GAP_AUDIT.md`** — durable Owner/product guardrails and anti-drift intent;
+9. **`docs/SPC_FIVE_RESIDENT_PRESSURE_CAMPAIGN.md`** — resident pressure dimensions and scenario donors;
+10. **`docs/SPC_REOBSERVATION_FINDINGS_2026-09-16.md`** — evidence about oracle/instrumentation failures and the pre-unified composition gap;
+11. **`docs/SPC_LIVING_WORLD_EXECUTION_PROGRAM.md`** — historical pre-stress execution snapshot only;
+12. older Pass-2 / First Presence documents and `src/research` — donor invariants and evidence, not current execution authority.
 
 `docs/PROJECT_STATE.md`, `docs/FRESH_TAKEOVER.md`, `docs/SPC_NEXT_CURRENT_STATE_RECONCILIATION.md` and the old Architecture Recovery Gate are historically important but **must not be used as the current feature sequence**.
 
@@ -135,7 +136,7 @@ The previous **Owner Living Sandbox** promotion is superseded by post-stress evi
 
 R1 has earned **LOCAL-LIFE PASS**: one resident can sustain grounded causal continuity, interruption, factual consequence, legitimate quiet and later local wake without provider cognition manufacturing life.
 
-The current recovery target is **R6 complementary resident personhood**. R1–R5 remain qualified only in their documented scopes. R6-A and R6-B are bounded qualified passes; the cross-resident Oren→Nela chain is mechanically green in the current domain suite, while broader R6 / browser-generic personhood / Owner-observed ordinary aliveness remain unproven.
+The current recovery target is **R6 complementary resident personhood**. R1–R5 remain qualified only in their documented scopes. R6-A and R6-B are bounded qualified passes. R6 has now additionally produced a bounded real-Luna history-sensitive choice finding, a deterministic runtime-generated Oren→Nela history→cognition join, and a deterministic counterparty-grounded release lifecycle on code source `da76300c78236c6c8d87277159c0d105f987f62a`. These are material personhood advances, not a broad R6 promotion: browser-qualified Oren/Nela genericity, an end-to-end real-provider run from runtime-generated history, five distinct living people and Owner-observed ordinary aliveness remain unproven.
 
 ## Evidence language
 
