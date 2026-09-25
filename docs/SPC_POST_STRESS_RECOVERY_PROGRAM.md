@@ -534,6 +534,7 @@ Current R6 evidence is deliberately split by plane:
 - **factual standing fulfilment: LIVE-SEMANTIC + DETERMINISTIC LIFECYCLE GREEN** — one-call Luna run #23 selects `complete_standing` from the exact factual return outcome, then local authority resolves the standing matter;
 - **Check #1603: PASS** on integrated source `32bae5f34982ef942ef6d3ea58fc0000212f79ec` — 263 / 263 files, 961 / 961 tests, typecheck/build/preview green;
 - **Browser Evidence #827: PASS as regression evidence**, including dedicated Mira/Ida R6 and legacy R1–R5-C browser vetoes.
+- **stage-closure hardening `2c7adf94...`: PASS** — explicit stale-life rejection for `complete_standing`; Check #1605 **263 / 263 files, 962 / 962 tests**; Browser Evidence #829 PASS; no production/runtime semantic change after `32bae5f3...`.
 
 Evidence hygiene / limits:
 
@@ -716,6 +717,8 @@ Completed and retained only within their documented scopes:
 Current:
 
 > **R6 personhood breadth after the first bounded endogenous ordinary-life chain.**
+
+The preceding explicit-standing-obligation endogenous stage is **closed as a bounded research stage**. Re-open it only if later evidence exposes a concrete regression or missing invariant; do not continue adding promise-shaped variants by inertia.
 
 Immediate method:
 

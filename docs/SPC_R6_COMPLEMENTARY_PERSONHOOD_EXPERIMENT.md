@@ -411,6 +411,7 @@ Completed / retained within scope:
 - the exact run-#23 proposal survives local authority and resolves the original standing responsibility;
 - Check #1603 is green on integrated source `32bae5f34982ef942ef6d3ea58fc0000212f79ec`: **263 / 263 files, 961 / 961 tests**, typecheck/build/preview PASS;
 - Browser Evidence #827 is green on the same code source as regression evidence.
+- stage-closure hardening source `2c7adf9415eefff5f2c7236ead7a59b10a3f8ab0` adds explicit stale-`complete_standing` rejection evidence; Check #1605 passes **263 / 263 files, 962 / 962 tests**, and Browser Evidence #829 passes with no production/runtime semantic change after `32bae5f3...`.
 
 Evidence hygiene:
 

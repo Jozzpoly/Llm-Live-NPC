@@ -139,6 +139,8 @@ R1 has earned **LOCAL-LIFE PASS**: one resident can sustain grounded causal cont
 
 The current recovery target is **R6 complementary resident personhood**. R1–R5 remain qualified only in their documented scopes. R6-A and R6-B remain bounded qualified mechanism passes. R6 has now additionally produced a material bounded endogenous-personhood finding: exact runtime-generated no-fresh-command frames were sent to real GPT-5.6 Luna; the control chose coherent non-action while the otherwise-matched history resident chose to return to Nela because of prior standing responsibility; that exact proposal survived local admission, caused factual World return, and a later one-call Luna judgement correctly completed the standing responsibility from the factual return outcome. Integrated code source `32bae5f34982ef942ef6d3ea58fc0000212f79ec` passes Check #1603 (**263 / 263 files, 961 / 961 tests**) and Browser Evidence #827 as regression evidence. This is **not broad R6 PASS**: the reflection points are explicit factual-outcome opt-ins, browser-qualified Oren/Nela genericity, non-obligation personhood dimensions, five distinct living people and Owner-observed ordinary aliveness remain unproven.
 
+Closure hardening at `2c7adf9415eefff5f2c7236ead7a59b10a3f8ab0` adds stale-life rejection coverage for `complete_standing` and cleans historical takeover authority. Check #1605 passes **263 / 263 files, 962 / 962 tests** and Browser Evidence #829 passes. This hardening changes no production/runtime semantics after `32bae5f3...`.
+
 ## Evidence language
 
 Use claims narrowly:

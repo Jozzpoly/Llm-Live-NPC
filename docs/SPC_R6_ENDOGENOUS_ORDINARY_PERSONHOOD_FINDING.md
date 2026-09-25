@@ -29,6 +29,15 @@ Final regression evidence on integrated code:
 - typecheck/build/preview dry-run PASS;
 - Browser Evidence **#827 — PASS** as regression evidence.
 
+Stage-closure hardening:
+- closure source `2c7adf9415eefff5f2c7236ead7a59b10a3f8ab0`;
+- no production/runtime semantic change after integrated source `32bae5f3...`;
+- one adversarial test proves an in-flight `complete_standing` answer cannot settle after the resident's standing matter changes;
+- stale settlement is rejected as `resident_life_changed_during_request` and creates no false `resident_fulfilled_social_commitment`;
+- Check **#1605 — PASS**, **263 / 263 test files, 962 / 962 tests**, typecheck/build/preview PASS;
+- Browser Evidence **#829 — PASS**, including the dedicated R6 Chromium job and the retained legacy browser veto suite;
+- takeover/current-authority drift was audited across repository documentation and stale historical entrypoints were explicitly demoted without deleting provenance.
+
 ## 1. Research question
 
 The previous R6 finding established:
@@ -406,7 +415,21 @@ Let the next concrete failure earn the smallest new causal representation.
 
 Browser Oren/Nela genericity remains real promotion-plane debt. It must be obtained or the promotion contract deliberately revised before a claim requiring that evidence. It is not the highest-information next research question.
 
-## 14. Promotion boundary
+## 14. Stage-closure verdict
+
+The **explicit-standing-obligation endogenous chain** is closed as a bounded research stage.
+
+Closure means:
+- no known contract/lifecycle hole remains in the path exercised by this specimen;
+- stale provider output cannot complete changed standing life;
+- exact live evidence remains separate from deterministic replay;
+- historical/current documentation authority is unambiguous at takeover entrypoints;
+- full repository and browser regression evidence is green on the closure source;
+- no further provider rerun is justified merely to accumulate confidence in the same bounded case.
+
+Closure does **not** mean R6 as a whole is complete. The next work should deliberately change the causal personhood pressure class rather than continue polishing this one unless new evidence reopens it.
+
+## 15. Promotion boundary
 
 Current classification:
 
