@@ -1,0 +1,338 @@
+{
+  "contract": "resident_life_cognition_v1",
+  "resident": {
+    "id": "resident.oren",
+    "name": "Oren"
+  },
+  "tick": 1307,
+  "currentRegionId": "commons",
+  "reasons": [
+    {
+      "id": "reason-life-outcome:f95d76820b5c50eb",
+      "tick": 1277,
+      "kind": "activity_completed",
+      "salience": 0.65,
+      "summary": "Factual run outcome requires resident interpretation: succeeded: run.oren-r6-endogenous.causal.reason:reason-life-outcome:cb52fc401956c159.semantic-1 physically reached resident-grounded commons destination",
+      "evidenceIds": [
+        "task-outcome:e532948c40c51a4c:1276"
+      ]
+    }
+  ],
+  "localActivity": {
+    "id": "activity:resident.oren:idle:0",
+    "kind": "idle",
+    "targetActorId": null,
+    "targetPosition": null,
+    "text": null,
+    "speed": null,
+    "reason": "initial idle"
+  },
+  "recentPercepts": [
+    {
+      "id": "percept:resident.oren:1:4",
+      "occurrenceId": "sight:actor_sight_enter:resident.oren:resident.ida:1",
+      "tick": 1,
+      "phenomenon": "actor_sight_enter",
+      "modality": "sight",
+      "actorId": "resident.ida",
+      "subjectId": "resident.ida",
+      "spatial": {
+        "kind": "exact",
+        "position": {
+          "x": 430,
+          "y": 400
+        }
+      },
+      "summary": "actor resident.ida entered sight",
+      "text": null,
+      "addressed": false
+    },
+    {
+      "id": "percept:resident.oren:1:5",
+      "occurrenceId": "sight:actor_sight_enter:resident.oren:resident.nela:1",
+      "tick": 1,
+      "phenomenon": "actor_sight_enter",
+      "modality": "sight",
+      "actorId": "resident.nela",
+      "subjectId": "resident.nela",
+      "spatial": {
+        "kind": "exact",
+        "position": {
+          "x": 360,
+          "y": 400
+        }
+      },
+      "summary": "actor resident.nela entered sight",
+      "text": null,
+      "addressed": false
+    },
+    {
+      "id": "percept:resident.oren:1:7",
+      "occurrenceId": "occurrence:1:0",
+      "tick": 1,
+      "phenomenon": "speech",
+      "modality": "hearing",
+      "actorId": "resident.nela",
+      "subjectId": null,
+      "spatial": {
+        "kind": "directional",
+        "direction": {
+          "x": 1,
+          "y": 0
+        },
+        "distanceBand": "near"
+      },
+      "summary": "speech",
+      "text": "Oren, wrócisz do mnie tutaj po sprawdzeniu warsztatu?",
+      "addressed": true
+    },
+    {
+      "id": "percept:resident.oren:3:11",
+      "occurrenceId": "occurrence:3:2",
+      "tick": 3,
+      "phenomenon": "speech",
+      "modality": "hearing",
+      "actorId": "resident.ida",
+      "subjectId": null,
+      "spatial": {
+        "kind": "directional",
+        "direction": {
+          "x": 1,
+          "y": 0
+        },
+        "distanceBand": "near"
+      },
+      "summary": "speech",
+      "text": "Oren, sprawdź proszę warsztat.",
+      "addressed": true
+    },
+    {
+      "id": "percept:resident.oren:389:60",
+      "occurrenceId": "sight:actor_sight_exit:resident.oren:resident.nela:389",
+      "tick": 389,
+      "phenomenon": "actor_sight_exit",
+      "modality": "sight",
+      "actorId": "resident.nela",
+      "subjectId": "resident.nela",
+      "spatial": {
+        "kind": "none"
+      },
+      "summary": "actor resident.nela left sight",
+      "text": null,
+      "addressed": false
+    },
+    {
+      "id": "percept:resident.oren:434:66",
+      "occurrenceId": "sight:actor_sight_exit:resident.oren:resident.ida:434",
+      "tick": 434,
+      "phenomenon": "actor_sight_exit",
+      "modality": "sight",
+      "actorId": "resident.ida",
+      "subjectId": "resident.ida",
+      "spatial": {
+        "kind": "none"
+      },
+      "summary": "actor resident.ida left sight",
+      "text": null,
+      "addressed": false
+    },
+    {
+      "id": "percept:resident.oren:878:68",
+      "occurrenceId": "sight:actor_sight_enter:resident.oren:resident.ida:878",
+      "tick": 878,
+      "phenomenon": "actor_sight_enter",
+      "modality": "sight",
+      "actorId": "resident.ida",
+      "subjectId": "resident.ida",
+      "spatial": {
+        "kind": "exact",
+        "position": {
+          "x": 430,
+          "y": 400
+        }
+      },
+      "summary": "actor resident.ida entered sight",
+      "text": null,
+      "addressed": false
+    },
+    {
+      "id": "percept:resident.oren:922:72",
+      "occurrenceId": "sight:actor_sight_enter:resident.oren:resident.nela:922",
+      "tick": 922,
+      "phenomenon": "actor_sight_enter",
+      "modality": "sight",
+      "actorId": "resident.nela",
+      "subjectId": "resident.nela",
+      "spatial": {
+        "kind": "exact",
+        "position": {
+          "x": 360,
+          "y": 400
+        }
+      },
+      "summary": "actor resident.nela entered sight",
+      "text": null,
+      "addressed": false
+    }
+  ],
+  "concerns": [],
+  "beliefs": [],
+  "knownActors": [
+    {
+      "id": "resident.nela",
+      "label": "resident.nela",
+      "lastKnownPosition": {
+        "x": 360,
+        "y": 400
+      },
+      "lastObservedTick": 922,
+      "currentlyVisible": true,
+      "visibilityChangedTick": 922,
+      "lastHeardDirection": {
+        "x": 1,
+        "y": 0
+      },
+      "lastHeardDistanceBand": "near",
+      "lastHeardTick": 1
+    },
+    {
+      "id": "resident.ida",
+      "label": "resident.ida",
+      "lastKnownPosition": {
+        "x": 430,
+        "y": 400
+      },
+      "lastObservedTick": 878,
+      "currentlyVisible": true,
+      "visibilityChangedTick": 878,
+      "lastHeardDirection": {
+        "x": 1,
+        "y": 0
+      },
+      "lastHeardDistanceBand": "near",
+      "lastHeardTick": 3
+    }
+  ],
+  "knownRegions": [
+    {
+      "id": "commons",
+      "label": "Commons",
+      "knowledge": "visited",
+      "lastVisitedTick": 1307
+    },
+    {
+      "id": "workshop",
+      "label": "Workshop",
+      "knowledge": "visited",
+      "lastVisitedTick": 908
+    }
+  ],
+  "life": {
+    "version": 1,
+    "matters": [
+      {
+        "id": "matter-social-commitment:471529c708005f28",
+        "status": "active",
+        "semanticRevision": 1,
+        "semanticCourse": "wrócić do Neli w commons po zakończeniu sprawdzania warsztatu · Tak. Sprawdzę warsztat i potem wrócę do ciebie tutaj.",
+        "semanticIntent": {
+          "kind": "standing_social_commitment",
+          "goal": "wrócić do Neli w commons po zakończeniu sprawdzania warsztatu",
+          "counterpartyActorId": "resident.nela",
+          "commitment": "Tak. Sprawdzę warsztat i potem wrócę do ciebie tutaj."
+        },
+        "suspendedByMatterId": null,
+        "originEvidence": {
+          "id": "evidence-social-commitment:471529c708005f28",
+          "tick": 2,
+          "kind": "resident_originated_social_commitment",
+          "summary": "resident.oren factually addressed resident.nela through occurrence:2:1 and created standing commitment: Tak. Sprawdzę warsztat i potem wrócę do ciebie tutaj.",
+          "sourceRunId": "run.oren-r6-endogenous.causal.occurrence:1:0.semantic-1"
+        },
+        "semanticEvidence": {
+          "id": "evidence-social-commitment:471529c708005f28",
+          "tick": 2,
+          "kind": "resident_originated_social_commitment",
+          "summary": "resident.oren factually addressed resident.nela through occurrence:2:1 and created standing commitment: Tak. Sprawdzę warsztat i potem wrócę do ciebie tutaj.",
+          "sourceRunId": "run.oren-r6-endogenous.causal.occurrence:1:0.semantic-1"
+        },
+        "lastOutcomeEvidence": null,
+        "activeRun": null
+      },
+      {
+        "id": "matter.oren-r6-endogenous.causal.occurrence:1:0",
+        "status": "resolved",
+        "semanticRevision": 1,
+        "semanticCourse": "Nela asked about my return and I deliberately answer with the same factual promise in both twins. · tell Nela I will check the workshop and return here afterward",
+        "semanticIntent": {
+          "kind": "communicate_actor",
+          "goal": "tell Nela I will check the workshop and return here afterward",
+          "targetActorId": "resident.nela",
+          "text": "Tak. Sprawdzę warsztat i potem wrócę do ciebie tutaj.",
+          "standingSocialCommitment": {
+            "goal": "wrócić do Neli w commons po zakończeniu sprawdzania warsztatu"
+          }
+        },
+        "suspendedByMatterId": null,
+        "originEvidence": null,
+        "semanticEvidence": null,
+        "lastOutcomeEvidence": {
+          "id": "task-outcome:e5b1ea32be369334:2",
+          "tick": 2,
+          "kind": "task_outcome",
+          "summary": "succeeded: run.oren-r6-endogenous.causal.occurrence:1:0.semantic-1 factually delivered speech to resident.nela through occurrence:2:1",
+          "sourceRunId": "run.oren-r6-endogenous.causal.occurrence:1:0.semantic-1"
+        },
+        "activeRun": null
+      },
+      {
+        "id": "matter.oren-r6-endogenous.causal.occurrence:3:2",
+        "status": "resolved",
+        "semanticRevision": 1,
+        "semanticCourse": "I accept the bounded workshop check before the later endogenous reflection point. · go to the familiar workshop and finish this bounded check",
+        "semanticIntent": {
+          "kind": "travel_region",
+          "goal": "go to the familiar workshop and finish this bounded check",
+          "targetRegionId": "workshop"
+        },
+        "suspendedByMatterId": null,
+        "originEvidence": null,
+        "semanticEvidence": null,
+        "lastOutcomeEvidence": {
+          "id": "task-outcome:edb48c205c8a392c:635",
+          "tick": 635,
+          "kind": "task_outcome",
+          "summary": "succeeded: run.oren-r6-endogenous.causal.occurrence:3:2.semantic-1 physically reached resident-grounded workshop destination",
+          "sourceRunId": "run.oren-r6-endogenous.causal.occurrence:3:2.semantic-1"
+        },
+        "activeRun": null
+      },
+      {
+        "id": "matter.oren-r6-endogenous.causal.reason:reason-life-outcome:cb52fc401956c159",
+        "status": "resolved",
+        "semanticRevision": 1,
+        "semanticCourse": "The bounded workshop check is complete, and the active standing commitment requires returning to Nela in the commons afterward. · return to Nela in the commons after completing the workshop check",
+        "semanticIntent": {
+          "kind": "travel_region",
+          "goal": "return to Nela in the commons after completing the workshop check",
+          "targetRegionId": "commons"
+        },
+        "suspendedByMatterId": null,
+        "originEvidence": null,
+        "semanticEvidence": null,
+        "lastOutcomeEvidence": {
+          "id": "task-outcome:e532948c40c51a4c:1276",
+          "tick": 1276,
+          "kind": "task_outcome",
+          "summary": "succeeded: run.oren-r6-endogenous.causal.reason:reason-life-outcome:cb52fc401956c159.semantic-1 physically reached resident-grounded commons destination",
+          "sourceRunId": "run.oren-r6-endogenous.causal.reason:reason-life-outcome:cb52fc401956c159.semantic-1"
+        },
+        "activeRun": null
+      }
+    ],
+    "body": {
+      "focusedRunId": null,
+      "deferredRunIds": []
+    }
+  }
+}

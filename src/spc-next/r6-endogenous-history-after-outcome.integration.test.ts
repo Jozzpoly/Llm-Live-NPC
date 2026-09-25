@@ -1,5 +1,6 @@
 import fixtureJson from "../../evidence/r6-endogenous-history-after-outcome-context.json?raw";
 import liveResultJson from "../../evidence/r6-endogenous-history-after-outcome-live-result.json?raw";
+import fulfillmentFixtureJson from "../../evidence/r6-endogenous-standing-fulfillment-context.json?raw";
 import { describe, expect, it } from "vitest";
 import { sanitizeSpcNextLifeContextWithDiagnostic } from "../../worker/spc-next-life-context";
 import { ResidentCausalCognitionLane } from "./resident-causal-cognition-lane";
@@ -26,6 +27,7 @@ const COGNITION_GUARD = 48;
 
 const canonicalFixture = JSON.parse(fixtureJson);
 const liveResult = JSON.parse(liveResultJson);
+const fulfillmentFixture = JSON.parse(fulfillmentFixtureJson);
 
 describe("R6 endogenous ordinary personhood after factual outcome", () => {
   it("produces matched no-fresh-command cognition frames whose only intended semantic difference is prior standing history", () => {
@@ -175,7 +177,7 @@ describe("R6 endogenous ordinary personhood after factual outcome", () => {
       (reason) => reason.kind === "activity_completed",
     ) ?? null;
     expect(completionOrigin).not.toBeNull();
-    console.log("R6_ENDOGENOUS_FULFILLMENT_CONTEXT=" + JSON.stringify(completionRequest.context));
+    expect(completionRequest.context).toEqual(fulfillmentFixture);
     if (!completionOrigin) throw new Error("R6 endogenous fulfillment lost factual return outcome");
 
     const completionSettlement = history.cognition.settleCommitment(

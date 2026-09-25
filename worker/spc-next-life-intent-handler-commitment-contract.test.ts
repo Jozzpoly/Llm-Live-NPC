@@ -181,7 +181,7 @@ describe("SPC Next life-intent endpoint commitment contract", () => {
     ]);
     expect(upstreamRequest.instructions).toContain("release_standing");
     expect(upstreamRequest.instructions).toContain(
-      "sole bounded lifecycle exception is release_standing",
+      "bounded lifecycle exceptions are release_standing and complete_standing",
     );
     expect(upstreamRequest.instructions).toContain(
       "does not replace or complete recovered matters by implication",
