@@ -239,6 +239,55 @@ export class ResidentOriginatedSocialCommitmentAuthority {
   }
 
   /**
+   * Marks one exact standing commitment fulfilled only against exact factual task
+   * outcome evidence already owned by this resident. Higher cognition owns the
+   * semantic judgement that the outcome satisfies the responsibility; this local
+   * authority proves only that the target matter and factual outcome really exist.
+   *
+   * Fulfilment is resident-private lifecycle state. It does not claim that the
+   * counterparty observed, accepted or socially acknowledged completion.
+   */
+  completeAfterFactualOutcome(input: {
+    matterId: string;
+    outcomeEvidenceId: string;
+    tick: number;
+    reason: string;
+  }): ReleasedResidentOriginatedSocialCommitment {
+    assertNonEmpty(input.outcomeEvidenceId, "social commitment completion outcome evidence id");
+    const matter = this.options.kernel.matter(input.matterId);
+    if (!matter
+      || (matter.status !== "active" && matter.status !== "suspended")
+      || matter.semanticIntent?.kind !== "standing_social_commitment") {
+      throw new Error("standing social commitment completion requires one open standing commitment");
+    }
+
+    const outcome = this.options.kernel.recentEvidenceSnapshot().find(
+      (candidate) => candidate.id === input.outcomeEvidenceId,
+    ) ?? null;
+    if (!outcome || outcome.kind !== "task_outcome" || !outcome.sourceRunId) {
+      throw new Error("standing social commitment completion lacks exact factual task outcome");
+    }
+
+    const completionEvidence = this.options.kernel.recordEvidence({
+      id: deriveSpcIdentifier(
+        "evidence-social-commitment-fulfilled",
+        `${this.identityNamespace}:${matter.id}:${outcome.id}:${input.tick}`,
+      ),
+      tick: input.tick,
+      kind: "resident_fulfilled_social_commitment",
+      summary: `${input.reason} · factual task outcome ${outcome.id}`,
+      sourceRunId: outcome.sourceRunId,
+    });
+    this.options.kernel.advanceSemanticContext(matter.id, completionEvidence.id);
+    const resolved = this.options.kernel.resolveMatter(matter.id);
+
+    return {
+      matter: structuredClone(resolved),
+      releaseEvidence: structuredClone(completionEvidence),
+    };
+  }
+
+  /**
    * Releases one exact standing commitment only after factual addressed speech from
    * that commitment's own counterparty. Language interpretation remains higher-level
    * cognition; this authority proves only the private matter and World-origin match.

@@ -137,6 +137,12 @@ export class ResidentCausalCognitionLane {
           matterId: string;
           occurrence: WorldOccurrence;
           reason: string;
+        }
+      | {
+          kind: "complete_standing";
+          matterId: string;
+          outcomeEvidenceId: string;
+          reason: string;
         };
 
     const settlement = this.life.lifeIntentOwner.settleCommitmentIntent<Admission>(
@@ -145,6 +151,49 @@ export class ResidentCausalCognitionLane {
       this.life.currentLifeView(),
       this.life.world.tick,
       (proposal, providerContext) => {
+        if (proposal.commitmentDecision.kind === "complete_standing") {
+          const completionDecision = proposal.commitmentDecision;
+          if (originReason.kind !== "activity_completed" || originReason.evidenceIds.length !== 1) {
+            return {
+              status: "rejected",
+              detail: "standing completion requires one exact activity-completed outcome origin",
+            };
+          }
+          const outcomeEvidenceId = originReason.evidenceIds[0]!;
+          const outcomeEvidence = this.life.kernel.recentEvidenceSnapshot().find(
+            (candidate) => candidate.id === outcomeEvidenceId,
+          ) ?? null;
+          if (!outcomeEvidence
+            || outcomeEvidence.kind !== "task_outcome"
+            || !outcomeEvidence.sourceRunId) {
+            return {
+              status: "rejected",
+              detail: "standing completion factual task outcome unavailable",
+            };
+          }
+          const matter = providerContext.life.matters.find(
+            (candidate) => candidate.id === completionDecision.matterId,
+          ) ?? null;
+          if (!matter
+            || (matter.status !== "active" && matter.status !== "suspended")
+            || matter.activeRun !== null
+            || matter.semanticIntent?.kind !== "standing_social_commitment") {
+            return {
+              status: "rejected",
+              detail: "standing completion target is not one open run-free standing commitment",
+            };
+          }
+          return {
+            status: "accepted",
+            intent: {
+              kind: "complete_standing",
+              matterId: matter.id,
+              outcomeEvidenceId,
+              reason: completionDecision.reason,
+            },
+          };
+        }
+
         if (proposal.commitmentDecision.kind === "release_standing") {
           const releaseDecision = proposal.commitmentDecision;
           if (originReason.kind !== "heard_speech") {
@@ -302,6 +351,13 @@ export class ResidentCausalCognitionLane {
       this.life.originatedSocialCommitments.releaseAfterCounterpartySpeech({
         matterId: admitted.matterId,
         occurrenceId: admitted.occurrence.id,
+        tick: this.life.world.tick,
+        reason: admitted.reason,
+      });
+    } else if (admitted.kind === "complete_standing") {
+      this.life.originatedSocialCommitments.completeAfterFactualOutcome({
+        matterId: admitted.matterId,
+        outcomeEvidenceId: admitted.outcomeEvidenceId,
         tick: this.life.world.tick,
         reason: admitted.reason,
       });
