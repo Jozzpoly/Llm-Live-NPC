@@ -526,33 +526,45 @@ Current R6 evidence is deliberately split by plane:
 
 - **R6-A — resident-originated standing social commitment: QUALIFIED BOUNDED PASS** at its documented source;
 - **R6-B — native standing social continuation: QUALIFIED BOUNDED PASS** at source `54fe9fbe2f615d4dd37e5f4e6a0577d2c359d3da`;
-- **R6-C Oren → Nela generated-history genericity: deterministic/domain GREEN** — the second resident can create the same class of factual-speech-grounded standing history and carry it into later higher cognition;
-- **R6 history-dependent real-model choice: BOUNDED POSITIVE FINDING** — in the exact two-call GPT-5.6 Luna twin, control Oren accepted leaving with Ida while the history twin declined specifically because his earlier Nela commitment still bound him;
-- **R6 standing lifecycle release: deterministic/domain GREEN** on code source `da76300c78236c6c8d87277159c0d105f987f62a` — factual addressed release speech from the exact counterparty can resolve the exact generated standing matter through normal cognition admission, while another actor cannot release it;
-- **Check #1587: PASS** — 260 / 260 files, 955 / 955 tests, typecheck/build/preview green;
-- **Browser Evidence #811: PASS as regression evidence**, including the dedicated Mira/Ida R6 specimen and legacy R1–R5 vetoes.
+- **R6-C Oren → Nela generated-history genericity: deterministic/domain GREEN**;
+- **direct-request history-sensitive real-model choice: BOUNDED POSITIVE FINDING** — same Ida request, control accepts departure while history Oren declines because earlier Nela responsibility still binds;
+- **exact counterparty release lifecycle: deterministic/domain GREEN**;
+- **endogenous history-after-outcome choice: MATERIAL BOUNDED POSITIVE FINDING** — exact runtime-generated no-fresh-command frames; control chooses no new matter, history chooses return to Nela from standing responsibility;
+- **factual World continuation: deterministic GREEN** — exact live history proposal survives local admission and Oren physically returns workshop → commons without fresh speech;
+- **factual standing fulfilment: LIVE-SEMANTIC + DETERMINISTIC LIFECYCLE GREEN** — one-call Luna run #23 selects `complete_standing` from the exact factual return outcome, then local authority resolves the standing matter;
+- **Check #1603: PASS** on integrated source `32bae5f34982ef942ef6d3ea58fc0000212f79ec` — 263 / 263 files, 961 / 961 tests, typecheck/build/preview green;
+- **Browser Evidence #827: PASS as regression evidence**, including dedicated Mira/Ida R6 and legacy R1–R5-C browser vetoes.
 
-Evidence limits remain explicit:
+Evidence hygiene / limits:
 
-- the real Luna twin used a canonical synthetic context; the runtime-generated-history → Worker join is deterministic, not a second paid end-to-end live run;
+- Live Provider #21 at `4861abf6...` made two real Luna inferences but failed at the provider/local admission contract; it is apparatus/cost evidence, **not positive semantic evidence**;
+- canonical endogenous run #22 at `592a19ec...` made exactly two calls with no within-run semantic retry;
+- fulfilment run #23 at `9aff2659...` made exactly one call with no retry;
+- the no-fresh-command reflection point is an explicit one-outcome R6 opt-in; R2 still suppresses normal successful-completion echo globally;
+- the initial standing-history construction in this paired specimen is deterministic experiment setup;
+- runtime contexts are generated exactly and equality-bound to the live fixtures, then replayed through the real endpoint; this is not one uninterrupted live browser process;
+- one paired model observation is not a behavior distribution;
 - the dedicated R6 browser specimen still exercises Mira/Ida, so **browser-qualified Oren/Nela genericity remains UNPROVEN**;
-- `release_standing` proves one narrow counterparty-grounded social exit, not arbitrary fulfilment or timer expiry;
-- one paired real-model observation is not a stable behavior distribution;
+- explicit social obligation is now deeply exercised, but preference/aversion, habit, broader relationship history, ownership/self-interest and other personhood causes remain largely open;
 - no machine result here is Owner-observed ordinary aliveness.
 
 Therefore do **not** promote:
 
 - a broad R6 PASS;
-- browser-qualified cross-resident personhood;
-- general social-contract intelligence;
+- browser-qualified cross-resident Oren/Nela personhood;
+- general social intelligence;
 - five distinct living people;
 - Owner-observed ordinary aliveness.
 
-The active research boundary is no longer merely “can the standing mechanism run for a second resident?”. It is:
+The active research boundary has moved.
 
-> **Can accumulated private life increasingly generate coherent ordinary choice and non-action for the resident's own reasons — including when nobody is issuing a fresh direct request — while the already-earned causal, homeostatic and material boundaries remain intact?**
+We now have one bounded example where accumulated private life causes meaningful choice/non-action **without a fresh direct command**, survives local admission into factual World behavior and later closes through factual-outcome-based semantic fulfilment.
 
-Browser Oren/Nela genericity remains a genuine missing promotion plane and must be obtained or the promotion contract explicitly revised before a claim that requires it. It must not be mistaken for the highest-information research question merely because it is easy to make green.
+The next highest-information question is:
+
+> **Can prior factual life produce coherent endogenous choice/non-action for a resident-owned reason that is not simply an explicit social promise or obligation?**
+
+Browser Oren/Nela genericity remains genuine promotion-plane debt. It must be obtained or the promotion contract deliberately revised before any claim that requires it, but it is not the highest-information research target.
 
 ---
 
@@ -659,17 +671,19 @@ Current recovery order:
    - canonical post-stress execution authority;
 3. **`docs/SPC_R6_COMPLEMENTARY_PERSONHOOD_EXPERIMENT.md`**
    - binding current R6 experiment contract;
-4. **`docs/SPC_R6B_NATIVE_STANDING_SOCIAL_CONTINUATION_PASS.md`**
+4. **`docs/SPC_R6_ENDOGENOUS_ORDINARY_PERSONHOOD_FINDING.md`**
+   - current strongest bounded R6 empirical finding and evidence/nonclaim boundary;
+5. **`docs/SPC_R6B_NATIVE_STANDING_SOCIAL_CONTINUATION_PASS.md`**
    - latest qualified bounded R6 mechanism evidence;
-5. **`docs/SPC_R6A_STANDING_SOCIAL_COMMITMENT_PASS.md`**
+6. **`docs/SPC_R6A_STANDING_SOCIAL_COMMITMENT_PASS.md`**
    - earlier bounded R6-A evidence and nonclaims;
-6. **R5 evidence documents**
+7. **R5 evidence documents**
    - semantic escalation, stale attention, provider outcomes and real-Luna causal boundary;
-7. **R4 / R3 / R2 / R1 qualified evidence documents**
+8. **R4 / R3 / R2 / R1 qualified evidence documents**
    - preserved scoped evidence, not current feature sequence;
-8. **`docs/SPC_NEXT_OWNER_INTENT_AND_GAP_AUDIT.md`**, pressure/re-observation documents
+9. **`docs/SPC_NEXT_OWNER_INTENT_AND_GAP_AUDIT.md`**, pressure/re-observation documents
    - durable Owner/product guardrails and donor evidence;
-9. **`docs/SPC_LIVING_WORLD_EXECUTION_PROGRAM.md`** and older recovery/Pass-2 documents
+10. **`docs/SPC_LIVING_WORLD_EXECUTION_PROGRAM.md`** and older recovery/Pass-2 documents
    - historical evidence only.
 
 `docs/PROJECT_STATE.md`, `docs/FRESH_TAKEOVER.md`, `docs/SPC_NEXT_CURRENT_STATE_RECONCILIATION.md` and older architecture-recovery documents must **not** be used as the current feature sequence.
@@ -690,25 +704,40 @@ Completed and retained only within their documented scopes:
 6. R5 semantic escalation / provider safety / real-Luna causal boundary — QUALIFIED PASS;
 7. R6-A standing social commitment — QUALIFIED BOUNDED PASS;
 8. R6-B native standing social continuation — QUALIFIED BOUNDED PASS;
-9. Oren → Nela generated standing history and later Worker-context join — deterministic/domain GREEN;
-10. bounded real-Luna history-dependent Oren choice — POSITIVE FINDING, not R6 PASS;
-11. exact counterparty-grounded release of the generated standing matter through normal cognition — deterministic/domain GREEN.
+9. Oren → Nela generated standing history and Worker-context join — deterministic/domain GREEN;
+10. direct-request real-Luna history-dependent Oren choice — POSITIVE FINDING;
+11. exact counterparty-grounded release — deterministic/domain GREEN;
+12. runtime-generated no-fresh-command endogenous control/history twin — deterministic exact-context GREEN;
+13. canonical live Luna endogenous choice run #22 — MATERIAL POSITIVE FINDING;
+14. exact live history proposal replay → factual Oren return to commons — deterministic World GREEN;
+15. `complete_standing` exact factual-outcome lifecycle — bounded deterministic GREEN;
+16. live Luna factual fulfilment run #23 + exact local replay — LIVE-SEMANTIC + deterministic lifecycle GREEN.
 
 Current:
 
-> **R6 ordinary-personhood pressure after the first real history-sensitive choice.**
+> **R6 personhood breadth after the first bounded endogenous ordinary-life chain.**
 
 Immediate method:
 
-- do not spend more provider calls to replay the already-observed twin merely for a green harness label;
-- keep the live finding, deterministic generated-history join and deterministic release lifecycle as separate evidence planes;
-- retain browser Oren/Nela genericity as an honest missing promotion-plane requirement; do not substitute the Mira browser specimen;
-- choose the next personhood falsifier for information gain, with priority on resident-owned coherent choice/non-action when no fresh direct request tells the resident what to do;
-- do not add a generic personality/needs system before a concrete resident-life failure demands it;
-- preserve Janek/material continuity, zero-provider life, semantic metabolism and provider-homeostasis as vetoes;
+- preserve `docs/SPC_R6_ENDOGENOUS_ORDINARY_PERSONHOOD_FINDING.md` as the canonical result of the current campaign;
+- do not keep polishing explicit promises merely because that dimension now has a rich test harness;
+- choose a different resident-owned causal reason class and make it earn representation from one concrete lived failure;
+- prefer paired falsifiers where sensible non-action is as legitimate as action;
+- do not introduce periodic provider cognition, generic needs meters or personality prose to manufacture autonomy;
+- retain Browser Oren/Nela genericity as honest promotion-plane debt;
+- preserve Janek/material continuity, R1 homeostasis, R2 metabolism and R5 provider safety as vetoes;
 - keep full R6 / five living residents / Owner-observed ordinary personhood **UNPROVEN**;
 - do not prepare an Owner gate or merge PR #148 by CI inertia.
 
-The next milestone is not “more personhood fields”. It is:
+Next research question:
 
-> **more of the resident's behavior becoming causally explainable by a life that existed before the current prompt — while remaining free to end, revise, ignore and continue that life through grounded reality.**
+> **Can prior factual life cause coherent endogenous choice or non-action for a resident-owned reason that is not reducible to one explicit open promise/obligation?**
+
+Promising falsifier families, to be selected by concrete information gain rather than implemented wholesale:
+- unfinished personal business from factual experience;
+- learned preference/aversion from repeated real outcomes;
+- relationship history beyond a single obligation;
+- emergent habit from repeated lived episodes;
+- concrete inconvenience or self-interest.
+
+The architecture must continue to be earned by resident-life pressure, not by a desire to fill a personality feature list.

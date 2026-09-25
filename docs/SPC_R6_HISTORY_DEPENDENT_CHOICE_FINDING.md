@@ -183,27 +183,27 @@ Browser Evidence #811:
 
 No extra paid Luna call was used for this lifecycle closure.
 
-## 8. Current claim boundary
+## 8. Historical boundary and subsequent evidence
 
-What is now supported:
-
-- one bounded real-Luna observation where private standing history changed Oren's later semantic choice;
-- deterministic native generation of that class of history by Oren from factual self speech;
-- deterministic propagation of runtime-generated history into the next higher-cognition/Worker context;
-- deterministic lifecycle termination of the exact generated standing matter after factual release speech from its own counterparty;
-- rejection of a release attempt grounded in another actor's speech;
-- no direct body or World authority from personhood state or its release.
-
-What remains unproven:
-
-- an end-to-end real-provider request whose context object was produced directly by the runtime-generated Oren chain;
+At the time of this 24 September finding, the following remained unproven:
+- end-to-end use of runtime-generated Oren life context by the real provider;
+- coherent endogenous choice when nobody made a fresh direct request;
+- factual self-derived fulfilment of the standing responsibility;
 - browser-qualified Oren/Nela genericity;
-- time-based or self-derived fulfilment of social commitments;
-- stable stochastic behavior across repeated model samples;
-- rich preferences, relationships, habit or self-interest;
-- coherent endogenous ordinary choice when nobody makes a fresh direct request;
+- richer non-obligation personhood.
+
+The first three items have since advanced materially in:
+
+`docs/SPC_R6_ENDOGENOUS_ORDINARY_PERSONHOOD_FINDING.md`.
+
+Do **not** retroactively rewrite this direct-request experiment as if it had already contained those later properties. Its original live twin was a canonical synthetic context.
+
+The later endogenous campaign separately generated exact runtime contexts, sent their captured/equality-bound forms to real Luna, replayed the accepted history decision through local World execution, and then obtained a separate live Luna fulfilment judgement from the factual return outcome.
+
+Still unproven after that later work:
+- browser-qualified Oren/Nela genericity;
+- stable stochastic behavior across repeated samples;
+- preferences/aversions/habit/self-interest/relationship history beyond explicit standing obligation;
 - five distinct living residents over time;
 - Owner-observed ordinary aliveness;
 - full R6.
-
-The next research step should be chosen for information gain about ordinary personhood, not to accumulate another green gate.
