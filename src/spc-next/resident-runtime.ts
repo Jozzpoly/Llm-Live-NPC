@@ -61,7 +61,8 @@ export type ResidentSemanticSettlementDecision =
   | "decline"
   | "defer"
   | "clarify"
-  | "release_standing";
+  | "release_standing"
+  | "complete_standing";
 
 export interface ResidentSemanticSettlementReconciliation {
   settledReasonIds: readonly string[];

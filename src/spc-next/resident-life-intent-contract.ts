@@ -25,6 +25,11 @@ export type ResidentLifeCommitmentDecision =
       kind: "release_standing";
       reason: string;
       matterId: string;
+    }
+  | {
+      kind: "complete_standing";
+      reason: string;
+      matterId: string;
     };
 
 export interface ResidentLifeIntentProposal {
@@ -157,7 +162,7 @@ export function parseResidentLifeIntentProposal(
     };
   }
 
-  if (decision.kind === "release_standing") {
+  if (decision.kind === "release_standing" || decision.kind === "complete_standing") {
     if (!hasExactKeys(decision, ["kind", "reason", "matterId"])
       || !isBoundedString(decision.matterId, 128)) return null;
     const validated = validateSemanticUpdatesOnly(value, context, decision.reason);
@@ -165,7 +170,7 @@ export function parseResidentLifeIntentProposal(
     return {
       version: 1,
       commitmentDecision: {
-        kind: "release_standing",
+        kind: decision.kind,
         reason: decision.reason,
         matterId: decision.matterId,
       },
