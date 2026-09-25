@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
+import { DEFAULT_RESIDENT_PROFILE } from "./contracts";
 import { ResidentContinuityKernel } from "./resident-continuity-kernel";
 import { ResidentExecutionArbitrator } from "./resident-execution-arbitrator";
 import { ResidentExecutionFocusAuthority } from "./resident-execution-focus-authority";
 import { captureResidentLifeCognitionView } from "./resident-life-cognition-view";
 import { ResidentLifeMatterScope } from "./resident-life-matter-scope";
+import { ResidentMaterialMatterRelevanceBridge } from "./resident-material-matter-relevance-bridge";
+import { ResidentRuntime } from "./resident-runtime";
 
 const MATTER_ID = "matter.mira.r6.lived-friction";
 const RUN_ID = "run.mira.r6.lived-friction";
@@ -70,6 +73,54 @@ describe("R6 post-terminal lived-friction gap", () => {
     });
     expect(history.kernel.lastOutcomeEvidence(MATTER_ID)).toBeNull();
     expect(history.scope.matterIds()).toEqual([]);
+  });
+
+  it("does not reinterpret a resolved blocked episode as still-open business when the same material identity is reacquired", () => {
+    const history = createHistoryVariant();
+    const life = history.view();
+    const resident = new ResidentRuntime({
+      ...DEFAULT_RESIDENT_PROFILE,
+      id: "resident.mira",
+      name: "Mira",
+    });
+    const bridge = new ResidentMaterialMatterRelevanceBridge(resident, history.kernel);
+
+    expect(life.matters).toHaveLength(1);
+    expect(life.matters[0]).toMatchObject({
+      id: MATTER_ID,
+      status: "resolved",
+      lastOutcomeEvidence: {
+        kind: "task_outcome",
+        summary: expect.stringContaining("blocked:"),
+      },
+    });
+
+    // The existing material-relevance seam is deliberately about one still-open
+    // blocked acquisition matter. A terminal episode must not be revived as an
+    // obligation merely because the same object becomes visible again.
+    expect(bridge.observeReacquisition(
+      {
+        objectId: OBJECT_ID,
+        lastKnownPosition: { x: 20, y: 20 },
+        observedAtTick: 2,
+        currentlyVisible: false,
+      },
+      {
+        objectId: OBJECT_ID,
+        lastKnownPosition: { x: 40, y: 20 },
+        observedAtTick: 3,
+        currentlyVisible: true,
+      },
+      life,
+    )).toEqual({
+      status: "not_relevant",
+      objectId: OBJECT_ID,
+    });
+    expect(resident.pendingCognitionReasons()).toEqual([]);
+    expect(history.kernel.matter(MATTER_ID)).toMatchObject({ status: "resolved" });
+
+    // This is the exact missing distinction for the next pressure: "this happened
+    // to me before" must not be represented as "I still owe this task".
   });
 
   it("does not revive the old terminal episode when committed life is reconstructed", () => {
