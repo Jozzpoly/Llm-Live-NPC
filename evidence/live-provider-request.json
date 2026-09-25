@@ -1,9 +1,9 @@
 {
-  "version": 22,
+  "version": 23,
   "pr": 148,
   "qualifiers": [
-    "r6-endogenous-history-outcome-twin"
+    "r6-endogenous-standing-fulfillment"
   ],
-  "purpose": "R6 endogenous ordinary-personhood twin rerun after a material provider-contract repair: structured accept.intent JSON Schema now encodes the same per-kind null/target invariants enforced by the local parser, and the prompt now distinguishes originReasonId causal attribution from recentPercepts-only durable belief/concern evidence. Exact runtime-generated twin contexts are unchanged. Exactly two GPT-5.6 Luna calls maximum and no semantic retry for preferred output. Harness now retains Worker code/diagnostic on rejection.",
-  "requestedAtUtc": "2026-09-25T00:17:00Z"
+  "purpose": "R6 endogenous standing-fulfillment falsifier. One exact runtime-generated frame follows the factual autonomous return to commons caused by the prior live-Luna history-sensitive continuation. Exactly one GPT-5.6 Luna call maximum, no semantic retry. Positive only if Luna selects complete_standing for the exact open standing return commitment.",
+  "requestedAtUtc": "2026-09-25T11:32:44Z"
 }
