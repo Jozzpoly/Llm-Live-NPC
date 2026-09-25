@@ -223,6 +223,47 @@ describe("R6 endogenous ordinary personhood after factual outcome", () => {
     });
   });
 
+  it("rejects stale standing completion when resident life changes during cognition", () => {
+    const history = buildSpecimen(true);
+    const standing = standingMatters(history.request.context)[0]!;
+    const origin = history.request.batch.reasons[0]!;
+    expect(origin.kind).toBe("activity_completed");
+
+    const released = history.life.originatedSocialCommitments.release({
+      matterId: standing.id,
+      tick: history.world.tick,
+      reason: "the resident's standing responsibility changed while higher cognition was in flight",
+    });
+    expect(released.matter.status).toBe("resolved");
+
+    expect(history.cognition.settleCommitment(
+      history.request,
+      {
+        version: 1,
+        commitmentDecision: {
+          kind: "complete_standing",
+          reason: "stale provider output must not complete an already changed responsibility",
+          matterId: standing.id,
+        },
+        beliefs: [],
+        concerns: [],
+        reviewAfterSeconds: 600,
+      },
+      origin.id,
+    )).toEqual({
+      status: "stale",
+      residentId: OREN_ID,
+      reason: "resident_life_changed_during_request",
+    });
+    expect(history.life.kernel.matter(standing.id)).toMatchObject({
+      status: "resolved",
+      activeRunId: null,
+    });
+    expect(history.life.kernel.recentEvidenceSnapshot().some(
+      (evidence) => evidence.kind === "resident_fulfilled_social_commitment",
+    )).toBe(false);
+  });
+
   it("rejects standing completion against a nonexistent target matter", () => {
     const history = buildSpecimen(true);
     const standing = standingMatters(history.request.context)[0]!;

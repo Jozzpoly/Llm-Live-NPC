@@ -1,6 +1,6 @@
 # SPC Next — current-state reconciliation and authority roadmap
 
-> **CURRENT EXECUTION NOTICE (2026-09-18):** This document preserves an important earlier substrate/authority reconciliation, but its capability sequence is **not the current execution roadmap**. For current direction, qualification boundary and continuation semantics use `docs/SPC_LIVING_WORLD_EXECUTION_PROGRAM.md`. Live evidence supersedes historical status claims here.
+> **CURRENT EXECUTION NOTICE (2026-09-25): HISTORICAL ONLY.** This document preserves an earlier substrate/authority reconciliation. Its capability sequence and its former pointer to the pre-stress Living World program are no longer current. Use `docs/SPC_POST_STRESS_RECOVERY_PROGRAM.md` for execution authority, `docs/SPC_R6_COMPLEMENTARY_PERSONHOOD_EXPERIMENT.md` for the active R6 contract, and `docs/SPC_R6_ENDOGENOUS_ORDINARY_PERSONHOOD_FINDING.md` for the latest bounded evidence. Live evidence supersedes historical status claims here.
 
 
 Status: **live working reconciliation, not a frozen architecture**  
