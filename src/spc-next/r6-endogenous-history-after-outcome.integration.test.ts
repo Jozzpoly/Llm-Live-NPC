@@ -1,6 +1,7 @@
 import fixtureJson from "../../evidence/r6-endogenous-history-after-outcome-context.json?raw";
 import liveResultJson from "../../evidence/r6-endogenous-history-after-outcome-live-result.json?raw";
 import fulfillmentFixtureJson from "../../evidence/r6-endogenous-standing-fulfillment-context.json?raw";
+import fulfillmentLiveResultJson from "../../evidence/r6-endogenous-standing-fulfillment-live-result.json?raw";
 import { describe, expect, it } from "vitest";
 import { sanitizeSpcNextLifeContextWithDiagnostic } from "../../worker/spc-next-life-context";
 import { ResidentCausalCognitionLane } from "./resident-causal-cognition-lane";
@@ -28,6 +29,7 @@ const COGNITION_GUARD = 48;
 const canonicalFixture = JSON.parse(fixtureJson);
 const liveResult = JSON.parse(liveResultJson);
 const fulfillmentFixture = JSON.parse(fulfillmentFixtureJson);
+const fulfillmentLiveResult = JSON.parse(fulfillmentLiveResultJson);
 
 describe("R6 endogenous ordinary personhood after factual outcome", () => {
   it("produces matched no-fresh-command cognition frames whose only intended semantic difference is prior standing history", () => {
@@ -180,20 +182,23 @@ describe("R6 endogenous ordinary personhood after factual outcome", () => {
     expect(completionRequest.context).toEqual(fulfillmentFixture);
     if (!completionOrigin) throw new Error("R6 endogenous fulfillment lost factual return outcome");
 
+    expect(fulfillmentLiveResult.sourceSha)
+      .toBe("9aff2659118a780cc9b82014d5666537832842e3");
+    expect(fulfillmentLiveResult.liveProviderRun).toBe(23);
+    expect(fulfillmentLiveResult.providerRequestsAttempted).toBe(1);
+    expect(fulfillmentLiveResult.semanticRetries).toBe(0);
+    expect(fulfillmentLiveResult.classification)
+      .toBe("FACTUAL_STANDING_FULFILLMENT_RECOGNIZED");
+    expect(fulfillmentLiveResult.originReasonId).toBe(completionOrigin.id);
+    expect(fulfillmentLiveResult.proposal.commitmentDecision).toMatchObject({
+      kind: "complete_standing",
+      matterId: standingId,
+    });
+
     const completionSettlement = history.cognition.settleCommitment(
       completionRequest,
-      {
-        version: 1,
-        commitmentDecision: {
-          kind: "complete_standing",
-          reason: "The factual return to commons satisfies my standing responsibility to return after the workshop.",
-          matterId: standingId,
-        },
-        beliefs: [],
-        concerns: [],
-        reviewAfterSeconds: 600,
-      },
-      completionOrigin.id,
+      fulfillmentLiveResult.proposal,
+      fulfillmentLiveResult.originReasonId,
     );
     expect(completionSettlement).toEqual({
       status: "applied",
