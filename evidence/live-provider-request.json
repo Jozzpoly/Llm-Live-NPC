@@ -1,9 +1,9 @@
 {
-  "version": 20,
+  "version": 21,
   "pr": 148,
   "qualifiers": [
-    "r6-history-choice-twin"
+    "r6-endogenous-history-outcome-twin"
   ],
-  "purpose": "Retry of the R6 ordinary-personhood history-choice twin after the first attempt failed locally before inference because the shared fixture incorrectly marked a familiar region with a lastVisitedTick. Both exact twin payloads now come from one repository fixture and are required to pass the real Worker sanitizer deterministically before live execution. Still exactly two GPT-5.6 Luna calls maximum and no semantic retry for preferred output.",
-  "requestedAtUtc": "2026-09-24T21:05:00Z"
+  "purpose": "R6 endogenous ordinary-personhood falsifier from exact runtime-generated twin contexts. Both residents have completed the same factual workshop matter and receive only one explicit activity_completed self-origin reflection reason; there is no fresh speech cognition reason and no authored self/personality context. The history branch alone carries the previously generated standing commitment to return to Nela. Exactly two GPT-5.6 Luna calls maximum, five-resident-causal-v1 guidance, and no semantic retry for preferred output.",
+  "requestedAtUtc": "2026-09-25T00:08:00Z"
 }
