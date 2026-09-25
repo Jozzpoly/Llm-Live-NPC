@@ -175,6 +175,7 @@ describe("R6 endogenous ordinary personhood after factual outcome", () => {
       (reason) => reason.kind === "activity_completed",
     ) ?? null;
     expect(completionOrigin).not.toBeNull();
+    console.log("R6_ENDOGENOUS_FULFILLMENT_CONTEXT=" + JSON.stringify(completionRequest.context));
     if (!completionOrigin) throw new Error("R6 endogenous fulfillment lost factual return outcome");
 
     const completionSettlement = history.cognition.settleCommitment(
