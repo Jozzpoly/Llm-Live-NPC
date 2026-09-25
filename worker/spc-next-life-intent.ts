@@ -65,7 +65,7 @@ For accept+communicate only, use standingSocialCommitment when the resident deli
 
 Do not output trajectories, routes, execution steps, matter ids to invent, run ids to invent, body-focus decisions, or claims that an action already happened. The local system owns execution and will re-ground any accepted semantic destination or target from current state at admission time.
 
-Use only causally acquired private evidence. Do not infer hidden World truth. A statement heard from any actor proves only that the statement was heard. Cite only evidence IDs present in this context. A hearing cue is directional/rough-distance information, not an exact coordinate. If actorId is null on speech, the speaker is unrecognized; never reconstruct identity from wording or context. Known remembered positions may be stale. Unknown actors, regions, coordinates, objects, outcomes and evidence must not be invented.
+Use only causally acquired private evidence. Do not infer hidden World truth. A statement heard from any actor proves only that the statement was heard. originReasonId cites one exact reasons[].id for causal attribution. By contrast, beliefs[].evidenceIds and concerns[].evidenceIds may cite only ids from recentPercepts; reason evidenceIds such as task-outcome/kernel evidence are not durable belief/concern evidence unless that same id is also an actual recentPercept id. A hearing cue is directional/rough-distance information, not an exact coordinate. If actorId is null on speech, the speaker is unrecognized; never reconstruct identity from wording or context. Known remembered positions may be stale. Unknown actors, regions, coordinates, objects, outcomes and evidence must not be invented.
 
 The resident is not a command interpreter. Addressed speech can justify accepting, declining, deferring or requesting clarification, while the resident's own ongoing matters continue independently. Prefer coherent continuity over unnecessary commitment churn. Set reviewAfterSeconds from 0.25 to 600 according to genuine semantic pressure rather than mechanical polling.
 
@@ -307,14 +307,51 @@ const objectSchema = (properties: Record<string, unknown>) => ({
   type: "object", additionalProperties: false, properties, required: Object.keys(properties),
 });
 const vecSchema = objectSchema({ x: { type: "number" }, y: { type: "number" } });
-const activitySchema = objectSchema({
-  kind: { type: "string", enum: ["idle", "travel", "follow", "communicate", "investigate"] },
-  goal: stringSchema(1200),
-  targetActorId: nullable(idSchema),
-  targetRegionId: nullable(idSchema),
-  targetPosition: nullable(vecSchema),
-  text: nullable(stringSchema(1200)),
-});
+const nullSchema = { type: "null" };
+const activitySchema = {
+  anyOf: [
+    objectSchema({
+      kind: { type: "string", enum: ["idle"] },
+      goal: stringSchema(1200),
+      targetActorId: nullSchema,
+      targetRegionId: nullSchema,
+      targetPosition: nullSchema,
+      text: nullSchema,
+    }),
+    objectSchema({
+      kind: { type: "string", enum: ["travel", "investigate"] },
+      goal: stringSchema(1200),
+      targetActorId: nullSchema,
+      targetRegionId: idSchema,
+      targetPosition: nullSchema,
+      text: nullSchema,
+    }),
+    objectSchema({
+      kind: { type: "string", enum: ["travel", "investigate"] },
+      goal: stringSchema(1200),
+      targetActorId: nullSchema,
+      targetRegionId: nullSchema,
+      targetPosition: vecSchema,
+      text: nullSchema,
+    }),
+    objectSchema({
+      kind: { type: "string", enum: ["follow"] },
+      goal: stringSchema(1200),
+      targetActorId: idSchema,
+      targetRegionId: nullSchema,
+      targetPosition: nullSchema,
+      text: nullSchema,
+    }),
+    objectSchema({
+      kind: { type: "string", enum: ["communicate"] },
+      goal: stringSchema(1200),
+      targetActorId: idSchema,
+      targetRegionId: nullSchema,
+      targetPosition: nullSchema,
+      text: stringSchema(1200),
+    }),
+  ],
+};
 const evidenceSchema = { type: "array", maxItems: 16, items: idSchema };
 const beliefsSchema = { type: "array", maxItems: 8, items: objectSchema({
   id: idSchema,

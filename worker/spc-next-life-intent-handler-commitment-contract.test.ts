@@ -175,6 +175,63 @@ describe("SPC Next life-intent endpoint commitment contract", () => {
     expect(upstreamRequest.instructions).toContain(
       "does not replace or complete recovered matters by implication",
     );
+    expect(upstreamRequest.instructions).toContain(
+      "beliefs[].evidenceIds and concerns[].evidenceIds may cite only ids from recentPercepts",
+    );
+
+    const acceptedIntentSchemas = commitmentVariants
+      .filter((variant: any) => variant.properties?.intent)
+      .map((variant: any) => variant.properties.intent);
+    expect(acceptedIntentSchemas.length).toBeGreaterThan(0);
+    for (const schema of acceptedIntentSchemas) {
+      expect(schema.anyOf).toEqual(expect.arrayContaining([
+        expect.objectContaining({
+          properties: expect.objectContaining({
+            kind: { type: "string", enum: ["idle"] },
+            targetActorId: { type: "null" },
+            targetRegionId: { type: "null" },
+            targetPosition: { type: "null" },
+            text: { type: "null" },
+          }),
+        }),
+        expect.objectContaining({
+          properties: expect.objectContaining({
+            kind: { type: "string", enum: ["follow"] },
+            targetActorId: expect.objectContaining({ type: "string" }),
+            targetRegionId: { type: "null" },
+            targetPosition: { type: "null" },
+            text: { type: "null" },
+          }),
+        }),
+        expect.objectContaining({
+          properties: expect.objectContaining({
+            kind: { type: "string", enum: ["communicate"] },
+            targetActorId: expect.objectContaining({ type: "string" }),
+            targetRegionId: { type: "null" },
+            targetPosition: { type: "null" },
+            text: expect.objectContaining({ type: "string" }),
+          }),
+        }),
+      ]));
+      const travelVariants = schema.anyOf.filter(
+        (variant: any) => variant.properties?.kind?.enum?.includes("travel"),
+      );
+      expect(travelVariants).toHaveLength(2);
+      expect(travelVariants).toEqual(expect.arrayContaining([
+        expect.objectContaining({
+          properties: expect.objectContaining({
+            targetRegionId: expect.objectContaining({ type: "string" }),
+            targetPosition: { type: "null" },
+          }),
+        }),
+        expect.objectContaining({
+          properties: expect.objectContaining({
+            targetRegionId: { type: "null" },
+            targetPosition: expect.objectContaining({ type: "object" }),
+          }),
+        }),
+      ]));
+    }
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toMatchObject({
