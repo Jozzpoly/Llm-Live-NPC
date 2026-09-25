@@ -1,3 +1,4 @@
+import fixtureJson from "../../evidence/r6-endogenous-history-after-outcome-context.json?raw";
 import { describe, expect, it } from "vitest";
 import { sanitizeSpcNextLifeContextWithDiagnostic } from "../../worker/spc-next-life-context";
 import { ResidentCausalCognitionLane } from "./resident-causal-cognition-lane";
@@ -21,6 +22,8 @@ const OREN_STANDING_GOAL = "wrócić do Neli w commons po zakończeniu sprawdzan
 const IDA_REQUEST = "Oren, sprawdź proszę warsztat.";
 const EXECUTION_GUARD = 1_200;
 const COGNITION_GUARD = 48;
+
+const canonicalFixture = JSON.parse(fixtureJson);
 
 describe("R6 endogenous ordinary personhood after factual outcome", () => {
   it("produces matched no-fresh-command cognition frames whose only intended semantic difference is prior standing history", () => {
@@ -72,10 +75,8 @@ describe("R6 endogenous ordinary personhood after factual outcome", () => {
       expect(worker.context).not.toBeNull();
     }
 
-    // Temporary forensic output used to bind the later live-provider fixture to the
-    // actual runtime-generated frame. Removed once the canonical fixture is captured.
-    console.log("R6_ENDOGENOUS_CONTROL_CONTEXT=" + JSON.stringify(control.request.context));
-    console.log("R6_ENDOGENOUS_HISTORY_CONTEXT=" + JSON.stringify(history.request.context));
+    expect(control.request.context).toEqual(canonicalFixture.control);
+    expect(history.request.context).toEqual(canonicalFixture.history);
   });
 });
 
