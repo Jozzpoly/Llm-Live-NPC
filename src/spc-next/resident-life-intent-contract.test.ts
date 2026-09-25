@@ -214,6 +214,24 @@ describe("ResidentLifeIntentProposal contract", () => {
     }, context)).toBeNull();
   });
 
+  it("represents factual-outcome completion of one exact standing commitment without body authority", () => {
+    const parsed = parseResidentLifeIntentProposal({
+      version: 1,
+      commitmentDecision: {
+        kind: "complete_standing",
+        reason: "the factual completed action satisfies this exact standing responsibility",
+        matterId: "matter.mira.standing.jozz",
+      },
+      ...semanticUpdates,
+    }, context);
+
+    expect(parsed?.commitmentDecision).toEqual({
+      kind: "complete_standing",
+      reason: "the factual completed action satisfies this exact standing responsibility",
+      matterId: "matter.mira.standing.jozz",
+    });
+  });
+
   it("rejects an accepted target outside the resident's private known-world context", () => {
     expect(parseResidentLifeIntentProposal({
       version: 1,

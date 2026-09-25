@@ -148,9 +148,9 @@ describe("R6 endogenous ordinary personhood after factual outcome", () => {
     });
 
     // The live model has now caused a real unprompted continuation in World.
-    // The original standing responsibility still being open after factual return is
-    // intentionally characterized here as the next lifecycle question, not hidden.
-    expect(history.life.kernel.matter(standingBeforeReturn[0]!.id)).toMatchObject({
+    // Factual action alone does not silently interpret its own semantic meaning.
+    const standingId = standingBeforeReturn[0]!.id;
+    expect(history.life.kernel.matter(standingId)).toMatchObject({
       status: "active",
       activeRunId: null,
       semanticIntent: {
@@ -159,6 +159,89 @@ describe("R6 endogenous ordinary personhood after factual outcome", () => {
         commitment: OREN_PROMISE,
       },
     });
+
+    // R2's global expected-success suppression remains unchanged. This one experiment
+    // explicitly reviews the factual return outcome to test standing fulfilment.
+    expect(history.life.outcomeReviewBridge.observe(
+      returnCompletion.outcomeEvidence,
+      history.world.tick,
+    )).toMatchObject({ status: "scheduled" });
+    const completionRequest = waitForRequest(
+      history.cognition,
+      history.execution,
+      history.world,
+    );
+    const completionOrigin = completionRequest.batch.reasons.find(
+      (reason) => reason.kind === "activity_completed",
+    ) ?? null;
+    expect(completionOrigin).not.toBeNull();
+    if (!completionOrigin) throw new Error("R6 endogenous fulfillment lost factual return outcome");
+
+    const completionSettlement = history.cognition.settleCommitment(
+      completionRequest,
+      {
+        version: 1,
+        commitmentDecision: {
+          kind: "complete_standing",
+          reason: "The factual return to commons satisfies my standing responsibility to return after the workshop.",
+          matterId: standingId,
+        },
+        beliefs: [],
+        concerns: [],
+        reviewAfterSeconds: 600,
+      },
+      completionOrigin.id,
+    );
+    expect(completionSettlement).toEqual({
+      status: "applied",
+      residentId: OREN_ID,
+      decision: "complete_standing",
+      commitment: null,
+    });
+    expect(history.life.kernel.matter(standingId)).toMatchObject({
+      status: "resolved",
+      activeRunId: null,
+    });
+    expect(history.life.kernel.recentEvidenceSnapshot()).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        kind: "resident_fulfilled_social_commitment",
+        sourceRunId: returnCompletion.outcomeEvidence.sourceRunId,
+        summary: expect.stringContaining(returnCompletion.outcomeEvidence.id),
+      }),
+    ]));
+    expect(history.life.currentLifeView().body).toEqual({
+      focusedRunId: null,
+      deferredRunIds: [],
+    });
+  });
+
+  it("rejects standing completion against a nonexistent target matter", () => {
+    const history = buildSpecimen(true);
+    const standing = standingMatters(history.request.context)[0]!;
+    const origin = history.request.batch.reasons[0]!;
+    expect(origin.kind).toBe("activity_completed");
+
+    expect(history.cognition.settleCommitment(
+      history.request,
+      {
+        version: 1,
+        commitmentDecision: {
+          kind: "complete_standing",
+          reason: "try to complete a standing matter that does not exist",
+          matterId: "matter.oren.nonexistent-standing",
+        },
+        beliefs: [],
+        concerns: [],
+        reviewAfterSeconds: 600,
+      },
+      origin.id,
+    )).toMatchObject({
+      status: "rejected",
+      residentId: OREN_ID,
+      reason: "intent_rejected",
+      detail: "standing completion target is not one open run-free standing commitment",
+    });
+    expect(history.life.kernel.matter(standing.id)?.status).toBe("active");
   });
 });
 
