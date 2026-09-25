@@ -159,6 +159,17 @@ describe("SPC Next life-intent endpoint commitment contract", () => {
     expect(upstreamRequest.instructions).toContain("commitmentDecision");
     expect(upstreamRequest.instructions).toContain("does not seize the body");
     expect(upstreamRequest.instructions).toContain("standingSocialCommitment");
+    const completionVariant = commitmentVariants.find((variant: any) => (
+      variant.properties?.kind?.enum?.includes("complete_standing")
+    ));
+    expect(completionVariant).toBeTruthy();
+    expect(Object.keys(completionVariant.properties)).toEqual([
+      "kind",
+      "reason",
+      "matterId",
+    ]);
+    expect(upstreamRequest.instructions).toContain("complete_standing");
+
     const releaseVariant = commitmentVariants.find((variant: any) => (
       variant.properties?.kind?.enum?.includes("release_standing")
     ));
