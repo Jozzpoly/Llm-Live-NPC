@@ -1,4 +1,5 @@
 import fixtureJson from "../../evidence/r6-endogenous-history-after-outcome-context.json?raw";
+import liveResultJson from "../../evidence/r6-endogenous-history-after-outcome-live-result.json?raw";
 import { describe, expect, it } from "vitest";
 import { sanitizeSpcNextLifeContextWithDiagnostic } from "../../worker/spc-next-life-context";
 import { ResidentCausalCognitionLane } from "./resident-causal-cognition-lane";
@@ -24,6 +25,7 @@ const EXECUTION_GUARD = 1_200;
 const COGNITION_GUARD = 48;
 
 const canonicalFixture = JSON.parse(fixtureJson);
+const liveResult = JSON.parse(liveResultJson);
 
 describe("R6 endogenous ordinary personhood after factual outcome", () => {
   it("produces matched no-fresh-command cognition frames whose only intended semantic difference is prior standing history", () => {
@@ -77,6 +79,86 @@ describe("R6 endogenous ordinary personhood after factual outcome", () => {
 
     expect(control.request.context).toEqual(canonicalFixture.control);
     expect(history.request.context).toEqual(canonicalFixture.history);
+  });
+
+  it("admits the exact live-Luna split locally and turns history into a factual unprompted return", () => {
+    expect(liveResult.sourceSha).toBe("592a19ecdb34598968690812310996aef8f2b0f7");
+    expect(liveResult.liveProviderRun).toBe(22);
+    expect(liveResult.providerRequestsAttempted).toBe(2);
+    expect(liveResult.classification).toBe("ENDOGENOUS_HISTORY_CONTINUATION_OBSERVED");
+
+    const control = buildSpecimen(false);
+    const history = buildSpecimen(true);
+
+    const controlSettlement = control.cognition.settleCommitment(
+      control.request,
+      liveResult.control.proposal,
+      liveResult.control.originReasonId,
+    );
+    expect(controlSettlement).toEqual({
+      status: "applied",
+      residentId: OREN_ID,
+      decision: "decline",
+      commitment: null,
+    });
+    expect(control.life.currentLifeView().body).toEqual({
+      focusedRunId: null,
+      deferredRunIds: [],
+    });
+    expect(control.oren.pendingCognitionReasons()).toEqual([]);
+
+    const standingBeforeReturn = standingMatters(history.life.currentLifeView());
+    expect(standingBeforeReturn).toHaveLength(1);
+
+    const historySettlement = history.cognition.settleCommitment(
+      history.request,
+      liveResult.history.proposal,
+      liveResult.history.originReasonId,
+    );
+    expect(historySettlement).toMatchObject({
+      status: "applied",
+      residentId: OREN_ID,
+      decision: "accept",
+      commitment: {
+        matterId: expect.any(String),
+        runId: expect.any(String),
+      },
+    });
+    if (historySettlement.status !== "applied" || !historySettlement.commitment) {
+      throw new Error("R6 endogenous live history proposal did not admit locally");
+    }
+
+    expect(history.life.currentLifeView().body.focusedRunId)
+      .toBe(historySettlement.commitment.runId);
+
+    const speechCountBeforeReturn = history.world.diagnostics().recentOccurrences
+      .filter((occurrence) => occurrence.kind === "speech").length;
+    const returnCompletion = completeFocused(history.execution, history.world);
+    expect(returnCompletion.matterId).toBe(historySettlement.commitment.matterId);
+    expect(history.oren.cognitionContext({
+      residentId: OREN_ID,
+      requestedAtTick: history.world.tick,
+      reasons: [],
+    }).currentRegionId).toBe(COMMONS_ID);
+    expect(history.world.diagnostics().recentOccurrences
+      .filter((occurrence) => occurrence.kind === "speech")).toHaveLength(speechCountBeforeReturn);
+    expect(history.life.currentLifeView().body).toEqual({
+      focusedRunId: null,
+      deferredRunIds: [],
+    });
+
+    // The live model has now caused a real unprompted continuation in World.
+    // The original standing responsibility still being open after factual return is
+    // intentionally characterized here as the next lifecycle question, not hidden.
+    expect(history.life.kernel.matter(standingBeforeReturn[0]!.id)).toMatchObject({
+      status: "active",
+      activeRunId: null,
+      semanticIntent: {
+        kind: "standing_social_commitment",
+        counterpartyActorId: NELA_ID,
+        commitment: OREN_PROMISE,
+      },
+    });
   });
 });
 
@@ -255,6 +337,11 @@ function buildSpecimen(withStandingHistory: boolean) {
     request,
     speechCountAtCompletion,
     speechCountAtReflection,
+    oren,
+    life,
+    cognition,
+    execution,
+    world,
   };
 }
 
