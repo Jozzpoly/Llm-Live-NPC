@@ -1,5 +1,7 @@
 # First Hearth — Current State
 
+> **HISTORICAL STATE NOTICE (2026-09-25):** Despite the filename, this is a 13 September First Presence / PR #123 state snapshot and is not current project truth. Preserve it for provenance only. Current execution authority is `docs/SPC_POST_STRESS_RECOVERY_PROGRAM.md`; current R6 state is `docs/SPC_R6_COMPLEMENTARY_PERSONHOOD_EXPERIMENT.md` plus `docs/SPC_R6_ENDOGENOUS_ORDINARY_PERSONHOOD_FINDING.md`.
+
 Updated: 2026-09-13
 
 ## Integrated continuity scene — 2026-09-13 evening
