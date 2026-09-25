@@ -341,6 +341,37 @@ Integrated source `32bae5f34982ef942ef6d3ea58fc0000212f79ec`:
 
 Browser #827 still does not qualify Oren/Nela genericity: the dedicated R6 Chromium specimen remains Mira/Ida.
 
+## 7.5 Next pressure characterization — post-terminal lived history
+
+Status: **CHARACTERIZED CURRENT GAP — NO NEW PERSONHOOD REPRESENTATION YET**
+
+After closing the explicit standing-obligation stage, the next pressure was re-derived from current causal material rather than selected from the candidate feature list.
+
+The highest-information current seam is:
+
+> Can one exact factual episode that happened to this resident remain causally available later, after its original matter is terminal, without pretending that the old task is still an open obligation?
+
+Executable characterization:
+
+`src/spc-next/r6-post-terminal-lived-friction-gap.characterization.test.ts`
+
+The characterization establishes two separate boundaries:
+
+1. a resolved matter and its exact factual blocked outcome remain available only during the existing bounded recent-evidence window; after normal evidence churn, `ResidentLifeMatterScope` correctly stops exposing that terminal episode to life cognition;
+2. even while the resolved episode is still near-term visible, `ResidentMaterialMatterRelevanceBridge` correctly refuses to treat reacquisition of the same material identity as unfinished business, because its legal relevance contract requires one still-open blocked acquisition matter.
+
+Both behaviors are desirable for R1/R2 homeostasis. Neither should be weakened by simply retaining terminal matters forever or letting resolved tasks reactivate themselves.
+
+They expose the narrower missing distinction:
+
+`past factual self-experience != current open matter`.
+
+The repository already retains other private history classes such as known actors and region visitation. Therefore this finding does **not** justify a generic autobiographical-memory store, personality system, preference vector or needs model.
+
+The next falsifier should pressure one post-terminal factual self-experience against an otherwise-matched control and ask whether a later legitimate semantic boundary can produce coherent choice or non-action because of that earlier experience. The first new representation, if any, must be earned by the exact failure of that falsifier and should preserve factual provenance without owning body authority or creating a provider heartbeat.
+
+Browser Oren/Nela genericity remains honest promotion-plane debt. It is not promoted back into the active research frontier merely because it remains unfinished.
+
 ## 8. Anti-cheat rules
 
 R6 FAILS if apparent personhood mainly comes from:
