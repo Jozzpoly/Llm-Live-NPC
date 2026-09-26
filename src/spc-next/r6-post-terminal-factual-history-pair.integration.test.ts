@@ -344,7 +344,7 @@ function buildSpecimen(withLivedHistory: boolean) {
 
   // Bring it back to the exact workshop-edge location and place it. This is the one
   // current factual cue both twins receive.
-  world.setActorMotionIntent(PLAYER_ID, { x: -55_200, y: 0 });
+  world.setActorMotionIntent(PLAYER_ID, { x: -60_000, y: 0 });
   world.step();
   world.setActorMotionIntent(PLAYER_ID, { x: 0, y: 0 });
   expect(world.attemptMaterialAction(PLAYER_ID, {
