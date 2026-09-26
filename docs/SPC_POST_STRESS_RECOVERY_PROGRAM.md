@@ -561,13 +561,14 @@ Therefore do **not** promote:
 - five distinct living people;
 - Owner-observed ordinary aliveness.
 
-The active research boundary has moved.
+The active research boundary has moved twice:
 
-We now have one bounded example where accumulated private life causes meaningful choice/non-action **without a fresh direct command**, survives local admission into factual World behavior and later closes through factual-outcome-based semantic fulfilment.
+1. the explicit-standing-obligation chain demonstrated one bounded endogenous history-caused World continuation and is now closed as a research stage;
+2. the first non-obligation post-terminal material probe reached real higher cognition, but run #24 produced **semantic history uptake without behavioral differentiation**.
 
-The next highest-information question is:
+Therefore the next highest-information question is narrower:
 
-> **Can prior factual life produce coherent endogenous choice/non-action for a resident-owned reason that is not simply an explicit social promise or obligation?**
+> **Can terminal factual life alter a genuine endogenous competing-future choice or coherent non-action through causally attributable support, without becoming an open obligation or a generic personality system?**
 
 Browser Oren/Nela genericity remains genuine promotion-plane debt. It must be obtained or the promotion contract deliberately revised before any claim that requires it, but it is not the highest-information research target.
 
@@ -718,7 +719,8 @@ Completed and retained only within their documented scopes:
 13. canonical live Luna endogenous choice run #22 — MATERIAL POSITIVE FINDING;
 14. exact live history proposal replay → factual Oren return to commons — deterministic World GREEN;
 15. `complete_standing` exact factual-outcome lifecycle — bounded deterministic GREEN;
-16. live Luna factual fulfilment run #23 + exact local replay — LIVE-SEMANTIC + deterministic lifecycle GREEN.
+16. live Luna factual fulfilment run #23 + exact local replay — LIVE-SEMANTIC + deterministic lifecycle GREEN;
+17. post-terminal Janek factual-history probe + live run #24 + exact local replay — BOUNDED NEUTRAL FINDING / SEMANTIC UPTAKE OBSERVED / BEHAVIORAL HISTORY EFFECT NOT PROVEN.
 
 Current:
 
