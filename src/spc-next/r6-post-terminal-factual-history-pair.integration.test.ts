@@ -1,3 +1,4 @@
+import fixtureJson from "../../evidence/r6-post-terminal-factual-history-context.json?raw";
 import { describe, expect, it } from "vitest";
 import { sanitizeSpcNextLifeContextWithDiagnostic } from "../../worker/spc-next-life-context";
 import { ResidentCausalCognitionLane } from "./resident-causal-cognition-lane";
@@ -19,6 +20,7 @@ const HISTORY_MATTER_ID = "matter.janek.r6.post-terminal-friction";
 const HISTORY_RUN_ID = "run.janek.r6.post-terminal-friction";
 const EXECUTION_GUARD = 180;
 const COGNITION_GUARD = 30;
+const canonicalFixture = JSON.parse(fixtureJson);
 
 /**
  * First paired falsifier for the non-obligation R6 frontier.
@@ -105,12 +107,9 @@ describe("R6 post-terminal factual-history paired falsifier", () => {
     expect(stripHistoricalEpisode(control.request.context))
       .toEqual(stripHistoricalEpisode(history.request.context));
 
-    // Temporary evidence-capture marker. Removed after the exact runtime-generated
-    // pair is frozen as a checked fixture.
-    console.log("R6_POST_TERMINAL_FACTUAL_HISTORY_CONTEXT=" + JSON.stringify({
-      control: control.request.context,
-      history: history.request.context,
-    }));
+    expect(control.request.context).toEqual(canonicalFixture.control);
+    expect(history.request.context).toEqual(canonicalFixture.history);
+
 
     expect(history.historyWorldAction).toMatchObject({
       status: "resolved",
