@@ -252,6 +252,18 @@ function sanitizeMatterIntent(value: unknown): ResidentMatterIntent | null {
     };
   }
 
+  if (value.kind === "acquire_material_object") {
+    if (!hasOnlyKeys(value, ["kind", "goal", "objectId"])) return null;
+    const goal = boundedText(value.goal, 1_200);
+    const objectId = identifier(value.objectId);
+    if (!goal || !objectId) return null;
+    return {
+      kind: "acquire_material_object",
+      goal,
+      objectId,
+    };
+  }
+
   if (value.kind === "standing_social_commitment") {
     if (!hasOnlyKeys(value, ["kind", "goal", "counterpartyActorId", "commitment"])) return null;
     const goal = boundedText(value.goal, 1_200);
