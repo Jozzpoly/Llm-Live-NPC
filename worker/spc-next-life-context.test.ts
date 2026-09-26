@@ -156,6 +156,33 @@ describe("shared SPC Next resident-life context sanitizer", () => {
     expect(sanitizeSpcNextLifeContext(blankStandingGoal)).toBeNull();
   });
 
+  it("preserves bounded acquire-material intent as resident meaning without execution leakage", () => {
+    const material = structuredClone(focusedContext) as any;
+    material.life.matters[0].semanticIntent = {
+      kind: "acquire_material_object",
+      goal: "try to acquire the familiar workshop crate",
+      objectId: "crate.workshop.01",
+    };
+
+    expect(sanitizeSpcNextLifeContext(material)?.life.matters[0]?.semanticIntent).toEqual({
+      kind: "acquire_material_object",
+      goal: "try to acquire the familiar workshop crate",
+      objectId: "crate.workshop.01",
+    });
+
+    const leaked = structuredClone(material);
+    leaked.life.matters[0].semanticIntent.pickupRunId = "run.janek.hidden-execution";
+    expect(sanitizeSpcNextLifeContext(leaked)).toBeNull();
+
+    const malformedObject = structuredClone(material);
+    malformedObject.life.matters[0].semanticIntent.objectId = "crate with spaces";
+    expect(sanitizeSpcNextLifeContext(malformedObject)).toBeNull();
+
+    const blankGoal = structuredClone(material);
+    blankGoal.life.matters[0].semanticIntent.goal = " ";
+    expect(sanitizeSpcNextLifeContext(blankGoal)).toBeNull();
+  });
+
   it("preserves bounded standing social commitment history for higher cognition", () => {
     const standing = structuredClone(focusedContext) as any;
     standing.life.matters[0].activeRun = null;
