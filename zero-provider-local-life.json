@@ -1,0 +1,2818 @@
+{
+  "schemaVersion": 1,
+  "sourceSha": "b79793cf625da93d4909c644a3e56511febde67a",
+  "startedAt": "2026-09-26T08:51:02.800Z",
+  "chrome": "Chrome/153.0.8010.52",
+  "assertions": [
+    {
+      "name": "R1 real browser exposes the exact zero-provider local-life scenario",
+      "pass": true,
+      "detail": {
+        "scenarioId": "browser-zero-provider-local-life",
+        "tick": 0,
+        "matterId": "matter.mira.local-life.restore-basket",
+        "matterStatus": "active",
+        "activeRunId": "run.mira.local-life.pickup-basket",
+        "activeRunCanMutateWorld": true,
+        "miraPosition": {
+          "x": 700,
+          "y": 500
+        },
+        "miraVelocity": {
+          "x": 0,
+          "y": 0
+        },
+        "miraFacing": {
+          "x": 1,
+          "y": 0
+        },
+        "objectLocation": {
+          "kind": "free",
+          "position": {
+            "x": 760,
+            "y": 500
+          }
+        },
+        "pendingCognitionReasonCount": 0,
+        "addressedPercept": null,
+        "responseOccurrence": null,
+        "actionFacts": [],
+        "framePendingCognitionReasonCount": 0,
+        "livingDiagnostics": null
+      }
+    },
+    {
+      "name": "Mira performs factual material delivery under exact local run authority before contact",
+      "pass": true,
+      "detail": {
+        "scenarioId": "browser-zero-provider-local-life",
+        "tick": 5,
+        "matterId": "matter.mira.local-life.restore-basket",
+        "matterStatus": "active",
+        "activeRunId": "run.mira.local-life.place-basket",
+        "activeRunCanMutateWorld": true,
+        "miraPosition": {
+          "x": 706,
+          "y": 500
+        },
+        "miraVelocity": {
+          "x": 90,
+          "y": 0
+        },
+        "miraFacing": {
+          "x": 1,
+          "y": 0
+        },
+        "objectLocation": {
+          "kind": "held",
+          "actorId": "resident.mira"
+        },
+        "pendingCognitionReasonCount": 0,
+        "addressedPercept": null,
+        "responseOccurrence": null,
+        "actionFacts": [
+          {
+            "tick": 3,
+            "runId": "run.mira.local-life.pickup-basket",
+            "kind": "material_pickup",
+            "objectId": "basket.workshop.local-life",
+            "outcomeStatus": "succeeded",
+            "code": "picked_up"
+          }
+        ],
+        "framePendingCognitionReasonCount": 0,
+        "livingDiagnostics": null
+      }
+    },
+    {
+      "name": "addressed participant speech becomes private directional evidence and suspends the exact material run",
+      "pass": true,
+      "detail": {
+        "call": {
+          "id": "occurrence:5:0",
+          "tick": 5,
+          "kind": "speech",
+          "actorId": "player.jozz",
+          "subjectId": null,
+          "position": {
+            "x": 850,
+            "y": 700
+          },
+          "radius": 420,
+          "summary": "speech",
+          "text": "Mira, chwila!",
+          "addressedActorIds": [
+            "resident.mira"
+          ]
+        },
+        "interrupted": {
+          "scenarioId": "browser-zero-provider-local-life",
+          "tick": 6,
+          "matterId": "matter.mira.local-life.restore-basket",
+          "matterStatus": "suspended",
+          "activeRunId": "run.mira.local-life.place-basket",
+          "activeRunCanMutateWorld": false,
+          "miraPosition": {
+            "x": 707.5,
+            "y": 500
+          },
+          "miraVelocity": {
+            "x": 0,
+            "y": 0
+          },
+          "miraFacing": {
+            "x": 1,
+            "y": 0
+          },
+          "objectLocation": {
+            "kind": "held",
+            "actorId": "resident.mira"
+          },
+          "pendingCognitionReasonCount": 1,
+          "addressedPercept": {
+            "id": "percept:resident.mira:5:1",
+            "occurrenceId": "occurrence:5:0",
+            "tick": 5,
+            "phenomenon": "speech",
+            "modality": "hearing",
+            "actorId": "player.jozz",
+            "subjectId": null,
+            "spatial": {
+              "kind": "directional",
+              "direction": {
+                "x": 0.7071067811865476,
+                "y": 0.7071067811865475
+              },
+              "distanceBand": "mid"
+            },
+            "summary": "speech",
+            "text": "Mira, chwila!",
+            "addressed": true
+          },
+          "responseOccurrence": null,
+          "actionFacts": [
+            {
+              "tick": 3,
+              "runId": "run.mira.local-life.pickup-basket",
+              "kind": "material_pickup",
+              "objectId": "basket.workshop.local-life",
+              "outcomeStatus": "succeeded",
+              "code": "picked_up"
+            }
+          ],
+          "framePendingCognitionReasonCount": 1,
+          "livingDiagnostics": null
+        }
+      }
+    },
+    {
+      "name": "local contact stops Mira, turns from private hearing evidence and emits factual Tak? without semantically resolving the original speech",
+      "pass": true,
+      "detail": {
+        "scenarioId": "browser-zero-provider-local-life",
+        "tick": 7,
+        "matterId": "matter.mira.local-life.restore-basket",
+        "matterStatus": "suspended",
+        "activeRunId": "run.mira.local-life.place-basket",
+        "activeRunCanMutateWorld": false,
+        "miraPosition": {
+          "x": 707.5,
+          "y": 500
+        },
+        "miraVelocity": {
+          "x": 0,
+          "y": 0
+        },
+        "miraFacing": {
+          "x": 0.7071067811865476,
+          "y": 0.7071067811865475
+        },
+        "objectLocation": {
+          "kind": "held",
+          "actorId": "resident.mira"
+        },
+        "pendingCognitionReasonCount": 1,
+        "addressedPercept": {
+          "id": "percept:resident.mira:5:1",
+          "occurrenceId": "occurrence:5:0",
+          "tick": 5,
+          "phenomenon": "speech",
+          "modality": "hearing",
+          "actorId": "player.jozz",
+          "subjectId": null,
+          "spatial": {
+            "kind": "directional",
+            "direction": {
+              "x": 0.7071067811865476,
+              "y": 0.7071067811865475
+            },
+            "distanceBand": "mid"
+          },
+          "summary": "speech",
+          "text": "Mira, chwila!",
+          "addressed": true
+        },
+        "responseOccurrence": {
+          "id": "occurrence:6:1",
+          "tick": 6,
+          "kind": "speech",
+          "actorId": "resident.mira",
+          "subjectId": null,
+          "position": {
+            "x": 707.5,
+            "y": 500
+          },
+          "radius": 420,
+          "summary": "speech",
+          "text": "Tak?",
+          "addressedActorIds": [
+            "player.jozz"
+          ]
+        },
+        "actionFacts": [
+          {
+            "tick": 3,
+            "runId": "run.mira.local-life.pickup-basket",
+            "kind": "material_pickup",
+            "objectId": "basket.workshop.local-life",
+            "outcomeStatus": "succeeded",
+            "code": "picked_up"
+          }
+        ],
+        "framePendingCognitionReasonCount": 1,
+        "livingDiagnostics": null
+      }
+    },
+    {
+      "name": "the exact material run regains authority and embodied motion after bounded contact",
+      "pass": true,
+      "detail": {
+        "resumed": {
+          "scenarioId": "browser-zero-provider-local-life",
+          "tick": 20,
+          "matterId": "matter.mira.local-life.restore-basket",
+          "matterStatus": "active",
+          "activeRunId": "run.mira.local-life.place-basket",
+          "activeRunCanMutateWorld": true,
+          "miraPosition": {
+            "x": 707.5,
+            "y": 500
+          },
+          "miraVelocity": {
+            "x": 0,
+            "y": 0
+          },
+          "miraFacing": {
+            "x": 0.7071067811865476,
+            "y": 0.7071067811865475
+          },
+          "objectLocation": {
+            "kind": "held",
+            "actorId": "resident.mira"
+          },
+          "pendingCognitionReasonCount": 1,
+          "addressedPercept": {
+            "id": "percept:resident.mira:5:1",
+            "occurrenceId": "occurrence:5:0",
+            "tick": 5,
+            "phenomenon": "speech",
+            "modality": "hearing",
+            "actorId": "player.jozz",
+            "subjectId": null,
+            "spatial": {
+              "kind": "directional",
+              "direction": {
+                "x": 0.7071067811865476,
+                "y": 0.7071067811865475
+              },
+              "distanceBand": "mid"
+            },
+            "summary": "speech",
+            "text": "Mira, chwila!",
+            "addressed": true
+          },
+          "responseOccurrence": {
+            "id": "occurrence:6:1",
+            "tick": 6,
+            "kind": "speech",
+            "actorId": "resident.mira",
+            "subjectId": null,
+            "position": {
+              "x": 707.5,
+              "y": 500
+            },
+            "radius": 420,
+            "summary": "speech",
+            "text": "Tak?",
+            "addressedActorIds": [
+              "player.jozz"
+            ]
+          },
+          "actionFacts": [
+            {
+              "tick": 3,
+              "runId": "run.mira.local-life.pickup-basket",
+              "kind": "material_pickup",
+              "objectId": "basket.workshop.local-life",
+              "outcomeStatus": "succeeded",
+              "code": "picked_up"
+            }
+          ],
+          "framePendingCognitionReasonCount": 1,
+          "livingDiagnostics": null
+        },
+        "afterResumeMotion": {
+          "scenarioId": "browser-zero-provider-local-life",
+          "tick": 21,
+          "matterId": "matter.mira.local-life.restore-basket",
+          "matterStatus": "active",
+          "activeRunId": "run.mira.local-life.place-basket",
+          "activeRunCanMutateWorld": true,
+          "miraPosition": {
+            "x": 709,
+            "y": 500
+          },
+          "miraVelocity": {
+            "x": 90,
+            "y": 0
+          },
+          "miraFacing": {
+            "x": 1,
+            "y": 0
+          },
+          "objectLocation": {
+            "kind": "held",
+            "actorId": "resident.mira"
+          },
+          "pendingCognitionReasonCount": 1,
+          "addressedPercept": {
+            "id": "percept:resident.mira:5:1",
+            "occurrenceId": "occurrence:5:0",
+            "tick": 5,
+            "phenomenon": "speech",
+            "modality": "hearing",
+            "actorId": "player.jozz",
+            "subjectId": null,
+            "spatial": {
+              "kind": "directional",
+              "direction": {
+                "x": 0.7071067811865476,
+                "y": 0.7071067811865475
+              },
+              "distanceBand": "mid"
+            },
+            "summary": "speech",
+            "text": "Mira, chwila!",
+            "addressed": true
+          },
+          "responseOccurrence": {
+            "id": "occurrence:6:1",
+            "tick": 6,
+            "kind": "speech",
+            "actorId": "resident.mira",
+            "subjectId": null,
+            "position": {
+              "x": 707.5,
+              "y": 500
+            },
+            "radius": 420,
+            "summary": "speech",
+            "text": "Tak?",
+            "addressedActorIds": [
+              "player.jozz"
+            ]
+          },
+          "actionFacts": [
+            {
+              "tick": 3,
+              "runId": "run.mira.local-life.pickup-basket",
+              "kind": "material_pickup",
+              "objectId": "basket.workshop.local-life",
+              "outcomeStatus": "succeeded",
+              "code": "picked_up"
+            }
+          ],
+          "framePendingCognitionReasonCount": 1,
+          "livingDiagnostics": null
+        }
+      }
+    },
+    {
+      "name": "Mira reaches the original factual basket consequence after the interruption",
+      "pass": true,
+      "detail": {
+        "scenarioId": "browser-zero-provider-local-life",
+        "tick": 232,
+        "matterId": "matter.mira.local-life.restore-basket",
+        "matterStatus": "resolved",
+        "activeRunId": null,
+        "activeRunCanMutateWorld": false,
+        "miraPosition": {
+          "x": 1024,
+          "y": 500
+        },
+        "miraVelocity": {
+          "x": 0,
+          "y": 0
+        },
+        "miraFacing": {
+          "x": 1,
+          "y": 0
+        },
+        "objectLocation": {
+          "kind": "free",
+          "position": {
+            "x": 1080,
+            "y": 500
+          }
+        },
+        "pendingCognitionReasonCount": 1,
+        "addressedPercept": {
+          "id": "percept:resident.mira:5:1",
+          "occurrenceId": "occurrence:5:0",
+          "tick": 5,
+          "phenomenon": "speech",
+          "modality": "hearing",
+          "actorId": "player.jozz",
+          "subjectId": null,
+          "spatial": {
+            "kind": "directional",
+            "direction": {
+              "x": 0.7071067811865476,
+              "y": 0.7071067811865475
+            },
+            "distanceBand": "mid"
+          },
+          "summary": "speech",
+          "text": "Mira, chwila!",
+          "addressed": true
+        },
+        "responseOccurrence": {
+          "id": "occurrence:6:1",
+          "tick": 6,
+          "kind": "speech",
+          "actorId": "resident.mira",
+          "subjectId": null,
+          "position": {
+            "x": 707.5,
+            "y": 500
+          },
+          "radius": 420,
+          "summary": "speech",
+          "text": "Tak?",
+          "addressedActorIds": [
+            "player.jozz"
+          ]
+        },
+        "actionFacts": [
+          {
+            "tick": 3,
+            "runId": "run.mira.local-life.pickup-basket",
+            "kind": "material_pickup",
+            "objectId": "basket.workshop.local-life",
+            "outcomeStatus": "succeeded",
+            "code": "picked_up"
+          },
+          {
+            "tick": 231,
+            "runId": "run.mira.local-life.place-basket",
+            "kind": "material_place",
+            "objectId": "basket.workshop.local-life",
+            "outcomeStatus": "succeeded",
+            "code": "placed"
+          }
+        ],
+        "framePendingCognitionReasonCount": 1,
+        "livingDiagnostics": null
+      }
+    },
+    {
+      "name": "3,600-tick quiet window is physically stable and does not amplify unresolved cognition pressure",
+      "pass": true,
+      "detail": {
+        "ticks": 3600,
+        "before": {
+          "scenarioId": "browser-zero-provider-local-life",
+          "tick": 232,
+          "matterId": "matter.mira.local-life.restore-basket",
+          "matterStatus": "resolved",
+          "activeRunId": null,
+          "activeRunCanMutateWorld": false,
+          "miraPosition": {
+            "x": 1024,
+            "y": 500
+          },
+          "miraVelocity": {
+            "x": 0,
+            "y": 0
+          },
+          "miraFacing": {
+            "x": 1,
+            "y": 0
+          },
+          "objectLocation": {
+            "kind": "free",
+            "position": {
+              "x": 1080,
+              "y": 500
+            }
+          },
+          "pendingCognitionReasonCount": 1,
+          "addressedPercept": null,
+          "responseOccurrence": {
+            "id": "occurrence:6:1",
+            "tick": 6,
+            "kind": "speech",
+            "actorId": "resident.mira",
+            "subjectId": null,
+            "position": {
+              "x": 707.5,
+              "y": 500
+            },
+            "radius": 420,
+            "summary": "speech",
+            "text": "Tak?",
+            "addressedActorIds": [
+              "player.jozz"
+            ]
+          },
+          "actionFacts": [
+            {
+              "tick": 3,
+              "runId": "run.mira.local-life.pickup-basket",
+              "kind": "material_pickup",
+              "objectId": "basket.workshop.local-life",
+              "outcomeStatus": "succeeded",
+              "code": "picked_up"
+            },
+            {
+              "tick": 231,
+              "runId": "run.mira.local-life.place-basket",
+              "kind": "material_place",
+              "objectId": "basket.workshop.local-life",
+              "outcomeStatus": "succeeded",
+              "code": "placed"
+            }
+          ],
+          "framePendingCognitionReasonCount": 1,
+          "livingDiagnostics": null
+        },
+        "after": {
+          "scenarioId": "browser-zero-provider-local-life",
+          "tick": 3832,
+          "matterId": "matter.mira.local-life.restore-basket",
+          "matterStatus": "resolved",
+          "activeRunId": null,
+          "activeRunCanMutateWorld": false,
+          "miraPosition": {
+            "x": 1024,
+            "y": 500
+          },
+          "miraVelocity": {
+            "x": 0,
+            "y": 0
+          },
+          "miraFacing": {
+            "x": 1,
+            "y": 0
+          },
+          "objectLocation": {
+            "kind": "free",
+            "position": {
+              "x": 1080,
+              "y": 500
+            }
+          },
+          "pendingCognitionReasonCount": 1,
+          "addressedPercept": null,
+          "responseOccurrence": {
+            "id": "occurrence:6:1",
+            "tick": 6,
+            "kind": "speech",
+            "actorId": "resident.mira",
+            "subjectId": null,
+            "position": {
+              "x": 707.5,
+              "y": 500
+            },
+            "radius": 420,
+            "summary": "speech",
+            "text": "Tak?",
+            "addressedActorIds": [
+              "player.jozz"
+            ]
+          },
+          "actionFacts": [
+            {
+              "tick": 3,
+              "runId": "run.mira.local-life.pickup-basket",
+              "kind": "material_pickup",
+              "objectId": "basket.workshop.local-life",
+              "outcomeStatus": "succeeded",
+              "code": "picked_up"
+            },
+            {
+              "tick": 231,
+              "runId": "run.mira.local-life.place-basket",
+              "kind": "material_place",
+              "objectId": "basket.workshop.local-life",
+              "outcomeStatus": "succeeded",
+              "code": "placed"
+            }
+          ],
+          "framePendingCognitionReasonCount": 1,
+          "livingDiagnostics": null
+        }
+      }
+    },
+    {
+      "name": "a new physically hearable addressed contact wakes quiet Mira locally without resurrecting the resolved basket matter",
+      "pass": true,
+      "detail": {
+        "lateCall": {
+          "id": "occurrence:3832:2",
+          "tick": 3832,
+          "kind": "speech",
+          "actorId": "player.jozz",
+          "subjectId": null,
+          "position": {
+            "x": 850,
+            "y": 700
+          },
+          "radius": 420,
+          "summary": "speech",
+          "text": "Mira?",
+          "addressedActorIds": [
+            "resident.mira"
+          ]
+        },
+        "quietWake": {
+          "scenarioId": "browser-zero-provider-local-life",
+          "tick": 3833,
+          "matterId": "matter.mira.local-life.restore-basket",
+          "matterStatus": "resolved",
+          "activeRunId": null,
+          "activeRunCanMutateWorld": false,
+          "miraPosition": {
+            "x": 1024,
+            "y": 500
+          },
+          "miraVelocity": {
+            "x": 0,
+            "y": 0
+          },
+          "miraFacing": {
+            "x": 1,
+            "y": 0
+          },
+          "objectLocation": {
+            "kind": "free",
+            "position": {
+              "x": 1080,
+              "y": 500
+            }
+          },
+          "pendingCognitionReasonCount": 2,
+          "addressedPercept": {
+            "id": "percept:resident.mira:3832:2",
+            "occurrenceId": "occurrence:3832:2",
+            "tick": 3832,
+            "phenomenon": "speech",
+            "modality": "hearing",
+            "actorId": "player.jozz",
+            "subjectId": null,
+            "spatial": {
+              "kind": "directional",
+              "direction": {
+                "x": -0.7071067811865475,
+                "y": 0.7071067811865476
+              },
+              "distanceBand": "mid"
+            },
+            "summary": "speech",
+            "text": "Mira?",
+            "addressed": true
+          },
+          "responseOccurrence": {
+            "id": "occurrence:6:1",
+            "tick": 6,
+            "kind": "speech",
+            "actorId": "resident.mira",
+            "subjectId": null,
+            "position": {
+              "x": 707.5,
+              "y": 500
+            },
+            "radius": 420,
+            "summary": "speech",
+            "text": "Tak?",
+            "addressedActorIds": [
+              "player.jozz"
+            ]
+          },
+          "actionFacts": [
+            {
+              "tick": 3,
+              "runId": "run.mira.local-life.pickup-basket",
+              "kind": "material_pickup",
+              "objectId": "basket.workshop.local-life",
+              "outcomeStatus": "succeeded",
+              "code": "picked_up"
+            },
+            {
+              "tick": 231,
+              "runId": "run.mira.local-life.place-basket",
+              "kind": "material_place",
+              "objectId": "basket.workshop.local-life",
+              "outcomeStatus": "succeeded",
+              "code": "placed"
+            }
+          ],
+          "framePendingCognitionReasonCount": 2,
+          "livingDiagnostics": null
+        },
+        "quietResponse": {
+          "scenarioId": "browser-zero-provider-local-life",
+          "tick": 3834,
+          "matterId": "matter.mira.local-life.restore-basket",
+          "matterStatus": "resolved",
+          "activeRunId": null,
+          "activeRunCanMutateWorld": false,
+          "miraPosition": {
+            "x": 1024,
+            "y": 500
+          },
+          "miraVelocity": {
+            "x": 0,
+            "y": 0
+          },
+          "miraFacing": {
+            "x": -0.7071067811865475,
+            "y": 0.7071067811865476
+          },
+          "objectLocation": {
+            "kind": "free",
+            "position": {
+              "x": 1080,
+              "y": 500
+            }
+          },
+          "pendingCognitionReasonCount": 2,
+          "addressedPercept": {
+            "id": "percept:resident.mira:3832:2",
+            "occurrenceId": "occurrence:3832:2",
+            "tick": 3832,
+            "phenomenon": "speech",
+            "modality": "hearing",
+            "actorId": "player.jozz",
+            "subjectId": null,
+            "spatial": {
+              "kind": "directional",
+              "direction": {
+                "x": -0.7071067811865475,
+                "y": 0.7071067811865476
+              },
+              "distanceBand": "mid"
+            },
+            "summary": "speech",
+            "text": "Mira?",
+            "addressed": true
+          },
+          "responseOccurrence": {
+            "id": "occurrence:3833:3",
+            "tick": 3833,
+            "kind": "speech",
+            "actorId": "resident.mira",
+            "subjectId": null,
+            "position": {
+              "x": 1024,
+              "y": 500
+            },
+            "radius": 420,
+            "summary": "speech",
+            "text": "Tak?",
+            "addressedActorIds": [
+              "player.jozz"
+            ]
+          },
+          "actionFacts": [
+            {
+              "tick": 3,
+              "runId": "run.mira.local-life.pickup-basket",
+              "kind": "material_pickup",
+              "objectId": "basket.workshop.local-life",
+              "outcomeStatus": "succeeded",
+              "code": "picked_up"
+            },
+            {
+              "tick": 231,
+              "runId": "run.mira.local-life.place-basket",
+              "kind": "material_place",
+              "objectId": "basket.workshop.local-life",
+              "outcomeStatus": "succeeded",
+              "code": "placed"
+            }
+          ],
+          "framePendingCognitionReasonCount": 2,
+          "livingDiagnostics": null
+        },
+        "quietReturned": {
+          "scenarioId": "browser-zero-provider-local-life",
+          "tick": 3847,
+          "matterId": "matter.mira.local-life.restore-basket",
+          "matterStatus": "resolved",
+          "activeRunId": null,
+          "activeRunCanMutateWorld": false,
+          "miraPosition": {
+            "x": 1024,
+            "y": 500
+          },
+          "miraVelocity": {
+            "x": 0,
+            "y": 0
+          },
+          "miraFacing": {
+            "x": -0.7071067811865475,
+            "y": 0.7071067811865476
+          },
+          "objectLocation": {
+            "kind": "free",
+            "position": {
+              "x": 1080,
+              "y": 500
+            }
+          },
+          "pendingCognitionReasonCount": 2,
+          "addressedPercept": {
+            "id": "percept:resident.mira:3832:2",
+            "occurrenceId": "occurrence:3832:2",
+            "tick": 3832,
+            "phenomenon": "speech",
+            "modality": "hearing",
+            "actorId": "player.jozz",
+            "subjectId": null,
+            "spatial": {
+              "kind": "directional",
+              "direction": {
+                "x": -0.7071067811865475,
+                "y": 0.7071067811865476
+              },
+              "distanceBand": "mid"
+            },
+            "summary": "speech",
+            "text": "Mira?",
+            "addressed": true
+          },
+          "responseOccurrence": {
+            "id": "occurrence:3833:3",
+            "tick": 3833,
+            "kind": "speech",
+            "actorId": "resident.mira",
+            "subjectId": null,
+            "position": {
+              "x": 1024,
+              "y": 500
+            },
+            "radius": 420,
+            "summary": "speech",
+            "text": "Tak?",
+            "addressedActorIds": [
+              "player.jozz"
+            ]
+          },
+          "actionFacts": [
+            {
+              "tick": 3,
+              "runId": "run.mira.local-life.pickup-basket",
+              "kind": "material_pickup",
+              "objectId": "basket.workshop.local-life",
+              "outcomeStatus": "succeeded",
+              "code": "picked_up"
+            },
+            {
+              "tick": 231,
+              "runId": "run.mira.local-life.place-basket",
+              "kind": "material_place",
+              "objectId": "basket.workshop.local-life",
+              "outcomeStatus": "succeeded",
+              "code": "placed"
+            }
+          ],
+          "framePendingCognitionReasonCount": 2,
+          "livingDiagnostics": null
+        }
+      }
+    },
+    {
+      "name": "movingHash is deterministic across real-Chrome reloads",
+      "pass": true,
+      "detail": [
+        "03afe7f9c965db420c1e89a0355d6fd6f802d6ed5b826954011707c8d4c6a54f",
+        "03afe7f9c965db420c1e89a0355d6fd6f802d6ed5b826954011707c8d4c6a54f"
+      ]
+    },
+    {
+      "name": "interruptedHash is deterministic across real-Chrome reloads",
+      "pass": true,
+      "detail": [
+        "d03f7e8918ef02776a6fefd7797291aa46fb2edbc183261d4927c3c567c2e9d7",
+        "d03f7e8918ef02776a6fefd7797291aa46fb2edbc183261d4927c3c567c2e9d7"
+      ]
+    },
+    {
+      "name": "respondedHash is deterministic across real-Chrome reloads",
+      "pass": true,
+      "detail": [
+        "6ead27c1cf226d55701447759d0e7a19a59e90235dfcfbce01d7d35dae6af7ea",
+        "6ead27c1cf226d55701447759d0e7a19a59e90235dfcfbce01d7d35dae6af7ea"
+      ]
+    },
+    {
+      "name": "settledHash is deterministic across real-Chrome reloads",
+      "pass": true,
+      "detail": [
+        "07e533d2c2cd6cff01f49e7c6c4e75c6cd81e1806b41046ece0f12f9ab60090b",
+        "07e533d2c2cd6cff01f49e7c6c4e75c6cd81e1806b41046ece0f12f9ab60090b"
+      ]
+    },
+    {
+      "name": "quietHash is deterministic across real-Chrome reloads",
+      "pass": true,
+      "detail": [
+        "d7f0f8a50d61c5e240cef88f1240b47cb43a1642551f851559d751a1df854710",
+        "d7f0f8a50d61c5e240cef88f1240b47cb43a1642551f851559d751a1df854710"
+      ]
+    },
+    {
+      "name": "quietReturnedHash is deterministic across real-Chrome reloads",
+      "pass": true,
+      "detail": [
+        "fa56b7790746f3f52b91f93c868c603f2b8f4c1c73b4e4dafb72a319c9ad83c3",
+        "fa56b7790746f3f52b91f93c868c603f2b8f4c1c73b4e4dafb72a319c9ad83c3"
+      ]
+    },
+    {
+      "name": "zero-provider browser specimen makes no provider/API request",
+      "pass": true,
+      "detail": []
+    },
+    {
+      "name": "zero-provider browser specimen has no uncaught runtime exception",
+      "pass": true,
+      "detail": []
+    },
+    {
+      "name": "R1 visual checkpoints are non-empty and screenshot capture is canonically read-only",
+      "pass": true,
+      "detail": {
+        "moving": {
+          "fileName": "r1-local-life-01-moving-basket.png",
+          "tick": 5,
+          "bytes": 43149,
+          "canonicalHash": "a9c9b1d48ecced630675dbcb02f25af1bd77a890f4776a392d9cf4057598678e"
+        },
+        "responded": {
+          "fileName": "r1-local-life-02-responded.png",
+          "tick": 7,
+          "bytes": 45011,
+          "canonicalHash": "a18f0c9f4151a7c561aa13d7ccd3e7308d8d944918f2befa21e45b211f483b15"
+        },
+        "settledQuiet": {
+          "fileName": "r1-local-life-03-settled-quiet.png",
+          "tick": 232,
+          "bytes": 45030,
+          "canonicalHash": "e7e1a4482533733d87f9703abb3bce0176ad3bd0a827321bf4e2cf084014ba87"
+        },
+        "quietWake": {
+          "fileName": "r1-local-life-04-quiet-wake.png",
+          "tick": 3834,
+          "bytes": 44512,
+          "canonicalHash": "9f0f9c77022a5878c675952ea7f748f1ebf67d614f66420520dcf3b3df85ca80"
+        }
+      }
+    }
+  ],
+  "runtimeExceptions": [],
+  "networkRequests": [
+    "http://127.0.0.1:4173/?spc=1&evidence=1&scenario=zero-provider-local-life",
+    "http://127.0.0.1:4173/assets/index-cIDBj7bK.js",
+    "http://127.0.0.1:4173/assets/spc-next-research-app-Bm_eoYiS.js",
+    "http://127.0.0.1:4173/assets/style-Dq43xotd.js",
+    "http://127.0.0.1:4173/assets/style-BkZFmUmy.css",
+    "http://127.0.0.1:4173/assets/spc-next-research-app-DPvfbXwd.css",
+    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAABAQMAAADD8p2OAAAAA1BMVEX/AP804Oa6AAAACklEQVQI12NgAAAAAgAB4iG8MwAAAABJRU5ErkJggg==",
+    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgAQMAAABJtOi3AAAAA1BMVEX///+nxBvIAAAAAXRSTlMAQObYZgAAABVJREFUeF7NwIEAAAAAgKD9qdeocAMAoAABm3DkcAAAAABJRU5ErkJggg==",
+    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAJ9JREFUeNq01ssOwyAMRFG46v//Mt1ESmgh+DFmE2GPOBARKb2NVjo+17PXLD8a1+pl5+A+wSgFygymWYHBb0FtsKhJDdZlncG2IzJ4ayoMDv20wTmSMzClEgbWYNTAkQ0Z+OJ+A/eWnAaR9+oxCF4Os0H8htsMUp+pwcgBBiMNnAwF8GqIgL2hAzaGFFgZauDPKABmowZ4GL369/0rwACp2yA/ttmvsQAAAABJRU5ErkJggg==",
+    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAIAAAAmkwkpAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAABdJREFUeNpi/P//PwMMMDEgAdwcgAADAJZuAwXJYZOzAAAAAElFTkSuQmCC",
+    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAABAQMAAADD8p2OAAAAA1BMVEX//wCKxvRFAAAACklEQVQI12NgAAAAAgAB4iG8MwAAAABJRU5ErkJggg==",
+    "http://127.0.0.1:4173/?spc=1&evidence=1&scenario=zero-provider-local-life",
+    "http://127.0.0.1:4173/assets/index-cIDBj7bK.js",
+    "http://127.0.0.1:4173/assets/spc-next-research-app-Bm_eoYiS.js",
+    "http://127.0.0.1:4173/assets/style-Dq43xotd.js",
+    "http://127.0.0.1:4173/assets/style-BkZFmUmy.css",
+    "http://127.0.0.1:4173/assets/spc-next-research-app-DPvfbXwd.css",
+    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAABAQMAAADD8p2OAAAAA1BMVEX/AP804Oa6AAAACklEQVQI12NgAAAAAgAB4iG8MwAAAABJRU5ErkJggg==",
+    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgAQMAAABJtOi3AAAAA1BMVEX///+nxBvIAAAAAXRSTlMAQObYZgAAABVJREFUeF7NwIEAAAAAgKD9qdeocAMAoAABm3DkcAAAAABJRU5ErkJggg==",
+    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAJ9JREFUeNq01ssOwyAMRFG46v//Mt1ESmgh+DFmE2GPOBARKb2NVjo+17PXLD8a1+pl5+A+wSgFygymWYHBb0FtsKhJDdZlncG2IzJ4ayoMDv20wTmSMzClEgbWYNTAkQ0Z+OJ+A/eWnAaR9+oxCF4Os0H8htsMUp+pwcgBBiMNnAwF8GqIgL2hAzaGFFgZauDPKABmowZ4GL369/0rwACp2yA/ttmvsQAAAABJRU5ErkJggg==",
+    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAIAAAAmkwkpAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAABdJREFUeNpi/P//PwMMMDEgAdwcgAADAJZuAwXJYZOzAAAAAElFTkSuQmCC",
+    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAABAQMAAADD8p2OAAAAA1BMVEX//wCKxvRFAAAACklEQVQI12NgAAAAAgAB4iG8MwAAAABJRU5ErkJggg=="
+  ],
+  "providerLikeRequests": [],
+  "runs": [
+    {
+      "runIndex": 0,
+      "initial": {
+        "scenarioId": "browser-zero-provider-local-life",
+        "tick": 0,
+        "matterId": "matter.mira.local-life.restore-basket",
+        "matterStatus": "active",
+        "activeRunId": "run.mira.local-life.pickup-basket",
+        "activeRunCanMutateWorld": true,
+        "miraPosition": {
+          "x": 700,
+          "y": 500
+        },
+        "miraVelocity": {
+          "x": 0,
+          "y": 0
+        },
+        "miraFacing": {
+          "x": 1,
+          "y": 0
+        },
+        "objectLocation": {
+          "kind": "free",
+          "position": {
+            "x": 760,
+            "y": 500
+          }
+        },
+        "pendingCognitionReasonCount": 0,
+        "addressedPercept": null,
+        "responseOccurrence": null,
+        "actionFacts": [],
+        "framePendingCognitionReasonCount": 0,
+        "livingDiagnostics": null
+      },
+      "moving": {
+        "scenarioId": "browser-zero-provider-local-life",
+        "tick": 5,
+        "matterId": "matter.mira.local-life.restore-basket",
+        "matterStatus": "active",
+        "activeRunId": "run.mira.local-life.place-basket",
+        "activeRunCanMutateWorld": true,
+        "miraPosition": {
+          "x": 706,
+          "y": 500
+        },
+        "miraVelocity": {
+          "x": 90,
+          "y": 0
+        },
+        "miraFacing": {
+          "x": 1,
+          "y": 0
+        },
+        "objectLocation": {
+          "kind": "held",
+          "actorId": "resident.mira"
+        },
+        "pendingCognitionReasonCount": 0,
+        "addressedPercept": null,
+        "responseOccurrence": null,
+        "actionFacts": [
+          {
+            "tick": 3,
+            "runId": "run.mira.local-life.pickup-basket",
+            "kind": "material_pickup",
+            "objectId": "basket.workshop.local-life",
+            "outcomeStatus": "succeeded",
+            "code": "picked_up"
+          }
+        ],
+        "framePendingCognitionReasonCount": 0,
+        "livingDiagnostics": null
+      },
+      "midCall": {
+        "id": "occurrence:5:0",
+        "tick": 5,
+        "kind": "speech",
+        "actorId": "player.jozz",
+        "subjectId": null,
+        "position": {
+          "x": 850,
+          "y": 700
+        },
+        "radius": 420,
+        "summary": "speech",
+        "text": "Mira, chwila!",
+        "addressedActorIds": [
+          "resident.mira"
+        ]
+      },
+      "interrupted": {
+        "scenarioId": "browser-zero-provider-local-life",
+        "tick": 6,
+        "matterId": "matter.mira.local-life.restore-basket",
+        "matterStatus": "suspended",
+        "activeRunId": "run.mira.local-life.place-basket",
+        "activeRunCanMutateWorld": false,
+        "miraPosition": {
+          "x": 707.5,
+          "y": 500
+        },
+        "miraVelocity": {
+          "x": 0,
+          "y": 0
+        },
+        "miraFacing": {
+          "x": 1,
+          "y": 0
+        },
+        "objectLocation": {
+          "kind": "held",
+          "actorId": "resident.mira"
+        },
+        "pendingCognitionReasonCount": 1,
+        "addressedPercept": {
+          "id": "percept:resident.mira:5:1",
+          "occurrenceId": "occurrence:5:0",
+          "tick": 5,
+          "phenomenon": "speech",
+          "modality": "hearing",
+          "actorId": "player.jozz",
+          "subjectId": null,
+          "spatial": {
+            "kind": "directional",
+            "direction": {
+              "x": 0.7071067811865476,
+              "y": 0.7071067811865475
+            },
+            "distanceBand": "mid"
+          },
+          "summary": "speech",
+          "text": "Mira, chwila!",
+          "addressed": true
+        },
+        "responseOccurrence": null,
+        "actionFacts": [
+          {
+            "tick": 3,
+            "runId": "run.mira.local-life.pickup-basket",
+            "kind": "material_pickup",
+            "objectId": "basket.workshop.local-life",
+            "outcomeStatus": "succeeded",
+            "code": "picked_up"
+          }
+        ],
+        "framePendingCognitionReasonCount": 1,
+        "livingDiagnostics": null
+      },
+      "responded": {
+        "scenarioId": "browser-zero-provider-local-life",
+        "tick": 7,
+        "matterId": "matter.mira.local-life.restore-basket",
+        "matterStatus": "suspended",
+        "activeRunId": "run.mira.local-life.place-basket",
+        "activeRunCanMutateWorld": false,
+        "miraPosition": {
+          "x": 707.5,
+          "y": 500
+        },
+        "miraVelocity": {
+          "x": 0,
+          "y": 0
+        },
+        "miraFacing": {
+          "x": 0.7071067811865476,
+          "y": 0.7071067811865475
+        },
+        "objectLocation": {
+          "kind": "held",
+          "actorId": "resident.mira"
+        },
+        "pendingCognitionReasonCount": 1,
+        "addressedPercept": {
+          "id": "percept:resident.mira:5:1",
+          "occurrenceId": "occurrence:5:0",
+          "tick": 5,
+          "phenomenon": "speech",
+          "modality": "hearing",
+          "actorId": "player.jozz",
+          "subjectId": null,
+          "spatial": {
+            "kind": "directional",
+            "direction": {
+              "x": 0.7071067811865476,
+              "y": 0.7071067811865475
+            },
+            "distanceBand": "mid"
+          },
+          "summary": "speech",
+          "text": "Mira, chwila!",
+          "addressed": true
+        },
+        "responseOccurrence": {
+          "id": "occurrence:6:1",
+          "tick": 6,
+          "kind": "speech",
+          "actorId": "resident.mira",
+          "subjectId": null,
+          "position": {
+            "x": 707.5,
+            "y": 500
+          },
+          "radius": 420,
+          "summary": "speech",
+          "text": "Tak?",
+          "addressedActorIds": [
+            "player.jozz"
+          ]
+        },
+        "actionFacts": [
+          {
+            "tick": 3,
+            "runId": "run.mira.local-life.pickup-basket",
+            "kind": "material_pickup",
+            "objectId": "basket.workshop.local-life",
+            "outcomeStatus": "succeeded",
+            "code": "picked_up"
+          }
+        ],
+        "framePendingCognitionReasonCount": 1,
+        "livingDiagnostics": null
+      },
+      "resumed": {
+        "scenarioId": "browser-zero-provider-local-life",
+        "tick": 20,
+        "matterId": "matter.mira.local-life.restore-basket",
+        "matterStatus": "active",
+        "activeRunId": "run.mira.local-life.place-basket",
+        "activeRunCanMutateWorld": true,
+        "miraPosition": {
+          "x": 707.5,
+          "y": 500
+        },
+        "miraVelocity": {
+          "x": 0,
+          "y": 0
+        },
+        "miraFacing": {
+          "x": 0.7071067811865476,
+          "y": 0.7071067811865475
+        },
+        "objectLocation": {
+          "kind": "held",
+          "actorId": "resident.mira"
+        },
+        "pendingCognitionReasonCount": 1,
+        "addressedPercept": {
+          "id": "percept:resident.mira:5:1",
+          "occurrenceId": "occurrence:5:0",
+          "tick": 5,
+          "phenomenon": "speech",
+          "modality": "hearing",
+          "actorId": "player.jozz",
+          "subjectId": null,
+          "spatial": {
+            "kind": "directional",
+            "direction": {
+              "x": 0.7071067811865476,
+              "y": 0.7071067811865475
+            },
+            "distanceBand": "mid"
+          },
+          "summary": "speech",
+          "text": "Mira, chwila!",
+          "addressed": true
+        },
+        "responseOccurrence": {
+          "id": "occurrence:6:1",
+          "tick": 6,
+          "kind": "speech",
+          "actorId": "resident.mira",
+          "subjectId": null,
+          "position": {
+            "x": 707.5,
+            "y": 500
+          },
+          "radius": 420,
+          "summary": "speech",
+          "text": "Tak?",
+          "addressedActorIds": [
+            "player.jozz"
+          ]
+        },
+        "actionFacts": [
+          {
+            "tick": 3,
+            "runId": "run.mira.local-life.pickup-basket",
+            "kind": "material_pickup",
+            "objectId": "basket.workshop.local-life",
+            "outcomeStatus": "succeeded",
+            "code": "picked_up"
+          }
+        ],
+        "framePendingCognitionReasonCount": 1,
+        "livingDiagnostics": null
+      },
+      "afterResumeMotion": {
+        "scenarioId": "browser-zero-provider-local-life",
+        "tick": 21,
+        "matterId": "matter.mira.local-life.restore-basket",
+        "matterStatus": "active",
+        "activeRunId": "run.mira.local-life.place-basket",
+        "activeRunCanMutateWorld": true,
+        "miraPosition": {
+          "x": 709,
+          "y": 500
+        },
+        "miraVelocity": {
+          "x": 90,
+          "y": 0
+        },
+        "miraFacing": {
+          "x": 1,
+          "y": 0
+        },
+        "objectLocation": {
+          "kind": "held",
+          "actorId": "resident.mira"
+        },
+        "pendingCognitionReasonCount": 1,
+        "addressedPercept": {
+          "id": "percept:resident.mira:5:1",
+          "occurrenceId": "occurrence:5:0",
+          "tick": 5,
+          "phenomenon": "speech",
+          "modality": "hearing",
+          "actorId": "player.jozz",
+          "subjectId": null,
+          "spatial": {
+            "kind": "directional",
+            "direction": {
+              "x": 0.7071067811865476,
+              "y": 0.7071067811865475
+            },
+            "distanceBand": "mid"
+          },
+          "summary": "speech",
+          "text": "Mira, chwila!",
+          "addressed": true
+        },
+        "responseOccurrence": {
+          "id": "occurrence:6:1",
+          "tick": 6,
+          "kind": "speech",
+          "actorId": "resident.mira",
+          "subjectId": null,
+          "position": {
+            "x": 707.5,
+            "y": 500
+          },
+          "radius": 420,
+          "summary": "speech",
+          "text": "Tak?",
+          "addressedActorIds": [
+            "player.jozz"
+          ]
+        },
+        "actionFacts": [
+          {
+            "tick": 3,
+            "runId": "run.mira.local-life.pickup-basket",
+            "kind": "material_pickup",
+            "objectId": "basket.workshop.local-life",
+            "outcomeStatus": "succeeded",
+            "code": "picked_up"
+          }
+        ],
+        "framePendingCognitionReasonCount": 1,
+        "livingDiagnostics": null
+      },
+      "settled": {
+        "scenarioId": "browser-zero-provider-local-life",
+        "tick": 232,
+        "matterId": "matter.mira.local-life.restore-basket",
+        "matterStatus": "resolved",
+        "activeRunId": null,
+        "activeRunCanMutateWorld": false,
+        "miraPosition": {
+          "x": 1024,
+          "y": 500
+        },
+        "miraVelocity": {
+          "x": 0,
+          "y": 0
+        },
+        "miraFacing": {
+          "x": 1,
+          "y": 0
+        },
+        "objectLocation": {
+          "kind": "free",
+          "position": {
+            "x": 1080,
+            "y": 500
+          }
+        },
+        "pendingCognitionReasonCount": 1,
+        "addressedPercept": {
+          "id": "percept:resident.mira:5:1",
+          "occurrenceId": "occurrence:5:0",
+          "tick": 5,
+          "phenomenon": "speech",
+          "modality": "hearing",
+          "actorId": "player.jozz",
+          "subjectId": null,
+          "spatial": {
+            "kind": "directional",
+            "direction": {
+              "x": 0.7071067811865476,
+              "y": 0.7071067811865475
+            },
+            "distanceBand": "mid"
+          },
+          "summary": "speech",
+          "text": "Mira, chwila!",
+          "addressed": true
+        },
+        "responseOccurrence": {
+          "id": "occurrence:6:1",
+          "tick": 6,
+          "kind": "speech",
+          "actorId": "resident.mira",
+          "subjectId": null,
+          "position": {
+            "x": 707.5,
+            "y": 500
+          },
+          "radius": 420,
+          "summary": "speech",
+          "text": "Tak?",
+          "addressedActorIds": [
+            "player.jozz"
+          ]
+        },
+        "actionFacts": [
+          {
+            "tick": 3,
+            "runId": "run.mira.local-life.pickup-basket",
+            "kind": "material_pickup",
+            "objectId": "basket.workshop.local-life",
+            "outcomeStatus": "succeeded",
+            "code": "picked_up"
+          },
+          {
+            "tick": 231,
+            "runId": "run.mira.local-life.place-basket",
+            "kind": "material_place",
+            "objectId": "basket.workshop.local-life",
+            "outcomeStatus": "succeeded",
+            "code": "placed"
+          }
+        ],
+        "framePendingCognitionReasonCount": 1,
+        "livingDiagnostics": null
+      },
+      "quiet": {
+        "ticks": 3600,
+        "before": {
+          "scenarioId": "browser-zero-provider-local-life",
+          "tick": 232,
+          "matterId": "matter.mira.local-life.restore-basket",
+          "matterStatus": "resolved",
+          "activeRunId": null,
+          "activeRunCanMutateWorld": false,
+          "miraPosition": {
+            "x": 1024,
+            "y": 500
+          },
+          "miraVelocity": {
+            "x": 0,
+            "y": 0
+          },
+          "miraFacing": {
+            "x": 1,
+            "y": 0
+          },
+          "objectLocation": {
+            "kind": "free",
+            "position": {
+              "x": 1080,
+              "y": 500
+            }
+          },
+          "pendingCognitionReasonCount": 1,
+          "addressedPercept": null,
+          "responseOccurrence": {
+            "id": "occurrence:6:1",
+            "tick": 6,
+            "kind": "speech",
+            "actorId": "resident.mira",
+            "subjectId": null,
+            "position": {
+              "x": 707.5,
+              "y": 500
+            },
+            "radius": 420,
+            "summary": "speech",
+            "text": "Tak?",
+            "addressedActorIds": [
+              "player.jozz"
+            ]
+          },
+          "actionFacts": [
+            {
+              "tick": 3,
+              "runId": "run.mira.local-life.pickup-basket",
+              "kind": "material_pickup",
+              "objectId": "basket.workshop.local-life",
+              "outcomeStatus": "succeeded",
+              "code": "picked_up"
+            },
+            {
+              "tick": 231,
+              "runId": "run.mira.local-life.place-basket",
+              "kind": "material_place",
+              "objectId": "basket.workshop.local-life",
+              "outcomeStatus": "succeeded",
+              "code": "placed"
+            }
+          ],
+          "framePendingCognitionReasonCount": 1,
+          "livingDiagnostics": null
+        },
+        "after": {
+          "scenarioId": "browser-zero-provider-local-life",
+          "tick": 3832,
+          "matterId": "matter.mira.local-life.restore-basket",
+          "matterStatus": "resolved",
+          "activeRunId": null,
+          "activeRunCanMutateWorld": false,
+          "miraPosition": {
+            "x": 1024,
+            "y": 500
+          },
+          "miraVelocity": {
+            "x": 0,
+            "y": 0
+          },
+          "miraFacing": {
+            "x": 1,
+            "y": 0
+          },
+          "objectLocation": {
+            "kind": "free",
+            "position": {
+              "x": 1080,
+              "y": 500
+            }
+          },
+          "pendingCognitionReasonCount": 1,
+          "addressedPercept": null,
+          "responseOccurrence": {
+            "id": "occurrence:6:1",
+            "tick": 6,
+            "kind": "speech",
+            "actorId": "resident.mira",
+            "subjectId": null,
+            "position": {
+              "x": 707.5,
+              "y": 500
+            },
+            "radius": 420,
+            "summary": "speech",
+            "text": "Tak?",
+            "addressedActorIds": [
+              "player.jozz"
+            ]
+          },
+          "actionFacts": [
+            {
+              "tick": 3,
+              "runId": "run.mira.local-life.pickup-basket",
+              "kind": "material_pickup",
+              "objectId": "basket.workshop.local-life",
+              "outcomeStatus": "succeeded",
+              "code": "picked_up"
+            },
+            {
+              "tick": 231,
+              "runId": "run.mira.local-life.place-basket",
+              "kind": "material_place",
+              "objectId": "basket.workshop.local-life",
+              "outcomeStatus": "succeeded",
+              "code": "placed"
+            }
+          ],
+          "framePendingCognitionReasonCount": 1,
+          "livingDiagnostics": null
+        }
+      },
+      "lateCall": {
+        "id": "occurrence:3832:2",
+        "tick": 3832,
+        "kind": "speech",
+        "actorId": "player.jozz",
+        "subjectId": null,
+        "position": {
+          "x": 850,
+          "y": 700
+        },
+        "radius": 420,
+        "summary": "speech",
+        "text": "Mira?",
+        "addressedActorIds": [
+          "resident.mira"
+        ]
+      },
+      "quietWake": {
+        "scenarioId": "browser-zero-provider-local-life",
+        "tick": 3833,
+        "matterId": "matter.mira.local-life.restore-basket",
+        "matterStatus": "resolved",
+        "activeRunId": null,
+        "activeRunCanMutateWorld": false,
+        "miraPosition": {
+          "x": 1024,
+          "y": 500
+        },
+        "miraVelocity": {
+          "x": 0,
+          "y": 0
+        },
+        "miraFacing": {
+          "x": 1,
+          "y": 0
+        },
+        "objectLocation": {
+          "kind": "free",
+          "position": {
+            "x": 1080,
+            "y": 500
+          }
+        },
+        "pendingCognitionReasonCount": 2,
+        "addressedPercept": {
+          "id": "percept:resident.mira:3832:2",
+          "occurrenceId": "occurrence:3832:2",
+          "tick": 3832,
+          "phenomenon": "speech",
+          "modality": "hearing",
+          "actorId": "player.jozz",
+          "subjectId": null,
+          "spatial": {
+            "kind": "directional",
+            "direction": {
+              "x": -0.7071067811865475,
+              "y": 0.7071067811865476
+            },
+            "distanceBand": "mid"
+          },
+          "summary": "speech",
+          "text": "Mira?",
+          "addressed": true
+        },
+        "responseOccurrence": {
+          "id": "occurrence:6:1",
+          "tick": 6,
+          "kind": "speech",
+          "actorId": "resident.mira",
+          "subjectId": null,
+          "position": {
+            "x": 707.5,
+            "y": 500
+          },
+          "radius": 420,
+          "summary": "speech",
+          "text": "Tak?",
+          "addressedActorIds": [
+            "player.jozz"
+          ]
+        },
+        "actionFacts": [
+          {
+            "tick": 3,
+            "runId": "run.mira.local-life.pickup-basket",
+            "kind": "material_pickup",
+            "objectId": "basket.workshop.local-life",
+            "outcomeStatus": "succeeded",
+            "code": "picked_up"
+          },
+          {
+            "tick": 231,
+            "runId": "run.mira.local-life.place-basket",
+            "kind": "material_place",
+            "objectId": "basket.workshop.local-life",
+            "outcomeStatus": "succeeded",
+            "code": "placed"
+          }
+        ],
+        "framePendingCognitionReasonCount": 2,
+        "livingDiagnostics": null
+      },
+      "quietResponse": {
+        "scenarioId": "browser-zero-provider-local-life",
+        "tick": 3834,
+        "matterId": "matter.mira.local-life.restore-basket",
+        "matterStatus": "resolved",
+        "activeRunId": null,
+        "activeRunCanMutateWorld": false,
+        "miraPosition": {
+          "x": 1024,
+          "y": 500
+        },
+        "miraVelocity": {
+          "x": 0,
+          "y": 0
+        },
+        "miraFacing": {
+          "x": -0.7071067811865475,
+          "y": 0.7071067811865476
+        },
+        "objectLocation": {
+          "kind": "free",
+          "position": {
+            "x": 1080,
+            "y": 500
+          }
+        },
+        "pendingCognitionReasonCount": 2,
+        "addressedPercept": {
+          "id": "percept:resident.mira:3832:2",
+          "occurrenceId": "occurrence:3832:2",
+          "tick": 3832,
+          "phenomenon": "speech",
+          "modality": "hearing",
+          "actorId": "player.jozz",
+          "subjectId": null,
+          "spatial": {
+            "kind": "directional",
+            "direction": {
+              "x": -0.7071067811865475,
+              "y": 0.7071067811865476
+            },
+            "distanceBand": "mid"
+          },
+          "summary": "speech",
+          "text": "Mira?",
+          "addressed": true
+        },
+        "responseOccurrence": {
+          "id": "occurrence:3833:3",
+          "tick": 3833,
+          "kind": "speech",
+          "actorId": "resident.mira",
+          "subjectId": null,
+          "position": {
+            "x": 1024,
+            "y": 500
+          },
+          "radius": 420,
+          "summary": "speech",
+          "text": "Tak?",
+          "addressedActorIds": [
+            "player.jozz"
+          ]
+        },
+        "actionFacts": [
+          {
+            "tick": 3,
+            "runId": "run.mira.local-life.pickup-basket",
+            "kind": "material_pickup",
+            "objectId": "basket.workshop.local-life",
+            "outcomeStatus": "succeeded",
+            "code": "picked_up"
+          },
+          {
+            "tick": 231,
+            "runId": "run.mira.local-life.place-basket",
+            "kind": "material_place",
+            "objectId": "basket.workshop.local-life",
+            "outcomeStatus": "succeeded",
+            "code": "placed"
+          }
+        ],
+        "framePendingCognitionReasonCount": 2,
+        "livingDiagnostics": null
+      },
+      "quietReturned": {
+        "scenarioId": "browser-zero-provider-local-life",
+        "tick": 3847,
+        "matterId": "matter.mira.local-life.restore-basket",
+        "matterStatus": "resolved",
+        "activeRunId": null,
+        "activeRunCanMutateWorld": false,
+        "miraPosition": {
+          "x": 1024,
+          "y": 500
+        },
+        "miraVelocity": {
+          "x": 0,
+          "y": 0
+        },
+        "miraFacing": {
+          "x": -0.7071067811865475,
+          "y": 0.7071067811865476
+        },
+        "objectLocation": {
+          "kind": "free",
+          "position": {
+            "x": 1080,
+            "y": 500
+          }
+        },
+        "pendingCognitionReasonCount": 2,
+        "addressedPercept": {
+          "id": "percept:resident.mira:3832:2",
+          "occurrenceId": "occurrence:3832:2",
+          "tick": 3832,
+          "phenomenon": "speech",
+          "modality": "hearing",
+          "actorId": "player.jozz",
+          "subjectId": null,
+          "spatial": {
+            "kind": "directional",
+            "direction": {
+              "x": -0.7071067811865475,
+              "y": 0.7071067811865476
+            },
+            "distanceBand": "mid"
+          },
+          "summary": "speech",
+          "text": "Mira?",
+          "addressed": true
+        },
+        "responseOccurrence": {
+          "id": "occurrence:3833:3",
+          "tick": 3833,
+          "kind": "speech",
+          "actorId": "resident.mira",
+          "subjectId": null,
+          "position": {
+            "x": 1024,
+            "y": 500
+          },
+          "radius": 420,
+          "summary": "speech",
+          "text": "Tak?",
+          "addressedActorIds": [
+            "player.jozz"
+          ]
+        },
+        "actionFacts": [
+          {
+            "tick": 3,
+            "runId": "run.mira.local-life.pickup-basket",
+            "kind": "material_pickup",
+            "objectId": "basket.workshop.local-life",
+            "outcomeStatus": "succeeded",
+            "code": "picked_up"
+          },
+          {
+            "tick": 231,
+            "runId": "run.mira.local-life.place-basket",
+            "kind": "material_place",
+            "objectId": "basket.workshop.local-life",
+            "outcomeStatus": "succeeded",
+            "code": "placed"
+          }
+        ],
+        "framePendingCognitionReasonCount": 2,
+        "livingDiagnostics": null
+      },
+      "movingHash": "03afe7f9c965db420c1e89a0355d6fd6f802d6ed5b826954011707c8d4c6a54f",
+      "interruptedHash": "d03f7e8918ef02776a6fefd7797291aa46fb2edbc183261d4927c3c567c2e9d7",
+      "respondedHash": "6ead27c1cf226d55701447759d0e7a19a59e90235dfcfbce01d7d35dae6af7ea",
+      "settledHash": "07e533d2c2cd6cff01f49e7c6c4e75c6cd81e1806b41046ece0f12f9ab60090b",
+      "quietHash": "d7f0f8a50d61c5e240cef88f1240b47cb43a1642551f851559d751a1df854710",
+      "quietReturnedHash": "fa56b7790746f3f52b91f93c868c603f2b8f4c1c73b4e4dafb72a319c9ad83c3",
+      "visualEvidence": {
+        "moving": {
+          "fileName": "r1-local-life-01-moving-basket.png",
+          "tick": 5,
+          "bytes": 43149,
+          "canonicalHash": "a9c9b1d48ecced630675dbcb02f25af1bd77a890f4776a392d9cf4057598678e"
+        },
+        "responded": {
+          "fileName": "r1-local-life-02-responded.png",
+          "tick": 7,
+          "bytes": 45011,
+          "canonicalHash": "a18f0c9f4151a7c561aa13d7ccd3e7308d8d944918f2befa21e45b211f483b15"
+        },
+        "settledQuiet": {
+          "fileName": "r1-local-life-03-settled-quiet.png",
+          "tick": 232,
+          "bytes": 45030,
+          "canonicalHash": "e7e1a4482533733d87f9703abb3bce0176ad3bd0a827321bf4e2cf084014ba87"
+        },
+        "quietWake": {
+          "fileName": "r1-local-life-04-quiet-wake.png",
+          "tick": 3834,
+          "bytes": 44512,
+          "canonicalHash": "9f0f9c77022a5878c675952ea7f748f1ebf67d614f66420520dcf3b3df85ca80"
+        }
+      }
+    },
+    {
+      "runIndex": 1,
+      "initial": {
+        "scenarioId": "browser-zero-provider-local-life",
+        "tick": 0,
+        "matterId": "matter.mira.local-life.restore-basket",
+        "matterStatus": "active",
+        "activeRunId": "run.mira.local-life.pickup-basket",
+        "activeRunCanMutateWorld": true,
+        "miraPosition": {
+          "x": 700,
+          "y": 500
+        },
+        "miraVelocity": {
+          "x": 0,
+          "y": 0
+        },
+        "miraFacing": {
+          "x": 1,
+          "y": 0
+        },
+        "objectLocation": {
+          "kind": "free",
+          "position": {
+            "x": 760,
+            "y": 500
+          }
+        },
+        "pendingCognitionReasonCount": 0,
+        "addressedPercept": null,
+        "responseOccurrence": null,
+        "actionFacts": [],
+        "framePendingCognitionReasonCount": 0,
+        "livingDiagnostics": null
+      },
+      "moving": {
+        "scenarioId": "browser-zero-provider-local-life",
+        "tick": 5,
+        "matterId": "matter.mira.local-life.restore-basket",
+        "matterStatus": "active",
+        "activeRunId": "run.mira.local-life.place-basket",
+        "activeRunCanMutateWorld": true,
+        "miraPosition": {
+          "x": 706,
+          "y": 500
+        },
+        "miraVelocity": {
+          "x": 90,
+          "y": 0
+        },
+        "miraFacing": {
+          "x": 1,
+          "y": 0
+        },
+        "objectLocation": {
+          "kind": "held",
+          "actorId": "resident.mira"
+        },
+        "pendingCognitionReasonCount": 0,
+        "addressedPercept": null,
+        "responseOccurrence": null,
+        "actionFacts": [
+          {
+            "tick": 3,
+            "runId": "run.mira.local-life.pickup-basket",
+            "kind": "material_pickup",
+            "objectId": "basket.workshop.local-life",
+            "outcomeStatus": "succeeded",
+            "code": "picked_up"
+          }
+        ],
+        "framePendingCognitionReasonCount": 0,
+        "livingDiagnostics": null
+      },
+      "midCall": {
+        "id": "occurrence:5:0",
+        "tick": 5,
+        "kind": "speech",
+        "actorId": "player.jozz",
+        "subjectId": null,
+        "position": {
+          "x": 850,
+          "y": 700
+        },
+        "radius": 420,
+        "summary": "speech",
+        "text": "Mira, chwila!",
+        "addressedActorIds": [
+          "resident.mira"
+        ]
+      },
+      "interrupted": {
+        "scenarioId": "browser-zero-provider-local-life",
+        "tick": 6,
+        "matterId": "matter.mira.local-life.restore-basket",
+        "matterStatus": "suspended",
+        "activeRunId": "run.mira.local-life.place-basket",
+        "activeRunCanMutateWorld": false,
+        "miraPosition": {
+          "x": 707.5,
+          "y": 500
+        },
+        "miraVelocity": {
+          "x": 0,
+          "y": 0
+        },
+        "miraFacing": {
+          "x": 1,
+          "y": 0
+        },
+        "objectLocation": {
+          "kind": "held",
+          "actorId": "resident.mira"
+        },
+        "pendingCognitionReasonCount": 1,
+        "addressedPercept": {
+          "id": "percept:resident.mira:5:1",
+          "occurrenceId": "occurrence:5:0",
+          "tick": 5,
+          "phenomenon": "speech",
+          "modality": "hearing",
+          "actorId": "player.jozz",
+          "subjectId": null,
+          "spatial": {
+            "kind": "directional",
+            "direction": {
+              "x": 0.7071067811865476,
+              "y": 0.7071067811865475
+            },
+            "distanceBand": "mid"
+          },
+          "summary": "speech",
+          "text": "Mira, chwila!",
+          "addressed": true
+        },
+        "responseOccurrence": null,
+        "actionFacts": [
+          {
+            "tick": 3,
+            "runId": "run.mira.local-life.pickup-basket",
+            "kind": "material_pickup",
+            "objectId": "basket.workshop.local-life",
+            "outcomeStatus": "succeeded",
+            "code": "picked_up"
+          }
+        ],
+        "framePendingCognitionReasonCount": 1,
+        "livingDiagnostics": null
+      },
+      "responded": {
+        "scenarioId": "browser-zero-provider-local-life",
+        "tick": 7,
+        "matterId": "matter.mira.local-life.restore-basket",
+        "matterStatus": "suspended",
+        "activeRunId": "run.mira.local-life.place-basket",
+        "activeRunCanMutateWorld": false,
+        "miraPosition": {
+          "x": 707.5,
+          "y": 500
+        },
+        "miraVelocity": {
+          "x": 0,
+          "y": 0
+        },
+        "miraFacing": {
+          "x": 0.7071067811865476,
+          "y": 0.7071067811865475
+        },
+        "objectLocation": {
+          "kind": "held",
+          "actorId": "resident.mira"
+        },
+        "pendingCognitionReasonCount": 1,
+        "addressedPercept": {
+          "id": "percept:resident.mira:5:1",
+          "occurrenceId": "occurrence:5:0",
+          "tick": 5,
+          "phenomenon": "speech",
+          "modality": "hearing",
+          "actorId": "player.jozz",
+          "subjectId": null,
+          "spatial": {
+            "kind": "directional",
+            "direction": {
+              "x": 0.7071067811865476,
+              "y": 0.7071067811865475
+            },
+            "distanceBand": "mid"
+          },
+          "summary": "speech",
+          "text": "Mira, chwila!",
+          "addressed": true
+        },
+        "responseOccurrence": {
+          "id": "occurrence:6:1",
+          "tick": 6,
+          "kind": "speech",
+          "actorId": "resident.mira",
+          "subjectId": null,
+          "position": {
+            "x": 707.5,
+            "y": 500
+          },
+          "radius": 420,
+          "summary": "speech",
+          "text": "Tak?",
+          "addressedActorIds": [
+            "player.jozz"
+          ]
+        },
+        "actionFacts": [
+          {
+            "tick": 3,
+            "runId": "run.mira.local-life.pickup-basket",
+            "kind": "material_pickup",
+            "objectId": "basket.workshop.local-life",
+            "outcomeStatus": "succeeded",
+            "code": "picked_up"
+          }
+        ],
+        "framePendingCognitionReasonCount": 1,
+        "livingDiagnostics": null
+      },
+      "resumed": {
+        "scenarioId": "browser-zero-provider-local-life",
+        "tick": 20,
+        "matterId": "matter.mira.local-life.restore-basket",
+        "matterStatus": "active",
+        "activeRunId": "run.mira.local-life.place-basket",
+        "activeRunCanMutateWorld": true,
+        "miraPosition": {
+          "x": 707.5,
+          "y": 500
+        },
+        "miraVelocity": {
+          "x": 0,
+          "y": 0
+        },
+        "miraFacing": {
+          "x": 0.7071067811865476,
+          "y": 0.7071067811865475
+        },
+        "objectLocation": {
+          "kind": "held",
+          "actorId": "resident.mira"
+        },
+        "pendingCognitionReasonCount": 1,
+        "addressedPercept": {
+          "id": "percept:resident.mira:5:1",
+          "occurrenceId": "occurrence:5:0",
+          "tick": 5,
+          "phenomenon": "speech",
+          "modality": "hearing",
+          "actorId": "player.jozz",
+          "subjectId": null,
+          "spatial": {
+            "kind": "directional",
+            "direction": {
+              "x": 0.7071067811865476,
+              "y": 0.7071067811865475
+            },
+            "distanceBand": "mid"
+          },
+          "summary": "speech",
+          "text": "Mira, chwila!",
+          "addressed": true
+        },
+        "responseOccurrence": {
+          "id": "occurrence:6:1",
+          "tick": 6,
+          "kind": "speech",
+          "actorId": "resident.mira",
+          "subjectId": null,
+          "position": {
+            "x": 707.5,
+            "y": 500
+          },
+          "radius": 420,
+          "summary": "speech",
+          "text": "Tak?",
+          "addressedActorIds": [
+            "player.jozz"
+          ]
+        },
+        "actionFacts": [
+          {
+            "tick": 3,
+            "runId": "run.mira.local-life.pickup-basket",
+            "kind": "material_pickup",
+            "objectId": "basket.workshop.local-life",
+            "outcomeStatus": "succeeded",
+            "code": "picked_up"
+          }
+        ],
+        "framePendingCognitionReasonCount": 1,
+        "livingDiagnostics": null
+      },
+      "afterResumeMotion": {
+        "scenarioId": "browser-zero-provider-local-life",
+        "tick": 21,
+        "matterId": "matter.mira.local-life.restore-basket",
+        "matterStatus": "active",
+        "activeRunId": "run.mira.local-life.place-basket",
+        "activeRunCanMutateWorld": true,
+        "miraPosition": {
+          "x": 709,
+          "y": 500
+        },
+        "miraVelocity": {
+          "x": 90,
+          "y": 0
+        },
+        "miraFacing": {
+          "x": 1,
+          "y": 0
+        },
+        "objectLocation": {
+          "kind": "held",
+          "actorId": "resident.mira"
+        },
+        "pendingCognitionReasonCount": 1,
+        "addressedPercept": {
+          "id": "percept:resident.mira:5:1",
+          "occurrenceId": "occurrence:5:0",
+          "tick": 5,
+          "phenomenon": "speech",
+          "modality": "hearing",
+          "actorId": "player.jozz",
+          "subjectId": null,
+          "spatial": {
+            "kind": "directional",
+            "direction": {
+              "x": 0.7071067811865476,
+              "y": 0.7071067811865475
+            },
+            "distanceBand": "mid"
+          },
+          "summary": "speech",
+          "text": "Mira, chwila!",
+          "addressed": true
+        },
+        "responseOccurrence": {
+          "id": "occurrence:6:1",
+          "tick": 6,
+          "kind": "speech",
+          "actorId": "resident.mira",
+          "subjectId": null,
+          "position": {
+            "x": 707.5,
+            "y": 500
+          },
+          "radius": 420,
+          "summary": "speech",
+          "text": "Tak?",
+          "addressedActorIds": [
+            "player.jozz"
+          ]
+        },
+        "actionFacts": [
+          {
+            "tick": 3,
+            "runId": "run.mira.local-life.pickup-basket",
+            "kind": "material_pickup",
+            "objectId": "basket.workshop.local-life",
+            "outcomeStatus": "succeeded",
+            "code": "picked_up"
+          }
+        ],
+        "framePendingCognitionReasonCount": 1,
+        "livingDiagnostics": null
+      },
+      "settled": {
+        "scenarioId": "browser-zero-provider-local-life",
+        "tick": 232,
+        "matterId": "matter.mira.local-life.restore-basket",
+        "matterStatus": "resolved",
+        "activeRunId": null,
+        "activeRunCanMutateWorld": false,
+        "miraPosition": {
+          "x": 1024,
+          "y": 500
+        },
+        "miraVelocity": {
+          "x": 0,
+          "y": 0
+        },
+        "miraFacing": {
+          "x": 1,
+          "y": 0
+        },
+        "objectLocation": {
+          "kind": "free",
+          "position": {
+            "x": 1080,
+            "y": 500
+          }
+        },
+        "pendingCognitionReasonCount": 1,
+        "addressedPercept": {
+          "id": "percept:resident.mira:5:1",
+          "occurrenceId": "occurrence:5:0",
+          "tick": 5,
+          "phenomenon": "speech",
+          "modality": "hearing",
+          "actorId": "player.jozz",
+          "subjectId": null,
+          "spatial": {
+            "kind": "directional",
+            "direction": {
+              "x": 0.7071067811865476,
+              "y": 0.7071067811865475
+            },
+            "distanceBand": "mid"
+          },
+          "summary": "speech",
+          "text": "Mira, chwila!",
+          "addressed": true
+        },
+        "responseOccurrence": {
+          "id": "occurrence:6:1",
+          "tick": 6,
+          "kind": "speech",
+          "actorId": "resident.mira",
+          "subjectId": null,
+          "position": {
+            "x": 707.5,
+            "y": 500
+          },
+          "radius": 420,
+          "summary": "speech",
+          "text": "Tak?",
+          "addressedActorIds": [
+            "player.jozz"
+          ]
+        },
+        "actionFacts": [
+          {
+            "tick": 3,
+            "runId": "run.mira.local-life.pickup-basket",
+            "kind": "material_pickup",
+            "objectId": "basket.workshop.local-life",
+            "outcomeStatus": "succeeded",
+            "code": "picked_up"
+          },
+          {
+            "tick": 231,
+            "runId": "run.mira.local-life.place-basket",
+            "kind": "material_place",
+            "objectId": "basket.workshop.local-life",
+            "outcomeStatus": "succeeded",
+            "code": "placed"
+          }
+        ],
+        "framePendingCognitionReasonCount": 1,
+        "livingDiagnostics": null
+      },
+      "quiet": {
+        "ticks": 3600,
+        "before": {
+          "scenarioId": "browser-zero-provider-local-life",
+          "tick": 232,
+          "matterId": "matter.mira.local-life.restore-basket",
+          "matterStatus": "resolved",
+          "activeRunId": null,
+          "activeRunCanMutateWorld": false,
+          "miraPosition": {
+            "x": 1024,
+            "y": 500
+          },
+          "miraVelocity": {
+            "x": 0,
+            "y": 0
+          },
+          "miraFacing": {
+            "x": 1,
+            "y": 0
+          },
+          "objectLocation": {
+            "kind": "free",
+            "position": {
+              "x": 1080,
+              "y": 500
+            }
+          },
+          "pendingCognitionReasonCount": 1,
+          "addressedPercept": null,
+          "responseOccurrence": {
+            "id": "occurrence:6:1",
+            "tick": 6,
+            "kind": "speech",
+            "actorId": "resident.mira",
+            "subjectId": null,
+            "position": {
+              "x": 707.5,
+              "y": 500
+            },
+            "radius": 420,
+            "summary": "speech",
+            "text": "Tak?",
+            "addressedActorIds": [
+              "player.jozz"
+            ]
+          },
+          "actionFacts": [
+            {
+              "tick": 3,
+              "runId": "run.mira.local-life.pickup-basket",
+              "kind": "material_pickup",
+              "objectId": "basket.workshop.local-life",
+              "outcomeStatus": "succeeded",
+              "code": "picked_up"
+            },
+            {
+              "tick": 231,
+              "runId": "run.mira.local-life.place-basket",
+              "kind": "material_place",
+              "objectId": "basket.workshop.local-life",
+              "outcomeStatus": "succeeded",
+              "code": "placed"
+            }
+          ],
+          "framePendingCognitionReasonCount": 1,
+          "livingDiagnostics": null
+        },
+        "after": {
+          "scenarioId": "browser-zero-provider-local-life",
+          "tick": 3832,
+          "matterId": "matter.mira.local-life.restore-basket",
+          "matterStatus": "resolved",
+          "activeRunId": null,
+          "activeRunCanMutateWorld": false,
+          "miraPosition": {
+            "x": 1024,
+            "y": 500
+          },
+          "miraVelocity": {
+            "x": 0,
+            "y": 0
+          },
+          "miraFacing": {
+            "x": 1,
+            "y": 0
+          },
+          "objectLocation": {
+            "kind": "free",
+            "position": {
+              "x": 1080,
+              "y": 500
+            }
+          },
+          "pendingCognitionReasonCount": 1,
+          "addressedPercept": null,
+          "responseOccurrence": {
+            "id": "occurrence:6:1",
+            "tick": 6,
+            "kind": "speech",
+            "actorId": "resident.mira",
+            "subjectId": null,
+            "position": {
+              "x": 707.5,
+              "y": 500
+            },
+            "radius": 420,
+            "summary": "speech",
+            "text": "Tak?",
+            "addressedActorIds": [
+              "player.jozz"
+            ]
+          },
+          "actionFacts": [
+            {
+              "tick": 3,
+              "runId": "run.mira.local-life.pickup-basket",
+              "kind": "material_pickup",
+              "objectId": "basket.workshop.local-life",
+              "outcomeStatus": "succeeded",
+              "code": "picked_up"
+            },
+            {
+              "tick": 231,
+              "runId": "run.mira.local-life.place-basket",
+              "kind": "material_place",
+              "objectId": "basket.workshop.local-life",
+              "outcomeStatus": "succeeded",
+              "code": "placed"
+            }
+          ],
+          "framePendingCognitionReasonCount": 1,
+          "livingDiagnostics": null
+        }
+      },
+      "lateCall": {
+        "id": "occurrence:3832:2",
+        "tick": 3832,
+        "kind": "speech",
+        "actorId": "player.jozz",
+        "subjectId": null,
+        "position": {
+          "x": 850,
+          "y": 700
+        },
+        "radius": 420,
+        "summary": "speech",
+        "text": "Mira?",
+        "addressedActorIds": [
+          "resident.mira"
+        ]
+      },
+      "quietWake": {
+        "scenarioId": "browser-zero-provider-local-life",
+        "tick": 3833,
+        "matterId": "matter.mira.local-life.restore-basket",
+        "matterStatus": "resolved",
+        "activeRunId": null,
+        "activeRunCanMutateWorld": false,
+        "miraPosition": {
+          "x": 1024,
+          "y": 500
+        },
+        "miraVelocity": {
+          "x": 0,
+          "y": 0
+        },
+        "miraFacing": {
+          "x": 1,
+          "y": 0
+        },
+        "objectLocation": {
+          "kind": "free",
+          "position": {
+            "x": 1080,
+            "y": 500
+          }
+        },
+        "pendingCognitionReasonCount": 2,
+        "addressedPercept": {
+          "id": "percept:resident.mira:3832:2",
+          "occurrenceId": "occurrence:3832:2",
+          "tick": 3832,
+          "phenomenon": "speech",
+          "modality": "hearing",
+          "actorId": "player.jozz",
+          "subjectId": null,
+          "spatial": {
+            "kind": "directional",
+            "direction": {
+              "x": -0.7071067811865475,
+              "y": 0.7071067811865476
+            },
+            "distanceBand": "mid"
+          },
+          "summary": "speech",
+          "text": "Mira?",
+          "addressed": true
+        },
+        "responseOccurrence": {
+          "id": "occurrence:6:1",
+          "tick": 6,
+          "kind": "speech",
+          "actorId": "resident.mira",
+          "subjectId": null,
+          "position": {
+            "x": 707.5,
+            "y": 500
+          },
+          "radius": 420,
+          "summary": "speech",
+          "text": "Tak?",
+          "addressedActorIds": [
+            "player.jozz"
+          ]
+        },
+        "actionFacts": [
+          {
+            "tick": 3,
+            "runId": "run.mira.local-life.pickup-basket",
+            "kind": "material_pickup",
+            "objectId": "basket.workshop.local-life",
+            "outcomeStatus": "succeeded",
+            "code": "picked_up"
+          },
+          {
+            "tick": 231,
+            "runId": "run.mira.local-life.place-basket",
+            "kind": "material_place",
+            "objectId": "basket.workshop.local-life",
+            "outcomeStatus": "succeeded",
+            "code": "placed"
+          }
+        ],
+        "framePendingCognitionReasonCount": 2,
+        "livingDiagnostics": null
+      },
+      "quietResponse": {
+        "scenarioId": "browser-zero-provider-local-life",
+        "tick": 3834,
+        "matterId": "matter.mira.local-life.restore-basket",
+        "matterStatus": "resolved",
+        "activeRunId": null,
+        "activeRunCanMutateWorld": false,
+        "miraPosition": {
+          "x": 1024,
+          "y": 500
+        },
+        "miraVelocity": {
+          "x": 0,
+          "y": 0
+        },
+        "miraFacing": {
+          "x": -0.7071067811865475,
+          "y": 0.7071067811865476
+        },
+        "objectLocation": {
+          "kind": "free",
+          "position": {
+            "x": 1080,
+            "y": 500
+          }
+        },
+        "pendingCognitionReasonCount": 2,
+        "addressedPercept": {
+          "id": "percept:resident.mira:3832:2",
+          "occurrenceId": "occurrence:3832:2",
+          "tick": 3832,
+          "phenomenon": "speech",
+          "modality": "hearing",
+          "actorId": "player.jozz",
+          "subjectId": null,
+          "spatial": {
+            "kind": "directional",
+            "direction": {
+              "x": -0.7071067811865475,
+              "y": 0.7071067811865476
+            },
+            "distanceBand": "mid"
+          },
+          "summary": "speech",
+          "text": "Mira?",
+          "addressed": true
+        },
+        "responseOccurrence": {
+          "id": "occurrence:3833:3",
+          "tick": 3833,
+          "kind": "speech",
+          "actorId": "resident.mira",
+          "subjectId": null,
+          "position": {
+            "x": 1024,
+            "y": 500
+          },
+          "radius": 420,
+          "summary": "speech",
+          "text": "Tak?",
+          "addressedActorIds": [
+            "player.jozz"
+          ]
+        },
+        "actionFacts": [
+          {
+            "tick": 3,
+            "runId": "run.mira.local-life.pickup-basket",
+            "kind": "material_pickup",
+            "objectId": "basket.workshop.local-life",
+            "outcomeStatus": "succeeded",
+            "code": "picked_up"
+          },
+          {
+            "tick": 231,
+            "runId": "run.mira.local-life.place-basket",
+            "kind": "material_place",
+            "objectId": "basket.workshop.local-life",
+            "outcomeStatus": "succeeded",
+            "code": "placed"
+          }
+        ],
+        "framePendingCognitionReasonCount": 2,
+        "livingDiagnostics": null
+      },
+      "quietReturned": {
+        "scenarioId": "browser-zero-provider-local-life",
+        "tick": 3847,
+        "matterId": "matter.mira.local-life.restore-basket",
+        "matterStatus": "resolved",
+        "activeRunId": null,
+        "activeRunCanMutateWorld": false,
+        "miraPosition": {
+          "x": 1024,
+          "y": 500
+        },
+        "miraVelocity": {
+          "x": 0,
+          "y": 0
+        },
+        "miraFacing": {
+          "x": -0.7071067811865475,
+          "y": 0.7071067811865476
+        },
+        "objectLocation": {
+          "kind": "free",
+          "position": {
+            "x": 1080,
+            "y": 500
+          }
+        },
+        "pendingCognitionReasonCount": 2,
+        "addressedPercept": {
+          "id": "percept:resident.mira:3832:2",
+          "occurrenceId": "occurrence:3832:2",
+          "tick": 3832,
+          "phenomenon": "speech",
+          "modality": "hearing",
+          "actorId": "player.jozz",
+          "subjectId": null,
+          "spatial": {
+            "kind": "directional",
+            "direction": {
+              "x": -0.7071067811865475,
+              "y": 0.7071067811865476
+            },
+            "distanceBand": "mid"
+          },
+          "summary": "speech",
+          "text": "Mira?",
+          "addressed": true
+        },
+        "responseOccurrence": {
+          "id": "occurrence:3833:3",
+          "tick": 3833,
+          "kind": "speech",
+          "actorId": "resident.mira",
+          "subjectId": null,
+          "position": {
+            "x": 1024,
+            "y": 500
+          },
+          "radius": 420,
+          "summary": "speech",
+          "text": "Tak?",
+          "addressedActorIds": [
+            "player.jozz"
+          ]
+        },
+        "actionFacts": [
+          {
+            "tick": 3,
+            "runId": "run.mira.local-life.pickup-basket",
+            "kind": "material_pickup",
+            "objectId": "basket.workshop.local-life",
+            "outcomeStatus": "succeeded",
+            "code": "picked_up"
+          },
+          {
+            "tick": 231,
+            "runId": "run.mira.local-life.place-basket",
+            "kind": "material_place",
+            "objectId": "basket.workshop.local-life",
+            "outcomeStatus": "succeeded",
+            "code": "placed"
+          }
+        ],
+        "framePendingCognitionReasonCount": 2,
+        "livingDiagnostics": null
+      },
+      "movingHash": "03afe7f9c965db420c1e89a0355d6fd6f802d6ed5b826954011707c8d4c6a54f",
+      "interruptedHash": "d03f7e8918ef02776a6fefd7797291aa46fb2edbc183261d4927c3c567c2e9d7",
+      "respondedHash": "6ead27c1cf226d55701447759d0e7a19a59e90235dfcfbce01d7d35dae6af7ea",
+      "settledHash": "07e533d2c2cd6cff01f49e7c6c4e75c6cd81e1806b41046ece0f12f9ab60090b",
+      "quietHash": "d7f0f8a50d61c5e240cef88f1240b47cb43a1642551f851559d751a1df854710",
+      "quietReturnedHash": "fa56b7790746f3f52b91f93c868c603f2b8f4c1c73b4e4dafb72a319c9ad83c3",
+      "visualEvidence": null
+    }
+  ],
+  "visualEvidence": {
+    "moving": {
+      "fileName": "r1-local-life-01-moving-basket.png",
+      "tick": 5,
+      "bytes": 43149,
+      "canonicalHash": "a9c9b1d48ecced630675dbcb02f25af1bd77a890f4776a392d9cf4057598678e"
+    },
+    "responded": {
+      "fileName": "r1-local-life-02-responded.png",
+      "tick": 7,
+      "bytes": 45011,
+      "canonicalHash": "a18f0c9f4151a7c561aa13d7ccd3e7308d8d944918f2befa21e45b211f483b15"
+    },
+    "settledQuiet": {
+      "fileName": "r1-local-life-03-settled-quiet.png",
+      "tick": 232,
+      "bytes": 45030,
+      "canonicalHash": "e7e1a4482533733d87f9703abb3bce0176ad3bd0a827321bf4e2cf084014ba87"
+    },
+    "quietWake": {
+      "fileName": "r1-local-life-04-quiet-wake.png",
+      "tick": 3834,
+      "bytes": 44512,
+      "canonicalHash": "9f0f9c77022a5878c675952ea7f748f1ebf67d614f66420520dcf3b3df85ca80"
+    }
+  },
+  "finishedAt": "2026-09-26T08:51:22.670Z",
+  "outcome": "PASS"
+}

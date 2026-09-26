@@ -1,0 +1,180 @@
+{
+  "schemaVersion": 1,
+  "sourceSha": "b79793cf625da93d4909c644a3e56511febde67a",
+  "browserOutcome": "PASS",
+  "generatedAt": "2026-09-26T08:45:07.781Z",
+  "residents": [
+    {
+      "resident": "Janek",
+      "samples": 49,
+      "movingSamples": 43,
+      "stationarySamples": 6,
+      "legacyIdleWhileMovingSamples": 43,
+      "maxResolvedSpeed": 90,
+      "maxCognitionQueue": 0,
+      "pathLength": 1012.070703254893,
+      "startPosition": {
+        "x": 1967,
+        "y": 742
+      },
+      "endPosition": {
+        "x": 2927,
+        "y": 1062
+      },
+      "regions": [
+        "workshop",
+        "crossroads"
+      ],
+      "displacement": 1011.9288512538815
+    },
+    {
+      "resident": "Mira",
+      "samples": 2,
+      "movingSamples": 2,
+      "stationarySamples": 0,
+      "legacyIdleWhileMovingSamples": 0,
+      "maxResolvedSpeed": 95,
+      "maxCognitionQueue": 0,
+      "pathLength": 20.248456731316587,
+      "startPosition": {
+        "x": 981,
+        "y": 734
+      },
+      "endPosition": {
+        "x": 1000,
+        "y": 741
+      },
+      "regions": [
+        "hearth"
+      ],
+      "displacement": 20.248456731316587
+    }
+  ],
+  "checkpoints": [
+    {
+      "name": "01-janek-early-research",
+      "tick": 26,
+      "selectedName": "Janek",
+      "worldOnly": false,
+      "position": {
+        "x": 1937,
+        "y": 732
+      },
+      "body": "moving",
+      "legacyActivity": "idle",
+      "region": "workshop",
+      "resolvedVelocity": 90,
+      "cognitionQueue": 0,
+      "screenshot": "screenshots/01-janek-early-research.jpg",
+      "screenshotBytes": 74037
+    },
+    {
+      "name": "02-player-call-mira-research",
+      "tick": 158,
+      "selectedName": "Mira",
+      "worldOnly": false,
+      "position": {
+        "x": 991,
+        "y": 738
+      },
+      "body": "moving",
+      "legacyActivity": "travel",
+      "region": "hearth",
+      "resolvedVelocity": 95,
+      "cognitionQueue": 0,
+      "screenshot": "screenshots/02-player-call-mira-research.jpg",
+      "screenshotBytes": 66633
+    },
+    {
+      "name": "03-janek-mid-delivery-research",
+      "tick": 180,
+      "selectedName": "Janek",
+      "worldOnly": false,
+      "position": {
+        "x": 2156,
+        "y": 805
+      },
+      "body": "moving",
+      "legacyActivity": "idle",
+      "region": "workshop",
+      "resolvedVelocity": 90,
+      "cognitionQueue": 0,
+      "screenshot": "screenshots/03-janek-mid-delivery-research.jpg",
+      "screenshotBytes": 73855
+    },
+    {
+      "name": "04-janek-mid-delivery-world",
+      "tick": 180,
+      "selectedName": "Janek",
+      "worldOnly": true,
+      "position": {
+        "x": 2156,
+        "y": 805
+      },
+      "body": "moving",
+      "legacyActivity": "idle",
+      "region": "workshop",
+      "resolvedVelocity": 90,
+      "cognitionQueue": 0,
+      "screenshot": "screenshots/04-janek-mid-delivery-world.jpg",
+      "screenshotBytes": 31813
+    },
+    {
+      "name": "05-janek-settled-research",
+      "tick": 762,
+      "selectedName": "Janek",
+      "worldOnly": false,
+      "position": {
+        "x": 2927,
+        "y": 1062
+      },
+      "body": "still",
+      "legacyActivity": "idle",
+      "region": "crossroads",
+      "resolvedVelocity": 0,
+      "cognitionQueue": 0,
+      "screenshot": "screenshots/05-janek-settled-research.jpg",
+      "screenshotBytes": 65651
+    },
+    {
+      "name": "06-janek-settled-world",
+      "tick": 762,
+      "selectedName": "Janek",
+      "worldOnly": true,
+      "position": {
+        "x": 2927,
+        "y": 1062
+      },
+      "body": "still",
+      "legacyActivity": "idle",
+      "region": "crossroads",
+      "resolvedVelocity": 0,
+      "cognitionQueue": 0,
+      "screenshot": "screenshots/06-janek-settled-world.jpg",
+      "screenshotBytes": 32373
+    }
+  ],
+  "findings": [
+    {
+      "id": "recovered-execution-vs-legacy-activity",
+      "severity": "material",
+      "summary": "Janek moved in 43/49 sampled frames while legacy activity remained idle."
+    },
+    {
+      "id": "janek-material-route-observed",
+      "severity": "positive-evidence",
+      "summary": "Real browser evidence observed Janek move 1011.9 world units across workshop → crossroads."
+    },
+    {
+      "id": "player-call-private-hearing",
+      "severity": "positive-evidence",
+      "summary": "The real browser path produced player speech that appeared in Mira's private hearing evidence."
+    }
+  ],
+  "browserHealth": {
+    "runtimeExceptions": 0,
+    "logErrors": 0,
+    "networkFailures": 0,
+    "httpErrors": 0
+  }
+}

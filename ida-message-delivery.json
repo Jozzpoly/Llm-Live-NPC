@@ -1,0 +1,1268 @@
+{
+  "schemaVersion": 1,
+  "sourceSha": "b79793cf625da93d4909c644a3e56511febde67a",
+  "claimScope": {
+    "causal": "Ida executes one already-accepted social commitment through private contact evidence and factual World speech.",
+    "epistemic": "This positive browser specimen does not replace the deterministic hidden-recipient relational proof.",
+    "participantReadability": "MANUAL_REVIEW_REQUIRED",
+    "understanding": "NOT_CLAIMED: addressed hearing does not prove recipient understanding or responsibility."
+  },
+  "startedAt": "2026-09-26T08:49:41.867Z",
+  "chrome": "Chrome/153.0.8010.52",
+  "assertions": [
+    {
+      "name": "browser opens the Ida social slice with one exact active social run and no invented material-private extension",
+      "pass": true,
+      "detail": {
+        "scenarioId": "browser-ida-message-delivery",
+        "tick": 970,
+        "residentId": "resident.ida",
+        "matterId": "matter.ida.message-for-janek",
+        "matterStatus": "active",
+        "semanticRevision": 1,
+        "semanticCourse": "find Janek from private contact evidence and deliver Mira's accepted message",
+        "activeRunId": "run.ida.deliver-message-to-janek",
+        "activeRunCanMutateWorld": true,
+        "originEvidenceKind": "accepted_social_commitment",
+        "lastOutcomeEvidenceSummary": null,
+        "materialKnowledgeCount": 0,
+        "idaPosition": {
+          "x": 3031.841573152469,
+          "y": 877.4736101777345
+        },
+        "idaVelocity": {
+          "x": 0,
+          "y": 0
+        },
+        "idaFacing": {
+          "x": 0.9904596462288574,
+          "y": 0.137803081214488
+        },
+        "janekSightPercept": null,
+        "deliveryOccurrence": null,
+        "actorIds": [
+          "player.jozz",
+          "resident.ida",
+          "resident.janek",
+          "resident.mira",
+          "resident.nela",
+          "resident.oren"
+        ]
+      }
+    },
+    {
+      "name": "Ida's exact social run owns real body movement before contact",
+      "pass": true,
+      "detail": {
+        "initial": {
+          "scenarioId": "browser-ida-message-delivery",
+          "tick": 970,
+          "residentId": "resident.ida",
+          "matterId": "matter.ida.message-for-janek",
+          "matterStatus": "active",
+          "semanticRevision": 1,
+          "semanticCourse": "find Janek from private contact evidence and deliver Mira's accepted message",
+          "activeRunId": "run.ida.deliver-message-to-janek",
+          "activeRunCanMutateWorld": true,
+          "originEvidenceKind": "accepted_social_commitment",
+          "lastOutcomeEvidenceSummary": null,
+          "materialKnowledgeCount": 0,
+          "idaPosition": {
+            "x": 3031.841573152469,
+            "y": 877.4736101777345
+          },
+          "idaVelocity": {
+            "x": 0,
+            "y": 0
+          },
+          "idaFacing": {
+            "x": 0.9904596462288574,
+            "y": 0.137803081214488
+          },
+          "janekSightPercept": null,
+          "deliveryOccurrence": null,
+          "actorIds": [
+            "player.jozz",
+            "resident.ida",
+            "resident.janek",
+            "resident.mira",
+            "resident.nela",
+            "resident.oren"
+          ]
+        },
+        "enRoute": {
+          "scenarioId": "browser-ida-message-delivery",
+          "tick": 1008,
+          "residentId": "resident.ida",
+          "matterId": "matter.ida.message-for-janek",
+          "matterStatus": "active",
+          "semanticRevision": 1,
+          "semanticCourse": "find Janek from private contact evidence and deliver Mira's accepted message",
+          "activeRunId": "run.ida.deliver-message-to-janek",
+          "activeRunCanMutateWorld": true,
+          "originEvidenceKind": "accepted_social_commitment",
+          "lastOutcomeEvidenceSummary": null,
+          "materialKnowledgeCount": 0,
+          "idaPosition": {
+            "x": 2972.2489177710304,
+            "y": 869.1824581246645
+          },
+          "idaVelocity": {
+            "x": -94.0936663917455,
+            "y": -13.091292715373584
+          },
+          "idaFacing": {
+            "x": -0.9904596462288622,
+            "y": -0.13780308121445353
+          },
+          "janekSightPercept": null,
+          "deliveryOccurrence": null,
+          "actorIds": [
+            "player.jozz",
+            "resident.ida",
+            "resident.janek",
+            "resident.mira",
+            "resident.nela",
+            "resident.oren"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Ida legally reacquires Janek through her private sight stream before factual delivery",
+      "pass": true,
+      "detail": {
+        "scenarioId": "browser-ida-message-delivery",
+        "tick": 1365,
+        "residentId": "resident.ida",
+        "matterId": "matter.ida.message-for-janek",
+        "matterStatus": "active",
+        "semanticRevision": 1,
+        "semanticCourse": "find Janek from private contact evidence and deliver Mira's accepted message",
+        "activeRunId": "run.ida.deliver-message-to-janek",
+        "activeRunCanMutateWorld": true,
+        "originEvidenceKind": "accepted_social_commitment",
+        "lastOutcomeEvidenceSummary": null,
+        "materialKnowledgeCount": 0,
+        "idaPosition": {
+          "x": 2412.3916027401447,
+          "y": 791.2892664681917
+        },
+        "idaVelocity": {
+          "x": -94.0936663917455,
+          "y": -13.091292715373584
+        },
+        "idaFacing": {
+          "x": -0.9904596462288622,
+          "y": -0.13780308121445353
+        },
+        "janekSightPercept": {
+          "id": "percept:resident.ida:1365:85",
+          "occurrenceId": "sight:actor_sight_enter:resident.ida:resident.janek:1365",
+          "tick": 1365,
+          "phenomenon": "actor_sight_enter",
+          "modality": "sight",
+          "actorId": "resident.janek",
+          "subjectId": "resident.janek",
+          "spatial": {
+            "kind": "exact",
+            "position": {
+              "x": 1900,
+              "y": 720
+            }
+          },
+          "summary": "actor resident.janek entered sight",
+          "text": null,
+          "addressed": false
+        },
+        "deliveryOccurrence": null,
+        "actorIds": [
+          "player.jozz",
+          "resident.ida",
+          "resident.janek",
+          "resident.mira",
+          "resident.nela",
+          "resident.oren"
+        ]
+      }
+    },
+    {
+      "name": "matter resolves only with one exact Ida World speech occurrence to Janek",
+      "pass": true,
+      "detail": {
+        "scenarioId": "browser-ida-message-delivery",
+        "tick": 1643,
+        "residentId": "resident.ida",
+        "matterId": "matter.ida.message-for-janek",
+        "matterStatus": "resolved",
+        "semanticRevision": 1,
+        "semanticCourse": "find Janek from private contact evidence and deliver Mira's accepted message",
+        "activeRunId": null,
+        "activeRunCanMutateWorld": false,
+        "originEvidenceKind": null,
+        "lastOutcomeEvidenceSummary": null,
+        "materialKnowledgeCount": 0,
+        "idaPosition": {
+          "x": 1977.9925095649196,
+          "y": 730.8511317655518
+        },
+        "idaVelocity": {
+          "x": 0,
+          "y": 0
+        },
+        "idaFacing": {
+          "x": -0.9904596462288663,
+          "y": -0.13780308121442297
+        },
+        "janekSightPercept": {
+          "id": "percept:resident.ida:1365:85",
+          "occurrenceId": "sight:actor_sight_enter:resident.ida:resident.janek:1365",
+          "tick": 1365,
+          "phenomenon": "actor_sight_enter",
+          "modality": "sight",
+          "actorId": "resident.janek",
+          "subjectId": "resident.janek",
+          "spatial": {
+            "kind": "exact",
+            "position": {
+              "x": 1900,
+              "y": 720
+            }
+          },
+          "summary": "actor resident.janek entered sight",
+          "text": null,
+          "addressed": false
+        },
+        "deliveryOccurrence": {
+          "id": "occurrence:1642:0",
+          "tick": 1642,
+          "kind": "speech",
+          "actorId": "resident.ida",
+          "subjectId": null,
+          "position": {
+            "x": 1977.9925095649196,
+            "y": 730.8511317655518
+          },
+          "radius": 220,
+          "summary": "speech",
+          "text": "Mira says the field well needs checking before dusk.",
+          "addressedActorIds": [
+            "resident.janek"
+          ]
+        },
+        "actorIds": [
+          "player.jozz",
+          "resident.ida",
+          "resident.janek",
+          "resident.mira",
+          "resident.nela",
+          "resident.oren"
+        ]
+      }
+    },
+    {
+      "name": "the same factual occurrence becomes Janek addressed hearing and Mira unaddressed hearing",
+      "pass": true,
+      "detail": {
+        "occurrenceId": "occurrence:1642:0",
+        "janek": {
+          "id": "percept:resident.janek:1642:122",
+          "occurrenceId": "occurrence:1642:0",
+          "tick": 1642,
+          "phenomenon": "speech",
+          "modality": "hearing",
+          "actorId": "resident.ida",
+          "subjectId": null,
+          "spatial": {
+            "kind": "directional",
+            "direction": {
+              "x": 1,
+              "y": 0
+            },
+            "distanceBand": "mid"
+          },
+          "summary": "speech",
+          "text": "Mira says the field well needs checking before dusk.",
+          "addressed": true
+        },
+        "mira": {
+          "id": "percept:resident.mira:1642:123",
+          "occurrenceId": "occurrence:1642:0",
+          "tick": 1642,
+          "phenomenon": "speech",
+          "modality": "hearing",
+          "actorId": "resident.ida",
+          "subjectId": null,
+          "spatial": {
+            "kind": "directional",
+            "direction": {
+              "x": 0,
+              "y": -1
+            },
+            "distanceBand": "near"
+          },
+          "summary": "speech",
+          "text": "Mira says the field well needs checking before dusk.",
+          "addressed": false
+        },
+        "oren": null,
+        "nela": null
+      }
+    },
+    {
+      "name": "authoritative participant world contains one Owner player identity and five unique resident identities",
+      "pass": true,
+      "detail": [
+        "player.jozz",
+        "resident.ida",
+        "resident.janek",
+        "resident.mira",
+        "resident.nela",
+        "resident.oren"
+      ]
+    },
+    {
+      "name": "initialHash is exactly reproducible across real-Chrome reloads",
+      "pass": true,
+      "detail": [
+        "b1108cfdf21cd155719036f3855e7538fbba7c584a0f649d0673df593b3fb7fb",
+        "b1108cfdf21cd155719036f3855e7538fbba7c584a0f649d0673df593b3fb7fb",
+        "b1108cfdf21cd155719036f3855e7538fbba7c584a0f649d0673df593b3fb7fb"
+      ]
+    },
+    {
+      "name": "enRouteHash is exactly reproducible across real-Chrome reloads",
+      "pass": true,
+      "detail": [
+        "4ea93fa200267d6a5c6b4847406f890b82daddbfb2ca318c7cf4b8712ef961c1",
+        "4ea93fa200267d6a5c6b4847406f890b82daddbfb2ca318c7cf4b8712ef961c1",
+        "4ea93fa200267d6a5c6b4847406f890b82daddbfb2ca318c7cf4b8712ef961c1"
+      ]
+    },
+    {
+      "name": "reacquiredHash is exactly reproducible across real-Chrome reloads",
+      "pass": true,
+      "detail": [
+        "7de8458371955bfd801265a86d34bf16000b33e94543c0db0359efb7d2598ca1",
+        "7de8458371955bfd801265a86d34bf16000b33e94543c0db0359efb7d2598ca1",
+        "7de8458371955bfd801265a86d34bf16000b33e94543c0db0359efb7d2598ca1"
+      ]
+    },
+    {
+      "name": "resolvedHash is exactly reproducible across real-Chrome reloads",
+      "pass": true,
+      "detail": [
+        "c25832d1b77c268ea982610bf9c25491ca55846bde01b20dcd2087d4563d58e6",
+        "c25832d1b77c268ea982610bf9c25491ca55846bde01b20dcd2087d4563d58e6",
+        "c25832d1b77c268ea982610bf9c25491ca55846bde01b20dcd2087d4563d58e6"
+      ]
+    },
+    {
+      "name": "reacquired occurs at the same World tick across reloads",
+      "pass": true,
+      "detail": [
+        1365,
+        1365,
+        1365
+      ]
+    },
+    {
+      "name": "resolved occurs at the same World tick across reloads",
+      "pass": true,
+      "detail": [
+        1643,
+        1643,
+        1643
+      ]
+    },
+    {
+      "name": "every Ida participant/research PNG is non-empty, canonically frozen and independently SHA-256 identified",
+      "pass": true,
+      "detail": {
+        "startWorld": {
+          "fileName": "ida-message-01-start-world.png",
+          "presentationMode": "world-only",
+          "tick": 970,
+          "bytes": 37847,
+          "sha256": "68f03763bb0e1e6a58bf81776982327dfab28aa278d6c483ab313ea1e97d6f6d",
+          "canonicalHash": "a26c49f7e5b2c31db42af08e696085dc6ffe54451d5d50c4b26ac6e3d3ee7938",
+          "canonicalBeforeHash": "a26c49f7e5b2c31db42af08e696085dc6ffe54451d5d50c4b26ac6e3d3ee7938",
+          "canonicalAfterHash": "a26c49f7e5b2c31db42af08e696085dc6ffe54451d5d50c4b26ac6e3d3ee7938"
+        },
+        "reacquiredWorld": {
+          "fileName": "ida-message-02-reacquired-world.png",
+          "presentationMode": "world-only",
+          "tick": 1365,
+          "bytes": 42675,
+          "sha256": "d1a359161d790a269de0591f483bbeda429cb6576e1d74de3203abedfc710f35",
+          "canonicalHash": "e9f82bd8b9b9e88cb57fb6522af60c0bc46d80419c9407b46d58b9969bad0971",
+          "canonicalBeforeHash": "e9f82bd8b9b9e88cb57fb6522af60c0bc46d80419c9407b46d58b9969bad0971",
+          "canonicalAfterHash": "e9f82bd8b9b9e88cb57fb6522af60c0bc46d80419c9407b46d58b9969bad0971"
+        },
+        "deliveredWorld": {
+          "fileName": "ida-message-03-delivered-world.png",
+          "presentationMode": "world-only",
+          "tick": 1643,
+          "bytes": 46927,
+          "sha256": "7c6414a2551ef9cccddd4638111fe8247c937611f1480954a03b0062bb46e2df",
+          "canonicalHash": "e97bfd256a87744a652eef8fa7aed0932626b4c8fd5e6facbc32db972b9d02b2",
+          "canonicalBeforeHash": "e97bfd256a87744a652eef8fa7aed0932626b4c8fd5e6facbc32db972b9d02b2",
+          "canonicalAfterHash": "e97bfd256a87744a652eef8fa7aed0932626b4c8fd5e6facbc32db972b9d02b2"
+        },
+        "deliveredResearch": {
+          "fileName": "ida-message-04-delivered-research.png",
+          "presentationMode": "research",
+          "tick": 1643,
+          "bytes": 111686,
+          "sha256": "f57e6efaf6ffca2638eb56a15f55605073f7b58400e5becc30f464eccfcbc630",
+          "canonicalHash": "e97bfd256a87744a652eef8fa7aed0932626b4c8fd5e6facbc32db972b9d02b2",
+          "canonicalBeforeHash": "e97bfd256a87744a652eef8fa7aed0932626b4c8fd5e6facbc32db972b9d02b2",
+          "canonicalAfterHash": "e97bfd256a87744a652eef8fa7aed0932626b4c8fd5e6facbc32db972b9d02b2"
+        }
+      }
+    },
+    {
+      "name": "Ida browser specimen has no uncaught runtime exceptions",
+      "pass": true,
+      "detail": []
+    }
+  ],
+  "runtimeExceptions": [],
+  "runs": [
+    {
+      "runIndex": 0,
+      "worldSteps": 673,
+      "initial": {
+        "scenarioId": "browser-ida-message-delivery",
+        "tick": 970,
+        "residentId": "resident.ida",
+        "matterId": "matter.ida.message-for-janek",
+        "matterStatus": "active",
+        "semanticRevision": 1,
+        "semanticCourse": "find Janek from private contact evidence and deliver Mira's accepted message",
+        "activeRunId": "run.ida.deliver-message-to-janek",
+        "activeRunCanMutateWorld": true,
+        "originEvidenceKind": "accepted_social_commitment",
+        "lastOutcomeEvidenceSummary": null,
+        "materialKnowledgeCount": 0,
+        "idaPosition": {
+          "x": 3031.841573152469,
+          "y": 877.4736101777345
+        },
+        "idaVelocity": {
+          "x": 0,
+          "y": 0
+        },
+        "idaFacing": {
+          "x": 0.9904596462288574,
+          "y": 0.137803081214488
+        },
+        "janekSightPercept": null,
+        "deliveryOccurrence": null,
+        "actorIds": [
+          "player.jozz",
+          "resident.ida",
+          "resident.janek",
+          "resident.mira",
+          "resident.nela",
+          "resident.oren"
+        ]
+      },
+      "enRoute": {
+        "scenarioId": "browser-ida-message-delivery",
+        "tick": 1008,
+        "residentId": "resident.ida",
+        "matterId": "matter.ida.message-for-janek",
+        "matterStatus": "active",
+        "semanticRevision": 1,
+        "semanticCourse": "find Janek from private contact evidence and deliver Mira's accepted message",
+        "activeRunId": "run.ida.deliver-message-to-janek",
+        "activeRunCanMutateWorld": true,
+        "originEvidenceKind": "accepted_social_commitment",
+        "lastOutcomeEvidenceSummary": null,
+        "materialKnowledgeCount": 0,
+        "idaPosition": {
+          "x": 2972.2489177710304,
+          "y": 869.1824581246645
+        },
+        "idaVelocity": {
+          "x": -94.0936663917455,
+          "y": -13.091292715373584
+        },
+        "idaFacing": {
+          "x": -0.9904596462288622,
+          "y": -0.13780308121445353
+        },
+        "janekSightPercept": null,
+        "deliveryOccurrence": null,
+        "actorIds": [
+          "player.jozz",
+          "resident.ida",
+          "resident.janek",
+          "resident.mira",
+          "resident.nela",
+          "resident.oren"
+        ]
+      },
+      "reacquired": {
+        "scenarioId": "browser-ida-message-delivery",
+        "tick": 1365,
+        "residentId": "resident.ida",
+        "matterId": "matter.ida.message-for-janek",
+        "matterStatus": "active",
+        "semanticRevision": 1,
+        "semanticCourse": "find Janek from private contact evidence and deliver Mira's accepted message",
+        "activeRunId": "run.ida.deliver-message-to-janek",
+        "activeRunCanMutateWorld": true,
+        "originEvidenceKind": "accepted_social_commitment",
+        "lastOutcomeEvidenceSummary": null,
+        "materialKnowledgeCount": 0,
+        "idaPosition": {
+          "x": 2412.3916027401447,
+          "y": 791.2892664681917
+        },
+        "idaVelocity": {
+          "x": -94.0936663917455,
+          "y": -13.091292715373584
+        },
+        "idaFacing": {
+          "x": -0.9904596462288622,
+          "y": -0.13780308121445353
+        },
+        "janekSightPercept": {
+          "id": "percept:resident.ida:1365:85",
+          "occurrenceId": "sight:actor_sight_enter:resident.ida:resident.janek:1365",
+          "tick": 1365,
+          "phenomenon": "actor_sight_enter",
+          "modality": "sight",
+          "actorId": "resident.janek",
+          "subjectId": "resident.janek",
+          "spatial": {
+            "kind": "exact",
+            "position": {
+              "x": 1900,
+              "y": 720
+            }
+          },
+          "summary": "actor resident.janek entered sight",
+          "text": null,
+          "addressed": false
+        },
+        "deliveryOccurrence": null,
+        "actorIds": [
+          "player.jozz",
+          "resident.ida",
+          "resident.janek",
+          "resident.mira",
+          "resident.nela",
+          "resident.oren"
+        ]
+      },
+      "resolved": {
+        "scenarioId": "browser-ida-message-delivery",
+        "tick": 1643,
+        "residentId": "resident.ida",
+        "matterId": "matter.ida.message-for-janek",
+        "matterStatus": "resolved",
+        "semanticRevision": 1,
+        "semanticCourse": "find Janek from private contact evidence and deliver Mira's accepted message",
+        "activeRunId": null,
+        "activeRunCanMutateWorld": false,
+        "originEvidenceKind": null,
+        "lastOutcomeEvidenceSummary": null,
+        "materialKnowledgeCount": 0,
+        "idaPosition": {
+          "x": 1977.9925095649196,
+          "y": 730.8511317655518
+        },
+        "idaVelocity": {
+          "x": 0,
+          "y": 0
+        },
+        "idaFacing": {
+          "x": -0.9904596462288663,
+          "y": -0.13780308121442297
+        },
+        "janekSightPercept": {
+          "id": "percept:resident.ida:1365:85",
+          "occurrenceId": "sight:actor_sight_enter:resident.ida:resident.janek:1365",
+          "tick": 1365,
+          "phenomenon": "actor_sight_enter",
+          "modality": "sight",
+          "actorId": "resident.janek",
+          "subjectId": "resident.janek",
+          "spatial": {
+            "kind": "exact",
+            "position": {
+              "x": 1900,
+              "y": 720
+            }
+          },
+          "summary": "actor resident.janek entered sight",
+          "text": null,
+          "addressed": false
+        },
+        "deliveryOccurrence": {
+          "id": "occurrence:1642:0",
+          "tick": 1642,
+          "kind": "speech",
+          "actorId": "resident.ida",
+          "subjectId": null,
+          "position": {
+            "x": 1977.9925095649196,
+            "y": 730.8511317655518
+          },
+          "radius": 220,
+          "summary": "speech",
+          "text": "Mira says the field well needs checking before dusk.",
+          "addressedActorIds": [
+            "resident.janek"
+          ]
+        },
+        "actorIds": [
+          "player.jozz",
+          "resident.ida",
+          "resident.janek",
+          "resident.mira",
+          "resident.nela",
+          "resident.oren"
+        ]
+      },
+      "privateJoin": {
+        "occurrenceId": "occurrence:1642:0",
+        "janek": {
+          "id": "percept:resident.janek:1642:122",
+          "occurrenceId": "occurrence:1642:0",
+          "tick": 1642,
+          "phenomenon": "speech",
+          "modality": "hearing",
+          "actorId": "resident.ida",
+          "subjectId": null,
+          "spatial": {
+            "kind": "directional",
+            "direction": {
+              "x": 1,
+              "y": 0
+            },
+            "distanceBand": "mid"
+          },
+          "summary": "speech",
+          "text": "Mira says the field well needs checking before dusk.",
+          "addressed": true
+        },
+        "mira": {
+          "id": "percept:resident.mira:1642:123",
+          "occurrenceId": "occurrence:1642:0",
+          "tick": 1642,
+          "phenomenon": "speech",
+          "modality": "hearing",
+          "actorId": "resident.ida",
+          "subjectId": null,
+          "spatial": {
+            "kind": "directional",
+            "direction": {
+              "x": 0,
+              "y": -1
+            },
+            "distanceBand": "near"
+          },
+          "summary": "speech",
+          "text": "Mira says the field well needs checking before dusk.",
+          "addressed": false
+        },
+        "oren": null,
+        "nela": null
+      },
+      "initialHash": "b1108cfdf21cd155719036f3855e7538fbba7c584a0f649d0673df593b3fb7fb",
+      "enRouteHash": "4ea93fa200267d6a5c6b4847406f890b82daddbfb2ca318c7cf4b8712ef961c1",
+      "reacquiredHash": "7de8458371955bfd801265a86d34bf16000b33e94543c0db0359efb7d2598ca1",
+      "resolvedHash": "c25832d1b77c268ea982610bf9c25491ca55846bde01b20dcd2087d4563d58e6",
+      "visualEvidence": {
+        "startWorld": {
+          "fileName": "ida-message-01-start-world.png",
+          "presentationMode": "world-only",
+          "tick": 970,
+          "bytes": 37847,
+          "sha256": "68f03763bb0e1e6a58bf81776982327dfab28aa278d6c483ab313ea1e97d6f6d",
+          "canonicalHash": "a26c49f7e5b2c31db42af08e696085dc6ffe54451d5d50c4b26ac6e3d3ee7938",
+          "canonicalBeforeHash": "a26c49f7e5b2c31db42af08e696085dc6ffe54451d5d50c4b26ac6e3d3ee7938",
+          "canonicalAfterHash": "a26c49f7e5b2c31db42af08e696085dc6ffe54451d5d50c4b26ac6e3d3ee7938"
+        },
+        "reacquiredWorld": {
+          "fileName": "ida-message-02-reacquired-world.png",
+          "presentationMode": "world-only",
+          "tick": 1365,
+          "bytes": 42675,
+          "sha256": "d1a359161d790a269de0591f483bbeda429cb6576e1d74de3203abedfc710f35",
+          "canonicalHash": "e9f82bd8b9b9e88cb57fb6522af60c0bc46d80419c9407b46d58b9969bad0971",
+          "canonicalBeforeHash": "e9f82bd8b9b9e88cb57fb6522af60c0bc46d80419c9407b46d58b9969bad0971",
+          "canonicalAfterHash": "e9f82bd8b9b9e88cb57fb6522af60c0bc46d80419c9407b46d58b9969bad0971"
+        },
+        "deliveredWorld": {
+          "fileName": "ida-message-03-delivered-world.png",
+          "presentationMode": "world-only",
+          "tick": 1643,
+          "bytes": 46927,
+          "sha256": "7c6414a2551ef9cccddd4638111fe8247c937611f1480954a03b0062bb46e2df",
+          "canonicalHash": "e97bfd256a87744a652eef8fa7aed0932626b4c8fd5e6facbc32db972b9d02b2",
+          "canonicalBeforeHash": "e97bfd256a87744a652eef8fa7aed0932626b4c8fd5e6facbc32db972b9d02b2",
+          "canonicalAfterHash": "e97bfd256a87744a652eef8fa7aed0932626b4c8fd5e6facbc32db972b9d02b2"
+        },
+        "deliveredResearch": {
+          "fileName": "ida-message-04-delivered-research.png",
+          "presentationMode": "research",
+          "tick": 1643,
+          "bytes": 111686,
+          "sha256": "f57e6efaf6ffca2638eb56a15f55605073f7b58400e5becc30f464eccfcbc630",
+          "canonicalHash": "e97bfd256a87744a652eef8fa7aed0932626b4c8fd5e6facbc32db972b9d02b2",
+          "canonicalBeforeHash": "e97bfd256a87744a652eef8fa7aed0932626b4c8fd5e6facbc32db972b9d02b2",
+          "canonicalAfterHash": "e97bfd256a87744a652eef8fa7aed0932626b4c8fd5e6facbc32db972b9d02b2"
+        }
+      }
+    },
+    {
+      "runIndex": 1,
+      "worldSteps": 673,
+      "initial": {
+        "scenarioId": "browser-ida-message-delivery",
+        "tick": 970,
+        "residentId": "resident.ida",
+        "matterId": "matter.ida.message-for-janek",
+        "matterStatus": "active",
+        "semanticRevision": 1,
+        "semanticCourse": "find Janek from private contact evidence and deliver Mira's accepted message",
+        "activeRunId": "run.ida.deliver-message-to-janek",
+        "activeRunCanMutateWorld": true,
+        "originEvidenceKind": "accepted_social_commitment",
+        "lastOutcomeEvidenceSummary": null,
+        "materialKnowledgeCount": 0,
+        "idaPosition": {
+          "x": 3031.841573152469,
+          "y": 877.4736101777345
+        },
+        "idaVelocity": {
+          "x": 0,
+          "y": 0
+        },
+        "idaFacing": {
+          "x": 0.9904596462288574,
+          "y": 0.137803081214488
+        },
+        "janekSightPercept": null,
+        "deliveryOccurrence": null,
+        "actorIds": [
+          "player.jozz",
+          "resident.ida",
+          "resident.janek",
+          "resident.mira",
+          "resident.nela",
+          "resident.oren"
+        ]
+      },
+      "enRoute": {
+        "scenarioId": "browser-ida-message-delivery",
+        "tick": 1008,
+        "residentId": "resident.ida",
+        "matterId": "matter.ida.message-for-janek",
+        "matterStatus": "active",
+        "semanticRevision": 1,
+        "semanticCourse": "find Janek from private contact evidence and deliver Mira's accepted message",
+        "activeRunId": "run.ida.deliver-message-to-janek",
+        "activeRunCanMutateWorld": true,
+        "originEvidenceKind": "accepted_social_commitment",
+        "lastOutcomeEvidenceSummary": null,
+        "materialKnowledgeCount": 0,
+        "idaPosition": {
+          "x": 2972.2489177710304,
+          "y": 869.1824581246645
+        },
+        "idaVelocity": {
+          "x": -94.0936663917455,
+          "y": -13.091292715373584
+        },
+        "idaFacing": {
+          "x": -0.9904596462288622,
+          "y": -0.13780308121445353
+        },
+        "janekSightPercept": null,
+        "deliveryOccurrence": null,
+        "actorIds": [
+          "player.jozz",
+          "resident.ida",
+          "resident.janek",
+          "resident.mira",
+          "resident.nela",
+          "resident.oren"
+        ]
+      },
+      "reacquired": {
+        "scenarioId": "browser-ida-message-delivery",
+        "tick": 1365,
+        "residentId": "resident.ida",
+        "matterId": "matter.ida.message-for-janek",
+        "matterStatus": "active",
+        "semanticRevision": 1,
+        "semanticCourse": "find Janek from private contact evidence and deliver Mira's accepted message",
+        "activeRunId": "run.ida.deliver-message-to-janek",
+        "activeRunCanMutateWorld": true,
+        "originEvidenceKind": "accepted_social_commitment",
+        "lastOutcomeEvidenceSummary": null,
+        "materialKnowledgeCount": 0,
+        "idaPosition": {
+          "x": 2412.3916027401447,
+          "y": 791.2892664681917
+        },
+        "idaVelocity": {
+          "x": -94.0936663917455,
+          "y": -13.091292715373584
+        },
+        "idaFacing": {
+          "x": -0.9904596462288622,
+          "y": -0.13780308121445353
+        },
+        "janekSightPercept": {
+          "id": "percept:resident.ida:1365:85",
+          "occurrenceId": "sight:actor_sight_enter:resident.ida:resident.janek:1365",
+          "tick": 1365,
+          "phenomenon": "actor_sight_enter",
+          "modality": "sight",
+          "actorId": "resident.janek",
+          "subjectId": "resident.janek",
+          "spatial": {
+            "kind": "exact",
+            "position": {
+              "x": 1900,
+              "y": 720
+            }
+          },
+          "summary": "actor resident.janek entered sight",
+          "text": null,
+          "addressed": false
+        },
+        "deliveryOccurrence": null,
+        "actorIds": [
+          "player.jozz",
+          "resident.ida",
+          "resident.janek",
+          "resident.mira",
+          "resident.nela",
+          "resident.oren"
+        ]
+      },
+      "resolved": {
+        "scenarioId": "browser-ida-message-delivery",
+        "tick": 1643,
+        "residentId": "resident.ida",
+        "matterId": "matter.ida.message-for-janek",
+        "matterStatus": "resolved",
+        "semanticRevision": 1,
+        "semanticCourse": "find Janek from private contact evidence and deliver Mira's accepted message",
+        "activeRunId": null,
+        "activeRunCanMutateWorld": false,
+        "originEvidenceKind": null,
+        "lastOutcomeEvidenceSummary": null,
+        "materialKnowledgeCount": 0,
+        "idaPosition": {
+          "x": 1977.9925095649196,
+          "y": 730.8511317655518
+        },
+        "idaVelocity": {
+          "x": 0,
+          "y": 0
+        },
+        "idaFacing": {
+          "x": -0.9904596462288663,
+          "y": -0.13780308121442297
+        },
+        "janekSightPercept": {
+          "id": "percept:resident.ida:1365:85",
+          "occurrenceId": "sight:actor_sight_enter:resident.ida:resident.janek:1365",
+          "tick": 1365,
+          "phenomenon": "actor_sight_enter",
+          "modality": "sight",
+          "actorId": "resident.janek",
+          "subjectId": "resident.janek",
+          "spatial": {
+            "kind": "exact",
+            "position": {
+              "x": 1900,
+              "y": 720
+            }
+          },
+          "summary": "actor resident.janek entered sight",
+          "text": null,
+          "addressed": false
+        },
+        "deliveryOccurrence": {
+          "id": "occurrence:1642:0",
+          "tick": 1642,
+          "kind": "speech",
+          "actorId": "resident.ida",
+          "subjectId": null,
+          "position": {
+            "x": 1977.9925095649196,
+            "y": 730.8511317655518
+          },
+          "radius": 220,
+          "summary": "speech",
+          "text": "Mira says the field well needs checking before dusk.",
+          "addressedActorIds": [
+            "resident.janek"
+          ]
+        },
+        "actorIds": [
+          "player.jozz",
+          "resident.ida",
+          "resident.janek",
+          "resident.mira",
+          "resident.nela",
+          "resident.oren"
+        ]
+      },
+      "privateJoin": {
+        "occurrenceId": "occurrence:1642:0",
+        "janek": {
+          "id": "percept:resident.janek:1642:122",
+          "occurrenceId": "occurrence:1642:0",
+          "tick": 1642,
+          "phenomenon": "speech",
+          "modality": "hearing",
+          "actorId": "resident.ida",
+          "subjectId": null,
+          "spatial": {
+            "kind": "directional",
+            "direction": {
+              "x": 1,
+              "y": 0
+            },
+            "distanceBand": "mid"
+          },
+          "summary": "speech",
+          "text": "Mira says the field well needs checking before dusk.",
+          "addressed": true
+        },
+        "mira": {
+          "id": "percept:resident.mira:1642:123",
+          "occurrenceId": "occurrence:1642:0",
+          "tick": 1642,
+          "phenomenon": "speech",
+          "modality": "hearing",
+          "actorId": "resident.ida",
+          "subjectId": null,
+          "spatial": {
+            "kind": "directional",
+            "direction": {
+              "x": 0,
+              "y": -1
+            },
+            "distanceBand": "near"
+          },
+          "summary": "speech",
+          "text": "Mira says the field well needs checking before dusk.",
+          "addressed": false
+        },
+        "oren": null,
+        "nela": null
+      },
+      "initialHash": "b1108cfdf21cd155719036f3855e7538fbba7c584a0f649d0673df593b3fb7fb",
+      "enRouteHash": "4ea93fa200267d6a5c6b4847406f890b82daddbfb2ca318c7cf4b8712ef961c1",
+      "reacquiredHash": "7de8458371955bfd801265a86d34bf16000b33e94543c0db0359efb7d2598ca1",
+      "resolvedHash": "c25832d1b77c268ea982610bf9c25491ca55846bde01b20dcd2087d4563d58e6",
+      "visualEvidence": null
+    },
+    {
+      "runIndex": 2,
+      "worldSteps": 673,
+      "initial": {
+        "scenarioId": "browser-ida-message-delivery",
+        "tick": 970,
+        "residentId": "resident.ida",
+        "matterId": "matter.ida.message-for-janek",
+        "matterStatus": "active",
+        "semanticRevision": 1,
+        "semanticCourse": "find Janek from private contact evidence and deliver Mira's accepted message",
+        "activeRunId": "run.ida.deliver-message-to-janek",
+        "activeRunCanMutateWorld": true,
+        "originEvidenceKind": "accepted_social_commitment",
+        "lastOutcomeEvidenceSummary": null,
+        "materialKnowledgeCount": 0,
+        "idaPosition": {
+          "x": 3031.841573152469,
+          "y": 877.4736101777345
+        },
+        "idaVelocity": {
+          "x": 0,
+          "y": 0
+        },
+        "idaFacing": {
+          "x": 0.9904596462288574,
+          "y": 0.137803081214488
+        },
+        "janekSightPercept": null,
+        "deliveryOccurrence": null,
+        "actorIds": [
+          "player.jozz",
+          "resident.ida",
+          "resident.janek",
+          "resident.mira",
+          "resident.nela",
+          "resident.oren"
+        ]
+      },
+      "enRoute": {
+        "scenarioId": "browser-ida-message-delivery",
+        "tick": 1008,
+        "residentId": "resident.ida",
+        "matterId": "matter.ida.message-for-janek",
+        "matterStatus": "active",
+        "semanticRevision": 1,
+        "semanticCourse": "find Janek from private contact evidence and deliver Mira's accepted message",
+        "activeRunId": "run.ida.deliver-message-to-janek",
+        "activeRunCanMutateWorld": true,
+        "originEvidenceKind": "accepted_social_commitment",
+        "lastOutcomeEvidenceSummary": null,
+        "materialKnowledgeCount": 0,
+        "idaPosition": {
+          "x": 2972.2489177710304,
+          "y": 869.1824581246645
+        },
+        "idaVelocity": {
+          "x": -94.0936663917455,
+          "y": -13.091292715373584
+        },
+        "idaFacing": {
+          "x": -0.9904596462288622,
+          "y": -0.13780308121445353
+        },
+        "janekSightPercept": null,
+        "deliveryOccurrence": null,
+        "actorIds": [
+          "player.jozz",
+          "resident.ida",
+          "resident.janek",
+          "resident.mira",
+          "resident.nela",
+          "resident.oren"
+        ]
+      },
+      "reacquired": {
+        "scenarioId": "browser-ida-message-delivery",
+        "tick": 1365,
+        "residentId": "resident.ida",
+        "matterId": "matter.ida.message-for-janek",
+        "matterStatus": "active",
+        "semanticRevision": 1,
+        "semanticCourse": "find Janek from private contact evidence and deliver Mira's accepted message",
+        "activeRunId": "run.ida.deliver-message-to-janek",
+        "activeRunCanMutateWorld": true,
+        "originEvidenceKind": "accepted_social_commitment",
+        "lastOutcomeEvidenceSummary": null,
+        "materialKnowledgeCount": 0,
+        "idaPosition": {
+          "x": 2412.3916027401447,
+          "y": 791.2892664681917
+        },
+        "idaVelocity": {
+          "x": -94.0936663917455,
+          "y": -13.091292715373584
+        },
+        "idaFacing": {
+          "x": -0.9904596462288622,
+          "y": -0.13780308121445353
+        },
+        "janekSightPercept": {
+          "id": "percept:resident.ida:1365:85",
+          "occurrenceId": "sight:actor_sight_enter:resident.ida:resident.janek:1365",
+          "tick": 1365,
+          "phenomenon": "actor_sight_enter",
+          "modality": "sight",
+          "actorId": "resident.janek",
+          "subjectId": "resident.janek",
+          "spatial": {
+            "kind": "exact",
+            "position": {
+              "x": 1900,
+              "y": 720
+            }
+          },
+          "summary": "actor resident.janek entered sight",
+          "text": null,
+          "addressed": false
+        },
+        "deliveryOccurrence": null,
+        "actorIds": [
+          "player.jozz",
+          "resident.ida",
+          "resident.janek",
+          "resident.mira",
+          "resident.nela",
+          "resident.oren"
+        ]
+      },
+      "resolved": {
+        "scenarioId": "browser-ida-message-delivery",
+        "tick": 1643,
+        "residentId": "resident.ida",
+        "matterId": "matter.ida.message-for-janek",
+        "matterStatus": "resolved",
+        "semanticRevision": 1,
+        "semanticCourse": "find Janek from private contact evidence and deliver Mira's accepted message",
+        "activeRunId": null,
+        "activeRunCanMutateWorld": false,
+        "originEvidenceKind": null,
+        "lastOutcomeEvidenceSummary": null,
+        "materialKnowledgeCount": 0,
+        "idaPosition": {
+          "x": 1977.9925095649196,
+          "y": 730.8511317655518
+        },
+        "idaVelocity": {
+          "x": 0,
+          "y": 0
+        },
+        "idaFacing": {
+          "x": -0.9904596462288663,
+          "y": -0.13780308121442297
+        },
+        "janekSightPercept": {
+          "id": "percept:resident.ida:1365:85",
+          "occurrenceId": "sight:actor_sight_enter:resident.ida:resident.janek:1365",
+          "tick": 1365,
+          "phenomenon": "actor_sight_enter",
+          "modality": "sight",
+          "actorId": "resident.janek",
+          "subjectId": "resident.janek",
+          "spatial": {
+            "kind": "exact",
+            "position": {
+              "x": 1900,
+              "y": 720
+            }
+          },
+          "summary": "actor resident.janek entered sight",
+          "text": null,
+          "addressed": false
+        },
+        "deliveryOccurrence": {
+          "id": "occurrence:1642:0",
+          "tick": 1642,
+          "kind": "speech",
+          "actorId": "resident.ida",
+          "subjectId": null,
+          "position": {
+            "x": 1977.9925095649196,
+            "y": 730.8511317655518
+          },
+          "radius": 220,
+          "summary": "speech",
+          "text": "Mira says the field well needs checking before dusk.",
+          "addressedActorIds": [
+            "resident.janek"
+          ]
+        },
+        "actorIds": [
+          "player.jozz",
+          "resident.ida",
+          "resident.janek",
+          "resident.mira",
+          "resident.nela",
+          "resident.oren"
+        ]
+      },
+      "privateJoin": {
+        "occurrenceId": "occurrence:1642:0",
+        "janek": {
+          "id": "percept:resident.janek:1642:122",
+          "occurrenceId": "occurrence:1642:0",
+          "tick": 1642,
+          "phenomenon": "speech",
+          "modality": "hearing",
+          "actorId": "resident.ida",
+          "subjectId": null,
+          "spatial": {
+            "kind": "directional",
+            "direction": {
+              "x": 1,
+              "y": 0
+            },
+            "distanceBand": "mid"
+          },
+          "summary": "speech",
+          "text": "Mira says the field well needs checking before dusk.",
+          "addressed": true
+        },
+        "mira": {
+          "id": "percept:resident.mira:1642:123",
+          "occurrenceId": "occurrence:1642:0",
+          "tick": 1642,
+          "phenomenon": "speech",
+          "modality": "hearing",
+          "actorId": "resident.ida",
+          "subjectId": null,
+          "spatial": {
+            "kind": "directional",
+            "direction": {
+              "x": 0,
+              "y": -1
+            },
+            "distanceBand": "near"
+          },
+          "summary": "speech",
+          "text": "Mira says the field well needs checking before dusk.",
+          "addressed": false
+        },
+        "oren": null,
+        "nela": null
+      },
+      "initialHash": "b1108cfdf21cd155719036f3855e7538fbba7c584a0f649d0673df593b3fb7fb",
+      "enRouteHash": "4ea93fa200267d6a5c6b4847406f890b82daddbfb2ca318c7cf4b8712ef961c1",
+      "reacquiredHash": "7de8458371955bfd801265a86d34bf16000b33e94543c0db0359efb7d2598ca1",
+      "resolvedHash": "c25832d1b77c268ea982610bf9c25491ca55846bde01b20dcd2087d4563d58e6",
+      "visualEvidence": null
+    }
+  ],
+  "visualEvidence": {
+    "startWorld": {
+      "fileName": "ida-message-01-start-world.png",
+      "presentationMode": "world-only",
+      "tick": 970,
+      "bytes": 37847,
+      "sha256": "68f03763bb0e1e6a58bf81776982327dfab28aa278d6c483ab313ea1e97d6f6d",
+      "canonicalHash": "a26c49f7e5b2c31db42af08e696085dc6ffe54451d5d50c4b26ac6e3d3ee7938",
+      "canonicalBeforeHash": "a26c49f7e5b2c31db42af08e696085dc6ffe54451d5d50c4b26ac6e3d3ee7938",
+      "canonicalAfterHash": "a26c49f7e5b2c31db42af08e696085dc6ffe54451d5d50c4b26ac6e3d3ee7938"
+    },
+    "reacquiredWorld": {
+      "fileName": "ida-message-02-reacquired-world.png",
+      "presentationMode": "world-only",
+      "tick": 1365,
+      "bytes": 42675,
+      "sha256": "d1a359161d790a269de0591f483bbeda429cb6576e1d74de3203abedfc710f35",
+      "canonicalHash": "e9f82bd8b9b9e88cb57fb6522af60c0bc46d80419c9407b46d58b9969bad0971",
+      "canonicalBeforeHash": "e9f82bd8b9b9e88cb57fb6522af60c0bc46d80419c9407b46d58b9969bad0971",
+      "canonicalAfterHash": "e9f82bd8b9b9e88cb57fb6522af60c0bc46d80419c9407b46d58b9969bad0971"
+    },
+    "deliveredWorld": {
+      "fileName": "ida-message-03-delivered-world.png",
+      "presentationMode": "world-only",
+      "tick": 1643,
+      "bytes": 46927,
+      "sha256": "7c6414a2551ef9cccddd4638111fe8247c937611f1480954a03b0062bb46e2df",
+      "canonicalHash": "e97bfd256a87744a652eef8fa7aed0932626b4c8fd5e6facbc32db972b9d02b2",
+      "canonicalBeforeHash": "e97bfd256a87744a652eef8fa7aed0932626b4c8fd5e6facbc32db972b9d02b2",
+      "canonicalAfterHash": "e97bfd256a87744a652eef8fa7aed0932626b4c8fd5e6facbc32db972b9d02b2"
+    },
+    "deliveredResearch": {
+      "fileName": "ida-message-04-delivered-research.png",
+      "presentationMode": "research",
+      "tick": 1643,
+      "bytes": 111686,
+      "sha256": "f57e6efaf6ffca2638eb56a15f55605073f7b58400e5becc30f464eccfcbc630",
+      "canonicalHash": "e97bfd256a87744a652eef8fa7aed0932626b4c8fd5e6facbc32db972b9d02b2",
+      "canonicalBeforeHash": "e97bfd256a87744a652eef8fa7aed0932626b4c8fd5e6facbc32db972b9d02b2",
+      "canonicalAfterHash": "e97bfd256a87744a652eef8fa7aed0932626b4c8fd5e6facbc32db972b9d02b2"
+    }
+  },
+  "finishedAt": "2026-09-26T08:51:02.584Z",
+  "outcome": "PASS"
+}

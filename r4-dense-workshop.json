@@ -1,0 +1,3694 @@
+{
+  "schemaVersion": 1,
+  "sourceSha": "b79793cf625da93d4909c644a3e56511febde67a",
+  "startedAt": "2026-09-26T08:51:22.883Z",
+  "chrome": "Chrome/153.0.8010.52",
+  "assertions": [
+    {
+      "name": "R4 browser exposes two pre-existing resident matters with A focused and B deferred",
+      "pass": true,
+      "detail": {
+        "scenarioId": "browser-r4-dense-workshop",
+        "tick": 274,
+        "primary": {
+          "id": "matter.janek.r4.missing-crate",
+          "status": "active",
+          "semanticRevision": 1,
+          "semanticCourse": "retrieve the familiar workshop crate from its last-known bench position",
+          "semanticIntent": {
+            "kind": "acquire_material_object",
+            "goal": "have the familiar workshop crate in hand",
+            "objectId": "crate.r4.remembered"
+          },
+          "suspendedByMatterId": null,
+          "originEvidence": {
+            "id": "evidence:janek:r4:primary-origin",
+            "tick": 274,
+            "kind": "life_context",
+            "summary": "Janek already needs the familiar workshop crate he last saw beside the bench."
+          },
+          "semanticEvidence": {
+            "id": "evidence:janek:r4:primary-origin",
+            "tick": 274,
+            "kind": "life_context",
+            "summary": "Janek already needs the familiar workshop crate he last saw beside the bench."
+          },
+          "lastOutcomeEvidence": null,
+          "activeRun": {
+            "runId": "run.janek.r4.pickup-last-known-crate",
+            "taskId": "task.janek.r4.pickup-last-known-crate",
+            "semanticRevision": 1,
+            "canMutateWorld": true,
+            "bodyState": "focused"
+          }
+        },
+        "secondary": {
+          "id": "matter.janek.r4.return-basket",
+          "status": "active",
+          "semanticRevision": 1,
+          "semanticCourse": "return the visible workshop basket to the local shelf",
+          "semanticIntent": null,
+          "suspendedByMatterId": null,
+          "originEvidence": {
+            "id": "evidence:janek:r4:secondary-origin",
+            "tick": 274,
+            "kind": "life_context",
+            "summary": "Janek already intends to return the workshop basket to its local shelf."
+          },
+          "semanticEvidence": {
+            "id": "evidence:janek:r4:secondary-origin",
+            "tick": 274,
+            "kind": "life_context",
+            "summary": "Janek already intends to return the workshop basket to its local shelf."
+          },
+          "lastOutcomeEvidence": null,
+          "activeRun": {
+            "runId": "run.janek.r4.pickup-basket",
+            "taskId": "task.janek.r4.pickup-basket",
+            "semanticRevision": 1,
+            "canMutateWorld": true,
+            "bodyState": "deferred"
+          }
+        },
+        "body": {
+          "focusedRunId": "run.janek.r4.pickup-last-known-crate",
+          "deferredRunIds": [
+            "run.janek.r4.pickup-basket"
+          ]
+        },
+        "primaryWorld": {
+          "id": "crate.r4.remembered",
+          "label": "Familiar Workshop Crate",
+          "radius": 18,
+          "location": {
+            "kind": "free",
+            "position": {
+              "x": 500,
+              "y": 500
+            }
+          }
+        },
+        "secondaryWorld": {
+          "id": "basket.r4.available",
+          "label": "Workshop Basket",
+          "radius": 18,
+          "location": {
+            "kind": "free",
+            "position": {
+              "x": 1100,
+              "y": 550
+            }
+          }
+        },
+        "irrelevantWorld": {
+          "id": "stool.r4.background",
+          "label": "Background Stool",
+          "radius": 18,
+          "location": {
+            "kind": "free",
+            "position": {
+              "x": 1180,
+              "y": 650
+            }
+          }
+        },
+        "primaryKnowledge": {
+          "objectId": "crate.r4.remembered",
+          "lastKnownPosition": {
+            "x": 500,
+            "y": 500
+          },
+          "observedAtTick": 0,
+          "currentlyVisible": false
+        },
+        "janekPosition": {
+          "x": 1021.3333333333234,
+          "y": 500
+        },
+        "pendingCognitionReasonCount": 0,
+        "actionFacts": []
+      }
+    },
+    {
+      "name": "hidden relocation changes World truth without rewriting Janek's remembered primary position",
+      "pass": true,
+      "detail": {
+        "scenarioId": "browser-r4-dense-workshop",
+        "tick": 275,
+        "primary": {
+          "id": "matter.janek.r4.missing-crate",
+          "status": "active",
+          "semanticRevision": 1,
+          "semanticCourse": "retrieve the familiar workshop crate from its last-known bench position",
+          "semanticIntent": {
+            "kind": "acquire_material_object",
+            "goal": "have the familiar workshop crate in hand",
+            "objectId": "crate.r4.remembered"
+          },
+          "suspendedByMatterId": null,
+          "originEvidence": {
+            "id": "evidence:janek:r4:primary-origin",
+            "tick": 274,
+            "kind": "life_context",
+            "summary": "Janek already needs the familiar workshop crate he last saw beside the bench."
+          },
+          "semanticEvidence": {
+            "id": "evidence:janek:r4:primary-origin",
+            "tick": 274,
+            "kind": "life_context",
+            "summary": "Janek already needs the familiar workshop crate he last saw beside the bench."
+          },
+          "lastOutcomeEvidence": null,
+          "activeRun": {
+            "runId": "run.janek.r4.pickup-last-known-crate",
+            "taskId": "task.janek.r4.pickup-last-known-crate",
+            "semanticRevision": 1,
+            "canMutateWorld": true,
+            "bodyState": "focused"
+          }
+        },
+        "secondary": {
+          "id": "matter.janek.r4.return-basket",
+          "status": "active",
+          "semanticRevision": 1,
+          "semanticCourse": "return the visible workshop basket to the local shelf",
+          "semanticIntent": null,
+          "suspendedByMatterId": null,
+          "originEvidence": {
+            "id": "evidence:janek:r4:secondary-origin",
+            "tick": 274,
+            "kind": "life_context",
+            "summary": "Janek already intends to return the workshop basket to its local shelf."
+          },
+          "semanticEvidence": {
+            "id": "evidence:janek:r4:secondary-origin",
+            "tick": 274,
+            "kind": "life_context",
+            "summary": "Janek already intends to return the workshop basket to its local shelf."
+          },
+          "lastOutcomeEvidence": null,
+          "activeRun": {
+            "runId": "run.janek.r4.pickup-basket",
+            "taskId": "task.janek.r4.pickup-basket",
+            "semanticRevision": 1,
+            "canMutateWorld": true,
+            "bodyState": "deferred"
+          }
+        },
+        "body": {
+          "focusedRunId": "run.janek.r4.pickup-last-known-crate",
+          "deferredRunIds": [
+            "run.janek.r4.pickup-basket"
+          ]
+        },
+        "primaryWorld": {
+          "id": "crate.r4.remembered",
+          "label": "Familiar Workshop Crate",
+          "radius": 18,
+          "location": {
+            "kind": "free",
+            "position": {
+              "x": 1710.6125126672691,
+              "y": 1058.7442366156627
+            }
+          }
+        },
+        "secondaryWorld": {
+          "id": "basket.r4.available",
+          "label": "Workshop Basket",
+          "radius": 18,
+          "location": {
+            "kind": "free",
+            "position": {
+              "x": 1100,
+              "y": 550
+            }
+          }
+        },
+        "irrelevantWorld": {
+          "id": "stool.r4.background",
+          "label": "Background Stool",
+          "radius": 18,
+          "location": {
+            "kind": "free",
+            "position": {
+              "x": 1180,
+              "y": 650
+            }
+          }
+        },
+        "primaryKnowledge": {
+          "objectId": "crate.r4.remembered",
+          "lastKnownPosition": {
+            "x": 500,
+            "y": 500
+          },
+          "observedAtTick": 0,
+          "currentlyVisible": false
+        },
+        "janekPosition": {
+          "x": 1021.3333333333234,
+          "y": 500
+        },
+        "pendingCognitionReasonCount": 0,
+        "actionFacts": []
+      }
+    },
+    {
+      "name": "checked absence keeps A unresolved while sole deferred B acquires the body locally",
+      "pass": true,
+      "detail": {
+        "scenarioId": "browser-r4-dense-workshop",
+        "tick": 703,
+        "primary": {
+          "id": "matter.janek.r4.missing-crate",
+          "status": "active",
+          "semanticRevision": 2,
+          "semanticCourse": "retrieve the familiar workshop crate from its last-known bench position",
+          "semanticIntent": {
+            "kind": "acquire_material_object",
+            "goal": "have the familiar workshop crate in hand",
+            "objectId": "crate.r4.remembered"
+          },
+          "suspendedByMatterId": null,
+          "originEvidence": {
+            "id": "evidence:janek:r4:primary-origin",
+            "tick": 274,
+            "kind": "life_context",
+            "summary": "Janek already needs the familiar workshop crate he last saw beside the bench."
+          },
+          "semanticEvidence": {
+            "id": "evidence:janek:r4:checked-absence:701",
+            "tick": 701,
+            "kind": "checked_absence",
+            "summary": "Checked (500, 500); the familiar crate is not visible there now."
+          },
+          "lastOutcomeEvidence": {
+            "id": "task-outcome:7a3ec2df32def742:701",
+            "tick": 701,
+            "kind": "task_outcome",
+            "summary": "blocked: material object is not visible after bounded local inspection",
+            "sourceRunId": "run.janek.r4.pickup-last-known-crate"
+          },
+          "activeRun": null
+        },
+        "secondary": {
+          "id": "matter.janek.r4.return-basket",
+          "status": "active",
+          "semanticRevision": 1,
+          "semanticCourse": "return the visible workshop basket to the local shelf",
+          "semanticIntent": null,
+          "suspendedByMatterId": null,
+          "originEvidence": {
+            "id": "evidence:janek:r4:secondary-origin",
+            "tick": 274,
+            "kind": "life_context",
+            "summary": "Janek already intends to return the workshop basket to its local shelf."
+          },
+          "semanticEvidence": {
+            "id": "evidence:janek:r4:secondary-origin",
+            "tick": 274,
+            "kind": "life_context",
+            "summary": "Janek already intends to return the workshop basket to its local shelf."
+          },
+          "lastOutcomeEvidence": null,
+          "activeRun": {
+            "runId": "run.janek.r4.pickup-basket",
+            "taskId": "task.janek.r4.pickup-basket",
+            "semanticRevision": 1,
+            "canMutateWorld": true,
+            "bodyState": "focused"
+          }
+        },
+        "body": {
+          "focusedRunId": "run.janek.r4.pickup-basket",
+          "deferredRunIds": []
+        },
+        "primaryWorld": {
+          "id": "crate.r4.remembered",
+          "label": "Familiar Workshop Crate",
+          "radius": 18,
+          "location": {
+            "kind": "free",
+            "position": {
+              "x": 1710.6125126672691,
+              "y": 1058.7442366156627
+            }
+          }
+        },
+        "secondaryWorld": {
+          "id": "basket.r4.available",
+          "label": "Workshop Basket",
+          "radius": 18,
+          "location": {
+            "kind": "free",
+            "position": {
+              "x": 1100,
+              "y": 550
+            }
+          }
+        },
+        "irrelevantWorld": {
+          "id": "stool.r4.background",
+          "label": "Background Stool",
+          "radius": 18,
+          "location": {
+            "kind": "free",
+            "position": {
+              "x": 1180,
+              "y": 650
+            }
+          }
+        },
+        "primaryKnowledge": {
+          "objectId": "crate.r4.remembered",
+          "lastKnownPosition": {
+            "x": 500,
+            "y": 500
+          },
+          "observedAtTick": 0,
+          "currentlyVisible": false
+        },
+        "janekPosition": {
+          "x": 498.50164136874986,
+          "y": 504.8370195119095
+        },
+        "pendingCognitionReasonCount": 1,
+        "actionFacts": []
+      }
+    },
+    {
+      "name": "alternate B creates pickup/place World consequences while A remains unresolved and C remains untouched",
+      "pass": true,
+      "detail": {
+        "scenarioId": "browser-r4-dense-workshop",
+        "tick": 1307,
+        "primary": {
+          "id": "matter.janek.r4.missing-crate",
+          "status": "active",
+          "semanticRevision": 2,
+          "semanticCourse": "retrieve the familiar workshop crate from its last-known bench position",
+          "semanticIntent": {
+            "kind": "acquire_material_object",
+            "goal": "have the familiar workshop crate in hand",
+            "objectId": "crate.r4.remembered"
+          },
+          "suspendedByMatterId": null,
+          "originEvidence": {
+            "id": "evidence:janek:r4:primary-origin",
+            "tick": 274,
+            "kind": "life_context",
+            "summary": "Janek already needs the familiar workshop crate he last saw beside the bench."
+          },
+          "semanticEvidence": {
+            "id": "evidence:janek:r4:checked-absence:701",
+            "tick": 701,
+            "kind": "checked_absence",
+            "summary": "Checked (500, 500); the familiar crate is not visible there now."
+          },
+          "lastOutcomeEvidence": {
+            "id": "task-outcome:7a3ec2df32def742:701",
+            "tick": 701,
+            "kind": "task_outcome",
+            "summary": "blocked: material object is not visible after bounded local inspection",
+            "sourceRunId": "run.janek.r4.pickup-last-known-crate"
+          },
+          "activeRun": null
+        },
+        "secondary": {
+          "id": "matter.janek.r4.return-basket",
+          "status": "resolved",
+          "semanticRevision": 1,
+          "semanticCourse": "return the visible workshop basket to the local shelf",
+          "semanticIntent": null,
+          "suspendedByMatterId": null,
+          "originEvidence": null,
+          "semanticEvidence": null,
+          "lastOutcomeEvidence": {
+            "id": "task-outcome:ea64107be86ac067:1304",
+            "tick": 1304,
+            "kind": "task_outcome",
+            "summary": "succeeded: placed basket.r4.available at the local material delivery destination",
+            "sourceRunId": "run.janek.r4.place-basket"
+          },
+          "activeRun": null
+        },
+        "body": {
+          "focusedRunId": null,
+          "deferredRunIds": []
+        },
+        "primaryWorld": {
+          "id": "crate.r4.remembered",
+          "label": "Familiar Workshop Crate",
+          "radius": 18,
+          "location": {
+            "kind": "free",
+            "position": {
+              "x": 1710.6125126672691,
+              "y": 1058.7442366156627
+            }
+          }
+        },
+        "secondaryWorld": {
+          "id": "basket.r4.available",
+          "label": "Workshop Basket",
+          "radius": 18,
+          "location": {
+            "kind": "free",
+            "position": {
+              "x": 1450,
+              "y": 500
+            }
+          }
+        },
+        "irrelevantWorld": {
+          "id": "stool.r4.background",
+          "label": "Background Stool",
+          "radius": 18,
+          "location": {
+            "kind": "free",
+            "position": {
+              "x": 1180,
+              "y": 650
+            }
+          }
+        },
+        "primaryKnowledge": {
+          "objectId": "crate.r4.remembered",
+          "lastKnownPosition": {
+            "x": 500,
+            "y": 500
+          },
+          "observedAtTick": 0,
+          "currentlyVisible": false
+        },
+        "janekPosition": {
+          "x": 1394.7351711922545,
+          "y": 506.24556847649575
+        },
+        "pendingCognitionReasonCount": 1,
+        "actionFacts": [
+          {
+            "tick": 1068,
+            "runId": "run.janek.r4.pickup-basket",
+            "kind": "material_pickup",
+            "objectId": "basket.r4.available",
+            "outcomeStatus": "succeeded",
+            "code": "picked_up"
+          },
+          {
+            "tick": 1304,
+            "runId": "run.janek.r4.place-basket",
+            "kind": "material_place",
+            "objectId": "basket.r4.available",
+            "outcomeStatus": "succeeded",
+            "code": "placed"
+          }
+        ]
+      }
+    },
+    {
+      "name": "quiet continuation does not invent a chore or mutate blocked/background truth",
+      "pass": true,
+      "detail": {
+        "ticks": 600,
+        "before": {
+          "scenarioId": "browser-r4-dense-workshop",
+          "tick": 1307,
+          "primary": {
+            "id": "matter.janek.r4.missing-crate",
+            "status": "active",
+            "semanticRevision": 2,
+            "semanticCourse": "retrieve the familiar workshop crate from its last-known bench position",
+            "semanticIntent": {
+              "kind": "acquire_material_object",
+              "goal": "have the familiar workshop crate in hand",
+              "objectId": "crate.r4.remembered"
+            },
+            "suspendedByMatterId": null,
+            "originEvidence": {
+              "id": "evidence:janek:r4:primary-origin",
+              "tick": 274,
+              "kind": "life_context",
+              "summary": "Janek already needs the familiar workshop crate he last saw beside the bench."
+            },
+            "semanticEvidence": {
+              "id": "evidence:janek:r4:checked-absence:701",
+              "tick": 701,
+              "kind": "checked_absence",
+              "summary": "Checked (500, 500); the familiar crate is not visible there now."
+            },
+            "lastOutcomeEvidence": {
+              "id": "task-outcome:7a3ec2df32def742:701",
+              "tick": 701,
+              "kind": "task_outcome",
+              "summary": "blocked: material object is not visible after bounded local inspection",
+              "sourceRunId": "run.janek.r4.pickup-last-known-crate"
+            },
+            "activeRun": null
+          },
+          "secondary": {
+            "id": "matter.janek.r4.return-basket",
+            "status": "resolved",
+            "semanticRevision": 1,
+            "semanticCourse": "return the visible workshop basket to the local shelf",
+            "semanticIntent": null,
+            "suspendedByMatterId": null,
+            "originEvidence": null,
+            "semanticEvidence": null,
+            "lastOutcomeEvidence": {
+              "id": "task-outcome:ea64107be86ac067:1304",
+              "tick": 1304,
+              "kind": "task_outcome",
+              "summary": "succeeded: placed basket.r4.available at the local material delivery destination",
+              "sourceRunId": "run.janek.r4.place-basket"
+            },
+            "activeRun": null
+          },
+          "body": {
+            "focusedRunId": null,
+            "deferredRunIds": []
+          },
+          "primaryWorld": {
+            "id": "crate.r4.remembered",
+            "label": "Familiar Workshop Crate",
+            "radius": 18,
+            "location": {
+              "kind": "free",
+              "position": {
+                "x": 1710.6125126672691,
+                "y": 1058.7442366156627
+              }
+            }
+          },
+          "secondaryWorld": {
+            "id": "basket.r4.available",
+            "label": "Workshop Basket",
+            "radius": 18,
+            "location": {
+              "kind": "free",
+              "position": {
+                "x": 1450,
+                "y": 500
+              }
+            }
+          },
+          "irrelevantWorld": {
+            "id": "stool.r4.background",
+            "label": "Background Stool",
+            "radius": 18,
+            "location": {
+              "kind": "free",
+              "position": {
+                "x": 1180,
+                "y": 650
+              }
+            }
+          },
+          "primaryKnowledge": {
+            "objectId": "crate.r4.remembered",
+            "lastKnownPosition": {
+              "x": 500,
+              "y": 500
+            },
+            "observedAtTick": 0,
+            "currentlyVisible": false
+          },
+          "janekPosition": {
+            "x": 1394.7351711922545,
+            "y": 506.24556847649575
+          },
+          "pendingCognitionReasonCount": 1,
+          "actionFacts": [
+            {
+              "tick": 1068,
+              "runId": "run.janek.r4.pickup-basket",
+              "kind": "material_pickup",
+              "objectId": "basket.r4.available",
+              "outcomeStatus": "succeeded",
+              "code": "picked_up"
+            },
+            {
+              "tick": 1304,
+              "runId": "run.janek.r4.place-basket",
+              "kind": "material_place",
+              "objectId": "basket.r4.available",
+              "outcomeStatus": "succeeded",
+              "code": "placed"
+            }
+          ]
+        },
+        "after": {
+          "scenarioId": "browser-r4-dense-workshop",
+          "tick": 1907,
+          "primary": {
+            "id": "matter.janek.r4.missing-crate",
+            "status": "active",
+            "semanticRevision": 2,
+            "semanticCourse": "retrieve the familiar workshop crate from its last-known bench position",
+            "semanticIntent": {
+              "kind": "acquire_material_object",
+              "goal": "have the familiar workshop crate in hand",
+              "objectId": "crate.r4.remembered"
+            },
+            "suspendedByMatterId": null,
+            "originEvidence": {
+              "id": "evidence:janek:r4:primary-origin",
+              "tick": 274,
+              "kind": "life_context",
+              "summary": "Janek already needs the familiar workshop crate he last saw beside the bench."
+            },
+            "semanticEvidence": {
+              "id": "evidence:janek:r4:checked-absence:701",
+              "tick": 701,
+              "kind": "checked_absence",
+              "summary": "Checked (500, 500); the familiar crate is not visible there now."
+            },
+            "lastOutcomeEvidence": {
+              "id": "task-outcome:7a3ec2df32def742:701",
+              "tick": 701,
+              "kind": "task_outcome",
+              "summary": "blocked: material object is not visible after bounded local inspection",
+              "sourceRunId": "run.janek.r4.pickup-last-known-crate"
+            },
+            "activeRun": null
+          },
+          "secondary": {
+            "id": "matter.janek.r4.return-basket",
+            "status": "resolved",
+            "semanticRevision": 1,
+            "semanticCourse": "return the visible workshop basket to the local shelf",
+            "semanticIntent": null,
+            "suspendedByMatterId": null,
+            "originEvidence": null,
+            "semanticEvidence": null,
+            "lastOutcomeEvidence": {
+              "id": "task-outcome:ea64107be86ac067:1304",
+              "tick": 1304,
+              "kind": "task_outcome",
+              "summary": "succeeded: placed basket.r4.available at the local material delivery destination",
+              "sourceRunId": "run.janek.r4.place-basket"
+            },
+            "activeRun": null
+          },
+          "body": {
+            "focusedRunId": null,
+            "deferredRunIds": []
+          },
+          "primaryWorld": {
+            "id": "crate.r4.remembered",
+            "label": "Familiar Workshop Crate",
+            "radius": 18,
+            "location": {
+              "kind": "free",
+              "position": {
+                "x": 1710.6125126672691,
+                "y": 1058.7442366156627
+              }
+            }
+          },
+          "secondaryWorld": {
+            "id": "basket.r4.available",
+            "label": "Workshop Basket",
+            "radius": 18,
+            "location": {
+              "kind": "free",
+              "position": {
+                "x": 1450,
+                "y": 500
+              }
+            }
+          },
+          "irrelevantWorld": {
+            "id": "stool.r4.background",
+            "label": "Background Stool",
+            "radius": 18,
+            "location": {
+              "kind": "free",
+              "position": {
+                "x": 1180,
+                "y": 650
+              }
+            }
+          },
+          "primaryKnowledge": {
+            "objectId": "crate.r4.remembered",
+            "lastKnownPosition": {
+              "x": 500,
+              "y": 500
+            },
+            "observedAtTick": 0,
+            "currentlyVisible": false
+          },
+          "janekPosition": {
+            "x": 1394.7351711922545,
+            "y": 506.24556847649575
+          },
+          "pendingCognitionReasonCount": 1,
+          "actionFacts": [
+            {
+              "tick": 1068,
+              "runId": "run.janek.r4.pickup-basket",
+              "kind": "material_pickup",
+              "objectId": "basket.r4.available",
+              "outcomeStatus": "succeeded",
+              "code": "picked_up"
+            },
+            {
+              "tick": 1304,
+              "runId": "run.janek.r4.place-basket",
+              "kind": "material_place",
+              "objectId": "basket.r4.available",
+              "outcomeStatus": "succeeded",
+              "code": "placed"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "later explicit World reveal changes A truth without pre-sampling private rewrite",
+      "pass": true,
+      "detail": {
+        "reveal": {
+          "from": {
+            "x": 1710.6125126672691,
+            "y": 1058.7442366156627
+          },
+          "to": {
+            "x": 1550,
+            "y": 650
+          },
+          "tickBefore": 1907,
+          "tickAfter": 1908
+        },
+        "boundary": {
+          "scenarioId": "browser-r4-dense-workshop",
+          "tick": 1908,
+          "primary": {
+            "id": "matter.janek.r4.missing-crate",
+            "status": "active",
+            "semanticRevision": 2,
+            "semanticCourse": "retrieve the familiar workshop crate from its last-known bench position",
+            "semanticIntent": {
+              "kind": "acquire_material_object",
+              "goal": "have the familiar workshop crate in hand",
+              "objectId": "crate.r4.remembered"
+            },
+            "suspendedByMatterId": null,
+            "originEvidence": {
+              "id": "evidence:janek:r4:primary-origin",
+              "tick": 274,
+              "kind": "life_context",
+              "summary": "Janek already needs the familiar workshop crate he last saw beside the bench."
+            },
+            "semanticEvidence": {
+              "id": "evidence:janek:r4:checked-absence:701",
+              "tick": 701,
+              "kind": "checked_absence",
+              "summary": "Checked (500, 500); the familiar crate is not visible there now."
+            },
+            "lastOutcomeEvidence": {
+              "id": "task-outcome:7a3ec2df32def742:701",
+              "tick": 701,
+              "kind": "task_outcome",
+              "summary": "blocked: material object is not visible after bounded local inspection",
+              "sourceRunId": "run.janek.r4.pickup-last-known-crate"
+            },
+            "activeRun": null
+          },
+          "secondary": {
+            "id": "matter.janek.r4.return-basket",
+            "status": "resolved",
+            "semanticRevision": 1,
+            "semanticCourse": "return the visible workshop basket to the local shelf",
+            "semanticIntent": null,
+            "suspendedByMatterId": null,
+            "originEvidence": null,
+            "semanticEvidence": null,
+            "lastOutcomeEvidence": {
+              "id": "task-outcome:ea64107be86ac067:1304",
+              "tick": 1304,
+              "kind": "task_outcome",
+              "summary": "succeeded: placed basket.r4.available at the local material delivery destination",
+              "sourceRunId": "run.janek.r4.place-basket"
+            },
+            "activeRun": null
+          },
+          "body": {
+            "focusedRunId": null,
+            "deferredRunIds": []
+          },
+          "primaryWorld": {
+            "id": "crate.r4.remembered",
+            "label": "Familiar Workshop Crate",
+            "radius": 18,
+            "location": {
+              "kind": "free",
+              "position": {
+                "x": 1550,
+                "y": 650
+              }
+            }
+          },
+          "secondaryWorld": {
+            "id": "basket.r4.available",
+            "label": "Workshop Basket",
+            "radius": 18,
+            "location": {
+              "kind": "free",
+              "position": {
+                "x": 1450,
+                "y": 500
+              }
+            }
+          },
+          "irrelevantWorld": {
+            "id": "stool.r4.background",
+            "label": "Background Stool",
+            "radius": 18,
+            "location": {
+              "kind": "free",
+              "position": {
+                "x": 1180,
+                "y": 650
+              }
+            }
+          },
+          "primaryKnowledge": {
+            "objectId": "crate.r4.remembered",
+            "lastKnownPosition": {
+              "x": 500,
+              "y": 500
+            },
+            "observedAtTick": 0,
+            "currentlyVisible": false
+          },
+          "janekPosition": {
+            "x": 1394.7351711922545,
+            "y": 506.24556847649575
+          },
+          "pendingCognitionReasonCount": 1,
+          "actionFacts": [
+            {
+              "tick": 1068,
+              "runId": "run.janek.r4.pickup-basket",
+              "kind": "material_pickup",
+              "objectId": "basket.r4.available",
+              "outcomeStatus": "succeeded",
+              "code": "picked_up"
+            },
+            {
+              "tick": 1304,
+              "runId": "run.janek.r4.place-basket",
+              "kind": "material_place",
+              "objectId": "basket.r4.available",
+              "outcomeStatus": "succeeded",
+              "code": "placed"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "name": "next ordinary local tick legally reacquires A and restores exact material execution without provider choice",
+      "pass": true,
+      "detail": {
+        "scenarioId": "browser-r4-dense-workshop",
+        "tick": 1909,
+        "primary": {
+          "id": "matter.janek.r4.missing-crate",
+          "status": "active",
+          "semanticRevision": 3,
+          "semanticCourse": "retrieve the familiar workshop crate from its last-known bench position",
+          "semanticIntent": {
+            "kind": "acquire_material_object",
+            "goal": "have the familiar workshop crate in hand",
+            "objectId": "crate.r4.remembered"
+          },
+          "suspendedByMatterId": null,
+          "originEvidence": {
+            "id": "evidence:janek:r4:primary-origin",
+            "tick": 274,
+            "kind": "life_context",
+            "summary": "Janek already needs the familiar workshop crate he last saw beside the bench."
+          },
+          "semanticEvidence": {
+            "id": "material_reacquired:884d259c83ea29a3:1908",
+            "tick": 1908,
+            "kind": "material_reacquired",
+            "summary": "Recognized material object crate.r4.remembered became privately visible again at (1550, 650)."
+          },
+          "lastOutcomeEvidence": {
+            "id": "task-outcome:7a3ec2df32def742:701",
+            "tick": 701,
+            "kind": "task_outcome",
+            "summary": "blocked: material object is not visible after bounded local inspection",
+            "sourceRunId": "run.janek.r4.pickup-last-known-crate"
+          },
+          "activeRun": {
+            "runId": "run.janek.r4.pickup-reacquired-crate",
+            "taskId": "task.janek.r4.pickup-reacquired-crate",
+            "semanticRevision": 3,
+            "canMutateWorld": true,
+            "bodyState": "focused"
+          }
+        },
+        "secondary": {
+          "id": "matter.janek.r4.return-basket",
+          "status": "resolved",
+          "semanticRevision": 1,
+          "semanticCourse": "return the visible workshop basket to the local shelf",
+          "semanticIntent": null,
+          "suspendedByMatterId": null,
+          "originEvidence": null,
+          "semanticEvidence": null,
+          "lastOutcomeEvidence": {
+            "id": "task-outcome:ea64107be86ac067:1304",
+            "tick": 1304,
+            "kind": "task_outcome",
+            "summary": "succeeded: placed basket.r4.available at the local material delivery destination",
+            "sourceRunId": "run.janek.r4.place-basket"
+          },
+          "activeRun": null
+        },
+        "body": {
+          "focusedRunId": "run.janek.r4.pickup-reacquired-crate",
+          "deferredRunIds": []
+        },
+        "primaryWorld": {
+          "id": "crate.r4.remembered",
+          "label": "Familiar Workshop Crate",
+          "radius": 18,
+          "location": {
+            "kind": "free",
+            "position": {
+              "x": 1550,
+              "y": 650
+            }
+          }
+        },
+        "secondaryWorld": {
+          "id": "basket.r4.available",
+          "label": "Workshop Basket",
+          "radius": 18,
+          "location": {
+            "kind": "free",
+            "position": {
+              "x": 1450,
+              "y": 500
+            }
+          }
+        },
+        "irrelevantWorld": {
+          "id": "stool.r4.background",
+          "label": "Background Stool",
+          "radius": 18,
+          "location": {
+            "kind": "free",
+            "position": {
+              "x": 1180,
+              "y": 650
+            }
+          }
+        },
+        "primaryKnowledge": {
+          "objectId": "crate.r4.remembered",
+          "lastKnownPosition": {
+            "x": 1550,
+            "y": 650
+          },
+          "observedAtTick": 1908,
+          "currentlyVisible": true
+        },
+        "janekPosition": {
+          "x": 1394.7351711922545,
+          "y": 506.24556847649575
+        },
+        "pendingCognitionReasonCount": 0,
+        "actionFacts": [
+          {
+            "tick": 1068,
+            "runId": "run.janek.r4.pickup-basket",
+            "kind": "material_pickup",
+            "objectId": "basket.r4.available",
+            "outcomeStatus": "succeeded",
+            "code": "picked_up"
+          },
+          {
+            "tick": 1304,
+            "runId": "run.janek.r4.place-basket",
+            "kind": "material_place",
+            "objectId": "basket.r4.available",
+            "outcomeStatus": "succeeded",
+            "code": "placed"
+          }
+        ]
+      }
+    },
+    {
+      "name": "reacquired A completes the same durable material goal while B and C remain stable",
+      "pass": true,
+      "detail": {
+        "scenarioId": "browser-r4-dense-workshop",
+        "tick": 2017,
+        "primary": {
+          "id": "matter.janek.r4.missing-crate",
+          "status": "resolved",
+          "semanticRevision": 3,
+          "semanticCourse": "retrieve the familiar workshop crate from its last-known bench position",
+          "semanticIntent": {
+            "kind": "acquire_material_object",
+            "goal": "have the familiar workshop crate in hand",
+            "objectId": "crate.r4.remembered"
+          },
+          "suspendedByMatterId": null,
+          "originEvidence": null,
+          "semanticEvidence": null,
+          "lastOutcomeEvidence": {
+            "id": "task-outcome:0288c97e592a3a91:2013",
+            "tick": 2013,
+            "kind": "task_outcome",
+            "summary": "succeeded: picked up crate.r4.remembered after legal private reacquisition",
+            "sourceRunId": "run.janek.r4.pickup-reacquired-crate"
+          },
+          "activeRun": null
+        },
+        "secondary": {
+          "id": "matter.janek.r4.return-basket",
+          "status": "resolved",
+          "semanticRevision": 1,
+          "semanticCourse": "return the visible workshop basket to the local shelf",
+          "semanticIntent": null,
+          "suspendedByMatterId": null,
+          "originEvidence": null,
+          "semanticEvidence": null,
+          "lastOutcomeEvidence": {
+            "id": "task-outcome:ea64107be86ac067:1304",
+            "tick": 1304,
+            "kind": "task_outcome",
+            "summary": "succeeded: placed basket.r4.available at the local material delivery destination",
+            "sourceRunId": "run.janek.r4.place-basket"
+          },
+          "activeRun": null
+        },
+        "body": {
+          "focusedRunId": null,
+          "deferredRunIds": []
+        },
+        "primaryWorld": {
+          "id": "crate.r4.remembered",
+          "label": "Familiar Workshop Crate",
+          "radius": 18,
+          "location": {
+            "kind": "held",
+            "actorId": "resident.janek"
+          }
+        },
+        "secondaryWorld": {
+          "id": "basket.r4.available",
+          "label": "Workshop Basket",
+          "radius": 18,
+          "location": {
+            "kind": "free",
+            "position": {
+              "x": 1450,
+              "y": 500
+            }
+          }
+        },
+        "irrelevantWorld": {
+          "id": "stool.r4.background",
+          "label": "Background Stool",
+          "radius": 18,
+          "location": {
+            "kind": "free",
+            "position": {
+              "x": 1180,
+              "y": 650
+            }
+          }
+        },
+        "primaryKnowledge": {
+          "objectId": "crate.r4.remembered",
+          "lastKnownPosition": {
+            "x": 1509.2052539757185,
+            "y": 612.229530223306
+          },
+          "observedAtTick": 2016,
+          "currentlyVisible": true
+        },
+        "janekPosition": {
+          "x": 1509.2052539757185,
+          "y": 612.229530223306
+        },
+        "pendingCognitionReasonCount": 0,
+        "actionFacts": [
+          {
+            "tick": 1068,
+            "runId": "run.janek.r4.pickup-basket",
+            "kind": "material_pickup",
+            "objectId": "basket.r4.available",
+            "outcomeStatus": "succeeded",
+            "code": "picked_up"
+          },
+          {
+            "tick": 1304,
+            "runId": "run.janek.r4.place-basket",
+            "kind": "material_place",
+            "objectId": "basket.r4.available",
+            "outcomeStatus": "succeeded",
+            "code": "placed"
+          },
+          {
+            "tick": 2013,
+            "runId": "run.janek.r4.pickup-reacquired-crate",
+            "kind": "material_pickup",
+            "objectId": "crate.r4.remembered",
+            "outcomeStatus": "succeeded",
+            "code": "picked_up"
+          }
+        ]
+      }
+    },
+    {
+      "name": "relocatedHash is deterministic across real-Chrome reloads",
+      "pass": true,
+      "detail": [
+        "fe87064b4a753db35eccb50d7061a4b15f403bef6aac790e2e56af4539177d1c",
+        "fe87064b4a753db35eccb50d7061a4b15f403bef6aac790e2e56af4539177d1c"
+      ]
+    },
+    {
+      "name": "blockedHash is deterministic across real-Chrome reloads",
+      "pass": true,
+      "detail": [
+        "29cc8356ac1550a83e530ab0edb14be92f465cb434d58b685554bf4cd1885152",
+        "29cc8356ac1550a83e530ab0edb14be92f465cb434d58b685554bf4cd1885152"
+      ]
+    },
+    {
+      "name": "resolvedHash is deterministic across real-Chrome reloads",
+      "pass": true,
+      "detail": [
+        "d04b3deadd4b7838c662f6d0099602dbff032e9b93482584f97a96aae26d3752",
+        "d04b3deadd4b7838c662f6d0099602dbff032e9b93482584f97a96aae26d3752"
+      ]
+    },
+    {
+      "name": "quietHash is deterministic across real-Chrome reloads",
+      "pass": true,
+      "detail": [
+        "3cf11a920bd50804836615dc90c563d6f0314742ca000c0fca8093331d1ccc19",
+        "3cf11a920bd50804836615dc90c563d6f0314742ca000c0fca8093331d1ccc19"
+      ]
+    },
+    {
+      "name": "revealBoundaryHash is deterministic across real-Chrome reloads",
+      "pass": true,
+      "detail": [
+        "2136dc83a1b3e8a48d0b73e725270a0c75a78c3d1979dc0667aae48faa4289a8",
+        "2136dc83a1b3e8a48d0b73e725270a0c75a78c3d1979dc0667aae48faa4289a8"
+      ]
+    },
+    {
+      "name": "reactivatedHash is deterministic across real-Chrome reloads",
+      "pass": true,
+      "detail": [
+        "9a2d039cbd83ed86297ab9cd12e924aa2fedbc2a5937db624120db9c3061b374",
+        "9a2d039cbd83ed86297ab9cd12e924aa2fedbc2a5937db624120db9c3061b374"
+      ]
+    },
+    {
+      "name": "primaryResolvedHash is deterministic across real-Chrome reloads",
+      "pass": true,
+      "detail": [
+        "03652953e287167ce34aa51c00caa2ed1d8b278d56cbd8b82d294f061c4bd9dc",
+        "03652953e287167ce34aa51c00caa2ed1d8b278d56cbd8b82d294f061c4bd9dc"
+      ]
+    },
+    {
+      "name": "R4 dense-workshop browser specimen makes no provider/API request",
+      "pass": true,
+      "detail": []
+    },
+    {
+      "name": "R4 dense-workshop browser specimen has no uncaught runtime exception",
+      "pass": true,
+      "detail": []
+    },
+    {
+      "name": "R4 visual checkpoints are non-empty and screenshot capture is canonically read-only",
+      "pass": true,
+      "detail": {
+        "relocated": {
+          "fileName": "r4-dense-workshop-01-hidden-relocation.png",
+          "tick": 275,
+          "bytes": 48225,
+          "canonicalHash": "4e890ce18e19db5f708c65004bf732b7cf60599438181d1a79bc6480edea45ec"
+        },
+        "blockedAlternate": {
+          "fileName": "r4-dense-workshop-02-blocked-alternate.png",
+          "tick": 703,
+          "bytes": 48663,
+          "canonicalHash": "84cf15ed4284132f185b838a181ec9baed62ede7a240bee4e01b9543fdc65816"
+        },
+        "resolved": {
+          "fileName": "r4-dense-workshop-03-alternate-resolved.png",
+          "tick": 1307,
+          "bytes": 47751,
+          "canonicalHash": "678883dd984ef9d1705430193bc43d68091df29406050949c45c16237bde12aa"
+        },
+        "quiet": {
+          "fileName": "r4-dense-workshop-04-quiet.png",
+          "tick": 1907,
+          "bytes": 47751,
+          "canonicalHash": "9044ff6e901f10c78704e4f7e1d6bc02128f8842f5bf68592b6305f98e279435"
+        },
+        "revealBoundary": {
+          "fileName": "r4-dense-workshop-05-world-reveal-private-stale.png",
+          "tick": 1908,
+          "bytes": 48090,
+          "canonicalHash": "6b854cd269735d867b7edb19fa8225b2437da6474416db79e0b999cd5eb1ffa1"
+        },
+        "reactivated": {
+          "fileName": "r4-dense-workshop-06-primary-reactivated.png",
+          "tick": 1909,
+          "bytes": 48090,
+          "canonicalHash": "e46550dd35f4329bfebe0fa9d4e4bf13a54394c8cebb7400b1fc298619f43ba7"
+        },
+        "primaryResolved": {
+          "fileName": "r4-dense-workshop-07-primary-resolved.png",
+          "tick": 2017,
+          "bytes": 46697,
+          "canonicalHash": "9b4bfbe622afaeb6e76fa76d825c2e98e57e283d080291363b17aec84668b6c3"
+        }
+      }
+    }
+  ],
+  "runtimeExceptions": [],
+  "networkRequests": [
+    "http://127.0.0.1:4173/?spc=1&evidence=1&scenario=r4-dense-workshop",
+    "http://127.0.0.1:4173/assets/index-cIDBj7bK.js",
+    "http://127.0.0.1:4173/assets/spc-next-research-app-Bm_eoYiS.js",
+    "http://127.0.0.1:4173/assets/style-Dq43xotd.js",
+    "http://127.0.0.1:4173/assets/style-BkZFmUmy.css",
+    "http://127.0.0.1:4173/assets/spc-next-research-app-DPvfbXwd.css",
+    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAABAQMAAADD8p2OAAAAA1BMVEX/AP804Oa6AAAACklEQVQI12NgAAAAAgAB4iG8MwAAAABJRU5ErkJggg==",
+    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgAQMAAABJtOi3AAAAA1BMVEX///+nxBvIAAAAAXRSTlMAQObYZgAAABVJREFUeF7NwIEAAAAAgKD9qdeocAMAoAABm3DkcAAAAABJRU5ErkJggg==",
+    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAJ9JREFUeNq01ssOwyAMRFG46v//Mt1ESmgh+DFmE2GPOBARKb2NVjo+17PXLD8a1+pl5+A+wSgFygymWYHBb0FtsKhJDdZlncG2IzJ4ayoMDv20wTmSMzClEgbWYNTAkQ0Z+OJ+A/eWnAaR9+oxCF4Os0H8htsMUp+pwcgBBiMNnAwF8GqIgL2hAzaGFFgZauDPKABmowZ4GL369/0rwACp2yA/ttmvsQAAAABJRU5ErkJggg==",
+    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAIAAAAmkwkpAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAABdJREFUeNpi/P//PwMMMDEgAdwcgAADAJZuAwXJYZOzAAAAAElFTkSuQmCC",
+    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAABAQMAAADD8p2OAAAAA1BMVEX//wCKxvRFAAAACklEQVQI12NgAAAAAgAB4iG8MwAAAABJRU5ErkJggg==",
+    "http://127.0.0.1:4173/?spc=1&evidence=1&scenario=r4-dense-workshop",
+    "http://127.0.0.1:4173/assets/index-cIDBj7bK.js",
+    "http://127.0.0.1:4173/assets/spc-next-research-app-Bm_eoYiS.js",
+    "http://127.0.0.1:4173/assets/style-Dq43xotd.js",
+    "http://127.0.0.1:4173/assets/style-BkZFmUmy.css",
+    "http://127.0.0.1:4173/assets/spc-next-research-app-DPvfbXwd.css",
+    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAABAQMAAADD8p2OAAAAA1BMVEX/AP804Oa6AAAACklEQVQI12NgAAAAAgAB4iG8MwAAAABJRU5ErkJggg==",
+    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgAQMAAABJtOi3AAAAA1BMVEX///+nxBvIAAAAAXRSTlMAQObYZgAAABVJREFUeF7NwIEAAAAAgKD9qdeocAMAoAABm3DkcAAAAABJRU5ErkJggg==",
+    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAJ9JREFUeNq01ssOwyAMRFG46v//Mt1ESmgh+DFmE2GPOBARKb2NVjo+17PXLD8a1+pl5+A+wSgFygymWYHBb0FtsKhJDdZlncG2IzJ4ayoMDv20wTmSMzClEgbWYNTAkQ0Z+OJ+A/eWnAaR9+oxCF4Os0H8htsMUp+pwcgBBiMNnAwF8GqIgL2hAzaGFFgZauDPKABmowZ4GL369/0rwACp2yA/ttmvsQAAAABJRU5ErkJggg==",
+    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAIAAAAmkwkpAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAABdJREFUeNpi/P//PwMMMDEgAdwcgAADAJZuAwXJYZOzAAAAAElFTkSuQmCC",
+    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAABAQMAAADD8p2OAAAAA1BMVEX//wCKxvRFAAAACklEQVQI12NgAAAAAgAB4iG8MwAAAABJRU5ErkJggg=="
+  ],
+  "providerLikeRequests": [],
+  "runs": [
+    {
+      "runIndex": 0,
+      "initial": {
+        "scenarioId": "browser-r4-dense-workshop",
+        "tick": 274,
+        "primary": {
+          "id": "matter.janek.r4.missing-crate",
+          "status": "active",
+          "semanticRevision": 1,
+          "semanticCourse": "retrieve the familiar workshop crate from its last-known bench position",
+          "semanticIntent": {
+            "kind": "acquire_material_object",
+            "goal": "have the familiar workshop crate in hand",
+            "objectId": "crate.r4.remembered"
+          },
+          "suspendedByMatterId": null,
+          "originEvidence": {
+            "id": "evidence:janek:r4:primary-origin",
+            "tick": 274,
+            "kind": "life_context",
+            "summary": "Janek already needs the familiar workshop crate he last saw beside the bench."
+          },
+          "semanticEvidence": {
+            "id": "evidence:janek:r4:primary-origin",
+            "tick": 274,
+            "kind": "life_context",
+            "summary": "Janek already needs the familiar workshop crate he last saw beside the bench."
+          },
+          "lastOutcomeEvidence": null,
+          "activeRun": {
+            "runId": "run.janek.r4.pickup-last-known-crate",
+            "taskId": "task.janek.r4.pickup-last-known-crate",
+            "semanticRevision": 1,
+            "canMutateWorld": true,
+            "bodyState": "focused"
+          }
+        },
+        "secondary": {
+          "id": "matter.janek.r4.return-basket",
+          "status": "active",
+          "semanticRevision": 1,
+          "semanticCourse": "return the visible workshop basket to the local shelf",
+          "semanticIntent": null,
+          "suspendedByMatterId": null,
+          "originEvidence": {
+            "id": "evidence:janek:r4:secondary-origin",
+            "tick": 274,
+            "kind": "life_context",
+            "summary": "Janek already intends to return the workshop basket to its local shelf."
+          },
+          "semanticEvidence": {
+            "id": "evidence:janek:r4:secondary-origin",
+            "tick": 274,
+            "kind": "life_context",
+            "summary": "Janek already intends to return the workshop basket to its local shelf."
+          },
+          "lastOutcomeEvidence": null,
+          "activeRun": {
+            "runId": "run.janek.r4.pickup-basket",
+            "taskId": "task.janek.r4.pickup-basket",
+            "semanticRevision": 1,
+            "canMutateWorld": true,
+            "bodyState": "deferred"
+          }
+        },
+        "body": {
+          "focusedRunId": "run.janek.r4.pickup-last-known-crate",
+          "deferredRunIds": [
+            "run.janek.r4.pickup-basket"
+          ]
+        },
+        "primaryWorld": {
+          "id": "crate.r4.remembered",
+          "label": "Familiar Workshop Crate",
+          "radius": 18,
+          "location": {
+            "kind": "free",
+            "position": {
+              "x": 500,
+              "y": 500
+            }
+          }
+        },
+        "secondaryWorld": {
+          "id": "basket.r4.available",
+          "label": "Workshop Basket",
+          "radius": 18,
+          "location": {
+            "kind": "free",
+            "position": {
+              "x": 1100,
+              "y": 550
+            }
+          }
+        },
+        "irrelevantWorld": {
+          "id": "stool.r4.background",
+          "label": "Background Stool",
+          "radius": 18,
+          "location": {
+            "kind": "free",
+            "position": {
+              "x": 1180,
+              "y": 650
+            }
+          }
+        },
+        "primaryKnowledge": {
+          "objectId": "crate.r4.remembered",
+          "lastKnownPosition": {
+            "x": 500,
+            "y": 500
+          },
+          "observedAtTick": 0,
+          "currentlyVisible": false
+        },
+        "janekPosition": {
+          "x": 1021.3333333333234,
+          "y": 500
+        },
+        "pendingCognitionReasonCount": 0,
+        "actionFacts": []
+      },
+      "relocated": {
+        "scenarioId": "browser-r4-dense-workshop",
+        "tick": 275,
+        "primary": {
+          "id": "matter.janek.r4.missing-crate",
+          "status": "active",
+          "semanticRevision": 1,
+          "semanticCourse": "retrieve the familiar workshop crate from its last-known bench position",
+          "semanticIntent": {
+            "kind": "acquire_material_object",
+            "goal": "have the familiar workshop crate in hand",
+            "objectId": "crate.r4.remembered"
+          },
+          "suspendedByMatterId": null,
+          "originEvidence": {
+            "id": "evidence:janek:r4:primary-origin",
+            "tick": 274,
+            "kind": "life_context",
+            "summary": "Janek already needs the familiar workshop crate he last saw beside the bench."
+          },
+          "semanticEvidence": {
+            "id": "evidence:janek:r4:primary-origin",
+            "tick": 274,
+            "kind": "life_context",
+            "summary": "Janek already needs the familiar workshop crate he last saw beside the bench."
+          },
+          "lastOutcomeEvidence": null,
+          "activeRun": {
+            "runId": "run.janek.r4.pickup-last-known-crate",
+            "taskId": "task.janek.r4.pickup-last-known-crate",
+            "semanticRevision": 1,
+            "canMutateWorld": true,
+            "bodyState": "focused"
+          }
+        },
+        "secondary": {
+          "id": "matter.janek.r4.return-basket",
+          "status": "active",
+          "semanticRevision": 1,
+          "semanticCourse": "return the visible workshop basket to the local shelf",
+          "semanticIntent": null,
+          "suspendedByMatterId": null,
+          "originEvidence": {
+            "id": "evidence:janek:r4:secondary-origin",
+            "tick": 274,
+            "kind": "life_context",
+            "summary": "Janek already intends to return the workshop basket to its local shelf."
+          },
+          "semanticEvidence": {
+            "id": "evidence:janek:r4:secondary-origin",
+            "tick": 274,
+            "kind": "life_context",
+            "summary": "Janek already intends to return the workshop basket to its local shelf."
+          },
+          "lastOutcomeEvidence": null,
+          "activeRun": {
+            "runId": "run.janek.r4.pickup-basket",
+            "taskId": "task.janek.r4.pickup-basket",
+            "semanticRevision": 1,
+            "canMutateWorld": true,
+            "bodyState": "deferred"
+          }
+        },
+        "body": {
+          "focusedRunId": "run.janek.r4.pickup-last-known-crate",
+          "deferredRunIds": [
+            "run.janek.r4.pickup-basket"
+          ]
+        },
+        "primaryWorld": {
+          "id": "crate.r4.remembered",
+          "label": "Familiar Workshop Crate",
+          "radius": 18,
+          "location": {
+            "kind": "free",
+            "position": {
+              "x": 1710.6125126672691,
+              "y": 1058.7442366156627
+            }
+          }
+        },
+        "secondaryWorld": {
+          "id": "basket.r4.available",
+          "label": "Workshop Basket",
+          "radius": 18,
+          "location": {
+            "kind": "free",
+            "position": {
+              "x": 1100,
+              "y": 550
+            }
+          }
+        },
+        "irrelevantWorld": {
+          "id": "stool.r4.background",
+          "label": "Background Stool",
+          "radius": 18,
+          "location": {
+            "kind": "free",
+            "position": {
+              "x": 1180,
+              "y": 650
+            }
+          }
+        },
+        "primaryKnowledge": {
+          "objectId": "crate.r4.remembered",
+          "lastKnownPosition": {
+            "x": 500,
+            "y": 500
+          },
+          "observedAtTick": 0,
+          "currentlyVisible": false
+        },
+        "janekPosition": {
+          "x": 1021.3333333333234,
+          "y": 500
+        },
+        "pendingCognitionReasonCount": 0,
+        "actionFacts": []
+      },
+      "blocked": {
+        "scenarioId": "browser-r4-dense-workshop",
+        "tick": 703,
+        "primary": {
+          "id": "matter.janek.r4.missing-crate",
+          "status": "active",
+          "semanticRevision": 2,
+          "semanticCourse": "retrieve the familiar workshop crate from its last-known bench position",
+          "semanticIntent": {
+            "kind": "acquire_material_object",
+            "goal": "have the familiar workshop crate in hand",
+            "objectId": "crate.r4.remembered"
+          },
+          "suspendedByMatterId": null,
+          "originEvidence": {
+            "id": "evidence:janek:r4:primary-origin",
+            "tick": 274,
+            "kind": "life_context",
+            "summary": "Janek already needs the familiar workshop crate he last saw beside the bench."
+          },
+          "semanticEvidence": {
+            "id": "evidence:janek:r4:checked-absence:701",
+            "tick": 701,
+            "kind": "checked_absence",
+            "summary": "Checked (500, 500); the familiar crate is not visible there now."
+          },
+          "lastOutcomeEvidence": {
+            "id": "task-outcome:7a3ec2df32def742:701",
+            "tick": 701,
+            "kind": "task_outcome",
+            "summary": "blocked: material object is not visible after bounded local inspection",
+            "sourceRunId": "run.janek.r4.pickup-last-known-crate"
+          },
+          "activeRun": null
+        },
+        "secondary": {
+          "id": "matter.janek.r4.return-basket",
+          "status": "active",
+          "semanticRevision": 1,
+          "semanticCourse": "return the visible workshop basket to the local shelf",
+          "semanticIntent": null,
+          "suspendedByMatterId": null,
+          "originEvidence": {
+            "id": "evidence:janek:r4:secondary-origin",
+            "tick": 274,
+            "kind": "life_context",
+            "summary": "Janek already intends to return the workshop basket to its local shelf."
+          },
+          "semanticEvidence": {
+            "id": "evidence:janek:r4:secondary-origin",
+            "tick": 274,
+            "kind": "life_context",
+            "summary": "Janek already intends to return the workshop basket to its local shelf."
+          },
+          "lastOutcomeEvidence": null,
+          "activeRun": {
+            "runId": "run.janek.r4.pickup-basket",
+            "taskId": "task.janek.r4.pickup-basket",
+            "semanticRevision": 1,
+            "canMutateWorld": true,
+            "bodyState": "focused"
+          }
+        },
+        "body": {
+          "focusedRunId": "run.janek.r4.pickup-basket",
+          "deferredRunIds": []
+        },
+        "primaryWorld": {
+          "id": "crate.r4.remembered",
+          "label": "Familiar Workshop Crate",
+          "radius": 18,
+          "location": {
+            "kind": "free",
+            "position": {
+              "x": 1710.6125126672691,
+              "y": 1058.7442366156627
+            }
+          }
+        },
+        "secondaryWorld": {
+          "id": "basket.r4.available",
+          "label": "Workshop Basket",
+          "radius": 18,
+          "location": {
+            "kind": "free",
+            "position": {
+              "x": 1100,
+              "y": 550
+            }
+          }
+        },
+        "irrelevantWorld": {
+          "id": "stool.r4.background",
+          "label": "Background Stool",
+          "radius": 18,
+          "location": {
+            "kind": "free",
+            "position": {
+              "x": 1180,
+              "y": 650
+            }
+          }
+        },
+        "primaryKnowledge": {
+          "objectId": "crate.r4.remembered",
+          "lastKnownPosition": {
+            "x": 500,
+            "y": 500
+          },
+          "observedAtTick": 0,
+          "currentlyVisible": false
+        },
+        "janekPosition": {
+          "x": 498.50164136874986,
+          "y": 504.8370195119095
+        },
+        "pendingCognitionReasonCount": 1,
+        "actionFacts": []
+      },
+      "resolved": {
+        "scenarioId": "browser-r4-dense-workshop",
+        "tick": 1307,
+        "primary": {
+          "id": "matter.janek.r4.missing-crate",
+          "status": "active",
+          "semanticRevision": 2,
+          "semanticCourse": "retrieve the familiar workshop crate from its last-known bench position",
+          "semanticIntent": {
+            "kind": "acquire_material_object",
+            "goal": "have the familiar workshop crate in hand",
+            "objectId": "crate.r4.remembered"
+          },
+          "suspendedByMatterId": null,
+          "originEvidence": {
+            "id": "evidence:janek:r4:primary-origin",
+            "tick": 274,
+            "kind": "life_context",
+            "summary": "Janek already needs the familiar workshop crate he last saw beside the bench."
+          },
+          "semanticEvidence": {
+            "id": "evidence:janek:r4:checked-absence:701",
+            "tick": 701,
+            "kind": "checked_absence",
+            "summary": "Checked (500, 500); the familiar crate is not visible there now."
+          },
+          "lastOutcomeEvidence": {
+            "id": "task-outcome:7a3ec2df32def742:701",
+            "tick": 701,
+            "kind": "task_outcome",
+            "summary": "blocked: material object is not visible after bounded local inspection",
+            "sourceRunId": "run.janek.r4.pickup-last-known-crate"
+          },
+          "activeRun": null
+        },
+        "secondary": {
+          "id": "matter.janek.r4.return-basket",
+          "status": "resolved",
+          "semanticRevision": 1,
+          "semanticCourse": "return the visible workshop basket to the local shelf",
+          "semanticIntent": null,
+          "suspendedByMatterId": null,
+          "originEvidence": null,
+          "semanticEvidence": null,
+          "lastOutcomeEvidence": {
+            "id": "task-outcome:ea64107be86ac067:1304",
+            "tick": 1304,
+            "kind": "task_outcome",
+            "summary": "succeeded: placed basket.r4.available at the local material delivery destination",
+            "sourceRunId": "run.janek.r4.place-basket"
+          },
+          "activeRun": null
+        },
+        "body": {
+          "focusedRunId": null,
+          "deferredRunIds": []
+        },
+        "primaryWorld": {
+          "id": "crate.r4.remembered",
+          "label": "Familiar Workshop Crate",
+          "radius": 18,
+          "location": {
+            "kind": "free",
+            "position": {
+              "x": 1710.6125126672691,
+              "y": 1058.7442366156627
+            }
+          }
+        },
+        "secondaryWorld": {
+          "id": "basket.r4.available",
+          "label": "Workshop Basket",
+          "radius": 18,
+          "location": {
+            "kind": "free",
+            "position": {
+              "x": 1450,
+              "y": 500
+            }
+          }
+        },
+        "irrelevantWorld": {
+          "id": "stool.r4.background",
+          "label": "Background Stool",
+          "radius": 18,
+          "location": {
+            "kind": "free",
+            "position": {
+              "x": 1180,
+              "y": 650
+            }
+          }
+        },
+        "primaryKnowledge": {
+          "objectId": "crate.r4.remembered",
+          "lastKnownPosition": {
+            "x": 500,
+            "y": 500
+          },
+          "observedAtTick": 0,
+          "currentlyVisible": false
+        },
+        "janekPosition": {
+          "x": 1394.7351711922545,
+          "y": 506.24556847649575
+        },
+        "pendingCognitionReasonCount": 1,
+        "actionFacts": [
+          {
+            "tick": 1068,
+            "runId": "run.janek.r4.pickup-basket",
+            "kind": "material_pickup",
+            "objectId": "basket.r4.available",
+            "outcomeStatus": "succeeded",
+            "code": "picked_up"
+          },
+          {
+            "tick": 1304,
+            "runId": "run.janek.r4.place-basket",
+            "kind": "material_place",
+            "objectId": "basket.r4.available",
+            "outcomeStatus": "succeeded",
+            "code": "placed"
+          }
+        ]
+      },
+      "quiet": {
+        "ticks": 600,
+        "before": {
+          "scenarioId": "browser-r4-dense-workshop",
+          "tick": 1307,
+          "primary": {
+            "id": "matter.janek.r4.missing-crate",
+            "status": "active",
+            "semanticRevision": 2,
+            "semanticCourse": "retrieve the familiar workshop crate from its last-known bench position",
+            "semanticIntent": {
+              "kind": "acquire_material_object",
+              "goal": "have the familiar workshop crate in hand",
+              "objectId": "crate.r4.remembered"
+            },
+            "suspendedByMatterId": null,
+            "originEvidence": {
+              "id": "evidence:janek:r4:primary-origin",
+              "tick": 274,
+              "kind": "life_context",
+              "summary": "Janek already needs the familiar workshop crate he last saw beside the bench."
+            },
+            "semanticEvidence": {
+              "id": "evidence:janek:r4:checked-absence:701",
+              "tick": 701,
+              "kind": "checked_absence",
+              "summary": "Checked (500, 500); the familiar crate is not visible there now."
+            },
+            "lastOutcomeEvidence": {
+              "id": "task-outcome:7a3ec2df32def742:701",
+              "tick": 701,
+              "kind": "task_outcome",
+              "summary": "blocked: material object is not visible after bounded local inspection",
+              "sourceRunId": "run.janek.r4.pickup-last-known-crate"
+            },
+            "activeRun": null
+          },
+          "secondary": {
+            "id": "matter.janek.r4.return-basket",
+            "status": "resolved",
+            "semanticRevision": 1,
+            "semanticCourse": "return the visible workshop basket to the local shelf",
+            "semanticIntent": null,
+            "suspendedByMatterId": null,
+            "originEvidence": null,
+            "semanticEvidence": null,
+            "lastOutcomeEvidence": {
+              "id": "task-outcome:ea64107be86ac067:1304",
+              "tick": 1304,
+              "kind": "task_outcome",
+              "summary": "succeeded: placed basket.r4.available at the local material delivery destination",
+              "sourceRunId": "run.janek.r4.place-basket"
+            },
+            "activeRun": null
+          },
+          "body": {
+            "focusedRunId": null,
+            "deferredRunIds": []
+          },
+          "primaryWorld": {
+            "id": "crate.r4.remembered",
+            "label": "Familiar Workshop Crate",
+            "radius": 18,
+            "location": {
+              "kind": "free",
+              "position": {
+                "x": 1710.6125126672691,
+                "y": 1058.7442366156627
+              }
+            }
+          },
+          "secondaryWorld": {
+            "id": "basket.r4.available",
+            "label": "Workshop Basket",
+            "radius": 18,
+            "location": {
+              "kind": "free",
+              "position": {
+                "x": 1450,
+                "y": 500
+              }
+            }
+          },
+          "irrelevantWorld": {
+            "id": "stool.r4.background",
+            "label": "Background Stool",
+            "radius": 18,
+            "location": {
+              "kind": "free",
+              "position": {
+                "x": 1180,
+                "y": 650
+              }
+            }
+          },
+          "primaryKnowledge": {
+            "objectId": "crate.r4.remembered",
+            "lastKnownPosition": {
+              "x": 500,
+              "y": 500
+            },
+            "observedAtTick": 0,
+            "currentlyVisible": false
+          },
+          "janekPosition": {
+            "x": 1394.7351711922545,
+            "y": 506.24556847649575
+          },
+          "pendingCognitionReasonCount": 1,
+          "actionFacts": [
+            {
+              "tick": 1068,
+              "runId": "run.janek.r4.pickup-basket",
+              "kind": "material_pickup",
+              "objectId": "basket.r4.available",
+              "outcomeStatus": "succeeded",
+              "code": "picked_up"
+            },
+            {
+              "tick": 1304,
+              "runId": "run.janek.r4.place-basket",
+              "kind": "material_place",
+              "objectId": "basket.r4.available",
+              "outcomeStatus": "succeeded",
+              "code": "placed"
+            }
+          ]
+        },
+        "after": {
+          "scenarioId": "browser-r4-dense-workshop",
+          "tick": 1907,
+          "primary": {
+            "id": "matter.janek.r4.missing-crate",
+            "status": "active",
+            "semanticRevision": 2,
+            "semanticCourse": "retrieve the familiar workshop crate from its last-known bench position",
+            "semanticIntent": {
+              "kind": "acquire_material_object",
+              "goal": "have the familiar workshop crate in hand",
+              "objectId": "crate.r4.remembered"
+            },
+            "suspendedByMatterId": null,
+            "originEvidence": {
+              "id": "evidence:janek:r4:primary-origin",
+              "tick": 274,
+              "kind": "life_context",
+              "summary": "Janek already needs the familiar workshop crate he last saw beside the bench."
+            },
+            "semanticEvidence": {
+              "id": "evidence:janek:r4:checked-absence:701",
+              "tick": 701,
+              "kind": "checked_absence",
+              "summary": "Checked (500, 500); the familiar crate is not visible there now."
+            },
+            "lastOutcomeEvidence": {
+              "id": "task-outcome:7a3ec2df32def742:701",
+              "tick": 701,
+              "kind": "task_outcome",
+              "summary": "blocked: material object is not visible after bounded local inspection",
+              "sourceRunId": "run.janek.r4.pickup-last-known-crate"
+            },
+            "activeRun": null
+          },
+          "secondary": {
+            "id": "matter.janek.r4.return-basket",
+            "status": "resolved",
+            "semanticRevision": 1,
+            "semanticCourse": "return the visible workshop basket to the local shelf",
+            "semanticIntent": null,
+            "suspendedByMatterId": null,
+            "originEvidence": null,
+            "semanticEvidence": null,
+            "lastOutcomeEvidence": {
+              "id": "task-outcome:ea64107be86ac067:1304",
+              "tick": 1304,
+              "kind": "task_outcome",
+              "summary": "succeeded: placed basket.r4.available at the local material delivery destination",
+              "sourceRunId": "run.janek.r4.place-basket"
+            },
+            "activeRun": null
+          },
+          "body": {
+            "focusedRunId": null,
+            "deferredRunIds": []
+          },
+          "primaryWorld": {
+            "id": "crate.r4.remembered",
+            "label": "Familiar Workshop Crate",
+            "radius": 18,
+            "location": {
+              "kind": "free",
+              "position": {
+                "x": 1710.6125126672691,
+                "y": 1058.7442366156627
+              }
+            }
+          },
+          "secondaryWorld": {
+            "id": "basket.r4.available",
+            "label": "Workshop Basket",
+            "radius": 18,
+            "location": {
+              "kind": "free",
+              "position": {
+                "x": 1450,
+                "y": 500
+              }
+            }
+          },
+          "irrelevantWorld": {
+            "id": "stool.r4.background",
+            "label": "Background Stool",
+            "radius": 18,
+            "location": {
+              "kind": "free",
+              "position": {
+                "x": 1180,
+                "y": 650
+              }
+            }
+          },
+          "primaryKnowledge": {
+            "objectId": "crate.r4.remembered",
+            "lastKnownPosition": {
+              "x": 500,
+              "y": 500
+            },
+            "observedAtTick": 0,
+            "currentlyVisible": false
+          },
+          "janekPosition": {
+            "x": 1394.7351711922545,
+            "y": 506.24556847649575
+          },
+          "pendingCognitionReasonCount": 1,
+          "actionFacts": [
+            {
+              "tick": 1068,
+              "runId": "run.janek.r4.pickup-basket",
+              "kind": "material_pickup",
+              "objectId": "basket.r4.available",
+              "outcomeStatus": "succeeded",
+              "code": "picked_up"
+            },
+            {
+              "tick": 1304,
+              "runId": "run.janek.r4.place-basket",
+              "kind": "material_place",
+              "objectId": "basket.r4.available",
+              "outcomeStatus": "succeeded",
+              "code": "placed"
+            }
+          ]
+        }
+      },
+      "reveal": {
+        "from": {
+          "x": 1710.6125126672691,
+          "y": 1058.7442366156627
+        },
+        "to": {
+          "x": 1550,
+          "y": 650
+        },
+        "tickBefore": 1907,
+        "tickAfter": 1908
+      },
+      "revealBoundary": {
+        "scenarioId": "browser-r4-dense-workshop",
+        "tick": 1908,
+        "primary": {
+          "id": "matter.janek.r4.missing-crate",
+          "status": "active",
+          "semanticRevision": 2,
+          "semanticCourse": "retrieve the familiar workshop crate from its last-known bench position",
+          "semanticIntent": {
+            "kind": "acquire_material_object",
+            "goal": "have the familiar workshop crate in hand",
+            "objectId": "crate.r4.remembered"
+          },
+          "suspendedByMatterId": null,
+          "originEvidence": {
+            "id": "evidence:janek:r4:primary-origin",
+            "tick": 274,
+            "kind": "life_context",
+            "summary": "Janek already needs the familiar workshop crate he last saw beside the bench."
+          },
+          "semanticEvidence": {
+            "id": "evidence:janek:r4:checked-absence:701",
+            "tick": 701,
+            "kind": "checked_absence",
+            "summary": "Checked (500, 500); the familiar crate is not visible there now."
+          },
+          "lastOutcomeEvidence": {
+            "id": "task-outcome:7a3ec2df32def742:701",
+            "tick": 701,
+            "kind": "task_outcome",
+            "summary": "blocked: material object is not visible after bounded local inspection",
+            "sourceRunId": "run.janek.r4.pickup-last-known-crate"
+          },
+          "activeRun": null
+        },
+        "secondary": {
+          "id": "matter.janek.r4.return-basket",
+          "status": "resolved",
+          "semanticRevision": 1,
+          "semanticCourse": "return the visible workshop basket to the local shelf",
+          "semanticIntent": null,
+          "suspendedByMatterId": null,
+          "originEvidence": null,
+          "semanticEvidence": null,
+          "lastOutcomeEvidence": {
+            "id": "task-outcome:ea64107be86ac067:1304",
+            "tick": 1304,
+            "kind": "task_outcome",
+            "summary": "succeeded: placed basket.r4.available at the local material delivery destination",
+            "sourceRunId": "run.janek.r4.place-basket"
+          },
+          "activeRun": null
+        },
+        "body": {
+          "focusedRunId": null,
+          "deferredRunIds": []
+        },
+        "primaryWorld": {
+          "id": "crate.r4.remembered",
+          "label": "Familiar Workshop Crate",
+          "radius": 18,
+          "location": {
+            "kind": "free",
+            "position": {
+              "x": 1550,
+              "y": 650
+            }
+          }
+        },
+        "secondaryWorld": {
+          "id": "basket.r4.available",
+          "label": "Workshop Basket",
+          "radius": 18,
+          "location": {
+            "kind": "free",
+            "position": {
+              "x": 1450,
+              "y": 500
+            }
+          }
+        },
+        "irrelevantWorld": {
+          "id": "stool.r4.background",
+          "label": "Background Stool",
+          "radius": 18,
+          "location": {
+            "kind": "free",
+            "position": {
+              "x": 1180,
+              "y": 650
+            }
+          }
+        },
+        "primaryKnowledge": {
+          "objectId": "crate.r4.remembered",
+          "lastKnownPosition": {
+            "x": 500,
+            "y": 500
+          },
+          "observedAtTick": 0,
+          "currentlyVisible": false
+        },
+        "janekPosition": {
+          "x": 1394.7351711922545,
+          "y": 506.24556847649575
+        },
+        "pendingCognitionReasonCount": 1,
+        "actionFacts": [
+          {
+            "tick": 1068,
+            "runId": "run.janek.r4.pickup-basket",
+            "kind": "material_pickup",
+            "objectId": "basket.r4.available",
+            "outcomeStatus": "succeeded",
+            "code": "picked_up"
+          },
+          {
+            "tick": 1304,
+            "runId": "run.janek.r4.place-basket",
+            "kind": "material_place",
+            "objectId": "basket.r4.available",
+            "outcomeStatus": "succeeded",
+            "code": "placed"
+          }
+        ]
+      },
+      "reactivated": {
+        "scenarioId": "browser-r4-dense-workshop",
+        "tick": 1909,
+        "primary": {
+          "id": "matter.janek.r4.missing-crate",
+          "status": "active",
+          "semanticRevision": 3,
+          "semanticCourse": "retrieve the familiar workshop crate from its last-known bench position",
+          "semanticIntent": {
+            "kind": "acquire_material_object",
+            "goal": "have the familiar workshop crate in hand",
+            "objectId": "crate.r4.remembered"
+          },
+          "suspendedByMatterId": null,
+          "originEvidence": {
+            "id": "evidence:janek:r4:primary-origin",
+            "tick": 274,
+            "kind": "life_context",
+            "summary": "Janek already needs the familiar workshop crate he last saw beside the bench."
+          },
+          "semanticEvidence": {
+            "id": "material_reacquired:884d259c83ea29a3:1908",
+            "tick": 1908,
+            "kind": "material_reacquired",
+            "summary": "Recognized material object crate.r4.remembered became privately visible again at (1550, 650)."
+          },
+          "lastOutcomeEvidence": {
+            "id": "task-outcome:7a3ec2df32def742:701",
+            "tick": 701,
+            "kind": "task_outcome",
+            "summary": "blocked: material object is not visible after bounded local inspection",
+            "sourceRunId": "run.janek.r4.pickup-last-known-crate"
+          },
+          "activeRun": {
+            "runId": "run.janek.r4.pickup-reacquired-crate",
+            "taskId": "task.janek.r4.pickup-reacquired-crate",
+            "semanticRevision": 3,
+            "canMutateWorld": true,
+            "bodyState": "focused"
+          }
+        },
+        "secondary": {
+          "id": "matter.janek.r4.return-basket",
+          "status": "resolved",
+          "semanticRevision": 1,
+          "semanticCourse": "return the visible workshop basket to the local shelf",
+          "semanticIntent": null,
+          "suspendedByMatterId": null,
+          "originEvidence": null,
+          "semanticEvidence": null,
+          "lastOutcomeEvidence": {
+            "id": "task-outcome:ea64107be86ac067:1304",
+            "tick": 1304,
+            "kind": "task_outcome",
+            "summary": "succeeded: placed basket.r4.available at the local material delivery destination",
+            "sourceRunId": "run.janek.r4.place-basket"
+          },
+          "activeRun": null
+        },
+        "body": {
+          "focusedRunId": "run.janek.r4.pickup-reacquired-crate",
+          "deferredRunIds": []
+        },
+        "primaryWorld": {
+          "id": "crate.r4.remembered",
+          "label": "Familiar Workshop Crate",
+          "radius": 18,
+          "location": {
+            "kind": "free",
+            "position": {
+              "x": 1550,
+              "y": 650
+            }
+          }
+        },
+        "secondaryWorld": {
+          "id": "basket.r4.available",
+          "label": "Workshop Basket",
+          "radius": 18,
+          "location": {
+            "kind": "free",
+            "position": {
+              "x": 1450,
+              "y": 500
+            }
+          }
+        },
+        "irrelevantWorld": {
+          "id": "stool.r4.background",
+          "label": "Background Stool",
+          "radius": 18,
+          "location": {
+            "kind": "free",
+            "position": {
+              "x": 1180,
+              "y": 650
+            }
+          }
+        },
+        "primaryKnowledge": {
+          "objectId": "crate.r4.remembered",
+          "lastKnownPosition": {
+            "x": 1550,
+            "y": 650
+          },
+          "observedAtTick": 1908,
+          "currentlyVisible": true
+        },
+        "janekPosition": {
+          "x": 1394.7351711922545,
+          "y": 506.24556847649575
+        },
+        "pendingCognitionReasonCount": 0,
+        "actionFacts": [
+          {
+            "tick": 1068,
+            "runId": "run.janek.r4.pickup-basket",
+            "kind": "material_pickup",
+            "objectId": "basket.r4.available",
+            "outcomeStatus": "succeeded",
+            "code": "picked_up"
+          },
+          {
+            "tick": 1304,
+            "runId": "run.janek.r4.place-basket",
+            "kind": "material_place",
+            "objectId": "basket.r4.available",
+            "outcomeStatus": "succeeded",
+            "code": "placed"
+          }
+        ]
+      },
+      "primaryResolved": {
+        "scenarioId": "browser-r4-dense-workshop",
+        "tick": 2017,
+        "primary": {
+          "id": "matter.janek.r4.missing-crate",
+          "status": "resolved",
+          "semanticRevision": 3,
+          "semanticCourse": "retrieve the familiar workshop crate from its last-known bench position",
+          "semanticIntent": {
+            "kind": "acquire_material_object",
+            "goal": "have the familiar workshop crate in hand",
+            "objectId": "crate.r4.remembered"
+          },
+          "suspendedByMatterId": null,
+          "originEvidence": null,
+          "semanticEvidence": null,
+          "lastOutcomeEvidence": {
+            "id": "task-outcome:0288c97e592a3a91:2013",
+            "tick": 2013,
+            "kind": "task_outcome",
+            "summary": "succeeded: picked up crate.r4.remembered after legal private reacquisition",
+            "sourceRunId": "run.janek.r4.pickup-reacquired-crate"
+          },
+          "activeRun": null
+        },
+        "secondary": {
+          "id": "matter.janek.r4.return-basket",
+          "status": "resolved",
+          "semanticRevision": 1,
+          "semanticCourse": "return the visible workshop basket to the local shelf",
+          "semanticIntent": null,
+          "suspendedByMatterId": null,
+          "originEvidence": null,
+          "semanticEvidence": null,
+          "lastOutcomeEvidence": {
+            "id": "task-outcome:ea64107be86ac067:1304",
+            "tick": 1304,
+            "kind": "task_outcome",
+            "summary": "succeeded: placed basket.r4.available at the local material delivery destination",
+            "sourceRunId": "run.janek.r4.place-basket"
+          },
+          "activeRun": null
+        },
+        "body": {
+          "focusedRunId": null,
+          "deferredRunIds": []
+        },
+        "primaryWorld": {
+          "id": "crate.r4.remembered",
+          "label": "Familiar Workshop Crate",
+          "radius": 18,
+          "location": {
+            "kind": "held",
+            "actorId": "resident.janek"
+          }
+        },
+        "secondaryWorld": {
+          "id": "basket.r4.available",
+          "label": "Workshop Basket",
+          "radius": 18,
+          "location": {
+            "kind": "free",
+            "position": {
+              "x": 1450,
+              "y": 500
+            }
+          }
+        },
+        "irrelevantWorld": {
+          "id": "stool.r4.background",
+          "label": "Background Stool",
+          "radius": 18,
+          "location": {
+            "kind": "free",
+            "position": {
+              "x": 1180,
+              "y": 650
+            }
+          }
+        },
+        "primaryKnowledge": {
+          "objectId": "crate.r4.remembered",
+          "lastKnownPosition": {
+            "x": 1509.2052539757185,
+            "y": 612.229530223306
+          },
+          "observedAtTick": 2016,
+          "currentlyVisible": true
+        },
+        "janekPosition": {
+          "x": 1509.2052539757185,
+          "y": 612.229530223306
+        },
+        "pendingCognitionReasonCount": 0,
+        "actionFacts": [
+          {
+            "tick": 1068,
+            "runId": "run.janek.r4.pickup-basket",
+            "kind": "material_pickup",
+            "objectId": "basket.r4.available",
+            "outcomeStatus": "succeeded",
+            "code": "picked_up"
+          },
+          {
+            "tick": 1304,
+            "runId": "run.janek.r4.place-basket",
+            "kind": "material_place",
+            "objectId": "basket.r4.available",
+            "outcomeStatus": "succeeded",
+            "code": "placed"
+          },
+          {
+            "tick": 2013,
+            "runId": "run.janek.r4.pickup-reacquired-crate",
+            "kind": "material_pickup",
+            "objectId": "crate.r4.remembered",
+            "outcomeStatus": "succeeded",
+            "code": "picked_up"
+          }
+        ]
+      },
+      "relocatedHash": "fe87064b4a753db35eccb50d7061a4b15f403bef6aac790e2e56af4539177d1c",
+      "blockedHash": "29cc8356ac1550a83e530ab0edb14be92f465cb434d58b685554bf4cd1885152",
+      "resolvedHash": "d04b3deadd4b7838c662f6d0099602dbff032e9b93482584f97a96aae26d3752",
+      "quietHash": "3cf11a920bd50804836615dc90c563d6f0314742ca000c0fca8093331d1ccc19",
+      "revealBoundaryHash": "2136dc83a1b3e8a48d0b73e725270a0c75a78c3d1979dc0667aae48faa4289a8",
+      "reactivatedHash": "9a2d039cbd83ed86297ab9cd12e924aa2fedbc2a5937db624120db9c3061b374",
+      "primaryResolvedHash": "03652953e287167ce34aa51c00caa2ed1d8b278d56cbd8b82d294f061c4bd9dc",
+      "visualEvidence": {
+        "relocated": {
+          "fileName": "r4-dense-workshop-01-hidden-relocation.png",
+          "tick": 275,
+          "bytes": 48225,
+          "canonicalHash": "4e890ce18e19db5f708c65004bf732b7cf60599438181d1a79bc6480edea45ec"
+        },
+        "blockedAlternate": {
+          "fileName": "r4-dense-workshop-02-blocked-alternate.png",
+          "tick": 703,
+          "bytes": 48663,
+          "canonicalHash": "84cf15ed4284132f185b838a181ec9baed62ede7a240bee4e01b9543fdc65816"
+        },
+        "resolved": {
+          "fileName": "r4-dense-workshop-03-alternate-resolved.png",
+          "tick": 1307,
+          "bytes": 47751,
+          "canonicalHash": "678883dd984ef9d1705430193bc43d68091df29406050949c45c16237bde12aa"
+        },
+        "quiet": {
+          "fileName": "r4-dense-workshop-04-quiet.png",
+          "tick": 1907,
+          "bytes": 47751,
+          "canonicalHash": "9044ff6e901f10c78704e4f7e1d6bc02128f8842f5bf68592b6305f98e279435"
+        },
+        "revealBoundary": {
+          "fileName": "r4-dense-workshop-05-world-reveal-private-stale.png",
+          "tick": 1908,
+          "bytes": 48090,
+          "canonicalHash": "6b854cd269735d867b7edb19fa8225b2437da6474416db79e0b999cd5eb1ffa1"
+        },
+        "reactivated": {
+          "fileName": "r4-dense-workshop-06-primary-reactivated.png",
+          "tick": 1909,
+          "bytes": 48090,
+          "canonicalHash": "e46550dd35f4329bfebe0fa9d4e4bf13a54394c8cebb7400b1fc298619f43ba7"
+        },
+        "primaryResolved": {
+          "fileName": "r4-dense-workshop-07-primary-resolved.png",
+          "tick": 2017,
+          "bytes": 46697,
+          "canonicalHash": "9b4bfbe622afaeb6e76fa76d825c2e98e57e283d080291363b17aec84668b6c3"
+        }
+      }
+    },
+    {
+      "runIndex": 1,
+      "initial": {
+        "scenarioId": "browser-r4-dense-workshop",
+        "tick": 274,
+        "primary": {
+          "id": "matter.janek.r4.missing-crate",
+          "status": "active",
+          "semanticRevision": 1,
+          "semanticCourse": "retrieve the familiar workshop crate from its last-known bench position",
+          "semanticIntent": {
+            "kind": "acquire_material_object",
+            "goal": "have the familiar workshop crate in hand",
+            "objectId": "crate.r4.remembered"
+          },
+          "suspendedByMatterId": null,
+          "originEvidence": {
+            "id": "evidence:janek:r4:primary-origin",
+            "tick": 274,
+            "kind": "life_context",
+            "summary": "Janek already needs the familiar workshop crate he last saw beside the bench."
+          },
+          "semanticEvidence": {
+            "id": "evidence:janek:r4:primary-origin",
+            "tick": 274,
+            "kind": "life_context",
+            "summary": "Janek already needs the familiar workshop crate he last saw beside the bench."
+          },
+          "lastOutcomeEvidence": null,
+          "activeRun": {
+            "runId": "run.janek.r4.pickup-last-known-crate",
+            "taskId": "task.janek.r4.pickup-last-known-crate",
+            "semanticRevision": 1,
+            "canMutateWorld": true,
+            "bodyState": "focused"
+          }
+        },
+        "secondary": {
+          "id": "matter.janek.r4.return-basket",
+          "status": "active",
+          "semanticRevision": 1,
+          "semanticCourse": "return the visible workshop basket to the local shelf",
+          "semanticIntent": null,
+          "suspendedByMatterId": null,
+          "originEvidence": {
+            "id": "evidence:janek:r4:secondary-origin",
+            "tick": 274,
+            "kind": "life_context",
+            "summary": "Janek already intends to return the workshop basket to its local shelf."
+          },
+          "semanticEvidence": {
+            "id": "evidence:janek:r4:secondary-origin",
+            "tick": 274,
+            "kind": "life_context",
+            "summary": "Janek already intends to return the workshop basket to its local shelf."
+          },
+          "lastOutcomeEvidence": null,
+          "activeRun": {
+            "runId": "run.janek.r4.pickup-basket",
+            "taskId": "task.janek.r4.pickup-basket",
+            "semanticRevision": 1,
+            "canMutateWorld": true,
+            "bodyState": "deferred"
+          }
+        },
+        "body": {
+          "focusedRunId": "run.janek.r4.pickup-last-known-crate",
+          "deferredRunIds": [
+            "run.janek.r4.pickup-basket"
+          ]
+        },
+        "primaryWorld": {
+          "id": "crate.r4.remembered",
+          "label": "Familiar Workshop Crate",
+          "radius": 18,
+          "location": {
+            "kind": "free",
+            "position": {
+              "x": 500,
+              "y": 500
+            }
+          }
+        },
+        "secondaryWorld": {
+          "id": "basket.r4.available",
+          "label": "Workshop Basket",
+          "radius": 18,
+          "location": {
+            "kind": "free",
+            "position": {
+              "x": 1100,
+              "y": 550
+            }
+          }
+        },
+        "irrelevantWorld": {
+          "id": "stool.r4.background",
+          "label": "Background Stool",
+          "radius": 18,
+          "location": {
+            "kind": "free",
+            "position": {
+              "x": 1180,
+              "y": 650
+            }
+          }
+        },
+        "primaryKnowledge": {
+          "objectId": "crate.r4.remembered",
+          "lastKnownPosition": {
+            "x": 500,
+            "y": 500
+          },
+          "observedAtTick": 0,
+          "currentlyVisible": false
+        },
+        "janekPosition": {
+          "x": 1021.3333333333234,
+          "y": 500
+        },
+        "pendingCognitionReasonCount": 0,
+        "actionFacts": []
+      },
+      "relocated": {
+        "scenarioId": "browser-r4-dense-workshop",
+        "tick": 275,
+        "primary": {
+          "id": "matter.janek.r4.missing-crate",
+          "status": "active",
+          "semanticRevision": 1,
+          "semanticCourse": "retrieve the familiar workshop crate from its last-known bench position",
+          "semanticIntent": {
+            "kind": "acquire_material_object",
+            "goal": "have the familiar workshop crate in hand",
+            "objectId": "crate.r4.remembered"
+          },
+          "suspendedByMatterId": null,
+          "originEvidence": {
+            "id": "evidence:janek:r4:primary-origin",
+            "tick": 274,
+            "kind": "life_context",
+            "summary": "Janek already needs the familiar workshop crate he last saw beside the bench."
+          },
+          "semanticEvidence": {
+            "id": "evidence:janek:r4:primary-origin",
+            "tick": 274,
+            "kind": "life_context",
+            "summary": "Janek already needs the familiar workshop crate he last saw beside the bench."
+          },
+          "lastOutcomeEvidence": null,
+          "activeRun": {
+            "runId": "run.janek.r4.pickup-last-known-crate",
+            "taskId": "task.janek.r4.pickup-last-known-crate",
+            "semanticRevision": 1,
+            "canMutateWorld": true,
+            "bodyState": "focused"
+          }
+        },
+        "secondary": {
+          "id": "matter.janek.r4.return-basket",
+          "status": "active",
+          "semanticRevision": 1,
+          "semanticCourse": "return the visible workshop basket to the local shelf",
+          "semanticIntent": null,
+          "suspendedByMatterId": null,
+          "originEvidence": {
+            "id": "evidence:janek:r4:secondary-origin",
+            "tick": 274,
+            "kind": "life_context",
+            "summary": "Janek already intends to return the workshop basket to its local shelf."
+          },
+          "semanticEvidence": {
+            "id": "evidence:janek:r4:secondary-origin",
+            "tick": 274,
+            "kind": "life_context",
+            "summary": "Janek already intends to return the workshop basket to its local shelf."
+          },
+          "lastOutcomeEvidence": null,
+          "activeRun": {
+            "runId": "run.janek.r4.pickup-basket",
+            "taskId": "task.janek.r4.pickup-basket",
+            "semanticRevision": 1,
+            "canMutateWorld": true,
+            "bodyState": "deferred"
+          }
+        },
+        "body": {
+          "focusedRunId": "run.janek.r4.pickup-last-known-crate",
+          "deferredRunIds": [
+            "run.janek.r4.pickup-basket"
+          ]
+        },
+        "primaryWorld": {
+          "id": "crate.r4.remembered",
+          "label": "Familiar Workshop Crate",
+          "radius": 18,
+          "location": {
+            "kind": "free",
+            "position": {
+              "x": 1710.6125126672691,
+              "y": 1058.7442366156627
+            }
+          }
+        },
+        "secondaryWorld": {
+          "id": "basket.r4.available",
+          "label": "Workshop Basket",
+          "radius": 18,
+          "location": {
+            "kind": "free",
+            "position": {
+              "x": 1100,
+              "y": 550
+            }
+          }
+        },
+        "irrelevantWorld": {
+          "id": "stool.r4.background",
+          "label": "Background Stool",
+          "radius": 18,
+          "location": {
+            "kind": "free",
+            "position": {
+              "x": 1180,
+              "y": 650
+            }
+          }
+        },
+        "primaryKnowledge": {
+          "objectId": "crate.r4.remembered",
+          "lastKnownPosition": {
+            "x": 500,
+            "y": 500
+          },
+          "observedAtTick": 0,
+          "currentlyVisible": false
+        },
+        "janekPosition": {
+          "x": 1021.3333333333234,
+          "y": 500
+        },
+        "pendingCognitionReasonCount": 0,
+        "actionFacts": []
+      },
+      "blocked": {
+        "scenarioId": "browser-r4-dense-workshop",
+        "tick": 703,
+        "primary": {
+          "id": "matter.janek.r4.missing-crate",
+          "status": "active",
+          "semanticRevision": 2,
+          "semanticCourse": "retrieve the familiar workshop crate from its last-known bench position",
+          "semanticIntent": {
+            "kind": "acquire_material_object",
+            "goal": "have the familiar workshop crate in hand",
+            "objectId": "crate.r4.remembered"
+          },
+          "suspendedByMatterId": null,
+          "originEvidence": {
+            "id": "evidence:janek:r4:primary-origin",
+            "tick": 274,
+            "kind": "life_context",
+            "summary": "Janek already needs the familiar workshop crate he last saw beside the bench."
+          },
+          "semanticEvidence": {
+            "id": "evidence:janek:r4:checked-absence:701",
+            "tick": 701,
+            "kind": "checked_absence",
+            "summary": "Checked (500, 500); the familiar crate is not visible there now."
+          },
+          "lastOutcomeEvidence": {
+            "id": "task-outcome:7a3ec2df32def742:701",
+            "tick": 701,
+            "kind": "task_outcome",
+            "summary": "blocked: material object is not visible after bounded local inspection",
+            "sourceRunId": "run.janek.r4.pickup-last-known-crate"
+          },
+          "activeRun": null
+        },
+        "secondary": {
+          "id": "matter.janek.r4.return-basket",
+          "status": "active",
+          "semanticRevision": 1,
+          "semanticCourse": "return the visible workshop basket to the local shelf",
+          "semanticIntent": null,
+          "suspendedByMatterId": null,
+          "originEvidence": {
+            "id": "evidence:janek:r4:secondary-origin",
+            "tick": 274,
+            "kind": "life_context",
+            "summary": "Janek already intends to return the workshop basket to its local shelf."
+          },
+          "semanticEvidence": {
+            "id": "evidence:janek:r4:secondary-origin",
+            "tick": 274,
+            "kind": "life_context",
+            "summary": "Janek already intends to return the workshop basket to its local shelf."
+          },
+          "lastOutcomeEvidence": null,
+          "activeRun": {
+            "runId": "run.janek.r4.pickup-basket",
+            "taskId": "task.janek.r4.pickup-basket",
+            "semanticRevision": 1,
+            "canMutateWorld": true,
+            "bodyState": "focused"
+          }
+        },
+        "body": {
+          "focusedRunId": "run.janek.r4.pickup-basket",
+          "deferredRunIds": []
+        },
+        "primaryWorld": {
+          "id": "crate.r4.remembered",
+          "label": "Familiar Workshop Crate",
+          "radius": 18,
+          "location": {
+            "kind": "free",
+            "position": {
+              "x": 1710.6125126672691,
+              "y": 1058.7442366156627
+            }
+          }
+        },
+        "secondaryWorld": {
+          "id": "basket.r4.available",
+          "label": "Workshop Basket",
+          "radius": 18,
+          "location": {
+            "kind": "free",
+            "position": {
+              "x": 1100,
+              "y": 550
+            }
+          }
+        },
+        "irrelevantWorld": {
+          "id": "stool.r4.background",
+          "label": "Background Stool",
+          "radius": 18,
+          "location": {
+            "kind": "free",
+            "position": {
+              "x": 1180,
+              "y": 650
+            }
+          }
+        },
+        "primaryKnowledge": {
+          "objectId": "crate.r4.remembered",
+          "lastKnownPosition": {
+            "x": 500,
+            "y": 500
+          },
+          "observedAtTick": 0,
+          "currentlyVisible": false
+        },
+        "janekPosition": {
+          "x": 498.50164136874986,
+          "y": 504.8370195119095
+        },
+        "pendingCognitionReasonCount": 1,
+        "actionFacts": []
+      },
+      "resolved": {
+        "scenarioId": "browser-r4-dense-workshop",
+        "tick": 1307,
+        "primary": {
+          "id": "matter.janek.r4.missing-crate",
+          "status": "active",
+          "semanticRevision": 2,
+          "semanticCourse": "retrieve the familiar workshop crate from its last-known bench position",
+          "semanticIntent": {
+            "kind": "acquire_material_object",
+            "goal": "have the familiar workshop crate in hand",
+            "objectId": "crate.r4.remembered"
+          },
+          "suspendedByMatterId": null,
+          "originEvidence": {
+            "id": "evidence:janek:r4:primary-origin",
+            "tick": 274,
+            "kind": "life_context",
+            "summary": "Janek already needs the familiar workshop crate he last saw beside the bench."
+          },
+          "semanticEvidence": {
+            "id": "evidence:janek:r4:checked-absence:701",
+            "tick": 701,
+            "kind": "checked_absence",
+            "summary": "Checked (500, 500); the familiar crate is not visible there now."
+          },
+          "lastOutcomeEvidence": {
+            "id": "task-outcome:7a3ec2df32def742:701",
+            "tick": 701,
+            "kind": "task_outcome",
+            "summary": "blocked: material object is not visible after bounded local inspection",
+            "sourceRunId": "run.janek.r4.pickup-last-known-crate"
+          },
+          "activeRun": null
+        },
+        "secondary": {
+          "id": "matter.janek.r4.return-basket",
+          "status": "resolved",
+          "semanticRevision": 1,
+          "semanticCourse": "return the visible workshop basket to the local shelf",
+          "semanticIntent": null,
+          "suspendedByMatterId": null,
+          "originEvidence": null,
+          "semanticEvidence": null,
+          "lastOutcomeEvidence": {
+            "id": "task-outcome:ea64107be86ac067:1304",
+            "tick": 1304,
+            "kind": "task_outcome",
+            "summary": "succeeded: placed basket.r4.available at the local material delivery destination",
+            "sourceRunId": "run.janek.r4.place-basket"
+          },
+          "activeRun": null
+        },
+        "body": {
+          "focusedRunId": null,
+          "deferredRunIds": []
+        },
+        "primaryWorld": {
+          "id": "crate.r4.remembered",
+          "label": "Familiar Workshop Crate",
+          "radius": 18,
+          "location": {
+            "kind": "free",
+            "position": {
+              "x": 1710.6125126672691,
+              "y": 1058.7442366156627
+            }
+          }
+        },
+        "secondaryWorld": {
+          "id": "basket.r4.available",
+          "label": "Workshop Basket",
+          "radius": 18,
+          "location": {
+            "kind": "free",
+            "position": {
+              "x": 1450,
+              "y": 500
+            }
+          }
+        },
+        "irrelevantWorld": {
+          "id": "stool.r4.background",
+          "label": "Background Stool",
+          "radius": 18,
+          "location": {
+            "kind": "free",
+            "position": {
+              "x": 1180,
+              "y": 650
+            }
+          }
+        },
+        "primaryKnowledge": {
+          "objectId": "crate.r4.remembered",
+          "lastKnownPosition": {
+            "x": 500,
+            "y": 500
+          },
+          "observedAtTick": 0,
+          "currentlyVisible": false
+        },
+        "janekPosition": {
+          "x": 1394.7351711922545,
+          "y": 506.24556847649575
+        },
+        "pendingCognitionReasonCount": 1,
+        "actionFacts": [
+          {
+            "tick": 1068,
+            "runId": "run.janek.r4.pickup-basket",
+            "kind": "material_pickup",
+            "objectId": "basket.r4.available",
+            "outcomeStatus": "succeeded",
+            "code": "picked_up"
+          },
+          {
+            "tick": 1304,
+            "runId": "run.janek.r4.place-basket",
+            "kind": "material_place",
+            "objectId": "basket.r4.available",
+            "outcomeStatus": "succeeded",
+            "code": "placed"
+          }
+        ]
+      },
+      "quiet": {
+        "ticks": 600,
+        "before": {
+          "scenarioId": "browser-r4-dense-workshop",
+          "tick": 1307,
+          "primary": {
+            "id": "matter.janek.r4.missing-crate",
+            "status": "active",
+            "semanticRevision": 2,
+            "semanticCourse": "retrieve the familiar workshop crate from its last-known bench position",
+            "semanticIntent": {
+              "kind": "acquire_material_object",
+              "goal": "have the familiar workshop crate in hand",
+              "objectId": "crate.r4.remembered"
+            },
+            "suspendedByMatterId": null,
+            "originEvidence": {
+              "id": "evidence:janek:r4:primary-origin",
+              "tick": 274,
+              "kind": "life_context",
+              "summary": "Janek already needs the familiar workshop crate he last saw beside the bench."
+            },
+            "semanticEvidence": {
+              "id": "evidence:janek:r4:checked-absence:701",
+              "tick": 701,
+              "kind": "checked_absence",
+              "summary": "Checked (500, 500); the familiar crate is not visible there now."
+            },
+            "lastOutcomeEvidence": {
+              "id": "task-outcome:7a3ec2df32def742:701",
+              "tick": 701,
+              "kind": "task_outcome",
+              "summary": "blocked: material object is not visible after bounded local inspection",
+              "sourceRunId": "run.janek.r4.pickup-last-known-crate"
+            },
+            "activeRun": null
+          },
+          "secondary": {
+            "id": "matter.janek.r4.return-basket",
+            "status": "resolved",
+            "semanticRevision": 1,
+            "semanticCourse": "return the visible workshop basket to the local shelf",
+            "semanticIntent": null,
+            "suspendedByMatterId": null,
+            "originEvidence": null,
+            "semanticEvidence": null,
+            "lastOutcomeEvidence": {
+              "id": "task-outcome:ea64107be86ac067:1304",
+              "tick": 1304,
+              "kind": "task_outcome",
+              "summary": "succeeded: placed basket.r4.available at the local material delivery destination",
+              "sourceRunId": "run.janek.r4.place-basket"
+            },
+            "activeRun": null
+          },
+          "body": {
+            "focusedRunId": null,
+            "deferredRunIds": []
+          },
+          "primaryWorld": {
+            "id": "crate.r4.remembered",
+            "label": "Familiar Workshop Crate",
+            "radius": 18,
+            "location": {
+              "kind": "free",
+              "position": {
+                "x": 1710.6125126672691,
+                "y": 1058.7442366156627
+              }
+            }
+          },
+          "secondaryWorld": {
+            "id": "basket.r4.available",
+            "label": "Workshop Basket",
+            "radius": 18,
+            "location": {
+              "kind": "free",
+              "position": {
+                "x": 1450,
+                "y": 500
+              }
+            }
+          },
+          "irrelevantWorld": {
+            "id": "stool.r4.background",
+            "label": "Background Stool",
+            "radius": 18,
+            "location": {
+              "kind": "free",
+              "position": {
+                "x": 1180,
+                "y": 650
+              }
+            }
+          },
+          "primaryKnowledge": {
+            "objectId": "crate.r4.remembered",
+            "lastKnownPosition": {
+              "x": 500,
+              "y": 500
+            },
+            "observedAtTick": 0,
+            "currentlyVisible": false
+          },
+          "janekPosition": {
+            "x": 1394.7351711922545,
+            "y": 506.24556847649575
+          },
+          "pendingCognitionReasonCount": 1,
+          "actionFacts": [
+            {
+              "tick": 1068,
+              "runId": "run.janek.r4.pickup-basket",
+              "kind": "material_pickup",
+              "objectId": "basket.r4.available",
+              "outcomeStatus": "succeeded",
+              "code": "picked_up"
+            },
+            {
+              "tick": 1304,
+              "runId": "run.janek.r4.place-basket",
+              "kind": "material_place",
+              "objectId": "basket.r4.available",
+              "outcomeStatus": "succeeded",
+              "code": "placed"
+            }
+          ]
+        },
+        "after": {
+          "scenarioId": "browser-r4-dense-workshop",
+          "tick": 1907,
+          "primary": {
+            "id": "matter.janek.r4.missing-crate",
+            "status": "active",
+            "semanticRevision": 2,
+            "semanticCourse": "retrieve the familiar workshop crate from its last-known bench position",
+            "semanticIntent": {
+              "kind": "acquire_material_object",
+              "goal": "have the familiar workshop crate in hand",
+              "objectId": "crate.r4.remembered"
+            },
+            "suspendedByMatterId": null,
+            "originEvidence": {
+              "id": "evidence:janek:r4:primary-origin",
+              "tick": 274,
+              "kind": "life_context",
+              "summary": "Janek already needs the familiar workshop crate he last saw beside the bench."
+            },
+            "semanticEvidence": {
+              "id": "evidence:janek:r4:checked-absence:701",
+              "tick": 701,
+              "kind": "checked_absence",
+              "summary": "Checked (500, 500); the familiar crate is not visible there now."
+            },
+            "lastOutcomeEvidence": {
+              "id": "task-outcome:7a3ec2df32def742:701",
+              "tick": 701,
+              "kind": "task_outcome",
+              "summary": "blocked: material object is not visible after bounded local inspection",
+              "sourceRunId": "run.janek.r4.pickup-last-known-crate"
+            },
+            "activeRun": null
+          },
+          "secondary": {
+            "id": "matter.janek.r4.return-basket",
+            "status": "resolved",
+            "semanticRevision": 1,
+            "semanticCourse": "return the visible workshop basket to the local shelf",
+            "semanticIntent": null,
+            "suspendedByMatterId": null,
+            "originEvidence": null,
+            "semanticEvidence": null,
+            "lastOutcomeEvidence": {
+              "id": "task-outcome:ea64107be86ac067:1304",
+              "tick": 1304,
+              "kind": "task_outcome",
+              "summary": "succeeded: placed basket.r4.available at the local material delivery destination",
+              "sourceRunId": "run.janek.r4.place-basket"
+            },
+            "activeRun": null
+          },
+          "body": {
+            "focusedRunId": null,
+            "deferredRunIds": []
+          },
+          "primaryWorld": {
+            "id": "crate.r4.remembered",
+            "label": "Familiar Workshop Crate",
+            "radius": 18,
+            "location": {
+              "kind": "free",
+              "position": {
+                "x": 1710.6125126672691,
+                "y": 1058.7442366156627
+              }
+            }
+          },
+          "secondaryWorld": {
+            "id": "basket.r4.available",
+            "label": "Workshop Basket",
+            "radius": 18,
+            "location": {
+              "kind": "free",
+              "position": {
+                "x": 1450,
+                "y": 500
+              }
+            }
+          },
+          "irrelevantWorld": {
+            "id": "stool.r4.background",
+            "label": "Background Stool",
+            "radius": 18,
+            "location": {
+              "kind": "free",
+              "position": {
+                "x": 1180,
+                "y": 650
+              }
+            }
+          },
+          "primaryKnowledge": {
+            "objectId": "crate.r4.remembered",
+            "lastKnownPosition": {
+              "x": 500,
+              "y": 500
+            },
+            "observedAtTick": 0,
+            "currentlyVisible": false
+          },
+          "janekPosition": {
+            "x": 1394.7351711922545,
+            "y": 506.24556847649575
+          },
+          "pendingCognitionReasonCount": 1,
+          "actionFacts": [
+            {
+              "tick": 1068,
+              "runId": "run.janek.r4.pickup-basket",
+              "kind": "material_pickup",
+              "objectId": "basket.r4.available",
+              "outcomeStatus": "succeeded",
+              "code": "picked_up"
+            },
+            {
+              "tick": 1304,
+              "runId": "run.janek.r4.place-basket",
+              "kind": "material_place",
+              "objectId": "basket.r4.available",
+              "outcomeStatus": "succeeded",
+              "code": "placed"
+            }
+          ]
+        }
+      },
+      "reveal": {
+        "from": {
+          "x": 1710.6125126672691,
+          "y": 1058.7442366156627
+        },
+        "to": {
+          "x": 1550,
+          "y": 650
+        },
+        "tickBefore": 1907,
+        "tickAfter": 1908
+      },
+      "revealBoundary": {
+        "scenarioId": "browser-r4-dense-workshop",
+        "tick": 1908,
+        "primary": {
+          "id": "matter.janek.r4.missing-crate",
+          "status": "active",
+          "semanticRevision": 2,
+          "semanticCourse": "retrieve the familiar workshop crate from its last-known bench position",
+          "semanticIntent": {
+            "kind": "acquire_material_object",
+            "goal": "have the familiar workshop crate in hand",
+            "objectId": "crate.r4.remembered"
+          },
+          "suspendedByMatterId": null,
+          "originEvidence": {
+            "id": "evidence:janek:r4:primary-origin",
+            "tick": 274,
+            "kind": "life_context",
+            "summary": "Janek already needs the familiar workshop crate he last saw beside the bench."
+          },
+          "semanticEvidence": {
+            "id": "evidence:janek:r4:checked-absence:701",
+            "tick": 701,
+            "kind": "checked_absence",
+            "summary": "Checked (500, 500); the familiar crate is not visible there now."
+          },
+          "lastOutcomeEvidence": {
+            "id": "task-outcome:7a3ec2df32def742:701",
+            "tick": 701,
+            "kind": "task_outcome",
+            "summary": "blocked: material object is not visible after bounded local inspection",
+            "sourceRunId": "run.janek.r4.pickup-last-known-crate"
+          },
+          "activeRun": null
+        },
+        "secondary": {
+          "id": "matter.janek.r4.return-basket",
+          "status": "resolved",
+          "semanticRevision": 1,
+          "semanticCourse": "return the visible workshop basket to the local shelf",
+          "semanticIntent": null,
+          "suspendedByMatterId": null,
+          "originEvidence": null,
+          "semanticEvidence": null,
+          "lastOutcomeEvidence": {
+            "id": "task-outcome:ea64107be86ac067:1304",
+            "tick": 1304,
+            "kind": "task_outcome",
+            "summary": "succeeded: placed basket.r4.available at the local material delivery destination",
+            "sourceRunId": "run.janek.r4.place-basket"
+          },
+          "activeRun": null
+        },
+        "body": {
+          "focusedRunId": null,
+          "deferredRunIds": []
+        },
+        "primaryWorld": {
+          "id": "crate.r4.remembered",
+          "label": "Familiar Workshop Crate",
+          "radius": 18,
+          "location": {
+            "kind": "free",
+            "position": {
+              "x": 1550,
+              "y": 650
+            }
+          }
+        },
+        "secondaryWorld": {
+          "id": "basket.r4.available",
+          "label": "Workshop Basket",
+          "radius": 18,
+          "location": {
+            "kind": "free",
+            "position": {
+              "x": 1450,
+              "y": 500
+            }
+          }
+        },
+        "irrelevantWorld": {
+          "id": "stool.r4.background",
+          "label": "Background Stool",
+          "radius": 18,
+          "location": {
+            "kind": "free",
+            "position": {
+              "x": 1180,
+              "y": 650
+            }
+          }
+        },
+        "primaryKnowledge": {
+          "objectId": "crate.r4.remembered",
+          "lastKnownPosition": {
+            "x": 500,
+            "y": 500
+          },
+          "observedAtTick": 0,
+          "currentlyVisible": false
+        },
+        "janekPosition": {
+          "x": 1394.7351711922545,
+          "y": 506.24556847649575
+        },
+        "pendingCognitionReasonCount": 1,
+        "actionFacts": [
+          {
+            "tick": 1068,
+            "runId": "run.janek.r4.pickup-basket",
+            "kind": "material_pickup",
+            "objectId": "basket.r4.available",
+            "outcomeStatus": "succeeded",
+            "code": "picked_up"
+          },
+          {
+            "tick": 1304,
+            "runId": "run.janek.r4.place-basket",
+            "kind": "material_place",
+            "objectId": "basket.r4.available",
+            "outcomeStatus": "succeeded",
+            "code": "placed"
+          }
+        ]
+      },
+      "reactivated": {
+        "scenarioId": "browser-r4-dense-workshop",
+        "tick": 1909,
+        "primary": {
+          "id": "matter.janek.r4.missing-crate",
+          "status": "active",
+          "semanticRevision": 3,
+          "semanticCourse": "retrieve the familiar workshop crate from its last-known bench position",
+          "semanticIntent": {
+            "kind": "acquire_material_object",
+            "goal": "have the familiar workshop crate in hand",
+            "objectId": "crate.r4.remembered"
+          },
+          "suspendedByMatterId": null,
+          "originEvidence": {
+            "id": "evidence:janek:r4:primary-origin",
+            "tick": 274,
+            "kind": "life_context",
+            "summary": "Janek already needs the familiar workshop crate he last saw beside the bench."
+          },
+          "semanticEvidence": {
+            "id": "material_reacquired:884d259c83ea29a3:1908",
+            "tick": 1908,
+            "kind": "material_reacquired",
+            "summary": "Recognized material object crate.r4.remembered became privately visible again at (1550, 650)."
+          },
+          "lastOutcomeEvidence": {
+            "id": "task-outcome:7a3ec2df32def742:701",
+            "tick": 701,
+            "kind": "task_outcome",
+            "summary": "blocked: material object is not visible after bounded local inspection",
+            "sourceRunId": "run.janek.r4.pickup-last-known-crate"
+          },
+          "activeRun": {
+            "runId": "run.janek.r4.pickup-reacquired-crate",
+            "taskId": "task.janek.r4.pickup-reacquired-crate",
+            "semanticRevision": 3,
+            "canMutateWorld": true,
+            "bodyState": "focused"
+          }
+        },
+        "secondary": {
+          "id": "matter.janek.r4.return-basket",
+          "status": "resolved",
+          "semanticRevision": 1,
+          "semanticCourse": "return the visible workshop basket to the local shelf",
+          "semanticIntent": null,
+          "suspendedByMatterId": null,
+          "originEvidence": null,
+          "semanticEvidence": null,
+          "lastOutcomeEvidence": {
+            "id": "task-outcome:ea64107be86ac067:1304",
+            "tick": 1304,
+            "kind": "task_outcome",
+            "summary": "succeeded: placed basket.r4.available at the local material delivery destination",
+            "sourceRunId": "run.janek.r4.place-basket"
+          },
+          "activeRun": null
+        },
+        "body": {
+          "focusedRunId": "run.janek.r4.pickup-reacquired-crate",
+          "deferredRunIds": []
+        },
+        "primaryWorld": {
+          "id": "crate.r4.remembered",
+          "label": "Familiar Workshop Crate",
+          "radius": 18,
+          "location": {
+            "kind": "free",
+            "position": {
+              "x": 1550,
+              "y": 650
+            }
+          }
+        },
+        "secondaryWorld": {
+          "id": "basket.r4.available",
+          "label": "Workshop Basket",
+          "radius": 18,
+          "location": {
+            "kind": "free",
+            "position": {
+              "x": 1450,
+              "y": 500
+            }
+          }
+        },
+        "irrelevantWorld": {
+          "id": "stool.r4.background",
+          "label": "Background Stool",
+          "radius": 18,
+          "location": {
+            "kind": "free",
+            "position": {
+              "x": 1180,
+              "y": 650
+            }
+          }
+        },
+        "primaryKnowledge": {
+          "objectId": "crate.r4.remembered",
+          "lastKnownPosition": {
+            "x": 1550,
+            "y": 650
+          },
+          "observedAtTick": 1908,
+          "currentlyVisible": true
+        },
+        "janekPosition": {
+          "x": 1394.7351711922545,
+          "y": 506.24556847649575
+        },
+        "pendingCognitionReasonCount": 0,
+        "actionFacts": [
+          {
+            "tick": 1068,
+            "runId": "run.janek.r4.pickup-basket",
+            "kind": "material_pickup",
+            "objectId": "basket.r4.available",
+            "outcomeStatus": "succeeded",
+            "code": "picked_up"
+          },
+          {
+            "tick": 1304,
+            "runId": "run.janek.r4.place-basket",
+            "kind": "material_place",
+            "objectId": "basket.r4.available",
+            "outcomeStatus": "succeeded",
+            "code": "placed"
+          }
+        ]
+      },
+      "primaryResolved": {
+        "scenarioId": "browser-r4-dense-workshop",
+        "tick": 2017,
+        "primary": {
+          "id": "matter.janek.r4.missing-crate",
+          "status": "resolved",
+          "semanticRevision": 3,
+          "semanticCourse": "retrieve the familiar workshop crate from its last-known bench position",
+          "semanticIntent": {
+            "kind": "acquire_material_object",
+            "goal": "have the familiar workshop crate in hand",
+            "objectId": "crate.r4.remembered"
+          },
+          "suspendedByMatterId": null,
+          "originEvidence": null,
+          "semanticEvidence": null,
+          "lastOutcomeEvidence": {
+            "id": "task-outcome:0288c97e592a3a91:2013",
+            "tick": 2013,
+            "kind": "task_outcome",
+            "summary": "succeeded: picked up crate.r4.remembered after legal private reacquisition",
+            "sourceRunId": "run.janek.r4.pickup-reacquired-crate"
+          },
+          "activeRun": null
+        },
+        "secondary": {
+          "id": "matter.janek.r4.return-basket",
+          "status": "resolved",
+          "semanticRevision": 1,
+          "semanticCourse": "return the visible workshop basket to the local shelf",
+          "semanticIntent": null,
+          "suspendedByMatterId": null,
+          "originEvidence": null,
+          "semanticEvidence": null,
+          "lastOutcomeEvidence": {
+            "id": "task-outcome:ea64107be86ac067:1304",
+            "tick": 1304,
+            "kind": "task_outcome",
+            "summary": "succeeded: placed basket.r4.available at the local material delivery destination",
+            "sourceRunId": "run.janek.r4.place-basket"
+          },
+          "activeRun": null
+        },
+        "body": {
+          "focusedRunId": null,
+          "deferredRunIds": []
+        },
+        "primaryWorld": {
+          "id": "crate.r4.remembered",
+          "label": "Familiar Workshop Crate",
+          "radius": 18,
+          "location": {
+            "kind": "held",
+            "actorId": "resident.janek"
+          }
+        },
+        "secondaryWorld": {
+          "id": "basket.r4.available",
+          "label": "Workshop Basket",
+          "radius": 18,
+          "location": {
+            "kind": "free",
+            "position": {
+              "x": 1450,
+              "y": 500
+            }
+          }
+        },
+        "irrelevantWorld": {
+          "id": "stool.r4.background",
+          "label": "Background Stool",
+          "radius": 18,
+          "location": {
+            "kind": "free",
+            "position": {
+              "x": 1180,
+              "y": 650
+            }
+          }
+        },
+        "primaryKnowledge": {
+          "objectId": "crate.r4.remembered",
+          "lastKnownPosition": {
+            "x": 1509.2052539757185,
+            "y": 612.229530223306
+          },
+          "observedAtTick": 2016,
+          "currentlyVisible": true
+        },
+        "janekPosition": {
+          "x": 1509.2052539757185,
+          "y": 612.229530223306
+        },
+        "pendingCognitionReasonCount": 0,
+        "actionFacts": [
+          {
+            "tick": 1068,
+            "runId": "run.janek.r4.pickup-basket",
+            "kind": "material_pickup",
+            "objectId": "basket.r4.available",
+            "outcomeStatus": "succeeded",
+            "code": "picked_up"
+          },
+          {
+            "tick": 1304,
+            "runId": "run.janek.r4.place-basket",
+            "kind": "material_place",
+            "objectId": "basket.r4.available",
+            "outcomeStatus": "succeeded",
+            "code": "placed"
+          },
+          {
+            "tick": 2013,
+            "runId": "run.janek.r4.pickup-reacquired-crate",
+            "kind": "material_pickup",
+            "objectId": "crate.r4.remembered",
+            "outcomeStatus": "succeeded",
+            "code": "picked_up"
+          }
+        ]
+      },
+      "relocatedHash": "fe87064b4a753db35eccb50d7061a4b15f403bef6aac790e2e56af4539177d1c",
+      "blockedHash": "29cc8356ac1550a83e530ab0edb14be92f465cb434d58b685554bf4cd1885152",
+      "resolvedHash": "d04b3deadd4b7838c662f6d0099602dbff032e9b93482584f97a96aae26d3752",
+      "quietHash": "3cf11a920bd50804836615dc90c563d6f0314742ca000c0fca8093331d1ccc19",
+      "revealBoundaryHash": "2136dc83a1b3e8a48d0b73e725270a0c75a78c3d1979dc0667aae48faa4289a8",
+      "reactivatedHash": "9a2d039cbd83ed86297ab9cd12e924aa2fedbc2a5937db624120db9c3061b374",
+      "primaryResolvedHash": "03652953e287167ce34aa51c00caa2ed1d8b278d56cbd8b82d294f061c4bd9dc",
+      "visualEvidence": null
+    }
+  ],
+  "visualEvidence": {
+    "relocated": {
+      "fileName": "r4-dense-workshop-01-hidden-relocation.png",
+      "tick": 275,
+      "bytes": 48225,
+      "canonicalHash": "4e890ce18e19db5f708c65004bf732b7cf60599438181d1a79bc6480edea45ec"
+    },
+    "blockedAlternate": {
+      "fileName": "r4-dense-workshop-02-blocked-alternate.png",
+      "tick": 703,
+      "bytes": 48663,
+      "canonicalHash": "84cf15ed4284132f185b838a181ec9baed62ede7a240bee4e01b9543fdc65816"
+    },
+    "resolved": {
+      "fileName": "r4-dense-workshop-03-alternate-resolved.png",
+      "tick": 1307,
+      "bytes": 47751,
+      "canonicalHash": "678883dd984ef9d1705430193bc43d68091df29406050949c45c16237bde12aa"
+    },
+    "quiet": {
+      "fileName": "r4-dense-workshop-04-quiet.png",
+      "tick": 1907,
+      "bytes": 47751,
+      "canonicalHash": "9044ff6e901f10c78704e4f7e1d6bc02128f8842f5bf68592b6305f98e279435"
+    },
+    "revealBoundary": {
+      "fileName": "r4-dense-workshop-05-world-reveal-private-stale.png",
+      "tick": 1908,
+      "bytes": 48090,
+      "canonicalHash": "6b854cd269735d867b7edb19fa8225b2437da6474416db79e0b999cd5eb1ffa1"
+    },
+    "reactivated": {
+      "fileName": "r4-dense-workshop-06-primary-reactivated.png",
+      "tick": 1909,
+      "bytes": 48090,
+      "canonicalHash": "e46550dd35f4329bfebe0fa9d4e4bf13a54394c8cebb7400b1fc298619f43ba7"
+    },
+    "primaryResolved": {
+      "fileName": "r4-dense-workshop-07-primary-resolved.png",
+      "tick": 2017,
+      "bytes": 46697,
+      "canonicalHash": "9b4bfbe622afaeb6e76fa76d825c2e98e57e283d080291363b17aec84668b6c3"
+    }
+  },
+  "finishedAt": "2026-09-26T08:51:48.778Z",
+  "outcome": "PASS"
+}
