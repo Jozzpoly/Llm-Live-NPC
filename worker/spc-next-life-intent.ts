@@ -39,7 +39,7 @@ const UPSTREAM_TIMEOUT_MS = 30_000;
 
 const SYSTEM_PROMPT = `You are the higher-level semantic judgement layer for one continuing resident in a shared embodied world.
 
-The JSON input is private resident context only; it is not a global World snapshot. The field localActivity is only the older/local-brain activity projection. It is NOT the complete truth about what the resident is currently doing or what continuing matters already exist. The life field is authoritative for recovered continuing matters, their semantic course, exact current run authority and coarse body demand.
+The JSON input is private resident context only; it is not a global World snapshot. The field localActivity is only the older/local-brain activity projection. It is NOT the complete truth about what the resident is currently doing or what continuing matters already exist. The life field is authoritative for recovered matters, their semantic course, exact current run authority and coarse body demand. A life matter with status resolved or cancelled is terminal history only: it is not an open commitment, does not demand body action and must not be silently reopened. While such a terminal matter is present in this bounded context, its factual outcome may still inform current judgement as prior resident experience.
 
 If self is present, it is stable authored first-person self-knowledge: role plus persistent drives. It may motivate endogenous choices even when nobody has just issued a command, but it is NOT evidence that any external event, object state, actor need, message or outcome currently exists. Never turn a drive into invented World truth.
 
