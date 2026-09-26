@@ -4,6 +4,8 @@ import { ResidentCausalCognitionLane } from "./resident-causal-cognition-lane";
 import { ResidentCausalExecutionCoordinator } from "./resident-causal-execution-coordinator";
 import { ResidentCausalLifeSubstrate } from "./resident-causal-life-substrate";
 import type { ResidentLifeCognitionContext } from "./resident-life-cognition-context";
+import type { ResidentLifeIntentProposal } from "./resident-life-intent-contract";
+import { ResidentMaterialKnowledge } from "./resident-material-knowledge";
 import { RegionNavigationGraph, bidirectionalEdge } from "./region-navigation";
 import { SpcWorldRuntime } from "./spc-world-runtime";
 
@@ -11,31 +13,28 @@ const JANEK_ID = "resident.janek";
 const PLAYER_ID = "player.fixture";
 const CRATE_ID = "crate.r6.post-terminal";
 const WORKSHOP_ID = "workshop";
-const COMMONS_ID = "commons";
+const YARD_ID = "yard";
 
 const HISTORY_MATTER_ID = "matter.janek.r6.post-terminal-friction";
 const HISTORY_RUN_ID = "run.janek.r6.post-terminal-friction";
-const CURRENT_MATTER_ID = "matter.janek.r6.same-later-arrival";
-const CURRENT_RUN_ID = "run.janek.r6.same-later-arrival";
-
-const EXECUTION_GUARD = 300;
-const COGNITION_GUARD = 30;
+const EXECUTION_GUARD = 180;
 
 /**
  * First paired falsifier for the non-obligation R6 frontier.
  *
- * Both Janeks inhabit the same factual World and later complete the exact same
- * self-owned travel. Neither receives fresh speech and neither receives authored
- * self/drives. The history twin alone previously attempted one exact material action,
- * factually received object_unavailable from World authority, reconciled that blocked
- * outcome, and TERMINATED the matter.
+ * Both Janeks receive the same current factual material reacquisition and no fresh
+ * speech, command, standing obligation or authored self/drives. The history twin alone
+ * previously attempted the same material identity through World authority, factually
+ * received object_unavailable, reconciled that blocked outcome and TERMINATED the
+ * matter.
  *
- * The purpose is not to prove learned aversion. It is to prove that the current
- * substrate can present a clean "this happened to me before" difference to higher
- * cognition without lying that the old task is still open.
+ * The test does not claim learned aversion/preference. It proves that current
+ * higher-cognition can be shown one clean "this happened to me before" difference
+ * without pretending the old task is still open. Live semantic judgement is a later
+ * evidence plane.
  */
 describe("R6 post-terminal factual-history paired falsifier", () => {
-  it("produces matched no-fresh-command reflection frames differing only by one resolved factual self-episode", () => {
+  it("produces matched current-reacquisition frames differing only by one resolved factual self-episode", () => {
     const control = buildSpecimen(false);
     const history = buildSpecimen(true);
 
@@ -43,7 +42,8 @@ describe("R6 post-terminal factual-history paired falsifier", () => {
     expect(history.request.batch.reasons).toHaveLength(1);
     expect(control.request.batch.reasons[0]).toEqual(history.request.batch.reasons[0]);
     expect(control.request.batch.reasons[0]).toMatchObject({
-      kind: "activity_completed",
+      kind: "direct_world_change",
+      summary: expect.stringContaining(CRATE_ID),
       evidenceIds: [expect.any(String)],
     });
     expect(control.request.batch.reasons.some((reason) => reason.kind === "heard_speech")).toBe(false);
@@ -51,8 +51,8 @@ describe("R6 post-terminal factual-history paired falsifier", () => {
 
     expect(control.request.context.self).toBeUndefined();
     expect(history.request.context.self).toBeUndefined();
-    expect(control.request.context.currentRegionId).toBe(COMMONS_ID);
-    expect(history.request.context.currentRegionId).toBe(COMMONS_ID);
+    expect(control.request.context.currentRegionId).toBe(YARD_ID);
+    expect(history.request.context.currentRegionId).toBe(YARD_ID);
     expect(control.request.context.life.body).toEqual({
       focusedRunId: null,
       deferredRunIds: [],
@@ -61,6 +61,18 @@ describe("R6 post-terminal factual-history paired falsifier", () => {
       focusedRunId: null,
       deferredRunIds: [],
     });
+
+    expect(control.previousMaterialObservation).toMatchObject({
+      objectId: CRATE_ID,
+      currentlyVisible: false,
+    });
+    expect(history.previousMaterialObservation).toEqual(control.previousMaterialObservation);
+    expect(control.currentMaterialObservation).toMatchObject({
+      objectId: CRATE_ID,
+      currentlyVisible: true,
+      lastKnownPosition: { x: 480, y: 150 },
+    });
+    expect(history.currentMaterialObservation).toEqual(control.currentMaterialObservation);
 
     const controlHistory = control.request.context.life.matters.filter(
       (matter) => matter.id === HISTORY_MATTER_ID,
@@ -77,6 +89,8 @@ describe("R6 post-terminal factual-history paired falsifier", () => {
         kind: "acquire_material_object",
         objectId: CRATE_ID,
       },
+      originEvidence: null,
+      semanticEvidence: null,
       lastOutcomeEvidence: {
         kind: "task_outcome",
         sourceRunId: HISTORY_RUN_ID,
@@ -85,8 +99,8 @@ describe("R6 post-terminal factual-history paired falsifier", () => {
       activeRun: null,
     });
 
-    // Critical distinction: the old material episode is history, not unfinished
-    // business. The later reflection has one identical current factual cause.
+    // Current factual World/private state is equivalent. The only intended semantic
+    // difference is one bounded terminal episode from this resident's own prior life.
     expect(stripHistoricalEpisode(control.request.context))
       .toEqual(stripHistoricalEpisode(history.request.context));
 
@@ -103,6 +117,8 @@ describe("R6 post-terminal factual-history paired falsifier", () => {
       status: "resolved",
       activeRunId: null,
     });
+    expect(history.life.arbitrator.deferredRunIds()).not.toContain(HISTORY_RUN_ID);
+    expect(history.life.focus.focusedRun()).toBeNull();
 
     for (const specimen of [control, history]) {
       const sanitized = sanitizeSpcNextLifeContextWithDiagnostic(specimen.request.context);
@@ -111,56 +127,106 @@ describe("R6 post-terminal factual-history paired falsifier", () => {
     }
   });
 
-  it("keeps the resolved episode visible only as bounded history rather than reviving it after the later reflection", () => {
+  it("keeps both action and non-action legal instead of hard-coding an aversion from the old failure", () => {
+    const control = buildSpecimen(false);
     const history = buildSpecimen(true);
-    const oldMatter = history.life.kernel.matter(HISTORY_MATTER_ID);
-    const oldHistoryView = history.request.context.life.matters.find(
-      (matter) => matter.id === HISTORY_MATTER_ID,
-    ) ?? null;
 
-    expect(oldMatter).toMatchObject({
-      status: "resolved",
-      activeRunId: null,
-    });
-    // Terminalization intentionally releases live evidence pins. Bounded historical
-    // visibility comes from the recent-evidence window, not an immortal matter pin.
-    expect(history.life.kernel.lastOutcomeEvidence(HISTORY_MATTER_ID)).toBeNull();
-    expect(oldHistoryView?.lastOutcomeEvidence).toMatchObject({
-      kind: "task_outcome",
-      sourceRunId: HISTORY_RUN_ID,
-      summary: expect.stringContaining("object_unavailable"),
-    });
-    expect(history.life.arbitrator.deferredRunIds()).not.toContain(HISTORY_RUN_ID);
-    expect(history.life.focus.focusedRun()).toBeNull();
+    const controlOrigin = control.request.batch.reasons[0]!;
+    const historyOrigin = history.request.batch.reasons[0]!;
 
-    // Merely taking the later cognition frame must not mutate the old episode back
-    // into active work or manufacture a new material run.
-    expect(history.life.kernel.matter(HISTORY_MATTER_ID)).toEqual(oldMatter);
-    expect(history.life.kernel.lastOutcomeEvidence(HISTORY_MATTER_ID)).toBeNull();
-    expect(history.request.context.life.matters.find(
-      (matter) => matter.id === HISTORY_MATTER_ID,
-    )).toEqual(oldHistoryView);
+    const accepted: ResidentLifeIntentProposal = {
+      version: 1,
+      commitmentDecision: {
+        kind: "accept",
+        reason: "the currently visible familiar crate makes one bounded return to the workshop worth checking",
+        intent: {
+          kind: "travel",
+          goal: "return to the familiar workshop because the crate is visibly present again",
+          targetActorId: null,
+          targetRegionId: WORKSHOP_ID,
+          targetPosition: null,
+          text: null,
+        },
+      },
+      beliefs: [],
+      concerns: [],
+      reviewAfterSeconds: 600,
+    };
+    const declined: ResidentLifeIntentProposal = {
+      version: 1,
+      commitmentDecision: {
+        kind: "decline",
+        reason: "do not create a new continuing matter from this reacquisition",
+      },
+      beliefs: [],
+      concerns: [],
+      reviewAfterSeconds: 600,
+    };
+
+    const controlSettlement = control.cognition.settleCommitment(
+      control.request,
+      accepted,
+      controlOrigin.id,
+    );
+    expect(controlSettlement).toMatchObject({
+      status: "applied",
+      residentId: JANEK_ID,
+      decision: "accept",
+      commitment: {
+        matterId: expect.any(String),
+        runId: expect.any(String),
+      },
+    });
+    if (controlSettlement.status !== "applied" || !controlSettlement.commitment) {
+      throw new Error("R6 post-terminal control travel was not admitted");
+    }
+    const completion = completeFocused(control.execution, control.world);
+    expect(completion.runId).toBe(controlSettlement.commitment.runId);
+    expect(control.janek.cognitionContext({
+      residentId: JANEK_ID,
+      requestedAtTick: control.world.tick,
+      reasons: [],
+    }).currentRegionId).toBe(WORKSHOP_ID);
+
+    const oldMatterBeforeDecline = history.life.kernel.matter(HISTORY_MATTER_ID);
+    const historySettlement = history.cognition.settleCommitment(
+      history.request,
+      declined,
+      historyOrigin.id,
+    );
+    expect(historySettlement).toEqual({
+      status: "applied",
+      residentId: JANEK_ID,
+      decision: "decline",
+      commitment: null,
+    });
+    expect(history.life.currentLifeView().body).toEqual({
+      focusedRunId: null,
+      deferredRunIds: [],
+    });
+    expect(history.life.kernel.matter(HISTORY_MATTER_ID)).toEqual(oldMatterBeforeDecline);
+    expect(history.janek.pendingCognitionReasons()).toEqual([]);
   });
 });
 
 function buildSpecimen(withLivedHistory: boolean) {
   const world = new SpcWorldRuntime({
-    bounds: { minX: 0, minY: 0, maxX: 700, maxY: 300 },
+    bounds: { minX: 0, minY: 0, maxX: 1_500, maxY: 300 },
     regions: [
       {
         id: WORKSHOP_ID,
         label: "Workshop",
         minX: 0,
         minY: 0,
-        maxX: 250,
+        maxX: 500,
         maxY: 300,
       },
       {
-        id: COMMONS_ID,
-        label: "Commons",
-        minX: 250,
+        id: YARD_ID,
+        label: "Yard",
+        minX: 500,
         minY: 0,
-        maxX: 700,
+        maxX: 1_500,
         maxY: 300,
       },
     ],
@@ -169,32 +235,29 @@ function buildSpecimen(withLivedHistory: boolean) {
     fixedDeltaSeconds: 1 / 60,
   });
 
-  world.addPlayer(PLAYER_ID, { x: 100, y: 150 });
-  const janek = world.addResident(JANEK_ID, "Janek", { x: 120, y: 150 });
-  world.familiarizeResidentWithRegions(JANEK_ID, [WORKSHOP_ID, COMMONS_ID]);
+  world.addPlayer(PLAYER_ID, { x: 480, y: 150 }, { maxSpeed: 60_000 });
+  const janek = world.addResident(JANEK_ID, "Janek", { x: 520, y: 150 });
+  world.familiarizeResidentWithRegions(JANEK_ID, [WORKSHOP_ID, YARD_ID]);
   world.addMaterialObject({
     id: CRATE_ID,
     label: "R6 factual-history crate",
     radius: 16,
-    location: { kind: "free", position: { x: 100, y: 150 } },
+    location: { kind: "free", position: { x: 480, y: 150 } },
   });
 
-  // Current World truth is identical in both twins: the participant already holds
-  // the crate. Only the history twin actually tried and experienced that unavailability.
-  expect(world.attemptMaterialAction(PLAYER_ID, {
-    kind: "pickup",
+  const materialKnowledge = new ResidentMaterialKnowledge(JANEK_ID, [CRATE_ID], world);
+  expect(materialKnowledge.sample()[0]).toMatchObject({
     objectId: CRATE_ID,
-  })).toMatchObject({
-    status: "succeeded",
-    code: "picked_up",
+    currentlyVisible: true,
+    lastKnownPosition: { x: 480, y: 150 },
   });
 
   const navigation = new RegionNavigationGraph(
     [
-      { id: WORKSHOP_ID, destinationPoint: { x: 120, y: 150 } },
-      { id: COMMONS_ID, destinationPoint: { x: 500, y: 150 } },
+      { id: WORKSHOP_ID, destinationPoint: { x: 450, y: 150 } },
+      { id: YARD_ID, destinationPoint: { x: 700, y: 150 } },
     ],
-    bidirectionalEdge(WORKSHOP_ID, COMMONS_ID, 1),
+    bidirectionalEdge(WORKSHOP_ID, YARD_ID, 1),
   );
   const life = new ResidentCausalLifeSubstrate({
     residentId: JANEK_ID,
@@ -205,6 +268,15 @@ function buildSpecimen(withLivedHistory: boolean) {
   });
   const cognition = new ResidentCausalCognitionLane(life);
   const execution = new ResidentCausalExecutionCoordinator(life);
+
+  // Identical current World prehistory in both twins: the player takes the crate.
+  expect(world.attemptMaterialAction(PLAYER_ID, {
+    kind: "pickup",
+    objectId: CRATE_ID,
+  })).toMatchObject({
+    status: "succeeded",
+    code: "picked_up",
+  });
 
   let historyWorldAction: ReturnType<typeof life.worldAuthority.act> | null = null;
   if (withLivedHistory) {
@@ -251,7 +323,7 @@ function buildSpecimen(withLivedHistory: boolean) {
       runId: HISTORY_RUN_ID,
       tick: world.tick,
       status: "blocked",
-      summary: "blocked: factual material attempt returned object_unavailable",
+      summary: "factual material attempt returned object_unavailable",
     });
     expect(outcome.status).toBe("recorded");
     life.kernel.resolveMatter(HISTORY_MATTER_ID);
@@ -259,50 +331,66 @@ function buildSpecimen(withLivedHistory: boolean) {
     life.worldAuthority.enforceMotionAuthority();
   }
 
-  // Same later self-owned chapter in both twins. It supplies the single current
-  // reflection cause without any fresh command or social obligation.
-  const currentOrigin = life.kernel.recordEvidence({
-    id: "evidence:janek:r6:same-later-arrival-origin",
+  // Move the held object outside Janek's sight in the same factual way in both twins.
+  world.setActorMotionIntent(PLAYER_ID, { x: 60_000, y: 0 });
+  world.step();
+  world.setActorMotionIntent(PLAYER_ID, { x: 0, y: 0 });
+  materialKnowledge.sample();
+  const previousMaterialObservation = materialKnowledge.observation(CRATE_ID);
+  expect(previousMaterialObservation).toMatchObject({
+    objectId: CRATE_ID,
+    currentlyVisible: false,
+  });
+
+  // Bring it back to the exact workshop-edge location and place it. This is the one
+  // current factual cue both twins receive.
+  world.setActorMotionIntent(PLAYER_ID, { x: -55_200, y: 0 });
+  world.step();
+  world.setActorMotionIntent(PLAYER_ID, { x: 0, y: 0 });
+  expect(world.attemptMaterialAction(PLAYER_ID, {
+    kind: "place",
+    objectId: CRATE_ID,
+    position: { x: 480, y: 150 },
+  })).toMatchObject({
+    status: "succeeded",
+    code: "placed",
+  });
+
+  materialKnowledge.sample();
+  const currentMaterialObservation = materialKnowledge.observation(CRATE_ID);
+  expect(currentMaterialObservation).toMatchObject({
+    objectId: CRATE_ID,
+    currentlyVisible: true,
+    lastKnownPosition: { x: 480, y: 150 },
+  });
+  if (!currentMaterialObservation || !previousMaterialObservation) {
+    throw new Error("R6 post-terminal material reacquisition observation missing");
+  }
+
+  // Explicit R6 probe boundary: this is not a new global R2 policy. We promote one
+  // exact, already-factual private reacquisition so the paired experiment can ask
+  // whether prior terminal life changes semantic judgement. The reason itself owns
+  // no body authority and creates no continuing matter.
+  const reacquiredEvidence = life.kernel.recordEvidence({
+    id: `evidence:janek:r6:material-reacquired:${world.tick}`,
     tick: world.tick,
-    kind: "life_context",
-    summary: "Janek already has one bounded self-owned trip to the commons.",
+    kind: "material_reacquired_probe",
+    summary:
+      `Recognized familiar material object ${CRATE_ID} is privately visible again at (${currentMaterialObservation.lastKnownPosition.x}, ${currentMaterialObservation.lastKnownPosition.y}).`,
   });
-  life.kernel.openMatter({
-    id: CURRENT_MATTER_ID,
-    originEvidenceId: currentOrigin.id,
-    semanticCourse: "go to the familiar commons and finish this bounded trip",
-    semanticIntent: {
-      kind: "travel_region",
-      goal: "go to the familiar commons",
-      targetRegionId: COMMONS_ID,
-    },
-  });
-  life.matterScope.track(CURRENT_MATTER_ID);
-  life.kernel.bindRun({
-    matterId: CURRENT_MATTER_ID,
-    taskId: "task.janek.r6.same-later-arrival",
-    runId: CURRENT_RUN_ID,
-  });
-  expect(life.arbitrator.request(CURRENT_RUN_ID)).toMatchObject({
-    status: "acquired",
-    runId: CURRENT_RUN_ID,
+  janek.promoteSemanticPressure({
+    id: "reason:resident.janek:r6:material-reacquired",
+    tick: world.tick,
+    kind: "direct_world_change",
+    salience: 0.75,
+    summary:
+      `Familiar material object ${CRATE_ID} is visibly present again near the workshop after an earlier absence.`,
+    evidenceIds: [reacquiredEvidence.id],
   });
 
-  const completion = completeFocused(execution, world);
-  expect(completion.matterId).toBe(CURRENT_MATTER_ID);
-  expect(completion.runId).toBe(CURRENT_RUN_ID);
-  expect(janek.cognitionContext({
-    residentId: JANEK_ID,
-    requestedAtTick: world.tick,
-    reasons: [],
-  }).currentRegionId).toBe(COMMONS_ID);
+  const request = cognition.takeReadyRequest();
+  if (!request) throw new Error("R6 post-terminal reacquisition produced no cognition request");
 
-  expect(life.outcomeReviewBridge.observe(
-    completion.outcomeEvidence,
-    world.tick,
-  )).toMatchObject({ status: "scheduled" });
-
-  const request = waitForRequest(cognition, execution, world);
   return {
     world,
     janek,
@@ -310,6 +398,9 @@ function buildSpecimen(withLivedHistory: boolean) {
     cognition,
     execution,
     request,
+    materialKnowledge,
+    previousMaterialObservation,
+    currentMaterialObservation,
     historyWorldAction,
   };
 }
@@ -325,29 +416,11 @@ function completeFocused(
       return step;
     }
     if (step.status !== "running") {
-      throw new Error(`R6 post-terminal later travel failed: ${step.status}`);
+      throw new Error(`R6 post-terminal accepted travel failed: ${step.status}`);
     }
     world.step();
   }
-  throw new Error("R6 post-terminal later travel exceeded guard");
-}
-
-function waitForRequest(
-  cognition: ResidentCausalCognitionLane,
-  execution: ResidentCausalExecutionCoordinator,
-  world: SpcWorldRuntime,
-) {
-  let request = cognition.takeReadyRequest();
-  for (let index = 0; index < COGNITION_GUARD && !request; index += 1) {
-    const step = execution.stepFocusedRun();
-    if (step.status !== "idle" && step.status !== "running") {
-      throw new Error(`R6 post-terminal unexpected execution while awaiting cognition: ${step.status}`);
-    }
-    world.step();
-    request = cognition.takeReadyRequest();
-  }
-  if (!request) throw new Error("R6 post-terminal specimen produced no cognition request");
-  return request;
+  throw new Error("R6 post-terminal accepted travel exceeded guard");
 }
 
 function stripHistoricalEpisode(context: ResidentLifeCognitionContext) {
