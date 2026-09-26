@@ -535,6 +535,8 @@ Current R6 evidence is deliberately split by plane:
 - **Check #1603: PASS** on integrated source `32bae5f34982ef942ef6d3ea58fc0000212f79ec` — 263 / 263 files, 961 / 961 tests, typecheck/build/preview green;
 - **Browser Evidence #827: PASS as regression evidence**, including dedicated Mira/Ida R6 and legacy R1–R5-C browser vetoes.
 - **stage-closure hardening `2c7adf94...`: PASS** — explicit stale-life rejection for `complete_standing`; Check #1605 **263 / 263 files, 962 / 962 tests**; Browser Evidence #829 PASS; no production/runtime semantic change after `32bae5f3...`.
+- **post-terminal factual-history probe: BOUNDED NEUTRAL FINDING** — exact matched Janek contexts with one terminal material episode only in history; Live Provider run #24 makes two Luna calls / zero retries and returns the same behavioral class in both twins while the history rationale explicitly consumes the earlier factual unavailability; exact proposals replay through local authority without reopening the old matter or granting material-action authority.
+- integrated closure head `b79793cf625da93d4909c644a3e56511febde67a`: **Check #1628 PASS — 266 / 266 files, 970 / 970 tests**; **Browser Evidence #852 PASS**.
 
 Evidence hygiene / limits:
 
@@ -545,6 +547,8 @@ Evidence hygiene / limits:
 - the initial standing-history construction in this paired specimen is deterministic experiment setup;
 - runtime contexts are generated exactly and equality-bound to the live fixtures, then replayed through the real endpoint; this is not one uninterrupted live browser process;
 - one paired model observation is not a behavior distribution;
+- Live Provider run #24 is a neutral single-sample result: semantic uptake of terminal history is observed, but history-caused behavioral differentiation is **not** proven;
+- the visible reacquired crate is a strong current fact, so retrying remained coherent in both run-#24 twins; do not treat equal behavior as proof that terminal history is useless;
 - the dedicated R6 browser specimen still exercises Mira/Ida, so **browser-qualified Oren/Nela genericity remains UNPROVEN**;
 - explicit social obligation is now deeply exercised, but preference/aversion, habit, broader relationship history, ownership/self-interest and other personhood causes remain largely open;
 - no machine result here is Owner-observed ordinary aliveness.
@@ -672,19 +676,21 @@ Current recovery order:
    - canonical post-stress execution authority;
 3. **`docs/SPC_R6_COMPLEMENTARY_PERSONHOOD_EXPERIMENT.md`**
    - binding current R6 experiment contract;
-4. **`docs/SPC_R6_ENDOGENOUS_ORDINARY_PERSONHOOD_FINDING.md`**
-   - current strongest bounded R6 empirical finding and evidence/nonclaim boundary;
-5. **`docs/SPC_R6B_NATIVE_STANDING_SOCIAL_CONTINUATION_PASS.md`**
+4. **`docs/SPC_R6_POST_TERMINAL_FACTUAL_HISTORY_FINDING.md`**
+   - current post-terminal material-history result, neutral live finding, and next falsifier boundary;
+5. **`docs/SPC_R6_ENDOGENOUS_ORDINARY_PERSONHOOD_FINDING.md`**
+   - strongest bounded positive endogenous standing-history finding and evidence/nonclaim boundary;
+6. **`docs/SPC_R6B_NATIVE_STANDING_SOCIAL_CONTINUATION_PASS.md`**
    - latest qualified bounded R6 mechanism evidence;
-6. **`docs/SPC_R6A_STANDING_SOCIAL_COMMITMENT_PASS.md`**
+7. **`docs/SPC_R6A_STANDING_SOCIAL_COMMITMENT_PASS.md`**
    - earlier bounded R6-A evidence and nonclaims;
-7. **R5 evidence documents**
+8. **R5 evidence documents**
    - semantic escalation, stale attention, provider outcomes and real-Luna causal boundary;
-8. **R4 / R3 / R2 / R1 qualified evidence documents**
+9. **R4 / R3 / R2 / R1 qualified evidence documents**
    - preserved scoped evidence, not current feature sequence;
-9. **`docs/SPC_NEXT_OWNER_INTENT_AND_GAP_AUDIT.md`**, pressure/re-observation documents
+10. **`docs/SPC_NEXT_OWNER_INTENT_AND_GAP_AUDIT.md`**, pressure/re-observation documents
    - durable Owner/product guardrails and donor evidence;
-10. **`docs/SPC_LIVING_WORLD_EXECUTION_PROGRAM.md`** and older recovery/Pass-2 documents
+11. **`docs/SPC_LIVING_WORLD_EXECUTION_PROGRAM.md`** and older recovery/Pass-2 documents
    - historical evidence only.
 
 `docs/PROJECT_STATE.md`, `docs/FRESH_TAKEOVER.md`, `docs/SPC_NEXT_CURRENT_STATE_RECONCILIATION.md` and older architecture-recovery documents must **not** be used as the current feature sequence.
@@ -716,31 +722,38 @@ Completed and retained only within their documented scopes:
 
 Current:
 
-> **R6 personhood breadth after the first bounded endogenous ordinary-life chain.**
+> **R6 personhood breadth — post-terminal single-opportunity probe closed, competing-future pressure next.**
 
-The preceding explicit-standing-obligation endogenous stage is **closed as a bounded research stage**. Re-open it only if later evidence exposes a concrete regression or missing invariant; do not continue adding promise-shaped variants by inertia.
+The explicit-standing-obligation endogenous stage remains **closed as a bounded research stage**.
+
+The first post-terminal material-history probe is also complete:
+- one exact terminal factual self-episode reached real higher cognition without reopening the old obligation;
+- Luna explicitly consumed that earlier history in its rationale;
+- both matched twins nevertheless chose the same behavioral class;
+- exact live proposals survived local admission and factual travel;
+- no new personhood representation was earned.
+
+Canonical result:
+`docs/SPC_R6_POST_TERMINAL_FACTUAL_HISTORY_FINDING.md`.
 
 Immediate method:
 
-- preserve `docs/SPC_R6_ENDOGENOUS_ORDINARY_PERSONHOOD_FINDING.md` as the canonical result of the current campaign;
-- do not keep polishing explicit promises merely because that dimension now has a rich test harness;
-- choose a different resident-owned causal reason class and make it earn representation from one concrete lived failure;
-- prefer paired falsifiers where sensible non-action is as legitimate as action;
-- do not introduce periodic provider cognition, generic needs meters or personality prose to manufacture autonomy;
+- do not rerun run #24 merely to obtain a stochastic behavioral split;
+- do not inflate repeated failures until the model says no;
+- do not introduce generic autobiographical memory, preferences, needs, habits or relationship scores from this neutral result;
+- move to a **genuine competing-future ambiguity** where multiple legal resident futures contest one free body;
+- keep current World/private evidence matched between control/history twins;
+- let one terminal factual episode be structurally relevant to only one candidate future;
+- require any claimed history-sensitive focus to cite pre-existing causal support that local admission can verify;
+- allow coherent `defer_all` / non-action as a valid outcome;
+- treat any inability of current candidate-local support to express the needed terminal-history relation as a concrete failure to characterize before designing a new seam;
 - retain Browser Oren/Nela genericity as honest promotion-plane debt;
-- preserve Janek/material continuity, R1 homeostasis, R2 metabolism and R5 provider safety as vetoes;
+- preserve Janek/material continuity, R1 homeostasis, R2 metabolism, private knowledge and R5 provider safety as vetoes;
 - keep full R6 / five living residents / Owner-observed ordinary personhood **UNPROVEN**;
 - do not prepare an Owner gate or merge PR #148 by CI inertia.
 
 Next research question:
 
-> **Can prior factual life cause coherent endogenous choice or non-action for a resident-owned reason that is not reducible to one explicit open promise/obligation?**
-
-Promising falsifier families, to be selected by concrete information gain rather than implemented wholesale:
-- unfinished personal business from factual experience;
-- learned preference/aversion from repeated real outcomes;
-- relationship history beyond a single obligation;
-- emergent habit from repeated lived episodes;
-- concrete inconvenience or self-interest.
+> **Can terminal factual life alter a genuine endogenous competing-future choice or coherent non-action through causally attributable support, without becoming an open obligation or a generic personality system?**
 
 The architecture must continue to be earned by resident-life pressure, not by a desire to fill a personality feature list.
