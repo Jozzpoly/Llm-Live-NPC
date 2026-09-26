@@ -148,8 +148,107 @@ describe("SPC Next life-intent endpoint commitment contract", () => {
     expect(upstreamRequest.text.format.schema.properties).toHaveProperty("proposal");
     expect(upstreamRequest.text.format.schema.properties.proposal.properties).toHaveProperty("commitmentDecision");
     expect(upstreamRequest.text.format.schema.properties.proposal.properties).not.toHaveProperty("activityDirective");
+    const commitmentVariants = upstreamRequest.text.format.schema.properties.proposal
+      .properties.commitmentDecision.anyOf;
+    const standingVariant = commitmentVariants.find((variant: any) => (
+      variant.properties?.standingSocialCommitment
+    ));
+    expect(standingVariant).toBeTruthy();
+    expect(Object.keys(standingVariant.properties.standingSocialCommitment.properties))
+      .toEqual(["goal"]);
     expect(upstreamRequest.instructions).toContain("commitmentDecision");
     expect(upstreamRequest.instructions).toContain("does not seize the body");
+    expect(upstreamRequest.instructions).toContain("standingSocialCommitment");
+    const completionVariant = commitmentVariants.find((variant: any) => (
+      variant.properties?.kind?.enum?.includes("complete_standing")
+    ));
+    expect(completionVariant).toBeTruthy();
+    expect(Object.keys(completionVariant.properties)).toEqual([
+      "kind",
+      "reason",
+      "matterId",
+    ]);
+    expect(upstreamRequest.instructions).toContain("complete_standing");
+
+    const releaseVariant = commitmentVariants.find((variant: any) => (
+      variant.properties?.kind?.enum?.includes("release_standing")
+    ));
+    expect(releaseVariant).toBeTruthy();
+    expect(Object.keys(releaseVariant.properties)).toEqual([
+      "kind",
+      "reason",
+      "matterId",
+    ]);
+    expect(upstreamRequest.instructions).toContain("release_standing");
+    expect(upstreamRequest.instructions).toContain(
+      "bounded lifecycle exceptions are release_standing and complete_standing",
+    );
+    expect(upstreamRequest.instructions).toContain(
+      "does not replace or complete recovered matters by implication",
+    );
+    expect(upstreamRequest.instructions).toContain(
+      "status resolved or cancelled is terminal history only",
+    );
+    expect(upstreamRequest.instructions).toContain(
+      "must not be silently reopened",
+    );
+    expect(upstreamRequest.instructions).toContain(
+      "beliefs[].evidenceIds and concerns[].evidenceIds may cite only ids from recentPercepts",
+    );
+
+    const acceptedIntentSchemas = commitmentVariants
+      .filter((variant: any) => variant.properties?.intent)
+      .map((variant: any) => variant.properties.intent);
+    expect(acceptedIntentSchemas.length).toBeGreaterThan(0);
+    for (const schema of acceptedIntentSchemas) {
+      expect(schema.anyOf).toEqual(expect.arrayContaining([
+        expect.objectContaining({
+          properties: expect.objectContaining({
+            kind: { type: "string", enum: ["idle"] },
+            targetActorId: { type: "null" },
+            targetRegionId: { type: "null" },
+            targetPosition: { type: "null" },
+            text: { type: "null" },
+          }),
+        }),
+        expect.objectContaining({
+          properties: expect.objectContaining({
+            kind: { type: "string", enum: ["follow"] },
+            targetActorId: expect.objectContaining({ type: "string" }),
+            targetRegionId: { type: "null" },
+            targetPosition: { type: "null" },
+            text: { type: "null" },
+          }),
+        }),
+        expect.objectContaining({
+          properties: expect.objectContaining({
+            kind: { type: "string", enum: ["communicate"] },
+            targetActorId: expect.objectContaining({ type: "string" }),
+            targetRegionId: { type: "null" },
+            targetPosition: { type: "null" },
+            text: expect.objectContaining({ type: "string" }),
+          }),
+        }),
+      ]));
+      const travelVariants = schema.anyOf.filter(
+        (variant: any) => variant.properties?.kind?.enum?.includes("travel"),
+      );
+      expect(travelVariants).toHaveLength(2);
+      expect(travelVariants).toEqual(expect.arrayContaining([
+        expect.objectContaining({
+          properties: expect.objectContaining({
+            targetRegionId: expect.objectContaining({ type: "string" }),
+            targetPosition: { type: "null" },
+          }),
+        }),
+        expect.objectContaining({
+          properties: expect.objectContaining({
+            targetRegionId: { type: "null" },
+            targetPosition: expect.objectContaining({ type: "object" }),
+          }),
+        }),
+      ]));
+    }
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toMatchObject({

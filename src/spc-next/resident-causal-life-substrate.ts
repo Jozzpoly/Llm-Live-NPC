@@ -1,5 +1,6 @@
 import { ResidentCausalCommunicateCommitmentAuthority } from "./resident-causal-communicate-commitment";
 import { ResidentCausalOutcomeTravelCommitmentAuthority } from "./resident-causal-outcome-travel-commitment";
+import { ResidentOriginatedSocialCommitmentAuthority } from "./resident-originated-social-commitment";
 import { ResidentCausalReasonCommitmentAuthority } from "./resident-causal-reason-commitment";
 import { ResidentCausalTravelCommitmentAuthority } from "./resident-causal-travel-commitment";
 import {
@@ -75,6 +76,7 @@ export class ResidentCausalLifeSubstrate {
   readonly communicateCommitments: ResidentCausalCommunicateCommitmentAuthority;
   readonly reasonCommitments: ResidentCausalReasonCommitmentAuthority;
   readonly outcomeTravelCommitments: ResidentCausalOutcomeTravelCommitmentAuthority;
+  readonly originatedSocialCommitments: ResidentOriginatedSocialCommitmentAuthority;
 
   private readonly effectiveIdentityNamespace: string | null;
 
@@ -160,6 +162,15 @@ export class ResidentCausalLifeSubstrate {
     this.outcomeTravelCommitments = new ResidentCausalOutcomeTravelCommitmentAuthority({
       ...shared,
       navigation: options.navigation,
+    });
+    this.originatedSocialCommitments = new ResidentOriginatedSocialCommitmentAuthority({
+      residentId: options.residentId,
+      world: options.world,
+      kernel: this.kernel,
+      matterScope: this.matterScope,
+      ...(this.effectiveIdentityNamespace === null
+        ? {}
+        : { identityNamespace: this.effectiveIdentityNamespace }),
     });
   }
 

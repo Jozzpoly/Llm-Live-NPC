@@ -1,5 +1,7 @@
 # First Hearth — ciągłość we wspólnej scenie
 
+> **HISTORICAL BUILD NOTICE (2026-09-25):** This describes the 13 September First Hearth / PR #123 Owner build. It is not the current playable candidate, branch, or project-state source. Preserve it as product/evidence history; begin current work from `README.md` and `docs/SPC_POST_STRESS_RECOVERY_PROGRAM.md`.
+
 Wersja rozwijana 13 września 2026, na kanonicznym checkpointcie `df0b06a9` / źródłowym `a5b8e5b`. Publikację, dokładny head i aktualny wynik rzeczywistej Luny dokumentuje [PR #123](https://github.com/Jozzpoly/Llm-Live-NPC/pull/123). To kolejna grywalna wersja do zwykłego przebywania z Mirą i Jankiem, przed dalszym poszerzaniem świata.
 
 ## Co zmienia się w działaniu

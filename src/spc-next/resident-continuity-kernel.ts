@@ -28,11 +28,26 @@ export interface ResidentTravelRegionMatterIntent {
   targetRegionId: string;
 }
 
+export interface ResidentStandingSocialCommitmentDescriptor {
+  /**
+   * Semantic purpose of explicitly making the communication durable.
+   * The durable commitment text itself is the exact factual speech text, not a
+   * second provider-authored paraphrase.
+   */
+  goal: string;
+}
+
 export interface ResidentCommunicateActorMatterIntent {
   kind: "communicate_actor";
   goal: string;
   targetActorId: string;
   text: string;
+  /**
+   * Optional semantic continuation declared before factual speech.
+   * It has no authority on its own and may become standing history only after the
+   * exact communicate run factually delivers that speech.
+   */
+  standingSocialCommitment?: ResidentStandingSocialCommitmentDescriptor;
 }
 
 /**
@@ -48,10 +63,25 @@ export interface ResidentAcquireMaterialObjectMatterIntent {
   objectId: string;
 }
 
+/**
+ * Resident-owned standing social responsibility created by the resident's own
+ * factually observed speech act. It deliberately owns no body execution method.
+ *
+ * The natural-language commitment remains bounded resident meaning, while the exact
+ * counterparty gives later resident-relative relevance a structured causal handle.
+ */
+export interface ResidentStandingSocialCommitmentMatterIntent {
+  kind: "standing_social_commitment";
+  goal: string;
+  counterpartyActorId: string;
+  commitment: string;
+}
+
 export type ResidentMatterIntent =
   | ResidentTravelRegionMatterIntent
   | ResidentCommunicateActorMatterIntent
-  | ResidentAcquireMaterialObjectMatterIntent;
+  | ResidentAcquireMaterialObjectMatterIntent
+  | ResidentStandingSocialCommitmentMatterIntent;
 
 export interface ResidentMatter {
   id: string;
@@ -779,9 +809,19 @@ function validateMatterIntent(intent: ResidentMatterIntent): void {
     case "communicate_actor":
       assertNonEmpty(intent.targetActorId, "matter intent target actor id");
       assertNonEmpty(intent.text, "matter intent message text");
+      if (intent.standingSocialCommitment !== undefined) {
+        assertNonEmpty(
+          intent.standingSocialCommitment.goal,
+          "standing social continuation goal",
+        );
+      }
       return;
     case "acquire_material_object":
       assertNonEmpty(intent.objectId, "matter intent material object id");
+      return;
+    case "standing_social_commitment":
+      assertNonEmpty(intent.counterpartyActorId, "standing social commitment counterparty actor id");
+      assertNonEmpty(intent.commitment, "standing social commitment meaning");
       return;
   }
 }

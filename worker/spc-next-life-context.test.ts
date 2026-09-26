@@ -129,6 +129,98 @@ describe("shared SPC Next resident-life context sanitizer", () => {
     const blankText = structuredClone(communicate);
     blankText.life.matters[0].semanticIntent.text = " ";
     expect(sanitizeSpcNextLifeContext(blankText)).toBeNull();
+
+    const withStandingContinuation = structuredClone(communicate);
+    withStandingContinuation.life.matters[0].semanticIntent.standingSocialCommitment = {
+      goal: "remain available to Janek after this exact factual message",
+    };
+    expect(
+      sanitizeSpcNextLifeContext(withStandingContinuation)?.life.matters[0]?.semanticIntent,
+    ).toEqual({
+      kind: "communicate_actor",
+      goal: "find Janek and deliver the accepted message",
+      targetActorId: "resident.janek",
+      text: "Mira says the field well needs checking before dusk.",
+      standingSocialCommitment: {
+        goal: "remain available to Janek after this exact factual message",
+      },
+    });
+
+    const independentPromiseLeak = structuredClone(withStandingContinuation);
+    independentPromiseLeak.life.matters[0].semanticIntent.standingSocialCommitment.commitment =
+      "provider-authored second promise wording must not cross this boundary";
+    expect(sanitizeSpcNextLifeContext(independentPromiseLeak)).toBeNull();
+
+    const blankStandingGoal = structuredClone(withStandingContinuation);
+    blankStandingGoal.life.matters[0].semanticIntent.standingSocialCommitment.goal = " ";
+    expect(sanitizeSpcNextLifeContext(blankStandingGoal)).toBeNull();
+  });
+
+  it("preserves bounded acquire-material intent as resident meaning without execution leakage", () => {
+    const material = structuredClone(focusedContext) as any;
+    material.life.matters[0].semanticIntent = {
+      kind: "acquire_material_object",
+      goal: "try to acquire the familiar workshop crate",
+      objectId: "crate.workshop.01",
+    };
+
+    expect(sanitizeSpcNextLifeContext(material)?.life.matters[0]?.semanticIntent).toEqual({
+      kind: "acquire_material_object",
+      goal: "try to acquire the familiar workshop crate",
+      objectId: "crate.workshop.01",
+    });
+
+    const leaked = structuredClone(material);
+    leaked.life.matters[0].semanticIntent.pickupRunId = "run.janek.hidden-execution";
+    expect(sanitizeSpcNextLifeContext(leaked)).toBeNull();
+
+    const malformedObject = structuredClone(material);
+    malformedObject.life.matters[0].semanticIntent.objectId = "crate with spaces";
+    expect(sanitizeSpcNextLifeContext(malformedObject)).toBeNull();
+
+    const blankGoal = structuredClone(material);
+    blankGoal.life.matters[0].semanticIntent.goal = " ";
+    expect(sanitizeSpcNextLifeContext(blankGoal)).toBeNull();
+  });
+
+  it("preserves bounded standing social commitment history for higher cognition", () => {
+    const standing = structuredClone(focusedContext) as any;
+    standing.life.matters[0].activeRun = null;
+    standing.life.body.focusedRunId = null;
+    standing.life.matters[0].semanticCourse =
+      "remain available to Nela for a while · Tak, zostanę tu z tobą jeszcze chwilę.";
+    standing.life.matters[0].semanticIntent = {
+      kind: "standing_social_commitment",
+      goal: "remain available to Nela for a while",
+      counterpartyActorId: "resident.nela",
+      commitment: "Tak, zostanę tu z tobą jeszcze chwilę.",
+    };
+    standing.life.matters[0].originEvidence = {
+      id: "evidence:oren:standing:nela",
+      tick: 100,
+      kind: "resident_originated_social_commitment",
+      summary: "Oren factually promised Nela that he would remain with her for a while.",
+      sourceRunId: "run.oren.promise-nela",
+    };
+
+    expect(sanitizeSpcNextLifeContext(standing)?.life.matters[0]?.semanticIntent).toEqual({
+      kind: "standing_social_commitment",
+      goal: "remain available to Nela for a while",
+      counterpartyActorId: "resident.nela",
+      commitment: "Tak, zostanę tu z tobą jeszcze chwilę.",
+    });
+
+    const leaked = structuredClone(standing);
+    leaked.life.matters[0].semanticIntent.fulfilled = false;
+    expect(sanitizeSpcNextLifeContext(leaked)).toBeNull();
+
+    const blankCommitment = structuredClone(standing);
+    blankCommitment.life.matters[0].semanticIntent.commitment = " ";
+    expect(sanitizeSpcNextLifeContext(blankCommitment)).toBeNull();
+
+    const malformedCounterparty = structuredClone(standing);
+    malformedCounterparty.life.matters[0].semanticIntent.counterpartyActorId = "resident nela";
+    expect(sanitizeSpcNextLifeContext(malformedCounterparty)).toBeNull();
   });
 
   it("fails closed on malformed structured intent and execution-method leakage", () => {

@@ -1,5 +1,7 @@
 # LLM Live NPC — Fresh Takeover
 
+> **CURRENT EXECUTION NOTICE (2026-09-25): HISTORICAL TAKEOVER ONLY.** This handoff belongs to the old P2-E12 recovery line and must not bootstrap a new conversation today. Do **not** follow its old branch, read order or immediate frontier as current work. Start from `README.md`, then `docs/SPC_POST_STRESS_RECOVERY_PROGRAM.md`, `docs/SPC_R6_COMPLEMENTARY_PERSONHOOD_EXPERIMENT.md`, and `docs/SPC_R6_ENDOGENOUS_ORDINARY_PERSONHOOD_FINDING.md`.
+
 Use this document to start a fresh Browser ChatGPT conversation after Pass 0 selective recovery, Pass 1 Presence Contract closure, Pass 2 architecture-selection closure and the cumulative executable research campaign through **P2-E12**.
 
 ## 1. First action: verify live truth

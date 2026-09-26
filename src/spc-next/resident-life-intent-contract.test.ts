@@ -97,6 +97,61 @@ describe("ResidentLifeIntentProposal contract", () => {
     });
   });
 
+  it("accepts an explicit standing social continuation only on grounded communication", () => {
+    const socialContext: ResidentCognitionContext = {
+      ...context,
+      knownActors: [{
+        id: "player.jozz",
+        label: "player.jozz",
+        lastKnownPosition: { x: 12, y: 4 },
+        lastObservedTick: 120,
+        currentlyVisible: true,
+        visibilityChangedTick: 120,
+        lastHeardDirection: { x: 1, y: 0 },
+        lastHeardDistanceBand: "near",
+        lastHeardTick: 120,
+      }],
+    };
+
+    const proposal = {
+      version: 1,
+      commitmentDecision: {
+        kind: "accept",
+        reason: "I choose to make one explicit promise to the person who addressed me.",
+        intent: {
+          kind: "communicate",
+          goal: "tell Jozz that I will remain here for a while",
+          targetActorId: "player.jozz",
+          targetRegionId: null,
+          targetPosition: null,
+          text: "Tak, zostanę tu jeszcze chwilę.",
+        },
+        standingSocialCommitment: {
+          goal: "remain available to Jozz for a while",
+        },
+      },
+      ...semanticUpdates,
+    } as const;
+
+    expect(parseResidentLifeIntentProposal(proposal, socialContext)?.commitmentDecision)
+      .toEqual(proposal.commitmentDecision);
+
+    expect(parseResidentLifeIntentProposal({
+      ...proposal,
+      commitmentDecision: {
+        ...proposal.commitmentDecision,
+        intent: {
+          kind: "travel",
+          goal: "visit the familiar fields later",
+          targetActorId: null,
+          targetRegionId: "fields",
+          targetPosition: null,
+          text: null,
+        },
+      },
+    }, socialContext)).toBeNull();
+  });
+
   it("represents decline, defer and clarification independently from body directives", () => {
     expect(parseResidentLifeIntentProposal({
       version: 1,
@@ -128,6 +183,52 @@ describe("ResidentLifeIntentProposal contract", () => {
       kind: "clarify",
       reason: "the requested place is ambiguous",
       question: "Które dokładnie miejsce masz na myśli?",
+    });
+  });
+
+  it("represents one bounded standing-commitment release without body authority", () => {
+    const parsed = parseResidentLifeIntentProposal({
+      version: 1,
+      commitmentDecision: {
+        kind: "release_standing",
+        reason: "the counterparty explicitly released this standing responsibility",
+        matterId: "matter.mira.standing.jozz",
+      },
+      ...semanticUpdates,
+    }, context);
+
+    expect(parsed?.commitmentDecision).toEqual({
+      kind: "release_standing",
+      reason: "the counterparty explicitly released this standing responsibility",
+      matterId: "matter.mira.standing.jozz",
+    });
+
+    expect(parseResidentLifeIntentProposal({
+      version: 1,
+      commitmentDecision: {
+        kind: "release_standing",
+        reason: "malformed release",
+        matterId: "",
+      },
+      ...semanticUpdates,
+    }, context)).toBeNull();
+  });
+
+  it("represents factual-outcome completion of one exact standing commitment without body authority", () => {
+    const parsed = parseResidentLifeIntentProposal({
+      version: 1,
+      commitmentDecision: {
+        kind: "complete_standing",
+        reason: "the factual completed action satisfies this exact standing responsibility",
+        matterId: "matter.mira.standing.jozz",
+      },
+      ...semanticUpdates,
+    }, context);
+
+    expect(parsed?.commitmentDecision).toEqual({
+      kind: "complete_standing",
+      reason: "the factual completed action satisfies this exact standing responsibility",
+      matterId: "matter.mira.standing.jozz",
     });
   });
 

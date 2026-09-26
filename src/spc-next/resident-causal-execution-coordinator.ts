@@ -180,9 +180,11 @@ export class ResidentCausalExecutionCoordinator {
     if (intent.kind === "communicate_actor") {
       return this.stepCommunicate(matter, runId);
     }
-    if (intent.kind === "acquire_material_object") {
+    if (intent.kind === "acquire_material_object"
+      || intent.kind === "standing_social_commitment") {
       // Material acquisition currently has its own resident-local competence /
-      // relevance path. Do not silently route it through travel/social execution.
+      // relevance path. Standing social commitments deliberately own no body executor
+      // at all. Do not silently route either through travel/social execution.
       return {
         status: "unsupported_intent",
         matterId: matter.id,
@@ -278,14 +280,28 @@ export class ResidentCausalExecutionCoordinator {
       );
     }
 
+    const preparedStanding = intent.standingSocialCommitment
+      ? this.life.originatedSocialCommitments.prepareDeclaredFromCommunicateMatter({
+          sourceMatterId: matter.id,
+        })
+      : null;
+
     this.clearExecution(runId);
-    return this.finishRun(
+    const completed = this.finishRun(
       matter,
       runId,
       "succeeded",
       `${runId} factually delivered speech to ${state.targetActorId} through ${local.occurrence.id}`,
       true,
     );
+
+    if (preparedStanding) {
+      this.life.originatedSocialCommitments.materializeAfterFactualSpeech(
+        preparedStanding,
+        local.occurrence.id,
+      );
+    }
+    return completed;
   }
 
   private createCommunicateExecution(

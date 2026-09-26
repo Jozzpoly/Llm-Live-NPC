@@ -39,17 +39,19 @@ const UPSTREAM_TIMEOUT_MS = 30_000;
 
 const SYSTEM_PROMPT = `You are the higher-level semantic judgement layer for one continuing resident in a shared embodied world.
 
-The JSON input is private resident context only; it is not a global World snapshot. The field localActivity is only the older/local-brain activity projection. It is NOT the complete truth about what the resident is currently doing or what continuing matters already exist. The life field is authoritative for recovered continuing matters, their semantic course, exact current run authority and coarse body demand.
+The JSON input is private resident context only; it is not a global World snapshot. The field localActivity is only the older/local-brain activity projection. It is NOT the complete truth about what the resident is currently doing or what continuing matters already exist. The life field is authoritative for recovered matters, their semantic course, exact current run authority and coarse body demand. A life matter with status resolved or cancelled is terminal history only: it is not an open commitment, does not demand body action and must not be silently reopened. While such a terminal matter is present in this bounded context, its factual outcome may still inform current judgement as prior resident experience.
 
 If self is present, it is stable authored first-person self-knowledge: role plus persistent drives. It may motivate endogenous choices even when nobody has just issued a command, but it is NOT evidence that any external event, object state, actor need, message or outcome currently exists. Never turn a drive into invented World truth.
 
-Return one bounded JSON envelope with exactly two fields: originReasonId and proposal. originReasonId must be the exact id of one entry in reasons that most directly caused this judgement; it is causal attribution, not durable evidence. proposal is one ResidentLifeIntentProposal. Its commitmentDecision decides only whether the newly perceived pressure should become a continuing resident commitment. It does not cancel, replace or complete any recovered matter. It does not move the resident, bind a run, grant body focus, mutate World, create a physical fact or prove an outcome. A later local admission step will decide whether the proposal is still legal and how any accepted intent can be grounded from current resident state.
+Return one bounded JSON envelope with exactly two fields: originReasonId and proposal. originReasonId must be the exact id of one entry in reasons that most directly caused this judgement; it is causal attribution, not durable evidence. proposal is one ResidentLifeIntentProposal. Its commitmentDecision normally decides whether the newly perceived pressure should become a continuing resident commitment. It does not replace or complete recovered matters by implication. The bounded lifecycle exceptions are release_standing and complete_standing: each may target one exact open standing social commitment already named in life, and local admission must still prove its exact factual origin authority. No commitmentDecision moves the resident, binds a run, grants body focus, mutates World, creates a physical fact or proves an external outcome. A later local admission step will decide whether the proposal is still legal and how any accepted intent or standing lifecycle transition can be grounded from current resident state.
 
 commitmentDecision kinds:
 - accept: accept one new bounded semantic intent as a continuing commitment. ACCEPT does not seize the body from the currently focused run and does not imply immediate execution.
 - decline: consciously do not accept the new pressure as a commitment.
 - defer: leave the pressure undecided for a later review; do not invent an accepted task.
 - clarify: the pressure cannot be responsibly decided without clarification; provide one concise natural-language question.
+- release_standing: end one exact open standing social commitment already present in life when the selected current reason is factual counterparty speech that genuinely releases it. Supply the exact matterId from life. This creates no new task, gives no body authority and proves no external World outcome.
+- complete_standing: mark one exact open standing social commitment fulfilled when the selected current reason is an activity_completed factual task outcome and that outcome genuinely satisfies the resident's own responsibility. Supply the exact matterId from life. This creates no new task, gives no body authority and does not claim the counterparty observed or accepted fulfilment.
 
 Supported accepted intents use the bounded semantic vocabulary:
 - idle: deliberately accept no new bodily task;
@@ -58,9 +60,15 @@ Supported accepted intents use the bounded semantic vocabulary:
 - follow: commit to seeking/following one KNOWN actor using acquired contact evidence;
 - communicate: commit to seeking physical contact with one KNOWN actor and speaking the supplied natural Polish text only after contact.
 
+For release_standing, only target an exact open life matter whose semanticIntent.kind is standing_social_commitment. Local admission requires factual addressed heard speech from that standing commitment's own counterparty; do not use another actor's statement to release it.
+
+For complete_standing, only target an exact open life matter whose semanticIntent.kind is standing_social_commitment, and only when originReasonId selects an activity_completed reason backed by one exact factual task outcome. Judge semantic fulfilment from resident-private life plus that factual outcome; never invent an unobserved result and never use completion merely to clean up history.
+
+For accept+communicate only, use standingSocialCommitment when the resident deliberately intends that exact future speech to create one continuing social responsibility after it is factually spoken. The field contains only goal. Omit it for ordinary acknowledgement or conversation. The exact supplied speech text becomes the durable commitment wording only if that speech factually succeeds; do not provide a second paraphrased commitment claim. The declaration does not make the promise true, does not grant body authority and does not create standing history by itself.
+
 Do not output trajectories, routes, execution steps, matter ids to invent, run ids to invent, body-focus decisions, or claims that an action already happened. The local system owns execution and will re-ground any accepted semantic destination or target from current state at admission time.
 
-Use only causally acquired private evidence. Do not infer hidden World truth. A statement heard from any actor proves only that the statement was heard. Cite only evidence IDs present in this context. A hearing cue is directional/rough-distance information, not an exact coordinate. If actorId is null on speech, the speaker is unrecognized; never reconstruct identity from wording or context. Known remembered positions may be stale. Unknown actors, regions, coordinates, objects, outcomes and evidence must not be invented.
+Use only causally acquired private evidence. Do not infer hidden World truth. A statement heard from any actor proves only that the statement was heard. originReasonId cites one exact reasons[].id for causal attribution. By contrast, beliefs[].evidenceIds and concerns[].evidenceIds may cite only ids from recentPercepts; reason evidenceIds such as task-outcome/kernel evidence are not durable belief/concern evidence unless that same id is also an actual recentPercept id. A hearing cue is directional/rough-distance information, not an exact coordinate. If actorId is null on speech, the speaker is unrecognized; never reconstruct identity from wording or context. Known remembered positions may be stale. Unknown actors, regions, coordinates, objects, outcomes and evidence must not be invented.
 
 The resident is not a command interpreter. Addressed speech can justify accepting, declining, deferring or requesting clarification, while the resident's own ongoing matters continue independently. Prefer coherent continuity over unnecessary commitment churn. Set reviewAfterSeconds from 0.25 to 600 according to genuine semantic pressure rather than mechanical polling.
 
@@ -229,12 +237,29 @@ function strictCommitmentProposalShape(value: unknown): boolean {
   const decision = value.commitmentDecision;
   if (!record(decision)) return false;
   if (decision.kind === "accept") {
-    if (!hasExactKeys(decision, ["kind", "reason", "intent"]) || !record(decision.intent)) return false;
+    const hasStandingSocialCommitment = Object.hasOwn(decision, "standingSocialCommitment");
+    const keys = hasStandingSocialCommitment
+      ? ["kind", "reason", "intent", "standingSocialCommitment"]
+      : ["kind", "reason", "intent"];
+    if (!hasExactKeys(decision, keys) || !record(decision.intent)) return false;
     if (!strictActivityShape(decision.intent)) return false;
+    if (hasStandingSocialCommitment) {
+      if (decision.intent.kind !== "communicate"
+        || decision.intent.targetActorId === null
+        || decision.intent.text === null
+        || !record(decision.standingSocialCommitment)
+        || !hasExactKeys(decision.standingSocialCommitment, ["goal"])
+        || typeof decision.standingSocialCommitment.goal !== "string"
+        || !decision.standingSocialCommitment.goal.trim()) return false;
+    }
   } else if (decision.kind === "decline" || decision.kind === "defer") {
     if (!hasExactKeys(decision, ["kind", "reason"])) return false;
   } else if (decision.kind === "clarify") {
     if (!hasExactKeys(decision, ["kind", "reason", "question"])) return false;
+  } else if (decision.kind === "release_standing" || decision.kind === "complete_standing") {
+    if (!hasExactKeys(decision, ["kind", "reason", "matterId"])
+      || typeof decision.matterId !== "string"
+      || !decision.matterId.trim()) return false;
   } else {
     return false;
   }
@@ -285,14 +310,51 @@ const objectSchema = (properties: Record<string, unknown>) => ({
   type: "object", additionalProperties: false, properties, required: Object.keys(properties),
 });
 const vecSchema = objectSchema({ x: { type: "number" }, y: { type: "number" } });
-const activitySchema = objectSchema({
-  kind: { type: "string", enum: ["idle", "travel", "follow", "communicate", "investigate"] },
-  goal: stringSchema(1200),
-  targetActorId: nullable(idSchema),
-  targetRegionId: nullable(idSchema),
-  targetPosition: nullable(vecSchema),
-  text: nullable(stringSchema(1200)),
-});
+const nullSchema = { type: "null" };
+const activitySchema = {
+  anyOf: [
+    objectSchema({
+      kind: { type: "string", enum: ["idle"] },
+      goal: stringSchema(1200),
+      targetActorId: nullSchema,
+      targetRegionId: nullSchema,
+      targetPosition: nullSchema,
+      text: nullSchema,
+    }),
+    objectSchema({
+      kind: { type: "string", enum: ["travel", "investigate"] },
+      goal: stringSchema(1200),
+      targetActorId: nullSchema,
+      targetRegionId: idSchema,
+      targetPosition: nullSchema,
+      text: nullSchema,
+    }),
+    objectSchema({
+      kind: { type: "string", enum: ["travel", "investigate"] },
+      goal: stringSchema(1200),
+      targetActorId: nullSchema,
+      targetRegionId: nullSchema,
+      targetPosition: vecSchema,
+      text: nullSchema,
+    }),
+    objectSchema({
+      kind: { type: "string", enum: ["follow"] },
+      goal: stringSchema(1200),
+      targetActorId: idSchema,
+      targetRegionId: nullSchema,
+      targetPosition: nullSchema,
+      text: nullSchema,
+    }),
+    objectSchema({
+      kind: { type: "string", enum: ["communicate"] },
+      goal: stringSchema(1200),
+      targetActorId: idSchema,
+      targetRegionId: nullSchema,
+      targetPosition: nullSchema,
+      text: stringSchema(1200),
+    }),
+  ],
+};
 const evidenceSchema = { type: "array", maxItems: 16, items: idSchema };
 const beliefsSchema = { type: "array", maxItems: 8, items: objectSchema({
   id: idSchema,
@@ -307,6 +369,9 @@ const concernsSchema = { type: "array", maxItems: 8, items: objectSchema({
   status: { type: "string", enum: ["open", "resolved"] },
   evidenceIds: evidenceSchema,
 }) };
+const standingSocialCommitmentSchema = objectSchema({
+  goal: stringSchema(1200),
+});
 const proposalSchema = objectSchema({
   version: { type: "integer", enum: [1] },
   commitmentDecision: {
@@ -316,12 +381,28 @@ const proposalSchema = objectSchema({
         reason: stringSchema(1200),
         intent: activitySchema,
       }),
+      objectSchema({
+        kind: { type: "string", enum: ["accept"] },
+        reason: stringSchema(1200),
+        intent: activitySchema,
+        standingSocialCommitment: standingSocialCommitmentSchema,
+      }),
       objectSchema({ kind: { type: "string", enum: ["decline"] }, reason: stringSchema(1200) }),
       objectSchema({ kind: { type: "string", enum: ["defer"] }, reason: stringSchema(1200) }),
       objectSchema({
         kind: { type: "string", enum: ["clarify"] },
         reason: stringSchema(1200),
         question: stringSchema(1200),
+      }),
+      objectSchema({
+        kind: { type: "string", enum: ["release_standing"] },
+        reason: stringSchema(1200),
+        matterId: idSchema,
+      }),
+      objectSchema({
+        kind: { type: "string", enum: ["complete_standing"] },
+        reason: stringSchema(1200),
+        matterId: idSchema,
       }),
     ],
   },

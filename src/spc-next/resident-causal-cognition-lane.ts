@@ -131,6 +131,18 @@ export class ResidentCausalCognitionLane {
       | {
           kind: "reason";
           intent: GroundedResidentCausalReasonCommitmentIntent;
+        }
+      | {
+          kind: "release_standing";
+          matterId: string;
+          occurrence: WorldOccurrence;
+          reason: string;
+        }
+      | {
+          kind: "complete_standing";
+          matterId: string;
+          outcomeEvidenceId: string;
+          reason: string;
         };
 
     const settlement = this.life.lifeIntentOwner.settleCommitmentIntent<Admission>(
@@ -139,6 +151,91 @@ export class ResidentCausalCognitionLane {
       this.life.currentLifeView(),
       this.life.world.tick,
       (proposal, providerContext) => {
+        if (proposal.commitmentDecision.kind === "complete_standing") {
+          const completionDecision = proposal.commitmentDecision;
+          if (originReason.kind !== "activity_completed" || originReason.evidenceIds.length !== 1) {
+            return {
+              status: "rejected",
+              detail: "standing completion requires one exact activity-completed outcome origin",
+            };
+          }
+          const outcomeEvidenceId = originReason.evidenceIds[0]!;
+          const outcomeEvidence = this.life.kernel.recentEvidenceSnapshot().find(
+            (candidate) => candidate.id === outcomeEvidenceId,
+          ) ?? null;
+          if (!outcomeEvidence
+            || outcomeEvidence.kind !== "task_outcome"
+            || !outcomeEvidence.sourceRunId) {
+            return {
+              status: "rejected",
+              detail: "standing completion factual task outcome unavailable",
+            };
+          }
+          const matter = providerContext.life.matters.find(
+            (candidate) => candidate.id === completionDecision.matterId,
+          ) ?? null;
+          if (!matter
+            || (matter.status !== "active" && matter.status !== "suspended")
+            || matter.activeRun !== null
+            || matter.semanticIntent?.kind !== "standing_social_commitment") {
+            return {
+              status: "rejected",
+              detail: "standing completion target is not one open run-free standing commitment",
+            };
+          }
+          return {
+            status: "accepted",
+            intent: {
+              kind: "complete_standing",
+              matterId: matter.id,
+              outcomeEvidenceId,
+              reason: completionDecision.reason,
+            },
+          };
+        }
+
+        if (proposal.commitmentDecision.kind === "release_standing") {
+          const releaseDecision = proposal.commitmentDecision;
+          if (originReason.kind !== "heard_speech") {
+            return {
+              status: "rejected",
+              detail: "standing commitment release requires exact heard-speech origin",
+            };
+          }
+          const occurrence = exactSpeechOccurrence(this.life, local.prepared, originReason);
+          if (!occurrence) {
+            return { status: "rejected", detail: "standing release speech occurrence unavailable" };
+          }
+          const matter = providerContext.life.matters.find(
+            (candidate) => candidate.id === releaseDecision.matterId,
+          ) ?? null;
+          if (!matter
+            || (matter.status !== "active" && matter.status !== "suspended")
+            || matter.activeRun !== null
+            || matter.semanticIntent?.kind !== "standing_social_commitment") {
+            return {
+              status: "rejected",
+              detail: "standing release target is not one open run-free standing commitment",
+            };
+          }
+          if (occurrence.actorId !== matter.semanticIntent.counterpartyActorId
+            || !occurrence.addressedActorIds.includes(this.life.residentId)) {
+            return {
+              status: "rejected",
+              detail: "standing release origin is not factual addressed speech from its counterparty",
+            };
+          }
+          return {
+            status: "accepted",
+            intent: {
+              kind: "release_standing",
+              matterId: matter.id,
+              occurrence,
+              reason: releaseDecision.reason,
+            },
+          };
+        }
+
         if (proposal.commitmentDecision.kind !== "accept"
           || proposal.commitmentDecision.intent.kind === "idle") {
           return { status: "accepted", intent: { kind: "no_commitment" } };
@@ -249,6 +346,20 @@ export class ResidentCausalCognitionLane {
         proposal: settlement.proposal,
         intent: admitted.intent,
         tick: this.life.world.tick,
+      });
+    } else if (admitted.kind === "release_standing") {
+      this.life.originatedSocialCommitments.releaseAfterCounterpartySpeech({
+        matterId: admitted.matterId,
+        occurrenceId: admitted.occurrence.id,
+        tick: this.life.world.tick,
+        reason: admitted.reason,
+      });
+    } else if (admitted.kind === "complete_standing") {
+      this.life.originatedSocialCommitments.completeAfterFactualOutcome({
+        matterId: admitted.matterId,
+        outcomeEvidenceId: admitted.outcomeEvidenceId,
+        tick: this.life.world.tick,
+        reason: admitted.reason,
       });
     }
 

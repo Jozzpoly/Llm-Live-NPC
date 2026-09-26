@@ -224,12 +224,58 @@ function sanitizeMatterIntent(value: unknown): ResidentMatterIntent | null {
   }
 
   if (value.kind === "communicate_actor") {
-    if (!hasOnlyKeys(value, ["kind", "goal", "targetActorId", "text"])) return null;
+    if (!hasRequiredAndOptionalKeys(
+      value,
+      ["kind", "goal", "targetActorId", "text"],
+      ["standingSocialCommitment"],
+    )) return null;
     const goal = boundedText(value.goal, 1_200);
     const targetActorId = identifier(value.targetActorId);
     const text = boundedText(value.text, 1_200);
     if (!goal || !targetActorId || !text) return null;
-    return { kind: "communicate_actor", goal, targetActorId, text };
+
+    let standingSocialCommitment: { goal: string } | undefined;
+    if (Object.hasOwn(value, "standingSocialCommitment")) {
+      const rawStanding = value.standingSocialCommitment;
+      if (!record(rawStanding) || !hasOnlyKeys(rawStanding, ["goal"])) return null;
+      const standingGoal = boundedText(rawStanding.goal, 1_200);
+      if (!standingGoal) return null;
+      standingSocialCommitment = { goal: standingGoal };
+    }
+
+    return {
+      kind: "communicate_actor",
+      goal,
+      targetActorId,
+      text,
+      ...(standingSocialCommitment ? { standingSocialCommitment } : {}),
+    };
+  }
+
+  if (value.kind === "acquire_material_object") {
+    if (!hasOnlyKeys(value, ["kind", "goal", "objectId"])) return null;
+    const goal = boundedText(value.goal, 1_200);
+    const objectId = identifier(value.objectId);
+    if (!goal || !objectId) return null;
+    return {
+      kind: "acquire_material_object",
+      goal,
+      objectId,
+    };
+  }
+
+  if (value.kind === "standing_social_commitment") {
+    if (!hasOnlyKeys(value, ["kind", "goal", "counterpartyActorId", "commitment"])) return null;
+    const goal = boundedText(value.goal, 1_200);
+    const counterpartyActorId = identifier(value.counterpartyActorId);
+    const commitment = boundedText(value.commitment, 1_200);
+    if (!goal || !counterpartyActorId || !commitment) return null;
+    return {
+      kind: "standing_social_commitment",
+      goal,
+      counterpartyActorId,
+      commitment,
+    };
   }
 
   return null;

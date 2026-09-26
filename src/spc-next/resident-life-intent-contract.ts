@@ -5,12 +5,32 @@ import {
   type ProposedActivity,
   type ResidentCognitionContext,
 } from "./cognition-contract";
+import type { ResidentStandingSocialCommitmentDescriptor } from "./resident-continuity-kernel";
 
 export type ResidentLifeCommitmentDecision =
-  | { kind: "accept"; reason: string; intent: ProposedActivity }
+  | {
+      kind: "accept";
+      reason: string;
+      intent: ProposedActivity;
+      /**
+       * Explicit future social meaning attached to this accepted communication.
+       * Absence means ordinary communication; speech text alone never implies it.
+       */
+      standingSocialCommitment?: ResidentStandingSocialCommitmentDescriptor;
+    }
   | { kind: "decline"; reason: string }
   | { kind: "defer"; reason: string }
-  | { kind: "clarify"; reason: string; question: string };
+  | { kind: "clarify"; reason: string; question: string }
+  | {
+      kind: "release_standing";
+      reason: string;
+      matterId: string;
+    }
+  | {
+      kind: "complete_standing";
+      reason: string;
+      matterId: string;
+    };
 
 export interface ResidentLifeIntentProposal {
   version: 1;
@@ -56,7 +76,14 @@ export function parseResidentLifeIntentProposal(
   if (!isBoundedString(decision.kind, 32) || !isBoundedString(decision.reason, 1_200)) return null;
 
   if (decision.kind === "accept") {
-    if (!hasExactKeys(decision, ["kind", "reason", "intent"]) || !isRecord(decision.intent)) return null;
+    const hasStandingSocialCommitment = Object.hasOwn(
+      decision,
+      "standingSocialCommitment",
+    );
+    const acceptKeys = hasStandingSocialCommitment
+      ? ["kind", "reason", "intent", "standingSocialCommitment"] as const
+      : ["kind", "reason", "intent"] as const;
+    if (!hasExactKeys(decision, acceptKeys) || !isRecord(decision.intent)) return null;
     if (!hasExactKeys(decision.intent, INTENT_KEYS)) return null;
 
     const validated = parseResidentCognitionProposal({
@@ -72,12 +99,31 @@ export function parseResidentLifeIntentProposal(
     }, context);
     if (!validated || validated.activityDirective.kind !== "replace") return null;
 
+    let standingSocialCommitment: ResidentStandingSocialCommitmentDescriptor | undefined;
+    if (hasStandingSocialCommitment) {
+      const rawStanding = decision.standingSocialCommitment;
+      if (!isRecord(rawStanding)
+        || !hasExactKeys(rawStanding, ["goal"])
+        || !isBoundedString(rawStanding.goal, 1_200)
+        || validated.activityDirective.activity.kind !== "communicate"
+        || validated.activityDirective.activity.targetActorId === null
+        || validated.activityDirective.activity.text === null) {
+        return null;
+      }
+      standingSocialCommitment = {
+        goal: rawStanding.goal,
+      };
+    }
+
     return {
       version: 1,
       commitmentDecision: {
         kind: "accept",
         reason: validated.activityDirective.reason,
         intent: structuredClone(validated.activityDirective.activity),
+        ...(standingSocialCommitment
+          ? { standingSocialCommitment: structuredClone(standingSocialCommitment) }
+          : {}),
       },
       beliefs: structuredClone(validated.beliefs),
       concerns: structuredClone(validated.concerns),
@@ -109,6 +155,24 @@ export function parseResidentLifeIntentProposal(
         kind: "clarify",
         reason: decision.reason,
         question: decision.question,
+      },
+      beliefs: structuredClone(validated.beliefs),
+      concerns: structuredClone(validated.concerns),
+      reviewAfterSeconds: validated.reviewAfterSeconds,
+    };
+  }
+
+  if (decision.kind === "release_standing" || decision.kind === "complete_standing") {
+    if (!hasExactKeys(decision, ["kind", "reason", "matterId"])
+      || !isBoundedString(decision.matterId, 128)) return null;
+    const validated = validateSemanticUpdatesOnly(value, context, decision.reason);
+    if (!validated) return null;
+    return {
+      version: 1,
+      commitmentDecision: {
+        kind: decision.kind,
+        reason: decision.reason,
+        matterId: decision.matterId,
       },
       beliefs: structuredClone(validated.beliefs),
       concerns: structuredClone(validated.concerns),
