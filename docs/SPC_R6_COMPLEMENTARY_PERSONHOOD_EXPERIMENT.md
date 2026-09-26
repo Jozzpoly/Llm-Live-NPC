@@ -341,36 +341,74 @@ Integrated source `32bae5f34982ef942ef6d3ea58fc0000212f79ec`:
 
 Browser #827 still does not qualify Oren/Nela genericity: the dedicated R6 Chromium specimen remains Mira/Ida.
 
-## 7.5 Next pressure characterization — post-terminal lived history
+## 7.5 R6 post-terminal factual-history probe
 
-Status: **CHARACTERIZED CURRENT GAP — NO NEW PERSONHOOD REPRESENTATION YET**
+Status: **BOUNDED NEUTRAL FINDING — SEMANTIC UPTAKE OBSERVED, BEHAVIORAL HISTORY EFFECT NOT PROVEN**
 
-After closing the explicit standing-obligation stage, the next pressure was re-derived from current causal material rather than selected from the candidate feature list.
+Canonical finding:
+`docs/SPC_R6_POST_TERMINAL_FACTUAL_HISTORY_FINDING.md`
 
-The highest-information current seam is:
+After closing the explicit standing-obligation stage, the next pressure was re-derived from existing material causality rather than chosen from a feature list.
 
-> Can one exact factual episode that happened to this resident remain causally available later, after its original matter is terminal, without pretending that the old task is still an open obligation?
-
-Executable characterization:
-
-`src/spc-next/r6-post-terminal-lived-friction-gap.characterization.test.ts`
-
-The characterization establishes two separate boundaries:
-
-1. a resolved matter and its exact factual blocked outcome remain available only during the existing bounded recent-evidence window; after normal evidence churn, `ResidentLifeMatterScope` correctly stops exposing that terminal episode to life cognition;
-2. even while the resolved episode is still near-term visible, `ResidentMaterialMatterRelevanceBridge` correctly refuses to treat reacquisition of the same material identity as unfinished business, because its legal relevance contract requires one still-open blocked acquisition matter.
-
-Both behaviors are desirable for R1/R2 homeostasis. Neither should be weakened by simply retaining terminal matters forever or letting resolved tasks reactivate themselves.
-
-They expose the narrower missing distinction:
+Characterization first established:
 
 `past factual self-experience != current open matter`.
 
-The repository already retains other private history classes such as known actors and region visitation. Therefore this finding does **not** justify a generic autobiographical-memory store, personality system, preference vector or needs model.
+A resolved material episode remains visible only while its factual outcome stays inside the bounded recent-evidence window. Reacquisition of the same object does not resurrect that terminal matter as unfinished business. These are desirable R1/R2 homeostasis properties.
 
-The next falsifier should pressure one post-terminal factual self-experience against an otherwise-matched control and ask whether a later legitimate semantic boundary can produce coherent choice or non-action because of that earlier experience. The first new representation, if any, must be earned by the exact failure of that falsifier and should preserve factual provenance without owning body authority or creating a provider heartbeat.
+The paired executable falsifier then generated two exact Janek contexts around the same current material reacquisition:
+- same resident/private current frame;
+- same reacquired familiar crate;
+- same free body;
+- no fresh speech or command;
+- no authored `self` / drives;
+- no standing obligation.
 
-Browser Oren/Nela genericity remains honest promotion-plane debt. It is not promoted back into the active research frontier merely because it remains unfinished.
+The history twin alone had one exact prior terminal episode:
+- `acquire_material_object` for the same crate;
+- factual World-authorized pickup attempt;
+- factual `object_unavailable` outcome;
+- reconciled run;
+- resolved run-free matter.
+
+The exact contexts are frozen in:
+`evidence/r6-post-terminal-factual-history-context.json`.
+
+Live Provider run #24 at source `f3968f5600f5cb462b212b9bbd5312424da105b4` made exactly two GPT-5.6 Luna calls and zero semantic retries.
+
+Observed:
+- control: `accept travel -> workshop`;
+- history: `accept travel -> workshop`;
+- history rationale explicitly referenced making another attempt after the earlier unavailability.
+
+Harness classification:
+`SAME_BEHAVIORAL_DECISION_OBSERVED`.
+
+The exact stored proposals are replayed through normal local admission at integrated head `b79793cf625da93d4909c644a3e56511febde67a`:
+- both produce factual travel only;
+- neither natural-language goal gains material-action authority;
+- the old history matter remains terminal;
+- Check #1628 passes **266 / 266 files and 970 / 970 tests**;
+- Browser Evidence #852 passes.
+
+Interpretation:
+
+- terminal factual self-history can reach real higher cognition without being an open obligation;
+- the model semantically consumed that history;
+- one single-opportunity specimen did **not** demonstrate history-caused behavioral differentiation;
+- the strong new fact that the crate visibly reappeared made retrying coherent in both twins.
+
+Therefore do not:
+- rerun the same pair until stochastic variation yields a preferred split;
+- inflate failure count merely to force refusal;
+- add `aversion`, preference weights or generic autobiographical memory;
+- reinterpret rationale wording as a behavioral PASS.
+
+The next highest-information pressure is a **genuine competing-future ambiguity**: several legal resident futures compete for one free body, current evidence is matched, and one terminal factual episode is structurally relevant to only one candidate.
+
+A useful existing surface is `ResidentLifeChoiceOwner`. Its current causal-support contract is candidate-local. The next falsifier should determine whether terminal lived history can legally support such a choice through existing authority, or whether a concrete admission/support failure earns the smallest history-to-current-choice relevance seam.
+
+Browser Oren/Nela genericity remains honest promotion-plane debt and is not promoted back into the active research frontier.
 
 ## 8. Anti-cheat rules
 
@@ -431,43 +469,42 @@ Completed / retained within scope:
 - R5 qualified sources remain frozen;
 - R6-A and R6-B remain bounded qualified mechanism passes;
 - Oren→Nela standing history is deterministic/domain green and crosses the Worker boundary;
-- earlier direct-request real-Luna history-sensitive choice remains a bounded positive finding;
-- exact counterparty release remains deterministic/domain green;
-- runtime-generated no-fresh-command control/history contexts are equality-bound to executable fixtures;
-- canonical endogenous Live Provider run #22 observes coherent control non-action versus history-caused return to Nela;
-- the exact history proposal from run #22 survives local admission and becomes factual World travel back to commons without fresh speech;
-- `complete_standing` provides one narrow factual-outcome-based fulfilment path without body/World authority;
-- runtime-generated post-return fulfilment context crosses the Worker boundary;
-- Live Provider run #23 uses one Luna call and selects exact `complete_standing`;
-- the exact run-#23 proposal survives local authority and resolves the original standing responsibility;
-- Check #1603 is green on integrated source `32bae5f34982ef942ef6d3ea58fc0000212f79ec`: **263 / 263 files, 961 / 961 tests**, typecheck/build/preview PASS;
-- Browser Evidence #827 is green on the same code source as regression evidence.
-- stage-closure hardening source `2c7adf9415eefff5f2c7236ead7a59b10a3f8ab0` adds explicit stale-`complete_standing` rejection evidence; Check #1605 passes **263 / 263 files, 962 / 962 tests**, and Browser Evidence #829 passes with no production/runtime semantic change after `32bae5f3...`.
+- canonical endogenous Live Provider run #22 remains the bounded no-fresh-command standing-history positive finding;
+- factual standing fulfilment run #23 and exact local replay remain bounded lifecycle evidence;
+- the explicit standing-obligation endogenous stage is **bounded CLOSED**;
+- post-terminal material-history characterization is executable;
+- exact post-terminal control/history contexts are frozen and equality-bound to runtime generation;
+- Live Provider run #24 is a valid **neutral** two-call / zero-retry result;
+- exact run-#24 proposals survive local admission and factual travel without gaining material-action authority;
+- integrated head `b79793cf625da93d4909c644a3e56511febde67a`: Check #1628 **266 / 266 files, 970 / 970 tests**; Browser Evidence #852 PASS.
 
 Evidence hygiene:
 
-- run #21 was a real two-inference **apparatus/contract failure**, not positive semantic evidence; do not hide its cost or reuse its rejected proposals;
-- “two calls, no retry” refers to canonical run #22 itself, not the entire campaign;
-- the endogenous reflection opportunity is an explicit R6 opt-in from a factual outcome; R2's global expected-success suppression remains unchanged;
-- initial standing-history construction in this paired specimen is deterministic experiment setup, not a claim that Luna autonomously authored Oren's entire biography;
-- the real endpoint receives exact runtime-generated contexts through captured/equality-bound fixtures, not a single uninterrupted browser process;
+- run #21 remains apparatus/contract failure evidence, not positive semantics;
+- run #22 is one paired positive observation, not a behavior distribution;
+- run #23 is one bounded fulfilment judgement;
+- run #24 produced the same behavioral decision in both twins; its different rationale is semantic uptake, not behavioral history-effect proof;
+- the post-terminal contexts come from exact runtime-generated fixtures and real endpoint calls, not one uninterrupted browser process;
+- terminal history remains bounded by current evidence retention; long-lived autobiographical persistence is not qualified;
 - browser-qualified Oren/Nela genericity remains **UNPROVEN**;
-- one paired Luna sample is not a stochastic behavior distribution;
 - full R6, five distinct living people and Owner-observed ordinary personhood remain **UNPROVEN**.
 
 Current order:
 
-1. preserve the new endogenous finding as a baseline falsifier; do not rerun it merely to accumulate green samples;
-2. stop deepening the same explicit-promise dimension unless a new concrete failure demands it;
-3. choose the next personhood pressure from a **different resident-owned causal class** — e.g. factual unfinished business, learned preference/aversion, relationship history, habit or concrete self-interest — without pre-building a generic personality/needs system;
-4. keep coherent non-action as a valid success outcome; do not force “autonomy” to mean constant activity;
-5. retain browser Oren/Nela genericity as honest promotion-plane debt and obtain it or explicitly revise the promotion contract before a claim that requires it;
-6. preserve Janek/material continuity, R1 homeostasis, R2 semantic metabolism and R5 provider safety as vetoes;
-7. do not prepare an Owner gate or merge PR #148 by CI inertia.
+1. preserve `docs/SPC_R6_POST_TERMINAL_FACTUAL_HISTORY_FINDING.md` as the canonical result of the completed single-opportunity probe;
+2. do not repeat run #24 merely to obtain a behavioral split;
+3. construct the next falsifier around a **real competing-future choice**, not a single obvious opportunity;
+4. require one terminal factual episode to be structurally relevant to one candidate future while current evidence remains matched;
+5. require any claimed history-based focus to cite pre-existing causal support that local admission can verify;
+6. let `focus candidate A`, `focus candidate B` and coherent `defer_all` remain legal;
+7. if current candidate-local support cannot legally represent the needed terminal-history relation, treat that as a concrete earned failure before designing the smallest new relevance representation;
+8. preserve Janek/material continuity, R1 homeostasis, R2 metabolism, private knowledge and R5 provider safety as vetoes;
+9. retain browser Oren/Nela genericity as promotion-plane debt rather than current research priority;
+10. do not prepare an Owner gate or merge PR #148 by CI inertia.
 
 The next research question is now:
 
-> **Can prior factual life cause coherent endogenous choice or non-action for a resident-owned reason that is not simply an explicit social promise or obligation?**
+> **Can terminal factual life alter a genuine endogenous competing-future choice or coherent non-action through causally attributable support, without becoming an open obligation or a generic personality system?**
 
 ## 12. Owner-observed target
 
