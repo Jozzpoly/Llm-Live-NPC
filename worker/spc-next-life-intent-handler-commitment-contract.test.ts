@@ -187,6 +187,12 @@ describe("SPC Next life-intent endpoint commitment contract", () => {
       "does not replace or complete recovered matters by implication",
     );
     expect(upstreamRequest.instructions).toContain(
+      "status resolved or cancelled is terminal history only",
+    );
+    expect(upstreamRequest.instructions).toContain(
+      "must not be silently reopened",
+    );
+    expect(upstreamRequest.instructions).toContain(
       "beliefs[].evidenceIds and concerns[].evidenceIds may cite only ids from recentPercepts",
     );
 
