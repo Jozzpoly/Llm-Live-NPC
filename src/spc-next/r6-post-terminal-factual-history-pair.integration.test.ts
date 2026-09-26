@@ -114,13 +114,18 @@ describe("R6 post-terminal factual-history paired falsifier", () => {
   it("keeps the resolved episode visible only as bounded history rather than reviving it after the later reflection", () => {
     const history = buildSpecimen(true);
     const oldMatter = history.life.kernel.matter(HISTORY_MATTER_ID);
-    const oldOutcome = history.life.kernel.lastOutcomeEvidence(HISTORY_MATTER_ID);
+    const oldHistoryView = history.request.context.life.matters.find(
+      (matter) => matter.id === HISTORY_MATTER_ID,
+    ) ?? null;
 
     expect(oldMatter).toMatchObject({
       status: "resolved",
       activeRunId: null,
     });
-    expect(oldOutcome).toMatchObject({
+    // Terminalization intentionally releases live evidence pins. Bounded historical
+    // visibility comes from the recent-evidence window, not an immortal matter pin.
+    expect(history.life.kernel.lastOutcomeEvidence(HISTORY_MATTER_ID)).toBeNull();
+    expect(oldHistoryView?.lastOutcomeEvidence).toMatchObject({
       kind: "task_outcome",
       sourceRunId: HISTORY_RUN_ID,
       summary: expect.stringContaining("object_unavailable"),
@@ -131,7 +136,10 @@ describe("R6 post-terminal factual-history paired falsifier", () => {
     // Merely taking the later cognition frame must not mutate the old episode back
     // into active work or manufacture a new material run.
     expect(history.life.kernel.matter(HISTORY_MATTER_ID)).toEqual(oldMatter);
-    expect(history.life.kernel.lastOutcomeEvidence(HISTORY_MATTER_ID)).toEqual(oldOutcome);
+    expect(history.life.kernel.lastOutcomeEvidence(HISTORY_MATTER_ID)).toBeNull();
+    expect(history.request.context.life.matters.find(
+      (matter) => matter.id === HISTORY_MATTER_ID,
+    )).toEqual(oldHistoryView);
   });
 });
 
