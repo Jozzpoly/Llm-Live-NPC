@@ -40,7 +40,7 @@ jobs:
           const qualifiers = Array.isArray(request.qualifiers)
             ? request.qualifiers
             : ['lifecycle', 'interruption'];
-          const allowed = new Set(['lifecycle', 'interruption', 'life-choice', 'life-intent', 'unified-addressed', 'r5-judgement', 'r6-history-choice-twin', 'r6-endogenous-history-outcome-twin', 'r6-endogenous-standing-fulfillment']);
+          const allowed = new Set(['lifecycle', 'interruption', 'life-choice', 'life-intent', 'unified-addressed', 'r5-judgement', 'r6-history-choice-twin', 'r6-endogenous-history-outcome-twin', 'r6-endogenous-standing-fulfillment', 'r6-post-terminal-factual-history-twin']);
           if (qualifiers.length === 0 || qualifiers.some((value) => !allowed.has(value))) {
             throw new Error(`invalid live-provider qualifiers: ${JSON.stringify(qualifiers)}`);
           }
@@ -53,6 +53,7 @@ jobs:
           process.stdout.write(`RUN_R6_HISTORY_CHOICE_TWIN=${qualifiers.includes('r6-history-choice-twin') ? '1' : '0'}\n`);
           process.stdout.write(`RUN_R6_ENDOGENOUS_HISTORY_OUTCOME_TWIN=${qualifiers.includes('r6-endogenous-history-outcome-twin') ? '1' : '0'}\n`);
           process.stdout.write(`RUN_R6_ENDOGENOUS_STANDING_FULFILLMENT=${qualifiers.includes('r6-endogenous-standing-fulfillment') ? '1' : '0'}\n`);
+          process.stdout.write(`RUN_R6_POST_TERMINAL_FACTUAL_HISTORY_TWIN=${qualifiers.includes('r6-post-terminal-factual-history-twin') ? '1' : '0'}\n`);
           process.stdout.write(`REQUESTED_QUALIFIERS=${qualifiers.join(',')}\n`);
           NODE
 
@@ -241,6 +242,16 @@ jobs:
           LIVE_PROVIDER_OUTPUT: evidence/live-provider/r6-endogenous-standing-fulfillment.json
         run: node scripts/spc-live-provider-r6-endogenous-standing-fulfillment-evidence.mjs
 
+      - name: Validate R6 post-terminal factual-history twin harness
+        if: env.RUN_R6_POST_TERMINAL_FACTUAL_HISTORY_TWIN == '1'
+        run: node --check scripts/spc-live-provider-r6-post-terminal-factual-history-twin-evidence.mjs
+
+      - name: Qualify R6 post-terminal factual-history twin with real Luna
+        if: env.RUN_R6_POST_TERMINAL_FACTUAL_HISTORY_TWIN == '1'
+        env:
+          LIVE_PROVIDER_OUTPUT: evidence/live-provider/r6-post-terminal-factual-history-twin.json
+        run: node scripts/spc-live-provider-r6-post-terminal-factual-history-twin-evidence.mjs
+
       - name: Print live-provider evidence summary
         if: always()
         shell: bash
@@ -309,6 +320,13 @@ jobs:
           echo "--- R6 endogenous standing fulfillment evidence ---"
           if [ "${RUN_R6_ENDOGENOUS_STANDING_FULFILLMENT:-0}" = "1" ]; then
             cat evidence/live-provider/r6-endogenous-standing-fulfillment.json 2>/dev/null || true
+          else
+            echo "not requested in this run"
+          fi
+
+          echo "--- R6 post-terminal factual-history twin evidence ---"
+          if [ "${RUN_R6_POST_TERMINAL_FACTUAL_HISTORY_TWIN:-0}" = "1" ]; then
+            cat evidence/live-provider/r6-post-terminal-factual-history-twin.json 2>/dev/null || true
           else
             echo "not requested in this run"
           fi
