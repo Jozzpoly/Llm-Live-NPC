@@ -18,6 +18,7 @@ const YARD_ID = "yard";
 const HISTORY_MATTER_ID = "matter.janek.r6.post-terminal-friction";
 const HISTORY_RUN_ID = "run.janek.r6.post-terminal-friction";
 const EXECUTION_GUARD = 180;
+const COGNITION_GUARD = 30;
 
 /**
  * First paired falsifier for the non-obligation R6 frontier.
@@ -388,8 +389,7 @@ function buildSpecimen(withLivedHistory: boolean) {
     evidenceIds: [reacquiredEvidence.id],
   });
 
-  const request = cognition.takeReadyRequest();
-  if (!request) throw new Error("R6 post-terminal reacquisition produced no cognition request");
+  const request = waitForRequest(cognition, world);
 
   return {
     world,
@@ -403,6 +403,19 @@ function buildSpecimen(withLivedHistory: boolean) {
     currentMaterialObservation,
     historyWorldAction,
   };
+}
+
+function waitForRequest(
+  cognition: ResidentCausalCognitionLane,
+  world: SpcWorldRuntime,
+) {
+  let request = cognition.takeReadyRequest();
+  for (let index = 0; index < COGNITION_GUARD && !request; index += 1) {
+    world.step();
+    request = cognition.takeReadyRequest();
+  }
+  if (!request) throw new Error("R6 post-terminal reacquisition produced no cognition request");
+  return request;
 }
 
 function completeFocused(
