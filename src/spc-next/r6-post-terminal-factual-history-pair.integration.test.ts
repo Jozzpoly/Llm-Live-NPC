@@ -105,6 +105,13 @@ describe("R6 post-terminal factual-history paired falsifier", () => {
     expect(stripHistoricalEpisode(control.request.context))
       .toEqual(stripHistoricalEpisode(history.request.context));
 
+    // Temporary evidence-capture marker. Removed after the exact runtime-generated
+    // pair is frozen as a checked fixture.
+    console.log("R6_POST_TERMINAL_FACTUAL_HISTORY_CONTEXT=" + JSON.stringify({
+      control: control.request.context,
+      history: history.request.context,
+    }));
+
     expect(history.historyWorldAction).toMatchObject({
       status: "resolved",
       materialOutcome: {
