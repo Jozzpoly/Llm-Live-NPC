@@ -1,4 +1,5 @@
 import fixtureJson from "../../evidence/r6-post-terminal-factual-history-context.json?raw";
+import liveResultJson from "../../evidence/r6-post-terminal-factual-history-live-result.json?raw";
 import { describe, expect, it } from "vitest";
 import { sanitizeSpcNextLifeContextWithDiagnostic } from "../../worker/spc-next-life-context";
 import { ResidentCausalCognitionLane } from "./resident-causal-cognition-lane";
@@ -21,6 +22,7 @@ const HISTORY_RUN_ID = "run.janek.r6.post-terminal-friction";
 const EXECUTION_GUARD = 180;
 const COGNITION_GUARD = 30;
 const canonicalFixture = JSON.parse(fixtureJson);
+const liveResult = JSON.parse(liveResultJson);
 
 /**
  * First paired falsifier for the non-obligation R6 frontier.
@@ -132,6 +134,99 @@ describe("R6 post-terminal factual-history paired falsifier", () => {
       expect(sanitized.diagnostic).toBeNull();
       expect(sanitized.context).not.toBeNull();
     }
+  });
+
+  it("replays both exact live-Luna proposals through local authority without turning semantic prose into material action", () => {
+    expect(liveResult.sourceSha).toBe("f3968f5600f5cb462b212b9bbd5312424da105b4");
+    expect(liveResult.liveProviderRun).toBe(24);
+    expect(liveResult.providerRequestsAttempted).toBe(2);
+    expect(liveResult.semanticRetries).toBe(0);
+    expect(liveResult.model).toBe("gpt-5.6-luna");
+    expect(liveResult.classification).toBe("SAME_BEHAVIORAL_DECISION_OBSERVED");
+    expect(liveResult.comparison).toEqual({
+      exactBehaviorEqual: true,
+      controlLocallyExecutableClass: true,
+      historyLocallyExecutableClass: true,
+    });
+    expect(liveResult.control.proposal.commitmentDecision).toMatchObject({
+      kind: "accept",
+      intent: {
+        kind: "travel",
+        targetRegionId: WORKSHOP_ID,
+      },
+    });
+    expect(liveResult.history.proposal.commitmentDecision).toMatchObject({
+      kind: "accept",
+      reason: expect.stringContaining("earlier unavailability"),
+      intent: {
+        kind: "travel",
+        targetRegionId: WORKSHOP_ID,
+      },
+    });
+
+    const control = buildSpecimen(false);
+    const history = buildSpecimen(true);
+    const oldHistoryMatter = history.life.kernel.matter(HISTORY_MATTER_ID);
+    const materialBeforeControl = control.world.materialObject(CRATE_ID);
+    const materialBeforeHistory = history.world.materialObject(CRATE_ID);
+
+    const controlSettlement = control.cognition.settleCommitment(
+      control.request,
+      liveResult.control.proposal,
+      liveResult.control.originReasonId,
+    );
+    const historySettlement = history.cognition.settleCommitment(
+      history.request,
+      liveResult.history.proposal,
+      liveResult.history.originReasonId,
+    );
+
+    expect(controlSettlement).toMatchObject({
+      status: "applied",
+      residentId: JANEK_ID,
+      decision: "accept",
+      commitment: { matterId: expect.any(String), runId: expect.any(String) },
+    });
+    expect(historySettlement).toMatchObject({
+      status: "applied",
+      residentId: JANEK_ID,
+      decision: "accept",
+      commitment: { matterId: expect.any(String), runId: expect.any(String) },
+    });
+    if (controlSettlement.status !== "applied" || !controlSettlement.commitment
+      || historySettlement.status !== "applied" || !historySettlement.commitment) {
+      throw new Error("R6 post-terminal exact live proposal did not survive local admission");
+    }
+
+    const controlCompletion = completeFocused(control.execution, control.world);
+    const historyCompletion = completeFocused(history.execution, history.world);
+    expect(controlCompletion.runId).toBe(controlSettlement.commitment.runId);
+    expect(historyCompletion.runId).toBe(historySettlement.commitment.runId);
+    expect(control.janek.cognitionContext({
+      residentId: JANEK_ID,
+      requestedAtTick: control.world.tick,
+      reasons: [],
+    }).currentRegionId).toBe(WORKSHOP_ID);
+    expect(history.janek.cognitionContext({
+      residentId: JANEK_ID,
+      requestedAtTick: history.world.tick,
+      reasons: [],
+    }).currentRegionId).toBe(WORKSHOP_ID);
+
+    // Natural-language goal text is not execution authority. Both admitted intents
+    // are travel-only, so neither branch may silently inspect/pick up the crate.
+    expect(control.world.materialObject(CRATE_ID)).toEqual(materialBeforeControl);
+    expect(history.world.materialObject(CRATE_ID)).toEqual(materialBeforeHistory);
+    expect(control.life.worldAuthority.recentActionFacts()).toEqual([]);
+    expect(history.life.worldAuthority.recentActionFacts()).toHaveLength(1);
+    expect(history.life.worldAuthority.recentActionFacts()[0]).toMatchObject({
+      runId: HISTORY_RUN_ID,
+      action: { kind: "material_pickup", objectId: CRATE_ID },
+      resolution: { status: "resolved", outcomeStatus: "rejected", code: "object_unavailable" },
+    });
+
+    // The old episode stays terminal; the live travel does not reopen it.
+    expect(history.life.kernel.matter(HISTORY_MATTER_ID)).toEqual(oldHistoryMatter);
   });
 
   it("keeps both action and non-action legal instead of hard-coding an aversion from the old failure", () => {
