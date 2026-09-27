@@ -327,6 +327,13 @@ export class ResidentCausalReasonCommitmentAuthority {
       originEvidenceId: origin.id,
       semanticCourse: input.intent.semanticCourse,
       semanticIntent: input.intent.semanticIntent as ResidentMatterIntent,
+      ...(materialIntent ? {
+        historicalSupport: [{
+          relation: "prior_same_material_outcome" as const,
+          sourceMatterId: materialIntent.sourceMatterId,
+          evidenceId: materialIntent.priorOutcomeEvidenceId,
+        }],
+      } : {}),
     });
     this.options.kernel.bindRun({
       matterId: matter.id,
