@@ -487,6 +487,92 @@ Required next question:
 
 Do not add another personhood representation before that runtime pressure proves one is needed.
 
+## 7.7 R6 delayed accumulated factual history
+
+Status: **MATERIAL BOUNDED POSITIVE FINDING — DELAYED RUNTIME CAUSATION + LIVE BEHAVIORAL EFFECT + EXACT LOCAL ADMISSION**
+
+Canonical finding:
+`docs/SPC_R6_DELAYED_FACTUAL_HISTORY_CHOICE_FINDING.md`
+
+The next falsifier deliberately moved beyond the near-term run-#26 condition.
+
+The concrete failure was not "we need a memory system". It was narrower:
+
+- correct homeostasis removes terminal A from `ResidentLifeMatterScope` once its outcome leaves recent evidence;
+- later exact same-object relevance could therefore lose access to A;
+- even after delayed reacquisition became possible, later choice support could lose A again once A was absent from `life.matters`;
+- the normal five-resident composition also did not yet route the full material relevance/execution path.
+
+The earned repair keeps history narrow:
+
+- bounded terminal factual outcome archive in resident continuity;
+- exact same-object private reacquisition as the only current relevance trigger;
+- recent + archived matches combined before selection;
+- ambiguous multiple historical matches fail closed;
+- a new current material matter C may carry typed
+  `{ relation: "prior_same_material_outcome", sourceMatterId, evidenceId }`;
+- kernel admission proves exact terminal source matter, exact same `objectId`, exact factual `task_outcome`;
+- the support is pinned only while C remains current and is released when C terminalizes;
+- Worker/provider context sees the old fact only as candidate-scoped causal support on C, not as a restored old matter or generic autobiography.
+
+The strengthened endogenous chain at
+`b4861568d222f11f3f0b0621cae14c92088acdc9`
+proves:
+
+1. A factually fails and becomes terminal/run-free;
+2. unrelated World time/evidence churn removes A's outcome from recent evidence and removes A from current life;
+3. exact same-object private reacquisition later recovers the one bounded factual outcome through current relevance;
+4. normal local admission creates new C with exact typed A provenance;
+5. independent B completion creates D;
+6. normal arbitration reaches `choice_required(C,D)`;
+7. final choice context still contains no A matter;
+8. C alone carries exact old factual support;
+9. A never reopens or regains body authority.
+
+Check #1725: **279 / 279 test files, 1006 / 1006 tests**, typecheck/build/preview PASS.
+
+Live Provider run #27 at source
+`ebf41ab8d67c86dd4eb4b3e4c8a30978ef73b827`
+uses exactly two GPT-5.6 Luna calls and zero semantic retries.
+
+Matched twins contain the same current C/D ambiguity and neither exposes A as a current matter. The history twin alone carries one candidate-scoped delayed factual outcome on C:
+
+- control: `defer_all`;
+- delayed-history twin: `focus_matter(retry)`;
+- exact old factual outcome is cited;
+- `exactBehaviorEqual = false`;
+- classification:
+  **`DELAYED_HISTORY_CAUSAL_COMPETING_FUTURE_DIFFERENCE_OBSERVED`**.
+
+Exact responses are retained in:
+`evidence/r6-delayed-competing-future-history-choice-live-result.json`.
+
+They replay through `ResidentLifeChoiceOwner` in:
+`src/spc-next/r6-delayed-competing-future-history-choice-pair.integration.test.ts`.
+
+Replay source `31a162e7debd25ec1d2aa742963e34cc67a225fb`:
+Check #1724 **279 / 279 files, 1006 / 1006 tests**, typecheck/build/preview PASS.
+
+This answers the delayed same-object question positively **within one exact causal lineage**.
+
+It does **not** qualify:
+
+- generic autobiographical memory;
+- unlimited long-term memory;
+- preference or aversion;
+- habit;
+- relationship generalization;
+- cross-object generalization;
+- broad R6;
+- five distinct living people;
+- Owner-observed ordinary aliveness.
+
+The delayed same-object factual-history stage is now **bounded CLOSED**.
+
+The next high-information pressure must be qualitatively different: **cumulative ordinary experience**, where several independently factual past episodes later affect one choice and no single exact old matter/object/standing obligation is sufficient to explain the decision.
+
+Do not add preference, aversion, habit, relationship or generic memory state before that pressure produces a concrete failure.
+
 ## 8. Anti-cheat rules
 
 R6 FAILS if apparent personhood mainly comes from:
@@ -545,46 +631,46 @@ Completed / retained within scope:
 
 - R5 qualified sources remain frozen;
 - R6-A and R6-B remain bounded qualified mechanism passes;
-- canonical endogenous standing-history run #22 and factual fulfilment run #23 remain bounded positive evidence;
+- canonical standing-history run #22 and factual fulfilment run #23 remain bounded positive evidence;
 - explicit standing-obligation endogenous work remains **bounded CLOSED**;
-- post-terminal single-opportunity run #24 remains **BOUNDED NEUTRAL**: semantic uptake observed, behavioral effect not proven;
-- competing-future support gap was characterized before implementation;
-- narrow `prior_same_material_outcome` remains exact-identity / terminal-outcome bounded and does not reopen history;
-- run #25 remains provider-contract failure evidence only: no model output / zero token usage;
-- canonical run #26 remains the **MATERIAL BOUNDED POSITIVE** real-Luna finding: control `defer_all`, history `focus_matter(retry)`, exact terminal outcome cited, zero retries;
-- exact run-#26 proposals survive normal local choice admission;
-- `docs/SPC_R6_ENDOGENOUS_COMPETING_FUTURE_RUNTIME_FINDING.md` now closes the corresponding fixture-construction debt at the deterministic runtime plane;
-- source `d0163c7850809897e163dd589e3ce344ff162fa1`: Check #1672 **272 / 272 files, 984 / 984 tests**, typecheck/build/preview PASS;
-- the runtime chain creates C from factual post-terminal reacquisition and D independently from another factual life outcome, then reaches normal `choice_required(C,D)`;
-- A remains terminal/run-free and coherent `defer_all` remains legal.
+- run #24 remains **BOUNDED NEUTRAL**: post-terminal semantic uptake without behavioral differentiation;
+- run #26 remains the first **MATERIAL BOUNDED POSITIVE** competing-future factual-history split;
+- the original endogenous runtime-generation pressure is bounded closed;
+- delayed-history failure was characterized before representation was added;
+- bounded terminal factual archive + exact current-matter causal genealogy are now defended;
+- the strengthened chain `b4861568...` moves A beyond recent/current life **before** reacquisition/C creation and still reaches normal `choice_required(C,D)`;
+- Check #1725: **279 / 279 files, 1006 / 1006 tests**, typecheck/build/preview PASS;
+- Live Provider run #27: **MATERIAL BOUNDED POSITIVE** — control `defer_all`, delayed-history `focus_matter(retry)`, exact old factual outcome cited, exactly two Luna calls, zero retries;
+- exact run-#27 local replay is green at `31a162e7...`, Check #1724 **279 / 279 files, 1006 / 1006 tests**;
+- the delayed same-object factual-history stage is **bounded CLOSED**.
 
 Evidence hygiene:
 
-- run #26 is still one paired model observation, not a behavior distribution;
-- runtime generation does not turn retry-after-failure into preference, aversion or habit;
-- the deterministic chain begins from bounded authored seed matters A/B; it proves the later history/future/arbitration chain is runtime-generated, not that all resident motives spontaneously originate from nothing;
-- terminal history is still bounded by current evidence retention;
-- long-lived autobiographical persistence remains **UNPROVEN**;
-- browser-qualified Oren/Nela genericity remains **UNPROVEN**;
+- runs #26 and #27 are each one paired model observation, not behavioral distributions;
+- one exact same-object lineage is not generic autobiography;
+- retry-after-failure is not a learned preference, aversion or habit;
+- the factual archive is bounded provenance and is not globally prompt-visible;
+- a historical fact remains provider-visible only when a current matter has an exact defended causal relation to it;
+- authored A/B experiment seeds remain; the evidence does not prove spontaneous origination of every motive;
+- browser-qualified Oren/Nela genericity remains **UNPROVEN** promotion-plane debt;
 - full R6, five distinct living people and Owner-observed ordinary personhood remain **UNPROVEN**.
 
 Current order:
 
-1. preserve the run-#24 neutral result and run-#26 positive result exactly as documented;
-2. do not rerun run #26 merely to obtain another stochastic sample;
-3. treat the normal-runtime provenance question as **bounded CLOSED** by `d0163c78...`;
-4. do not deepen the same material chain by inertia;
-5. move to the next new personhood pressure: **history durability after ordinary unrelated life/evidence churn**;
-6. first falsify the current system after the terminal factual episode has naturally fallen outside bounded recent evidence;
-7. preserve the distinction between `past factual self-experience` and `current open matter`;
-8. do not retain terminal matters forever and do not add a generic autobiographical-memory/personality store before the delayed-history failure is concrete;
-9. preserve Janek/material continuity, R1 homeostasis, R2 metabolism, private knowledge and R5 provider safety as vetoes;
-10. retain browser Oren/Nela genericity as promotion-plane debt rather than current research priority;
-11. do not prepare an Owner gate or merge PR #148 by CI inertia.
+1. preserve runs #24, #26 and #27 exactly as their canonical findings describe;
+2. do not rerun #27 merely to obtain another stochastic split;
+3. do not deepen the same crate lineage by inertia;
+4. preserve the separation between terminal factual archive, current-matter causal genealogy, provider judgement and body authority;
+5. move to a **qualitatively different personhood pressure: cumulative ordinary experience**;
+6. first characterize the current architecture when several independently factual past episodes are potentially relevant but no single exact old matter/object/standing obligation explains the later choice;
+7. do not add preference/aversion, habit, relationship scores or generic autobiographical memory before that failure is concrete;
+8. preserve Janek/material continuity, R1 homeostasis, R2 metabolism, private knowledge and R5 provider safety as vetoes;
+9. retain browser Oren/Nela genericity as honest promotion-plane debt;
+10. do not prepare an Owner gate or merge PR #148 by CI inertia.
 
 The next research question is now:
 
-> **Can a resident's terminal factual life still causally alter a later endogenous competing-future choice after ordinary unrelated life has moved that episode beyond the bounded recent-evidence window — without keeping the old matter open or replacing personhood with a generic memory/personality system?**
+> **Can several independently factual past experiences, none of which is itself an open obligation or exact same-object continuation, jointly alter a later endogenous choice in a causally attributable way without replacing resident life with generic personality/preference state?**
 
 ## 12. Owner-observed target
 
