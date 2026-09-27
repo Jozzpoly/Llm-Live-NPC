@@ -65,3 +65,43 @@ export function derivePriorSameActorOutcomeSupport(
     evidenceId: match.evidenceId,
   }));
 }
+
+
+/**
+ * Derive bounded exact counterparty-caused social genealogy for one CURRENT
+ * communicate_actor matter.
+ *
+ * This recognizes only factual standing-commitment releases already archived by the
+ * resident after exact addressed World speech from that same counterparty. It does
+ * not infer trust, affinity, preference or a general relationship summary.
+ */
+export function derivePriorCounterpartySocialOutcomeSupport(
+  kernel: ResidentContinuityKernel,
+  targetActorId: string,
+): ResidentMatterHistoricalSupport[] {
+  if (typeof targetActorId !== "string" || targetActorId.trim().length === 0) {
+    throw new Error("counterparty social historical support target must be non-empty");
+  }
+
+  return kernel.terminalSocialOutcomeArchiveSnapshot()
+    .filter((entry) => (
+      entry.counterpartyActorId === targetActorId
+      && entry.evidence.kind === "resident_released_social_commitment"
+    ))
+    .sort((left, right) => (
+      right.evidence.tick - left.evidence.tick
+      || right.evidence.id.localeCompare(left.evidence.id)
+      || right.matterId.localeCompare(left.matterId)
+    ))
+    .slice(0, MAX_CUMULATIVE_SAME_ACTOR_OUTCOMES)
+    .sort((left, right) => (
+      left.evidence.tick - right.evidence.tick
+      || left.evidence.id.localeCompare(right.evidence.id)
+      || left.matterId.localeCompare(right.matterId)
+    ))
+    .map((entry) => ({
+      relation: "prior_counterparty_social_outcome" as const,
+      sourceMatterId: entry.matterId,
+      evidenceId: entry.evidence.id,
+    }));
+}
