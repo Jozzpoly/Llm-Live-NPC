@@ -1,4 +1,4 @@
-// @ts-expect-error Vitest/Vite loads the frozen JSON fixture; the browser/worker tsconfig intentionally has no Node/JSON ambient types.
+// @ts-ignore Vitest/Vite loads the frozen JSON fixture; the browser/worker tsconfig intentionally has no Node/JSON ambient types.
 import FIXTURE from "../evidence/r6-competing-future-terminal-history-choice-context.json";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
