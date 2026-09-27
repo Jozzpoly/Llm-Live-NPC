@@ -871,6 +871,7 @@ function snapshotHistoricalSupportPins(
 ): Array<{
   matterId: string;
   relation: ResidentMatterHistoricalSupportRelation;
+  sourceMatterId: string;
   evidence: ResidentKernelEvidence;
 }> {
   const result: Array<{
@@ -891,6 +892,7 @@ function snapshotHistoricalSupportPins(
   }
   return result.sort((left, right) => (
     left.matterId.localeCompare(right.matterId)
+    || left.sourceMatterId.localeCompare(right.sourceMatterId)
     || left.evidence.id.localeCompare(right.evidence.id)
     || left.relation.localeCompare(right.relation)
   ));
