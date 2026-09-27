@@ -8,6 +8,7 @@ import type {
 } from "./resident-execution-arbitrator";
 import { ResidentGroundedTravelExecutor } from "./resident-grounded-travel-executor";
 import { ResidentMessageDeliveryExecutor } from "./resident-message-delivery-executor";
+import { ResidentMaterialPickupExecutor } from "./resident-material-pickup-executor";
 import type { ResidentLifeChoiceReviewObservation } from "./resident-life-choice-review-bridge";
 import { ResidentCausalLifeSubstrate } from "./resident-causal-life-substrate";
 
@@ -17,7 +18,7 @@ export type ResidentCausalExecutionStep =
       status: "running";
       matterId: string;
       runId: string;
-      intentKind: "travel_region" | "communicate_actor";
+      intentKind: "travel_region" | "communicate_actor" | "acquire_material_object";
     }
   | {
       status: "completed";
@@ -97,6 +98,7 @@ export type ResidentCausalExecutionReactivation =
 export class ResidentCausalExecutionCoordinator {
   private readonly travel = new Map<string, TravelExecutionState>();
   private readonly communicate = new Map<string, CommunicateExecutionState>();
+  private readonly material = new Map<string, ResidentMaterialPickupExecutor>();
 
   constructor(private readonly life: ResidentCausalLifeSubstrate) {}
 
@@ -111,7 +113,11 @@ export class ResidentCausalExecutionCoordinator {
     }
     if (!matter.semanticIntent
       || (matter.semanticIntent.kind !== "travel_region"
-        && matter.semanticIntent.kind !== "communicate_actor")) {
+        && matter.semanticIntent.kind !== "communicate_actor"
+        && matter.semanticIntent.kind !== "acquire_material_object")) {
+      return { status: "rejected", matterId, reason: "unsupported_intent" };
+    }
+    if (matter.semanticIntent.kind === "acquire_material_object" && !this.life.materialKnowledge) {
       return { status: "rejected", matterId, reason: "unsupported_intent" };
     }
 
@@ -180,11 +186,11 @@ export class ResidentCausalExecutionCoordinator {
     if (intent.kind === "communicate_actor") {
       return this.stepCommunicate(matter, runId);
     }
-    if (intent.kind === "acquire_material_object"
-      || intent.kind === "standing_social_commitment") {
-      // Material acquisition currently has its own resident-local competence /
-      // relevance path. Standing social commitments deliberately own no body executor
-      // at all. Do not silently route either through travel/social execution.
+    if (intent.kind === "acquire_material_object") {
+      return this.stepMaterial(matter, runId);
+    }
+    if (intent.kind === "standing_social_commitment") {
+      // Standing social commitments deliberately own no body executor at all.
       return {
         status: "unsupported_intent",
         matterId: matter.id,
@@ -231,6 +237,65 @@ export class ResidentCausalExecutionCoordinator {
       runId,
       "succeeded",
       `${runId} physically reached resident-grounded ${state.targetRegionId} destination`,
+      true,
+    );
+  }
+
+  private stepMaterial(matter: ResidentMatter, runId: string): ResidentCausalExecutionStep {
+    const intent = matter.semanticIntent;
+    const knowledge = this.life.materialKnowledge;
+    if (!intent || intent.kind !== "acquire_material_object" || !knowledge) {
+      return {
+        status: "unsupported_intent",
+        matterId: matter.id,
+        runId,
+        intentKind: intent?.kind ?? null,
+      };
+    }
+
+    // Keep material execution epistemic: the executor receives only resident-private
+    // recognized material knowledge. Sampling may reveal current visibility but never
+    // hidden holder identity or hidden World position.
+    knowledge.sample();
+    const executor = this.material.get(runId) ?? new ResidentMaterialPickupExecutor(
+      runId,
+      intent.objectId,
+      knowledge,
+      this.life.worldAuthority,
+      this.life.world,
+    );
+    this.material.set(runId, executor);
+
+    const local = executor.step();
+    if (local.status === "running") {
+      return {
+        status: "running",
+        matterId: matter.id,
+        runId,
+        intentKind: "acquire_material_object",
+      };
+    }
+    if (local.status === "authority_lost") {
+      this.clearExecution(runId);
+      return this.finishAuthorityLost(matter.id, runId);
+    }
+    if (local.status === "blocked") {
+      this.clearExecution(runId);
+      return this.finishRun(
+        matter,
+        runId,
+        "blocked",
+        `material acquisition ${intent.objectId} blocked: ${local.reason}`,
+        false,
+      );
+    }
+
+    this.clearExecution(runId);
+    return this.finishRun(
+      matter,
+      runId,
+      "succeeded",
+      `factually picked up ${intent.objectId} through resident-grounded material acquisition`,
       true,
     );
   }
@@ -349,6 +414,7 @@ export class ResidentCausalExecutionCoordinator {
   private clearExecution(runId: string): void {
     this.travel.delete(runId);
     this.communicate.delete(runId);
+    this.material.delete(runId);
   }
 
   private createTravelExecution(matter: ResidentMatter, runId: string): TravelExecutionState | null {
