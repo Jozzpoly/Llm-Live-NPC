@@ -7,11 +7,21 @@ import {
 } from "./cognition-contract";
 import type { ResidentStandingSocialCommitmentDescriptor } from "./resident-continuity-kernel";
 
+export interface ResidentLifeMaterialAcquisitionIntent {
+  kind: "acquire_material_object";
+  goal: string;
+  objectId: string;
+}
+
+export type ResidentLifeAcceptedIntent =
+  | ProposedActivity
+  | ResidentLifeMaterialAcquisitionIntent;
+
 export type ResidentLifeCommitmentDecision =
   | {
       kind: "accept";
       reason: string;
-      intent: ProposedActivity;
+      intent: ResidentLifeAcceptedIntent;
       /**
        * Explicit future social meaning attached to this accepted communication.
        * Absence means ordinary communication; speech text alone never implies it.
@@ -55,6 +65,7 @@ const INTENT_KEYS = [
   "targetPosition",
   "text",
 ] as const;
+const MATERIAL_INTENT_KEYS = ["kind", "goal", "objectId"] as const;
 
 /**
  * Strict semantic contract for higher cognition deciding whether a newly perceived
@@ -84,6 +95,31 @@ export function parseResidentLifeIntentProposal(
       ? ["kind", "reason", "intent", "standingSocialCommitment"] as const
       : ["kind", "reason", "intent"] as const;
     if (!hasExactKeys(decision, acceptKeys) || !isRecord(decision.intent)) return null;
+
+    if (decision.intent.kind === "acquire_material_object") {
+      if (hasStandingSocialCommitment
+        || !hasExactKeys(decision.intent, MATERIAL_INTENT_KEYS)
+        || !isBoundedString(decision.intent.goal, 1_200)
+        || !isBoundedString(decision.intent.objectId, 128)) return null;
+      const validated = validateSemanticUpdatesOnly(value, context, decision.reason);
+      if (!validated) return null;
+      return {
+        version: 1,
+        commitmentDecision: {
+          kind: "accept",
+          reason: decision.reason,
+          intent: {
+            kind: "acquire_material_object",
+            goal: decision.intent.goal,
+            objectId: decision.intent.objectId,
+          },
+        },
+        beliefs: structuredClone(validated.beliefs),
+        concerns: structuredClone(validated.concerns),
+        reviewAfterSeconds: validated.reviewAfterSeconds,
+      };
+    }
+
     if (!hasExactKeys(decision.intent, INTENT_KEYS)) return null;
 
     const validated = parseResidentCognitionProposal({
