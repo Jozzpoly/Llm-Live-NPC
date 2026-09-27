@@ -184,7 +184,7 @@ export class ResidentMaterialMatterRelevanceBridge {
     const evidence = this.kernel.recordEvidence({
       id: materialReacquiredEvidenceId(
         this.resident.profile.id,
-        prior.id,
+        priorMatterId,
         objectId,
         current.observedAtTick,
       ),
