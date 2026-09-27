@@ -1,9 +1,9 @@
 {
-  "version": 28,
+  "version": 29,
   "pr": 148,
   "qualifiers": [
     "r6-cumulative-same-actor-history-choice-twin"
   ],
-  "purpose": "R6 cumulative same-actor factual-history live qualification. Deterministic runtime now proves that several independent terminal communicate_actor outcomes with the exact same target actor can fall out of current/recent life, remain as bounded factual archive, and be attached automatically as typed prior_same_actor_outcome genealogy only when a later current communication matter C to that exact actor is legally created. Run one matched Mira C-vs-D twin pair through the exact resident life-choice endpoint: neither twin exposes old matters; history differs only by two candidate-scoped exact Ida outcomes on C. Hard maximum two GPT-5.6 Luna requests, no semantic retry, no preferred winner. A cumulative causal classification requires a behavioral difference plus citation of BOTH exact old factual outcomes; one cited episode is partial uptake, not cumulative proof.",
-  "requestedAtUtc": "2026-09-27T13:55:00Z"
+  "purpose": "R6 cumulative same-actor factual-history live qualification — apparatus retry only. Prior Live Provider run #28 failed in qualifier resolution before preview/provider inference and spent zero model requests/tokens; it is not a semantic sample. Re-run the identical frozen matched Mira C-vs-D twins now that workflow registration is repaired. Neither twin exposes old matters; history differs only by two candidate-scoped exact Ida prior_same_actor_outcome facts on current C. Hard maximum two GPT-5.6 Luna requests, no semantic retry, no preferred winner. Cumulative causal classification still requires a behavioral difference plus citation of BOTH exact old factual outcomes; one cited episode is partial uptake, not cumulative proof.",
+  "requestedAtUtc": "2026-09-27T13:57:00Z"
 }
