@@ -143,10 +143,21 @@ export type RunOutcomeReconciliationResult =
     }
   | { status: "rejected"; reason: "run_missing" };
 
+export interface ResidentTerminalOutcomeArchiveEntry {
+  matterId: string;
+  evidence: ResidentKernelEvidence;
+}
+
 export interface ResidentContinuityKernelCommittedSnapshot {
   version: 1;
   recentEvidenceLimit: number;
   revocationLimit: number;
+  /**
+   * Optional for backward compatibility with older version-1 committed snapshots.
+   * New snapshots always emit both archive fields.
+   */
+  terminalOutcomeArchiveLimit?: number;
+  terminalOutcomeArchive?: readonly ResidentTerminalOutcomeArchiveEntry[];
   recentEvidence: readonly ResidentKernelEvidence[];
   matters: readonly ResidentMatter[];
   pinnedOriginEvidence: readonly { matterId: string; evidence: ResidentKernelEvidence }[];
@@ -160,11 +171,13 @@ export interface ResidentContinuityKernelCommittedSnapshot {
 export interface ResidentContinuityKernelOptions {
   recentEvidenceLimit?: number;
   revocationLimit?: number;
+  terminalOutcomeArchiveLimit?: number;
   committedSnapshot?: ResidentContinuityKernelCommittedSnapshot;
 }
 
 const DEFAULT_RECENT_EVIDENCE_LIMIT = 64;
 const DEFAULT_REVOCATION_LIMIT = 64;
+const DEFAULT_TERMINAL_OUTCOME_ARCHIVE_LIMIT = 64;
 
 /**
  * Small resident-owned semantic/execution authority kernel for SPC Next recovery.
@@ -185,6 +198,14 @@ export class ResidentContinuityKernel {
   private readonly pinnedOriginEvidence = new Map<string, ResidentKernelEvidence>();
   private readonly pinnedSemanticEvidence = new Map<string, ResidentKernelEvidence>();
   private readonly pinnedOutcomeEvidence = new Map<string, ResidentKernelEvidence>();
+  /**
+   * Bounded factual history for terminal resident matters.
+   *
+   * This is not live evidence, cognition context or body authority. Entries may be
+   * consulted only by an explicit current relevance bridge that can independently
+   * prove why one old factual outcome matters now.
+   */
+  private readonly terminalOutcomeArchive = new Map<string, ResidentKernelEvidence>();
   private readonly runBindings = new Map<string, ResidentTaskRunBinding>();
   private readonly usedRunIds = new Set<string>();
   private readonly pendingProposals = new Map<string, ResidentSemanticProposalTicket>();
@@ -192,6 +213,7 @@ export class ResidentContinuityKernel {
   private proposalSequence = 0;
   private readonly recentEvidenceLimit: number;
   private readonly revocationLimit: number;
+  private readonly terminalOutcomeArchiveLimit: number;
 
   constructor(options: ResidentContinuityKernelOptions = {}) {
     const snapshot = options.committedSnapshot;
@@ -208,6 +230,12 @@ export class ResidentContinuityKernel {
       && options.revocationLimit !== snapshot.revocationLimit) {
       throw new Error("revocationLimit conflicts with committed snapshot");
     }
+    if (snapshot
+      && snapshot.terminalOutcomeArchiveLimit !== undefined
+      && options.terminalOutcomeArchiveLimit !== undefined
+      && options.terminalOutcomeArchiveLimit !== snapshot.terminalOutcomeArchiveLimit) {
+      throw new Error("terminalOutcomeArchiveLimit conflicts with committed snapshot");
+    }
 
     this.recentEvidenceLimit = options.recentEvidenceLimit
       ?? snapshot?.recentEvidenceLimit
@@ -215,11 +243,18 @@ export class ResidentContinuityKernel {
     this.revocationLimit = options.revocationLimit
       ?? snapshot?.revocationLimit
       ?? DEFAULT_REVOCATION_LIMIT;
+    this.terminalOutcomeArchiveLimit = options.terminalOutcomeArchiveLimit
+      ?? snapshot?.terminalOutcomeArchiveLimit
+      ?? DEFAULT_TERMINAL_OUTCOME_ARCHIVE_LIMIT;
     if (!Number.isInteger(this.recentEvidenceLimit) || this.recentEvidenceLimit < 1) {
       throw new Error("recentEvidenceLimit must be a positive integer");
     }
     if (!Number.isInteger(this.revocationLimit) || this.revocationLimit < 1) {
       throw new Error("revocationLimit must be a positive integer");
+    }
+    if (!Number.isInteger(this.terminalOutcomeArchiveLimit)
+      || this.terminalOutcomeArchiveLimit < 1) {
+      throw new Error("terminalOutcomeArchiveLimit must be a positive integer");
     }
 
     if (snapshot) this.restoreCommittedSnapshot(snapshot);
@@ -289,6 +324,18 @@ export class ResidentContinuityKernel {
     return [...this.recentEvidence.values()].map((evidence) => structuredClone(evidence));
   }
 
+  archivedTerminalOutcomeEvidence(matterId: string): ResidentKernelEvidence | null {
+    const evidence = this.terminalOutcomeArchive.get(matterId);
+    return evidence ? structuredClone(evidence) : null;
+  }
+
+  terminalOutcomeArchiveSnapshot(): ResidentTerminalOutcomeArchiveEntry[] {
+    return [...this.terminalOutcomeArchive.entries()].map(([matterId, evidence]) => ({
+      matterId,
+      evidence: structuredClone(evidence),
+    }));
+  }
+
   pendingSemanticProposals(): ResidentSemanticProposalTicket[] {
     return [...this.pendingProposals.values()].map((ticket) => structuredClone(ticket));
   }
@@ -308,6 +355,8 @@ export class ResidentContinuityKernel {
       version: 1,
       recentEvidenceLimit: this.recentEvidenceLimit,
       revocationLimit: this.revocationLimit,
+      terminalOutcomeArchiveLimit: this.terminalOutcomeArchiveLimit,
+      terminalOutcomeArchive: this.terminalOutcomeArchiveSnapshot(),
       recentEvidence: [...this.recentEvidence.values()].map((entry) => structuredClone(entry)),
       matters: [...this.matters.values()].map((matter) => structuredClone(matter)),
       pinnedOriginEvidence: snapshotEvidencePins(this.pinnedOriginEvidence),
@@ -508,6 +557,8 @@ export class ResidentContinuityKernel {
     matter.lastOutcomeSemanticRevision = binding.semanticRevision;
     if (!isTerminal(matter.status)) {
       this.pinnedOutcomeEvidence.set(matter.id, structuredClone(resultEvidence));
+    } else {
+      this.archiveTerminalOutcome(matter.id, resultEvidence);
     }
     matter.activeRunId = null;
     this.runBindings.delete(binding.runId);
@@ -533,11 +584,22 @@ export class ResidentContinuityKernel {
     const matter = this.matters.get(matterId);
     if (!matter) throw new Error(`unknown matter: ${matterId}`);
     if (isTerminal(matter.status)) return structuredClone(matter);
+    const terminalOutcome = matter.lastOutcomeEvidenceId
+      ? this.pinnedOutcomeEvidence.get(matter.id)
+        ?? this.recentEvidence.get(matter.lastOutcomeEvidenceId)
+        ?? null
+      : null;
     matter.status = status;
     matter.suspendedByMatterId = null;
     this.revokePendingForMatter(matter.id, "matter_terminal");
+    if (terminalOutcome
+      && terminalOutcome.id === matter.lastOutcomeEvidenceId
+      && terminalOutcome.kind === "task_outcome") {
+      this.archiveTerminalOutcome(matter.id, terminalOutcome);
+    }
     // Keep activeRunId until explicit mechanical retirement/reconciliation.
     // canRunMutateWorld() already denies authority immediately because the matter is terminal.
+    // Live pins are still released: the archive is historical provenance, not current matter evidence.
     this.releaseLiveEvidencePins(matter.id);
     return structuredClone(matter);
   }
@@ -568,6 +630,27 @@ export class ResidentContinuityKernel {
     this.pinnedOriginEvidence.delete(matterId);
     this.pinnedSemanticEvidence.delete(matterId);
     this.pinnedOutcomeEvidence.delete(matterId);
+  }
+
+  private archiveTerminalOutcome(
+    matterId: string,
+    evidence: ResidentKernelEvidence,
+  ): void {
+    const matter = this.matters.get(matterId);
+    if (!matter || !isTerminal(matter.status)) {
+      throw new Error("terminal outcome archive requires a terminal matter");
+    }
+    if (evidence.kind !== "task_outcome"
+      || matter.lastOutcomeEvidenceId !== evidence.id) {
+      throw new Error("terminal outcome archive requires the matter's exact factual outcome");
+    }
+    this.terminalOutcomeArchive.delete(matterId);
+    this.terminalOutcomeArchive.set(matterId, structuredClone(evidence));
+    while (this.terminalOutcomeArchive.size > this.terminalOutcomeArchiveLimit) {
+      const oldestMatterId = this.terminalOutcomeArchive.keys().next().value as string | undefined;
+      if (oldestMatterId === undefined) break;
+      this.terminalOutcomeArchive.delete(oldestMatterId);
+    }
   }
 
   private revokePendingForMatter(matterId: string, reason: ResidentSemanticProposalRevocationReason): void {
@@ -620,7 +703,12 @@ export class ResidentContinuityKernel {
   }
 
   private restoreCommittedSnapshot(snapshot: ResidentContinuityKernelCommittedSnapshot): void {
-    validateCommittedSnapshot(snapshot, this.recentEvidenceLimit, this.revocationLimit);
+    validateCommittedSnapshot(
+      snapshot,
+      this.recentEvidenceLimit,
+      this.revocationLimit,
+      this.terminalOutcomeArchiveLimit,
+    );
 
     for (const evidence of snapshot.recentEvidence) {
       this.recentEvidence.set(evidence.id, structuredClone(evidence));
@@ -631,6 +719,9 @@ export class ResidentContinuityKernel {
     restoreEvidencePins(this.pinnedOriginEvidence, snapshot.pinnedOriginEvidence, this.matters);
     restoreEvidencePins(this.pinnedSemanticEvidence, snapshot.pinnedSemanticEvidence, this.matters);
     restoreEvidencePins(this.pinnedOutcomeEvidence, snapshot.pinnedOutcomeEvidence, this.matters);
+    for (const entry of snapshot.terminalOutcomeArchive ?? []) {
+      this.terminalOutcomeArchive.set(entry.matterId, structuredClone(entry.evidence));
+    }
     for (const runId of snapshot.usedRunIds) this.usedRunIds.add(runId);
     for (const binding of snapshot.runBindings) {
       this.runBindings.set(binding.runId, structuredClone(binding));
@@ -671,6 +762,7 @@ function validateCommittedSnapshot(
   snapshot: ResidentContinuityKernelCommittedSnapshot,
   recentEvidenceLimit: number,
   revocationLimit: number,
+  terminalOutcomeArchiveLimit: number,
 ): void {
   if (snapshot.version !== 1) {
     throw new Error("unsupported resident continuity committed snapshot version");
@@ -684,6 +776,14 @@ function validateCommittedSnapshot(
   }
   if (snapshot.recentEvidence.length > recentEvidenceLimit) {
     throw new Error("snapshot recent evidence exceeds configured bound");
+  }
+  if (snapshot.terminalOutcomeArchiveLimit !== undefined
+    && snapshot.terminalOutcomeArchiveLimit !== terminalOutcomeArchiveLimit) {
+    throw new Error("resident continuity committed snapshot terminal archive limit mismatch");
+  }
+  const terminalOutcomeArchive = snapshot.terminalOutcomeArchive ?? [];
+  if (terminalOutcomeArchive.length > terminalOutcomeArchiveLimit) {
+    throw new Error("snapshot terminal outcome archive exceeds configured bound");
   }
 
   const evidenceIds = new Set<string>();
@@ -702,6 +802,31 @@ function validateCommittedSnapshot(
       throw new Error(`duplicate snapshot matter id: ${matter.id}`);
     }
     matterIds.add(matter.id);
+  }
+
+  const archivedMatterIds = new Set<string>();
+  const archivedEvidenceIds = new Set<string>();
+  for (const entry of terminalOutcomeArchive) {
+    assertSpcIdentifier(entry.matterId, "snapshot terminal outcome archive matter id");
+    if (archivedMatterIds.has(entry.matterId)) {
+      throw new Error(`duplicate snapshot terminal outcome archive matter: ${entry.matterId}`);
+    }
+    archivedMatterIds.add(entry.matterId);
+    validateEvidence(entry.evidence);
+    if (entry.evidence.kind !== "task_outcome") {
+      throw new Error("snapshot terminal outcome archive requires task_outcome evidence");
+    }
+    if (archivedEvidenceIds.has(entry.evidence.id)) {
+      throw new Error(`duplicate snapshot terminal outcome archive evidence: ${entry.evidence.id}`);
+    }
+    archivedEvidenceIds.add(entry.evidence.id);
+    const matter = snapshot.matters.find((candidate) => candidate.id === entry.matterId);
+    if (!matter || !isTerminal(matter.status)) {
+      throw new Error(`snapshot terminal outcome archive references non-terminal matter: ${entry.matterId}`);
+    }
+    if (matter.lastOutcomeEvidenceId !== entry.evidence.id) {
+      throw new Error(`snapshot terminal outcome archive disagrees with matter outcome: ${entry.matterId}`);
+    }
   }
 
   const usedRunIds = new Set<string>();
