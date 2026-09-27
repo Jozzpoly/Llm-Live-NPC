@@ -213,12 +213,42 @@ The earlier blocked attempt did **not** produce a learned aversion. With the cra
 
 Therefore the finding is about **history-sensitive significance**, not a hard-coded “failure means avoid” rule.
 
-## 9. What remains unproven
+## 9. Runtime-generation follow-up
 
-Do not promote this result into:
+The fixture-construction limitation recorded by the original run #26 finding has now been tested directly.
+
+Canonical follow-up:
+
+`docs/SPC_R6_ENDOGENOUS_COMPETING_FUTURE_RUNTIME_FINDING.md`
+
+At source `d0163c7850809897e163dd589e3ce344ff162fa1`, the deterministic runtime creates the relevant chain through normal authorities from bounded authored seed matters:
+
+- factual `object_unavailable` material failure;
+- terminal old material matter;
+- later exact private reacquisition;
+- fresh material opportunity pressure;
+- native matter-level material commitment;
+- new material future C deferred behind ongoing body work;
+- independent future D generated from another factual completed-life outcome;
+- normal free-body `choice_required(C,D)`;
+- normal life-choice pressure with exact terminal-history support;
+- coherent `defer_all` remains legal;
+- old history never reopens.
+
+Check #1672 passes **272 / 272 files, 984 / 984 tests**, plus typecheck/build/preview.
+
+This closes the specific claim that run #26 might depend on an impossible hand-assembled final life frame.
+
+It does **not** prove that all seed motives arise spontaneously from nothing: A and the ordinary carrier B remain bounded authored experiment seeds.
+
+## 10. What remains unproven
+
+Do not promote the combined live + runtime result into:
+
 - learned preference or aversion;
 - habit;
 - generalized autobiographical memory;
+- long-lived terminal-history persistence;
 - durable identity/personality model;
 - broad relationship history;
 - ownership psychology;
@@ -227,28 +257,32 @@ Do not promote this result into:
 - five distinct living residents;
 - Owner-observed ordinary aliveness.
 
-One paired model observation is not a behavioral distribution.
+One paired model observation is still not a behavioral distribution.
 
-The live twin is also a rigorously frozen/validated fixture, not yet one uninterrupted World-generated causal episode. The historical material episode, later current futures and ambiguity were assembled into the exact resident-life contract for falsification rather than all arising through one natural runtime sequence.
+## 11. Next high-information frontier
 
-## 10. Next high-information frontier
+The run-#26 cognition question and its runtime provenance question are now bounded closed.
 
-The next question should therefore move **down the evidence stack**, not sideways into more speculative personhood representation:
+The next materially different pressure is temporal:
 
-> **Can the same competing-future situation arise endogenously through normal resident/World lifecycle — factual material failure, terminalization, later exact reacquisition, an independently grounded second future, free-body arbitration and natural life-choice pressure — without fixture-owned construction?**
+> **Can a resident's terminal factual life still causally matter after ordinary unrelated life has pushed that episode beyond the bounded recent-evidence window?**
+
+This is already grounded by an executable limitation: `ResidentLifeMatterScope` deliberately stops exposing terminal episodes after their outcome leaves recent evidence. That remains correct homeostasis for finished work, but it may be insufficient for the Owner's stronger goal of accumulated private life.
 
 Required next pressure:
-1. obtain the earlier material outcome through normal World authority;
-2. reconcile and terminalize it normally;
-3. later reacquire the exact same material identity through factual/private knowledge flow;
-4. independently ground another legal resident future;
-5. let arbitration naturally expose one free-body competing-future boundary;
-6. let the existing review bridge produce the semantic uncertainty;
-7. verify that bounded terminal history reaches the same causal-support membrane;
-8. only after that deterministic/runtime chain is solid decide whether another real-provider sample adds information.
 
-No new memory/personality representation is earned merely because run #26 is positive.
+1. create one factual terminal episode through normal runtime authority;
+2. let enough unrelated factual resident life occur to move its outcome beyond current recent-evidence retention;
+3. verify the old matter remains terminal and does not re-enter current obligation scope;
+4. later create a genuine competing-future ambiguity structurally related to that old episode;
+5. determine whether the resident has any legal causal surface for the old experience;
+6. characterize the exact failure before adding representation;
+7. if a new representation is earned, make it narrower than generic autobiography and keep body/World authority separate.
+
+Do not retain all terminal matters forever merely to pass this pressure.
+
+A new Luna sample is not yet justified: the next unknown is whether the local runtime can carry delayed factual self-history at all.
 
 Browser-qualified Oren/Nela genericity remains separate promotion-plane debt.
 
-PR #148 remains draft/open. No merge or Owner gate is justified by this bounded result alone.
+PR #148 remains draft/open.
