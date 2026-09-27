@@ -4,6 +4,7 @@ import type {
   ResidentContinuityKernel,
   ResidentKernelEvidence,
   ResidentMatter,
+  ResidentMatterHistoricalSupportRelation,
   ResidentTaskRunBinding,
 } from "./resident-continuity-kernel";
 
@@ -16,6 +17,11 @@ export interface ResidentLifeEvidenceView {
   summary: string;
   /** Exact causal run when the evidence is a factual run outcome. */
   sourceRunId?: string;
+}
+
+export interface ResidentLifeHistoricalSupportView {
+  relation: ResidentMatterHistoricalSupportRelation;
+  evidence: ResidentLifeEvidenceView;
 }
 
 export interface ResidentLifeRunView {
@@ -41,6 +47,11 @@ export interface ResidentLifeMatterView {
   originEvidence: ResidentLifeEvidenceView | null;
   semanticEvidence: ResidentLifeEvidenceView | null;
   lastOutcomeEvidence: ResidentLifeEvidenceView | null;
+  /**
+   * Candidate-scoped causal history for this CURRENT matter only. Omitted when
+   * empty so older resident_life_cognition_v1 fixtures remain byte-compatible.
+   */
+  historicalSupport?: readonly ResidentLifeHistoricalSupportView[];
   activeRun: ResidentLifeRunView | null;
 }
 
@@ -132,6 +143,17 @@ function projectMatter(
         : "unfocused" as const,
   } : null;
 
+  const historicalSupport = kernel.historicalSupportEvidence(matter.id)
+    .map((entry) => ({
+      relation: entry.relation,
+      evidence: projectEvidence(entry.evidence)!,
+    }))
+    .sort((left, right) => (
+      left.evidence.tick - right.evidence.tick
+      || left.evidence.id.localeCompare(right.evidence.id)
+      || left.relation.localeCompare(right.relation)
+    ));
+
   return {
     id: matter.id,
     status: matter.status,
@@ -145,6 +167,7 @@ function projectMatter(
       kernel.lastOutcomeEvidence(matter.id)
       ?? (matter.lastOutcomeEvidenceId ? recentEvidenceById.get(matter.lastOutcomeEvidenceId) ?? null : null),
     ),
+    ...(historicalSupport.length > 0 ? { historicalSupport } : {}),
     activeRun,
   };
 }
