@@ -30,7 +30,7 @@
     "knownActors": [],
     "knownRegions": [
       { "id": "yard", "label": "Yard", "knowledge": "visited", "lastVisitedTick": 120 },
-      { "id": "workshop", "label": "Workshop", "knowledge": "familiar", "lastVisitedTick": 60 }
+      { "id": "workshop", "label": "Workshop", "knowledge": "visited", "lastVisitedTick": 60 }
     ],
     "life": {
       "version": 1,
@@ -140,7 +140,7 @@
     "knownActors": [],
     "knownRegions": [
       { "id": "yard", "label": "Yard", "knowledge": "visited", "lastVisitedTick": 120 },
-      { "id": "workshop", "label": "Workshop", "knowledge": "familiar", "lastVisitedTick": 60 }
+      { "id": "workshop", "label": "Workshop", "knowledge": "visited", "lastVisitedTick": 60 }
     ],
     "life": {
       "version": 1,
