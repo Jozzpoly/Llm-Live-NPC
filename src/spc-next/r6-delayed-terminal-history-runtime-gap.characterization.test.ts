@@ -186,6 +186,7 @@ describe("R6 delayed terminal-history factual recall boundary", () => {
     // The important durability boundary is reconstruction, not merely an in-process
     // cache. All body work is terminal/idle here, so restoring committed continuity
     // cannot smuggle volatile focus/provider authority across the boundary.
+    expect(world.releaseResidentExecutionAuthority(RESIDENT_ID, authority)).toBe(true);
     const restoredKernel = new ResidentContinuityKernel({
       committedSnapshot: kernel.snapshotCommittedState(),
     });
