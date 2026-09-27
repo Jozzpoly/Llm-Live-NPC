@@ -10,7 +10,7 @@ const NELA = "matter.oren.r6.symmetric-social.nela";
 const RELEASE = "evidence-social-commitment-release:r6-symmetric-social-old-nela-release";
 
 describe("R6 causal defer-all support gap", () => {
-  it("cannot currently attribute deliberate non-action to exact resident-owned evidence even when focus can cite that evidence", () => {
+  it("admits exact resident-owned evidence for deliberate non-action without making evidence mandatory", () => {
     const focusLife = structuredClone(
       FIXTURE.history.life,
     ) as unknown as ResidentLifeCognitionView;
@@ -53,9 +53,8 @@ describe("R6 causal defer-all support gap", () => {
     ) as unknown as ResidentLifeCognitionView;
     const deferPrepared = prepare(deferLife);
 
-    // This is the earned gap exposed by live run #32. The exact release is legal
-    // resident-owned choice support, but adding the same evidence to a deliberate
-    // defer-all decision makes the current parser reject the entire proposal.
+    // The gap exposed by live run #32 is now closed narrowly: non-action may cite
+    // only already-frozen choice-support evidence, while remaining non-executable.
     expect(deferPrepared.owner.settle(
       deferPrepared.attempt,
       {
@@ -68,6 +67,57 @@ describe("R6 causal defer-all support gap", () => {
         },
       },
       deferLife,
+      270,
+    )).toEqual({
+      status: "applied",
+      decision: {
+        kind: "defer_all",
+        reason: "the prior Nela release is relevant, but it still does not establish enough current priority to choose Nela over Ida",
+        supportEvidenceIds: [RELEASE],
+        reviewAfterSeconds: 60,
+      },
+    });
+
+    const legacyLife = structuredClone(
+      FIXTURE.control.life,
+    ) as unknown as ResidentLifeCognitionView;
+    const legacyPrepared = prepare(legacyLife);
+    expect(legacyPrepared.owner.settle(
+      legacyPrepared.attempt,
+      {
+        version: 1,
+        decision: {
+          kind: "defer_all",
+          reason: "neither current future has enough positive evidence to deserve the body yet",
+          reviewAfterSeconds: 30,
+        },
+      },
+      legacyLife,
+      270,
+    )).toMatchObject({
+      status: "applied",
+      decision: {
+        kind: "defer_all",
+        reviewAfterSeconds: 30,
+      },
+    });
+
+    const forgedLife = structuredClone(
+      FIXTURE.history.life,
+    ) as unknown as ResidentLifeCognitionView;
+    const forgedPrepared = prepare(forgedLife);
+    expect(forgedPrepared.owner.settle(
+      forgedPrepared.attempt,
+      {
+        version: 1,
+        decision: {
+          kind: "defer_all",
+          reason: "invent a causal basis that is not part of the frozen choice support",
+          supportEvidenceIds: ["evidence:forged:r6:defer-all"],
+          reviewAfterSeconds: 60,
+        },
+      },
+      forgedLife,
       270,
     )).toEqual({
       status: "rejected",
