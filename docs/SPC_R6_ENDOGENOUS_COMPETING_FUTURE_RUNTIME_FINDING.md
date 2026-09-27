@@ -3,7 +3,8 @@
 Date: 2026-09-27  
 Branch: `recovery/spc-post-stress-complementary-personhood-r6`  
 PR: #148  
-Deterministic source: `d0163c7850809897e163dd589e3ce344ff162fa1`
+Current strengthened deterministic source: `b4861568d222f11f3f0b0621cae14c92088acdc9`  
+Original near-term runtime closure source: `d0163c7850809897e163dd589e3ce344ff162fa1`
 
 ## 1. Question
 
@@ -114,94 +115,108 @@ Checkpoint `d0b43400b1292ec818f15cc77fbc613ac72ce980`:
 
 `src/spc-next/r6-endogenous-competing-future-history-chain.integration.test.ts`
 
-closes the specific fixture-construction debt behind run #26.
+originally closed the final-frame fixture-construction debt behind run #26. It has since been strengthened to cross the delayed-history boundary as well.
 
-The test starts from bounded authored seed matters, but it does **not** hand-build the final resident-life choice frame.
+The test still starts from bounded authored A/B seed matters, but it does **not** hand-build the final resident-life choice frame.
 
 ### A — factual terminal material history
 
 - Janek has one structured material matter for an exact crate.
-- An external World actor factually picks up and removes that crate.
-- Janek's authorized local pickup attempt reaches World authority and receives `object_unavailable`.
-- The exact factual result is reconciled as a blocked `task_outcome`.
+- An external World actor factually removes that crate.
+- Janek's authorized local attempt reaches World authority and receives `object_unavailable`.
+- The exact result is reconciled as a blocked `task_outcome`.
 - A becomes `resolved` and run-free.
 
 ### B — ordinary carrier life
 
 - an independent ordinary travel matter owns the body;
 - B is not one of the final choice candidates;
-- it exists only to make the later C and D generation occur while real body continuity is already in progress.
+- it makes C and D arise while real body continuity is already underway.
 
-### C — fresh history-related material future
+### Delayed-history boundary before C exists
+
+Before the object returns:
+
+- ordinary World time advances;
+- unrelated factual resident evidence churns normally;
+- A's factual outcome leaves bounded recent evidence;
+- `ResidentLifeMatterScope` removes terminal A from current life;
+- the bounded terminal factual archive still retains the exact A outcome;
+- A remains terminal/run-free and owns no body authority.
+
+This is materially stronger than the original `d0163c78...` checkpoint, where A was still available through near-term bounded life evidence.
+
+### C — fresh same-object future from delayed factual provenance
 
 While B owns the body:
 
 - the external actor factually returns the exact crate;
-- resident-private material knowledge acquires the invisible→visible change;
-- the post-terminal relevance bridge emits fresh semantic opportunity pressure;
-- normal cognition cadence reaches `ResidentLifeIntentOwner`;
-- a material proposal is admitted through exact local grounding;
-- a **new** C matter/run is created;
+- resident-private material perception observes the invisible→visible reacquisition;
+- the relevance bridge finds exactly one matching terminal same-object factual outcome through bounded resident history;
+- it emits fresh semantic opportunity pressure without reopening A;
+- normal life-intent admission creates a **new** current C matter/run;
+- C carries typed causal genealogy:
+  `prior_same_material_outcome -> { sourceMatterId: A, exact factual outcome }`;
 - C cannot steal B's body and becomes a legal deferred demand.
 
-A remains terminal.
+The old A matter is still absent from current life.
 
 ### D — independent future from B's own factual outcome
 
 B then factually reaches its destination.
 
 - B's run outcome is reconciled and B becomes terminal;
-- `ResidentLifeOutcomeReviewBridge` turns that exact factual outcome into `activity_completed` semantic pressure;
-- normal life-intent admission accepts a new travel future;
-- `ResidentCausalOutcomeTravelCommitmentAuthority` proves the exact B outcome and grounds D;
+- `ResidentLifeOutcomeReviewBridge` turns B's exact factual outcome into semantic pressure;
+- normal life-intent admission accepts a new ordinary travel future D;
+- D is grounded from B's own outcome, not from A;
 - because C already waits deferred, D joins the deferred set rather than winning by arrival order.
 
 No fresh addressed speech or direct user command creates D.
 
-### Genuine free-body ambiguity
+### Genuine delayed-history free-body ambiguity
 
-Normal `ResidentExecutionArbitrator.reconcile()` now produces:
+Normal `ResidentExecutionArbitrator.reconcile()` produces:
 
 `choice_required(C, D)`
 
-Then `ResidentLifeChoiceReviewBridge` emits the exact `uncertainty` reason over those two authorized runs.
+Then `ResidentLifeChoiceReviewBridge` emits the exact uncertainty reason over those two authorized runs.
 
 `ResidentLifeChoiceOwner` receives the generated life frame and proves:
 
 - exactly C and D are current candidates;
-- A is still terminal/run-free;
-- C carries exact `prior_same_material_outcome` support from A;
-- D's candidate-local facts do not pretend A is its own origin;
-- comparative citation of A remains available without turning A into an open obligation;
+- A is **not** present in `life.matters`;
+- C alone carries exact typed `prior_same_material_outcome` support from A;
+- D's ordinary support remains candidate-local;
+- A's factual outcome may be used comparatively without turning A into an open obligation;
 - final choice cognition contains no fresh `heard_speech`;
 - no authored `self`/personality context is required;
-- coherent `defer_all` is locally admissible and leaves both futures deferred/body-free.
+- coherent `defer_all` remains locally admissible.
 
-Checkpoint `d0163c7850809897e163dd589e3ce344ff162fa1`:
+Current strengthened checkpoint `b4861568d222f11f3f0b0621cae14c92088acdc9`:
 
-- Check #1672 PASS;
-- **272 / 272 test files**;
-- **984 / 984 tests**;
+- Check #1725 PASS;
+- **279 / 279 test files**;
+- **1006 / 1006 tests**;
 - typecheck PASS;
 - build PASS;
 - preview dry-run PASS.
 
-Browser Evidence #896 is regression evidence for this source and must be recorded only after its workflow completes successfully.
+The exact delayed-history live/provider result is recorded separately in
+`docs/SPC_R6_DELAYED_FACTUAL_HISTORY_CHOICE_FINDING.md`.
 
 ## 6. Bounded conclusion
 
-The fixture-proven run-#26 relation is now reachable through a defended normal runtime chain:
+The run-#26-like relation is not only reachable through normal runtime causation; the strengthened chain now survives the specific recent-life eviction that originally motivated the next falsifier:
 
-> **A resident can factually fail at one material episode, terminalize it, later privately reacquire the exact material identity, consciously create a new same-object future, independently generate another future from a different factual life outcome, reach a genuine free-body ambiguity, and expose the old terminal fact as causal support at the normal life-choice boundary — without reopening the old matter or granting history body authority.**
+> **A resident can factually fail at one material episode, terminalize it, live through unrelated factual churn until that episode leaves current life, later privately reacquire the exact material identity, consciously create a new same-object future carrying exact causal provenance, independently generate another future, and reach genuine free-body ambiguity without reopening the old matter or giving history body authority.**
 
-This materially strengthens run #26 because the final choice context is no longer only a plausible hand-assembled contract specimen.
+Evidence planes remain distinct:
 
-The evidence planes remain distinct:
-
-- run #26 is the real-Luna behavioral history-effect observation;
-- this document's runtime chain proves the corresponding causal situation can actually be generated by resident/World lifecycle and local authorities.
-
-A new Luna rerun is **not automatically informative** merely because runtime generation is now proven.
+- run #26: real-Luna near-term terminal-history behavioral split;
+- `d0163c78...`: original normal-runtime generation of the competing-future situation;
+- `b4861568...`: strengthened delayed-history normal-runtime chain;
+- run #27: real-Luna behavioral split where A is absent from current life and only C carries exact delayed causal support;
+- exact run-#27 local replay: local admission closure.
 
 ## 7. Nonclaims
 
@@ -210,28 +225,34 @@ This does **not** prove:
 - broad R6 PASS;
 - a stable learned preference or aversion;
 - habit;
-- generic autobiographical memory;
-- long-lived history beyond bounded evidence retention;
+- generic or unlimited autobiographical memory;
+- cumulative history across unrelated identities/domains;
 - spontaneous generation of every seed concern from nothing;
 - five distinct living people;
-- browser-qualified genericity of this exact chain;
+- browser-qualified Oren/Nela genericity;
 - Owner-observed ordinary aliveness;
 - that retry is always better than avoidance;
 - that C should beat D.
 
-The authored A/B seeds are deliberate experiment setup. The material historical outcome, terminalization, later reacquisition, new C, factual B outcome, new D, arbitration boundary and final choice pressure are generated through the runtime authority/lifecycle path.
+The authored A/B seeds remain deliberate experiment setup. The factual A outcome, delayed eviction, archive-backed reacquisition, new C, factual B outcome, new D, arbitration boundary and final choice pressure are generated through the runtime authority/lifecycle path.
 
 ## 8. Evidence hygiene / next boundary
 
+The delayed same-object lineage is now bounded CLOSED by the stronger evidence recorded in
+`docs/SPC_R6_DELAYED_FACTUAL_HISTORY_CHOICE_FINDING.md`.
+
 Do not:
 
-- rerun run #26 to seek a preferred stochastic split;
+- rerun run #26 or run #27 merely to seek another stochastic split;
+- deepen the same crate lineage by inertia;
 - convert this result into `aversion`, `preference`, needs or personality weights;
+- expose the archive as a generic prompt-visible autobiography;
 - retain all terminal matters forever;
-- make reacquisition automatically reopen history or automatically create a task;
-- treat green browser regression evidence as an Owner-observed personhood PASS.
+- treat green machine/browser evidence as Owner-observed personhood.
 
-The next R6 pressure should be chosen for **new personhood information**, not because this material chain can be made even more elaborate.
+The next R6 pressure should seek **qualitatively different personhood information**. The current high-information candidate is cumulative ordinary experience: several independently factual past episodes later alter one choice even though no single exact old matter/object/standing obligation is sufficient to explain the decision.
+
+Characterize that pressure before adding preference, aversion, habit, relationship or generic memory state.
 
 Browser Oren/Nela genericity remains honest promotion-plane debt.
 
