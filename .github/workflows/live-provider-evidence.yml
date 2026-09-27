@@ -40,7 +40,7 @@ jobs:
           const qualifiers = Array.isArray(request.qualifiers)
             ? request.qualifiers
             : ['lifecycle', 'interruption'];
-          const allowed = new Set(['lifecycle', 'interruption', 'life-choice', 'life-intent', 'unified-addressed', 'r5-judgement', 'r6-history-choice-twin', 'r6-endogenous-history-outcome-twin', 'r6-endogenous-standing-fulfillment', 'r6-post-terminal-factual-history-twin', 'r6-competing-future-terminal-history-choice-twin', 'r6-delayed-competing-future-history-choice-twin']);
+          const allowed = new Set(['lifecycle', 'interruption', 'life-choice', 'life-intent', 'unified-addressed', 'r5-judgement', 'r6-history-choice-twin', 'r6-endogenous-history-outcome-twin', 'r6-endogenous-standing-fulfillment', 'r6-post-terminal-factual-history-twin', 'r6-competing-future-terminal-history-choice-twin', 'r6-delayed-competing-future-history-choice-twin', 'r6-cumulative-same-actor-history-choice-twin']);
           if (qualifiers.length === 0 || qualifiers.some((value) => !allowed.has(value))) {
             throw new Error(`invalid live-provider qualifiers: ${JSON.stringify(qualifiers)}`);
           }
@@ -56,6 +56,7 @@ jobs:
           process.stdout.write(`RUN_R6_POST_TERMINAL_FACTUAL_HISTORY_TWIN=${qualifiers.includes('r6-post-terminal-factual-history-twin') ? '1' : '0'}\n`);
           process.stdout.write(`RUN_R6_COMPETING_FUTURE_TERMINAL_HISTORY_CHOICE_TWIN=${qualifiers.includes('r6-competing-future-terminal-history-choice-twin') ? '1' : '0'}\n`);
           process.stdout.write(`RUN_R6_DELAYED_COMPETING_FUTURE_HISTORY_CHOICE_TWIN=${qualifiers.includes('r6-delayed-competing-future-history-choice-twin') ? '1' : '0'}\n`);
+          process.stdout.write(`RUN_R6_CUMULATIVE_SAME_ACTOR_HISTORY_CHOICE_TWIN=${qualifiers.includes('r6-cumulative-same-actor-history-choice-twin') ? '1' : '0'}\n`);
           process.stdout.write(`REQUESTED_QUALIFIERS=${qualifiers.join(',')}\n`);
           NODE
 
