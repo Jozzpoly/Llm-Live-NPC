@@ -207,6 +207,11 @@ function sanitizeMatter(value: unknown, contextTick: number): ResidentLifeMatter
     ? sanitizeHistoricalSupport(value.historicalSupport, contextTick)
     : null;
   if (Object.hasOwn(value, "historicalSupport") && historicalSupport === null) return null;
+  if (historicalSupport && historicalSupport.length > 0) {
+    if (semanticIntent?.kind !== "acquire_material_object"
+      || (status !== "active" && status !== "suspended")
+      || historicalSupport.some((entry) => entry.evidence.kind !== "task_outcome")) return null;
+  }
 
   const activeRun = value.activeRun === null ? null : sanitizeRun(value.activeRun);
   if (activeRun === null && value.activeRun !== null) return null;
