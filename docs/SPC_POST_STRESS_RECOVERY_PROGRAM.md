@@ -697,31 +697,33 @@ Current recovery order:
    - canonical post-stress execution authority;
 3. **`docs/SPC_R6_COMPLEMENTARY_PERSONHOOD_EXPERIMENT.md`**
    - binding current R6 experiment contract;
-4. **`docs/SPC_R6_SAME_CARDINALITY_OUTCOME_MEANING_FINDING.md`**
-   - current strongest outcome-meaning result: at fixed actor/history count/support identities, two succeeded outcomes versus two blocked outcomes produced opposite real-Luna C-vs-D choices and both exact old facts were cited;
-5. **`docs/SPC_R6_CUMULATIVE_SAME_ACTOR_HISTORY_FINDING.md`**
+4. **`docs/SPC_R6_COUNTERPARTY_SOCIAL_HISTORY_FINDING.md`**
+   - current counterparty-history authority: exact Nela release survives beyond recent/current life as bounded provenance and is cited by real Luna; run #31 is behaviorally neutral and does not prove relationship state;
+5. **`docs/SPC_R6_SAME_CARDINALITY_OUTCOME_MEANING_FINDING.md`**
+   - strongest own-outcome meaning result: at fixed actor/history count/support identities, two succeeded outcomes versus two blocked outcomes produced opposite real-Luna C-vs-D choices and both exact old facts were cited;
+17. **`docs/SPC_R6_CUMULATIVE_SAME_ACTOR_HISTORY_FINDING.md`**
    - preceding cumulative-history result: two independent terminal same-actor factual outcomes jointly changed a later real-Luna C-vs-D judgement while old matters remained absent from current life;
-6. **`docs/SPC_R6_DELAYED_FACTUAL_HISTORY_CHOICE_FINDING.md`**
+17. **`docs/SPC_R6_DELAYED_FACTUAL_HISTORY_CHOICE_FINDING.md`**
    - preceding delayed-history result: A may leave recent/current life, become exact causal genealogy of current C after later relevance, and change a real-Luna C-vs-D choice without reopening A;
-7. **`docs/SPC_R6_ENDOGENOUS_COMPETING_FUTURE_RUNTIME_FINDING.md`**
+17. **`docs/SPC_R6_ENDOGENOUS_COMPETING_FUTURE_RUNTIME_FINDING.md`**
    - deterministic provenance/composition authority for the normal A → delayed reacquisition/C + B → D → genuine choice chain;
-8. **`docs/SPC_R6_COMPETING_FUTURE_FACTUAL_HISTORY_FINDING.md`**
+17. **`docs/SPC_R6_COMPETING_FUTURE_FACTUAL_HISTORY_FINDING.md`**
    - preceding near-term exact real-Luna competing-future split and local causal admission;
-9. **`docs/SPC_R6_POST_TERMINAL_FACTUAL_HISTORY_FINDING.md`**
+17. **`docs/SPC_R6_POST_TERMINAL_FACTUAL_HISTORY_FINDING.md`**
    - preceding single-opportunity neutral finding; authoritative for what run #24 did and did not prove;
-10. **`docs/SPC_R6_ENDOGENOUS_ORDINARY_PERSONHOOD_FINDING.md`**
+17. **`docs/SPC_R6_ENDOGENOUS_ORDINARY_PERSONHOOD_FINDING.md`**
    - bounded positive endogenous standing-history finding and evidence/nonclaim boundary;
-11. **`docs/SPC_R6B_NATIVE_STANDING_SOCIAL_CONTINUATION_PASS.md`**
+17. **`docs/SPC_R6B_NATIVE_STANDING_SOCIAL_CONTINUATION_PASS.md`**
    - qualified bounded R6 mechanism evidence;
-12. **`docs/SPC_R6A_STANDING_SOCIAL_COMMITMENT_PASS.md`**
+17. **`docs/SPC_R6A_STANDING_SOCIAL_COMMITMENT_PASS.md`**
    - earlier bounded R6-A evidence and nonclaims;
-13. **R5 evidence documents**
+17. **R5 evidence documents**
    - semantic escalation, stale attention, provider outcomes and real-Luna causal boundary;
-14. **R4 / R3 / R2 / R1 qualified evidence documents**
+17. **R4 / R3 / R2 / R1 qualified evidence documents**
    - preserved scoped evidence, not current feature sequence;
-15. **`docs/SPC_NEXT_OWNER_INTENT_AND_GAP_AUDIT.md`**, pressure/re-observation documents
+17. **`docs/SPC_NEXT_OWNER_INTENT_AND_GAP_AUDIT.md`**, pressure/re-observation documents
    - durable Owner/product guardrails and donor evidence;
-16. **`docs/SPC_LIVING_WORLD_EXECUTION_PROGRAM.md`** and older recovery/Pass-2 documents
+17. **`docs/SPC_LIVING_WORLD_EXECUTION_PROGRAM.md`** and older recovery/Pass-2 documents
    - historical evidence only.
 
 `docs/PROJECT_STATE.md`, `docs/FRESH_TAKEOVER.md`, `docs/SPC_NEXT_CURRENT_STATE_RECONCILIATION.md` and older architecture-recovery documents must **not** be used as the current feature sequence.
@@ -769,10 +771,16 @@ Completed and retained only within their documented scopes:
     - Worker frozen twin accepts both histories with identical legal evidence-ID/schema surfaces;
     - Live Provider run #30 `d4dd09c0d6afefefaf60772ebdb169728128b548`: succeeded-history `focus_matter(current Janek C)`, blocked-history `focus_matter(unrelated D)`, both sides cite both exact old outcomes, exactly two Luna calls, zero semantic retries;
     - exact local replay: Check #1766 **287 / 287 files, 1026 / 1026 tests**, typecheck/build/preview PASS.
+23. counterparty-caused social history — **BOUNDED NEUTRAL LIVE FINDING / PROVEN DURABLE PROVENANCE, BEHAVIORAL EFFECT UNPROVEN**:
+    - characterized gap: exact Nela release of Oren's standing commitment disappeared after recent-evidence churn and had no legal route into later Nela choice;
+    - earned repair: separate bounded terminal social-lifecycle archive + typed \`prior_counterparty_social_outcome\`, exact standing source/counterparty/World occurrence/release evidence, no relationship score;
+    - normal production later creates Nela C with that history automatically; snapshot/boundedness/Worker/local admission are defended;
+    - Live Provider run #31 \`14383cec2e7e75b07d8ed240d076aa1e935695f2\`: control \`focus_matter(C=Nela)\`, history also \`focus_matter(C=Nela)\`; history cites exact release; exactly two Luna calls, zero retries; classification \`COUNTERPARTY_SOCIAL_HISTORY_UPTAKE_WITHOUT_BEHAVIOR_CHANGE\`;
+    - exact replay \`ddef04f5a098ea7b6894dea57723879652d33943\`: Check #1789 **292 / 292 files, 1037 / 1037 tests**, typecheck/build/preview PASS.
 
 Current:
 
-> **R6 personhood breadth — at fixed same-actor history count and fixed current ambiguity, factual consequence meaning itself can now change a genuine real-Luna choice through exact old evidence. Same-cardinality own-task-outcome meaning is bounded CLOSED; the next pressure moves from the resident's own task outcomes to durable facts about what the other resident actually did.**
+> **R6 personhood breadth — durable facts about what another resident actually did can now survive beyond immediate perception/resolved responsibility and reach later real-Luna judgement as exact causal support. Run #31 proves semantic uptake but not a behavioral counterparty-history effect. The next pressure is a symmetric Nela-vs-Ida social choice that removes the dominant current-cue asymmetry.**
 
 The explicit-standing-obligation endogenous stage remains **bounded CLOSED**.
 
@@ -806,15 +814,17 @@ Immediate method:
 - preserve R1 homeostasis, R2 metabolism, private epistemics, local admission and R5 provider safety as vetoes;
 - retain run #29 exactly as the bounded cumulative-count finding and run #30 exactly as the bounded same-cardinality outcome-meaning finding; do not rerun either for a preferred stochastic direction;
 - do not infer trust/liking/aversion from successful or blocked own-task outcomes;
-- move the personhood pressure to **counterparty-caused social history**: a factual response/action by the other resident that later matters after immediate perception has left recent life;
-- first characterize whether such an old counterparty-caused fact has any exact admissible route into a later genuine choice;
-- do not introduce generic autobiographical memory, preference weights, habits or relationship scores before that concrete provenance failure earns something narrower;
+- retain the exact counterparty-caused provenance repair and run #31 as **behaviorally neutral**; do not rerun it for a preferred split;
+- remove the current-cue asymmetry with a **symmetric social-vs-social** pressure: equally current Nela and Ida communication futures, one free body, only Nela carrying exact old release provenance;
+- generate that ambiguity first through normal resident/World authorities and prove both choices plus defer-all remain legal;
+- only then freeze one matched real-Luna pair; require exact release citation for any causal behavioral claim;
+- do not introduce generic autobiography, gratitude, trust, affinity, preference weights, habits or relationship scores before a concrete later failure earns something narrower;
 - retain Browser Oren/Nela genericity as honest promotion-plane debt;
 - keep full R6 / five living residents / Owner-observed ordinary personhood **UNPROVEN**;
 - do not prepare an Owner gate or merge PR #148 by CI inertia.
 
 Next research question:
 
-> **Can a factual response/action by the other resident survive beyond immediate recent perception and later change a genuine endogenous choice through exact causal provenance, without being compressed into a relationship score?**
+> **When Oren has equally current legal reasons to speak with Nela and Ida, can one exact prior factual action by Nela change which person he chooses to engage with through cited causal provenance, without being compressed into a relationship score?**
 
 The architecture must continue to be earned by resident-life pressure, not by a desire to fill a personality feature list.
