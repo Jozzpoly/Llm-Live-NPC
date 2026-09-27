@@ -693,43 +693,42 @@ Current recovery order:
 
 1. **latest explicit Owner correction**
    - outranks product-level interpretations for the same claim;
-2. **`docs/SPC_POST_STRESS_RECOVERY_PROGRAM.md`**
+2. **\`docs/SPC_POST_STRESS_RECOVERY_PROGRAM.md\`**
    - canonical post-stress execution authority;
-3. **`docs/SPC_R6_COMPLEMENTARY_PERSONHOOD_EXPERIMENT.md`**
+3. **\`docs/SPC_R6_COMPLEMENTARY_PERSONHOOD_EXPERIMENT.md\`**
    - binding current R6 experiment contract;
-4. **`docs/SPC_R6_COUNTERPARTY_SOCIAL_HISTORY_FINDING.md`**
+4. **\`docs/SPC_R6_COUNTERPARTY_SOCIAL_HISTORY_FINDING.md\`**
    - current counterparty-history authority: exact Nela release survives beyond recent/current life as bounded provenance and is cited by real Luna; run #31 is behaviorally neutral and does not prove relationship state;
-5. **`docs/SPC_R6_SAME_CARDINALITY_OUTCOME_MEANING_FINDING.md`**
+5. **\`docs/SPC_R6_SAME_CARDINALITY_OUTCOME_MEANING_FINDING.md\`**
    - strongest own-outcome meaning result: at fixed actor/history count/support identities, two succeeded outcomes versus two blocked outcomes produced opposite real-Luna C-vs-D choices and both exact old facts were cited;
-17. **`docs/SPC_R6_CUMULATIVE_SAME_ACTOR_HISTORY_FINDING.md`**
+6. **\`docs/SPC_R6_CUMULATIVE_SAME_ACTOR_HISTORY_FINDING.md\`**
    - preceding cumulative-history result: two independent terminal same-actor factual outcomes jointly changed a later real-Luna C-vs-D judgement while old matters remained absent from current life;
-17. **`docs/SPC_R6_DELAYED_FACTUAL_HISTORY_CHOICE_FINDING.md`**
+7. **\`docs/SPC_R6_DELAYED_FACTUAL_HISTORY_CHOICE_FINDING.md\`**
    - preceding delayed-history result: A may leave recent/current life, become exact causal genealogy of current C after later relevance, and change a real-Luna C-vs-D choice without reopening A;
-17. **`docs/SPC_R6_ENDOGENOUS_COMPETING_FUTURE_RUNTIME_FINDING.md`**
+8. **\`docs/SPC_R6_ENDOGENOUS_COMPETING_FUTURE_RUNTIME_FINDING.md\`**
    - deterministic provenance/composition authority for the normal A → delayed reacquisition/C + B → D → genuine choice chain;
-17. **`docs/SPC_R6_COMPETING_FUTURE_FACTUAL_HISTORY_FINDING.md`**
+9. **\`docs/SPC_R6_COMPETING_FUTURE_FACTUAL_HISTORY_FINDING.md\`**
    - preceding near-term exact real-Luna competing-future split and local causal admission;
-17. **`docs/SPC_R6_POST_TERMINAL_FACTUAL_HISTORY_FINDING.md`**
+10. **\`docs/SPC_R6_POST_TERMINAL_FACTUAL_HISTORY_FINDING.md\`**
    - preceding single-opportunity neutral finding; authoritative for what run #24 did and did not prove;
-17. **`docs/SPC_R6_ENDOGENOUS_ORDINARY_PERSONHOOD_FINDING.md`**
+11. **\`docs/SPC_R6_ENDOGENOUS_ORDINARY_PERSONHOOD_FINDING.md\`**
    - bounded positive endogenous standing-history finding and evidence/nonclaim boundary;
-17. **`docs/SPC_R6B_NATIVE_STANDING_SOCIAL_CONTINUATION_PASS.md`**
+12. **\`docs/SPC_R6B_NATIVE_STANDING_SOCIAL_CONTINUATION_PASS.md\`**
    - qualified bounded R6 mechanism evidence;
-17. **`docs/SPC_R6A_STANDING_SOCIAL_COMMITMENT_PASS.md`**
+13. **\`docs/SPC_R6A_STANDING_SOCIAL_COMMITMENT_PASS.md\`**
    - earlier bounded R6-A evidence and nonclaims;
-17. **R5 evidence documents**
+14. **R5 evidence documents**
    - semantic escalation, stale attention, provider outcomes and real-Luna causal boundary;
-17. **R4 / R3 / R2 / R1 qualified evidence documents**
+15. **R4 / R3 / R2 / R1 qualified evidence documents**
    - preserved scoped evidence, not current feature sequence;
-17. **`docs/SPC_NEXT_OWNER_INTENT_AND_GAP_AUDIT.md`**, pressure/re-observation documents
+16. **\`docs/SPC_NEXT_OWNER_INTENT_AND_GAP_AUDIT.md\`**, pressure/re-observation documents
    - durable Owner/product guardrails and donor evidence;
-17. **`docs/SPC_LIVING_WORLD_EXECUTION_PROGRAM.md`** and older recovery/Pass-2 documents
+17. **\`docs/SPC_LIVING_WORLD_EXECUTION_PROGRAM.md\`** and older recovery/Pass-2 documents
    - historical evidence only.
 
-`docs/PROJECT_STATE.md`, `docs/FRESH_TAKEOVER.md`, `docs/SPC_NEXT_CURRENT_STATE_RECONCILIATION.md` and older architecture-recovery documents must **not** be used as the current feature sequence.
+\`docs/PROJECT_STATE.md\`, \`docs/FRESH_TAKEOVER.md\`, \`docs/SPC_NEXT_CURRENT_STATE_RECONCILIATION.md\` and older architecture-recovery documents must **not** be used as the current feature sequence.
 
 When prose conflicts with live evidence, live evidence wins and prose must be corrected.
-
 ---
 
 ## 13. Current work order
