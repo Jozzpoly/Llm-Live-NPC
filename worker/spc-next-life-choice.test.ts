@@ -241,6 +241,110 @@ describe("SPC Next resident-life choice Worker", () => {
     expect(sanitizeSpcNextLifeChoiceContext(nonOutcomeHistory)).toBeNull();
   });
 
+  it("carries several exact same-actor factual outcomes only on the current communication candidate", () => {
+    const social = structuredClone(context) as any;
+    social.life.matters[0].semanticIntent = {
+      kind: "communicate_actor",
+      goal: "speak with Ida about the current situation",
+      targetActorId: "resident.ida",
+      text: "Ida, porozmawiajmy o tym, co dzieje się teraz.",
+    };
+    social.life.matters[0].historicalSupport = [
+      {
+        relation: "prior_same_actor_outcome",
+        sourceMatterId: "matter.mira.worker.ida-old-a",
+        evidence: {
+          id: "evidence:mira:worker:ida-old-a-outcome",
+          tick: 12,
+          kind: "task_outcome",
+          summary: "factually delivered first old Ida exchange",
+          sourceRunId: "run.mira.worker.ida-old-a",
+        },
+      },
+      {
+        relation: "prior_same_actor_outcome",
+        sourceMatterId: "matter.mira.worker.ida-old-b",
+        evidence: {
+          id: "evidence:mira:worker:ida-old-b-outcome",
+          tick: 18,
+          kind: "task_outcome",
+          summary: "factually delivered second old Ida exchange",
+          sourceRunId: "run.mira.worker.ida-old-b",
+        },
+      },
+    ];
+    social.life.matters[1].semanticIntent = {
+      kind: "travel_region",
+      goal: "take an unrelated current future",
+      targetRegionId: "hearth",
+    };
+
+    const sanitized = sanitizeSpcNextLifeChoiceContext(social);
+    expect(sanitized).not.toBeNull();
+
+    const idaSupport = sanitized?.candidateSupports.find(
+      (candidate) => candidate.matterId === B,
+    );
+    expect(idaSupport?.facts).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        evidenceId: "evidence:mira:worker:ida-old-a-outcome",
+        sourceMatterId: "matter.mira.worker.ida-old-a",
+        relation: "prior_same_actor_outcome",
+        evidenceKind: "task_outcome",
+      }),
+      expect.objectContaining({
+        evidenceId: "evidence:mira:worker:ida-old-b-outcome",
+        sourceMatterId: "matter.mira.worker.ida-old-b",
+        relation: "prior_same_actor_outcome",
+        evidenceKind: "task_outcome",
+      }),
+    ]));
+
+    const otherSupport = sanitized?.candidateSupports.find(
+      (candidate) => candidate.matterId === C,
+    );
+    expect(otherSupport?.facts.some((fact) => (
+      fact.evidenceId === "evidence:mira:worker:ida-old-a-outcome"
+      || fact.evidenceId === "evidence:mira:worker:ida-old-b-outcome"
+    ))).toBe(false);
+
+    expect(extractSpcNextLifeChoiceDecision(
+      responseBody({
+        kind: "focus_matter",
+        matterId: C,
+        reason: "the two prior Ida outcomes belong to the competing Ida future, so take the unrelated current future instead",
+        supportEvidenceIds: [
+          "evidence:mira:worker:ida-old-a-outcome",
+          "evidence:mira:worker:ida-old-b-outcome",
+          "evidence:c:origin",
+        ],
+        reviewAfterSeconds: 20,
+      }),
+      sanitized!.candidateMatterIds,
+      sanitized!.candidateSupports,
+    )).toMatchObject({
+      kind: "focus_matter",
+      matterId: C,
+      supportEvidenceIds: [
+        "evidence:mira:worker:ida-old-a-outcome",
+        "evidence:mira:worker:ida-old-b-outcome",
+        "evidence:c:origin",
+      ],
+    });
+
+    const illegalTravelHistory = structuredClone(social);
+    illegalTravelHistory.life.matters[0].semanticIntent = {
+      kind: "travel_region",
+      goal: "ordinary travel",
+      targetRegionId: "hearth",
+    };
+    expect(sanitizeSpcNextLifeChoiceContext(illegalTravelHistory)).toBeNull();
+
+    const forgedMaterialRelation = structuredClone(social);
+    forgedMaterialRelation.life.matters[0].historicalSupport[0].relation = "prior_same_material_outcome";
+    expect(sanitizeSpcNextLifeChoiceContext(forgedMaterialRelation)).toBeNull();
+  });
+
   it("extracts only a bounded choice among supplied matters or an explicit defer-all", () => {
     expect(extractSpcNextLifeChoiceDecision(
       responseBody(focusB()),
