@@ -61,9 +61,23 @@ export function allowedChoiceSupportEvidenceIds(
   matterId: string,
 ): string[] {
   const candidate = supports.find((entry) => entry.matterId === matterId);
-  return candidate
-    ? [...new Set(candidate.facts.map((fact) => fact.evidenceId))].sort((a, b) => a.localeCompare(b))
-    : [];
+  if (!candidate) return [];
+
+  // Most evidence remains candidate-local: choosing B cannot cite A's ordinary
+  // origin/current context. The earned R6 exception is comparative terminal material
+  // history. A factual prior outcome attached to candidate A may causally explain
+  // choosing A *or avoiding A in favour of another current candidate*, while the
+  // candidateSupports structure still preserves exactly which candidate that history
+  // belongs to.
+  const allowed = new Set(candidate.facts.map((fact) => fact.evidenceId));
+  for (const support of supports) {
+    for (const fact of support.facts) {
+      if (fact.relation === "prior_same_material_outcome") {
+        allowed.add(fact.evidenceId);
+      }
+    }
+  }
+  return [...allowed].sort((a, b) => a.localeCompare(b));
 }
 
 function supportFacts(
