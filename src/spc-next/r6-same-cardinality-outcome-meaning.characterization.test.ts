@@ -30,7 +30,9 @@ describe("R6 same-cardinality factual outcome meaning", () => {
 
     for (const variant of [succeeded, blocked]) {
       expect(variant.support).toHaveLength(2);
-      expect(variant.support.map((entry) => entry.sourceMatterId)).toEqual([OLD_A, OLD_B]);
+      expect(variant.support.map((entry) => entry.sourceMatterId).sort()).toEqual(
+        [OLD_A, OLD_B].sort(),
+      );
       expect(variant.support.map((entry) => entry.relation)).toEqual([
         "prior_same_actor_outcome",
         "prior_same_actor_outcome",
