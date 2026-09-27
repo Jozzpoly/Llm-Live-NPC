@@ -233,6 +233,8 @@ export class ResidentCausalReasonCommitmentAuthority {
     }
 
     if (decision.intent.kind === "communicate"
+      && "targetActorId" in decision.intent
+      && "text" in decision.intent
       && decision.intent.targetActorId !== null
       && decision.intent.text !== null) {
       const knownActor = input.groundingContext.knownActors.find(
@@ -283,9 +285,12 @@ export class ResidentCausalReasonCommitmentAuthority {
     const originReason = input.attempt.context.reasons.find(
       (reason) => reason.id === input.originReasonId,
     ) ?? null;
+    const materialIntent = isGroundedMaterialCommitmentIntent(input.intent)
+      ? input.intent
+      : null;
     const identity = originReason
-      ? input.intent.semanticIntent.kind === "acquire_material_object"
-        ? this.materialIdentityFor(input.intent.reacquisitionEvidenceId)
+      ? materialIntent
+        ? this.materialIdentityFor(materialIntent.reacquisitionEvidenceId)
         : this.identityFor(originReason.id)
       : null;
     const grounded = this.grounded.get(input.intent);
@@ -300,8 +305,8 @@ export class ResidentCausalReasonCommitmentAuthority {
       || grounded.identity.runId !== identity.runId
       || input.intent.originReasonId !== originReason.id
       || !SELF_ORIGIN_REASON_KINDS.has(originReason.kind)
-      || (input.intent.semanticIntent.kind === "acquire_material_object"
-        && !this.materialIntentStillGrounded(input.attempt.context, originReason, input.intent))) {
+      || (materialIntent
+        && !this.materialIntentStillGrounded(input.attempt.context, originReason, materialIntent))) {
       this.grounded.delete(input.intent);
       throw new Error("grounded causal reason intent lacks exact admitted authority");
     }
@@ -451,6 +456,18 @@ export class ResidentCausalReasonCommitmentAuthority {
       runId: `run.${this.identityNamespace}.causal.reason:${reasonId}.semantic-1`,
     };
   }
+}
+
+function isGroundedMaterialCommitmentIntent(
+  intent: GroundedResidentCausalReasonCommitmentIntent,
+): intent is Extract<
+  GroundedResidentCausalReasonCommitmentIntent,
+  { semanticIntent: ResidentAcquireMaterialObjectMatterIntent }
+> {
+  return intent.semanticIntent.kind === "acquire_material_object"
+    && "reacquisitionEvidenceId" in intent
+    && "priorOutcomeEvidenceId" in intent
+    && "sourceMatterId" in intent;
 }
 
 function exactReason(
