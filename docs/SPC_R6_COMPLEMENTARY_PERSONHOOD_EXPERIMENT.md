@@ -569,9 +569,54 @@ It does **not** qualify:
 
 The delayed same-object factual-history stage is now **bounded CLOSED**.
 
-The next high-information pressure must be qualitatively different: **cumulative ordinary experience**, where several independently factual past episodes later affect one choice and no single exact old matter/object/standing obligation is sufficient to explain the decision.
+That cumulative ordinary-experience pressure has now been answered positively in the narrow same-actor communication lineage recorded in section 7.8.
 
-Do not add preference, aversion, habit, relationship or generic memory state before that pressure produces a concrete failure.
+Do not infer relationship state from that result. The next pressure is **same-cardinality factual-meaning sensitivity**: keep actor identity, history count and current C-vs-D ambiguity matched while changing what factually happened in the old episodes.
+
+## 7.8 R6 cumulative same-actor factual history
+
+Status: **MATERIAL BOUNDED POSITIVE FINDING — CUMULATIVE SAME-ACTOR HISTORY CHANGED REAL-LUNA BEHAVIOR**
+
+Canonical finding:
+\`docs/SPC_R6_CUMULATIVE_SAME_ACTOR_HISTORY_FINDING.md\`
+
+The cumulative ordinary-experience pressure exposed a concrete attribution gap rather than a need for generic memory:
+
+- two independent terminal \`communicate_actor\` episodes with exact Ida survived bounded archive;
+- both old matters correctly disappeared from current life;
+- later current Ida future C and unrelated D were legal;
+- but old factual outcomes could not be cited as causal support for C.
+
+The earned repair adds only typed \`prior_same_actor_outcome\` genealogy to a **current** \`communicate_actor\` matter when kernel validation proves exact same \`targetActorId\` and exact terminal factual \`task_outcome\`.
+
+The projection is bounded to the 8 most recent exact same-actor terminal communication outcomes, deterministic, actor-isolated and released when the current descendant matter terminates. It adds no relationship score, sentiment, trust, liking, dislike, habit or body authority.
+
+Run #29 at source
+\`900d626b9049a43438993a96e7b442c6e59aa369\`
+uses exactly two GPT-5.6 Luna calls and zero semantic retries:
+
+- control: \`defer_all\`;
+- history: \`focus_matter(other)\`;
+- history cites **both** independent old Ida task outcomes plus D's current origin;
+- old A/B are absent from current life in both twins;
+- classification:
+  **\`CUMULATIVE_SAME_ACTOR_HISTORY_CAUSAL_DIFFERENCE_OBSERVED\`**.
+
+Run #28 is apparatus-only evidence: qualifier resolution failed before inference, with zero provider requests/token spend.
+
+Exact run-#29 proposals replay through local \`ResidentLifeChoiceOwner\` at
+\`0bf8ad82e691c6fbd8accf7d975a0bb7d71574f8\`.
+
+Check #1753: **284 / 284 files, 1020 / 1020 tests**, typecheck/build/preview PASS.
+Browser Evidence #977: PASS.
+
+This boundedly proves that several independent same-actor factual episodes can jointly affect a later real choice without reopening old matters or introducing relationship state.
+
+It does **not** prove richer social meaning. The observed history effect may still be dominated by **repetition/cardinality**: the history rationale explicitly treated Ida contact as another already-repeated exchange.
+
+Therefore this cumulative same-actor stage is **bounded CLOSED**.
+
+The next falsifier must hold history cardinality constant and ask whether **different factual outcomes or consequences** of the same number of old same-actor episodes can produce different later judgement. First use existing factual outcome structure; do not add relationship/preference state unless a concrete representation failure earns it.
 
 ## 8. Anti-cheat rules
 
@@ -661,16 +706,17 @@ Current order:
 2. do not rerun #27 merely to obtain another stochastic split;
 3. do not deepen the same crate lineage by inertia;
 4. preserve the separation between terminal factual archive, current-matter causal genealogy, provider judgement and body authority;
-5. move to a **qualitatively different personhood pressure: cumulative ordinary experience**;
-6. first characterize the current architecture when several independently factual past episodes are potentially relevant but no single exact old matter/object/standing obligation explains the later choice;
-7. do not add preference/aversion, habit, relationship scores or generic autobiographical memory before that failure is concrete;
-8. preserve Janek/material continuity, R1 homeostasis, R2 metabolism, private knowledge and R5 provider safety as vetoes;
-9. retain browser Oren/Nela genericity as honest promotion-plane debt;
-10. do not prepare an Owner gate or merge PR #148 by CI inertia.
+5. retain run #29 as the first **MATERIAL BOUNDED POSITIVE** cumulative same-actor behavioral split: two old Ida outcomes jointly changed control `defer_all` into history `focus_matter(other)` and both old facts were causally cited;
+6. treat the cumulative same-actor communication-count/history stage as **bounded CLOSED**;
+7. attack the remaining cardinality ambiguity: same actor, same number of old episodes, same current C-vs-D choice, but different factual old outcomes/consequences;
+8. do not add preference/aversion, habit, relationship scores or generic autobiographical memory before that sharper pressure demonstrates a representation failure;
+9. preserve Janek/material continuity, R1 homeostasis, R2 metabolism, private knowledge and R5 provider safety as vetoes;
+10. retain browser Oren/Nela genericity as honest promotion-plane debt;
+11. do not prepare an Owner gate or merge PR #148 by CI inertia.
 
 The next research question is now:
 
-> **Can several independently factual past experiences, none of which is itself an open obligation or exact same-object continuation, jointly alter a later endogenous choice in a causally attributable way without replacing resident life with generic personality/preference state?**
+> **With the same actor, the same number of old episodes and the same current C-vs-D ambiguity, can different factual past outcomes or consequences change later judgement — or is current personhood only sensitive to “this happened N times before”?**
 
 ## 12. Owner-observed target
 
