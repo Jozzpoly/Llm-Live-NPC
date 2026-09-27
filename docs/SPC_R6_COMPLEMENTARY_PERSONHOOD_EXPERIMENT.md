@@ -404,11 +404,88 @@ Therefore do not:
 - add `aversion`, preference weights or generic autobiographical memory;
 - reinterpret rationale wording as a behavioral PASS.
 
-The next highest-information pressure is a **genuine competing-future ambiguity**: several legal resident futures compete for one free body, current evidence is matched, and one terminal factual episode is structurally relevant to only one candidate.
-
-A useful existing surface is `ResidentLifeChoiceOwner`. Its current causal-support contract is candidate-local. The next falsifier should determine whether terminal lived history can legally support such a choice through existing authority, or whether a concrete admission/support failure earns the smallest history-to-current-choice relevance seam.
+That next pressure has now been executed and is recorded separately in section 7.6. The run-#24 single-opportunity result remains neutral; it is not retroactively reclassified by the later competing-future result.
 
 Browser Oren/Nela genericity remains honest promotion-plane debt and is not promoted back into the active research frontier.
+
+## 7.6 R6 competing-future terminal factual history
+
+Status: **MATERIAL BOUNDED POSITIVE FINDING — LIVE BEHAVIORAL HISTORY EFFECT + EXACT LOCAL CAUSAL ADMISSION**
+
+Canonical finding:
+`docs/SPC_R6_COMPETING_FUTURE_FACTUAL_HISTORY_FINDING.md`
+
+The competing-future falsifier first exposed a concrete authority gap rather than a missing personality model:
+
+- the terminal factual outcome was visible in the bounded resident `life` view;
+- the new same-object current candidate existed;
+- the existing candidate-local support contract could not legally cite that old factual outcome in a new choice;
+- and support attached only to candidate A could not explain choosing candidate B because of what happened to A.
+
+The smallest earned seam is `prior_same_material_outcome`.
+
+It is constrained to:
+- one terminal run-free material matter;
+- one factual `task_outcome`;
+- exact structured `objectId` equality;
+- bounded history already present in the resident-life view.
+
+It creates no run, body authority, World authority, preference, aversion or immortal memory. Ordinary cross-candidate evidence remains forbidden. Only this exact terminal material relation may act as comparative support across the current candidate set.
+
+The matched Janek twin is frozen in:
+`evidence/r6-competing-future-terminal-history-choice-context.json`.
+
+Both twins have:
+- one free body;
+- the same two legal deferred futures;
+- the same current private frame;
+- no fresh speech/command;
+- no authored `self`;
+- no standing obligation.
+
+The history twin alone owns one resolved factual `object_unavailable` episode for the exact crate identity relevant to the retry candidate.
+
+Live Provider run #25 at source `1f537579dfec368b1e62404f3385a6868e5a57ed` is apparatus evidence only. A provider-incompatible strict-schema `uniqueItems` keyword caused `upstream_http` failure before any model output or token usage. The keyword was removed while local duplicate rejection remained intact.
+
+Canonical Live Provider run #26 at source `c9999f589886311125dd91a215d27f3b46371a5c` used exactly two GPT-5.6 Luna calls with zero semantic retries:
+
+- control: `defer_all`;
+- history: `focus_matter(retry)`;
+- the history proposal cited the exact prior factual outcome and current retry origin;
+- `exactBehaviorEqual = false`;
+- harness classification: `HISTORY_CAUSAL_COMPETING_FUTURE_DIFFERENCE_OBSERVED`.
+
+The observed direction is not learned aversion: the earlier blocked attempt plus current availability made retry behaviorally salient. The defended claim is therefore history-sensitive significance, not “failure means avoid”.
+
+The exact live responses are stored in:
+`evidence/r6-competing-future-terminal-history-choice-live-result.json`.
+
+They replay through the normal `ResidentLifeChoiceOwner` in:
+`src/spc-next/r6-competing-future-terminal-history-choice-pair.integration.test.ts`.
+
+At replay source `c3e2efb784520d17e520f3373a2de97bc8caab53`, Check #1653 passes **269 / 269 files and 979 / 979 tests**. The old episode remains resolved/run-free and semantic choice admission itself does not seize body authority.
+
+This is the first bounded post-terminal material result in this branch where:
+- matched current state differs only by prior factual life;
+- the behavioral class changes;
+- the exact historical evidence is causally cited;
+- local admission verifies the citation.
+
+It does **not** qualify:
+- preference or aversion;
+- habit;
+- generalized autobiography;
+- full R6;
+- five distinct living people;
+- Owner-observed ordinary aliveness.
+
+The next highest-information pressure is now **endogenous generation of the same competing-future situation through normal runtime/World lifecycle**, because run #26 used a rigorously frozen and validated twin but not one uninterrupted naturally generated world-life chain.
+
+Required next question:
+
+> Can factual material failure, terminalization, later exact reacquisition, an independently grounded second future, free-body arbitration and the resulting life-choice pressure all arise through normal resident/World paths without fixture-owned construction?
+
+Do not add another personhood representation before that runtime pressure proves one is needed.
 
 ## 8. Anti-cheat rules
 
@@ -474,9 +551,14 @@ Completed / retained within scope:
 - the explicit standing-obligation endogenous stage is **bounded CLOSED**;
 - post-terminal material-history characterization is executable;
 - exact post-terminal control/history contexts are frozen and equality-bound to runtime generation;
-- Live Provider run #24 is a valid **neutral** two-call / zero-retry result;
+- Live Provider run #24 remains a valid **neutral** two-call / zero-retry single-opportunity result;
 - exact run-#24 proposals survive local admission and factual travel without gaining material-action authority;
-- integrated head `b79793cf625da93d4909c644a3e56511febde67a`: Check #1628 **266 / 266 files, 970 / 970 tests**; Browser Evidence #852 PASS.
+- competing-future support gap was characterized before implementation;
+- narrow `prior_same_material_outcome` support is exact-identity / terminal-outcome bounded and does not reopen history;
+- Live Provider run #25 is provider-contract failure evidence only: zero token usage / no semantic output;
+- canonical Live Provider run #26 is a **material bounded positive finding**: control `defer_all`, history `focus_matter(retry)`, exact historical outcome cited, zero semantic retries;
+- exact run-#26 proposals survive normal local choice admission while old history remains resolved/run-free;
+- replay source `c3e2efb784520d17e520f3373a2de97bc8caab53`: Check #1653 **269 / 269 files, 979 / 979 tests**.
 
 Evidence hygiene:
 
@@ -484,6 +566,9 @@ Evidence hygiene:
 - run #22 is one paired positive observation, not a behavior distribution;
 - run #23 is one bounded fulfilment judgement;
 - run #24 produced the same behavioral decision in both twins; its different rationale is semantic uptake, not behavioral history-effect proof;
+- run #25 produced no model output and zero token usage, so it is apparatus/schema evidence only;
+- run #26 is one paired positive observation, not a behavior distribution;
+- run #26 proves one exact post-terminal factual-history effect on a competing-future behavior, not preference/aversion or generalized autobiography;
 - the post-terminal contexts come from exact runtime-generated fixtures and real endpoint calls, not one uninterrupted browser process;
 - terminal history remains bounded by current evidence retention; long-lived autobiographical persistence is not qualified;
 - browser-qualified Oren/Nela genericity remains **UNPROVEN**;
