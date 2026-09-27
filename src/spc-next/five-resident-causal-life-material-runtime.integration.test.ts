@@ -195,7 +195,19 @@ describe("five-resident causal life material continuity", () => {
         kind: "acquire_material_object",
         objectId: CRATE_ID,
       },
+      historicalSupport: [{
+        relation: "prior_same_material_outcome",
+        sourceMatterId: OLD_MATTER_ID,
+        evidenceId: blockedOutcomeId,
+      }],
     });
+    expect(life.kernel.historicalSupportEvidence(accepted.matter.id)).toEqual([
+      expect.objectContaining({
+        relation: "prior_same_material_outcome",
+        sourceMatterId: OLD_MATTER_ID,
+        evidence: expect.objectContaining({ id: blockedOutcomeId }),
+      }),
+    ]);
 
     let completedMatterId: string | null = null;
     for (let guard = 0; guard < 180 && completedMatterId === null; guard += 1) {
@@ -218,6 +230,8 @@ describe("five-resident causal life material continuity", () => {
       status: "resolved",
       activeRunId: null,
     });
+    expect(life.kernel.matter(accepted.matter.id)?.historicalSupport).toBeUndefined();
+    expect(life.kernel.historicalSupportEvidence(accepted.matter.id)).toEqual([]);
   });
 });
 
