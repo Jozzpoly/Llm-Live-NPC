@@ -185,7 +185,6 @@ function decisionSchema(
         type: "array",
         minItems: 1,
         maxItems: Math.min(8, supportIds.length),
-        uniqueItems: true,
         items: { type: "string", enum: supportIds },
       },
       reviewAfterSeconds: { type: "number", minimum: 0.25, maximum: 600 },
