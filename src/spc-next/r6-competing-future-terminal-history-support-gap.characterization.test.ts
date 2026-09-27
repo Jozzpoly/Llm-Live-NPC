@@ -81,22 +81,45 @@ describe("R6 competing-future terminal-history causal support", () => {
     });
   });
 
-  it("does not let terminal material history support an unrelated competing future", () => {
-    const { owner, attempt, life } = setup();
+  it("permits the exact terminal material outcome as comparative evidence for choosing the other future, but still rejects ordinary cross-matter support", () => {
+    const comparative = setup();
 
-    expect(owner.settle(
-      attempt,
+    expect(comparative.owner.settle(
+      comparative.attempt,
       {
         version: 1,
         decision: {
           kind: "focus_matter",
           matterId: OTHER_MATTER,
-          reason: "misattribute the crate history to an unrelated workshop future",
-          supportEvidenceIds: [HISTORY_OUTCOME],
+          reason: "the earlier factual failure belongs to the competing crate retry, so take the ordinary workshop future instead",
+          supportEvidenceIds: [HISTORY_OUTCOME, OTHER_ORIGIN],
           reviewAfterSeconds: 12,
         },
       },
-      life,
+      comparative.life,
+    )).toMatchObject({
+      status: "applied",
+      decision: {
+        kind: "focus_matter",
+        matterId: OTHER_MATTER,
+        supportEvidenceIds: [HISTORY_OUTCOME, OTHER_ORIGIN],
+      },
+    });
+
+    const ordinaryCrossMatter = setup();
+    expect(ordinaryCrossMatter.owner.settle(
+      ordinaryCrossMatter.attempt,
+      {
+        version: 1,
+        decision: {
+          kind: "focus_matter",
+          matterId: OTHER_MATTER,
+          reason: "ordinary support from the retry candidate must not leak across candidates",
+          supportEvidenceIds: [RETRY_ORIGIN],
+          reviewAfterSeconds: 12,
+        },
+      },
+      ordinaryCrossMatter.life,
     )).toEqual({
       status: "rejected",
       reason: "proposal_invalid",
