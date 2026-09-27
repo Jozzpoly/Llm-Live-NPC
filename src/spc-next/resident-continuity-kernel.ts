@@ -729,22 +729,18 @@ export class ResidentContinuityKernel {
     support: ResidentMatterHistoricalSupport,
     evidence: ResidentKernelEvidence,
   ): void {
-    if (evidence.kind !== "task_outcome") {
-      throw new Error("resident historical support requires factual task outcome evidence");
-    }
-
-    const source = this.matters.get(support.sourceMatterId);
-    if (!source
-      || !isTerminal(source.status)
-      || source.activeRunId !== null
-      || source.lastOutcomeEvidenceId !== evidence.id) {
-      throw new Error("resident historical support source is not exact terminal factual outcome");
-    }
-
     if (support.relation === "prior_same_material_outcome") {
       if (semanticIntent?.kind !== "acquire_material_object"
+        || evidence.kind !== "task_outcome") {
+        throw new Error("prior material history requires a material candidate and factual task outcome");
+      }
+      const source = this.matters.get(support.sourceMatterId);
+      if (!source
+        || !isTerminal(source.status)
+        || source.activeRunId !== null
         || source.semanticIntent?.kind !== "acquire_material_object"
-        || source.semanticIntent.objectId !== semanticIntent.objectId) {
+        || source.semanticIntent.objectId !== semanticIntent.objectId
+        || source.lastOutcomeEvidenceId !== evidence.id) {
         throw new Error("prior material history does not match exact terminal same-object matter");
       }
       return;
@@ -752,8 +748,16 @@ export class ResidentContinuityKernel {
 
     if (support.relation === "prior_same_actor_outcome") {
       if (semanticIntent?.kind !== "communicate_actor"
+        || evidence.kind !== "task_outcome") {
+        throw new Error("prior actor history requires a communication candidate and factual task outcome");
+      }
+      const source = this.matters.get(support.sourceMatterId);
+      if (!source
+        || !isTerminal(source.status)
+        || source.activeRunId !== null
         || source.semanticIntent?.kind !== "communicate_actor"
-        || source.semanticIntent.targetActorId !== semanticIntent.targetActorId) {
+        || source.semanticIntent.targetActorId !== semanticIntent.targetActorId
+        || source.lastOutcomeEvidenceId !== evidence.id) {
         throw new Error("prior actor history does not match exact terminal same-actor matter");
       }
       return;
