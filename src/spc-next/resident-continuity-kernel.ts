@@ -87,6 +87,7 @@ export type ResidentMatterHistoricalSupportRelation = "prior_same_material_outco
 
 export interface ResidentMatterHistoricalSupport {
   relation: ResidentMatterHistoricalSupportRelation;
+  sourceMatterId: string;
   evidenceId: string;
 }
 
@@ -180,6 +181,7 @@ export interface ResidentContinuityKernelCommittedSnapshot {
   pinnedHistoricalSupportEvidence?: readonly {
     matterId: string;
     relation: ResidentMatterHistoricalSupportRelation;
+    sourceMatterId: string;
     evidence: ResidentKernelEvidence;
   }[];
   runBindings: readonly ResidentTaskRunBinding[];
@@ -219,7 +221,11 @@ export class ResidentContinuityKernel {
   private readonly pinnedOutcomeEvidence = new Map<string, ResidentKernelEvidence>();
   private readonly pinnedHistoricalSupportEvidence = new Map<
     string,
-    Map<string, { relation: ResidentMatterHistoricalSupportRelation; evidence: ResidentKernelEvidence }>
+    Map<string, {
+      relation: ResidentMatterHistoricalSupportRelation;
+      sourceMatterId: string;
+      evidence: ResidentKernelEvidence;
+    }>
   >();
   /**
    * Bounded factual history for terminal resident matters.
@@ -315,6 +321,9 @@ export class ResidentContinuityKernel {
       support,
       evidence: this.requireHistoricalSupportEvidence(support.evidenceId),
     }));
+    for (const entry of historicalEvidence) {
+      this.validateHistoricalSupportForNewMatter(input.semanticIntent ?? null, entry.support, entry.evidence);
+    }
     const matter: ResidentMatter = {
       id: input.id,
       status: "active",
@@ -335,11 +344,13 @@ export class ResidentContinuityKernel {
     if (historicalEvidence.length > 0) {
       const pins = new Map<string, {
         relation: ResidentMatterHistoricalSupportRelation;
+        sourceMatterId: string;
         evidence: ResidentKernelEvidence;
       }>();
       for (const entry of historicalEvidence) {
         pins.set(entry.evidence.id, {
           relation: entry.support.relation,
+          sourceMatterId: entry.support.sourceMatterId,
           evidence: structuredClone(entry.evidence),
         });
       }
@@ -370,12 +381,14 @@ export class ResidentContinuityKernel {
 
   historicalSupportEvidence(matterId: string): Array<{
     relation: ResidentMatterHistoricalSupportRelation;
+    sourceMatterId: string;
     evidence: ResidentKernelEvidence;
   }> {
     const pins = this.pinnedHistoricalSupportEvidence.get(matterId);
     if (!pins) return [];
     return [...pins.values()].map((entry) => ({
       relation: entry.relation,
+      sourceMatterId: entry.sourceMatterId,
       evidence: structuredClone(entry.evidence),
     }));
   }
@@ -707,6 +720,27 @@ export class ResidentContinuityKernel {
     }
   }
 
+  private validateHistoricalSupportForNewMatter(
+    semanticIntent: ResidentMatterIntent | null,
+    support: ResidentMatterHistoricalSupport,
+    evidence: ResidentKernelEvidence,
+  ): void {
+    if (support.relation !== "prior_same_material_outcome"
+      || semanticIntent?.kind !== "acquire_material_object"
+      || evidence.kind !== "task_outcome") {
+      throw new Error("prior material history requires a material candidate and factual task outcome");
+    }
+    const source = this.matters.get(support.sourceMatterId);
+    if (!source
+      || !isTerminal(source.status)
+      || source.activeRunId !== null
+      || source.semanticIntent?.kind !== "acquire_material_object"
+      || source.semanticIntent.objectId !== semanticIntent.objectId
+      || source.lastOutcomeEvidenceId !== evidence.id) {
+      throw new Error("prior material history does not match exact terminal same-object matter");
+    }
+  }
+
   private releaseLiveEvidencePins(matterId: string): void {
     this.pinnedOriginEvidence.delete(matterId);
     this.pinnedSemanticEvidence.delete(matterId);
@@ -830,6 +864,7 @@ function snapshotHistoricalSupportPins(
     string,
     ReadonlyMap<string, {
       relation: ResidentMatterHistoricalSupportRelation;
+      sourceMatterId: string;
       evidence: ResidentKernelEvidence;
     }>
   >,
@@ -841,6 +876,7 @@ function snapshotHistoricalSupportPins(
   const result: Array<{
     matterId: string;
     relation: ResidentMatterHistoricalSupportRelation;
+    sourceMatterId: string;
     evidence: ResidentKernelEvidence;
   }> = [];
   for (const [matterId, matterPins] of pins) {
@@ -848,6 +884,7 @@ function snapshotHistoricalSupportPins(
       result.push({
         matterId,
         relation: entry.relation,
+        sourceMatterId: entry.sourceMatterId,
         evidence: structuredClone(entry.evidence),
       });
     }
@@ -864,18 +901,21 @@ function restoreHistoricalSupportPins(
     string,
     Map<string, {
       relation: ResidentMatterHistoricalSupportRelation;
+      sourceMatterId: string;
       evidence: ResidentKernelEvidence;
     }>
   >,
   pins: readonly {
     matterId: string;
     relation: ResidentMatterHistoricalSupportRelation;
+    sourceMatterId: string;
     evidence: ResidentKernelEvidence;
   }[],
   matters: ReadonlyMap<string, ResidentMatter>,
 ): void {
   for (const pin of pins) {
     assertSpcIdentifier(pin.matterId, "snapshot historical support matter id");
+    assertSpcIdentifier(pin.sourceMatterId, "snapshot historical support source matter id");
     const matter = matters.get(pin.matterId);
     if (!matter || isTerminal(matter.status)) {
       throw new Error(`snapshot historical support references non-current matter: ${pin.matterId}`);
@@ -885,6 +925,7 @@ function restoreHistoricalSupportPins(
     const declared = matter.historicalSupport ?? [];
     if (!declared.some((support) => (
       support.relation === pin.relation
+      && support.sourceMatterId === pin.sourceMatterId
       && support.evidenceId === pin.evidence.id
     ))) {
       throw new Error(`snapshot historical support pin is undeclared: ${pin.matterId}`);
@@ -895,6 +936,7 @@ function restoreHistoricalSupportPins(
     }
     matterPins.set(pin.evidence.id, {
       relation: pin.relation,
+      sourceMatterId: pin.sourceMatterId,
       evidence: structuredClone(pin.evidence),
     });
     target.set(pin.matterId, matterPins);
@@ -999,6 +1041,7 @@ function validateCommittedSnapshot(
   const historicalPinKeys = new Set<string>();
   for (const pin of historicalPins) {
     assertSpcIdentifier(pin.matterId, "snapshot historical support matter id");
+    assertSpcIdentifier(pin.sourceMatterId, "snapshot historical support source matter id");
     validateHistoricalSupportRelation(pin.relation);
     validateEvidence(pin.evidence);
     const matter = snapshot.matters.find((candidate) => candidate.id === pin.matterId);
@@ -1008,11 +1051,27 @@ function validateCommittedSnapshot(
     const declared = matter.historicalSupport ?? [];
     if (!declared.some((support) => (
       support.relation === pin.relation
+      && support.sourceMatterId === pin.sourceMatterId
       && support.evidenceId === pin.evidence.id
     ))) {
       throw new Error(`snapshot historical support pin is undeclared: ${pin.matterId}`);
     }
-    const key = `${pin.matterId}|${pin.relation}|${pin.evidence.id}`;
+    const source = snapshot.matters.find((candidate) => candidate.id === pin.sourceMatterId);
+    if (!source
+      || !isTerminal(source.status)
+      || source.activeRunId !== null
+      || source.lastOutcomeEvidenceId !== pin.evidence.id) {
+      throw new Error(`snapshot historical support source is not exact terminal outcome: ${pin.sourceMatterId}`);
+    }
+    const candidateIntent = matter.semanticIntent;
+    if (pin.relation === "prior_same_material_outcome"
+      && (candidateIntent?.kind !== "acquire_material_object"
+        || source.semanticIntent?.kind !== "acquire_material_object"
+        || source.semanticIntent.objectId !== candidateIntent.objectId
+        || pin.evidence.kind !== "task_outcome")) {
+      throw new Error("snapshot prior material support violates exact object/outcome relation");
+    }
+    const key = `${pin.matterId}|${pin.sourceMatterId}|${pin.relation}|${pin.evidence.id}`;
     if (historicalPinKeys.has(key)) {
       throw new Error(`duplicate snapshot historical support pin: ${key}`);
     }
@@ -1021,7 +1080,7 @@ function validateCommittedSnapshot(
   for (const matter of snapshot.matters) {
     if (isTerminal(matter.status)) continue;
     for (const support of matter.historicalSupport ?? []) {
-      const key = `${matter.id}|${support.relation}|${support.evidenceId}`;
+      const key = `${matter.id}|${support.sourceMatterId}|${support.relation}|${support.evidenceId}`;
       if (!historicalPinKeys.has(key)) {
         throw new Error(`snapshot current matter lost historical support pin: ${matter.id}`);
       }
@@ -1138,12 +1197,14 @@ function validateHistoricalSupport(
   const result: ResidentMatterHistoricalSupport[] = [];
   for (const entry of support) {
     validateHistoricalSupportRelation(entry.relation);
+    assertSpcIdentifier(entry.sourceMatterId, "matter historical support source matter id");
     assertSpcIdentifier(entry.evidenceId, "matter historical support evidence id");
-    const key = `${entry.relation}|${entry.evidenceId}`;
+    const key = `${entry.relation}|${entry.sourceMatterId}|${entry.evidenceId}`;
     if (seen.has(key)) throw new Error(`duplicate matter historical support: ${key}`);
     seen.add(key);
     result.push({
       relation: entry.relation,
+      sourceMatterId: entry.sourceMatterId,
       evidenceId: entry.evidenceId,
     });
   }
