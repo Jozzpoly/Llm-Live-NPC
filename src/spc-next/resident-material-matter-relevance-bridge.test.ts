@@ -71,6 +71,72 @@ function emptyLife(kernel: ResidentContinuityKernel) {
 
 describe("ResidentMaterialMatterRelevanceBridge", () => {
 
+  it("fails closed across one recent and one older archived same-object terminal episode", () => {
+    const resident = new ResidentRuntime({
+      ...DEFAULT_RESIDENT_PROFILE,
+      id: "resident.material-mixed-history-ambiguity",
+      name: "Material Mixed History Ambiguity",
+    });
+    const kernel = new ResidentContinuityKernel({
+      recentEvidenceLimit: 2,
+      terminalOutcomeArchiveLimit: 4,
+    });
+    terminalBlockedMaterialMatter(
+      kernel,
+      "matter.material.mixed.old",
+      "run.material.mixed.old",
+      "crate.mixed",
+    );
+    terminalBlockedMaterialMatter(
+      kernel,
+      "matter.material.mixed.recent",
+      "run.material.mixed.recent",
+      "crate.mixed",
+    );
+
+    const focus = new ResidentExecutionFocusAuthority(kernel);
+    const arbitrator = new ResidentExecutionArbitrator(kernel, focus);
+    const life = captureResidentLifeCognitionView({
+      kernel,
+      focus,
+      arbitrator,
+      matterIds: ["matter.material.mixed.recent"],
+    });
+    expect(life.matters).toContainEqual(expect.objectContaining({
+      id: "matter.material.mixed.recent",
+      status: "resolved",
+      lastOutcomeEvidence: expect.objectContaining({ kind: "task_outcome" }),
+    }));
+    expect(kernel.recentEvidenceSnapshot().some(
+      (evidence) => evidence.id.includes("run.material.mixed.old"),
+    )).toBe(false);
+
+    const bridge = new ResidentMaterialMatterRelevanceBridge(resident, kernel);
+    expect(bridge.observeReacquisition(
+      {
+        objectId: "crate.mixed",
+        lastKnownPosition: { x: 10, y: 10 },
+        observedAtTick: 2,
+        currentlyVisible: false,
+      },
+      {
+        objectId: "crate.mixed",
+        lastKnownPosition: { x: 30, y: 10 },
+        observedAtTick: 3,
+        currentlyVisible: true,
+      },
+      life,
+    )).toEqual({
+      status: "ambiguous",
+      objectId: "crate.mixed",
+      matterIds: [
+        "matter.material.mixed.old",
+        "matter.material.mixed.recent",
+      ],
+    });
+    expect(resident.pendingCognitionReasons()).toEqual([]);
+  });
+
   it("fails closed when two archived terminal same-object failures could explain one delayed reacquisition", () => {
     const resident = new ResidentRuntime({
       ...DEFAULT_RESIDENT_PROFILE,
