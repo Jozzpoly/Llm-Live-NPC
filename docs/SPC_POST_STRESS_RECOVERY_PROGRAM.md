@@ -697,27 +697,29 @@ Current recovery order:
    - canonical post-stress execution authority;
 3. **`docs/SPC_R6_COMPLEMENTARY_PERSONHOOD_EXPERIMENT.md`**
    - binding current R6 experiment contract;
-4. **`docs/SPC_R6_DELAYED_FACTUAL_HISTORY_CHOICE_FINDING.md`**
-   - current strongest delayed-history result: A may leave recent/current life, become exact causal genealogy of current C after later relevance, and change a real-Luna C-vs-D choice without reopening A;
-5. **`docs/SPC_R6_ENDOGENOUS_COMPETING_FUTURE_RUNTIME_FINDING.md`**
+4. **`docs/SPC_R6_CUMULATIVE_SAME_ACTOR_HISTORY_FINDING.md`**
+   - current strongest cumulative-history result: two independent terminal same-actor factual outcomes jointly changed a later real-Luna C-vs-D judgement while old matters remained absent from current life;
+5. **`docs/SPC_R6_DELAYED_FACTUAL_HISTORY_CHOICE_FINDING.md`**
+   - preceding delayed-history result: A may leave recent/current life, become exact causal genealogy of current C after later relevance, and change a real-Luna C-vs-D choice without reopening A;
+6. **`docs/SPC_R6_ENDOGENOUS_COMPETING_FUTURE_RUNTIME_FINDING.md`**
    - deterministic provenance/composition authority for the normal A → delayed reacquisition/C + B → D → genuine choice chain;
-6. **`docs/SPC_R6_COMPETING_FUTURE_FACTUAL_HISTORY_FINDING.md`**
+7. **`docs/SPC_R6_COMPETING_FUTURE_FACTUAL_HISTORY_FINDING.md`**
    - preceding near-term exact real-Luna competing-future split and local causal admission;
-7. **`docs/SPC_R6_POST_TERMINAL_FACTUAL_HISTORY_FINDING.md`**
+8. **`docs/SPC_R6_POST_TERMINAL_FACTUAL_HISTORY_FINDING.md`**
    - preceding single-opportunity neutral finding; authoritative for what run #24 did and did not prove;
-8. **`docs/SPC_R6_ENDOGENOUS_ORDINARY_PERSONHOOD_FINDING.md`**
+9. **`docs/SPC_R6_ENDOGENOUS_ORDINARY_PERSONHOOD_FINDING.md`**
    - bounded positive endogenous standing-history finding and evidence/nonclaim boundary;
-9. **`docs/SPC_R6B_NATIVE_STANDING_SOCIAL_CONTINUATION_PASS.md`**
+10. **`docs/SPC_R6B_NATIVE_STANDING_SOCIAL_CONTINUATION_PASS.md`**
    - qualified bounded R6 mechanism evidence;
-10. **`docs/SPC_R6A_STANDING_SOCIAL_COMMITMENT_PASS.md`**
+11. **`docs/SPC_R6A_STANDING_SOCIAL_COMMITMENT_PASS.md`**
    - earlier bounded R6-A evidence and nonclaims;
-11. **R5 evidence documents**
+12. **R5 evidence documents**
    - semantic escalation, stale attention, provider outcomes and real-Luna causal boundary;
-12. **R4 / R3 / R2 / R1 qualified evidence documents**
+13. **R4 / R3 / R2 / R1 qualified evidence documents**
    - preserved scoped evidence, not current feature sequence;
-13. **`docs/SPC_NEXT_OWNER_INTENT_AND_GAP_AUDIT.md`**, pressure/re-observation documents
+14. **`docs/SPC_NEXT_OWNER_INTENT_AND_GAP_AUDIT.md`**, pressure/re-observation documents
    - durable Owner/product guardrails and donor evidence;
-14. **`docs/SPC_LIVING_WORLD_EXECUTION_PROGRAM.md`** and older recovery/Pass-2 documents
+15. **`docs/SPC_LIVING_WORLD_EXECUTION_PROGRAM.md`** and older recovery/Pass-2 documents
    - historical evidence only.
 
 `docs/PROJECT_STATE.md`, `docs/FRESH_TAKEOVER.md`, `docs/SPC_NEXT_CURRENT_STATE_RECONCILIATION.md` and older architecture-recovery documents must **not** be used as the current feature sequence.
@@ -753,10 +755,16 @@ Completed and retained only within their documented scopes:
     - strengthened endogenous chain `b4861568d222f11f3f0b0621cae14c92088acdc9`: A leaves recent/current life before reacquisition, then archive-backed relevance creates C and normal B outcome creates D; Check #1725 **279 / 279 files, 1006 / 1006 tests**;
     - Live Provider run #27 `ebf41ab8d67c86dd4eb4b3e4c8a30978ef73b827`: control `defer_all`, delayed-history `focus_matter(retry)`, exact old factual outcome cited, exactly two Luna calls, zero retries;
     - exact replay `31a162e7debd25ec1d2aa742963e34cc67a225fb`: local admission GREEN, Check #1724 **279 / 279 files, 1006 / 1006 tests**.
+21. cumulative same-actor factual history — **MATERIAL BOUNDED POSITIVE; bounded CLOSED**:
+    - characterized gap: two old Ida communication outcomes survive bounded archive but have no legal path into later Ida-vs-other choice;
+    - earned repair: bounded typed \`prior_same_actor_outcome\` genealogy on a current exact-same-actor \`communicate_actor\` matter, max 8 most recent, no score/sentiment;
+    - Live Provider run #29 \`900d626b9049a43438993a96e7b442c6e59aa369\`: control \`defer_all\`, history \`focus_matter(other)\`, **both** old Ida outcomes cited, exactly two Luna calls, zero retries;
+    - run #28 is zero-spend apparatus-only failure before inference;
+    - exact local replay \`0bf8ad82e691c6fbd8accf7d975a0bb7d71574f8\`: Check #1753 **284 / 284 files, 1020 / 1020 tests**, Browser Evidence #977 PASS.
 
 Current:
 
-> **R6 personhood breadth — one exact terminal factual self-experience can survive beyond bounded recent/current life as narrowly defended causal genealogy of a later current matter and materially change a genuine competing-future judgement. The delayed same-object lineage is bounded CLOSED; the next pressure is cumulative ordinary experience beyond any single exact lineage or standing obligation.**
+> **R6 personhood breadth — several independent terminal same-actor factual experiences can now survive outside current/recent life as bounded candidate-scoped genealogy and jointly change a genuine real-Luna competing-future judgement. The cumulative same-actor communication stage is bounded CLOSED; the next pressure controls history cardinality and asks whether factual meaning/consequence matters, not merely repetition count.**
 
 The explicit-standing-obligation endogenous stage remains **bounded CLOSED**.
 
@@ -786,15 +794,16 @@ Immediate method:
 - preserve bounded terminal archive as non-live factual provenance;
 - preserve candidate-scoped causal genealogy and release it when the current descendant matter terminates;
 - preserve R1 homeostasis, R2 metabolism, private epistemics, local admission and R5 provider safety as vetoes;
-- now attack a **qualitatively different** personhood limitation: cumulative ordinary experience;
-- first characterize whether several independently factual past episodes can jointly matter later when no single exact object/matter/standing obligation supplies the answer;
-- do not introduce generic autobiographical memory, preference weights, aversion, habits or relationship scores before that failure earns a narrower representation;
+- retain run #29 exactly as one bounded cumulative same-actor positive observation; do not rerun it for a preferred direction;
+- attack the remaining **cardinality-vs-meaning ambiguity**: same actor, same number of old episodes, same current C-vs-D ambiguity, different factual old outcomes/consequences;
+- first test whether existing factual outcome evidence can carry that distinction honestly;
+- do not introduce generic autobiographical memory, preference weights, aversion, habits or relationship scores before a concrete representation failure earns something narrower;
 - retain Browser Oren/Nela genericity as honest promotion-plane debt;
 - keep full R6 / five living residents / Owner-observed ordinary personhood **UNPROVEN**;
 - do not prepare an Owner gate or merge PR #148 by CI inertia.
 
 Next research question:
 
-> **Can several independently factual past experiences, none of which is itself an open obligation or exact same-object continuation, jointly alter a later endogenous choice in a causally attributable way without replacing personhood with generic personality/preference state?**
+> **With the same actor, the same number of old episodes and the same current C-vs-D ambiguity, can different factual past outcomes or consequences change later judgement — or is the current system only sensitive to repetition/cardinality?**
 
 The architecture must continue to be earned by resident-life pressure, not by a desire to fill a personality feature list.
