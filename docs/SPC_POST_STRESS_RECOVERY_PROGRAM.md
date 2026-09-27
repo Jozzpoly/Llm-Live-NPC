@@ -697,29 +697,31 @@ Current recovery order:
    - canonical post-stress execution authority;
 3. **`docs/SPC_R6_COMPLEMENTARY_PERSONHOOD_EXPERIMENT.md`**
    - binding current R6 experiment contract;
-4. **`docs/SPC_R6_CUMULATIVE_SAME_ACTOR_HISTORY_FINDING.md`**
-   - current strongest cumulative-history result: two independent terminal same-actor factual outcomes jointly changed a later real-Luna C-vs-D judgement while old matters remained absent from current life;
-5. **`docs/SPC_R6_DELAYED_FACTUAL_HISTORY_CHOICE_FINDING.md`**
+4. **`docs/SPC_R6_SAME_CARDINALITY_OUTCOME_MEANING_FINDING.md`**
+   - current strongest outcome-meaning result: at fixed actor/history count/support identities, two succeeded outcomes versus two blocked outcomes produced opposite real-Luna C-vs-D choices and both exact old facts were cited;
+5. **`docs/SPC_R6_CUMULATIVE_SAME_ACTOR_HISTORY_FINDING.md`**
+   - preceding cumulative-history result: two independent terminal same-actor factual outcomes jointly changed a later real-Luna C-vs-D judgement while old matters remained absent from current life;
+6. **`docs/SPC_R6_DELAYED_FACTUAL_HISTORY_CHOICE_FINDING.md`**
    - preceding delayed-history result: A may leave recent/current life, become exact causal genealogy of current C after later relevance, and change a real-Luna C-vs-D choice without reopening A;
-6. **`docs/SPC_R6_ENDOGENOUS_COMPETING_FUTURE_RUNTIME_FINDING.md`**
+7. **`docs/SPC_R6_ENDOGENOUS_COMPETING_FUTURE_RUNTIME_FINDING.md`**
    - deterministic provenance/composition authority for the normal A → delayed reacquisition/C + B → D → genuine choice chain;
-7. **`docs/SPC_R6_COMPETING_FUTURE_FACTUAL_HISTORY_FINDING.md`**
+8. **`docs/SPC_R6_COMPETING_FUTURE_FACTUAL_HISTORY_FINDING.md`**
    - preceding near-term exact real-Luna competing-future split and local causal admission;
-8. **`docs/SPC_R6_POST_TERMINAL_FACTUAL_HISTORY_FINDING.md`**
+9. **`docs/SPC_R6_POST_TERMINAL_FACTUAL_HISTORY_FINDING.md`**
    - preceding single-opportunity neutral finding; authoritative for what run #24 did and did not prove;
-9. **`docs/SPC_R6_ENDOGENOUS_ORDINARY_PERSONHOOD_FINDING.md`**
+10. **`docs/SPC_R6_ENDOGENOUS_ORDINARY_PERSONHOOD_FINDING.md`**
    - bounded positive endogenous standing-history finding and evidence/nonclaim boundary;
-10. **`docs/SPC_R6B_NATIVE_STANDING_SOCIAL_CONTINUATION_PASS.md`**
+11. **`docs/SPC_R6B_NATIVE_STANDING_SOCIAL_CONTINUATION_PASS.md`**
    - qualified bounded R6 mechanism evidence;
-11. **`docs/SPC_R6A_STANDING_SOCIAL_COMMITMENT_PASS.md`**
+12. **`docs/SPC_R6A_STANDING_SOCIAL_COMMITMENT_PASS.md`**
    - earlier bounded R6-A evidence and nonclaims;
-12. **R5 evidence documents**
+13. **R5 evidence documents**
    - semantic escalation, stale attention, provider outcomes and real-Luna causal boundary;
-13. **R4 / R3 / R2 / R1 qualified evidence documents**
+14. **R4 / R3 / R2 / R1 qualified evidence documents**
    - preserved scoped evidence, not current feature sequence;
-14. **`docs/SPC_NEXT_OWNER_INTENT_AND_GAP_AUDIT.md`**, pressure/re-observation documents
+15. **`docs/SPC_NEXT_OWNER_INTENT_AND_GAP_AUDIT.md`**, pressure/re-observation documents
    - durable Owner/product guardrails and donor evidence;
-15. **`docs/SPC_LIVING_WORLD_EXECUTION_PROGRAM.md`** and older recovery/Pass-2 documents
+16. **`docs/SPC_LIVING_WORLD_EXECUTION_PROGRAM.md`** and older recovery/Pass-2 documents
    - historical evidence only.
 
 `docs/PROJECT_STATE.md`, `docs/FRESH_TAKEOVER.md`, `docs/SPC_NEXT_CURRENT_STATE_RECONCILIATION.md` and older architecture-recovery documents must **not** be used as the current feature sequence.
@@ -757,14 +759,20 @@ Completed and retained only within their documented scopes:
     - exact replay `31a162e7debd25ec1d2aa742963e34cc67a225fb`: local admission GREEN, Check #1724 **279 / 279 files, 1006 / 1006 tests**.
 21. cumulative same-actor factual history — **MATERIAL BOUNDED POSITIVE; bounded CLOSED**:
     - characterized gap: two old Ida communication outcomes survive bounded archive but have no legal path into later Ida-vs-other choice;
-    - earned repair: bounded typed \`prior_same_actor_outcome\` genealogy on a current exact-same-actor \`communicate_actor\` matter, max 8 most recent, no score/sentiment;
-    - Live Provider run #29 \`900d626b9049a43438993a96e7b442c6e59aa369\`: control \`defer_all\`, history \`focus_matter(other)\`, **both** old Ida outcomes cited, exactly two Luna calls, zero retries;
+    - earned repair: bounded typed `prior_same_actor_outcome` genealogy on a current exact-same-actor `communicate_actor` matter, max 8 most recent, no score/sentiment;
+    - Live Provider run #29 `900d626b9049a43438993a96e7b442c6e59aa369`: control `defer_all`, history `focus_matter(other)`, **both** old Ida outcomes cited, exactly two Luna calls, zero retries;
     - run #28 is zero-spend apparatus-only failure before inference;
-    - exact local replay \`0bf8ad82e691c6fbd8accf7d975a0bb7d71574f8\`: Check #1753 **284 / 284 files, 1020 / 1020 tests**, Browser Evidence #977 PASS.
+    - exact local replay `0bf8ad82e691c6fbd8accf7d975a0bb7d71574f8`: Check #1753 **284 / 284 files, 1020 / 1020 tests**, Browser Evidence #977 PASS.
+22. same-cardinality factual outcome meaning — **MATERIAL BOUNDED POSITIVE; bounded CLOSED**:
+    - deterministic World-grounded contrast creates exactly two structured same-actor communication outcomes in each history through `ResidentMessageDeliveryExecutor`: either `2×succeeded` or `2×blocked: recipient_absent_at_best_known_contact`;
+    - actor, eligible history count, source/evidence IDs, current C/D and body state are held fixed; existing `task_outcome.summary` preserves the factual distinction without new personhood representation;
+    - Worker frozen twin accepts both histories with identical legal evidence-ID/schema surfaces;
+    - Live Provider run #30 `d4dd09c0d6afefefaf60772ebdb169728128b548`: succeeded-history `focus_matter(current Janek C)`, blocked-history `focus_matter(unrelated D)`, both sides cite both exact old outcomes, exactly two Luna calls, zero semantic retries;
+    - exact local replay: Check #1766 **287 / 287 files, 1026 / 1026 tests**, typecheck/build/preview PASS.
 
 Current:
 
-> **R6 personhood breadth — several independent terminal same-actor factual experiences can now survive outside current/recent life as bounded candidate-scoped genealogy and jointly change a genuine real-Luna competing-future judgement. The cumulative same-actor communication stage is bounded CLOSED; the next pressure controls history cardinality and asks whether factual meaning/consequence matters, not merely repetition count.**
+> **R6 personhood breadth — at fixed same-actor history count and fixed current ambiguity, factual consequence meaning itself can now change a genuine real-Luna choice through exact old evidence. Same-cardinality own-task-outcome meaning is bounded CLOSED; the next pressure moves from the resident's own task outcomes to durable facts about what the other resident actually did.**
 
 The explicit-standing-obligation endogenous stage remains **bounded CLOSED**.
 
@@ -782,7 +790,9 @@ Canonical records:
 - `docs/SPC_R6_POST_TERMINAL_FACTUAL_HISTORY_FINDING.md`;
 - `docs/SPC_R6_COMPETING_FUTURE_FACTUAL_HISTORY_FINDING.md`;
 - `docs/SPC_R6_ENDOGENOUS_COMPETING_FUTURE_RUNTIME_FINDING.md`;
-- `docs/SPC_R6_DELAYED_FACTUAL_HISTORY_CHOICE_FINDING.md`.
+- `docs/SPC_R6_DELAYED_FACTUAL_HISTORY_CHOICE_FINDING.md`;
+- `docs/SPC_R6_CUMULATIVE_SAME_ACTOR_HISTORY_FINDING.md`;
+- `docs/SPC_R6_SAME_CARDINALITY_OUTCOME_MEANING_FINDING.md`.
 
 Run #25 remains explicitly non-semantic apparatus evidence: strict-schema failure, no proposal, zero token usage.
 
@@ -794,16 +804,17 @@ Immediate method:
 - preserve bounded terminal archive as non-live factual provenance;
 - preserve candidate-scoped causal genealogy and release it when the current descendant matter terminates;
 - preserve R1 homeostasis, R2 metabolism, private epistemics, local admission and R5 provider safety as vetoes;
-- retain run #29 exactly as one bounded cumulative same-actor positive observation; do not rerun it for a preferred direction;
-- attack the remaining **cardinality-vs-meaning ambiguity**: same actor, same number of old episodes, same current C-vs-D ambiguity, different factual old outcomes/consequences;
-- first test whether existing factual outcome evidence can carry that distinction honestly;
-- do not introduce generic autobiographical memory, preference weights, aversion, habits or relationship scores before a concrete representation failure earns something narrower;
+- retain run #29 exactly as the bounded cumulative-count finding and run #30 exactly as the bounded same-cardinality outcome-meaning finding; do not rerun either for a preferred stochastic direction;
+- do not infer trust/liking/aversion from successful or blocked own-task outcomes;
+- move the personhood pressure to **counterparty-caused social history**: a factual response/action by the other resident that later matters after immediate perception has left recent life;
+- first characterize whether such an old counterparty-caused fact has any exact admissible route into a later genuine choice;
+- do not introduce generic autobiographical memory, preference weights, habits or relationship scores before that concrete provenance failure earns something narrower;
 - retain Browser Oren/Nela genericity as honest promotion-plane debt;
 - keep full R6 / five living residents / Owner-observed ordinary personhood **UNPROVEN**;
 - do not prepare an Owner gate or merge PR #148 by CI inertia.
 
 Next research question:
 
-> **With the same actor, the same number of old episodes and the same current C-vs-D ambiguity, can different factual past outcomes or consequences change later judgement — or is the current system only sensitive to repetition/cardinality?**
+> **Can a factual response/action by the other resident survive beyond immediate recent perception and later change a genuine endogenous choice through exact causal provenance, without being compressed into a relationship score?**
 
 The architecture must continue to be earned by resident-life pressure, not by a desire to fill a personality feature list.
