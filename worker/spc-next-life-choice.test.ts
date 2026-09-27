@@ -162,6 +162,85 @@ describe("SPC Next resident-life choice Worker", () => {
     expect(sanitizeSpcNextLifeChoiceContext(leakedMethod)).toBeNull();
   });
 
+  it("carries only candidate-scoped delayed factual history into Worker choice support", () => {
+    const delayed = structuredClone(context) as any;
+    delayed.life.matters[0].semanticIntent = {
+      kind: "acquire_material_object",
+      goal: "try the familiar crate again",
+      objectId: "crate.worker.delayed-history",
+    };
+    delayed.life.matters[0].historicalSupport = [{
+      relation: "prior_same_material_outcome",
+      sourceMatterId: "matter.mira.worker.old-terminal",
+      evidence: {
+        id: "evidence:mira:worker:old-terminal-outcome",
+        tick: 20,
+        kind: "task_outcome",
+        summary: "blocked: factual material attempt returned object_unavailable",
+        sourceRunId: "run.mira.worker.old-terminal",
+      },
+    }];
+    delayed.life.matters[1].semanticIntent = {
+      kind: "travel_region",
+      goal: "take an unrelated current future",
+      targetRegionId: "hearth",
+    };
+
+    const sanitized = sanitizeSpcNextLifeChoiceContext(delayed);
+    expect(sanitized).not.toBeNull();
+    const materialSupport = sanitized?.candidateSupports.find(
+      (candidate) => candidate.matterId === B,
+    );
+    expect(materialSupport?.facts).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        evidenceId: "evidence:mira:worker:old-terminal-outcome",
+        sourceMatterId: "matter.mira.worker.old-terminal",
+        relation: "prior_same_material_outcome",
+        evidenceKind: "task_outcome",
+      }),
+    ]));
+    const otherSupport = sanitized?.candidateSupports.find(
+      (candidate) => candidate.matterId === C,
+    );
+    expect(otherSupport?.facts.some(
+      (fact) => fact.evidenceId === "evidence:mira:worker:old-terminal-outcome",
+    )).toBe(false);
+
+    expect(extractSpcNextLifeChoiceDecision(
+      responseBody({
+        kind: "focus_matter",
+        matterId: C,
+        reason: "the exact earlier material failure belongs to the competing retry, so take C instead",
+        supportEvidenceIds: [
+          "evidence:mira:worker:old-terminal-outcome",
+          "evidence:c:origin",
+        ],
+        reviewAfterSeconds: 12,
+      }),
+      sanitized!.candidateMatterIds,
+      sanitized!.candidateSupports,
+    )).toMatchObject({
+      kind: "focus_matter",
+      matterId: C,
+      supportEvidenceIds: [
+        "evidence:mira:worker:old-terminal-outcome",
+        "evidence:c:origin",
+      ],
+    });
+
+    const illegalTravelHistory = structuredClone(delayed);
+    illegalTravelHistory.life.matters[0].semanticIntent = {
+      kind: "travel_region",
+      goal: "ordinary travel",
+      targetRegionId: "hearth",
+    };
+    expect(sanitizeSpcNextLifeChoiceContext(illegalTravelHistory)).toBeNull();
+
+    const nonOutcomeHistory = structuredClone(delayed);
+    nonOutcomeHistory.life.matters[0].historicalSupport[0].evidence.kind = "life_context";
+    expect(sanitizeSpcNextLifeChoiceContext(nonOutcomeHistory)).toBeNull();
+  });
+
   it("extracts only a bounded choice among supplied matters or an explicit defer-all", () => {
     expect(extractSpcNextLifeChoiceDecision(
       responseBody(focusB()),
