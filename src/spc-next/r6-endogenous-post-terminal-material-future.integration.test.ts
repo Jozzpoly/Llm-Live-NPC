@@ -99,7 +99,7 @@ describe("R6 endogenous post-terminal material future", () => {
       runId: OLD_RUN_ID,
       tick: world.tick,
       status: "blocked",
-      summary: "object_unavailable after factual local material attempt",
+      summary: "blocked: factual material attempt returned object_unavailable",
     });
     expect(oldOutcome.status).toBe("recorded");
     kernel.resolveMatter(OLD_MATTER_ID);
