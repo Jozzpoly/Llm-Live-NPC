@@ -732,13 +732,37 @@ The stronger behavioral claim is **not proven**. In this pair the control alread
 
 Do not rerun run #31 for a stochastic split.
 
-The next pressure removes that current-cue asymmetry: **symmetric social-vs-social choice**.
+The symmetric Nela-vs-Ida follow-up is now recorded in
+\`docs/SPC_R6_SYMMETRIC_SOCIAL_NONACTION_FINDING.md\`.
 
-Required question:
+Run #32 uses a generated symmetric social-vs-social pressure and one matched real-Luna pair:
 
-> **When Oren has equally current legal reasons to speak with Nela and Ida, can one exact prior factual action by Nela change which person he chooses to engage with, through cited provenance and without relationship scores?**
+- control: \`defer_all\`;
+- history: \`defer_all\`;
+- history rationale explicitly considers the old Nela release but judges it insufficient to establish current priority;
+- behavior remains equal;
+- the old decision contract cannot formally cite evidence on \`defer_all\`;
+- classification:
+  **\`SYMMETRIC_SAME_DECISION_NO_COUNTERPARTY_HISTORY_USE\`**.
 
-First generate the Nela-vs-Ida ambiguity through normal local authorities. Only then freeze a provider pair if the deterministic surface is clean.
+Do not reclassify this live result after repair.
+
+The run exposed a narrower causal-attribution gap for deliberate non-action. That gap is now deterministically closed:
+
+- \`defer_all.supportEvidenceIds\` is optional and bounded;
+- every cited ID must belong to the frozen current candidate-support plane;
+- legacy no-citation defer remains legal;
+- forged evidence is rejected;
+- Worker strict schema exposes separate no-citation and evidence-grounded defer variants;
+- evidence citation grants no execution/body authority.
+
+At \`5ebdd291ba146fc939126751ef4496d8821b7b6f\`, Check #1809 passes **296 / 296 files, 1045 / 1045 tests**.
+
+The next pressure is no longer another reroll of Nela-vs-Ida. It is **plan revision / refusal**:
+
+> **Can exact resident-owned history make one already-current legal matter cease to be the resident's chosen future through a bounded locally admitted plan-change mechanism, without giving the provider arbitrary cancellation authority or inventing preference state?**
+
+Characterize the current inability first.
 
 ## 8. Anti-cheat rules
 
@@ -834,17 +858,18 @@ Current order:
 7. retain run #30 as the first **MATERIAL BOUNDED POSITIVE** same-cardinality outcome-meaning split: `2×succeeded` chose current Janek C while `2×blocked` chose unrelated D, with both old outcomes cited on both sides;
 8. treat same-cardinality own-task-outcome meaning as **bounded CLOSED**;
 9. retain the counterparty-caused provenance repair and run #31 exactly as a **BOUNDED NEUTRAL** live finding: old Nela release is durable/citable, but behavioral effect is unproven;
-10. do not rerun run #31 for a stochastic split;
-11. create a deterministic **symmetric Nela-vs-Ida social choice** through normal authorities, with equally current legal reasons and only Nela carrying old counterparty release history;
-12. if that surface is clean, freeze one matched provider pair and require exact release citation for any causal behavioral claim;
-13. do not add preference/aversion, gratitude, trust, habit, relationship scores or generic autobiographical memory before a stronger pressure earns them;
-14. preserve Janek/material continuity, R1 homeostasis, R2 metabolism, private knowledge and R5 provider safety as vetoes;
-15. retain browser Oren/Nela genericity as honest promotion-plane debt;
-16. do not prepare an Owner gate or merge PR #148 by CI inertia.
+10. retain run #32 exactly as a **BOUNDED NEUTRAL** symmetric social-vs-social result: control/history both `defer_all`; history rationale notices the release but the old contract cannot causally cite evidence for non-action;
+11. retain the deterministic causal-non-action repair: optional bounded defer-all support, legacy defer preserved, forged evidence rejected; do **not** rerun #32 merely because the schema is now richer;
+12. move to **plan revision / refusal** as the next qualitatively different ordinary-personhood pressure;
+13. first characterize whether a resident can locally relinquish one already-current legal matter for causally attributable reasons without provider-owned deletion;
+14. do not add preference/aversion, gratitude, trust, habit, relationship scores or generic autobiographical memory before a stronger pressure earns them;
+15. preserve Janek/material continuity, R1 homeostasis, R2 metabolism, private knowledge and R5 provider safety as vetoes;
+16. retain browser Oren/Nela genericity as honest promotion-plane debt;
+17. do not prepare an Owner gate or merge PR #148 by CI inertia.
 
 The next research question is now:
 
-> **When current social alternatives are symmetric, can one exact prior factual action by Nela change which person Oren chooses to engage with, through cited causal provenance and without relationship scores?**
+> **Can exact resident-owned history make one already-current legal matter cease to be the resident's chosen future through a bounded locally admitted plan-change/refusal mechanism, without provider-owned deletion or generic preference state?**
 
 ## 12. Owner-observed target
 
