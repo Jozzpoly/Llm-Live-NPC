@@ -10,7 +10,8 @@ export type ResidentLifeChoiceSupportRelation =
   | "current_semantic_context"
   | "blocked_outcome"
   | "last_outcome"
-  | "prior_same_material_outcome";
+  | "prior_same_material_outcome"
+  | "prior_same_actor_outcome";
 
 export interface ResidentLifeChoiceSupportFact {
   evidenceId: string;
@@ -37,12 +38,12 @@ export interface ResidentLifeChoiceCandidateSupport {
  * The first personhood-specific distinction recognized here is an open social
  * responsibility whose matter origin is exact accepted_social_commitment evidence.
  *
- * R6 additionally earns one deliberately narrow post-terminal relation:
- * when a current material-acquisition candidate concerns the exact same objectId as
- * a terminal material matter still present in the bounded life view, that terminal
- * matter's factual task outcome may be cited as prior_same_material_outcome support
- * for the current candidate. The old matter remains terminal; this projection grants
- * it no run, body demand, execution authority or implicit reopening.
+ * R6 additionally earns narrow typed post-terminal relations:
+ * - exact same-material factual outcome;
+ * - exact same-actor communication factual outcome.
+ *
+ * These are candidate genealogy, not priority or relationship scores. Old matters
+ * remain terminal and gain no run/body/execution authority.
  */
 export function deriveResidentLifeChoiceCandidateSupports(
   life: ResidentLifeCognitionView,
@@ -66,15 +67,15 @@ export function allowedChoiceSupportEvidenceIds(
   if (!candidate) return [];
 
   // Most evidence remains candidate-local: choosing B cannot cite A's ordinary
-  // origin/current context. The earned R6 exception is comparative terminal material
-  // history. A factual prior outcome attached to candidate A may causally explain
-  // choosing A *or avoiding A in favour of another current candidate*, while the
-  // candidateSupports structure still preserves exactly which candidate that history
-  // belongs to.
+  // origin/current context. The earned R6 exception is typed comparative terminal
+  // history. A factual prior same-material or same-actor outcome attached to candidate
+  // A may causally explain choosing A *or avoiding A in favour of another current
+  // candidate*, while candidateSupports still preserves where that history belongs.
   const allowed = new Set(candidate.facts.map((fact) => fact.evidenceId));
   for (const support of supports) {
     for (const fact of support.facts) {
-      if (fact.relation === "prior_same_material_outcome") {
+      if (fact.relation === "prior_same_material_outcome"
+        || fact.relation === "prior_same_actor_outcome") {
         allowed.add(fact.evidenceId);
       }
     }
@@ -131,17 +132,31 @@ function addPinnedHistoricalSupportFacts(
   seenEvidenceIds: Set<string>,
   candidate: ResidentLifeMatterView,
 ): void {
-  if (candidate.semanticIntent?.kind !== "acquire_material_object") return;
   for (const support of candidate.historicalSupport ?? []) {
-    if (support.relation !== "prior_same_material_outcome"
-      || support.evidence.kind !== "task_outcome") continue;
-    addFact(
-      facts,
-      seenEvidenceIds,
-      support.evidence,
-      "prior_same_material_outcome",
-      support.sourceMatterId,
-    );
+    if (support.evidence.kind !== "task_outcome") continue;
+
+    if (support.relation === "prior_same_material_outcome"
+      && candidate.semanticIntent?.kind === "acquire_material_object") {
+      addFact(
+        facts,
+        seenEvidenceIds,
+        support.evidence,
+        "prior_same_material_outcome",
+        support.sourceMatterId,
+      );
+      continue;
+    }
+
+    if (support.relation === "prior_same_actor_outcome"
+      && candidate.semanticIntent?.kind === "communicate_actor") {
+      addFact(
+        facts,
+        seenEvidenceIds,
+        support.evidence,
+        "prior_same_actor_outcome",
+        support.sourceMatterId,
+      );
+    }
   }
 }
 
