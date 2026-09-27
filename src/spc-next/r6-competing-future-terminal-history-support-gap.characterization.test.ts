@@ -104,15 +104,12 @@ describe("R6 competing-future terminal-history causal support", () => {
   });
 
   it("requires exact structured object identity rather than prose similarity", () => {
-    const mismatchedLife = lifeView();
-    const history = mismatchedLife.matters.find((matter) => matter.id === HISTORY_MATTER);
+    const mismatchedLife = structuredClone(lifeView()) as any;
+    const history = mismatchedLife.matters.find((matter: any) => matter.id === HISTORY_MATTER);
     if (!history || history.semanticIntent?.kind !== "acquire_material_object") {
       throw new Error("R6 competing-future history fixture missing material intent");
     }
-    history.semanticIntent = {
-      ...history.semanticIntent,
-      objectId: "crate.r6.competing-future.different",
-    };
+    history.semanticIntent.objectId = "crate.r6.competing-future.different";
 
     const { owner, batch } = setupResident();
     const attempt = owner.prepare(batch, mismatchedLife);
