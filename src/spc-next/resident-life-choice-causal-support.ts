@@ -136,9 +136,8 @@ function addPinnedHistoricalSupportFacts(
   candidate: ResidentLifeMatterView,
 ): void {
   for (const support of candidate.historicalSupport ?? []) {
-    if (support.evidence.kind !== "task_outcome") continue;
-
     if (support.relation === "prior_same_material_outcome"
+      && support.evidence.kind === "task_outcome"
       && candidate.semanticIntent?.kind === "acquire_material_object") {
       addFact(
         facts,
@@ -151,6 +150,7 @@ function addPinnedHistoricalSupportFacts(
     }
 
     if (support.relation === "prior_same_actor_outcome"
+      && support.evidence.kind === "task_outcome"
       && candidate.semanticIntent?.kind === "communicate_actor") {
       addFact(
         facts,
@@ -163,6 +163,7 @@ function addPinnedHistoricalSupportFacts(
     }
 
     if (support.relation === "prior_counterparty_social_outcome"
+      && support.evidence.kind === "resident_released_social_commitment"
       && candidate.semanticIntent?.kind === "communicate_actor") {
       addFact(
         facts,
