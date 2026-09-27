@@ -6,11 +6,15 @@ import type {
   ResidentLifeMatterView,
   ResidentLifeRunView,
 } from "../src/spc-next/resident-life-cognition-view";
-import type { ResidentMatterIntent } from "../src/spc-next/resident-continuity-kernel";
+import type {
+  ResidentMatterHistoricalSupportRelation,
+  ResidentMatterIntent,
+} from "../src/spc-next/resident-continuity-kernel";
 import { isSpcIdentifier } from "../src/spc-next/identity-contract";
 import { sanitizeSpcNextContext } from "./spc-next-cognition";
 
 const MAX_MATTERS = 32;
+const MAX_HISTORICAL_SUPPORT_PER_MATTER = 8;
 const MAX_SELF_DRIVES = 8;
 
 const record = (value: unknown): value is Record<string, unknown> =>
@@ -171,7 +175,11 @@ function sanitizeMatter(value: unknown, contextTick: number): ResidentLifeMatter
     "id", "status", "semanticRevision", "semanticCourse", "suspendedByMatterId",
     "originEvidence", "semanticEvidence", "lastOutcomeEvidence", "activeRun",
   ] as const;
-  if (!record(value) || !hasRequiredAndOptionalKeys(value, required, ["semanticIntent"])) return null;
+  if (!record(value) || !hasRequiredAndOptionalKeys(
+    value,
+    required,
+    ["semanticIntent", "historicalSupport"],
+  )) return null;
 
   const id = identifier(value.id);
   const status = ["active", "suspended", "resolved", "cancelled"].includes(String(value.status))
@@ -195,6 +203,11 @@ function sanitizeMatter(value: unknown, contextTick: number): ResidentLifeMatter
     || (semanticEvidence === null && value.semanticEvidence !== null)
     || (lastOutcomeEvidence === null && value.lastOutcomeEvidence !== null)) return null;
 
+  const historicalSupport = Object.hasOwn(value, "historicalSupport")
+    ? sanitizeHistoricalSupport(value.historicalSupport, contextTick)
+    : null;
+  if (Object.hasOwn(value, "historicalSupport") && historicalSupport === null) return null;
+
   const activeRun = value.activeRun === null ? null : sanitizeRun(value.activeRun);
   if (activeRun === null && value.activeRun !== null) return null;
 
@@ -208,8 +221,38 @@ function sanitizeMatter(value: unknown, contextTick: number): ResidentLifeMatter
     originEvidence,
     semanticEvidence,
     lastOutcomeEvidence,
+    ...(historicalSupport && historicalSupport.length > 0 ? { historicalSupport } : {}),
     activeRun,
   };
+}
+
+function sanitizeHistoricalSupport(
+  value: unknown,
+  contextTick: number,
+): Array<{
+  relation: ResidentMatterHistoricalSupportRelation;
+  evidence: ResidentLifeEvidenceView;
+}> | null {
+  if (!Array.isArray(value) || value.length > MAX_HISTORICAL_SUPPORT_PER_MATTER) return null;
+  const result: Array<{
+    relation: ResidentMatterHistoricalSupportRelation;
+    evidence: ResidentLifeEvidenceView;
+  }> = [];
+  const seen = new Set<string>();
+  for (const raw of value) {
+    if (!record(raw) || !hasOnlyKeys(raw, ["relation", "evidence"])) return null;
+    if (raw.relation !== "prior_same_material_outcome") return null;
+    const evidence = sanitizeEvidence(raw.evidence, contextTick);
+    if (!evidence) return null;
+    const key = `${raw.relation}|${evidence.id}`;
+    if (seen.has(key)) return null;
+    seen.add(key);
+    result.push({
+      relation: raw.relation,
+      evidence,
+    });
+  }
+  return result;
 }
 
 function sanitizeMatterIntent(value: unknown): ResidentMatterIntent | null {
