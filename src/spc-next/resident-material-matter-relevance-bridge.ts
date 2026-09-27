@@ -1,6 +1,10 @@
 import { deriveSpcIdentifier } from "./identity-contract";
 import type { ResidentMaterialKnowledge, ResidentKnownMaterialObject } from "./resident-material-knowledge";
-import type { ResidentContinuityKernel, ResidentKernelEvidence } from "./resident-continuity-kernel";
+import type {
+  ResidentContinuityKernel,
+  ResidentKernelEvidence,
+  ResidentMatter,
+} from "./resident-continuity-kernel";
 import type { ResidentLifeCognitionView, ResidentLifeMatterView } from "./resident-life-cognition-view";
 import type { ResidentRuntime } from "./resident-runtime";
 
@@ -69,11 +73,14 @@ export function materialReacquiredEvidenceId(
  * - if exactly one already-open blocked matter owns the same structured material
  *   identity, the old R4 reactivation path remains unchanged;
  * - if no open matter matches but exactly one terminal, run-free, factually blocked
- *   material episode for that identity is still present in bounded resident life,
- *   reacquisition creates only a fresh semantic opportunity pressure. It does NOT
- *   reopen the old episode or manufacture a new matter.
+ *   material episode for that identity is either still present in bounded resident
+ *   life OR retained as exact factual terminal-outcome provenance, reacquisition
+ *   creates only a fresh semantic opportunity pressure. It does NOT reopen the old
+ *   episode, reinsert it into life scope or manufacture a new matter.
  *
- * If several relevant matters match either path, the bridge refuses to choose.
+ * The archive is never sufficient by itself: a new private invisible -> visible
+ * observation is still required. If several relevant historical matters match, the
+ * bridge refuses to choose.
  */
 export class ResidentMaterialMatterRelevanceBridge {
   constructor(
@@ -133,10 +140,14 @@ export class ResidentMaterialMatterRelevanceBridge {
       };
     }
 
-    const terminalMatches = matchingTerminalBlockedMaterialMatters(life, objectId);
-    if (terminalMatches.length === 0) {
+    // Do not manufacture a second same-object commitment merely because archived
+    // history exists. Any current open/suspended material matter already owns the
+    // semantic question, even if it is not in the narrow blocked-reactivation state.
+    if (hasOpenMaterialMatter(life, objectId)) {
       return { status: "not_relevant", objectId };
     }
+
+    const terminalMatches = matchingTerminalBlockedMaterialMatters(life, objectId);
     if (terminalMatches.length > 1) {
       return {
         status: "ambiguous",
@@ -145,8 +156,31 @@ export class ResidentMaterialMatterRelevanceBridge {
       };
     }
 
-    const prior = terminalMatches[0]!;
-    const priorOutcomeEvidence = prior.lastOutcomeEvidence!;
+    let priorMatterId: string;
+    let priorOutcomeEvidence: ResidentKernelEvidence;
+    if (terminalMatches.length === 1) {
+      const prior = terminalMatches[0]!;
+      priorMatterId = prior.id;
+      priorOutcomeEvidence = structuredClone(prior.lastOutcomeEvidence!);
+    } else {
+      const archivedMatches = matchingArchivedTerminalBlockedMaterialMatters(
+        this.kernel,
+        objectId,
+      );
+      if (archivedMatches.length === 0) {
+        return { status: "not_relevant", objectId };
+      }
+      if (archivedMatches.length > 1) {
+        return {
+          status: "ambiguous",
+          objectId,
+          matterIds: archivedMatches.map((match) => match.matter.id),
+        };
+      }
+      const archived = archivedMatches[0]!;
+      priorMatterId = archived.matter.id;
+      priorOutcomeEvidence = structuredClone(archived.evidence);
+    }
     const evidence = this.kernel.recordEvidence({
       id: materialReacquiredEvidenceId(
         this.resident.profile.id,
@@ -174,13 +208,13 @@ export class ResidentMaterialMatterRelevanceBridge {
       kind: "direct_world_change",
       salience: 0.75,
       summary:
-        `Familiar material object ${objectId} is privately visible again after an earlier terminal factual attempt.`,
+        `Familiar material object ${objectId} is privately visible again after an earlier terminal factual attempt. Earlier factual outcome: ${priorOutcomeEvidence.summary}`,
       evidenceIds: [evidence.id, priorOutcomeEvidence.id],
     });
 
     return {
       status: "fresh_opportunity",
-      priorMatterId: prior.id,
+      priorMatterId,
       objectId,
       evidence,
       priorOutcomeEvidence: structuredClone(priorOutcomeEvidence),
@@ -223,6 +257,41 @@ export function sampleRecognizedMaterialObservation(
   return { previous, current };
 }
 
+
+
+function hasOpenMaterialMatter(
+  life: ResidentLifeCognitionView,
+  objectId: string,
+): boolean {
+  return life.matters.some((matter) => (
+    (matter.status === "active" || matter.status === "suspended")
+    && matter.semanticIntent?.kind === "acquire_material_object"
+    && matter.semanticIntent.objectId === objectId
+  ));
+}
+
+function matchingArchivedTerminalBlockedMaterialMatters(
+  kernel: ResidentContinuityKernel,
+  objectId: string,
+): Array<{ matter: ResidentMatter; evidence: ResidentKernelEvidence }> {
+  const matches: Array<{ matter: ResidentMatter; evidence: ResidentKernelEvidence }> = [];
+  for (const entry of kernel.terminalOutcomeArchiveSnapshot()) {
+    const matter = kernel.matter(entry.matterId);
+    if (!matter
+      || (matter.status !== "resolved" && matter.status !== "cancelled")
+      || matter.activeRunId !== null
+      || matter.semanticIntent?.kind !== "acquire_material_object"
+      || matter.semanticIntent.objectId !== objectId
+      || matter.lastOutcomeEvidenceId !== entry.evidence.id
+      || entry.evidence.kind !== "task_outcome"
+      || !entry.evidence.summary.startsWith("blocked:")) continue;
+    matches.push({
+      matter,
+      evidence: structuredClone(entry.evidence),
+    });
+  }
+  return matches.sort((left, right) => left.matter.id.localeCompare(right.matter.id));
+}
 
 function matchingTerminalBlockedMaterialMatters(
   life: ResidentLifeCognitionView,
