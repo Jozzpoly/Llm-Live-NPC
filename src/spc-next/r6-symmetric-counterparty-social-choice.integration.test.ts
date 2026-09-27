@@ -388,12 +388,34 @@ function createFactualNelaRelease(
     text: occurrence.text,
   });
 
-  return life.originatedSocialCommitments.releaseAfterCounterpartySpeech({
+  // The old counterparty episode must be fully lived in its own time. Do not carry
+  // an unresolved heard-speech pressure into the later symmetric Nela-vs-Ida choice.
+  const releaseBatch = waitForBatch(life.resident, world);
+  const releaseReason = releaseBatch.reasons.find((reason) => (
+    reason.kind === "heard_speech"
+    && reason.evidenceIds.includes(percept!.id)
+  )) ?? null;
+  expect(releaseReason).not.toBeNull();
+  if (!releaseReason) throw new Error("old Nela release never reached Oren cognition");
+
+  const released = life.originatedSocialCommitments.releaseAfterCounterpartySpeech({
     matterId: STANDING_ID,
     occurrenceId: occurrence.id,
     tick: world.tick,
     reason: "Nela explicitly released the standing responsibility.",
-  }).releaseEvidence;
+  });
+  expect(life.resident.reconcileCognitionSettlement({
+    batch: releaseBatch,
+    originReasonId: releaseReason.id,
+    decision: "release_standing",
+    tick: world.tick,
+  })).toEqual({
+    settledReasonIds: [releaseReason.id],
+    retainedReasonIds: [],
+  });
+  expect(life.resident.pendingCognitionReasons()).toEqual([]);
+
+  return released.releaseEvidence;
 }
 
 function materializeCurrentCommunication(input: {
