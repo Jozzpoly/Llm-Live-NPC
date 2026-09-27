@@ -97,6 +97,51 @@ describe("ResidentLifeIntentProposal contract", () => {
     });
   });
 
+  it("accepts one matter-level material acquisition without route, task or body authority", () => {
+    const parsed = parseResidentLifeIntentProposal({
+      version: 1,
+      commitmentDecision: {
+        kind: "accept",
+        reason: "the factual reacquisition makes one new bounded material attempt worth considering",
+        intent: {
+          kind: "acquire_material_object",
+          goal: "try the familiar crate again",
+          objectId: "crate.workshop.familiar",
+        },
+      },
+      beliefs: [],
+      concerns: [],
+      reviewAfterSeconds: 30,
+    }, context);
+
+    expect(parsed?.commitmentDecision).toEqual({
+      kind: "accept",
+      reason: "the factual reacquisition makes one new bounded material attempt worth considering",
+      intent: {
+        kind: "acquire_material_object",
+        goal: "try the familiar crate again",
+        objectId: "crate.workshop.familiar",
+      },
+    });
+
+    expect(parseResidentLifeIntentProposal({
+      version: 1,
+      commitmentDecision: {
+        kind: "accept",
+        reason: "attempt to smuggle execution into material semantics",
+        intent: {
+          kind: "acquire_material_object",
+          goal: "try the familiar crate again",
+          objectId: "crate.workshop.familiar",
+          runId: "run.smuggled",
+        },
+      },
+      beliefs: [],
+      concerns: [],
+      reviewAfterSeconds: 30,
+    }, context)).toBeNull();
+  });
+
   it("accepts an explicit standing social continuation only on grounded communication", () => {
     const socialContext: ResidentCognitionContext = {
       ...context,
