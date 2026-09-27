@@ -14,6 +14,8 @@ export type ResidentLifeChoiceSupportRelation =
 
 export interface ResidentLifeChoiceSupportFact {
   evidenceId: string;
+  /** Exact terminal matter provenance when support is pinned to one current matter. */
+  sourceMatterId?: string;
   evidenceTick: number;
   evidenceKind: string;
   relation: ResidentLifeChoiceSupportRelation;
@@ -114,6 +116,7 @@ function supportFacts(
     );
   }
 
+  addPinnedHistoricalSupportFacts(facts, seenEvidenceIds, matter);
   addPriorSameMaterialOutcomeFacts(facts, seenEvidenceIds, matter, life);
 
   return facts.sort((a, b) => (
@@ -121,6 +124,25 @@ function supportFacts(
     || a.evidenceId.localeCompare(b.evidenceId)
     || a.relation.localeCompare(b.relation)
   ));
+}
+
+function addPinnedHistoricalSupportFacts(
+  facts: ResidentLifeChoiceSupportFact[],
+  seenEvidenceIds: Set<string>,
+  candidate: ResidentLifeMatterView,
+): void {
+  if (candidate.semanticIntent?.kind !== "acquire_material_object") return;
+  for (const support of candidate.historicalSupport ?? []) {
+    if (support.relation !== "prior_same_material_outcome"
+      || support.evidence.kind !== "task_outcome") continue;
+    addFact(
+      facts,
+      seenEvidenceIds,
+      support.evidence,
+      "prior_same_material_outcome",
+      support.sourceMatterId,
+    );
+  }
 }
 
 function addPriorSameMaterialOutcomeFacts(
@@ -154,11 +176,13 @@ function addFact(
   seenEvidenceIds: Set<string>,
   evidence: ResidentLifeEvidenceView,
   relation: ResidentLifeChoiceSupportRelation,
+  sourceMatterId?: string,
 ): void {
   if (seenEvidenceIds.has(evidence.id)) return;
   seenEvidenceIds.add(evidence.id);
   facts.push({
     evidenceId: evidence.id,
+    ...(sourceMatterId ? { sourceMatterId } : {}),
     evidenceTick: evidence.tick,
     evidenceKind: evidence.kind,
     relation,
