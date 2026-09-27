@@ -44,7 +44,7 @@ const OBJECT_START = Object.freeze({ x: 150, y: 120 });
 const OBJECT_RETURN = Object.freeze({ x: 180, y: 120 });
 
 describe("R6 endogenous competing-future factual-history chain", () => {
-  it("generates terminal material history, a fresh same-object future, an independent outcome future and real choice pressure through normal runtime authorities", () => {
+  it("carries delayed terminal material history through a fresh same-object future into later genuine choice pressure", () => {
     const world = createWorld();
     const resident = world.addResident(RESIDENT_ID, "Janek", { ...YARD_POINT });
     world.familiarizeResidentWithRegions(RESIDENT_ID, [YARD, WORKSHOP, FIELDS]);
@@ -60,7 +60,10 @@ describe("R6 endogenous competing-future factual-history chain", () => {
     knowledge.sample();
     expect(knowledge.observation(OBJECT_ID)).toMatchObject({ currentlyVisible: true });
 
-    const kernel = new ResidentContinuityKernel();
+    const kernel = new ResidentContinuityKernel({
+      recentEvidenceLimit: 8,
+      terminalOutcomeArchiveLimit: 8,
+    });
     const matterScope = new ResidentLifeMatterScope(kernel);
     const focus = new ResidentExecutionFocusAuthority(kernel);
     const arbitrator = new ResidentExecutionArbitrator(kernel, focus);
@@ -282,7 +285,17 @@ describe("R6 endogenous competing-future factual-history chain", () => {
         kind: "acquire_material_object",
         objectId: OBJECT_ID,
       },
+      historicalSupport: [{
+        relation: "prior_same_material_outcome",
+        sourceMatterId: OLD_MATTER_ID,
+        evidenceId: oldOutcome.id,
+      }],
     });
+    expect(kernel.historicalSupportEvidence(materialFuture.matter.id)).toEqual([{
+      relation: "prior_same_material_outcome",
+      sourceMatterId: OLD_MATTER_ID,
+      evidence: oldOutcome,
+    }]);
     expect(materialFuture.focusClaim).toEqual({
       status: "busy",
       runId: materialFuture.runId,
@@ -292,6 +305,34 @@ describe("R6 endogenous competing-future factual-history chain", () => {
     expect(kernel.matter(OLD_MATTER_ID)).toMatchObject({
       status: "resolved",
       activeRunId: null,
+    });
+
+    // Ordinary unrelated factual life now advances enough to evict A from the bounded
+    // recent-evidence window. C remains current, so its exact causal provenance keeps
+    // only A's factual task outcome pinned; the old matter itself must disappear from
+    // current life before the later C-vs-D ambiguity is formed.
+    for (let index = 0; index < 12; index += 1) {
+      kernel.recordEvidence({
+        id: `evidence:janek:r6:endogenous-competing:unrelated-churn:${index}`,
+        tick: world.tick + index + 1,
+        kind: "later_life",
+        summary: `ordinary unrelated factual life after material future creation ${index}`,
+      });
+    }
+    expect(kernel.recentEvidenceSnapshot().some(
+      (evidence) => evidence.id === oldOutcome.id,
+    )).toBe(false);
+    expect(kernel.archivedTerminalOutcomeEvidence(OLD_MATTER_ID)).toEqual(oldOutcome);
+    const delayedLife = currentLife(kernel, matterScope, focus, arbitrator);
+    expect(delayedLife.matters.some((matter) => matter.id === OLD_MATTER_ID)).toBe(false);
+    expect(delayedLife.matters.find(
+      (matter) => matter.id === materialFuture.matter.id,
+    )).toMatchObject({
+      historicalSupport: [{
+        relation: "prior_same_material_outcome",
+        sourceMatterId: OLD_MATTER_ID,
+        evidence: { id: oldOutcome.id, kind: "task_outcome" },
+      }],
     });
 
     // B now completes factually. We intentionally do NOT call reconcile() at this
@@ -452,20 +493,22 @@ describe("R6 endogenous competing-future factual-history chain", () => {
     );
     expect(choiceAttempt.context.self).toBeUndefined();
 
-    const oldHistory = choiceAttempt.context.life.matters.find(
+    // A is no longer current life and is not smuggled back into the provider context.
+    // Its exact factual outcome survives only as typed provenance on current C.
+    expect(choiceAttempt.context.life.matters.some(
       (matter) => matter.id === OLD_MATTER_ID,
-    );
-    expect(oldHistory).toMatchObject({
-      status: "resolved",
-      activeRun: null,
-      semanticIntent: {
-        kind: "acquire_material_object",
-        objectId: OBJECT_ID,
-      },
-      lastOutcomeEvidence: {
-        id: oldOutcome.id,
-        kind: "task_outcome",
-      },
+    )).toBe(false);
+    expect(choiceAttempt.context.life.matters.find(
+      (matter) => matter.id === materialFuture.matter.id,
+    )).toMatchObject({
+      historicalSupport: [{
+        relation: "prior_same_material_outcome",
+        sourceMatterId: OLD_MATTER_ID,
+        evidence: {
+          id: oldOutcome.id,
+          kind: "task_outcome",
+        },
+      }],
     });
 
     const materialSupport = choiceAttempt.candidateSupports.find(
@@ -477,6 +520,7 @@ describe("R6 endogenous competing-future factual-history chain", () => {
     expect(materialSupport?.facts).toEqual(expect.arrayContaining([
       expect.objectContaining({
         evidenceId: oldOutcome.id,
+        sourceMatterId: OLD_MATTER_ID,
         relation: "prior_same_material_outcome",
       }),
       expect.objectContaining({
