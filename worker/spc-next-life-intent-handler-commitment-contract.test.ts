@@ -195,6 +195,8 @@ describe("SPC Next life-intent endpoint commitment contract", () => {
     expect(upstreamRequest.instructions).toContain(
       "beliefs[].evidenceIds and concerns[].evidenceIds may cite only ids from recentPercepts",
     );
+    expect(upstreamRequest.instructions).toContain("acquire_material_object");
+    expect(upstreamRequest.instructions).toContain("NOT a pickup command or execution plan");
 
     const acceptedIntentSchemas = commitmentVariants
       .filter((variant: any) => variant.properties?.intent)
@@ -230,6 +232,18 @@ describe("SPC Next life-intent endpoint commitment contract", () => {
           }),
         }),
       ]));
+      expect(schema.anyOf).toEqual(expect.arrayContaining([
+        expect.objectContaining({
+          properties: expect.objectContaining({
+            kind: { type: "string", enum: ["acquire_material_object"] },
+            objectId: expect.objectContaining({ type: "string" }),
+          }),
+        }),
+      ]));
+      const materialVariant = schema.anyOf.find(
+        (variant: any) => variant.properties?.kind?.enum?.includes("acquire_material_object"),
+      );
+      expect(Object.keys(materialVariant.properties)).toEqual(["kind", "goal", "objectId"]);
       const travelVariants = schema.anyOf.filter(
         (variant: any) => variant.properties?.kind?.enum?.includes("travel"),
       );
