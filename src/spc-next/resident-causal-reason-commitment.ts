@@ -1,4 +1,5 @@
 import type { ResidentCognitionContext } from "./cognition-contract";
+import { derivePriorSameActorOutcomeSupport } from "./resident-cumulative-history-support";
 import type { CognitionReason } from "./contracts";
 import type {
   ResidentAcquireMaterialObjectMatterIntent,
@@ -322,6 +323,12 @@ export class ResidentCausalReasonCommitmentAuthority {
       kind: "accepted_cognition_commitment",
       summary: `${input.intent.semanticCourse}; origin reason ${originReason.kind} ${originReason.id}: ${originReason.summary}`,
     });
+    const communicateHistory = input.intent.semanticIntent.kind === "communicate_actor"
+      ? derivePriorSameActorOutcomeSupport(
+          this.options.kernel,
+          input.intent.semanticIntent.targetActorId,
+        )
+      : [];
     const matter = this.options.kernel.openMatter({
       id: identity.matterId,
       originEvidenceId: origin.id,
@@ -333,6 +340,8 @@ export class ResidentCausalReasonCommitmentAuthority {
           sourceMatterId: materialIntent.sourceMatterId,
           evidenceId: materialIntent.priorOutcomeEvidenceId,
         }],
+      } : communicateHistory.length > 0 ? {
+        historicalSupport: communicateHistory,
       } : {}),
     });
     this.options.kernel.bindRun({
