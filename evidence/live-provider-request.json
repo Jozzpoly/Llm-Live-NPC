@@ -1,9 +1,9 @@
 {
-  "version": 25,
+  "version": 26,
   "pr": 148,
   "qualifiers": [
     "r6-competing-future-terminal-history-choice-twin"
   ],
-  "purpose": "R6 endogenous competing-future falsifier. Two matched Janek resident-life choice frames have one free body and the same two already-grounded deferred futures, with no fresh command, speech or authored self. The history twin alone carries one resolved factual task outcome for the exact same material identity as one current candidate. Hard budget: exactly two GPT-5.6 Luna requests, no semantic retry and no preferred winner. A behavioral difference is positive only when the history decision also cites the exact pre-existing terminal outcome through the locally admitted causal-support contract; same behavior, defer-all, or uncited difference remain valid neutral/negative evidence.",
+  "purpose": "R6 competing-future live qualification after run #25 exposed a provider-contract failure before semantic output: the strict response schema used unsupported array keyword uniqueItems, so both upstream requests failed with zero token usage. This source removes only that unsupported keyword while local parsing still rejects duplicate support evidence IDs, and preserves upstream status diagnostics. Re-run the same matched Janek twin exactly once with a hard maximum of two GPT-5.6 Luna requests and no semantic retry. Positive history-sensitive evidence still requires a behavioral difference plus citation of the exact pre-existing terminal outcome through local causal-support admission; same behavior or uncited difference remains neutral evidence.",
   "requestedAtUtc": "2026-09-27T04:17:40Z"
 }
