@@ -98,7 +98,7 @@ describe("R6 delayed terminal-history factual recall boundary", () => {
       OLD_RUN_ID,
       OBJECT_ID,
       knowledge,
-      restoredAuthority,
+      authority,
       world,
     );
     const blocked = oldExecutor.step();
@@ -374,7 +374,7 @@ describe("R6 delayed terminal-history factual recall boundary", () => {
       accepted.runId,
       OBJECT_ID,
       knowledge,
-      authority,
+      restoredAuthority,
       world,
     );
     let retryStep = retry.step();
