@@ -208,13 +208,17 @@ function sanitizeMatter(value: unknown, contextTick: number): ResidentLifeMatter
     : null;
   if (Object.hasOwn(value, "historicalSupport") && historicalSupport === null) return null;
   if (historicalSupport && historicalSupport.length > 0) {
-    if ((status !== "active" && status !== "suspended")
-      || historicalSupport.some((entry) => entry.evidence.kind !== "task_outcome")) return null;
+    if (status !== "active" && status !== "suspended") return null;
     if (historicalSupport.some((entry) => (
       (entry.relation === "prior_same_material_outcome"
-        && semanticIntent?.kind !== "acquire_material_object")
+        && (semanticIntent?.kind !== "acquire_material_object"
+          || entry.evidence.kind !== "task_outcome"))
       || (entry.relation === "prior_same_actor_outcome"
-        && semanticIntent?.kind !== "communicate_actor")
+        && (semanticIntent?.kind !== "communicate_actor"
+          || entry.evidence.kind !== "task_outcome"))
+      || (entry.relation === "prior_counterparty_social_outcome"
+        && (semanticIntent?.kind !== "communicate_actor"
+          || entry.evidence.kind !== "resident_released_social_commitment"))
     ))) return null;
   }
 
@@ -254,7 +258,8 @@ function sanitizeHistoricalSupport(
   for (const raw of value) {
     if (!record(raw) || !hasOnlyKeys(raw, ["relation", "sourceMatterId", "evidence"])) return null;
     if (raw.relation !== "prior_same_material_outcome"
-      && raw.relation !== "prior_same_actor_outcome") return null;
+      && raw.relation !== "prior_same_actor_outcome"
+      && raw.relation !== "prior_counterparty_social_outcome") return null;
     const sourceMatterId = identifier(raw.sourceMatterId);
     const evidence = sanitizeEvidence(raw.evidence, contextTick);
     if (!sourceMatterId || !evidence) return null;
