@@ -133,6 +133,7 @@ async function providerChoice(label, submittedContext) {
     elapsedMs,
     ok: body?.ok ?? null,
     code: body?.code ?? null,
+    upstreamStatus: body?.upstreamStatus ?? null,
     proposal: body?.proposal ?? null,
     usage: body?.usage ?? null,
   };
@@ -245,6 +246,13 @@ async function run() {
   }
 
   const control = await providerChoice("control_without_terminal_episode", controlContext);
+  if (control.status !== 200 || control.ok !== true) {
+    report.finishedAt = new Date().toISOString();
+    report.classification = "CONTROL_PROVIDER_BOUNDARY_FAIL";
+    report.outcome = "HARNESS_OR_CONTRACT_FAIL";
+    writeFileSync(OUTPUT_FILE, `${JSON.stringify(report, null, 2)}\n`);
+    throw new Error(`R6 competing-future control provider boundary failed before matched history spend (upstream ${control.upstreamStatus ?? "unknown"})`);
+  }
   const history = await providerChoice("history_with_terminal_same_object_outcome", historyContext);
 
   const controlBehavior = behavioralDecision(control);
