@@ -85,7 +85,8 @@ export type ResidentMatterIntent =
 
 export type ResidentMatterHistoricalSupportRelation =
   | "prior_same_material_outcome"
-  | "prior_same_actor_outcome";
+  | "prior_same_actor_outcome"
+  | "prior_counterparty_social_outcome";
 
 export interface ResidentMatterHistoricalSupport {
   relation: ResidentMatterHistoricalSupportRelation;
@@ -164,6 +165,13 @@ export interface ResidentTerminalOutcomeArchiveEntry {
   evidence: ResidentKernelEvidence;
 }
 
+export interface ResidentTerminalSocialOutcomeArchiveEntry {
+  matterId: string;
+  counterpartyActorId: string;
+  occurrenceId: string;
+  evidence: ResidentKernelEvidence;
+}
+
 export interface ResidentContinuityKernelCommittedSnapshot {
   version: 1;
   recentEvidenceLimit: number;
@@ -174,6 +182,11 @@ export interface ResidentContinuityKernelCommittedSnapshot {
    */
   terminalOutcomeArchiveLimit?: number;
   terminalOutcomeArchive?: readonly ResidentTerminalOutcomeArchiveEntry[];
+  /**
+   * Bounded exact counterparty-caused social lifecycle outcomes.
+   * Optional for backward-compatible version-1 snapshots.
+   */
+  terminalSocialOutcomeArchive?: readonly ResidentTerminalSocialOutcomeArchiveEntry[];
   recentEvidence: readonly ResidentKernelEvidence[];
   matters: readonly ResidentMatter[];
   pinnedOriginEvidence: readonly { matterId: string; evidence: ResidentKernelEvidence }[];
@@ -237,6 +250,15 @@ export class ResidentContinuityKernel {
    * prove why one old factual outcome matters now.
    */
   private readonly terminalOutcomeArchive = new Map<string, ResidentKernelEvidence>();
+  /**
+   * Narrow durable provenance for factual counterparty-caused standing lifecycle exits.
+   * This is not a relationship model or general social-event log.
+   */
+  private readonly terminalSocialOutcomeArchive = new Map<string, {
+    counterpartyActorId: string;
+    occurrenceId: string;
+    evidence: ResidentKernelEvidence;
+  }>();
   private readonly runBindings = new Map<string, ResidentTaskRunBinding>();
   private readonly usedRunIds = new Set<string>();
   private readonly pendingProposals = new Map<string, ResidentSemanticProposalTicket>();
@@ -413,6 +435,62 @@ export class ResidentContinuityKernel {
     }));
   }
 
+  terminalSocialOutcomeArchiveSnapshot(): ResidentTerminalSocialOutcomeArchiveEntry[] {
+    return [...this.terminalSocialOutcomeArchive.entries()].map(([matterId, entry]) => ({
+      matterId,
+      counterpartyActorId: entry.counterpartyActorId,
+      occurrenceId: entry.occurrenceId,
+      evidence: structuredClone(entry.evidence),
+    }));
+  }
+
+  archiveCounterpartySocialOutcome(input: {
+    matterId: string;
+    counterpartyActorId: string;
+    occurrenceId: string;
+    evidenceId: string;
+  }): ResidentTerminalSocialOutcomeArchiveEntry {
+    assertSpcIdentifier(input.matterId, "counterparty social outcome matter id");
+    assertNonEmpty(input.counterpartyActorId, "counterparty social outcome actor id");
+    assertSpcIdentifier(input.occurrenceId, "counterparty social outcome occurrence id");
+    assertSpcIdentifier(input.evidenceId, "counterparty social outcome evidence id");
+
+    const matter = this.matters.get(input.matterId);
+    const evidence = this.recentEvidence.get(input.evidenceId)
+      ?? this.pinnedSemanticEvidence.get(input.matterId)
+      ?? null;
+    if (!matter
+      || !isTerminal(matter.status)
+      || matter.activeRunId !== null
+      || matter.semanticIntent?.kind !== "standing_social_commitment"
+      || matter.semanticIntent.counterpartyActorId !== input.counterpartyActorId
+      || matter.semanticEvidenceId !== input.evidenceId
+      || !evidence
+      || evidence.id !== input.evidenceId
+      || evidence.kind !== "resident_released_social_commitment") {
+      throw new Error("counterparty social archive requires exact terminal standing release evidence");
+    }
+
+    const archived = {
+      counterpartyActorId: input.counterpartyActorId,
+      occurrenceId: input.occurrenceId,
+      evidence: structuredClone(evidence),
+    };
+    this.terminalSocialOutcomeArchive.delete(input.matterId);
+    this.terminalSocialOutcomeArchive.set(input.matterId, archived);
+    while (this.terminalSocialOutcomeArchive.size > this.terminalOutcomeArchiveLimit) {
+      const oldestMatterId = this.terminalSocialOutcomeArchive.keys().next().value as string | undefined;
+      if (oldestMatterId === undefined) break;
+      this.terminalSocialOutcomeArchive.delete(oldestMatterId);
+    }
+    return {
+      matterId: input.matterId,
+      counterpartyActorId: archived.counterpartyActorId,
+      occurrenceId: archived.occurrenceId,
+      evidence: structuredClone(archived.evidence),
+    };
+  }
+
   pendingSemanticProposals(): ResidentSemanticProposalTicket[] {
     return [...this.pendingProposals.values()].map((ticket) => structuredClone(ticket));
   }
@@ -434,6 +512,7 @@ export class ResidentContinuityKernel {
       revocationLimit: this.revocationLimit,
       terminalOutcomeArchiveLimit: this.terminalOutcomeArchiveLimit,
       terminalOutcomeArchive: this.terminalOutcomeArchiveSnapshot(),
+      terminalSocialOutcomeArchive: this.terminalSocialOutcomeArchiveSnapshot(),
       recentEvidence: [...this.recentEvidence.values()].map((entry) => structuredClone(entry)),
       matters: [...this.matters.values()].map((matter) => structuredClone(matter)),
       pinnedOriginEvidence: snapshotEvidencePins(this.pinnedOriginEvidence),
@@ -716,6 +795,9 @@ export class ResidentContinuityKernel {
       for (const evidence of this.terminalOutcomeArchive.values()) {
         if (evidence.id === evidenceId) return structuredClone(evidence);
       }
+      for (const entry of this.terminalSocialOutcomeArchive.values()) {
+        if (entry.evidence.id === evidenceId) return structuredClone(entry.evidence);
+      }
       for (const pins of this.pinnedHistoricalSupportEvidence.values()) {
         const pinned = pins.get(evidenceId);
         if (pinned) return structuredClone(pinned.evidence);
@@ -759,6 +841,27 @@ export class ResidentContinuityKernel {
         || source.semanticIntent.targetActorId !== semanticIntent.targetActorId
         || source.lastOutcomeEvidenceId !== evidence.id) {
         throw new Error("prior actor history does not match exact terminal same-actor matter");
+      }
+      return;
+    }
+
+    if (support.relation === "prior_counterparty_social_outcome") {
+      if (semanticIntent?.kind !== "communicate_actor"
+        || evidence.kind !== "resident_released_social_commitment") {
+        throw new Error("counterparty social history requires a communication candidate and factual standing release");
+      }
+      const source = this.matters.get(support.sourceMatterId);
+      const archived = this.terminalSocialOutcomeArchive.get(support.sourceMatterId);
+      if (!source
+        || !isTerminal(source.status)
+        || source.activeRunId !== null
+        || source.semanticIntent?.kind !== "standing_social_commitment"
+        || source.semanticIntent.counterpartyActorId !== semanticIntent.targetActorId
+        || source.semanticEvidenceId !== evidence.id
+        || !archived
+        || archived.counterpartyActorId !== semanticIntent.targetActorId
+        || archived.evidence.id !== evidence.id) {
+        throw new Error("counterparty social history does not match exact terminal counterparty release");
       }
       return;
     }
@@ -867,6 +970,13 @@ export class ResidentContinuityKernel {
     );
     for (const entry of snapshot.terminalOutcomeArchive ?? []) {
       this.terminalOutcomeArchive.set(entry.matterId, structuredClone(entry.evidence));
+    }
+    for (const entry of snapshot.terminalSocialOutcomeArchive ?? []) {
+      this.terminalSocialOutcomeArchive.set(entry.matterId, {
+        counterpartyActorId: entry.counterpartyActorId,
+        occurrenceId: entry.occurrenceId,
+        evidence: structuredClone(entry.evidence),
+      });
     }
     for (const runId of snapshot.usedRunIds) this.usedRunIds.add(runId);
     for (const binding of snapshot.runBindings) {
@@ -1017,6 +1127,10 @@ function validateCommittedSnapshot(
   if (terminalOutcomeArchive.length > terminalOutcomeArchiveLimit) {
     throw new Error("snapshot terminal outcome archive exceeds configured bound");
   }
+  const terminalSocialOutcomeArchive = snapshot.terminalSocialOutcomeArchive ?? [];
+  if (terminalSocialOutcomeArchive.length > terminalOutcomeArchiveLimit) {
+    throw new Error("snapshot terminal social outcome archive exceeds configured bound");
+  }
 
   const evidenceIds = new Set<string>();
   for (const evidence of snapshot.recentEvidence) {
@@ -1061,6 +1175,35 @@ function validateCommittedSnapshot(
     }
   }
 
+  const socialArchivedMatterIds = new Set<string>();
+  const socialArchivedEvidenceIds = new Set<string>();
+  for (const entry of terminalSocialOutcomeArchive) {
+    assertSpcIdentifier(entry.matterId, "snapshot terminal social outcome matter id");
+    assertNonEmpty(entry.counterpartyActorId, "snapshot terminal social outcome actor id");
+    assertSpcIdentifier(entry.occurrenceId, "snapshot terminal social outcome occurrence id");
+    if (socialArchivedMatterIds.has(entry.matterId)) {
+      throw new Error(`duplicate snapshot terminal social outcome matter: ${entry.matterId}`);
+    }
+    socialArchivedMatterIds.add(entry.matterId);
+    validateEvidence(entry.evidence);
+    if (entry.evidence.kind !== "resident_released_social_commitment") {
+      throw new Error("snapshot terminal social outcome archive requires release evidence");
+    }
+    if (socialArchivedEvidenceIds.has(entry.evidence.id)) {
+      throw new Error(`duplicate snapshot terminal social outcome evidence: ${entry.evidence.id}`);
+    }
+    socialArchivedEvidenceIds.add(entry.evidence.id);
+    const matter = snapshot.matters.find((candidate) => candidate.id === entry.matterId);
+    if (!matter
+      || !isTerminal(matter.status)
+      || matter.activeRunId !== null
+      || matter.semanticIntent?.kind !== "standing_social_commitment"
+      || matter.semanticIntent.counterpartyActorId !== entry.counterpartyActorId
+      || matter.semanticEvidenceId !== entry.evidence.id) {
+      throw new Error(`snapshot terminal social outcome archive disagrees with standing matter: ${entry.matterId}`);
+    }
+  }
+
   const historicalPins = snapshot.pinnedHistoricalSupportEvidence ?? [];
   if (historicalPins.length > snapshot.matters.length * 8) {
     throw new Error("snapshot historical support pins exceed matter bound");
@@ -1084,27 +1227,42 @@ function validateCommittedSnapshot(
       throw new Error(`snapshot historical support pin is undeclared: ${pin.matterId}`);
     }
     const source = snapshot.matters.find((candidate) => candidate.id === pin.sourceMatterId);
-    if (!source
-      || !isTerminal(source.status)
-      || source.activeRunId !== null
-      || source.lastOutcomeEvidenceId !== pin.evidence.id) {
-      throw new Error(`snapshot historical support source is not exact terminal outcome: ${pin.sourceMatterId}`);
+    if (!source || !isTerminal(source.status) || source.activeRunId !== null) {
+      throw new Error(`snapshot historical support source is not exact terminal matter: ${pin.sourceMatterId}`);
     }
     const candidateIntent = matter.semanticIntent;
-    if (pin.evidence.kind !== "task_outcome") {
-      throw new Error("snapshot historical support requires factual task outcome");
-    }
-    if (pin.relation === "prior_same_material_outcome"
-      && (candidateIntent?.kind !== "acquire_material_object"
+    if (pin.relation === "prior_same_material_outcome") {
+      if (pin.evidence.kind !== "task_outcome"
+        || source.lastOutcomeEvidenceId !== pin.evidence.id
+        || candidateIntent?.kind !== "acquire_material_object"
         || source.semanticIntent?.kind !== "acquire_material_object"
-        || source.semanticIntent.objectId !== candidateIntent.objectId)) {
-      throw new Error("snapshot prior material support violates exact object/outcome relation");
+        || source.semanticIntent.objectId !== candidateIntent.objectId) {
+        throw new Error("snapshot prior material support violates exact object/outcome relation");
+      }
     }
-    if (pin.relation === "prior_same_actor_outcome"
-      && (candidateIntent?.kind !== "communicate_actor"
+    if (pin.relation === "prior_same_actor_outcome") {
+      if (pin.evidence.kind !== "task_outcome"
+        || source.lastOutcomeEvidenceId !== pin.evidence.id
+        || candidateIntent?.kind !== "communicate_actor"
         || source.semanticIntent?.kind !== "communicate_actor"
-        || source.semanticIntent.targetActorId !== candidateIntent.targetActorId)) {
-      throw new Error("snapshot prior actor support violates exact actor/outcome relation");
+        || source.semanticIntent.targetActorId !== candidateIntent.targetActorId) {
+        throw new Error("snapshot prior actor support violates exact actor/outcome relation");
+      }
+    }
+    if (pin.relation === "prior_counterparty_social_outcome") {
+      const archived = terminalSocialOutcomeArchive.find(
+        (entry) => entry.matterId === pin.sourceMatterId,
+      );
+      if (pin.evidence.kind !== "resident_released_social_commitment"
+        || source.semanticEvidenceId !== pin.evidence.id
+        || candidateIntent?.kind !== "communicate_actor"
+        || source.semanticIntent?.kind !== "standing_social_commitment"
+        || source.semanticIntent.counterpartyActorId !== candidateIntent.targetActorId
+        || !archived
+        || archived.counterpartyActorId !== candidateIntent.targetActorId
+        || archived.evidence.id !== pin.evidence.id) {
+        throw new Error("snapshot counterparty social support violates exact actor/release relation");
+      }
     }
     const key = `${pin.matterId}|${pin.sourceMatterId}|${pin.relation}|${pin.evidence.id}`;
     if (historicalPinKeys.has(key)) {
@@ -1250,7 +1408,8 @@ function validateHistoricalSupportRelation(
   relation: ResidentMatterHistoricalSupportRelation,
 ): void {
   if (relation !== "prior_same_material_outcome"
-    && relation !== "prior_same_actor_outcome") {
+    && relation !== "prior_same_actor_outcome"
+    && relation !== "prior_counterparty_social_outcome") {
     throw new Error(`unsupported matter historical support relation: ${String(relation)}`);
   }
 }
