@@ -204,8 +204,8 @@ describe("ResidentContinuityKernel bounded terminal factual outcome archive", ()
     restored.cancelMatter(current.id);
     expect(restored.matter(current.id)).toMatchObject({
       status: "cancelled",
-      historicalSupport: [],
     });
+    expect(restored.matter(current.id)?.historicalSupport).toBeUndefined();
     expect(restored.historicalSupportEvidence(current.id)).toEqual([]);
   });
 
