@@ -1,9 +1,9 @@
 {
-  "version": 26,
+  "version": 27,
   "pr": 148,
   "qualifiers": [
-    "r6-competing-future-terminal-history-choice-twin"
+    "r6-delayed-competing-future-history-choice-twin"
   ],
-  "purpose": "R6 competing-future live qualification after run #25 exposed a provider-contract failure before semantic output: the strict response schema used unsupported array keyword uniqueItems, so both upstream requests failed with zero token usage. This source removes only that unsupported keyword while local parsing still rejects duplicate support evidence IDs, and preserves upstream status diagnostics. Re-run the same matched Janek twin exactly once with a hard maximum of two GPT-5.6 Luna requests and no semantic retry. Positive history-sensitive evidence still requires a behavioral difference plus citation of the exact pre-existing terminal outcome through local causal-support admission; same behavior or uncited difference remains neutral evidence.",
-  "requestedAtUtc": "2026-09-27T04:17:40Z"
+  "purpose": "R6 delayed accumulated-history live qualification. Deterministic runtime now proves that an exact terminal material outcome can fall beyond bounded recent life, remain only as typed causal provenance on a current same-object future C, and later participate in genuine C-vs-D choice without reopening old matter A. Run one matched twin pair through the exact resident life-choice endpoint: neither twin exposes A as a current matter; the history twin alone carries one candidate-scoped prior_same_material_outcome on C. Hard maximum two GPT-5.6 Luna requests, no semantic retry, no preferred winner. Positive causal evidence requires a behavioral difference plus citation of the exact pre-existing delayed factual outcome; same behavior or uncited difference remains neutral evidence.",
+  "requestedAtUtc": "2026-09-27T11:49:00Z"
 }
