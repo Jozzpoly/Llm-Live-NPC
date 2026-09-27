@@ -15,8 +15,10 @@ import { ResidentMessageDeliveryExecutor } from "./resident-message-delivery-exe
 
 const JANEK_ID = "resident.janek";
 const CURRENT = "matter.ida.r6.same-cardinality.current-janek";
-const SECOND = "matter.ida.r6.same-cardinality.old-second";
-const SECOND_RUN = "run.ida.r6.same-cardinality.old-second";
+const OLD_A = "matter.ida.r6.same-cardinality.old-a";
+const OLD_B = "matter.ida.r6.same-cardinality.old-b";
+const OLD_A_RUN = "run.ida.r6.same-cardinality.old-a";
+const OLD_B_RUN = "run.ida.r6.same-cardinality.old-b";
 const HIDDEN_JANEK_POSITION = Object.freeze({ x: 1_200, y: 720 });
 const EXECUTION_GUARD = 1_100;
 const RELOCATION_GUARD = 600;
@@ -26,16 +28,18 @@ describe("R6 same-cardinality factual outcome meaning", () => {
     const succeeded = buildHistory("succeeded");
     const blocked = buildHistory("blocked");
 
-    expect(succeeded.support).toHaveLength(2);
-    expect(blocked.support).toHaveLength(2);
-    expect(succeeded.support.map((entry) => entry.relation)).toEqual([
-      "prior_same_actor_outcome",
-      "prior_same_actor_outcome",
-    ]);
-    expect(blocked.support.map((entry) => entry.relation)).toEqual([
-      "prior_same_actor_outcome",
-      "prior_same_actor_outcome",
-    ]);
+    for (const variant of [succeeded, blocked]) {
+      expect(variant.support).toHaveLength(2);
+      expect(variant.support.map((entry) => entry.sourceMatterId)).toEqual([OLD_A, OLD_B]);
+      expect(variant.support.map((entry) => entry.relation)).toEqual([
+        "prior_same_actor_outcome",
+        "prior_same_actor_outcome",
+      ]);
+      // The legacy I1 setup matter deliberately has no structured communicate_actor
+      // intent, so exact same-actor genealogy must ignore it rather than guessing from prose.
+      expect(variant.support.some((entry) => entry.sourceMatterId === IDA_MESSAGE_MATTER_ID))
+        .toBe(false);
+    }
 
     expect(succeeded.facts.map((fact) => fact.summary)).toEqual([
       expect.stringMatching(/^succeeded:/),
@@ -51,32 +55,26 @@ describe("R6 same-cardinality factual outcome meaning", () => {
     expect(blocked.facts.every((fact) => fact.relation === "prior_same_actor_outcome"))
       .toBe(true);
 
-    // Same cardinality and same structured target relation. The current system already
-    // preserves factual outcome meaning in the evidence summaries; no score/state is
-    // required merely to expose this sharper counterfactual to later judgement.
+    // Actor identity, eligible history cardinality and current semantic relation are
+    // matched. Existing factual task-outcome evidence already preserves the meaningful
+    // succeeded-vs-blocked distinction; no relationship score is needed to expose it.
     expect(succeeded.facts).toHaveLength(blocked.facts.length);
     expect(succeeded.currentTargetActorId).toBe(JANEK_ID);
     expect(blocked.currentTargetActorId).toBe(JANEK_ID);
 
     for (const variant of [succeeded, blocked]) {
-      expect(variant.kernel.matter(IDA_MESSAGE_MATTER_ID)).toMatchObject({
-        status: expect.stringMatching(/resolved|cancelled/),
-        activeRunId: null,
-        semanticIntent: expect.objectContaining({
-          kind: "communicate_actor",
-          targetActorId: JANEK_ID,
-        }),
-      });
-      expect(variant.kernel.matter(SECOND)).toMatchObject({
-        status: expect.stringMatching(/resolved|cancelled/),
-        activeRunId: null,
-        semanticIntent: expect.objectContaining({
-          kind: "communicate_actor",
-          targetActorId: JANEK_ID,
-        }),
-      });
+      for (const oldMatterId of [OLD_A, OLD_B]) {
+        expect(variant.kernel.matter(oldMatterId)).toMatchObject({
+          status: expect.stringMatching(/resolved|cancelled/),
+          activeRunId: null,
+          semanticIntent: {
+            kind: "communicate_actor",
+            targetActorId: JANEK_ID,
+          },
+        });
+      }
       expect(variant.life.matters.some(
-        (matter) => matter.id === IDA_MESSAGE_MATTER_ID || matter.id === SECOND,
+        (matter) => matter.id === OLD_A || matter.id === OLD_B,
       )).toBe(false);
     }
   });
@@ -85,60 +83,44 @@ describe("R6 same-cardinality factual outcome meaning", () => {
 function buildHistory(kind: "succeeded" | "blocked") {
   const slice = createFiveResidentIdaMessageDeliverySlice();
 
+  // The legacy I1 run is used only to establish the real World/contact geometry. It is
+  // explicitly excluded from eligible same-actor history because its old fixture matter
+  // predates structured communicate_actor intent.
   if (kind === "blocked") {
     relocateJanekOutsideIdaKnowledge(slice, HIDDEN_JANEK_POSITION);
   }
-
-  const first = runInitialEpisode(slice);
-  if (first.status === "blocked") {
+  const setupEpisode = runInitialEpisode(slice);
+  if (setupEpisode.status === "blocked") {
     slice.kernel.cancelMatter(IDA_MESSAGE_MATTER_ID);
   }
+  expect(slice.kernel.matter(IDA_MESSAGE_MATTER_ID)?.semanticIntent).toBeNull();
 
-  const secondOrigin = slice.kernel.recordEvidence({
-    id: "evidence:ida:r6:same-cardinality:second-origin",
-    tick: slice.world.tick,
-    kind: "accepted_cognition_commitment",
-    summary: "Ida independently owns a second bounded factual attempt to speak with Janek.",
-  });
-  slice.kernel.openMatter({
-    id: SECOND,
-    originEvidenceId: secondOrigin.id,
-    semanticCourse: "second bounded communication attempt with Janek",
-    semanticIntent: {
-      kind: "communicate_actor",
-      goal: "speak with Janek a second time",
-      targetActorId: JANEK_ID,
-      text: "Janek, chcę przekazać ci jeszcze jedną krótką wiadomość.",
-    },
-  });
-  slice.kernel.bindRun({
-    matterId: SECOND,
-    taskId: "task.ida.r6.same-cardinality.old-second",
-    runId: SECOND_RUN,
-  });
-
-  const secondExecutor = new ResidentMessageDeliveryExecutor(
-    SECOND_RUN,
-    JANEK_ID,
-    "Janek, chcę przekazać ci jeszcze jedną krótką wiadomość.",
-    () => slice.idaRecipientContact(),
-    slice.authority,
-    slice.world,
+  const oldA = runStructuredEpisode(
+    slice,
+    OLD_A,
+    OLD_A_RUN,
+    "Ida, to jest pierwsza z dwóch strukturalnych wiadomości do Janek.",
   );
-  const second = runSecondEpisode(slice, secondExecutor);
-  const reconciled = slice.kernel.reconcileRunOutcome({
-    runId: SECOND_RUN,
-    tick: slice.world.tick,
-    status: second.status === "delivered" ? "succeeded" : "blocked",
-    summary: second.status === "delivered"
-      ? `Ida factually delivered the second bounded message to Janek through World speech occurrence ${second.occurrence.id}`
-      : `Ida's second bounded message attempt factually ended with ${second.reason}`,
-  });
-  expect(reconciled.status).toBe("recorded");
-  if (reconciled.status !== "recorded") throw new Error("second episode did not reconcile");
+  const oldB = runStructuredEpisode(
+    slice,
+    OLD_B,
+    OLD_B_RUN,
+    "Ida, to jest druga z dwóch strukturalnych wiadomości do Janek.",
+  );
 
-  if (second.status === "delivered") slice.kernel.resolveMatter(SECOND);
-  else slice.kernel.cancelMatter(SECOND);
+  if (kind === "succeeded") {
+    expect(oldA.status).toBe("delivered");
+    expect(oldB.status).toBe("delivered");
+  } else {
+    expect(oldA.status).toBe("blocked");
+    expect(oldB.status).toBe("blocked");
+    if (oldA.status === "blocked") {
+      expect(oldA.reason).toBe("recipient_absent_at_best_known_contact");
+    }
+    if (oldB.status === "blocked") {
+      expect(oldB.reason).toBe("recipient_absent_at_best_known_contact");
+    }
+  }
 
   const support = derivePriorSameActorOutcomeSupport(slice.kernel, JANEK_ID);
   expect(support).toHaveLength(2);
@@ -188,6 +170,61 @@ function buildHistory(kind: "succeeded" | "blocked") {
   };
 }
 
+function runStructuredEpisode(
+  slice: ReturnType<typeof createFiveResidentIdaMessageDeliverySlice>,
+  matterId: string,
+  runId: string,
+  text: string,
+) {
+  const origin = slice.kernel.recordEvidence({
+    id: `evidence:${matterId}:origin`,
+    tick: slice.world.tick,
+    kind: "accepted_cognition_commitment",
+    summary: `Ida independently owns structured bounded communication ${matterId}.`,
+  });
+  slice.kernel.openMatter({
+    id: matterId,
+    originEvidenceId: origin.id,
+    semanticCourse: "bounded structured communication with Janek",
+    semanticIntent: {
+      kind: "communicate_actor",
+      goal: "speak with Janek in one bounded factual episode",
+      targetActorId: JANEK_ID,
+      text,
+    },
+  });
+  slice.kernel.bindRun({
+    matterId,
+    taskId: `task.${matterId}`,
+    runId,
+  });
+
+  const executor = new ResidentMessageDeliveryExecutor(
+    runId,
+    JANEK_ID,
+    text,
+    () => slice.idaRecipientContact(),
+    slice.authority,
+    slice.world,
+  );
+  const terminal = runExecutor(slice, executor);
+  const reconciled = slice.kernel.reconcileRunOutcome({
+    runId,
+    tick: slice.world.tick,
+    status: terminal.status === "delivered" ? "succeeded" : "blocked",
+    summary: terminal.status === "delivered"
+      ? `Ida factually delivered structured speech to Janek through World occurrence ${terminal.occurrence.id}`
+      : `Ida's structured communication factually ended with ${terminal.reason}`,
+  });
+  expect(reconciled.status).toBe("recorded");
+  if (reconciled.status !== "recorded") throw new Error("structured episode did not reconcile");
+
+  if (terminal.status === "delivered") slice.kernel.resolveMatter(matterId);
+  else slice.kernel.cancelMatter(matterId);
+
+  return terminal;
+}
+
 function runInitialEpisode(slice: ReturnType<typeof createFiveResidentIdaMessageDeliverySlice>) {
   for (let guard = 0; guard < EXECUTION_GUARD; guard += 1) {
     const step = slice.advanceOneWorldTick();
@@ -197,17 +234,17 @@ function runInitialEpisode(slice: ReturnType<typeof createFiveResidentIdaMessage
   throw new Error("initial communication episode exceeded guard");
 }
 
-function runSecondEpisode(
+function runExecutor(
   slice: ReturnType<typeof createFiveResidentIdaMessageDeliverySlice>,
   executor: ResidentMessageDeliveryExecutor,
 ) {
   for (let guard = 0; guard < EXECUTION_GUARD; guard += 1) {
     const step = executor.step();
     if (step.status === "delivered" || step.status === "blocked") return step;
-    if (step.status === "authority_lost") throw new Error("second episode lost authority");
+    if (step.status === "authority_lost") throw new Error("structured episode lost authority");
     slice.world.step();
   }
-  throw new Error("second communication episode exceeded guard");
+  throw new Error("structured communication episode exceeded guard");
 }
 
 function relocateJanekOutsideIdaKnowledge(
