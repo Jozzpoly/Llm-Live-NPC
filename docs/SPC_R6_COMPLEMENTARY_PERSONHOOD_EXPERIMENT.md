@@ -545,51 +545,46 @@ Completed / retained within scope:
 
 - R5 qualified sources remain frozen;
 - R6-A and R6-B remain bounded qualified mechanism passes;
-- Oren→Nela standing history is deterministic/domain green and crosses the Worker boundary;
-- canonical endogenous Live Provider run #22 remains the bounded no-fresh-command standing-history positive finding;
-- factual standing fulfilment run #23 and exact local replay remain bounded lifecycle evidence;
-- the explicit standing-obligation endogenous stage is **bounded CLOSED**;
-- post-terminal material-history characterization is executable;
-- exact post-terminal control/history contexts are frozen and equality-bound to runtime generation;
-- Live Provider run #24 remains a valid **neutral** two-call / zero-retry single-opportunity result;
-- exact run-#24 proposals survive local admission and factual travel without gaining material-action authority;
+- canonical endogenous standing-history run #22 and factual fulfilment run #23 remain bounded positive evidence;
+- explicit standing-obligation endogenous work remains **bounded CLOSED**;
+- post-terminal single-opportunity run #24 remains **BOUNDED NEUTRAL**: semantic uptake observed, behavioral effect not proven;
 - competing-future support gap was characterized before implementation;
-- narrow `prior_same_material_outcome` support is exact-identity / terminal-outcome bounded and does not reopen history;
-- Live Provider run #25 is provider-contract failure evidence only: zero token usage / no semantic output;
-- canonical Live Provider run #26 is a **material bounded positive finding**: control `defer_all`, history `focus_matter(retry)`, exact historical outcome cited, zero semantic retries;
-- exact run-#26 proposals survive normal local choice admission while old history remains resolved/run-free;
-- replay source `c3e2efb784520d17e520f3373a2de97bc8caab53`: Check #1653 **269 / 269 files, 979 / 979 tests**.
+- narrow `prior_same_material_outcome` remains exact-identity / terminal-outcome bounded and does not reopen history;
+- run #25 remains provider-contract failure evidence only: no model output / zero token usage;
+- canonical run #26 remains the **MATERIAL BOUNDED POSITIVE** real-Luna finding: control `defer_all`, history `focus_matter(retry)`, exact terminal outcome cited, zero retries;
+- exact run-#26 proposals survive normal local choice admission;
+- `docs/SPC_R6_ENDOGENOUS_COMPETING_FUTURE_RUNTIME_FINDING.md` now closes the corresponding fixture-construction debt at the deterministic runtime plane;
+- source `d0163c7850809897e163dd589e3ce344ff162fa1`: Check #1672 **272 / 272 files, 984 / 984 tests**, typecheck/build/preview PASS;
+- the runtime chain creates C from factual post-terminal reacquisition and D independently from another factual life outcome, then reaches normal `choice_required(C,D)`;
+- A remains terminal/run-free and coherent `defer_all` remains legal.
 
 Evidence hygiene:
 
-- run #21 remains apparatus/contract failure evidence, not positive semantics;
-- run #22 is one paired positive observation, not a behavior distribution;
-- run #23 is one bounded fulfilment judgement;
-- run #24 produced the same behavioral decision in both twins; its different rationale is semantic uptake, not behavioral history-effect proof;
-- run #25 produced no model output and zero token usage, so it is apparatus/schema evidence only;
-- run #26 is one paired positive observation, not a behavior distribution;
-- run #26 proves one exact post-terminal factual-history effect on a competing-future behavior, not preference/aversion or generalized autobiography;
-- the post-terminal contexts come from exact runtime-generated fixtures and real endpoint calls, not one uninterrupted browser process;
-- terminal history remains bounded by current evidence retention; long-lived autobiographical persistence is not qualified;
+- run #26 is still one paired model observation, not a behavior distribution;
+- runtime generation does not turn retry-after-failure into preference, aversion or habit;
+- the deterministic chain begins from bounded authored seed matters A/B; it proves the later history/future/arbitration chain is runtime-generated, not that all resident motives spontaneously originate from nothing;
+- terminal history is still bounded by current evidence retention;
+- long-lived autobiographical persistence remains **UNPROVEN**;
 - browser-qualified Oren/Nela genericity remains **UNPROVEN**;
 - full R6, five distinct living people and Owner-observed ordinary personhood remain **UNPROVEN**.
 
 Current order:
 
-1. preserve `docs/SPC_R6_POST_TERMINAL_FACTUAL_HISTORY_FINDING.md` as the canonical result of the completed single-opportunity probe;
-2. do not repeat run #24 merely to obtain a behavioral split;
-3. construct the next falsifier around a **real competing-future choice**, not a single obvious opportunity;
-4. require one terminal factual episode to be structurally relevant to one candidate future while current evidence remains matched;
-5. require any claimed history-based focus to cite pre-existing causal support that local admission can verify;
-6. let `focus candidate A`, `focus candidate B` and coherent `defer_all` remain legal;
-7. if current candidate-local support cannot legally represent the needed terminal-history relation, treat that as a concrete earned failure before designing the smallest new relevance representation;
-8. preserve Janek/material continuity, R1 homeostasis, R2 metabolism, private knowledge and R5 provider safety as vetoes;
-9. retain browser Oren/Nela genericity as promotion-plane debt rather than current research priority;
-10. do not prepare an Owner gate or merge PR #148 by CI inertia.
+1. preserve the run-#24 neutral result and run-#26 positive result exactly as documented;
+2. do not rerun run #26 merely to obtain another stochastic sample;
+3. treat the normal-runtime provenance question as **bounded CLOSED** by `d0163c78...`;
+4. do not deepen the same material chain by inertia;
+5. move to the next new personhood pressure: **history durability after ordinary unrelated life/evidence churn**;
+6. first falsify the current system after the terminal factual episode has naturally fallen outside bounded recent evidence;
+7. preserve the distinction between `past factual self-experience` and `current open matter`;
+8. do not retain terminal matters forever and do not add a generic autobiographical-memory/personality store before the delayed-history failure is concrete;
+9. preserve Janek/material continuity, R1 homeostasis, R2 metabolism, private knowledge and R5 provider safety as vetoes;
+10. retain browser Oren/Nela genericity as promotion-plane debt rather than current research priority;
+11. do not prepare an Owner gate or merge PR #148 by CI inertia.
 
 The next research question is now:
 
-> **Can terminal factual life alter a genuine endogenous competing-future choice or coherent non-action through causally attributable support, without becoming an open obligation or a generic personality system?**
+> **Can a resident's terminal factual life still causally alter a later endogenous competing-future choice after ordinary unrelated life has moved that episode beyond the bounded recent-evidence window — without keeping the old matter open or replacing personhood with a generic memory/personality system?**
 
 ## 12. Owner-observed target
 
