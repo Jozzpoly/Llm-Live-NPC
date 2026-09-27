@@ -156,15 +156,16 @@ export class ResidentCausalReasonCommitmentAuthority {
     if (decision.kind !== "accept") {
       return { status: "rejected", detail: "expected accepted resident commitment" };
     }
+    const acceptedIntent = decision.intent;
 
-    if (decision.intent.kind === "travel" && decision.intent.targetRegionId !== null) {
+    if (acceptedIntent.kind === "travel" && acceptedIntent.targetRegionId !== null) {
       const currentRegionId = input.groundingContext.currentRegionId;
       if (!currentRegionId) {
         return { status: "rejected", detail: "current resident region is unavailable at admission" };
       }
       const known = new Set(input.groundingContext.knownRegions.map((region) => region.id));
       known.add(currentRegionId);
-      const targetRegionId = decision.intent.targetRegionId;
+      const targetRegionId = acceptedIntent.targetRegionId;
       const route = this.options.navigation.route(currentRegionId, targetRegionId, known);
       const destination = this.options.navigation.destinationPoint(targetRegionId);
       if (!route || !destination) {
@@ -174,10 +175,10 @@ export class ResidentCausalReasonCommitmentAuthority {
       const intent = Object.freeze({
         originReasonId: originReason.id,
         originReasonKind: originReason.kind,
-        semanticCourse: `${decision.reason} · ${decision.intent.goal}`,
+        semanticCourse: `${decision.reason} · ${acceptedIntent.goal}`,
         semanticIntent: Object.freeze({
           kind: "travel_region" as const,
-          goal: decision.intent.goal,
+          goal: acceptedIntent.goal,
           targetRegionId,
         }),
         routeRegionIds: Object.freeze([...route.regionIds]),
@@ -191,11 +192,11 @@ export class ResidentCausalReasonCommitmentAuthority {
       return { status: "accepted", intent };
     }
 
-    if (decision.intent.kind === "acquire_material_object") {
+    if (acceptedIntent.kind === "acquire_material_object") {
       const material = this.exactMaterialReacquisition(
         input.providerContext,
         originReason,
-        decision.intent.objectId,
+        acceptedIntent.objectId,
       );
       if (!material) {
         return {
@@ -215,11 +216,11 @@ export class ResidentCausalReasonCommitmentAuthority {
         sourceMatterId: material.sourceMatterId,
         reacquisitionEvidenceId: material.reacquisitionEvidence.id,
         priorOutcomeEvidenceId: material.priorOutcomeEvidence.id,
-        semanticCourse: `${decision.reason} · ${decision.intent.goal}`,
+        semanticCourse: `${decision.reason} · ${acceptedIntent.goal}`,
         semanticIntent: Object.freeze({
           kind: "acquire_material_object" as const,
-          goal: decision.intent.goal,
-          objectId: decision.intent.objectId,
+          goal: acceptedIntent.goal,
+          objectId: acceptedIntent.objectId,
         }),
         routeRegionIds: [] as const,
       }) satisfies GroundedResidentCausalReasonCommitmentIntent;
@@ -232,13 +233,13 @@ export class ResidentCausalReasonCommitmentAuthority {
       return { status: "accepted", intent };
     }
 
-    if (decision.intent.kind === "communicate"
-      && "targetActorId" in decision.intent
-      && "text" in decision.intent
-      && decision.intent.targetActorId !== null
-      && decision.intent.text !== null) {
+    if (acceptedIntent.kind === "communicate"
+      && "targetActorId" in acceptedIntent
+      && "text" in acceptedIntent
+      && acceptedIntent.targetActorId !== null
+      && acceptedIntent.text !== null) {
       const knownActor = input.groundingContext.knownActors.find(
-        (actor) => actor.id === decision.intent.targetActorId,
+        (actor) => actor.id === acceptedIntent.targetActorId,
       );
       if (!knownActor) {
         return { status: "rejected", detail: "reason commitment target actor is not privately known" };
@@ -247,12 +248,12 @@ export class ResidentCausalReasonCommitmentAuthority {
       const intent = Object.freeze({
         originReasonId: originReason.id,
         originReasonKind: originReason.kind,
-        semanticCourse: `${decision.reason} · ${decision.intent.goal}`,
+        semanticCourse: `${decision.reason} · ${acceptedIntent.goal}`,
         semanticIntent: Object.freeze({
           kind: "communicate_actor" as const,
-          goal: decision.intent.goal,
-          targetActorId: decision.intent.targetActorId,
-          text: decision.intent.text,
+          goal: acceptedIntent.goal,
+          targetActorId: acceptedIntent.targetActorId,
+          text: acceptedIntent.text,
         }),
         routeRegionIds: [] as const,
       }) satisfies GroundedResidentCausalReasonCommitmentIntent;
