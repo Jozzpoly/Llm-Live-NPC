@@ -2,6 +2,7 @@ import type { ResidentLifeCognitionContext } from "../src/spc-next/resident-life
 import type { ResidentLifeChoiceDecision } from "../src/spc-next/resident-life-choice-owner";
 import {
   allowedChoiceSupportEvidenceIds,
+  allowedDeferAllSupportEvidenceIds,
   deriveResidentLifeChoiceCandidateSupports,
   type ResidentLifeChoiceCandidateSupport,
 } from "../src/spc-next/resident-life-choice-causal-support";
@@ -50,7 +51,7 @@ A choice is semantic priority only. It does not move the resident, complete a ta
 
 Use the resident's reasons, private percepts, concerns, beliefs, known actors/regions, semantic courses and resident-life evidence when useful. Do not infer hidden World truth. Do not invent matter ids, run ids, facts, evidence or completed outcomes. A run marked canMutateWorld means it currently has resident semantic authority to attempt factual execution; it does not mean the task succeeded.
 
-The input also contains choiceSupport, a read-only projection of causal facts that existed before this decision. For focus_matter, cite one or more supportEvidenceIds allowed by the schema. Ordinary matter-origin/current-context evidence remains candidate-local. The narrow relation prior_same_material_outcome is different: it is an exact factual terminal task outcome tied by material object identity to one current candidate, so it may be comparative evidence for choosing that candidate or choosing another candidate instead. It does not reopen the old matter, create a preference, grant body authority or imply that retry/avoidance is inherently correct. Do not invent evidence. The support citation proves causal grounding; it does not force one candidate to win.
+The input also contains choiceSupport, a read-only projection of causal facts that existed before this decision. For focus_matter, cite one or more supportEvidenceIds allowed by the schema. For defer_all, if specific resident-owned facts materially contribute to the deliberate non-action, use the supported defer_all variant and cite them; the legacy no-citation defer_all remains valid when no positive fact is doing causal work. Ordinary matter-origin/current-context evidence remains candidate-local. The narrow relation prior_same_material_outcome is different: it is an exact factual terminal task outcome tied by material object identity to one current candidate, so it may be comparative evidence for choosing that candidate or choosing another candidate instead. It does not reopen the old matter, create a preference, grant body authority or imply that retry/avoidance is inherently correct. Do not invent evidence. The support citation proves causal grounding; it does not force one candidate to win.
 
 If the available context does not justify choosing among the candidates, defer_all is valid. Set reviewAfterSeconds from 0.25 to 600 according to how soon the ambiguity deserves reconsideration. Do not mechanically poll.
 
@@ -160,8 +161,35 @@ export function extractSpcNextLifeChoiceDecision(
     };
   }
   if (decision.kind === "defer_all") {
-    if (!hasOnlyKeys(decision, ["kind", "reason", "reviewAfterSeconds"])) return null;
-    return { kind: "defer_all", reason, reviewAfterSeconds };
+    if (!hasOnlyKeys(decision, [
+      "kind",
+      "reason",
+      "supportEvidenceIds",
+      "reviewAfterSeconds",
+    ])) return null;
+    if (decision.supportEvidenceIds === undefined) {
+      return { kind: "defer_all", reason, reviewAfterSeconds };
+    }
+
+    const allowedSupport = new Set(
+      allowedDeferAllSupportEvidenceIds(candidateSupports),
+    );
+    if (!Array.isArray(decision.supportEvidenceIds)
+      || decision.supportEvidenceIds.length < 1
+      || decision.supportEvidenceIds.length > 8) return null;
+    const supportEvidenceIds: string[] = [];
+    for (const evidenceId of decision.supportEvidenceIds) {
+      if (typeof evidenceId !== "string"
+        || !allowedSupport.has(evidenceId)
+        || supportEvidenceIds.includes(evidenceId)) return null;
+      supportEvidenceIds.push(evidenceId);
+    }
+    return {
+      kind: "defer_all",
+      reason,
+      supportEvidenceIds,
+      reviewAfterSeconds,
+    };
   }
   return null;
 }
@@ -191,16 +219,32 @@ function decisionSchema(
     })];
   });
 
+  const deferSupportIds = allowedDeferAllSupportEvidenceIds(candidateSupports);
+  const deferVariants = [
+    objectSchema({
+      kind: { type: "string", enum: ["defer_all"] },
+      reason: stringSchema(MAX_REASON_LENGTH),
+      reviewAfterSeconds: { type: "number", minimum: 0.25, maximum: 600 },
+    }),
+    ...(deferSupportIds.length > 0 ? [objectSchema({
+      kind: { type: "string", enum: ["defer_all"] },
+      reason: stringSchema(MAX_REASON_LENGTH),
+      supportEvidenceIds: {
+        type: "array",
+        minItems: 1,
+        maxItems: Math.min(8, deferSupportIds.length),
+        items: { type: "string", enum: deferSupportIds },
+      },
+      reviewAfterSeconds: { type: "number", minimum: 0.25, maximum: 600 },
+    })] : []),
+  ];
+
   return objectSchema({
     version: { type: "integer", enum: [1] },
     decision: {
       anyOf: [
         ...focusVariants,
-        objectSchema({
-          kind: { type: "string", enum: ["defer_all"] },
-          reason: stringSchema(MAX_REASON_LENGTH),
-          reviewAfterSeconds: { type: "number", minimum: 0.25, maximum: 600 },
-        }),
+        ...deferVariants,
       ],
     },
   });
