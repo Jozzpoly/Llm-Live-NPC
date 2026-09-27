@@ -365,22 +365,45 @@ export class ResidentCausalReasonCommitmentAuthority {
       || originReason.id !== materialReacquiredOpportunityReasonId(this.options.residentId, objectId)
       || !this.options.materialKnowledge) return null;
 
-    const sources = context.life.matters.filter((matter) => (
-      (matter.status === "resolved" || matter.status === "cancelled")
-      && matter.activeRun === null
-      && matter.semanticIntent?.kind === "acquire_material_object"
-      && matter.semanticIntent.objectId === objectId
-      && matter.lastOutcomeEvidence?.kind === "task_outcome"
-      && matter.lastOutcomeEvidence.summary.startsWith("blocked:")
-      && originReason.evidenceIds.includes(matter.lastOutcomeEvidence.id)
-    ));
-    if (sources.length !== 1) return null;
+    // A recent terminal episode may still be projected in life. An older one may
+    // exist only in the bounded factual terminal archive. Both routes must identify
+    // the same exact kernel matter + task outcome; neither grants the old matter any
+    // current execution or body authority.
+    const sources = new Map<string, ResidentKernelEvidence>();
+    for (const matter of context.life.matters) {
+      if ((matter.status !== "resolved" && matter.status !== "cancelled")
+        || matter.activeRun !== null
+        || matter.semanticIntent?.kind !== "acquire_material_object"
+        || matter.semanticIntent.objectId !== objectId
+        || matter.lastOutcomeEvidence?.kind !== "task_outcome"
+        || !matter.lastOutcomeEvidence.summary.startsWith("blocked:")
+        || !originReason.evidenceIds.includes(matter.lastOutcomeEvidence.id)) continue;
+      sources.set(matter.id, structuredClone(matter.lastOutcomeEvidence));
+    }
 
-    const source = sources[0]!;
-    const projectedOutcome = source.lastOutcomeEvidence!;
+    for (const entry of this.options.kernel.terminalOutcomeArchiveSnapshot()) {
+      const matter = this.options.kernel.matter(entry.matterId);
+      if (!matter
+        || (matter.status !== "resolved" && matter.status !== "cancelled")
+        || matter.activeRunId !== null
+        || matter.semanticIntent?.kind !== "acquire_material_object"
+        || matter.semanticIntent.objectId !== objectId
+        || matter.lastOutcomeEvidenceId !== entry.evidence.id
+        || entry.evidence.kind !== "task_outcome"
+        || !entry.evidence.summary.startsWith("blocked:")
+        || !originReason.evidenceIds.includes(entry.evidence.id)) continue;
+
+      const existing = sources.get(matter.id);
+      if (existing && !sameKernelEvidence(existing, entry.evidence)) return null;
+      sources.set(matter.id, structuredClone(entry.evidence));
+    }
+
+    if (sources.size !== 1) return null;
+    const [sourceMatterId, projectedOutcome] = [...sources.entries()][0]!;
+
     const reacquisitionId = materialReacquiredEvidenceId(
       this.options.residentId,
-      source.id,
+      sourceMatterId,
       objectId,
       originReason.tick,
     );
@@ -388,22 +411,22 @@ export class ResidentCausalReasonCommitmentAuthority {
 
     const recent = this.options.kernel.recentEvidenceSnapshot();
     const reacquisitionEvidence = recent.find((evidence) => evidence.id === reacquisitionId) ?? null;
-    const priorOutcomeEvidence = recent.find((evidence) => evidence.id === projectedOutcome.id) ?? null;
+    const archivedOutcome = this.options.kernel.archivedTerminalOutcomeEvidence(sourceMatterId);
+    const recentOutcome = recent.find((evidence) => evidence.id === projectedOutcome.id) ?? null;
+    const priorOutcomeEvidence = archivedOutcome ?? recentOutcome;
     if (!reacquisitionEvidence
       || reacquisitionEvidence.kind !== "material_reacquired"
       || reacquisitionEvidence.tick !== originReason.tick
       || !priorOutcomeEvidence
-      || priorOutcomeEvidence.kind !== projectedOutcome.kind
-      || priorOutcomeEvidence.tick !== projectedOutcome.tick
-      || priorOutcomeEvidence.summary !== projectedOutcome.summary) return null;
+      || !sameKernelEvidence(priorOutcomeEvidence, projectedOutcome)) return null;
 
-    const kernelSource = this.options.kernel.matter(source.id);
+    const kernelSource = this.options.kernel.matter(sourceMatterId);
     if (!kernelSource
       || (kernelSource.status !== "resolved" && kernelSource.status !== "cancelled")
       || kernelSource.activeRunId !== null
       || kernelSource.semanticIntent?.kind !== "acquire_material_object"
       || kernelSource.semanticIntent.objectId !== objectId
-      || kernelSource.lastOutcomeEvidenceId !== projectedOutcome.id) return null;
+      || kernelSource.lastOutcomeEvidenceId !== priorOutcomeEvidence.id) return null;
 
     this.options.materialKnowledge.sample();
     const current = this.options.materialKnowledge.observation(objectId);
@@ -417,9 +440,9 @@ export class ResidentCausalReasonCommitmentAuthority {
     if (openSameObject) return null;
 
     return {
-      sourceMatterId: source.id,
+      sourceMatterId,
       reacquisitionEvidence,
-      priorOutcomeEvidence,
+      priorOutcomeEvidence: structuredClone(priorOutcomeEvidence),
     };
   }
 
@@ -469,6 +492,17 @@ function isGroundedMaterialCommitmentIntent(
     && "reacquisitionEvidenceId" in intent
     && "priorOutcomeEvidenceId" in intent
     && "sourceMatterId" in intent;
+}
+
+function sameKernelEvidence(
+  left: ResidentKernelEvidence,
+  right: ResidentKernelEvidence,
+): boolean {
+  return left.id === right.id
+    && left.tick === right.tick
+    && left.kind === right.kind
+    && left.summary === right.summary
+    && left.sourceRunId === right.sourceRunId;
 }
 
 function exactReason(
