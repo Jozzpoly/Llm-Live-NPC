@@ -208,9 +208,14 @@ function sanitizeMatter(value: unknown, contextTick: number): ResidentLifeMatter
     : null;
   if (Object.hasOwn(value, "historicalSupport") && historicalSupport === null) return null;
   if (historicalSupport && historicalSupport.length > 0) {
-    if (semanticIntent?.kind !== "acquire_material_object"
-      || (status !== "active" && status !== "suspended")
+    if ((status !== "active" && status !== "suspended")
       || historicalSupport.some((entry) => entry.evidence.kind !== "task_outcome")) return null;
+    if (historicalSupport.some((entry) => (
+      (entry.relation === "prior_same_material_outcome"
+        && semanticIntent?.kind !== "acquire_material_object")
+      || (entry.relation === "prior_same_actor_outcome"
+        && semanticIntent?.kind !== "communicate_actor")
+    ))) return null;
   }
 
   const activeRun = value.activeRun === null ? null : sanitizeRun(value.activeRun);
@@ -248,7 +253,8 @@ function sanitizeHistoricalSupport(
   const seen = new Set<string>();
   for (const raw of value) {
     if (!record(raw) || !hasOnlyKeys(raw, ["relation", "sourceMatterId", "evidence"])) return null;
-    if (raw.relation !== "prior_same_material_outcome") return null;
+    if (raw.relation !== "prior_same_material_outcome"
+      && raw.relation !== "prior_same_actor_outcome") return null;
     const sourceMatterId = identifier(raw.sourceMatterId);
     const evidence = sanitizeEvidence(raw.evidence, contextTick);
     if (!sourceMatterId || !evidence) return null;
