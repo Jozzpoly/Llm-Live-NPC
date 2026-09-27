@@ -21,6 +21,7 @@ export interface ResidentLifeEvidenceView {
 
 export interface ResidentLifeHistoricalSupportView {
   relation: ResidentMatterHistoricalSupportRelation;
+  sourceMatterId: string;
   evidence: ResidentLifeEvidenceView;
 }
 
@@ -146,6 +147,7 @@ function projectMatter(
   const historicalSupport = kernel.historicalSupportEvidence(matter.id)
     .map((entry) => ({
       relation: entry.relation,
+      sourceMatterId: entry.sourceMatterId,
       evidence: projectEvidence(entry.evidence)!,
     }))
     .sort((left, right) => (
