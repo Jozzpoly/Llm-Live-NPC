@@ -11,7 +11,8 @@ export type ResidentLifeChoiceSupportRelation =
   | "blocked_outcome"
   | "last_outcome"
   | "prior_same_material_outcome"
-  | "prior_same_actor_outcome";
+  | "prior_same_actor_outcome"
+  | "prior_counterparty_social_outcome";
 
 export interface ResidentLifeChoiceSupportFact {
   evidenceId: string;
@@ -40,7 +41,8 @@ export interface ResidentLifeChoiceCandidateSupport {
  *
  * R6 additionally earns narrow typed post-terminal relations:
  * - exact same-material factual outcome;
- * - exact same-actor communication factual outcome.
+ * - exact same-actor communication factual outcome;
+ * - exact counterparty-caused standing lifecycle outcome.
  *
  * These are candidate genealogy, not priority or relationship scores. Old matters
  * remain terminal and gain no run/body/execution authority.
@@ -75,7 +77,8 @@ export function allowedChoiceSupportEvidenceIds(
   for (const support of supports) {
     for (const fact of support.facts) {
       if (fact.relation === "prior_same_material_outcome"
-        || fact.relation === "prior_same_actor_outcome") {
+        || fact.relation === "prior_same_actor_outcome"
+        || fact.relation === "prior_counterparty_social_outcome") {
         allowed.add(fact.evidenceId);
       }
     }
@@ -154,6 +157,18 @@ function addPinnedHistoricalSupportFacts(
         seenEvidenceIds,
         support.evidence,
         "prior_same_actor_outcome",
+        support.sourceMatterId,
+      );
+      continue;
+    }
+
+    if (support.relation === "prior_counterparty_social_outcome"
+      && candidate.semanticIntent?.kind === "communicate_actor") {
+      addFact(
+        facts,
+        seenEvidenceIds,
+        support.evidence,
+        "prior_counterparty_social_outcome",
         support.sourceMatterId,
       );
     }
