@@ -181,6 +181,26 @@ describe("R6 endogenous competing-future factual-history chain", () => {
       runId: CARRIER_RUN_ID,
     });
 
+    // Ordinary unrelated factual life now advances enough to evict A from the bounded
+    // recent-evidence window BEFORE the object returns. This is the delayed-history
+    // boundary: current life must forget terminal A, while the bounded factual archive
+    // retains only the exact old outcome as possible provenance.
+    for (let index = 0; index < 12; index += 1) {
+      world.step();
+      kernel.recordEvidence({
+        id: `evidence:janek:r6:endogenous-competing:unrelated-churn:${index}`,
+        tick: world.tick,
+        kind: "later_life",
+        summary: `ordinary unrelated factual life before delayed reacquisition ${index}`,
+      });
+    }
+    expect(kernel.recentEvidenceSnapshot().some(
+      (evidence) => evidence.id === oldOutcome.id,
+    )).toBe(false);
+    expect(kernel.archivedTerminalOutcomeEvidence(OLD_MATTER_ID)).toEqual(oldOutcome);
+    const preReturnLife = currentLife(kernel, matterScope, focus, arbitrator);
+    expect(preReturnLife.matters.some((matter) => matter.id === OLD_MATTER_ID)).toBe(false);
+
     // While B really owns the body, the external actor returns the exact same object
     // into Janek's sight. This is a World event, not fixture-owned life JSON.
     moveActorOneTick(world, RELOCATOR_ID, { ...OBJECT_RETURN });
@@ -307,23 +327,9 @@ describe("R6 endogenous competing-future factual-history chain", () => {
       activeRunId: null,
     });
 
-    // Ordinary unrelated factual life now advances enough to evict A from the bounded
-    // recent-evidence window. C remains current, so its exact causal provenance keeps
-    // only A's factual task outcome pinned; the old matter itself must disappear from
-    // current life before the later C-vs-D ambiguity is formed.
-    for (let index = 0; index < 12; index += 1) {
-      world.step();
-      kernel.recordEvidence({
-        id: `evidence:janek:r6:endogenous-competing:unrelated-churn:${index}`,
-        tick: world.tick,
-        kind: "later_life",
-        summary: `ordinary unrelated factual life after material future creation ${index}`,
-      });
-    }
-    expect(kernel.recentEvidenceSnapshot().some(
-      (evidence) => evidence.id === oldOutcome.id,
-    )).toBe(false);
-    expect(kernel.archivedTerminalOutcomeEvidence(OLD_MATTER_ID)).toEqual(oldOutcome);
+    // C was created only after A had already left current life. Its typed provenance
+    // now keeps the exact old factual outcome available to this current matter without
+    // restoring A itself as an open/current-life entity.
     const delayedLife = currentLife(kernel, matterScope, focus, arbitrator);
     expect(delayedLife.matters.some((matter) => matter.id === OLD_MATTER_ID)).toBe(false);
     expect(delayedLife.matters.find(
