@@ -219,7 +219,7 @@ function setupResident() {
       "run.janek.r6.competing-future.other",
     ],
   });
-  const batch = resident.takeCognitionBatch(30);
+  const batch = resident.takeCognitionBatch(50);
   if (!batch) throw new Error("R6 competing-future fixture did not produce cognition");
 
   return {
