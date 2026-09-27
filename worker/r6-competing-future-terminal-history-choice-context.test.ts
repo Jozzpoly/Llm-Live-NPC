@@ -158,6 +158,8 @@ describe("R6 competing-future terminal-history life-choice contract", () => {
       .toEqual([HISTORY_OUTCOME, OTHER_ORIGIN].sort((a, b) => a.localeCompare(b)));
     expect(focus(historySchema, RETRY_MATTER).properties.supportEvidenceIds.items.enum)
       .toEqual([HISTORY_OUTCOME, RETRY_ORIGIN].sort((a, b) => a.localeCompare(b)));
+    expect(focus(historySchema, RETRY_MATTER).properties.supportEvidenceIds.uniqueItems)
+      .toBeUndefined();
 
     expect(focus(historySchema, OTHER_MATTER).properties.supportEvidenceIds.items.enum)
       .not.toContain(RETRY_ORIGIN);
