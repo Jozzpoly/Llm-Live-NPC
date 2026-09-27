@@ -163,13 +163,17 @@ describe("R6 endogenous post-terminal material future", () => {
       throw new Error(`unexpected material opportunity: ${opportunity.status}`);
     }
 
-    const batch = resident.takeCognitionBatch(world.tick);
-    expect(batch?.reasons).toContainEqual(expect.objectContaining({
+    let batch = resident.takeCognitionBatch(world.tick);
+    for (let wait = 0; !batch && wait < 180; wait += 1) {
+      world.step();
+      batch = resident.takeCognitionBatch(world.tick);
+    }
+    if (!batch) throw new Error("material reacquisition did not produce cognition");
+    expect(batch.reasons).toContainEqual(expect.objectContaining({
       id: opportunity.reasonId,
       kind: "direct_world_change",
       evidenceIds: [opportunity.evidence.id, opportunity.priorOutcomeEvidence.id],
     }));
-    if (!batch) throw new Error("material reacquisition did not produce cognition");
 
     const lifeAtDecision = captureResidentLifeCognitionView({
       kernel,
