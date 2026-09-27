@@ -61,6 +61,19 @@ export function deriveResidentLifeChoiceCandidateSupports(
     .sort((a, b) => a.matterId.localeCompare(b.matterId));
 }
 
+export function allowedDeferAllSupportEvidenceIds(
+  supports: readonly ResidentLifeChoiceCandidateSupport[],
+): string[] {
+  // Deliberate non-action is a judgement over the whole current ambiguity rather
+  // than one selected winner. It may therefore cite any already-existing support
+  // fact attached to one of the frozen candidates, but nothing outside that plane.
+  const allowed = new Set<string>();
+  for (const support of supports) {
+    for (const fact of support.facts) allowed.add(fact.evidenceId);
+  }
+  return [...allowed].sort((a, b) => a.localeCompare(b));
+}
+
 export function allowedChoiceSupportEvidenceIds(
   supports: readonly ResidentLifeChoiceCandidateSupport[],
   matterId: string,
