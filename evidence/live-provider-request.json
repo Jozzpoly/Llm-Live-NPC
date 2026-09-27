@@ -1,9 +1,9 @@
 {
-  "version": 29,
+  "version": 30,
   "pr": 148,
   "qualifiers": [
-    "r6-cumulative-same-actor-history-choice-twin"
+    "r6-same-cardinality-outcome-meaning-choice-twin"
   ],
-  "purpose": "R6 cumulative same-actor factual-history live qualification — apparatus retry only. Prior Live Provider run #28 failed in qualifier resolution before preview/provider inference and spent zero model requests/tokens; it is not a semantic sample. Re-run the identical frozen matched Mira C-vs-D twins now that workflow registration is repaired. Neither twin exposes old matters; history differs only by two candidate-scoped exact Ida prior_same_actor_outcome facts on current C. Hard maximum two GPT-5.6 Luna requests, no semantic retry, no preferred winner. Cumulative causal classification still requires a behavioral difference plus citation of BOTH exact old factual outcomes; one cited episode is partial uptake, not cumulative proof.",
-  "requestedAtUtc": "2026-09-27T13:57:00Z"
+  "purpose": "R6 same-cardinality factual outcome-meaning live falsifier. Both matched Ida frames contain exactly two prior_same_actor_outcome facts for the same exact Janek lineage, identical evidence IDs/ticks, identical current C-vs-D futures, one free body, no old matters, no fresh speech and no authored self. The only material difference is factual old outcome meaning: two succeeded delivered-speech outcomes versus two blocked recipient_absent_at_best_known_contact outcomes. Exactly two GPT-5.6 Luna requests, no semantic retry, no preferred winner. A bounded positive meaning-sensitive observation requires a behavioral difference while at least one focused decision cites both exact old outcome IDs; equal behavior remains neutral even if rationale wording differs.",
+  "requestedAtUtc": "2026-09-27T15:31:00Z"
 }
