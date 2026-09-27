@@ -83,7 +83,9 @@ export type ResidentMatterIntent =
   | ResidentAcquireMaterialObjectMatterIntent
   | ResidentStandingSocialCommitmentMatterIntent;
 
-export type ResidentMatterHistoricalSupportRelation = "prior_same_material_outcome";
+export type ResidentMatterHistoricalSupportRelation =
+  | "prior_same_material_outcome"
+  | "prior_same_actor_outcome";
 
 export interface ResidentMatterHistoricalSupport {
   relation: ResidentMatterHistoricalSupportRelation;
@@ -727,20 +729,37 @@ export class ResidentContinuityKernel {
     support: ResidentMatterHistoricalSupport,
     evidence: ResidentKernelEvidence,
   ): void {
-    if (support.relation !== "prior_same_material_outcome"
-      || semanticIntent?.kind !== "acquire_material_object"
-      || evidence.kind !== "task_outcome") {
-      throw new Error("prior material history requires a material candidate and factual task outcome");
+    if (evidence.kind !== "task_outcome") {
+      throw new Error("resident historical support requires factual task outcome evidence");
     }
+
     const source = this.matters.get(support.sourceMatterId);
     if (!source
       || !isTerminal(source.status)
       || source.activeRunId !== null
-      || source.semanticIntent?.kind !== "acquire_material_object"
-      || source.semanticIntent.objectId !== semanticIntent.objectId
       || source.lastOutcomeEvidenceId !== evidence.id) {
-      throw new Error("prior material history does not match exact terminal same-object matter");
+      throw new Error("resident historical support source is not exact terminal factual outcome");
     }
+
+    if (support.relation === "prior_same_material_outcome") {
+      if (semanticIntent?.kind !== "acquire_material_object"
+        || source.semanticIntent?.kind !== "acquire_material_object"
+        || source.semanticIntent.objectId !== semanticIntent.objectId) {
+        throw new Error("prior material history does not match exact terminal same-object matter");
+      }
+      return;
+    }
+
+    if (support.relation === "prior_same_actor_outcome") {
+      if (semanticIntent?.kind !== "communicate_actor"
+        || source.semanticIntent?.kind !== "communicate_actor"
+        || source.semanticIntent.targetActorId !== semanticIntent.targetActorId) {
+        throw new Error("prior actor history does not match exact terminal same-actor matter");
+      }
+      return;
+    }
+
+    throw new Error(`unsupported resident historical support relation: ${String(support.relation)}`);
   }
 
   private releaseLiveEvidencePins(matterId: string): void {
@@ -1068,12 +1087,20 @@ function validateCommittedSnapshot(
       throw new Error(`snapshot historical support source is not exact terminal outcome: ${pin.sourceMatterId}`);
     }
     const candidateIntent = matter.semanticIntent;
+    if (pin.evidence.kind !== "task_outcome") {
+      throw new Error("snapshot historical support requires factual task outcome");
+    }
     if (pin.relation === "prior_same_material_outcome"
       && (candidateIntent?.kind !== "acquire_material_object"
         || source.semanticIntent?.kind !== "acquire_material_object"
-        || source.semanticIntent.objectId !== candidateIntent.objectId
-        || pin.evidence.kind !== "task_outcome")) {
+        || source.semanticIntent.objectId !== candidateIntent.objectId)) {
       throw new Error("snapshot prior material support violates exact object/outcome relation");
+    }
+    if (pin.relation === "prior_same_actor_outcome"
+      && (candidateIntent?.kind !== "communicate_actor"
+        || source.semanticIntent?.kind !== "communicate_actor"
+        || source.semanticIntent.targetActorId !== candidateIntent.targetActorId)) {
+      throw new Error("snapshot prior actor support violates exact actor/outcome relation");
     }
     const key = `${pin.matterId}|${pin.sourceMatterId}|${pin.relation}|${pin.evidence.id}`;
     if (historicalPinKeys.has(key)) {
@@ -1218,7 +1245,8 @@ function validateHistoricalSupport(
 function validateHistoricalSupportRelation(
   relation: ResidentMatterHistoricalSupportRelation,
 ): void {
-  if (relation !== "prior_same_material_outcome") {
+  if (relation !== "prior_same_material_outcome"
+    && relation !== "prior_same_actor_outcome") {
     throw new Error(`unsupported matter historical support relation: ${String(relation)}`);
   }
 }
