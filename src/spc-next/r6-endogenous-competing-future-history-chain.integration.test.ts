@@ -117,7 +117,7 @@ describe("R6 endogenous competing-future factual-history chain", () => {
     expect(blocked).toMatchObject({
       status: "blocked",
       materialOutcome: {
-        status: "failed",
+        status: "rejected",
         code: "object_unavailable",
         objectId: OBJECT_ID,
       },
