@@ -178,16 +178,25 @@ Important anticipated question, not yet a design decision:
 
 Concrete failure must answer that before any new representation is added.
 
-## 8. Promotion boundary
+## 8. Promotion boundary and later follow-up
 
 The explicit standing-obligation stage remains **bounded CLOSED**.
 
 The post-terminal single-opportunity probe is also complete as a bounded neutral finding.
 
-The active R6 frontier is now:
+At this document's original closure, the next R6 frontier was:
 
 > **Can terminal factual life alter a genuine endogenous competing-future choice or coherent non-action through causally attributable support, without becoming an open obligation or a generic personality system?**
 
+That follow-up has since been executed and must **not** change the classification of run #24 itself.
+
+Current follow-up authority:
+`docs/SPC_R6_COMPETING_FUTURE_FACTUAL_HISTORY_FINDING.md`.
+
+Its bounded result is positive: under a genuine competing-future matched twin, terminal factual history changed the behavioral class and the history proposal cited the exact pre-existing factual outcome through local causal admission.
+
+The new active frontier is therefore endogenous runtime generation of that competing-future causal chain rather than another fixture-level rerun.
+
 Browser Oren/Nela genericity remains honest promotion-plane debt, not the highest-information immediate research target.
 
-PR #148 remains draft/open. No Owner gate and no merge are justified by this result.
+PR #148 remains draft/open. No Owner gate and no merge are justified by the run-#24 result or by its later bounded follow-up alone.
