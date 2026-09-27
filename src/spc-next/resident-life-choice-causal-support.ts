@@ -9,7 +9,8 @@ export type ResidentLifeChoiceSupportRelation =
   | "matter_origin"
   | "current_semantic_context"
   | "blocked_outcome"
-  | "last_outcome";
+  | "last_outcome"
+  | "prior_same_material_outcome";
 
 export interface ResidentLifeChoiceSupportFact {
   evidenceId: string;
@@ -25,16 +26,21 @@ export interface ResidentLifeChoiceCandidateSupport {
 }
 
 /**
- * R3 read-only causal-support projection for multi-matter choice.
+ * Read-only causal-support projection for multi-matter choice.
  *
  * This is not a priority function. It never decides which matter should win.
  * It exposes only already-existing resident-owned causal facts so a later judgement
  * cannot claim that its rationale came from history that did not exist.
  *
- * The first personhood-specific distinction deliberately recognized here is an open
- * social responsibility whose matter origin is exact accepted_social_commitment
- * evidence. That state still lives in the continuity kernel; this projector does not
- * duplicate it into a personality database.
+ * The first personhood-specific distinction recognized here is an open social
+ * responsibility whose matter origin is exact accepted_social_commitment evidence.
+ *
+ * R6 additionally earns one deliberately narrow post-terminal relation:
+ * when a current material-acquisition candidate concerns the exact same objectId as
+ * a terminal material matter still present in the bounded life view, that terminal
+ * matter's factual task outcome may be cited as prior_same_material_outcome support
+ * for the current candidate. The old matter remains terminal; this projection grants
+ * it no run, body demand, execution authority or implicit reopening.
  */
 export function deriveResidentLifeChoiceCandidateSupports(
   life: ResidentLifeCognitionView,
@@ -45,7 +51,7 @@ export function deriveResidentLifeChoiceCandidateSupports(
     .filter((matter) => candidates.has(matter.id))
     .map((matter) => ({
       matterId: matter.id,
-      facts: supportFacts(matter),
+      facts: supportFacts(matter, life),
     }))
     .sort((a, b) => a.matterId.localeCompare(b.matterId));
 }
@@ -60,7 +66,10 @@ export function allowedChoiceSupportEvidenceIds(
     : [];
 }
 
-function supportFacts(matter: ResidentLifeMatterView): ResidentLifeChoiceSupportFact[] {
+function supportFacts(
+  matter: ResidentLifeMatterView,
+  life: ResidentLifeCognitionView,
+): ResidentLifeChoiceSupportFact[] {
   const facts: ResidentLifeChoiceSupportFact[] = [];
   const seenEvidenceIds = new Set<string>();
 
@@ -91,11 +100,39 @@ function supportFacts(matter: ResidentLifeMatterView): ResidentLifeChoiceSupport
     );
   }
 
+  addPriorSameMaterialOutcomeFacts(facts, seenEvidenceIds, matter, life);
+
   return facts.sort((a, b) => (
     a.evidenceTick - b.evidenceTick
     || a.evidenceId.localeCompare(b.evidenceId)
     || a.relation.localeCompare(b.relation)
   ));
+}
+
+function addPriorSameMaterialOutcomeFacts(
+  facts: ResidentLifeChoiceSupportFact[],
+  seenEvidenceIds: Set<string>,
+  candidate: ResidentLifeMatterView,
+  life: ResidentLifeCognitionView,
+): void {
+  if (candidate.semanticIntent?.kind !== "acquire_material_object") return;
+  const objectId = candidate.semanticIntent.objectId;
+
+  for (const prior of life.matters) {
+    if (prior.id === candidate.id) continue;
+    if (prior.status !== "resolved" && prior.status !== "cancelled") continue;
+    if (prior.activeRun !== null) continue;
+    if (prior.semanticIntent?.kind !== "acquire_material_object") continue;
+    if (prior.semanticIntent.objectId !== objectId) continue;
+    if (!prior.lastOutcomeEvidence || prior.lastOutcomeEvidence.kind !== "task_outcome") continue;
+
+    addFact(
+      facts,
+      seenEvidenceIds,
+      prior.lastOutcomeEvidence,
+      "prior_same_material_outcome",
+    );
+  }
 }
 
 function addFact(
