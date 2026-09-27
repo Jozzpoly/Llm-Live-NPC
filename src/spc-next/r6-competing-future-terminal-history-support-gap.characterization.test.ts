@@ -12,8 +12,8 @@ const RETRY_ORIGIN = "evidence:janek:r6:competing-future:retry-origin";
 const OTHER_ORIGIN = "evidence:janek:r6:competing-future:other-origin";
 const OBJECT_ID = "crate.r6.competing-future";
 
-describe("R6 competing-future terminal-history support gap", () => {
-  it("keeps terminal same-object history visible but cannot causally cite it for the new candidate under the current support contract", () => {
+describe("R6 competing-future terminal-history causal support", () => {
+  it("projects one exact terminal factual same-object outcome into the current retry candidate without reopening the old matter", () => {
     const { owner, attempt, life } = setup();
 
     expect(attempt.context.life.matters).toEqual(expect.arrayContaining([
@@ -36,8 +36,22 @@ describe("R6 competing-future terminal-history support gap", () => {
     const retrySupport = attempt.candidateSupports.find(
       (candidate) => candidate.matterId === RETRY_MATTER,
     );
-    expect(retrySupport?.facts.map((fact) => fact.evidenceId)).toEqual([RETRY_ORIGIN]);
-    expect(retrySupport?.facts.some((fact) => fact.evidenceId === HISTORY_OUTCOME)).toBe(false);
+    expect(retrySupport?.facts).toEqual([
+      expect.objectContaining({
+        evidenceId: HISTORY_OUTCOME,
+        evidenceKind: "task_outcome",
+        relation: "prior_same_material_outcome",
+      }),
+      expect.objectContaining({
+        evidenceId: RETRY_ORIGIN,
+        relation: "matter_origin",
+      }),
+    ]);
+
+    const otherSupport = attempt.candidateSupports.find(
+      (candidate) => candidate.matterId === OTHER_MATTER,
+    );
+    expect(otherSupport?.facts.some((fact) => fact.evidenceId === HISTORY_OUTCOME)).toBe(false);
 
     expect(owner.settle(
       attempt,
@@ -52,9 +66,13 @@ describe("R6 competing-future terminal-history support gap", () => {
         },
       },
       life,
-    )).toEqual({
-      status: "rejected",
-      reason: "proposal_invalid",
+    )).toMatchObject({
+      status: "applied",
+      decision: {
+        kind: "focus_matter",
+        matterId: RETRY_MATTER,
+        supportEvidenceIds: [HISTORY_OUTCOME],
+      },
     });
 
     expect(life.matters.find((matter) => matter.id === HISTORY_MATTER)).toMatchObject({
@@ -63,7 +81,51 @@ describe("R6 competing-future terminal-history support gap", () => {
     });
   });
 
-  it("still admits either current candidate from its own current support, proving the gap is causal attribution rather than a hard-coded winner", () => {
+  it("does not let terminal material history support an unrelated competing future", () => {
+    const { owner, attempt, life } = setup();
+
+    expect(owner.settle(
+      attempt,
+      {
+        version: 1,
+        decision: {
+          kind: "focus_matter",
+          matterId: OTHER_MATTER,
+          reason: "misattribute the crate history to an unrelated workshop future",
+          supportEvidenceIds: [HISTORY_OUTCOME],
+          reviewAfterSeconds: 12,
+        },
+      },
+      life,
+    )).toEqual({
+      status: "rejected",
+      reason: "proposal_invalid",
+    });
+  });
+
+  it("requires exact structured object identity rather than prose similarity", () => {
+    const mismatchedLife = lifeView();
+    const history = mismatchedLife.matters.find((matter) => matter.id === HISTORY_MATTER);
+    if (!history || history.semanticIntent?.kind !== "acquire_material_object") {
+      throw new Error("R6 competing-future history fixture missing material intent");
+    }
+    history.semanticIntent = {
+      ...history.semanticIntent,
+      objectId: "crate.r6.competing-future.different",
+    };
+
+    const { owner, batch } = setupResident();
+    const attempt = owner.prepare(batch, mismatchedLife);
+    if (!attempt) throw new Error("R6 mismatched fixture did not prepare a choice attempt");
+
+    const retrySupport = attempt.candidateSupports.find(
+      (candidate) => candidate.matterId === RETRY_MATTER,
+    );
+    expect(retrySupport?.facts.map((fact) => fact.evidenceId)).toEqual([RETRY_ORIGIN]);
+    expect(retrySupport?.facts.some((fact) => fact.evidenceId === HISTORY_OUTCOME)).toBe(false);
+  });
+
+  it("still admits either current candidate from its own current support, so history support does not hard-code a winner", () => {
     const retry = setup();
     expect(retry.owner.settle(
       retry.attempt,
@@ -113,6 +175,14 @@ describe("R6 competing-future terminal-history support gap", () => {
 });
 
 function setup() {
+  const { owner, batch } = setupResident();
+  const life = lifeView();
+  const attempt = owner.prepare(batch, life);
+  if (!attempt) throw new Error("R6 competing-future fixture did not prepare a choice attempt");
+  return { owner, attempt, life };
+}
+
+function setupResident() {
   const resident = new ResidentRuntime({
     ...DEFAULT_RESIDENT_PROFILE,
     id: "resident.janek",
@@ -132,12 +202,11 @@ function setup() {
   const batch = resident.takeCognitionBatch(30);
   if (!batch) throw new Error("R6 competing-future fixture did not produce cognition");
 
-  const life = lifeView();
-  const owner = new ResidentLifeChoiceOwner(resident, 1 / 60);
-  const attempt = owner.prepare(batch, life);
-  if (!attempt) throw new Error("R6 competing-future fixture did not prepare a choice attempt");
-
-  return { owner, attempt, life };
+  return {
+    resident,
+    batch,
+    owner: new ResidentLifeChoiceOwner(resident, 1 / 60),
+  };
 }
 
 function lifeView(): ResidentLifeCognitionView {
