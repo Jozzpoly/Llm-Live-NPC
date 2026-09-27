@@ -345,6 +345,90 @@ describe("SPC Next resident-life choice Worker", () => {
     expect(sanitizeSpcNextLifeChoiceContext(forgedMaterialRelation)).toBeNull();
   });
 
+  it("carries exact counterparty-caused standing release only on a current communication candidate", () => {
+    const social = structuredClone(context) as any;
+    social.life.matters[0].semanticIntent = {
+      kind: "communicate_actor",
+      goal: "speak with Nela about the current situation",
+      targetActorId: "resident.nela",
+      text: "Nela, porozmawiajmy o tym, co dzieje się teraz.",
+    };
+    social.life.matters[0].historicalSupport = [{
+      relation: "prior_counterparty_social_outcome",
+      sourceMatterId: "matter.oren.worker.old-standing-nela",
+      evidence: {
+        id: "evidence:oren:worker:nela-release",
+        tick: 18,
+        kind: "resident_released_social_commitment",
+        summary: "Nela explicitly released Oren from the standing responsibility · factual counterparty speech occurrence:r6:worker:nela-release",
+      },
+    }];
+    social.life.matters[1].semanticIntent = {
+      kind: "travel_region",
+      goal: "take an unrelated current future",
+      targetRegionId: "hearth",
+    };
+
+    const sanitized = sanitizeSpcNextLifeChoiceContext(social);
+    expect(sanitized).not.toBeNull();
+
+    const nelaSupport = sanitized?.candidateSupports.find(
+      (candidate) => candidate.matterId === B,
+    );
+    expect(nelaSupport?.facts).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        evidenceId: "evidence:oren:worker:nela-release",
+        sourceMatterId: "matter.oren.worker.old-standing-nela",
+        relation: "prior_counterparty_social_outcome",
+        evidenceKind: "resident_released_social_commitment",
+      }),
+    ]));
+    const otherSupport = sanitized?.candidateSupports.find(
+      (candidate) => candidate.matterId === C,
+    );
+    expect(otherSupport?.facts.some(
+      (fact) => fact.evidenceId === "evidence:oren:worker:nela-release",
+    )).toBe(false);
+
+    expect(extractSpcNextLifeChoiceDecision(
+      responseBody({
+        kind: "focus_matter",
+        matterId: C,
+        reason: "Nela's earlier factual release belongs to the competing Nela future, so choose the unrelated future instead",
+        supportEvidenceIds: [
+          "evidence:oren:worker:nela-release",
+          "evidence:c:origin",
+        ],
+        reviewAfterSeconds: 20,
+      }),
+      sanitized!.candidateMatterIds,
+      sanitized!.candidateSupports,
+    )).toMatchObject({
+      kind: "focus_matter",
+      matterId: C,
+      supportEvidenceIds: [
+        "evidence:oren:worker:nela-release",
+        "evidence:c:origin",
+      ],
+    });
+
+    const illegalTravelHistory = structuredClone(social);
+    illegalTravelHistory.life.matters[0].semanticIntent = {
+      kind: "travel_region",
+      goal: "ordinary travel",
+      targetRegionId: "hearth",
+    };
+    expect(sanitizeSpcNextLifeChoiceContext(illegalTravelHistory)).toBeNull();
+
+    const forgedTaskOutcome = structuredClone(social);
+    forgedTaskOutcome.life.matters[0].historicalSupport[0].evidence.kind = "task_outcome";
+    expect(sanitizeSpcNextLifeChoiceContext(forgedTaskOutcome)).toBeNull();
+
+    const forgedSameActorRelation = structuredClone(social);
+    forgedSameActorRelation.life.matters[0].historicalSupport[0].relation = "prior_same_actor_outcome";
+    expect(sanitizeSpcNextLifeChoiceContext(forgedSameActorRelation)).toBeNull();
+  });
+
   it("extracts only a bounded choice among supplied matters or an explicit defer-all", () => {
     expect(extractSpcNextLifeChoiceDecision(
       responseBody(focusB()),
