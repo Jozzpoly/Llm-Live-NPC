@@ -147,40 +147,47 @@ export class ResidentMaterialMatterRelevanceBridge {
       return { status: "not_relevant", objectId };
     }
 
-    const terminalMatches = matchingTerminalBlockedMaterialMatters(life, objectId);
-    if (terminalMatches.length > 1) {
+    const historicalMatches = new Map<
+      string,
+      { matterId: string; evidence: ResidentKernelEvidence }
+    >();
+    for (const matter of matchingTerminalBlockedMaterialMatters(life, objectId)) {
+      historicalMatches.set(matter.id, {
+        matterId: matter.id,
+        evidence: structuredClone(matter.lastOutcomeEvidence!),
+      });
+    }
+    for (const archived of matchingArchivedTerminalBlockedMaterialMatters(
+      this.kernel,
+      objectId,
+    )) {
+      const existing = historicalMatches.get(archived.matter.id);
+      if (existing && existing.evidence.id !== archived.evidence.id) {
+        // Same matter cannot truthfully own two different terminal factual outcomes
+        // at one relevance boundary. Fail closed instead of manufacturing memory.
+        return { status: "not_relevant", objectId };
+      }
+      historicalMatches.set(archived.matter.id, {
+        matterId: archived.matter.id,
+        evidence: structuredClone(archived.evidence),
+      });
+    }
+
+    const orderedHistory = [...historicalMatches.values()]
+      .sort((left, right) => left.matterId.localeCompare(right.matterId));
+    if (orderedHistory.length === 0) {
+      return { status: "not_relevant", objectId };
+    }
+    if (orderedHistory.length > 1) {
       return {
         status: "ambiguous",
         objectId,
-        matterIds: terminalMatches.map((matter) => matter.id),
+        matterIds: orderedHistory.map((entry) => entry.matterId),
       };
     }
 
-    let priorMatterId: string;
-    let priorOutcomeEvidence: ResidentKernelEvidence;
-    if (terminalMatches.length === 1) {
-      const prior = terminalMatches[0]!;
-      priorMatterId = prior.id;
-      priorOutcomeEvidence = structuredClone(prior.lastOutcomeEvidence!);
-    } else {
-      const archivedMatches = matchingArchivedTerminalBlockedMaterialMatters(
-        this.kernel,
-        objectId,
-      );
-      if (archivedMatches.length === 0) {
-        return { status: "not_relevant", objectId };
-      }
-      if (archivedMatches.length > 1) {
-        return {
-          status: "ambiguous",
-          objectId,
-          matterIds: archivedMatches.map((match) => match.matter.id),
-        };
-      }
-      const archived = archivedMatches[0]!;
-      priorMatterId = archived.matter.id;
-      priorOutcomeEvidence = structuredClone(archived.evidence);
-    }
+    const priorMatterId = orderedHistory[0]!.matterId;
+    const priorOutcomeEvidence = structuredClone(orderedHistory[0]!.evidence);
     const evidence = this.kernel.recordEvidence({
       id: materialReacquiredEvidenceId(
         this.resident.profile.id,
