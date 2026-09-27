@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_RESIDENT_PROFILE } from "./contracts";
+import { ResidentCausalCognitionLane } from "./resident-causal-cognition-lane";
 import { ResidentCausalLifeSubstrate } from "./resident-causal-life-substrate";
 import { ResidentContinuityKernel } from "./resident-continuity-kernel";
 import { allowedChoiceSupportEvidenceIds } from "./resident-life-choice-causal-support";
@@ -67,6 +68,7 @@ describe("R6 symmetric social-vs-social counterparty-history pressure", () => {
       identityNamespace: "oren-r6-symmetric-social",
     });
 
+    const cognition = new ResidentCausalCognitionLane(life);
     const releaseEvidence = createFactualNelaRelease(life, world);
     for (let index = 0; index < 80; index += 1) {
       world.step();
@@ -121,16 +123,15 @@ describe("R6 symmetric social-vs-social counterparty-history pressure", () => {
       });
     }
 
-    const firstBatch = waitForBatch(oren, world);
-    expect(firstBatch.reasons.map((reason) => reason.id).sort()).toEqual(
+    const firstRequest = waitForCognitionRequest(cognition, world);
+    expect(firstRequest.batch.reasons.map((reason) => reason.id).sort()).toEqual(
       [nelaReasonId, idaReasonId].sort(),
     );
 
     const nelaCurrent = materializeCurrentCommunication({
       life,
-      resident: oren,
-      world,
-      batch: firstBatch,
+      cognition,
+      request: firstRequest,
       reasonId: nelaReasonId,
       targetActorId: NELA_ID,
       targetName: "Nela",
@@ -141,33 +142,38 @@ describe("R6 symmetric social-vs-social counterparty-history pressure", () => {
       sourceMatterId: STANDING_ID,
       evidenceId: releaseEvidence.id,
     }]);
-    expect(nelaCurrent.focusClaim).toMatchObject({
-      status: "busy",
-      focusedRunId: CARRIER_RUN,
+    expect(life.currentLifeView().matters.find(
+      (matter) => matter.id === nelaCurrent.matter.id,
+    )?.activeRun).toMatchObject({
+      runId: nelaCurrent.runId,
+      bodyState: "deferred",
     });
+    expect(life.currentLifeView().body.focusedRunId).toBe(CARRIER_RUN);
 
-    const secondBatch = oren.takeCognitionBatch(world.tick);
-    expect(secondBatch).not.toBeNull();
-    if (!secondBatch) throw new Error("retained Ida sibling reason did not become ready");
-    expect(secondBatch.requestedAtTick).toBe(formationTick);
-    expect(secondBatch.reasons.map((reason) => reason.id)).toContain(idaReasonId);
-    expect(secondBatch.reasons.map((reason) => reason.id)).not.toContain(nelaReasonId);
+    const secondRequest = cognition.takeReadyRequest();
+    expect(secondRequest).not.toBeNull();
+    if (!secondRequest) throw new Error("retained Ida sibling reason did not become ready");
+    expect(secondRequest.batch.requestedAtTick).toBe(formationTick);
+    expect(secondRequest.batch.reasons.map((reason) => reason.id)).toContain(idaReasonId);
+    expect(secondRequest.batch.reasons.map((reason) => reason.id)).not.toContain(nelaReasonId);
 
     const idaCurrent = materializeCurrentCommunication({
       life,
-      resident: oren,
-      world,
-      batch: secondBatch,
+      cognition,
+      request: secondRequest,
       reasonId: idaReasonId,
       targetActorId: IDA_ID,
       targetName: "Ida",
     });
     expect(idaCurrent.matter.originEvidenceId).toBeTruthy();
     expect(idaCurrent.matter.historicalSupport).toBeUndefined();
-    expect(idaCurrent.focusClaim).toMatchObject({
-      status: "busy",
-      focusedRunId: CARRIER_RUN,
+    expect(life.currentLifeView().matters.find(
+      (matter) => matter.id === idaCurrent.matter.id,
+    )?.activeRun).toMatchObject({
+      runId: idaCurrent.runId,
+      bodyState: "deferred",
     });
+    expect(life.currentLifeView().body.focusedRunId).toBe(CARRIER_RUN);
     expect(world.tick).toBe(formationTick);
 
     const nelaOrigin = life.kernel.originEvidence(nelaCurrent.matter.id);
@@ -420,19 +426,16 @@ function createFactualNelaRelease(
 
 function materializeCurrentCommunication(input: {
   life: ResidentCausalLifeSubstrate;
-  resident: ResidentRuntime;
-  world: SpcWorldRuntime;
-  batch: ReturnType<ResidentRuntime["takeCognitionBatch"]> extends infer T ? Exclude<T, null> : never;
+  cognition: ResidentCausalCognitionLane;
+  request: NonNullable<ReturnType<ResidentCausalCognitionLane["takeReadyRequest"]>>;
   reasonId: string;
   targetActorId: string;
   targetName: string;
 }) {
-  const { life, resident, world, batch, reasonId, targetActorId, targetName } = input;
-  const reason = batch.reasons.find((candidate) => candidate.id === reasonId);
+  const { life, cognition, request, reasonId, targetActorId, targetName } = input;
+  const reason = request.batch.reasons.find((candidate) => candidate.id === reasonId);
   if (!reason) throw new Error(`missing symmetric current reason: ${reasonId}`);
 
-  const attempt = life.lifeIntentOwner.prepare(batch, life.currentLifeView(), world.tick);
-  if (!attempt) throw new Error(`could not prepare symmetric current ${targetName} intent`);
   const proposal = {
     version: 1 as const,
     commitmentDecision: {
@@ -452,31 +455,38 @@ function materializeCurrentCommunication(input: {
     reviewAfterSeconds: 30,
   };
 
-  const settled = life.lifeIntentOwner.settleCommitmentIntent(
-    attempt,
-    proposal,
-    life.currentLifeView(),
-    world.tick,
-    (admittedProposal, providerContext) => life.reasonCommitments.groundCommitment({
-      attempt,
-      originReasonId: reason.id,
-      proposal: admittedProposal,
-      providerContext,
-      groundingContext: resident.cognitionContext(batch, world.tick),
-    }),
-  );
-  expect(settled.status).toBe("applied");
-  if (settled.status !== "applied") {
-    throw new Error(`symmetric current ${targetName} commitment rejected: ${settled.status}`);
-  }
-
-  return life.reasonCommitments.materializeCommitment({
-    attempt,
-    originReasonId: reason.id,
-    proposal: settled.proposal,
-    intent: settled.intent,
-    tick: world.tick,
+  const settled = cognition.settleCommitment(request, proposal, reason.id);
+  expect(settled).toMatchObject({
+    status: "applied",
+    residentId: OREN_ID,
+    decision: "accept",
+    commitment: {
+      matterId: expect.any(String),
+      runId: expect.any(String),
+    },
   });
+  if (settled.status !== "applied" || !settled.commitment) {
+    throw new Error(`symmetric current ${targetName} commitment rejected`);
+  }
+  const matter = life.kernel.matter(settled.commitment.matterId);
+  if (!matter) throw new Error(`symmetric current ${targetName} matter missing after admission`);
+  return {
+    matter,
+    runId: settled.commitment.runId,
+  };
+}
+
+function waitForCognitionRequest(
+  cognition: ResidentCausalCognitionLane,
+  world: SpcWorldRuntime,
+) {
+  let request = cognition.takeReadyRequest();
+  for (let guard = 0; !request && guard < 240; guard += 1) {
+    world.step();
+    request = cognition.takeReadyRequest();
+  }
+  if (!request) throw new Error("resident causal cognition request did not become ready");
+  return request;
 }
 
 function settleFreshChoice(input: {
