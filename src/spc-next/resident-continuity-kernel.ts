@@ -332,7 +332,9 @@ export class ResidentContinuityKernel {
       semanticRevision: 1,
       semanticCourse: input.semanticCourse,
       semanticIntent: input.semanticIntent ? structuredClone(input.semanticIntent) : null,
-      historicalSupport: historicalSupport.map((support) => structuredClone(support)),
+      ...(historicalSupport.length > 0
+        ? { historicalSupport: historicalSupport.map((support) => structuredClone(support)) }
+        : {}),
       suspendedByMatterId: null,
       activeRunId: null,
       lastOutcomeEvidenceId: null,
@@ -669,7 +671,7 @@ export class ResidentContinuityKernel {
     matter.suspendedByMatterId = null;
     // Historical support is current-matter provenance, not a second historical
     // archive. Once this matter is terminal it stops projecting that support.
-    matter.historicalSupport = [];
+    delete matter.historicalSupport;
     this.revokePendingForMatter(matter.id, "matter_terminal");
     if (terminalOutcome
       && terminalOutcome.id === matter.lastOutcomeEvidenceId
