@@ -1,5 +1,8 @@
 import type { ResidentCognitionContext } from "./cognition-contract";
-import { derivePriorSameActorOutcomeSupport } from "./resident-cumulative-history-support";
+import {
+  derivePriorCounterpartySocialOutcomeSupport,
+  derivePriorSameActorOutcomeSupport,
+} from "./resident-cumulative-history-support";
 import type { WorldOccurrence } from "./contracts";
 import type {
   ResidentCommunicateActorMatterIntent,
@@ -201,10 +204,16 @@ export class ResidentCausalCommunicateCommitmentAuthority {
       kind: "accepted_social_commitment",
       summary: `${input.intent.semanticCourse}; origin occurrence ${originPercept.occurrenceId}`,
     });
-    const historicalSupport = derivePriorSameActorOutcomeSupport(
-      this.options.kernel,
-      input.intent.semanticIntent.targetActorId,
-    );
+    const historicalSupport = [
+      ...derivePriorSameActorOutcomeSupport(
+        this.options.kernel,
+        input.intent.semanticIntent.targetActorId,
+      ),
+      ...derivePriorCounterpartySocialOutcomeSupport(
+        this.options.kernel,
+        input.intent.semanticIntent.targetActorId,
+      ),
+    ];
     const matter = this.options.kernel.openMatter({
       id: identity.matterId,
       originEvidenceId: origin.id,
