@@ -287,7 +287,10 @@ describe("R6 endogenous post-terminal material future", () => {
     expect(authority.recentActionFacts()).toContainEqual(expect.objectContaining({
       runId: accepted.runId,
       action: { kind: "material_pickup", objectId: OBJECT_ID },
-      outcome: expect.objectContaining({ status: "succeeded" }),
+      resolution: expect.objectContaining({
+        status: "resolved",
+        outcomeStatus: "succeeded",
+      }),
     }));
   });
 });
