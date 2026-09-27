@@ -312,9 +312,10 @@ describe("R6 endogenous competing-future factual-history chain", () => {
     // only A's factual task outcome pinned; the old matter itself must disappear from
     // current life before the later C-vs-D ambiguity is formed.
     for (let index = 0; index < 12; index += 1) {
+      world.step();
       kernel.recordEvidence({
         id: `evidence:janek:r6:endogenous-competing:unrelated-churn:${index}`,
-        tick: world.tick + index + 1,
+        tick: world.tick,
         kind: "later_life",
         summary: `ordinary unrelated factual life after material future creation ${index}`,
       });
