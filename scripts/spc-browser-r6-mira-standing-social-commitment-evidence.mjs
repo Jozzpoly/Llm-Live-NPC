@@ -23,6 +23,51 @@ const REPEAT_COUNT = 2;
 mkdirSync(OUTPUT_DIR, { recursive: true });
 const sleep = (ms) => new Promise((resolveSleep) => setTimeout(resolveSleep, ms));
 
+async function waitForChildExit(child, timeoutMs) {
+  if (child.exitCode !== null || child.signalCode !== null) return true;
+  return await new Promise((resolveExit) => {
+    let settled = false;
+    const finish = (value) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      child.off("exit", onExit);
+      child.off("close", onExit);
+      resolveExit(value);
+    };
+    const onExit = () => finish(true);
+    const timer = setTimeout(() => finish(false), timeoutMs);
+    child.once("exit", onExit);
+    child.once("close", onExit);
+  });
+}
+
+async function stopChromeAndCleanup(chrome, userDataDir) {
+  if (chrome.exitCode === null && chrome.signalCode === null) {
+    chrome.kill("SIGTERM");
+    if (!await waitForChildExit(chrome, 2_000)) {
+      chrome.kill("SIGKILL");
+      await waitForChildExit(chrome, 2_000);
+    }
+  }
+
+  // Chrome can finish a final profile-file rename just after process exit on CI.
+  // Cleanup is hygiene, not experiment evidence, so retry generously and never turn
+  // an already-written semantic PASS/FAIL report into a false harness failure.
+  try {
+    rmSync(userDataDir, {
+      recursive: true,
+      force: true,
+      maxRetries: 20,
+      retryDelay: 100,
+    });
+  } catch (error) {
+    console.warn(
+      `R6 browser cleanup warning for ${userDataDir}: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+}
+
 function chromeExecutable() {
   const candidates = [
     process.env.CHROME_PATH,
@@ -341,10 +386,7 @@ async function run() {
     if (report.outcome !== "PASS") process.exitCode = 1;
   } finally {
     cdp?.close();
-    chrome.kill("SIGTERM");
-    await sleep(120);
-    if (!chrome.killed) chrome.kill("SIGKILL");
-    rmSync(userDataDir, { recursive: true, force: true, maxRetries: 6, retryDelay: 100 });
+    await stopChromeAndCleanup(chrome, userDataDir);
   }
 }
 
