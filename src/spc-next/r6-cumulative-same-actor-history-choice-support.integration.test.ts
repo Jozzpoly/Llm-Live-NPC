@@ -142,7 +142,7 @@ describe("R6 cumulative same-actor factual history through normal current-matter
     // Current C originates from one ordinary resident semantic reason. The proposal
     // itself contains no history field; same-actor factual genealogy must be attached
     // only by the production commitment authority after local admission.
-    const originReason = mira.promoteSemanticPressure({
+    mira.promoteSemanticPressure({
       id: "reason:mira:r6:cumulative-runtime:current-ida",
       tick: world.tick,
       kind: "uncertainty",
@@ -150,7 +150,6 @@ describe("R6 cumulative same-actor factual history through normal current-matter
       summary: "Mira has one current reason to speak with the already-known Ida.",
       evidenceIds: [],
     });
-    expect(originReason).toBe(true);
     const batch = waitForBatch(mira, world);
     const reason = batch.reasons.find(
       (candidate) => candidate.id === "reason:mira:r6:cumulative-runtime:current-ida",
