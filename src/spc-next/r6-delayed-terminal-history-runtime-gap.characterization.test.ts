@@ -358,7 +358,17 @@ describe("R6 delayed terminal-history factual recall boundary", () => {
         kind: "acquire_material_object",
         objectId: OBJECT_ID,
       },
+      historicalSupport: [{
+        relation: "prior_same_material_outcome",
+        sourceMatterId: OLD_MATTER_ID,
+        evidenceId: oldOutcome.id,
+      }],
     });
+    expect(restoredKernel.historicalSupportEvidence(accepted.matter.id)).toEqual([{
+      relation: "prior_same_material_outcome",
+      sourceMatterId: OLD_MATTER_ID,
+      evidence: oldOutcome,
+    }]);
     expect(accepted.focusClaim).toEqual({
       status: "acquired",
       runId: accepted.runId,
@@ -387,6 +397,24 @@ describe("R6 delayed terminal-history factual recall boundary", () => {
     expect(retryStep.status).toBe("succeeded");
     expect(world.materialObject(OBJECT_ID)).toMatchObject({
       location: { kind: "held", actorId: RESIDENT_ID },
+    });
+    if (retryStep.status !== "succeeded") {
+      throw new Error("delayed-history retry unexpectedly remained non-terminal");
+    }
+    const retryOutcome = restoredKernel.reconcileRunOutcome({
+      runId: accepted.runId,
+      tick: retryStep.materialOutcome.tick,
+      status: "succeeded",
+      summary: "factual delayed-history retry picked up the exact familiar object",
+    });
+    expect(retryOutcome.status).toBe("recorded");
+    restoredKernel.resolveMatter(accepted.matter.id);
+    restoredAuthority.enforceMotionAuthority();
+    expect(restoredKernel.matter(accepted.matter.id)?.historicalSupport).toBeUndefined();
+    expect(restoredKernel.historicalSupportEvidence(accepted.matter.id)).toEqual([]);
+    expect(restoredKernel.matter(OLD_MATTER_ID)).toMatchObject({
+      status: "resolved",
+      activeRunId: null,
     });
   });
 });
