@@ -40,7 +40,7 @@ jobs:
           const qualifiers = Array.isArray(request.qualifiers)
             ? request.qualifiers
             : ['lifecycle', 'interruption'];
-          const allowed = new Set(['lifecycle', 'interruption', 'life-choice', 'life-intent', 'unified-addressed', 'r5-judgement', 'r6-history-choice-twin', 'r6-endogenous-history-outcome-twin', 'r6-endogenous-standing-fulfillment', 'r6-post-terminal-factual-history-twin', 'r6-competing-future-terminal-history-choice-twin', 'r6-delayed-competing-future-history-choice-twin', 'r6-cumulative-same-actor-history-choice-twin', 'r6-same-cardinality-outcome-meaning-choice-twin']);
+          const allowed = new Set(['lifecycle', 'interruption', 'life-choice', 'life-intent', 'unified-addressed', 'r5-judgement', 'r6-history-choice-twin', 'r6-endogenous-history-outcome-twin', 'r6-endogenous-standing-fulfillment', 'r6-post-terminal-factual-history-twin', 'r6-competing-future-terminal-history-choice-twin', 'r6-delayed-competing-future-history-choice-twin', 'r6-cumulative-same-actor-history-choice-twin', 'r6-same-cardinality-outcome-meaning-choice-twin', 'r6-counterparty-social-history-choice-twin']);
           if (qualifiers.length === 0 || qualifiers.some((value) => !allowed.has(value))) {
             throw new Error(`invalid live-provider qualifiers: ${JSON.stringify(qualifiers)}`);
           }
@@ -58,6 +58,7 @@ jobs:
           process.stdout.write(`RUN_R6_DELAYED_COMPETING_FUTURE_HISTORY_CHOICE_TWIN=${qualifiers.includes('r6-delayed-competing-future-history-choice-twin') ? '1' : '0'}\n`);
           process.stdout.write(`RUN_R6_CUMULATIVE_SAME_ACTOR_HISTORY_CHOICE_TWIN=${qualifiers.includes('r6-cumulative-same-actor-history-choice-twin') ? '1' : '0'}\n`);
           process.stdout.write(`RUN_R6_SAME_CARDINALITY_OUTCOME_MEANING_CHOICE_TWIN=${qualifiers.includes('r6-same-cardinality-outcome-meaning-choice-twin') ? '1' : '0'}\n`);
+          process.stdout.write(`RUN_R6_COUNTERPARTY_SOCIAL_HISTORY_CHOICE_TWIN=${qualifiers.includes('r6-counterparty-social-history-choice-twin') ? '1' : '0'}\n`);
           process.stdout.write(`REQUESTED_QUALIFIERS=${qualifiers.join(',')}\n`);
           NODE
 
@@ -296,6 +297,16 @@ jobs:
           LIVE_PROVIDER_OUTPUT: evidence/live-provider/r6-same-cardinality-outcome-meaning-choice-twin.json
         run: node scripts/spc-live-provider-r6-same-cardinality-outcome-meaning-choice-twin-evidence.mjs
 
+      - name: Validate R6 counterparty social-history choice twin harness
+        if: env.RUN_R6_COUNTERPARTY_SOCIAL_HISTORY_CHOICE_TWIN == '1'
+        run: node --check scripts/spc-live-provider-r6-counterparty-social-history-choice-twin-evidence.mjs
+
+      - name: Qualify R6 counterparty social-history choice twin with real Luna
+        if: env.RUN_R6_COUNTERPARTY_SOCIAL_HISTORY_CHOICE_TWIN == '1'
+        env:
+          LIVE_PROVIDER_OUTPUT: evidence/live-provider/r6-counterparty-social-history-choice-twin.json
+        run: node scripts/spc-live-provider-r6-counterparty-social-history-choice-twin-evidence.mjs
+
       - name: Print live-provider evidence summary
         if: always()
         shell: bash
@@ -392,6 +403,13 @@ jobs:
           echo "--- R6 same-cardinality outcome-meaning choice twin evidence ---"
           if [ "${RUN_R6_SAME_CARDINALITY_OUTCOME_MEANING_CHOICE_TWIN:-0}" = "1" ]; then
             cat evidence/live-provider/r6-same-cardinality-outcome-meaning-choice-twin.json 2>/dev/null || true
+          else
+            echo "not requested in this run"
+          fi
+
+          echo "--- R6 counterparty social-history choice twin evidence ---"
+          if [ "${RUN_R6_COUNTERPARTY_SOCIAL_HISTORY_CHOICE_TWIN:-0}" = "1" ]; then
+            cat evidence/live-provider/r6-counterparty-social-history-choice-twin.json 2>/dev/null || true
           else
             echo "not requested in this run"
           fi
