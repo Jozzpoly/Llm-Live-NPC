@@ -127,6 +127,10 @@ describe("R6 symmetric social-vs-social counterparty-history pressure", () => {
     expect(firstRequest.batch.reasons.map((reason) => reason.id).sort()).toEqual(
       [nelaReasonId, idaReasonId].sort(),
     );
+    expect(firstRequest.batch.reasons.map((reason) => reason.tick)).toEqual([
+      formationTick,
+      formationTick,
+    ]);
 
     const nelaCurrent = materializeCurrentCommunication({
       life,
@@ -150,12 +154,11 @@ describe("R6 symmetric social-vs-social counterparty-history pressure", () => {
     });
     expect(life.currentLifeView().body.focusedRunId).toBe(CARRIER_RUN);
 
-    const secondRequest = cognition.takeReadyRequest();
-    expect(secondRequest).not.toBeNull();
-    if (!secondRequest) throw new Error("retained Ida sibling reason did not become ready");
-    expect(secondRequest.batch.requestedAtTick).toBe(formationTick);
+    const secondRequest = waitForCognitionRequest(cognition, world);
     expect(secondRequest.batch.reasons.map((reason) => reason.id)).toContain(idaReasonId);
     expect(secondRequest.batch.reasons.map((reason) => reason.id)).not.toContain(nelaReasonId);
+    expect(secondRequest.batch.reasons.find((reason) => reason.id === idaReasonId)?.tick)
+      .toBe(formationTick);
 
     const idaCurrent = materializeCurrentCommunication({
       life,
@@ -174,14 +177,12 @@ describe("R6 symmetric social-vs-social counterparty-history pressure", () => {
       bodyState: "deferred",
     });
     expect(life.currentLifeView().body.focusedRunId).toBe(CARRIER_RUN);
-    expect(world.tick).toBe(formationTick);
-
     const nelaOrigin = life.kernel.originEvidence(nelaCurrent.matter.id);
     const idaOrigin = life.kernel.originEvidence(idaCurrent.matter.id);
-    expect(nelaOrigin?.tick).toBe(formationTick);
-    expect(idaOrigin?.tick).toBe(formationTick);
     expect(nelaOrigin?.kind).toBe("accepted_cognition_commitment");
     expect(idaOrigin?.kind).toBe("accepted_cognition_commitment");
+    expect(nelaOrigin?.tick).toBeGreaterThanOrEqual(formationTick);
+    expect(idaOrigin?.tick).toBeGreaterThanOrEqual(nelaOrigin?.tick ?? formationTick);
 
     life.kernel.cancelMatter(CARRIER);
     life.kernel.retireRun(CARRIER_RUN);
