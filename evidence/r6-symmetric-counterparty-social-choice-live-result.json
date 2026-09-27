@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 1,
+  "sourceSha": "9a0086a0a06fcf2d108ea7bdca32053f3a388f60",
+  "candidateBaseUrl": "https://f3cdac51-llm-live-npc.jozzpoly.workers.dev",
+  "purpose": "R6 symmetric social-vs-social counterparty-history falsifier. Matched Oren twins contain current Nela and Ida communication futures, one free body, no old standing matter and no fresh speech. History differs only because current Nela future owns one exact typed factual Nela release. Exactly two GPT-5.6 Luna requests, zero semantic retry and no preferred winner.",
+  "startedAt": "2026-09-27T21:39:29.021Z",
+  "observations": {
+    "preflight": {
+      "status": 200,
+      "endpoint": "/api/spc-next/life-choice",
+      "model": "gpt-5.6-luna",
+      "keyConfigured": true
+    },
+    "control_without_counterparty_history": {
+      "label": "control_without_counterparty_history",
+      "status": 200,
+      "elapsedMs": 2601,
+      "ok": true,
+      "code": null,
+      "upstreamStatus": null,
+      "proposal": {
+        "version": 1,
+        "decision": {
+          "kind": "defer_all",
+          "reason": "Both active matters are independently grounded and semantically equivalent: each seeks a conversation about the current situation, with no percepts, concerns, beliefs, actor knowledge, or comparative outcome evidence favoring Nela or Ida. The ambiguity should be reconsidered after a short interval rather than assigning the body arbitrarily.",
+          "reviewAfterSeconds": 30
+        }
+      },
+      "usage": {
+        "model": "gpt-5.6-luna",
+        "inputTokens": 1664,
+        "outputTokens": 129,
+        "totalTokens": 1793,
+        "elapsedMs": 2473
+      }
+    },
+    "history_with_nela_release": {
+      "label": "history_with_nela_release",
+      "status": 200,
+      "elapsedMs": 2491,
+      "ok": true,
+      "code": null,
+      "upstreamStatus": null,
+      "proposal": {
+        "version": 1,
+        "decision": {
+          "kind": "defer_all",
+          "reason": "Both current social commitments are independently grounded, but the available context provides no sufficient basis to prioritize speaking with Nela over speaking with Ida or vice versa. The prior Nela-related release records a past outcome and does not itself establish current priority.",
+          "reviewAfterSeconds": 60
+        }
+      },
+      "usage": {
+        "model": "gpt-5.6-luna",
+        "inputTokens": 1863,
+        "outputTokens": 231,
+        "totalTokens": 2094,
+        "elapsedMs": 2450
+      }
+    },
+    "comparison": {
+      "control": {
+        "kind": "defer_all",
+        "matterId": null,
+        "reason": "Both active matters are independently grounded and semantically equivalent: each seeks a conversation about the current situation, with no percepts, concerns, beliefs, actor knowledge, or comparative outcome evidence favoring Nela or Ida. The ambiguity should be reconsidered after a short interval rather than assigning the body arbitrarily.",
+        "supportEvidenceIds": null,
+        "reviewAfterSeconds": 30
+      },
+      "history": {
+        "kind": "defer_all",
+        "matterId": null,
+        "reason": "Both current social commitments are independently grounded, but the available context provides no sufficient basis to prioritize speaking with Nela over speaking with Ida or vice versa. The prior Nela-related release records a past outcome and does not itself establish current priority.",
+        "supportEvidenceIds": null,
+        "reviewAfterSeconds": 60
+      },
+      "controlBehavior": {
+        "kind": "defer_all"
+      },
+      "historyBehavior": {
+        "kind": "defer_all"
+      },
+      "exactBehaviorEqual": true,
+      "historyCitesRelease": false
+    }
+  },
+  "providerRequestsAttempted": 2,
+  "semanticRetries": 0,
+  "classification": "SYMMETRIC_SAME_DECISION_NO_COUNTERPARTY_HISTORY_USE",
+  "finishedAt": "2026-09-27T21:39:34.354Z",
+  "outcome": "SYMMETRIC_SAME_DECISION_NO_COUNTERPARTY_HISTORY_USE",
+  "workflowRun": 32,
+  "rawWorkflowArtifact": "spc-live-provider-evidence-9a0086a0a06fcf2d108ea7bdca32053f3a388f60"
+}
