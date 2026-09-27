@@ -95,6 +95,91 @@ describe("R6 symmetric counterparty social choice contract", () => {
     expect(historyIdaSupport?.facts.map((fact) => fact.evidenceId)).toEqual([IDA_ORIGIN]);
   });
 
+  it("exposes a strict evidence-grounded defer-all variant while preserving legacy defer-all", async () => {
+    const captured: any[] = [];
+    const fetchMock = vi.fn(async (_url: string, init?: RequestInit) => {
+      const body = JSON.parse(String(init?.body));
+      captured.push(body);
+      return new Response(JSON.stringify(upstreamResponse({
+        kind: "defer_all",
+        reason: "the exact earlier Nela release matters, but still does not establish current priority over Ida",
+        supportEvidenceIds: [RELEASE],
+        reviewAfterSeconds: 60,
+      })), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const env: SpcNextLifeChoiceEnv = {
+      OPENAI_API_KEY: "test-key",
+      SPC_NEXT_LIFE_CHOICE_MODEL: "gpt-5.6-luna",
+      SPC_NEXT_LIFE_CHOICE_REASONING: "low",
+      SPC_NEXT_LIFE_CHOICE_MAX_OUTPUT_TOKENS: "512",
+      HEARTH_COGNITION_LIMITER: { limit: vi.fn(async () => ({ success: true })) },
+    };
+
+    const response = await handleSpcNextLifeChoice(
+      new Request("https://example.test/api/spc-next/life-choice", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(FIXTURE.history),
+      }),
+      env,
+    );
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({
+      ok: true,
+      proposal: {
+        decision: {
+          kind: "defer_all",
+          supportEvidenceIds: [RELEASE],
+        },
+      },
+    });
+
+    const variants = captured[0].text.format.schema.properties.decision.anyOf;
+    const deferVariants = variants.filter(
+      (variant: any) => variant.properties?.kind?.enum?.includes("defer_all"),
+    );
+    expect(deferVariants).toHaveLength(2);
+    expect(deferVariants.some(
+      (variant: any) => !Object.hasOwn(variant.properties, "supportEvidenceIds"),
+    )).toBe(true);
+    const supported = deferVariants.find(
+      (variant: any) => Object.hasOwn(variant.properties, "supportEvidenceIds"),
+    );
+    expect(supported.properties.supportEvidenceIds.items.enum)
+      .toEqual([IDA_ORIGIN, NELA_ORIGIN, RELEASE].sort((a, b) => a.localeCompare(b)));
+
+    const sanitized = sanitizeSpcNextLifeChoiceContext(FIXTURE.history);
+    if (!sanitized) throw new Error("symmetric history failed sanitization");
+    expect(extractSpcNextLifeChoiceDecision(
+      upstreamResponse({
+        kind: "defer_all",
+        reason: "the release is relevant but not enough to choose one current social future",
+        supportEvidenceIds: [RELEASE],
+        reviewAfterSeconds: 60,
+      }),
+      sanitized.candidateMatterIds,
+      sanitized.candidateSupports,
+    )).toMatchObject({
+      kind: "defer_all",
+      supportEvidenceIds: [RELEASE],
+    });
+    expect(extractSpcNextLifeChoiceDecision(
+      upstreamResponse({
+        kind: "defer_all",
+        reason: "forged evidence must remain impossible",
+        supportEvidenceIds: ["evidence:forged:r6:defer-all"],
+        reviewAfterSeconds: 60,
+      }),
+      sanitized.candidateMatterIds,
+      sanitized.candidateSupports,
+    )).toBeNull();
+  });
+
   it("exposes the Nela release comparatively for either social choice without leaking sibling current origins", async () => {
     const captured: any[] = [];
     const fetchMock = vi.fn(async (_url: string, init?: RequestInit) => {
