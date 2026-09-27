@@ -274,6 +274,16 @@ jobs:
           LIVE_PROVIDER_OUTPUT: evidence/live-provider/r6-delayed-competing-future-history-choice-twin.json
         run: node scripts/spc-live-provider-r6-delayed-competing-future-history-choice-twin-evidence.mjs
 
+      - name: Validate R6 cumulative same-actor history choice twin harness
+        if: env.RUN_R6_CUMULATIVE_SAME_ACTOR_HISTORY_CHOICE_TWIN == '1'
+        run: node --check scripts/spc-live-provider-r6-cumulative-same-actor-history-choice-twin-evidence.mjs
+
+      - name: Qualify R6 cumulative same-actor history choice twin with real Luna
+        if: env.RUN_R6_CUMULATIVE_SAME_ACTOR_HISTORY_CHOICE_TWIN == '1'
+        env:
+          LIVE_PROVIDER_OUTPUT: evidence/live-provider/r6-cumulative-same-actor-history-choice-twin.json
+        run: node scripts/spc-live-provider-r6-cumulative-same-actor-history-choice-twin-evidence.mjs
+
       - name: Print live-provider evidence summary
         if: always()
         shell: bash
@@ -356,6 +366,13 @@ jobs:
           echo "--- R6 competing-future terminal-history choice twin evidence ---"
           if [ "${RUN_R6_COMPETING_FUTURE_TERMINAL_HISTORY_CHOICE_TWIN:-0}" = "1" ]; then
             cat evidence/live-provider/r6-competing-future-terminal-history-choice-twin.json 2>/dev/null || true
+          else
+            echo "not requested in this run"
+          fi
+
+          echo "--- R6 cumulative same-actor history choice twin evidence ---"
+          if [ "${RUN_R6_CUMULATIVE_SAME_ACTOR_HISTORY_CHOICE_TWIN:-0}" = "1" ]; then
+            cat evidence/live-provider/r6-cumulative-same-actor-history-choice-twin.json 2>/dev/null || true
           else
             echo "not requested in this run"
           fi
