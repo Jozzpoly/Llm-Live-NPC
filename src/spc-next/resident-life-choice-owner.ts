@@ -6,6 +6,7 @@ import {
 import type { ResidentLifeCognitionView } from "./resident-life-cognition-view";
 import {
   allowedChoiceSupportEvidenceIds,
+  allowedDeferAllSupportEvidenceIds,
   deriveResidentLifeChoiceCandidateSupports,
   type ResidentLifeChoiceCandidateSupport,
 } from "./resident-life-choice-causal-support";
@@ -22,6 +23,12 @@ export type ResidentLifeChoiceDecision =
   | {
       kind: "defer_all";
       reason: string;
+      /**
+       * Optional causal provenance for deliberate non-action. Omitted remains legal
+       * when the decision rests on unresolved equivalence/absence rather than one
+       * positive resident-owned fact.
+       */
+      supportEvidenceIds?: readonly string[];
       reviewAfterSeconds: number;
     };
 
@@ -276,8 +283,36 @@ function parseChoice(
     };
   }
   if (kind === "defer_all") {
-    if (!hasOnlyKeys(decision, ["kind", "reason", "reviewAfterSeconds"])) return null;
-    return { kind: "defer_all", reason, reviewAfterSeconds };
+    if (!hasOnlyKeys(decision, [
+      "kind",
+      "reason",
+      "supportEvidenceIds",
+      "reviewAfterSeconds",
+    ])) return null;
+
+    if (decision.supportEvidenceIds === undefined) {
+      return { kind: "defer_all", reason, reviewAfterSeconds };
+    }
+
+    const allowedSupport = new Set(
+      allowedDeferAllSupportEvidenceIds(candidateSupports),
+    );
+    if (!Array.isArray(decision.supportEvidenceIds)
+      || decision.supportEvidenceIds.length < 1
+      || decision.supportEvidenceIds.length > 8) return null;
+    const supportEvidenceIds: string[] = [];
+    for (const evidenceId of decision.supportEvidenceIds) {
+      if (typeof evidenceId !== "string"
+        || !allowedSupport.has(evidenceId)
+        || supportEvidenceIds.includes(evidenceId)) return null;
+      supportEvidenceIds.push(evidenceId);
+    }
+    return {
+      kind: "defer_all",
+      reason,
+      supportEvidenceIds,
+      reviewAfterSeconds,
+    };
   }
   return null;
 }
