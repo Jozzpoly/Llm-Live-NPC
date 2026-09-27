@@ -5,7 +5,10 @@ import {
   R4_PRIMARY_MATTER_ID,
   R4_PRIMARY_OBJECT_ID,
 } from "./r4-dense-workshop-slice";
-import { materialAbsencePressureReasonId } from "./resident-material-matter-relevance-bridge";
+import {
+  materialAbsencePressureReasonId,
+  materialReacquiredOpportunityReasonId,
+} from "./resident-material-matter-relevance-bridge";
 
 describe("R6 endogenous post-terminal material-future generation gap", () => {
   it("lets World/private reacquisition happen after a factual blocked episode is terminal, but produces no fresh resident future", () => {
@@ -73,15 +76,24 @@ describe("R6 endogenous post-terminal material-future generation gap", () => {
       status: "resolved",
       activeRunId: null,
     });
-    // ...but there is currently no second seam that turns the new factual
-    // opportunity into a fresh semantic pressure/future.
-    expect(slice.resident.pendingCognitionReasons()).toEqual([]);
+    // ...while the new factual opportunity now enters semantic metabolism rather
+    // than silently disappearing or automatically becoming a task.
+    expect(slice.resident.pendingCognitionReasons()).toEqual([
+      expect.objectContaining({
+        id: materialReacquiredOpportunityReasonId("resident.janek", R4_PRIMARY_OBJECT_ID),
+        kind: "direct_world_change",
+        evidenceIds: expect.arrayContaining([
+          expect.any(String),
+          blocked!.id,
+        ]),
+      }),
+    ]);
     expect(slice.focus.focusedRun()).toBeNull();
     expect(slice.arbitrator.deferredRunIds()).toEqual([]);
     expect(step.status).not.toBe("primary_reactivated");
   });
 
-  it("cannot represent a fresh material acquisition as a native life commitment even when the object identity is explicit", () => {
+  it("represents a fresh material acquisition as matter-level life intent without pretending it is body execution", () => {
     const slice = createR4DenseWorkshopSlice();
     const parserContext = slice.resident.cognitionContext({
       residentId: "resident.janek",
@@ -110,6 +122,14 @@ describe("R6 endogenous post-terminal material-future generation gap", () => {
       beliefs: [],
       concerns: [],
       reviewAfterSeconds: 30,
-    }, parserContext)).toBeNull();
+    }, parserContext)).toMatchObject({
+      commitmentDecision: {
+        kind: "accept",
+        intent: {
+          kind: "acquire_material_object",
+          objectId: R4_PRIMARY_OBJECT_ID,
+        },
+      },
+    });
   });
 });
