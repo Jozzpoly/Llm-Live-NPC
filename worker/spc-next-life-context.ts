@@ -231,24 +231,28 @@ function sanitizeHistoricalSupport(
   contextTick: number,
 ): Array<{
   relation: ResidentMatterHistoricalSupportRelation;
+  sourceMatterId: string;
   evidence: ResidentLifeEvidenceView;
 }> | null {
   if (!Array.isArray(value) || value.length > MAX_HISTORICAL_SUPPORT_PER_MATTER) return null;
   const result: Array<{
     relation: ResidentMatterHistoricalSupportRelation;
+    sourceMatterId: string;
     evidence: ResidentLifeEvidenceView;
   }> = [];
   const seen = new Set<string>();
   for (const raw of value) {
-    if (!record(raw) || !hasOnlyKeys(raw, ["relation", "evidence"])) return null;
+    if (!record(raw) || !hasOnlyKeys(raw, ["relation", "sourceMatterId", "evidence"])) return null;
     if (raw.relation !== "prior_same_material_outcome") return null;
+    const sourceMatterId = identifier(raw.sourceMatterId);
     const evidence = sanitizeEvidence(raw.evidence, contextTick);
-    if (!evidence) return null;
-    const key = `${raw.relation}|${evidence.id}`;
+    if (!sourceMatterId || !evidence) return null;
+    const key = `${raw.relation}|${sourceMatterId}|${evidence.id}`;
     if (seen.has(key)) return null;
     seen.add(key);
     result.push({
       relation: raw.relation,
+      sourceMatterId,
       evidence,
     });
   }
