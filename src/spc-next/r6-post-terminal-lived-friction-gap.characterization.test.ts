@@ -5,7 +5,10 @@ import { ResidentExecutionArbitrator } from "./resident-execution-arbitrator";
 import { ResidentExecutionFocusAuthority } from "./resident-execution-focus-authority";
 import { captureResidentLifeCognitionView } from "./resident-life-cognition-view";
 import { ResidentLifeMatterScope } from "./resident-life-matter-scope";
-import { ResidentMaterialMatterRelevanceBridge } from "./resident-material-matter-relevance-bridge";
+import {
+  ResidentMaterialMatterRelevanceBridge,
+  materialReacquiredOpportunityReasonId,
+} from "./resident-material-matter-relevance-bridge";
 import { ResidentRuntime } from "./resident-runtime";
 
 const MATTER_ID = "matter.mira.r6.lived-friction";
@@ -95,10 +98,9 @@ describe("R6 post-terminal lived-friction gap", () => {
       },
     });
 
-    // The existing material-relevance seam is deliberately about one still-open
-    // blocked acquisition matter. A terminal episode must not be revived as an
-    // obligation merely because the same object becomes visible again.
-    expect(bridge.observeReacquisition(
+    // The R6 repair preserves anti-reopen semantics while allowing the new factual
+    // observation to become semantic pressure for a genuinely new decision.
+    const observed = bridge.observeReacquisition(
       {
         objectId: OBJECT_ID,
         lastKnownPosition: { x: 20, y: 20 },
@@ -112,15 +114,34 @@ describe("R6 post-terminal lived-friction gap", () => {
         currentlyVisible: true,
       },
       life,
-    )).toEqual({
-      status: "not_relevant",
+    );
+    expect(observed).toMatchObject({
+      status: "fresh_opportunity",
+      priorMatterId: MATTER_ID,
       objectId: OBJECT_ID,
+      priorOutcomeEvidence: {
+        kind: "task_outcome",
+        summary: expect.stringContaining("blocked:"),
+      },
+      reasonId: materialReacquiredOpportunityReasonId("resident.mira", OBJECT_ID),
     });
-    expect(resident.pendingCognitionReasons()).toEqual([]);
-    expect(history.kernel.matter(MATTER_ID)).toMatchObject({ status: "resolved" });
+    expect(resident.pendingCognitionReasons()).toEqual([
+      expect.objectContaining({
+        id: materialReacquiredOpportunityReasonId("resident.mira", OBJECT_ID),
+        kind: "direct_world_change",
+        evidenceIds: expect.arrayContaining([
+          expect.any(String),
+          expect.stringContaining("task-outcome"),
+        ]),
+      }),
+    ]);
+    expect(history.kernel.matter(MATTER_ID)).toMatchObject({
+      status: "resolved",
+      activeRunId: null,
+    });
 
-    // This is the exact missing distinction for the next pressure: "this happened
-    // to me before" must not be represented as "I still owe this task".
+    // "This happened to me before" can now justify a fresh semantic decision, but it
+    // is still not represented as "I still owe this task".
   });
 
   it("does not revive the old terminal episode when committed life is reconstructed", () => {
