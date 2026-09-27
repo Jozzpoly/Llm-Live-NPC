@@ -578,34 +578,34 @@ Do not infer relationship state from that result. The next pressure is **same-ca
 Status: **MATERIAL BOUNDED POSITIVE FINDING — CUMULATIVE SAME-ACTOR HISTORY CHANGED REAL-LUNA BEHAVIOR**
 
 Canonical finding:
-\`docs/SPC_R6_CUMULATIVE_SAME_ACTOR_HISTORY_FINDING.md\`
+`docs/SPC_R6_CUMULATIVE_SAME_ACTOR_HISTORY_FINDING.md`
 
 The cumulative ordinary-experience pressure exposed a concrete attribution gap rather than a need for generic memory:
 
-- two independent terminal \`communicate_actor\` episodes with exact Ida survived bounded archive;
+- two independent terminal `communicate_actor` episodes with exact Ida survived bounded archive;
 - both old matters correctly disappeared from current life;
 - later current Ida future C and unrelated D were legal;
 - but old factual outcomes could not be cited as causal support for C.
 
-The earned repair adds only typed \`prior_same_actor_outcome\` genealogy to a **current** \`communicate_actor\` matter when kernel validation proves exact same \`targetActorId\` and exact terminal factual \`task_outcome\`.
+The earned repair adds only typed `prior_same_actor_outcome` genealogy to a **current** `communicate_actor` matter when kernel validation proves exact same `targetActorId` and exact terminal factual `task_outcome`.
 
 The projection is bounded to the 8 most recent exact same-actor terminal communication outcomes, deterministic, actor-isolated and released when the current descendant matter terminates. It adds no relationship score, sentiment, trust, liking, dislike, habit or body authority.
 
 Run #29 at source
-\`900d626b9049a43438993a96e7b442c6e59aa369\`
+`900d626b9049a43438993a96e7b442c6e59aa369`
 uses exactly two GPT-5.6 Luna calls and zero semantic retries:
 
-- control: \`defer_all\`;
-- history: \`focus_matter(other)\`;
+- control: `defer_all`;
+- history: `focus_matter(other)`;
 - history cites **both** independent old Ida task outcomes plus D's current origin;
 - old A/B are absent from current life in both twins;
 - classification:
-  **\`CUMULATIVE_SAME_ACTOR_HISTORY_CAUSAL_DIFFERENCE_OBSERVED\`**.
+  **`CUMULATIVE_SAME_ACTOR_HISTORY_CAUSAL_DIFFERENCE_OBSERVED`**.
 
 Run #28 is apparatus-only evidence: qualifier resolution failed before inference, with zero provider requests/token spend.
 
-Exact run-#29 proposals replay through local \`ResidentLifeChoiceOwner\` at
-\`0bf8ad82e691c6fbd8accf7d975a0bb7d71574f8\`.
+Exact run-#29 proposals replay through local `ResidentLifeChoiceOwner` at
+`0bf8ad82e691c6fbd8accf7d975a0bb7d71574f8`.
 
 Check #1753: **284 / 284 files, 1020 / 1020 tests**, typecheck/build/preview PASS.
 Browser Evidence #977: PASS.
@@ -616,7 +616,62 @@ It does **not** prove richer social meaning. The observed history effect may sti
 
 Therefore this cumulative same-actor stage is **bounded CLOSED**.
 
-The next falsifier must hold history cardinality constant and ask whether **different factual outcomes or consequences** of the same number of old same-actor episodes can produce different later judgement. First use existing factual outcome structure; do not add relationship/preference state unless a concrete representation failure earns it.
+That same-cardinality ambiguity is now answered positively in section 7.9: factual old outcome meaning changed a real choice while count and support identities were fixed.
+
+Do not infer relationship state from that result. The next pressure must move from **the resident's own task outcomes** to **what the other actor factually did**.
+
+## 7.9 R6 same-cardinality factual outcome meaning
+
+Status: **MATERIAL BOUNDED POSITIVE FINDING — FACTUAL OUTCOME MEANING CHANGED REAL-LUNA BEHAVIOR AT FIXED HISTORY COUNT**
+
+Canonical finding:
+`docs/SPC_R6_SAME_CARDINALITY_OUTCOME_MEANING_FINDING.md`
+
+This pressure directly falsified the main ambiguity left by run #29.
+
+The matched histories keep fixed:
+
+- resident and target actor;
+- exactly two old same-actor episodes;
+- source matter IDs;
+- evidence IDs and ticks;
+- current C-vs-D ambiguity;
+- free body;
+- no old matters in current life;
+- no fresh speech;
+- no authored self.
+
+Only factual old outcome meaning changes:
+
+- two real message-delivery outcomes are `succeeded:`;
+- or two real message-delivery outcomes are `blocked:` with `recipient_absent_at_best_known_contact`.
+
+The deterministic contrast is produced through the actual World/message-delivery path, not by inventing relationship prose. Existing `task_outcome.summary` already preserves the distinction, so **no new production representation was needed**.
+
+Live Provider run #30 at source
+`d4dd09c0d6afefefaf60772ebdb169728128b548`
+uses exactly two GPT-5.6 Luna calls and no semantic retry:
+
+- succeeded-history: `focus_matter(current Janek C)`;
+- blocked-history: `focus_matter(unrelated D)`;
+- both exact responses cite both old same-actor outcome IDs;
+- classification:
+  **`SAME_CARDINALITY_OUTCOME_MEANING_BEHAVIOR_DIFFERENCE_OBSERVED`**.
+
+Exact proposals replay through `ResidentLifeChoiceOwner` in:
+`src/spc-next/r6-same-cardinality-outcome-meaning-choice-pair.integration.test.ts`.
+
+Check #1766: **287 / 287 files, 1026 / 1026 tests**, typecheck/build/preview PASS.
+
+Bounded conclusion:
+
+> At fixed history cardinality, factual consequence meaning itself can change a later real-Luna choice through exact old evidence, without adding relationship/preference state.
+
+This still does **not** prove relationship state. The old facts describe the resident's own communication attempts and their World outcomes, not what the counterparty deliberately chose or did.
+
+Therefore this exact same-cardinality own-outcome stage is **bounded CLOSED**.
+
+The next pressure is **counterparty-caused social history**: can an old factual response, refusal, assistance, release or other action by the other resident leave immediate/recent life and later alter a genuine endogenous choice through exact provenance — without compressing it into trust/affinity scores?
 
 ## 8. Anti-cheat rules
 
@@ -708,15 +763,17 @@ Current order:
 4. preserve the separation between terminal factual archive, current-matter causal genealogy, provider judgement and body authority;
 5. retain run #29 as the first **MATERIAL BOUNDED POSITIVE** cumulative same-actor behavioral split: two old Ida outcomes jointly changed control `defer_all` into history `focus_matter(other)` and both old facts were causally cited;
 6. treat the cumulative same-actor communication-count/history stage as **bounded CLOSED**;
-7. attack the remaining cardinality ambiguity: same actor, same number of old episodes, same current C-vs-D choice, but different factual old outcomes/consequences;
-8. do not add preference/aversion, habit, relationship scores or generic autobiographical memory before that sharper pressure demonstrates a representation failure;
-9. preserve Janek/material continuity, R1 homeostasis, R2 metabolism, private knowledge and R5 provider safety as vetoes;
-10. retain browser Oren/Nela genericity as honest promotion-plane debt;
-11. do not prepare an Owner gate or merge PR #148 by CI inertia.
+7. retain run #30 as the first **MATERIAL BOUNDED POSITIVE** same-cardinality outcome-meaning split: `2×succeeded` chose current Janek C while `2×blocked` chose unrelated D, with both old outcomes cited on both sides;
+8. treat same-cardinality own-task-outcome meaning as **bounded CLOSED**;
+9. characterize durable **counterparty-caused social history** before adding any relationship representation: what Janek/Nela/another resident factually said or did back, after the immediate percept has left recent life;
+10. do not add preference/aversion, habit, relationship scores or generic autobiographical memory before that sharper pressure demonstrates a concrete provenance failure;
+11. preserve Janek/material continuity, R1 homeostasis, R2 metabolism, private knowledge and R5 provider safety as vetoes;
+12. retain browser Oren/Nela genericity as honest promotion-plane debt;
+13. do not prepare an Owner gate or merge PR #148 by CI inertia.
 
 The next research question is now:
 
-> **With the same actor, the same number of old episodes and the same current C-vs-D ambiguity, can different factual past outcomes or consequences change later judgement — or is current personhood only sensitive to “this happened N times before”?**
+> **Can an old factual response/action by the other resident — not merely the outcome of my own attempt — survive beyond immediate recent perception and later change a genuine endogenous choice through exact causal provenance, without becoming a relationship score?**
 
 ## 12. Owner-observed target
 
