@@ -286,6 +286,152 @@ describe("ResidentContinuityKernel bounded terminal factual outcome archive", ()
     })).toThrow("prior material history requires a material candidate and factual task outcome");
   });
 
+  it("pins several exact same-actor factual outcomes only to one current communication matter", () => {
+    const kernel = new ResidentContinuityKernel({
+      recentEvidenceLimit: 1,
+      terminalOutcomeArchiveLimit: 8,
+    });
+    const first = createTerminalCommunicationOutcome(
+      kernel,
+      "social-old-a",
+      "resident.ida",
+      1,
+    );
+    const second = createTerminalCommunicationOutcome(
+      kernel,
+      "social-old-b",
+      "resident.ida",
+      10,
+    );
+
+    const origin = kernel.recordEvidence({
+      id: "evidence.archive.social-current.origin",
+      tick: 30,
+      kind: "accepted_cognition_commitment",
+      summary: "current bounded communication with Ida",
+    });
+    const current = kernel.openMatter({
+      id: "matter.archive.social-current",
+      originEvidenceId: origin.id,
+      semanticCourse: "speak with Ida about the current situation",
+      semanticIntent: {
+        kind: "communicate_actor",
+        goal: "speak with Ida now",
+        targetActorId: "resident.ida",
+        text: "Ida, porozmawiajmy o tym, co dzieje się teraz.",
+      },
+      historicalSupport: [
+        {
+          relation: "prior_same_actor_outcome",
+          sourceMatterId: "matter.archive.social-old-a",
+          evidenceId: first.id,
+        },
+        {
+          relation: "prior_same_actor_outcome",
+          sourceMatterId: "matter.archive.social-old-b",
+          evidenceId: second.id,
+        },
+      ],
+    });
+
+    expect(current.historicalSupport).toEqual([
+      {
+        relation: "prior_same_actor_outcome",
+        sourceMatterId: "matter.archive.social-old-a",
+        evidenceId: first.id,
+      },
+      {
+        relation: "prior_same_actor_outcome",
+        sourceMatterId: "matter.archive.social-old-b",
+        evidenceId: second.id,
+      },
+    ]);
+    expect(kernel.historicalSupportEvidence(current.id)).toEqual([
+      {
+        relation: "prior_same_actor_outcome",
+        sourceMatterId: "matter.archive.social-old-a",
+        evidence: first,
+      },
+      {
+        relation: "prior_same_actor_outcome",
+        sourceMatterId: "matter.archive.social-old-b",
+        evidence: second,
+      },
+    ]);
+
+    const restored = new ResidentContinuityKernel({
+      committedSnapshot: kernel.snapshotCommittedState(),
+    });
+    expect(restored.historicalSupportEvidence(current.id)).toEqual([
+      {
+        relation: "prior_same_actor_outcome",
+        sourceMatterId: "matter.archive.social-old-a",
+        evidence: first,
+      },
+      {
+        relation: "prior_same_actor_outcome",
+        sourceMatterId: "matter.archive.social-old-b",
+        evidence: second,
+      },
+    ]);
+
+    restored.cancelMatter(current.id);
+    expect(restored.matter(current.id)?.historicalSupport).toBeUndefined();
+    expect(restored.historicalSupportEvidence(current.id)).toEqual([]);
+  });
+
+  it("rejects same-actor support for a different actor or a non-communication current matter", () => {
+    const kernel = new ResidentContinuityKernel({
+      recentEvidenceLimit: 1,
+      terminalOutcomeArchiveLimit: 8,
+    });
+    const old = createTerminalCommunicationOutcome(
+      kernel,
+      "social-validation-old",
+      "resident.ida",
+      1,
+    );
+    const origin = kernel.recordEvidence({
+      id: "evidence.archive.social-validation-current.origin",
+      tick: 20,
+      kind: "accepted_cognition_commitment",
+      summary: "current validation candidate",
+    });
+
+    expect(() => kernel.openMatter({
+      id: "matter.archive.social-wrong-actor",
+      originEvidenceId: origin.id,
+      semanticCourse: "speak with Nela",
+      semanticIntent: {
+        kind: "communicate_actor",
+        goal: "speak with Nela",
+        targetActorId: "resident.nela",
+        text: "Nela, porozmawiajmy.",
+      },
+      historicalSupport: [{
+        relation: "prior_same_actor_outcome",
+        sourceMatterId: "matter.archive.social-validation-old",
+        evidenceId: old.id,
+      }],
+    })).toThrow("prior actor history does not match exact terminal same-actor matter");
+
+    expect(() => kernel.openMatter({
+      id: "matter.archive.social-wrong-kind",
+      originEvidenceId: origin.id,
+      semanticCourse: "visit workshop",
+      semanticIntent: {
+        kind: "travel_region",
+        goal: "visit workshop",
+        targetRegionId: "workshop",
+      },
+      historicalSupport: [{
+        relation: "prior_same_actor_outcome",
+        sourceMatterId: "matter.archive.social-validation-old",
+        evidenceId: old.id,
+      }],
+    })).toThrow("prior actor history requires a communication candidate and factual task outcome");
+  });
+
   it("persists the bounded factual archive across committed reconstruction while accepting legacy v1 snapshots with no archive fields", () => {
     const source = new ResidentContinuityKernel({
       recentEvidenceLimit: 1,
@@ -354,6 +500,50 @@ function createTerminalOutcome(
   expect(reconciled.status).toBe("recorded");
   if (reconciled.status !== "recorded") {
     throw new Error("archive fixture outcome was not recorded");
+  }
+  kernel.resolveMatter(matterId);
+  return reconciled.evidence;
+}
+
+function createTerminalCommunicationOutcome(
+  kernel: ResidentContinuityKernel,
+  suffix: string,
+  targetActorId: string,
+  tick: number,
+) {
+  const matterId = `matter.archive.${suffix}`;
+  const runId = `run.archive.${suffix}`;
+  const origin = kernel.recordEvidence({
+    id: `evidence.archive.${suffix}.origin`,
+    tick,
+    kind: "life_context",
+    summary: `old factual communication episode ${suffix}`,
+  });
+  kernel.openMatter({
+    id: matterId,
+    originEvidenceId: origin.id,
+    semanticCourse: `old communication ${suffix}`,
+    semanticIntent: {
+      kind: "communicate_actor",
+      goal: `communicate in episode ${suffix}`,
+      targetActorId,
+      text: `message ${suffix}`,
+    },
+  });
+  kernel.bindRun({
+    matterId,
+    taskId: `task.archive.${suffix}`,
+    runId,
+  });
+  const reconciled = kernel.reconcileRunOutcome({
+    runId,
+    tick: tick + 1,
+    status: "succeeded",
+    summary: `factually delivered communication episode ${suffix}`,
+  });
+  expect(reconciled.status).toBe("recorded");
+  if (reconciled.status !== "recorded") {
+    throw new Error("social archive fixture outcome was not recorded");
   }
   kernel.resolveMatter(matterId);
   return reconciled.evidence;
