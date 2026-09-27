@@ -318,11 +318,18 @@ export class ResidentOriginatedSocialCommitmentAuthority {
       );
     }
 
-    return this.release({
+    const released = this.release({
       matterId: matter.id,
       tick: input.tick,
       reason: `${input.reason} · factual counterparty speech ${occurrence.id}`,
     });
+    this.options.kernel.archiveCounterpartySocialOutcome({
+      matterId: matter.id,
+      counterpartyActorId: matter.semanticIntent.counterpartyActorId,
+      occurrenceId: occurrence.id,
+      evidenceId: released.releaseEvidence.id,
+    });
+    return released;
   }
 
   /**
