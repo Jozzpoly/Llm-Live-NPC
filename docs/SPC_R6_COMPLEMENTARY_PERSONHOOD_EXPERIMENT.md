@@ -673,6 +673,73 @@ Therefore this exact same-cardinality own-outcome stage is **bounded CLOSED**.
 
 The next pressure is **counterparty-caused social history**: can an old factual response, refusal, assistance, release or other action by the other resident leave immediate/recent life and later alter a genuine endogenous choice through exact provenance — without compressing it into trust/affinity scores?
 
+## 7.10 R6 counterparty-caused social history
+
+Status: **BOUNDED NEUTRAL LIVE FINDING — COUNTERPARTY FACT SURVIVES AND IS CAUSALLY CITED; BEHAVIORAL EFFECT NOT YET PROVEN**
+
+Canonical finding:
+\`docs/SPC_R6_COUNTERPARTY_SOCIAL_HISTORY_FINDING.md\`
+
+The next pressure moved from the resident's own task outcomes to a factual action by another resident.
+
+The concrete pre-repair failure was exact:
+
+- Oren owned one standing commitment to Nela;
+- Nela factually released Oren through exact addressed World speech;
+- Oren's standing matter resolved correctly;
+- after ordinary evidence churn, the release fact left recent life and the old standing matter left current life;
+- terminal \`task_outcome\` archive could not retain the release because it was not Oren's own task outcome;
+- a later current Nela future therefore had no admissible causal route to what Nela had previously done.
+
+The earned repair is deliberately not a relationship model:
+
+- a separate bounded terminal social-lifecycle archive retains only exact counterparty-caused standing releases;
+- each entry keeps source standing matter, exact \`counterpartyActorId\`, exact World \`occurrenceId\`, and exact resident-owned \`resident_released_social_commitment\` evidence;
+- ordinary self-release and generic social events are not archived;
+- later current \`communicate_actor\` C to the exact same actor may carry typed
+  \`prior_counterparty_social_outcome\`;
+- kernel validation proves exact terminal standing source, exact counterparty identity and exact archived release;
+- old standing remains terminal/run-free and absent from current life;
+- the support is comparative evidence, not a priority rule or trust/affinity score.
+
+Deterministic production, committed reconstruction, boundedness and Worker admission are defended. The normal Oren path produces the later Nela C through \`ResidentLifeIntentOwner\` + \`ResidentCausalReasonCommitmentAuthority\`; the integration test does not hand-author historical support.
+
+Live Provider run #31 at source
+\`14383cec2e7e75b07d8ed240d076aa1e935695f2\`
+uses exactly two GPT-5.6 Luna calls and zero semantic retries.
+
+Matched twins have the same Oren, same C/D ambiguity, same free body, same current pressure, no fresh speech, no authored \`self\`, and no old standing matter. The history twin alone gives current Nela C one exact typed old release fact.
+
+Observed result:
+
+- control: \`focus_matter(C=Nela)\`;
+- history: \`focus_matter(C=Nela)\`;
+- history explicitly cites the exact old Nela release as additional social context;
+- \`exactBehaviorEqual = true\`;
+- classification:
+  **\`COUNTERPARTY_SOCIAL_HISTORY_UPTAKE_WITHOUT_BEHAVIOR_CHANGE\`**.
+
+Exact proposals replay through local \`ResidentLifeChoiceOwner\` at
+\`ddef04f5a098ea7b6894dea57723879652d33943\`.
+
+Check #1789: **292 / 292 files, 1037 / 1037 tests**, typecheck/build/preview PASS.
+
+Bounded conclusion:
+
+> A factual action by another resident can survive beyond immediate perception and the old resolved responsibility as exact resident-owned provenance, later reach a new same-counterparty current matter, and be consciously cited by real Luna without reopening the old matter or creating relationship state.
+
+The stronger behavioral claim is **not proven**. In this pair the control already strongly preferred the current Nela conversation over unrelated travel, so history changed causal support/rationale but not the selected future.
+
+Do not rerun run #31 for a stochastic split.
+
+The next pressure removes that current-cue asymmetry: **symmetric social-vs-social choice**.
+
+Required question:
+
+> **When Oren has equally current legal reasons to speak with Nela and Ida, can one exact prior factual action by Nela change which person he chooses to engage with, through cited provenance and without relationship scores?**
+
+First generate the Nela-vs-Ida ambiguity through normal local authorities. Only then freeze a provider pair if the deterministic surface is clean.
+
 ## 8. Anti-cheat rules
 
 R6 FAILS if apparent personhood mainly comes from:
@@ -743,6 +810,7 @@ Completed / retained within scope:
 - Live Provider run #27: **MATERIAL BOUNDED POSITIVE** — control `defer_all`, delayed-history `focus_matter(retry)`, exact old factual outcome cited, exactly two Luna calls, zero retries;
 - exact run-#27 local replay is green at `31a162e7...`, Check #1724 **279 / 279 files, 1006 / 1006 tests**;
 - the delayed same-object factual-history stage is **bounded CLOSED**.
+- run #31 remains **BOUNDED NEUTRAL** for behavior: exact counterparty release reached real-Luna causal support, but control/history both chose current Nela C;
 
 Evidence hygiene:
 
@@ -765,15 +833,18 @@ Current order:
 6. treat the cumulative same-actor communication-count/history stage as **bounded CLOSED**;
 7. retain run #30 as the first **MATERIAL BOUNDED POSITIVE** same-cardinality outcome-meaning split: `2×succeeded` chose current Janek C while `2×blocked` chose unrelated D, with both old outcomes cited on both sides;
 8. treat same-cardinality own-task-outcome meaning as **bounded CLOSED**;
-9. characterize durable **counterparty-caused social history** before adding any relationship representation: what Janek/Nela/another resident factually said or did back, after the immediate percept has left recent life;
-10. do not add preference/aversion, habit, relationship scores or generic autobiographical memory before that sharper pressure demonstrates a concrete provenance failure;
-11. preserve Janek/material continuity, R1 homeostasis, R2 metabolism, private knowledge and R5 provider safety as vetoes;
-12. retain browser Oren/Nela genericity as honest promotion-plane debt;
-13. do not prepare an Owner gate or merge PR #148 by CI inertia.
+9. retain the counterparty-caused provenance repair and run #31 exactly as a **BOUNDED NEUTRAL** live finding: old Nela release is durable/citable, but behavioral effect is unproven;
+10. do not rerun run #31 for a stochastic split;
+11. create a deterministic **symmetric Nela-vs-Ida social choice** through normal authorities, with equally current legal reasons and only Nela carrying old counterparty release history;
+12. if that surface is clean, freeze one matched provider pair and require exact release citation for any causal behavioral claim;
+13. do not add preference/aversion, gratitude, trust, habit, relationship scores or generic autobiographical memory before a stronger pressure earns them;
+14. preserve Janek/material continuity, R1 homeostasis, R2 metabolism, private knowledge and R5 provider safety as vetoes;
+15. retain browser Oren/Nela genericity as honest promotion-plane debt;
+16. do not prepare an Owner gate or merge PR #148 by CI inertia.
 
 The next research question is now:
 
-> **Can an old factual response/action by the other resident — not merely the outcome of my own attempt — survive beyond immediate recent perception and later change a genuine endogenous choice through exact causal provenance, without becoming a relationship score?**
+> **When current social alternatives are symmetric, can one exact prior factual action by Nela change which person Oren chooses to engage with, through cited causal provenance and without relationship scores?**
 
 ## 12. Owner-observed target
 
