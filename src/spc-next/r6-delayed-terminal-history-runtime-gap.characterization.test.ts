@@ -98,7 +98,7 @@ describe("R6 delayed terminal-history factual recall boundary", () => {
       OLD_RUN_ID,
       OBJECT_ID,
       knowledge,
-      authority,
+      restoredAuthority,
       world,
     );
     const blocked = oldExecutor.step();
@@ -183,7 +183,37 @@ describe("R6 delayed terminal-history factual recall boundary", () => {
     const lifeAfterChurn = currentLife(kernel, matterScope, focus, arbitrator);
     expect(lifeAfterChurn.matters.some((matter) => matter.id === OLD_MATTER_ID)).toBe(false);
 
-    // The exact same object factually returns after ordinary life has advanced.
+    // The important durability boundary is reconstruction, not merely an in-process
+    // cache. All body work is terminal/idle here, so restoring committed continuity
+    // cannot smuggle volatile focus/provider authority across the boundary.
+    const restoredKernel = new ResidentContinuityKernel({
+      committedSnapshot: kernel.snapshotCommittedState(),
+    });
+    const restoredMatterScope = new ResidentLifeMatterScope(restoredKernel);
+    const restoredFocus = new ResidentExecutionFocusAuthority(restoredKernel);
+    const restoredArbitrator = new ResidentExecutionArbitrator(restoredKernel, restoredFocus);
+    const restoredAuthority = new ResidentWorldExecutionAuthority(
+      RESIDENT_ID,
+      restoredArbitrator,
+      world,
+    );
+    expect(restoredKernel.matter(OLD_MATTER_ID)).toMatchObject({
+      status: "resolved",
+      activeRunId: null,
+      lastOutcomeEvidenceId: oldOutcome.id,
+    });
+    expect(restoredKernel.lastOutcomeEvidence(OLD_MATTER_ID)).toBeNull();
+    expect(restoredKernel.archivedTerminalOutcomeEvidence(OLD_MATTER_ID)).toEqual(oldOutcome);
+    const restoredLifeAfterChurn = currentLife(
+      restoredKernel,
+      restoredMatterScope,
+      restoredFocus,
+      restoredArbitrator,
+    );
+    expect(restoredLifeAfterChurn.matters).toEqual([]);
+
+    // The exact same object factually returns after ordinary life has advanced
+    // and committed resident continuity has been reconstructed.
     const self = world.publicSnapshot().actors.find((actor) => actor.id === RESIDENT_ID);
     if (!self) throw new Error("Janek body missing after ordinary life churn");
     moveActorOneTick(world, RELOCATOR_ID, {
@@ -200,11 +230,11 @@ describe("R6 delayed terminal-history factual recall boundary", () => {
     expect(sampled.previous).toMatchObject({ currentlyVisible: false });
     expect(sampled.current).toMatchObject({ currentlyVisible: true });
 
-    const relevance = new ResidentMaterialMatterRelevanceBridge(resident, kernel);
+    const relevance = new ResidentMaterialMatterRelevanceBridge(resident, restoredKernel);
     const opportunity = relevance.observeReacquisition(
       sampled.previous,
       sampled.current,
-      lifeAfterChurn,
+      restoredLifeAfterChurn,
     );
     expect(opportunity).toMatchObject({
       status: "fresh_opportunity",
@@ -217,15 +247,18 @@ describe("R6 delayed terminal-history factual recall boundary", () => {
     }
 
     // Crucially, archive-backed recall does not reinsert old work into current life.
-    expect(currentLife(kernel, matterScope, focus, arbitrator).matters.some(
-      (matter) => matter.id === OLD_MATTER_ID,
-    )).toBe(false);
-    expect(kernel.matter(OLD_MATTER_ID)).toMatchObject({
+    expect(currentLife(
+      restoredKernel,
+      restoredMatterScope,
+      restoredFocus,
+      restoredArbitrator,
+    ).matters.some((matter) => matter.id === OLD_MATTER_ID)).toBe(false);
+    expect(restoredKernel.matter(OLD_MATTER_ID)).toMatchObject({
       status: "resolved",
       activeRunId: null,
     });
-    expect(kernel.lastOutcomeEvidence(OLD_MATTER_ID)).toBeNull();
-    expect(kernel.archivedTerminalOutcomeEvidence(OLD_MATTER_ID)).toEqual(oldOutcome);
+    expect(restoredKernel.lastOutcomeEvidence(OLD_MATTER_ID)).toBeNull();
+    expect(restoredKernel.archivedTerminalOutcomeEvidence(OLD_MATTER_ID)).toEqual(oldOutcome);
 
     const batch = waitForCognitionBatch(resident, world);
     expect(batch.reasons).toContainEqual(expect.objectContaining({
@@ -235,7 +268,12 @@ describe("R6 delayed terminal-history factual recall boundary", () => {
       summary: expect.stringContaining(oldOutcome.summary),
     }));
 
-    const decisionLife = currentLife(kernel, matterScope, focus, arbitrator);
+    const decisionLife = currentLife(
+      restoredKernel,
+      restoredMatterScope,
+      restoredFocus,
+      restoredArbitrator,
+    );
     expect(decisionLife.matters.some((matter) => matter.id === OLD_MATTER_ID)).toBe(false);
 
     const lifeIntentOwner = new ResidentLifeIntentOwner(resident);
@@ -267,17 +305,22 @@ describe("R6 delayed terminal-history factual recall boundary", () => {
         [{ id: "yard", destinationPoint: { x: 120, y: 120 } }],
         [],
       ),
-      kernel,
-      arbitrator,
-      authority,
+      kernel: restoredKernel,
+      arbitrator: restoredArbitrator,
+      authority: restoredAuthority,
       materialKnowledge: knowledge,
-      matterScope,
+      matterScope: restoredMatterScope,
       identityNamespace: "janek",
     });
     const settlement = lifeIntentOwner.settleCommitmentIntent(
       attempt,
       proposal,
-      currentLife(kernel, matterScope, focus, arbitrator),
+      currentLife(
+        restoredKernel,
+        restoredMatterScope,
+        restoredFocus,
+        restoredArbitrator,
+      ),
       world.tick,
       (admittedProposal, providerContext) => causal.groundCommitment({
         attempt,
@@ -294,8 +337,8 @@ describe("R6 delayed terminal-history factual recall boundary", () => {
 
     // Semantic admission still creates no World/body authority until the exact
     // locally grounded intent is materialized.
-    expect(focus.focusedRun()).toBeNull();
-    expect(kernel.matter(OLD_MATTER_ID)).toMatchObject({
+    expect(restoredFocus.focusedRun()).toBeNull();
+    expect(restoredKernel.matter(OLD_MATTER_ID)).toMatchObject({
       status: "resolved",
       activeRunId: null,
     });
@@ -319,11 +362,11 @@ describe("R6 delayed terminal-history factual recall boundary", () => {
       status: "acquired",
       runId: accepted.runId,
     });
-    expect(kernel.matter(OLD_MATTER_ID)).toMatchObject({
+    expect(restoredKernel.matter(OLD_MATTER_ID)).toMatchObject({
       status: "resolved",
       activeRunId: null,
     });
-    expect(kernel.archivedTerminalOutcomeEvidence(OLD_MATTER_ID)).toEqual(oldOutcome);
+    expect(restoredKernel.archivedTerminalOutcomeEvidence(OLD_MATTER_ID)).toEqual(oldOutcome);
 
     // The new episode can now act through ordinary material World authority; the
     // archive supplied provenance only, never execution.
