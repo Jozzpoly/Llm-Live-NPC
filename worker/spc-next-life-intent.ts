@@ -58,7 +58,8 @@ Supported accepted intents use the bounded semantic vocabulary:
 - travel: commit to going to one KNOWN region or an exact position already grounded by visual/private evidence;
 - investigate: commit to physically inspecting one KNOWN region or an exact position already grounded by visual/private evidence;
 - follow: commit to seeking/following one KNOWN actor using acquired contact evidence;
-- communicate: commit to seeking physical contact with one KNOWN actor and speaking the supplied natural Polish text only after contact.
+- communicate: commit to seeking physical contact with one KNOWN actor and speaking the supplied natural Polish text only after contact;
+- acquire_material_object: accept one new matter-level goal concerning one exact recognized material object identity grounded by the current private causal pressure. This is NOT a pickup command or execution plan: provide only kind, goal and objectId. Local admission must still prove exact reacquisition evidence and current resident-private visibility before any new matter/run can exist.
 
 For release_standing, only target an exact open life matter whose semanticIntent.kind is standing_social_commitment. Local admission requires factual addressed heard speech from that standing commitment's own counterparty; do not use another actor's statement to release it.
 
