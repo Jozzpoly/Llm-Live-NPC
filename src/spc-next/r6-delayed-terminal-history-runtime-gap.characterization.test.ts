@@ -149,7 +149,9 @@ describe("R6 delayed terminal-history runtime gap", () => {
       arbitrator,
       authority,
     });
-    expect(kernel.lastOutcomeEvidence(OLD_MATTER_ID)).not.toBeNull();
+    expect(kernel.recentEvidenceSnapshot().some(
+      (evidence) => evidence.id === oldOutcome.id,
+    )).toBe(true);
 
     executeOrdinaryTravelEpisode({
       suffix: "later-2",
@@ -167,6 +169,11 @@ describe("R6 delayed terminal-history runtime gap", () => {
       activeRunId: null,
       lastOutcomeEvidenceId: oldOutcome.id,
     });
+    expect(kernel.recentEvidenceSnapshot().some(
+      (evidence) => evidence.id === oldOutcome.id,
+    )).toBe(false);
+    // Terminalization already released the live outcome pin; the only near-term
+    // projection route was the bounded recent-evidence window that has now churned.
     expect(kernel.lastOutcomeEvidence(OLD_MATTER_ID)).toBeNull();
 
     const lifeAfterChurn = currentLife(kernel, matterScope, focus, arbitrator);
