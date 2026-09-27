@@ -1,15 +1,11 @@
-import { readFileSync } from "node:fs";
+// @ts-expect-error Vitest/Vite loads the frozen JSON fixture; the browser/worker tsconfig intentionally has no Node/JSON ambient types.
+import FIXTURE from "../evidence/r6-competing-future-terminal-history-choice-context.json";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   handleSpcNextLifeChoice,
   sanitizeSpcNextLifeChoiceContext,
   type SpcNextLifeChoiceEnv,
 } from "./spc-next-life-choice";
-
-const FIXTURE = JSON.parse(readFileSync(
-  new URL("../evidence/r6-competing-future-terminal-history-choice-context.json", import.meta.url),
-  "utf8",
-));
 
 const HISTORY_OUTCOME = "evidence:janek:r6:competing-future:history-outcome";
 const RETRY_ORIGIN = "evidence:janek:r6:competing-future:retry-origin";
