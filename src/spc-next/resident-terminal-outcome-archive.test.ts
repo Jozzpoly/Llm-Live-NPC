@@ -110,6 +110,182 @@ describe("ResidentContinuityKernel bounded terminal factual outcome archive", ()
     expect(kernel.recentEvidenceSnapshot().some((evidence) => evidence.id === first.id)).toBe(false);
   });
 
+  it("pins one exact archived same-object outcome only while the current descendant matter needs it", () => {
+    const kernel = new ResidentContinuityKernel({
+      recentEvidenceLimit: 1,
+      terminalOutcomeArchiveLimit: 1,
+    });
+
+    const oldOrigin = kernel.recordEvidence({
+      id: "evidence.archive.material-old.origin",
+      tick: 1,
+      kind: "life_context",
+      summary: "old material episode",
+    });
+    kernel.openMatter({
+      id: "matter.archive.material-old",
+      originEvidenceId: oldOrigin.id,
+      semanticCourse: "one old bounded crate attempt",
+      semanticIntent: {
+        kind: "acquire_material_object",
+        goal: "try crate once",
+        objectId: "crate.archive.shared",
+      },
+    });
+    kernel.bindRun({
+      matterId: "matter.archive.material-old",
+      taskId: "task.archive.material-old",
+      runId: "run.archive.material-old",
+    });
+    const oldResult = kernel.reconcileRunOutcome({
+      runId: "run.archive.material-old",
+      tick: 2,
+      status: "blocked",
+      summary: "factual same-object failure",
+    });
+    expect(oldResult.status).toBe("recorded");
+    if (oldResult.status !== "recorded") return;
+    kernel.resolveMatter("matter.archive.material-old");
+    expect(kernel.archivedTerminalOutcomeEvidence("matter.archive.material-old"))
+      .toEqual(oldResult.evidence);
+
+    const currentOrigin = kernel.recordEvidence({
+      id: "evidence.archive.material-current.origin",
+      tick: 10,
+      kind: "accepted_cognition_commitment",
+      summary: "current exact same-object future",
+    });
+    const current = kernel.openMatter({
+      id: "matter.archive.material-current",
+      originEvidenceId: currentOrigin.id,
+      semanticCourse: "one current bounded retry",
+      semanticIntent: {
+        kind: "acquire_material_object",
+        goal: "try the same crate again",
+        objectId: "crate.archive.shared",
+      },
+      historicalSupport: [{
+        relation: "prior_same_material_outcome",
+        sourceMatterId: "matter.archive.material-old",
+        evidenceId: oldResult.evidence.id,
+      }],
+    });
+    expect(current.historicalSupport).toEqual([{
+      relation: "prior_same_material_outcome",
+      sourceMatterId: "matter.archive.material-old",
+      evidenceId: oldResult.evidence.id,
+    }]);
+    expect(kernel.historicalSupportEvidence(current.id)).toEqual([{
+      relation: "prior_same_material_outcome",
+      sourceMatterId: "matter.archive.material-old",
+      evidence: oldResult.evidence,
+    }]);
+
+    // New terminal history evicts A from the bounded archive, but the exact old fact
+    // remains pinned because it is still a causal dependency of CURRENT matter C.
+    createTerminalOutcome(kernel, "newer-than-material-old", 20);
+    expect(kernel.archivedTerminalOutcomeEvidence("matter.archive.material-old")).toBeNull();
+    expect(kernel.historicalSupportEvidence(current.id)).toEqual([{
+      relation: "prior_same_material_outcome",
+      sourceMatterId: "matter.archive.material-old",
+      evidence: oldResult.evidence,
+    }]);
+
+    const restored = new ResidentContinuityKernel({
+      committedSnapshot: kernel.snapshotCommittedState(),
+    });
+    expect(restored.archivedTerminalOutcomeEvidence("matter.archive.material-old")).toBeNull();
+    expect(restored.historicalSupportEvidence(current.id)).toEqual([{
+      relation: "prior_same_material_outcome",
+      sourceMatterId: "matter.archive.material-old",
+      evidence: oldResult.evidence,
+    }]);
+
+    restored.cancelMatter(current.id);
+    expect(restored.matter(current.id)).toMatchObject({
+      status: "cancelled",
+      historicalSupport: [],
+    });
+    expect(restored.historicalSupportEvidence(current.id)).toEqual([]);
+  });
+
+  it("rejects historical support that is not the exact terminal same-object factual outcome", () => {
+    const kernel = new ResidentContinuityKernel({
+      recentEvidenceLimit: 1,
+      terminalOutcomeArchiveLimit: 4,
+    });
+
+    const origin = kernel.recordEvidence({
+      id: "evidence.archive.validation-old.origin",
+      tick: 1,
+      kind: "life_context",
+      summary: "old material episode for validation",
+    });
+    kernel.openMatter({
+      id: "matter.archive.validation-old",
+      originEvidenceId: origin.id,
+      semanticCourse: "old crate attempt",
+      semanticIntent: {
+        kind: "acquire_material_object",
+        goal: "try old crate",
+        objectId: "crate.archive.validation-a",
+      },
+    });
+    kernel.bindRun({
+      matterId: "matter.archive.validation-old",
+      taskId: "task.archive.validation-old",
+      runId: "run.archive.validation-old",
+    });
+    const old = kernel.reconcileRunOutcome({
+      runId: "run.archive.validation-old",
+      tick: 2,
+      status: "blocked",
+      summary: "factual validation failure",
+    });
+    expect(old.status).toBe("recorded");
+    if (old.status !== "recorded") return;
+    kernel.resolveMatter("matter.archive.validation-old");
+
+    const newOrigin = kernel.recordEvidence({
+      id: "evidence.archive.validation-new.origin",
+      tick: 5,
+      kind: "accepted_cognition_commitment",
+      summary: "new candidate",
+    });
+
+    expect(() => kernel.openMatter({
+      id: "matter.archive.validation-wrong-object",
+      originEvidenceId: newOrigin.id,
+      semanticCourse: "wrong object candidate",
+      semanticIntent: {
+        kind: "acquire_material_object",
+        goal: "try another crate",
+        objectId: "crate.archive.validation-b",
+      },
+      historicalSupport: [{
+        relation: "prior_same_material_outcome",
+        sourceMatterId: "matter.archive.validation-old",
+        evidenceId: old.evidence.id,
+      }],
+    })).toThrow("prior material history does not match exact terminal same-object matter");
+
+    expect(() => kernel.openMatter({
+      id: "matter.archive.validation-travel",
+      originEvidenceId: newOrigin.id,
+      semanticCourse: "unrelated travel",
+      semanticIntent: {
+        kind: "travel_region",
+        goal: "visit workshop",
+        targetRegionId: "workshop",
+      },
+      historicalSupport: [{
+        relation: "prior_same_material_outcome",
+        sourceMatterId: "matter.archive.validation-old",
+        evidenceId: old.evidence.id,
+      }],
+    })).toThrow("prior material history requires a material candidate and factual task outcome");
+  });
+
   it("persists the bounded factual archive across committed reconstruction while accepting legacy v1 snapshots with no archive fields", () => {
     const source = new ResidentContinuityKernel({
       recentEvidenceLimit: 1,
