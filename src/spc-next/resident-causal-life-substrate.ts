@@ -20,6 +20,11 @@ import {
 } from "./resident-life-intent-owner";
 import { ResidentLifeMatterScope } from "./resident-life-matter-scope";
 import { ResidentLifeOutcomeReviewBridge } from "./resident-life-outcome-review-bridge";
+import type { ResidentMaterialKnowledge } from "./resident-material-knowledge";
+import {
+  ResidentMaterialMatterRelevanceBridge,
+  type ResidentMaterialMatterRelevanceObservation,
+} from "./resident-material-matter-relevance-bridge";
 import type { RegionNavigationGraph } from "./region-navigation";
 import type { ResidentRuntime } from "./resident-runtime";
 import { ResidentWorldExecutionAuthority } from "./resident-world-execution-authority";
@@ -46,6 +51,8 @@ export interface ResidentCausalLifeSubstrateOptions {
   navigation: RegionNavigationGraph;
   identityNamespace?: string;
   selfContext?: ResidentLifeSelfContext;
+  /** Resident-private recognized material knowledge; omit for residents/hosts with none. */
+  materialKnowledge?: ResidentMaterialKnowledge;
   snapshot?: ResidentCausalLifeSnapshot;
 }
 
@@ -72,6 +79,8 @@ export class ResidentCausalLifeSubstrate {
   readonly lifeIntentOwner: ResidentLifeIntentOwner;
   readonly choiceReviewBridge: ResidentLifeChoiceReviewBridge;
   readonly outcomeReviewBridge: ResidentLifeOutcomeReviewBridge;
+  readonly materialKnowledge: ResidentMaterialKnowledge | null;
+  readonly materialRelevanceBridge: ResidentMaterialMatterRelevanceBridge | null;
   readonly travelCommitments: ResidentCausalTravelCommitmentAuthority;
   readonly communicateCommitments: ResidentCausalCommunicateCommitmentAuthority;
   readonly reasonCommitments: ResidentCausalReasonCommitmentAuthority;
@@ -86,6 +95,9 @@ export class ResidentCausalLifeSubstrate {
     }
     if (options.resident.profile.id !== options.residentId) {
       throw new Error("resident causal life substrate runtime belongs to another resident");
+    }
+    if (options.materialKnowledge && options.materialKnowledge.residentId !== options.residentId) {
+      throw new Error("resident causal life material knowledge belongs to another resident");
     }
 
     const snapshot = options.snapshot;
@@ -136,6 +148,10 @@ export class ResidentCausalLifeSubstrate {
     this.lifeIntentOwner = new ResidentLifeIntentOwner(options.resident, options.selfContext);
     this.choiceReviewBridge = new ResidentLifeChoiceReviewBridge(options.resident);
     this.outcomeReviewBridge = new ResidentLifeOutcomeReviewBridge(options.resident);
+    this.materialKnowledge = options.materialKnowledge ?? null;
+    this.materialRelevanceBridge = this.materialKnowledge
+      ? new ResidentMaterialMatterRelevanceBridge(options.resident, this.kernel)
+      : null;
 
     const shared = {
       residentId: options.residentId,
@@ -158,6 +174,7 @@ export class ResidentCausalLifeSubstrate {
     this.reasonCommitments = new ResidentCausalReasonCommitmentAuthority({
       ...shared,
       navigation: options.navigation,
+      ...(this.materialKnowledge ? { materialKnowledge: this.materialKnowledge } : {}),
     });
     this.outcomeTravelCommitments = new ResidentCausalOutcomeTravelCommitmentAuthority({
       ...shared,
@@ -215,6 +232,33 @@ export class ResidentCausalLifeSubstrate {
       arbitrator: this.arbitrator,
       matterIds: this.matterScope.matterIds(),
     }));
+  }
+
+  /**
+   * Sample only resident-private recognized material knowledge and surface genuine
+   * invisible -> visible reacquisition transitions into the normal semantic pressure
+   * lifecycle. First sight and ordinary visibility maintenance do not create history
+   * pressure. The relevance bridge still owns exact open/terminal-history matching.
+   */
+  sampleMaterialRelevance(): ResidentMaterialMatterRelevanceObservation[] {
+    if (!this.materialKnowledge || !this.materialRelevanceBridge) return [];
+
+    const previous = this.materialKnowledge.snapshot();
+    this.materialKnowledge.sample();
+    const currentByObjectId = new Map(
+      this.materialKnowledge.snapshot().map((entry) => [entry.objectId, entry] as const),
+    );
+    const observations: ResidentMaterialMatterRelevanceObservation[] = [];
+    for (const before of previous) {
+      const after = currentByObjectId.get(before.objectId) ?? null;
+      if (before.currentlyVisible || !after?.currentlyVisible) continue;
+      observations.push(this.materialRelevanceBridge.observeReacquisition(
+        before,
+        after,
+        this.currentLifeView(),
+      ));
+    }
+    return observations.map((entry) => structuredClone(entry));
   }
 
   prepareLifeIntentAttempt(batch: CognitionBatch): PreparedResidentCausalLifeIntent | null {
