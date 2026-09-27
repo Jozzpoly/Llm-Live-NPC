@@ -654,6 +654,9 @@ export class ResidentContinuityKernel {
       : null;
     matter.status = status;
     matter.suspendedByMatterId = null;
+    // Historical support is current-matter provenance, not a second historical
+    // archive. Once this matter is terminal it stops projecting that support.
+    matter.historicalSupport = [];
     this.revokePendingForMatter(matter.id, "matter_terminal");
     if (terminalOutcome
       && terminalOutcome.id === matter.lastOutcomeEvidenceId
