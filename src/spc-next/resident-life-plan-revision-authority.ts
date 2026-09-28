@@ -74,10 +74,12 @@ export class ResidentLifePlanRevisionAuthority {
     const evidence = this.kernel.recordEvidence({
       id: deriveSpcIdentifier(
         "evidence-plan-revision",
-        this.residentId,
-        grant.matterId,
-        grant.runId,
-        String(grant.semanticRevision),
+        [
+          this.residentId,
+          grant.matterId,
+          grant.runId,
+          String(grant.semanticRevision),
+        ].join("|"),
         String(tick),
       ),
       tick,
