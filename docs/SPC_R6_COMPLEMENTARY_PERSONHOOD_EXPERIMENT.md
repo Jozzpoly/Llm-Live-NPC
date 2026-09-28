@@ -758,11 +758,74 @@ The run exposed a narrower causal-attribution gap for deliberate non-action. Tha
 
 At \`5ebdd291ba146fc939126751ef4496d8821b7b6f\`, Check #1809 passes **296 / 296 files, 1045 / 1045 tests**.
 
-The next pressure is no longer another reroll of Nela-vs-Ida. It is **plan revision / refusal**:
+That plan-revision pressure is now recorded in section 7.11.
 
-> **Can exact resident-owned history make one already-current legal matter cease to be the resident's chosen future through a bounded locally admitted plan-change mechanism, without giving the provider arbitrary cancellation authority or inventing preference state?**
+The bounded mechanism gap is closed, but live Luna relinquishment is unproven. The next pressure is **single-current-plan autonomous reappraisal**: can one lone current plan be reconsidered because resident-owned evidence changed its meaning without manufacturing a second plan merely to open the multi-matter choice surface?
 
-Characterize the current inability first.
+## 7.11 R6 resident plan revision / refusal
+
+Status: **DETERMINISTIC MECHANISM PASS + BOUNDED NEUTRAL LIVE RELINQUISHMENT RESULT**
+
+Canonical finding:
+`docs/SPC_R6_PLAN_REVISION_REFUSAL_FINDING.md`
+
+The preceding choice/non-action machinery exposed a concrete difference between:
+
+- choosing another current future for now;
+- deferring all current futures;
+- and actually ceasing to carry one already-current matter.
+
+The characterization proved that `focus_matter(D)` and `defer_all` both leave C current. Once D disappears, ordinary arbitration automatically reacquires C.
+
+The earned repair adds a deliberately narrow `relinquish_matter` path:
+
+- target must be one exact frozen current candidate;
+- provider must cite factual support attached to that target;
+- ordinary origin/current wording alone cannot authorize relinquishment;
+- semantic admission produces only a one-shot identity-bound local grant;
+- cloned/reused settlements cannot claim the grant;
+- `ResidentLifePlanRevisionAuthority` separately revalidates resident/matter/run/revision truth;
+- only then it records `resident_relinquished_matter` evidence, advances semantic context, cancels the matter and retires its run;
+- the authority chooses no replacement and mutates no World fact.
+
+This closes the bounded **mechanism gap** without provider-owned arbitrary deletion.
+
+Live Provider run #33 at source
+`677df1acc0c029d8ad6761556f5840139326be37`
+reused the matched run-30 Ida twins and gave both sides the same new plan-revision action space.
+
+Exactly 2 GPT-5.6 Luna calls / 0 semantic retries:
+
+- succeeded-history: `focus_matter(current Janek C)`;
+- blocked-history: `focus_matter(unrelated D)`;
+- both sides cite both exact old outcome facts;
+- neither side chooses `relinquish_matter`;
+- blocked rationale explicitly avoids concluding that current Janek C is impossible;
+- classification:
+  **`OUTCOME_MEANING_BEHAVIOR_DIFFERENCE_WITHOUT_PLAN_RELINQUISHMENT`**.
+
+Exact proposals replay through local admission in
+`src/spc-next/r6-plan-revision-outcome-meaning-choice-pair.integration.test.ts`.
+
+Current qualified head:
+`db6453abee0263eb4c8f1153d2d94f8082d2b5a9`
+
+Check #1831: **300 / 300 files, 1057 / 1057 tests**, typecheck/build PASS.
+Browser Evidence #1055: PASS.
+
+Therefore:
+
+- bounded plan-revision **mechanism** is deterministically defended;
+- one real-Luna sample of actual relinquishment remains **UNPROVEN**;
+- run #33 must not be rerolled merely to obtain `relinquish_matter`.
+
+The strongest next pressure is narrower and more autonomous:
+
+> **Can one already-current plan be endogenously reconsidered and relinquished when it is the resident's only current legal future, because new or recovered resident-owned evidence changed its meaning — without requiring a competing D merely to create a choice surface?**
+
+This follows directly from the current characterization: after D terminates, lone C automatically reacquires body authority and no resident-owned plan-reappraisal gate exists on that path.
+
+Do not solve this by adding a periodic provider heartbeat or a generic preference system.
 
 ## 8. Anti-cheat rules
 
@@ -860,16 +923,18 @@ Current order:
 9. retain the counterparty-caused provenance repair and run #31 exactly as a **BOUNDED NEUTRAL** live finding: old Nela release is durable/citable, but behavioral effect is unproven;
 10. retain run #32 exactly as a **BOUNDED NEUTRAL** symmetric social-vs-social result: control/history both `defer_all`; history rationale notices the release but the old contract cannot causally cite evidence for non-action;
 11. retain the deterministic causal-non-action repair: optional bounded defer-all support, legacy defer preserved, forged evidence rejected; do **not** rerun #32 merely because the schema is now richer;
-12. move to **plan revision / refusal** as the next qualitatively different ordinary-personhood pressure;
-13. first characterize whether a resident can locally relinquish one already-current legal matter for causally attributable reasons without provider-owned deletion;
-14. do not add preference/aversion, gratitude, trust, habit, relationship scores or generic autobiographical memory before a stronger pressure earns them;
-15. preserve Janek/material continuity, R1 homeostasis, R2 metabolism, private knowledge and R5 provider safety as vetoes;
-16. retain browser Oren/Nela genericity as honest promotion-plane debt;
-17. do not prepare an Owner gate or merge PR #148 by CI inertia.
+12. retain plan-revision/refusal as **DETERMINISTIC MECHANISM PASS + BOUNDED NEUTRAL LIVE RELINQUISHMENT RESULT**;
+13. retain run #33 exactly: outcome meaning again changes current priority, but neither twin relinquishes C; do not reroll it for a preferred answer;
+14. treat multi-matter `relinquish_matter` as boundedly defended, not generic autonomous refusal;
+15. attack **single-current-plan autonomous reappraisal**: one current legal plan, no competing D required merely to create cognition, exact resident-owned evidence may change whether the plan should continue;
+16. do not add preference/aversion, gratitude, trust, habit, relationship scores, generic autobiography or periodic provider review before that failure earns something narrower;
+17. preserve Janek/material continuity, R1 homeostasis, R2 metabolism, private knowledge and R5 provider safety as vetoes;
+18. retain browser Oren/Nela genericity as honest promotion-plane debt;
+19. do not prepare an Owner gate or merge PR #148 by CI inertia.
 
 The next research question is now:
 
-> **Can exact resident-owned history make one already-current legal matter cease to be the resident's chosen future through a bounded locally admitted plan-change/refusal mechanism, without provider-owned deletion or generic preference state?**
+> **Can one already-current plan be endogenously reconsidered and relinquished when it is the resident's only current legal future, because new or recovered resident-owned evidence changed its meaning — without requiring a competing future, periodic provider heartbeat or generic preference state?**
 
 ## 12. Owner-observed target
 
