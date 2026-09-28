@@ -7,6 +7,7 @@ import type { ResidentLifeCognitionView } from "./resident-life-cognition-view";
 import {
   allowedChoiceSupportEvidenceIds,
   allowedDeferAllSupportEvidenceIds,
+  allowedPlanRevisionSupportEvidenceIds,
   deriveResidentLifeChoiceCandidateSupports,
   type ResidentLifeChoiceCandidateSupport,
 } from "./resident-life-choice-causal-support";
@@ -15,6 +16,13 @@ import { ResidentRuntime, type ResidentCognitionRevision } from "./resident-runt
 export type ResidentLifeChoiceDecision =
   | {
       kind: "focus_matter";
+      matterId: string;
+      reason: string;
+      supportEvidenceIds: readonly string[];
+      reviewAfterSeconds: number;
+    }
+  | {
+      kind: "relinquish_matter";
       matterId: string;
       reason: string;
       supportEvidenceIds: readonly string[];
@@ -44,6 +52,16 @@ export interface ResidentLifeChoiceAttempt {
   readonly lifeFingerprint: string;
 }
 
+export interface ResidentLifePlanRevisionGrant {
+  readonly residentId: string;
+  readonly matterId: string;
+  readonly runId: string;
+  readonly semanticRevision: number;
+  readonly reason: string;
+  readonly supportEvidenceIds: readonly string[];
+  readonly settlementTick: number;
+}
+
 export type ResidentLifeChoiceSettlement =
   | { status: "applied"; decision: ResidentLifeChoiceDecision }
   | {
@@ -64,12 +82,14 @@ const MAX_REASON_LENGTH = 1_200;
  * The owner does NOT invent priorities, open matters, execute actions or mutate World.
  * It freezes the exact private resident context + recovered life truth, then admits
  * only a choice among the candidate matter ids that were actually deferred at that
- * boundary (or an explicit decision to defer all). Attention, local-activity or life
+ * boundary, an evidence-grounded relinquishment of one exact candidate, or an
+ * explicit decision to defer all. Attention, local-activity or life
  * changes while a provider is thinking make the old answer stale.
  */
 export class ResidentLifeChoiceOwner {
   private activeAttempt: ResidentLifeChoiceAttempt | null = null;
   private sequence = 0;
+  private readonly planRevisionGrants = new WeakMap<object, ResidentLifePlanRevisionGrant>();
 
   constructor(
     private readonly resident: ResidentRuntime,
@@ -174,12 +194,46 @@ export class ResidentLifeChoiceOwner {
     this.resident.reconcileCognitionSettlement({
       batch: attempt.batch,
       originReasonId: attempt.originReasonId,
-      decision: decision.kind === "focus_matter" ? "accept" : "defer",
+      decision: decision.kind === "focus_matter"
+        ? "accept"
+        : decision.kind === "relinquish_matter"
+          ? "decline"
+          : "defer",
       tick: settlementTick,
       ...(retainOriginUntilTick === undefined ? {} : { retainOriginUntilTick }),
     });
 
-    return { status: "applied", decision };
+    const settlement: ResidentLifeChoiceSettlement = { status: "applied", decision };
+    if (decision.kind === "relinquish_matter") {
+      const target = attempt.context.life.matters.find(
+        (matter) => matter.id === decision.matterId,
+      );
+      if (!target?.activeRun) {
+        throw new Error("resident plan revision target lost frozen run authority");
+      }
+      this.planRevisionGrants.set(settlement as object, {
+        residentId: attempt.residentId,
+        matterId: target.id,
+        runId: target.activeRun.runId,
+        semanticRevision: target.semanticRevision,
+        reason: decision.reason,
+        supportEvidenceIds: [...decision.supportEvidenceIds],
+        settlementTick,
+      });
+    }
+
+    return settlement;
+  }
+
+  claimPlanRevision(
+    settlement: ResidentLifeChoiceSettlement,
+  ): ResidentLifePlanRevisionGrant | null {
+    if (settlement.status !== "applied"
+      || settlement.decision.kind !== "relinquish_matter") return null;
+    const grant = this.planRevisionGrants.get(settlement as object);
+    if (!grant) return null;
+    this.planRevisionGrants.delete(settlement as object);
+    return structuredClone(grant);
   }
 
   state(): { activeAttemptId: string | null } {
@@ -276,6 +330,40 @@ function parseChoice(
 
     return {
       kind: "focus_matter",
+      matterId: decision.matterId,
+      reason,
+      supportEvidenceIds,
+      reviewAfterSeconds,
+    };
+  }
+  if (kind === "relinquish_matter") {
+    if (!hasOnlyKeys(decision, [
+      "kind",
+      "matterId",
+      "reason",
+      "supportEvidenceIds",
+      "reviewAfterSeconds",
+    ])) return null;
+    if (typeof decision.matterId !== "string"
+      || !candidateMatterIds.includes(decision.matterId)) return null;
+
+    const allowedSupport = new Set(
+      allowedPlanRevisionSupportEvidenceIds(candidateSupports, decision.matterId),
+    );
+    if (!Array.isArray(decision.supportEvidenceIds)
+      || decision.supportEvidenceIds.length < 1
+      || decision.supportEvidenceIds.length > 8) return null;
+
+    const supportEvidenceIds: string[] = [];
+    for (const evidenceId of decision.supportEvidenceIds) {
+      if (typeof evidenceId !== "string"
+        || !allowedSupport.has(evidenceId)
+        || supportEvidenceIds.includes(evidenceId)) return null;
+      supportEvidenceIds.push(evidenceId);
+    }
+
+    return {
+      kind: "relinquish_matter",
       matterId: decision.matterId,
       reason,
       supportEvidenceIds,
