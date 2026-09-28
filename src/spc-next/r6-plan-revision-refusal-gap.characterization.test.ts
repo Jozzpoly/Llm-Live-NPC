@@ -5,6 +5,7 @@ import { ResidentExecutionArbitrator } from "./resident-execution-arbitrator";
 import { ResidentExecutionFocusAuthority } from "./resident-execution-focus-authority";
 import { captureResidentLifeCognitionView } from "./resident-life-cognition-view";
 import { ResidentLifeChoiceOwner } from "./resident-life-choice-owner";
+import { ResidentLifePlanRevisionAuthority } from "./resident-life-plan-revision-authority";
 import { ResidentRuntime } from "./resident-runtime";
 
 const OLD = "matter.janek.r6.plan-revision.old-material";
@@ -17,7 +18,7 @@ const CARRIER = "matter.janek.r6.plan-revision.carrier";
 const CARRIER_RUN = "run.janek.r6.plan-revision.carrier";
 const OBJECT = "crate.r6.plan-revision";
 
-describe("R6 plan revision / refusal gap", () => {
+describe("R6 plan revision / refusal boundary", () => {
   it("can avoid a history-bearing current plan for now but cannot make that plan cease to be current", () => {
     const state = setup();
     const oldOutcomeId = state.oldOutcome.id;
@@ -78,10 +79,10 @@ describe("R6 plan revision / refusal gap", () => {
     });
   });
 
-  it("cannot express a bounded resident decision to relinquish one already-current matter", () => {
+  it("closes the gap only through evidence-grounded semantic admission plus separate local plan-revision authority", () => {
     const state = setup();
 
-    expect(state.owner.settle(
+    const settlement = state.owner.settle(
       state.attempt,
       {
         version: 1,
@@ -95,18 +96,50 @@ describe("R6 plan revision / refusal gap", () => {
       },
       state.life,
       60,
-    )).toEqual({
-      status: "rejected",
-      reason: "proposal_invalid",
+    );
+    expect(settlement).toMatchObject({
+      status: "applied",
+      decision: {
+        kind: "relinquish_matter",
+        matterId: C,
+        supportEvidenceIds: [state.oldOutcome.id],
+      },
     });
 
+    // Semantic admission alone is inert with respect to lifecycle/body authority.
     expect(state.kernel.matter(C)).toMatchObject({
       status: "active",
       activeRunId: C_RUN,
     });
+    expect(state.kernel.canRunMutateWorld(C_RUN)).toBe(true);
+
+    const revision = new ResidentLifePlanRevisionAuthority(
+      "resident.janek",
+      state.owner,
+      state.kernel,
+    );
+    expect(revision.apply(settlement, 61)).toMatchObject({
+      status: "applied",
+      evidence: {
+        kind: "resident_relinquished_matter",
+        summary: expect.stringContaining(state.oldOutcome.id),
+      },
+      matter: {
+        id: C,
+        status: "cancelled",
+        activeRunId: null,
+      },
+      retiredRunId: C_RUN,
+    });
+
+    expect(state.kernel.canRunMutateWorld(C_RUN)).toBe(false);
     expect(state.kernel.matter(D)).toMatchObject({
       status: "active",
       activeRunId: D_RUN,
+    });
+    expect(state.arbitrator.reconcile()).toEqual({
+      status: "acquired_deferred",
+      runId: D_RUN,
     });
   });
 
