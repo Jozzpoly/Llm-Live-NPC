@@ -239,7 +239,7 @@ function setup() {
   // Free the body without ending C: this fixture needs both exact legal demands to
   // enter the resident choice plane.
   focus.release(C_RUN);
-  expect(arbitrator.request(C_RUN)).toMatchObject({ status: "busy" });
+  expect(arbitrator.request(C_RUN)).toEqual({ status: "deferred", runId: C_RUN });
   expect(arbitrator.reconcile()).toEqual({
     status: "choice_required",
     candidateRunIds: [C_RUN, D_RUN].sort((a, b) => a.localeCompare(b)),
