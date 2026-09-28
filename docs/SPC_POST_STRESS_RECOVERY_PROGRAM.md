@@ -697,35 +697,37 @@ Current recovery order:
    - canonical post-stress execution authority;
 3. **\`docs/SPC_R6_COMPLEMENTARY_PERSONHOOD_EXPERIMENT.md\`**
    - binding current R6 experiment contract;
-4. **\`docs/SPC_R6_SYMMETRIC_SOCIAL_NONACTION_FINDING.md\`**
-   - current symmetric social/non-action authority: run #32 is behaviorally neutral, and the resulting causal-attribution gap for deliberate non-action is now deterministically repaired;
-5. **\`docs/SPC_R6_COUNTERPARTY_SOCIAL_HISTORY_FINDING.md\`**
+4. **\`docs/SPC_R6_PLAN_REVISION_REFUSAL_FINDING.md\`**
+   - current plan-revision authority: bounded multi-matter relinquishment mechanism is deterministically defended; run #33 is live-neutral for actual relinquishment and must not be rerolled;
+5. **\`docs/SPC_R6_SYMMETRIC_SOCIAL_NONACTION_FINDING.md\`**
+   - preceding symmetric social/non-action authority: run #32 is behaviorally neutral, and the resulting causal-attribution gap for deliberate non-action is now deterministically repaired;
+6. **\`docs/SPC_R6_COUNTERPARTY_SOCIAL_HISTORY_FINDING.md\`**
    - preceding counterparty-history authority: exact Nela release survives beyond recent/current life as bounded provenance and is cited by real Luna; run #31 is behaviorally neutral and does not prove relationship state;
-6. **\`docs/SPC_R6_SAME_CARDINALITY_OUTCOME_MEANING_FINDING.md\`**
+7. **\`docs/SPC_R6_SAME_CARDINALITY_OUTCOME_MEANING_FINDING.md\`**
    - strongest own-outcome meaning result: at fixed actor/history count/support identities, two succeeded outcomes versus two blocked outcomes produced opposite real-Luna C-vs-D choices and both exact old facts were cited;
-7. **\`docs/SPC_R6_CUMULATIVE_SAME_ACTOR_HISTORY_FINDING.md\`**
+8. **\`docs/SPC_R6_CUMULATIVE_SAME_ACTOR_HISTORY_FINDING.md\`**
    - preceding cumulative-history result: two independent terminal same-actor factual outcomes jointly changed a later real-Luna C-vs-D judgement while old matters remained absent from current life;
-8. **\`docs/SPC_R6_DELAYED_FACTUAL_HISTORY_CHOICE_FINDING.md\`**
+9. **\`docs/SPC_R6_DELAYED_FACTUAL_HISTORY_CHOICE_FINDING.md\`**
    - preceding delayed-history result: A may leave recent/current life, become exact causal genealogy of current C after later relevance, and change a real-Luna C-vs-D choice without reopening A;
-9. **\`docs/SPC_R6_ENDOGENOUS_COMPETING_FUTURE_RUNTIME_FINDING.md\`**
+10. **\`docs/SPC_R6_ENDOGENOUS_COMPETING_FUTURE_RUNTIME_FINDING.md\`**
    - deterministic provenance/composition authority for the normal A → delayed reacquisition/C + B → D → genuine choice chain;
-10. **\`docs/SPC_R6_COMPETING_FUTURE_FACTUAL_HISTORY_FINDING.md\`**
+11. **\`docs/SPC_R6_COMPETING_FUTURE_FACTUAL_HISTORY_FINDING.md\`**
    - preceding near-term exact real-Luna competing-future split and local causal admission;
-11. **\`docs/SPC_R6_POST_TERMINAL_FACTUAL_HISTORY_FINDING.md\`**
+12. **\`docs/SPC_R6_POST_TERMINAL_FACTUAL_HISTORY_FINDING.md\`**
    - preceding single-opportunity neutral finding; authoritative for what run #24 did and did not prove;
-12. **\`docs/SPC_R6_ENDOGENOUS_ORDINARY_PERSONHOOD_FINDING.md\`**
+13. **\`docs/SPC_R6_ENDOGENOUS_ORDINARY_PERSONHOOD_FINDING.md\`**
    - bounded positive endogenous standing-history finding and evidence/nonclaim boundary;
-13. **\`docs/SPC_R6B_NATIVE_STANDING_SOCIAL_CONTINUATION_PASS.md\`**
+14. **\`docs/SPC_R6B_NATIVE_STANDING_SOCIAL_CONTINUATION_PASS.md\`**
    - qualified bounded R6 mechanism evidence;
-14. **\`docs/SPC_R6A_STANDING_SOCIAL_COMMITMENT_PASS.md\`**
+15. **\`docs/SPC_R6A_STANDING_SOCIAL_COMMITMENT_PASS.md\`**
    - earlier bounded R6-A evidence and nonclaims;
-15. **R5 evidence documents**
+16. **R5 evidence documents**
    - semantic escalation, stale attention, provider outcomes and real-Luna causal boundary;
-16. **R4 / R3 / R2 / R1 qualified evidence documents**
+17. **R4 / R3 / R2 / R1 qualified evidence documents**
    - preserved scoped evidence, not current feature sequence;
-17. **\`docs/SPC_NEXT_OWNER_INTENT_AND_GAP_AUDIT.md\`**, pressure/re-observation documents
+18. **\`docs/SPC_NEXT_OWNER_INTENT_AND_GAP_AUDIT.md\`**, pressure/re-observation documents
    - durable Owner/product guardrails and donor evidence;
-18. **\`docs/SPC_LIVING_WORLD_EXECUTION_PROGRAM.md\`** and older recovery/Pass-2 documents
+19. **\`docs/SPC_LIVING_WORLD_EXECUTION_PROGRAM.md\`** and older recovery/Pass-2 documents
    - historical evidence only.
 
 \`docs/PROJECT_STATE.md\`, \`docs/FRESH_TAKEOVER.md\`, \`docs/SPC_NEXT_CURRENT_STATE_RECONCILIATION.md\` and older architecture-recovery documents must **not** be used as the current feature sequence.
@@ -786,10 +788,17 @@ Completed and retained only within their documented scopes:
     - repaired contract admits optional bounded \`defer_all.supportEvidenceIds\` from the frozen union of candidate support only, preserves legacy defer and rejects forged evidence;
     - exact run-#32 replay remains legal; Check #1809 **296 / 296 files, 1045 / 1045 tests**.
 
+25. resident plan revision / refusal — **DETERMINISTIC MECHANISM PASS + BOUNDED NEUTRAL LIVE RELINQUISHMENT RESULT**:
+    - characterization proves `focus_matter(D)` and `defer_all` postpone C but do not remove C from resident life; after D ends, lone C auto-reacquires body authority;
+    - earned repair adds target-local evidence-grounded `relinquish_matter`, one-shot non-clonable revision grant and separate stale-safe `ResidentLifePlanRevisionAuthority`;
+    - ordinary origin/current wording alone cannot authorize plan deletion; exact factual support attached to the target is required;
+    - Live Provider run #33 `677df1acc0c029d8ad6761556f5840139326be37`: succeeded history `focus_matter(C)`, blocked history `focus_matter(D)`; both cite both old outcome facts, neither relinquishes C; exactly two Luna calls, zero retries;
+    - exact local replay `db6453abee0263eb4c8f1153d2d94f8082d2b5a9`: no revision grant is smuggled out of either focus decision; Check #1831 **300 / 300 files, 1057 / 1057 tests**, Browser Evidence #1055 PASS.
+
 
 Current:
 
-> **R6 personhood breadth — durable history now reaches action selection, comparative social judgement and deterministically evidence-grounded deliberate non-action without becoming live authority. Run #32 is behaviorally neutral and must remain so; its key contribution is the earned causal-provenance repair for non-action. The next pressure is plan revision/refusal of an already-current future.**
+> **R6 personhood breadth — durable history now reaches action selection, factual outcome meaning, comparative social judgement, deliberate non-action and a bounded locally-authorized multi-matter plan-revision mechanism without becoming direct World/body authority. Run #33 did not exercise relinquishment, so live behavioral plan revision remains unproven. The next pressure is single-current-plan autonomous reappraisal.**
 
 The explicit-standing-obligation endogenous stage remains **bounded CLOSED**.
 
@@ -809,19 +818,23 @@ Canonical records:
 - `docs/SPC_R6_ENDOGENOUS_COMPETING_FUTURE_RUNTIME_FINDING.md`;
 - `docs/SPC_R6_DELAYED_FACTUAL_HISTORY_CHOICE_FINDING.md`;
 - `docs/SPC_R6_CUMULATIVE_SAME_ACTOR_HISTORY_FINDING.md`;
-- `docs/SPC_R6_SAME_CARDINALITY_OUTCOME_MEANING_FINDING.md`.
+- `docs/SPC_R6_SAME_CARDINALITY_OUTCOME_MEANING_FINDING.md`;
+- `docs/SPC_R6_COUNTERPARTY_SOCIAL_HISTORY_FINDING.md`;
+- `docs/SPC_R6_SYMMETRIC_SOCIAL_NONACTION_FINDING.md`;
+- `docs/SPC_R6_PLAN_REVISION_REFUSAL_FINDING.md`.
 
 Run #25 remains explicitly non-semantic apparatus evidence: strict-schema failure, no proposal, zero token usage.
 
 Immediate method:
 
-- preserve runs #24/#26/#27/#29/#30/#31/#32 exactly as their canonical findings describe;
-- do not rerun #32 after adding causal defer-all support;
+- preserve runs #24/#26/#27/#29/#30/#31/#32/#33 exactly as their canonical findings describe;
+- do not rerun #32 after causal defer-all repair and do not rerun #33 merely to obtain a relinquishment sample;
 - preserve the distinction between live neutral evidence and later deterministic contract repair;
 - keep history as bounded provenance, never direct body/World authority;
-- retain evidence-grounded \`defer_all\` as causal non-action, not a hidden priority score;
-- now characterize **plan revision/refusal**: can one already-current legal matter be consciously relinquished for exact resident-owned reasons?
-- do not expose provider-owned arbitrary cancellation; any revision/removal path must be locally bounded to current resident matters and preserve terminal/history truth;
+- retain evidence-grounded `defer_all` as causal non-action, not a hidden priority score;
+- retain target-local `relinquish_matter` as a bounded multi-matter mechanism, not proof of generic refusal;
+- next characterize **single-current-plan autonomous reappraisal**: can one lone current legal matter be reconsidered for exact resident-owned reasons without manufacturing a competing D or a periodic provider heartbeat?
+- preserve terminal/history truth and stale-safe local lifecycle authority on any future revision path;
 - do not add preferences, aversion, trust, affinity, habits, gratitude or generic autobiographical state before a concrete failure earns them;
 - retain Browser Oren/Nela genericity as honest promotion-plane debt;
 - keep full R6 / five living residents / Owner-observed ordinary personhood **UNPROVEN**;
@@ -829,8 +842,8 @@ Immediate method:
 
 Next research question:
 
-> **Can exact resident-owned history make one already-current legal matter cease to be the resident's chosen future through a bounded locally admitted plan-change/refusal mechanism, without provider-owned deletion or generic preference state?**
+> **Can one already-current plan be endogenously reconsidered and relinquished when it is the resident's only current legal future, because new or recovered resident-owned evidence changed its meaning — without requiring a competing future, periodic provider heartbeat or generic preference state?**
 
-> **When Oren has equally current legal reasons to speak with Nela and Ida, can one exact prior factual action by Nela change which person he chooses to engage with through cited causal provenance, without being compressed into a relationship score?**
+The earlier Nela-vs-Ida counterparty-history question remains behaviorally unproven, but it is no longer the highest-information frontier and must not displace the single-plan autonomy pressure by inertia.
 
 The architecture must continue to be earned by resident-life pressure, not by a desire to fill a personality feature list.
