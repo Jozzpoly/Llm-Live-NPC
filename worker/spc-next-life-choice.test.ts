@@ -241,6 +241,108 @@ describe("SPC Next resident-life choice Worker", () => {
     expect(sanitizeSpcNextLifeChoiceContext(nonOutcomeHistory)).toBeNull();
   });
 
+  it("exposes plan relinquishment only for exact candidate-local factual history", async () => {
+    const delayed = structuredClone(context) as any;
+    delayed.life.matters[0].semanticIntent = {
+      kind: "acquire_material_object",
+      goal: "try the familiar crate again",
+      objectId: "crate.worker.plan-revision",
+    };
+    delayed.life.matters[0].historicalSupport = [{
+      relation: "prior_same_material_outcome",
+      sourceMatterId: "matter.mira.worker.plan-revision-old",
+      evidence: {
+        id: "evidence:mira:worker:plan-revision-old-outcome",
+        tick: 20,
+        kind: "task_outcome",
+        summary: "blocked: factual material attempt returned object_unavailable",
+        sourceRunId: "run.mira.worker.plan-revision-old",
+      },
+    }];
+    delayed.life.matters[1].semanticIntent = {
+      kind: "travel_region",
+      goal: "take an unrelated current future",
+      targetRegionId: "hearth",
+    };
+
+    const sanitized = sanitizeSpcNextLifeChoiceContext(delayed);
+    expect(sanitized).not.toBeNull();
+    if (!sanitized) throw new Error("plan revision fixture failed sanitization");
+
+    const relinquish = {
+      kind: "relinquish_matter",
+      matterId: B,
+      reason: "the exact earlier factual failure changed this current retry plan",
+      supportEvidenceIds: ["evidence:mira:worker:plan-revision-old-outcome"],
+      reviewAfterSeconds: 30,
+    };
+
+    expect(extractSpcNextLifeChoiceDecision(
+      responseBody(relinquish),
+      sanitized.candidateMatterIds,
+      sanitized.candidateSupports,
+    )).toEqual(relinquish);
+
+    expect(extractSpcNextLifeChoiceDecision(
+      responseBody({
+        ...relinquish,
+        matterId: C,
+      }),
+      sanitized.candidateMatterIds,
+      sanitized.candidateSupports,
+    )).toBeNull();
+
+    expect(extractSpcNextLifeChoiceDecision(
+      responseBody({
+        ...relinquish,
+        supportEvidenceIds: ["evidence:b"],
+      }),
+      sanitized.candidateMatterIds,
+      sanitized.candidateSupports,
+    )).toBeNull();
+
+    let capturedSchema: any = null;
+    const fetchMock = vi.fn(async (_url: string, init?: RequestInit) => {
+      const body = JSON.parse(String(init?.body));
+      capturedSchema = body.text.format.schema;
+      return new Response(JSON.stringify(responseBody(relinquish)), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const env: SpcNextLifeChoiceEnv = {
+      OPENAI_API_KEY: "test-key",
+      SPC_NEXT_LIFE_CHOICE_MODEL: "gpt-5.6-luna",
+      SPC_NEXT_LIFE_CHOICE_REASONING: "low",
+      SPC_NEXT_LIFE_CHOICE_MAX_OUTPUT_TOKENS: "512",
+      HEARTH_COGNITION_LIMITER: { limit: vi.fn(async () => ({ success: true })) },
+    };
+
+    const response = await handleSpcNextLifeChoice(new Request(
+      "https://example.test/api/spc-next/life-choice",
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(delayed),
+      },
+    ), env);
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({
+      ok: true,
+      proposal: { version: 1, decision: relinquish },
+    });
+
+    const variants = capturedSchema.properties.decision.anyOf;
+    const relinquishVariants = variants.filter(
+      (variant: any) => variant.properties?.kind?.enum?.includes("relinquish_matter"),
+    );
+    expect(relinquishVariants).toHaveLength(1);
+    expect(relinquishVariants[0].properties.matterId.enum).toEqual([B]);
+    expect(relinquishVariants[0].properties.supportEvidenceIds.items.enum)
+      .toEqual(["evidence:mira:worker:plan-revision-old-outcome"]);
+  });
+
   it("carries several exact same-actor factual outcomes only on the current communication candidate", () => {
     const social = structuredClone(context) as any;
     social.life.matters[0].semanticIntent = {
