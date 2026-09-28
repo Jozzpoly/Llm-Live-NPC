@@ -74,6 +74,30 @@ export function allowedDeferAllSupportEvidenceIds(
   return [...allowed].sort((a, b) => a.localeCompare(b));
 }
 
+export function allowedPlanRevisionSupportEvidenceIds(
+  supports: readonly ResidentLifeChoiceCandidateSupport[],
+  matterId: string,
+): string[] {
+  const candidate = supports.find((entry) => entry.matterId === matterId);
+  if (!candidate) return [];
+
+  // Relinquishing an already-current plan is deliberately stricter than merely
+  // choosing among current plans. The resident must cite factual pressure attached
+  // to the exact matter being revised; its own origin/current wording is not enough
+  // to grant a provider a generic "delete this task" capability.
+  const factualRelations = new Set<ResidentLifeChoiceSupportRelation>([
+    "blocked_outcome",
+    "last_outcome",
+    "prior_same_material_outcome",
+    "prior_same_actor_outcome",
+    "prior_counterparty_social_outcome",
+  ]);
+  return candidate.facts
+    .filter((fact) => factualRelations.has(fact.relation))
+    .map((fact) => fact.evidenceId)
+    .sort((a, b) => a.localeCompare(b));
+}
+
 export function allowedChoiceSupportEvidenceIds(
   supports: readonly ResidentLifeChoiceCandidateSupport[],
   matterId: string,
