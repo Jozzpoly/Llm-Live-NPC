@@ -183,6 +183,14 @@ export class ResidentCausalCognitionLane {
               detail: "single-plan review target is not the exact sole current run-free outcome-bearing plan",
             };
           }
+          if (decision.kind === "continue_matter"
+            && singlePlanReview.matter.semanticIntent?.kind === "acquire_material_object"
+            && !this.life.materialKnowledge) {
+            return {
+              status: "rejected",
+              detail: "single-plan continuation lacks local material execution substrate",
+            };
+          }
 
           const supports = deriveResidentLifeChoiceCandidateSupports(
             providerContext.life,
