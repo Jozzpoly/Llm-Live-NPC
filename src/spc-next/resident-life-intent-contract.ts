@@ -32,6 +32,12 @@ export type ResidentLifeCommitmentDecision =
   | { kind: "defer"; reason: string }
   | { kind: "clarify"; reason: string; question: string }
   | {
+      kind: "relinquish_matter";
+      reason: string;
+      matterId: string;
+      supportEvidenceIds: readonly string[];
+    }
+  | {
       kind: "release_standing";
       reason: string;
       matterId: string;
@@ -191,6 +197,33 @@ export function parseResidentLifeIntentProposal(
         kind: "clarify",
         reason: decision.reason,
         question: decision.question,
+      },
+      beliefs: structuredClone(validated.beliefs),
+      concerns: structuredClone(validated.concerns),
+      reviewAfterSeconds: validated.reviewAfterSeconds,
+    };
+  }
+
+  if (decision.kind === "relinquish_matter") {
+    if (!hasExactKeys(decision, ["kind", "reason", "matterId", "supportEvidenceIds"])
+      || !isBoundedString(decision.matterId, 128)
+      || !Array.isArray(decision.supportEvidenceIds)
+      || decision.supportEvidenceIds.length < 1
+      || decision.supportEvidenceIds.length > 8) return null;
+    const supportEvidenceIds: string[] = [];
+    for (const evidenceId of decision.supportEvidenceIds) {
+      if (!isBoundedString(evidenceId, 128) || supportEvidenceIds.includes(evidenceId)) return null;
+      supportEvidenceIds.push(evidenceId);
+    }
+    const validated = validateSemanticUpdatesOnly(value, context, decision.reason);
+    if (!validated) return null;
+    return {
+      version: 1,
+      commitmentDecision: {
+        kind: "relinquish_matter",
+        reason: decision.reason,
+        matterId: decision.matterId,
+        supportEvidenceIds,
       },
       beliefs: structuredClone(validated.beliefs),
       concerns: structuredClone(validated.concerns),
