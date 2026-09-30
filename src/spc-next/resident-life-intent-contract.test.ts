@@ -231,7 +231,28 @@ describe("ResidentLifeIntentProposal contract", () => {
     });
   });
 
-  it("represents one bounded existing-matter relinquishment with explicit factual support ids", () => {
+  it("represents bounded existing-matter continue/relinquish review with explicit factual support ids", () => {
+    const continued = parseResidentLifeIntentProposal({
+      version: 1,
+      commitmentDecision: {
+        kind: "continue_matter",
+        reason: "the exact factual outcome was reviewed and this same current plan still matters",
+        matterId: "matter.mira.current",
+        supportEvidenceIds: ["evidence:mira:current:outcome"],
+      },
+      beliefs: [],
+      concerns: [],
+      reviewAfterSeconds: 30,
+    }, context);
+
+    expect(continued?.commitmentDecision).toEqual({
+      kind: "continue_matter",
+      reason: "the exact factual outcome was reviewed and this same current plan still matters",
+      matterId: "matter.mira.current",
+      supportEvidenceIds: ["evidence:mira:current:outcome"],
+    });
+
+
     const parsed = parseResidentLifeIntentProposal({
       version: 1,
       commitmentDecision: {
