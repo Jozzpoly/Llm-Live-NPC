@@ -72,6 +72,92 @@ describe("R6 single-current-plan autonomous reappraisal", () => {
     });
   });
 
+  it("can explicitly continue the same sole current plan after factual review and lawfully bind semantic revision 2", () => {
+    const state = setupBlockedSinglePlan();
+    const request = takeOutcomeRequest(state);
+    const outcomeReason = exactOutcomeReason(request, state.blocked.evidence.id);
+
+    expect(state.cognition.settleCommitment(
+      request,
+      {
+        version: 1,
+        commitmentDecision: {
+          kind: "continue_matter",
+          matterId: C,
+          reason: "this factual block does not end the plan; keep carrying the same workshop matter",
+          supportEvidenceIds: [state.blocked.evidence.id],
+        },
+        beliefs: [],
+        concerns: [],
+        reviewAfterSeconds: 30,
+      },
+      outcomeReason.id,
+    )).toMatchObject({
+      status: "applied",
+      residentId: JANEK,
+      decision: "continue_matter",
+      commitment: null,
+    });
+
+    expect(state.life.kernel.matter(C)).toMatchObject({
+      id: C,
+      status: "active",
+      activeRunId: "run.janek.r6.single-plan-reappraisal.semantic-2",
+      semanticRevision: 2,
+      lastOutcomeEvidenceId: state.blocked.evidence.id,
+      lastOutcomeSemanticRevision: 1,
+    });
+    expect(state.life.kernel.recentEvidenceSnapshot()).toContainEqual(expect.objectContaining({
+      kind: "resident_continued_matter",
+      summary: expect.stringContaining(state.blocked.evidence.id),
+    }));
+    expect(state.life.kernel.canRunMutateWorld(
+      "run.janek.r6.single-plan-reappraisal.semantic-2",
+    )).toBe(true);
+    expect(state.life.arbitrator.reconcile()).toMatchObject({
+      status: "already_focused",
+      runId: "run.janek.r6.single-plan-reappraisal.semantic-2",
+    });
+  });
+
+  it("rejects plain decline when it would consume the only factual review pressure and strand the current plan", () => {
+    const state = setupBlockedSinglePlan();
+    const request = takeOutcomeRequest(state);
+    const outcomeReason = exactOutcomeReason(request, state.blocked.evidence.id);
+
+    expect(state.cognition.settleCommitment(
+      request,
+      {
+        version: 1,
+        commitmentDecision: {
+          kind: "decline",
+          reason: "plain decline is not an existing-plan lifecycle decision",
+        },
+        beliefs: [],
+        concerns: [],
+        reviewAfterSeconds: 30,
+      },
+      outcomeReason.id,
+    )).toEqual({
+      status: "rejected",
+      residentId: JANEK,
+      reason: "intent_rejected",
+      detail:
+        "single-plan factual outcome requires explicit continue, relinquish, defer or clarify",
+    });
+
+    expect(state.life.kernel.matter(C)).toMatchObject({
+      status: "active",
+      activeRunId: null,
+      semanticRevision: 1,
+      lastOutcomeEvidenceId: state.blocked.evidence.id,
+    });
+    expect(state.life.resident.semanticPressureSnapshot()).toContainEqual(expect.objectContaining({
+      reason: expect.objectContaining({ id: outcomeReason.id }),
+      status: "pending",
+    }));
+  });
+
   it("reaches the same relinquishment through a factual blocked outcome produced by the main five-resident material executor", () => {
     const composition = createFiveResidentRegionComposition();
     const runtime = new FiveResidentCausalLifeRuntime(composition);
@@ -209,7 +295,7 @@ describe("R6 single-current-plan autonomous reappraisal", () => {
       status: "rejected",
       residentId: JANEK,
       reason: "intent_rejected",
-      detail: "single-plan relinquishment lacks exact target-local factual support",
+      detail: "single-plan review lacks exact target-local factual support",
     });
 
     expect(state.life.kernel.matter(C)).toMatchObject({
