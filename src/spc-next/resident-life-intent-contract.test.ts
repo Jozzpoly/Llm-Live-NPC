@@ -231,6 +231,41 @@ describe("ResidentLifeIntentProposal contract", () => {
     });
   });
 
+  it("represents one bounded existing-matter relinquishment with explicit factual support ids", () => {
+    const parsed = parseResidentLifeIntentProposal({
+      version: 1,
+      commitmentDecision: {
+        kind: "relinquish_matter",
+        reason: "the exact factual outcome changed whether this current plan should continue",
+        matterId: "matter.mira.current",
+        supportEvidenceIds: ["evidence:mira:current:outcome"],
+      },
+      beliefs: [],
+      concerns: [],
+      reviewAfterSeconds: 30,
+    }, context);
+
+    expect(parsed?.commitmentDecision).toEqual({
+      kind: "relinquish_matter",
+      reason: "the exact factual outcome changed whether this current plan should continue",
+      matterId: "matter.mira.current",
+      supportEvidenceIds: ["evidence:mira:current:outcome"],
+    });
+
+    expect(parseResidentLifeIntentProposal({
+      version: 1,
+      commitmentDecision: {
+        kind: "relinquish_matter",
+        reason: "duplicate support must fail closed",
+        matterId: "matter.mira.current",
+        supportEvidenceIds: ["evidence:mira:current:outcome", "evidence:mira:current:outcome"],
+      },
+      beliefs: [],
+      concerns: [],
+      reviewAfterSeconds: 30,
+    }, context)).toBeNull();
+  });
+
   it("represents one bounded standing-commitment release without body authority", () => {
     const parsed = parseResidentLifeIntentProposal({
       version: 1,
