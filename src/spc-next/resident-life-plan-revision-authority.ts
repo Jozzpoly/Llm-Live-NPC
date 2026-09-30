@@ -4,17 +4,18 @@ import type {
   ResidentKernelEvidence,
   ResidentMatter,
 } from "./resident-continuity-kernel";
-import type {
-  ResidentLifeChoiceOwner,
-  ResidentLifeChoiceSettlement,
-} from "./resident-life-choice-owner";
+import type { ResidentLifePlanRevisionGrant } from "./resident-life-choice-owner";
+
+export interface ResidentLifePlanRevisionGrantSource {
+  claimPlanRevision(settlement: object): ResidentLifePlanRevisionGrant | null;
+}
 
 export type ResidentLifePlanRevisionResult =
   | {
       status: "applied";
       evidence: ResidentKernelEvidence;
       matter: ResidentMatter;
-      retiredRunId: string;
+      retiredRunId: string | null;
     }
   | {
       status: "rejected";
@@ -30,10 +31,11 @@ export type ResidentLifePlanRevisionResult =
  * Local lifecycle authority for one resident-owned plan relinquishment.
  *
  * A provider response cannot call this directly: it must first survive one exact
- * ResidentLifeChoiceOwner settlement and yield the identity-bound one-shot grant
- * consumed here. This authority then rechecks the exact current matter/run revision,
- * records a resident-owned semantic plan-change fact, terminalizes the matter as
- * cancelled and retires the old run binding.
+ * resident semantic settlement and yield an identity-bound one-shot grant consumed
+ * here. This authority then rechecks the exact current matter/run revision, records
+ * a resident-owned semantic plan-change fact and terminalizes the matter as cancelled.
+ * If a live run still exists, that exact binding is retired; a factually reconciled
+ * run-free matter can be revised only while its frozen semantic revision still matches.
  *
  * It does not choose another plan and does not mutate World. Any remaining execution
  * demand is handled later by ordinary policy-free arbitration.
@@ -41,14 +43,14 @@ export type ResidentLifePlanRevisionResult =
 export class ResidentLifePlanRevisionAuthority {
   constructor(
     private readonly residentId: string,
-    private readonly owner: ResidentLifeChoiceOwner,
+    private readonly owner: ResidentLifePlanRevisionGrantSource,
     private readonly kernel: ResidentContinuityKernel,
   ) {
     if (!residentId.trim()) throw new Error("resident plan revision residentId must be non-empty");
   }
 
   apply(
-    settlement: ResidentLifeChoiceSettlement,
+    settlement: object,
     tick: number,
   ): ResidentLifePlanRevisionResult {
     const grant = this.owner.claimPlanRevision(settlement);
@@ -67,7 +69,7 @@ export class ResidentLifePlanRevisionAuthority {
       || matter.activeRunId !== grant.runId) {
       return { status: "rejected", reason: "matter_changed" };
     }
-    if (!this.kernel.canRunMutateWorld(grant.runId)) {
+    if (grant.runId !== null && !this.kernel.canRunMutateWorld(grant.runId)) {
       return { status: "rejected", reason: "run_authority_changed" };
     }
 
@@ -77,7 +79,7 @@ export class ResidentLifePlanRevisionAuthority {
         [
           this.residentId,
           grant.matterId,
-          grant.runId,
+          grant.runId ?? "run-free",
           String(grant.semanticRevision),
         ].join("|"),
         String(tick),
@@ -89,12 +91,12 @@ export class ResidentLifePlanRevisionAuthority {
         + grant.supportEvidenceIds.join(", "),
     });
 
-    // Semantic revision first makes the old run stale before terminalization. The
-    // explicit cancellation then records that this resident plan was relinquished,
-    // not mechanically completed or factually failed.
+    // Semantic revision first makes any still-live run stale before terminalization.
+    // A run-free blocked matter has already reconciled its factual run; cancellation
+    // here records resident-owned plan revision rather than mechanical completion.
     this.kernel.advanceSemanticContext(grant.matterId, evidence.id);
     const cancelled = this.kernel.cancelMatter(grant.matterId);
-    this.kernel.retireRun(grant.runId);
+    if (grant.runId !== null) this.kernel.retireRun(grant.runId);
 
     return {
       status: "applied",
