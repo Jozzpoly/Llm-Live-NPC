@@ -43,12 +43,13 @@ The JSON input is private resident context only; it is not a global World snapsh
 
 If self is present, it is stable authored first-person self-knowledge: role plus persistent drives. It may motivate endogenous choices even when nobody has just issued a command, but it is NOT evidence that any external event, object state, actor need, message or outcome currently exists. Never turn a drive into invented World truth.
 
-Return one bounded JSON envelope with exactly two fields: originReasonId and proposal. originReasonId must be the exact id of one entry in reasons that most directly caused this judgement; it is causal attribution, not durable evidence. proposal is one ResidentLifeIntentProposal. Its commitmentDecision normally decides whether the newly perceived pressure should become a continuing resident commitment. It does not replace or complete recovered matters by implication. The bounded lifecycle exceptions are release_standing, complete_standing and relinquish_matter. The first two may target one exact open standing social commitment already named in life. relinquish_matter may target one exact already-current body plan only when the selected current reason is its own factual activity_completed outcome and that plan is the sole current executable future. Local admission must still prove exact factual origin and target-local support authority. No commitmentDecision moves the resident, binds a run, grants body focus, mutates World, creates a physical fact or proves an external outcome. A later local admission step will decide whether the proposal is still legal and how any accepted intent or standing lifecycle transition can be grounded from current resident state.
+Return one bounded JSON envelope with exactly two fields: originReasonId and proposal. originReasonId must be the exact id of one entry in reasons that most directly caused this judgement; it is causal attribution, not durable evidence. proposal is one ResidentLifeIntentProposal. Its commitmentDecision normally decides whether the newly perceived pressure should become a continuing resident commitment. It does not replace or complete recovered matters by implication. The bounded lifecycle exceptions are release_standing, complete_standing, continue_matter and relinquish_matter. The first two may target one exact open standing social commitment already named in life. relinquish_matter may target one exact already-current body plan only when the selected current reason is its own factual activity_completed outcome and that plan is the sole current executable future. Local admission must still prove exact factual origin and target-local support authority. No commitmentDecision moves the resident, binds a run, grants body focus, mutates World, creates a physical fact or proves an external outcome. A later local admission step will decide whether the proposal is still legal and how any accepted intent or standing lifecycle transition can be grounded from current resident state.
 
 commitmentDecision kinds:
 - accept: accept one new bounded semantic intent as a continuing commitment. ACCEPT does not seize the body from the currently focused run and does not imply immediate execution.
-- decline: consciously do not accept the new pressure as a commitment. Decline does NOT cancel an already-current life matter.
+- decline: consciously do not accept a NEW pressure as a NEW commitment. Decline does NOT review, resume or cancel an already-current life matter.
 - defer: leave the pressure undecided for a later review; do not invent an accepted task.
+- continue_matter: after one exact already-current plan produced the selected factual activity_completed outcome, explicitly decide to keep carrying that SAME plan. Supply the exact matterId and target-local supportEvidenceIds including the selected outcome. This is semantic review of the existing plan, not a new commitment; local authority may create a new run only after revalidating current resident truth.
 - relinquish_matter: stop carrying one exact already-current plan after its own new factual activity_completed outcome changed the resident's judgement. Supply the exact matterId and one or more supportEvidenceIds attached to that matter, including the selected outcome evidence. This is legal only for the sole current executable run-free plan; it creates no replacement plan and does not claim the factual task succeeded, became impossible or should be avoided in general.
 - clarify: the pressure cannot be responsibly decided without clarification; provide one concise natural-language question.
 - release_standing: end one exact open standing social commitment already present in life when the selected current reason is factual counterparty speech that genuinely releases it. Supply the exact matterId from life. This creates no new task, gives no body authority and proves no external World outcome.
@@ -66,7 +67,7 @@ For release_standing, only target an exact open life matter whose semanticIntent
 
 For complete_standing, only target an exact open life matter whose semanticIntent.kind is standing_social_commitment, and only when originReasonId selects an activity_completed reason backed by one exact factual task outcome. Judge semantic fulfilment from resident-private life plus that factual outcome; never invent an unobserved result and never use completion merely to clean up history.
 
-For relinquish_matter, originReasonId must select the exact activity_completed reason produced by that same current matter's latest factual outcome. Cite that outcome in supportEvidenceIds. Other target-local factual support already shown in life may also contribute, but ordinary matter origin/current prose alone is insufficient. Do not use relinquish_matter merely because a plan is inconvenient or because another future looks better; multi-matter priority remains the separate life-choice plane.
+For continue_matter or relinquish_matter, originReasonId must select the exact activity_completed reason produced by that same current matter's latest factual outcome. Cite that outcome in supportEvidenceIds. Other target-local factual support already shown in life may also contribute, but ordinary matter origin/current prose alone is insufficient. Do not use continue_matter or relinquish_matter merely because another future looks better; multi-matter priority remains the separate life-choice plane. When the selected pressure is exactly the latest factual outcome of the sole current executable run-free plan, use continue_matter to affirm it, relinquish_matter to stop carrying it, or defer/clarify if judgement is genuinely unresolved. Plain decline is not a lifecycle decision for that existing plan.
 
 For accept+communicate only, use standingSocialCommitment when the resident deliberately intends that exact future speech to create one continuing social responsibility after it is factually spoken. The field contains only goal. Omit it for ordinary acknowledgement or conversation. The exact supplied speech text becomes the durable commitment wording only if that speech factually succeeds; do not provide a second paraphrased commitment claim. The declaration does not make the promise true, does not grant body authority and does not create standing history by itself.
 
@@ -260,7 +261,7 @@ function strictCommitmentProposalShape(value: unknown): boolean {
     if (!hasExactKeys(decision, ["kind", "reason"])) return false;
   } else if (decision.kind === "clarify") {
     if (!hasExactKeys(decision, ["kind", "reason", "question"])) return false;
-  } else if (decision.kind === "relinquish_matter") {
+  } else if (decision.kind === "continue_matter" || decision.kind === "relinquish_matter") {
     if (!hasExactKeys(decision, ["kind", "reason", "matterId", "supportEvidenceIds"])
       || typeof decision.matterId !== "string"
       || !decision.matterId.trim()
@@ -428,6 +429,17 @@ const proposalSchema = objectSchema({
         kind: { type: "string", enum: ["clarify"] },
         reason: stringSchema(1200),
         question: stringSchema(1200),
+      }),
+      objectSchema({
+        kind: { type: "string", enum: ["continue_matter"] },
+        reason: stringSchema(1200),
+        matterId: idSchema,
+        supportEvidenceIds: {
+          type: "array",
+          minItems: 1,
+          maxItems: 8,
+          items: idSchema,
+        },
       }),
       objectSchema({
         kind: { type: "string", enum: ["relinquish_matter"] },
