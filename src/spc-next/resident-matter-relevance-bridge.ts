@@ -22,20 +22,39 @@ export interface ResidentMatterRelevanceReconciliation {
   invalidatedReasonIds: readonly string[];
 }
 
+type ActorMatterRelevanceKind =
+  | "blocked_actor_matter"
+  | "standing_social_commitment";
+
+interface ActorMatterRelevanceMatch {
+  matter: ResidentLifeMatterView;
+  actorId: string;
+  kind: ActorMatterRelevanceKind;
+}
+
+interface ActiveMatterRelevance {
+  reasonId: string;
+  actorId: string;
+  kind: ActorMatterRelevanceKind;
+}
+
 /**
- * R3 first resident-relative relevance seam.
+ * Resident-relative relevance seam grounded only in already-existing private
+ * continuity.
  *
- * This bridge does not invent personality, rank matters or execute anything. It asks
- * one deliberately narrow causal question:
+ * Raw actor sight remains observation-only. A sight-enter becomes semantic pressure
+ * only when one exact open resident matter makes contact with that actor consequential:
  *
- *   does this new private actor observation change the situation of an already-open
- *   resident matter that was factually blocked on that exact actor?
+ * - an existing communicate_actor matter whose factual run was blocked on contact; or
+ * - a standing social commitment previously created from this resident's own factual
+ *   speech act.
  *
- * The meaningful difference comes from resident-owned matter history. Raw sight stays
- * R2 observation-only; only the existing obligation + blocked outcome can promote it.
+ * This bridge never invents a responsibility, ranks competing matters or executes
+ * anything. If several open matters could independently make the same actor relevant,
+ * it refuses to choose which one owns the significance.
  */
 export class ResidentMatterRelevanceBridge {
-  private readonly activeReasonByMatterId = new Map<string, string>();
+  private readonly activeReasonByMatterId = new Map<string, ActiveMatterRelevance>();
 
   constructor(
     private readonly resident: Pick<
@@ -52,31 +71,30 @@ export class ResidentMatterRelevanceBridge {
       return { status: "not_relevant", evidenceId: percept.id };
     }
 
-    const matter = matchingBlockedActorMatter(life, percept.actorId);
-    if (!matter) return { status: "not_relevant", evidenceId: percept.id };
+    const match = matchingActorMatter(life, percept.actorId);
+    if (!match) return { status: "not_relevant", evidenceId: percept.id };
 
     const reasonId = deriveSpcIdentifier(
       "reason-matter-relevance",
-      `${this.resident.profile.id}:${matter.id}`,
+      `${this.resident.profile.id}:${match.matter.id}`,
     );
-    this.activeReasonByMatterId.set(matter.id, reasonId);
+    this.activeReasonByMatterId.set(match.matter.id, {
+      reasonId,
+      actorId: match.actorId,
+      kind: match.kind,
+    });
     this.resident.promoteSemanticPressure({
       id: reasonId,
       tick: percept.tick,
       kind: "uncertainty",
       salience: 0.8,
-      summary:
-        `New private contact with ${percept.actorId} is relevant to open matter ${matter.id} after its blocked outcome.`,
-      evidenceIds: [
-        percept.id,
-        matter.id,
-        ...(matter.lastOutcomeEvidence ? [matter.lastOutcomeEvidence.id] : []),
-      ],
+      summary: relevanceSummary(match),
+      evidenceIds: relevanceEvidenceIds(percept, match),
     });
 
     return {
       status: "promoted",
-      matterId: matter.id,
+      matterId: match.matter.id,
       reasonId,
       evidenceId: percept.id,
     };
@@ -85,10 +103,9 @@ export class ResidentMatterRelevanceBridge {
   /**
    * Reconcile previously promoted matter-relative significance against current life.
    *
-   * If the matter is terminal, has resumed execution, lost the actor relation or no
-   * longer carries the blocked outcome that justified review, the pressure is settled
-   * locally. ResidentRuntime tombstones prevent any older in-flight batch from
-   * resurrecting that causal version.
+   * Terminalization, release, semantic relation change or disappearance of the exact
+   * actor relation settles the pressure locally. ResidentRuntime tombstones prevent an
+   * older in-flight batch from resurrecting that causal version.
    */
   reconcile(
     life: ResidentLifeCognitionView,
@@ -96,16 +113,16 @@ export class ResidentMatterRelevanceBridge {
   ): ResidentMatterRelevanceReconciliation {
     const invalidatedReasonIds: string[] = [];
 
-    for (const [matterId, reasonId] of [...this.activeReasonByMatterId.entries()]) {
+    for (const [matterId, active] of [...this.activeReasonByMatterId.entries()]) {
       const matter = life.matters.find((candidate) => candidate.id === matterId) ?? null;
-      if (matter && isBlockedActorMatter(matter)) continue;
+      if (matter && matterStillSupportsActorRelevance(matter, active)) continue;
 
       if (this.resident.invalidateSemanticPressure(
-        reasonId,
+        active.reasonId,
         tick,
-        `matter-relative relevance ended because ${matterId} is no longer an open blocked actor obligation`,
+        `matter-relative relevance ended because ${matterId} no longer carries its exact open actor relation`,
       )) {
-        invalidatedReasonIds.push(reasonId);
+        invalidatedReasonIds.push(active.reasonId);
       }
       this.activeReasonByMatterId.delete(matterId);
     }
@@ -118,22 +135,77 @@ export class ResidentMatterRelevanceBridge {
   }
 }
 
-function matchingBlockedActorMatter(
+function matchingActorMatter(
   life: ResidentLifeCognitionView,
   actorId: string,
-): ResidentLifeMatterView | null {
+): ActorMatterRelevanceMatch | null {
   const matches = life.matters
-    .filter((matter) => (
-      isBlockedActorMatter(matter)
-      && matter.semanticIntent?.kind === "communicate_actor"
-      && matter.semanticIntent.targetActorId === actorId
-    ))
-    .sort((a, b) => a.id.localeCompare(b.id));
+    .flatMap((matter): ActorMatterRelevanceMatch[] => {
+      if (isBlockedActorMatterFor(matter, actorId)) {
+        return [{ matter, actorId, kind: "blocked_actor_matter" }];
+      }
+      if (isStandingSocialCommitmentFor(matter, actorId)) {
+        return [{ matter, actorId, kind: "standing_social_commitment" }];
+      }
+      return [];
+    })
+    .sort((left, right) => left.matter.id.localeCompare(right.matter.id));
 
-  // If several different open obligations target the same actor, do not silently
-  // choose which one gives the observation meaning. That ambiguity belongs to a later
-  // personhood/choice layer rather than this narrow relevance seam.
+  // Several distinct resident-owned reasons to care about the same actor are a real
+  // ambiguity. This narrow bridge must not silently pick one and fabricate priority.
   return matches.length === 1 ? matches[0]! : null;
+}
+
+function matterStillSupportsActorRelevance(
+  matter: ResidentLifeMatterView,
+  active: ActiveMatterRelevance,
+): boolean {
+  return active.kind === "blocked_actor_matter"
+    ? isBlockedActorMatterFor(matter, active.actorId)
+    : isStandingSocialCommitmentFor(matter, active.actorId);
+}
+
+function isBlockedActorMatterFor(
+  matter: ResidentLifeMatterView,
+  actorId: string,
+): boolean {
+  return isBlockedActorMatter(matter)
+    && matter.semanticIntent?.kind === "communicate_actor"
+    && matter.semanticIntent.targetActorId === actorId;
+}
+
+function isStandingSocialCommitmentFor(
+  matter: ResidentLifeMatterView,
+  actorId: string,
+): boolean {
+  return matter.status === "active"
+    && matter.activeRun === null
+    && matter.semanticIntent?.kind === "standing_social_commitment"
+    && matter.semanticIntent.counterpartyActorId === actorId;
+}
+
+function relevanceSummary(match: ActorMatterRelevanceMatch): string {
+  return match.kind === "standing_social_commitment"
+    ? `New private contact with ${match.actorId} is relevant to open standing social commitment ${match.matter.id}.`
+    : `New private contact with ${match.actorId} is relevant to open matter ${match.matter.id} after its blocked outcome.`;
+}
+
+function relevanceEvidenceIds(
+  percept: ResidentPercept,
+  match: ActorMatterRelevanceMatch,
+): string[] {
+  if (match.kind === "standing_social_commitment") {
+    return [
+      percept.id,
+      match.matter.id,
+      ...(match.matter.originEvidence ? [match.matter.originEvidence.id] : []),
+    ];
+  }
+  return [
+    percept.id,
+    match.matter.id,
+    ...(match.matter.lastOutcomeEvidence ? [match.matter.lastOutcomeEvidence.id] : []),
+  ];
 }
 
 function isBlockedActorMatter(matter: ResidentLifeMatterView): boolean {

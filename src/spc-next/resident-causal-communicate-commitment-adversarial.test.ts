@@ -57,6 +57,63 @@ describe("resident causal communicate authority adversarial boundaries", () => {
     expect(fixture.focus.focusedRun()).toBeNull();
   });
 
+  it("binds the same bounded prior-recipient factual history on speech-origin communication too", () => {
+    const fixture = setup();
+    const first = recordTerminalRecipientEpisode(
+      fixture.kernel,
+      "matter.ida.history.janek-a",
+      "run.ida.history.janek-a",
+      1,
+    );
+    const second = recordTerminalRecipientEpisode(
+      fixture.kernel,
+      "matter.ida.history.janek-b",
+      "run.ida.history.janek-b",
+      10,
+    );
+
+    const settlement = fixture.owner.settleCommitmentIntent(
+      fixture.attempt,
+      fixture.proposal,
+      currentLife(fixture),
+      fixture.world.tick,
+      (proposal, providerContext) => fixture.causal.groundPrivateSpeechCommitment({
+        attempt: fixture.attempt,
+        occurrence: fixture.occurrence,
+        proposal,
+        providerContext,
+        groundingContext: fixture.ida.cognitionContext(fixture.batch),
+      }),
+    );
+    expect(settlement.status).toBe("applied");
+    if (settlement.status !== "applied") return;
+
+    const accepted = fixture.causal.materializePrivateSpeechCommitment({
+      attempt: fixture.attempt,
+      occurrence: fixture.occurrence,
+      proposal: settlement.proposal,
+      intent: settlement.intent,
+    });
+    expect(accepted.matter).toMatchObject({
+      semanticIntent: {
+        kind: "communicate_actor",
+        targetActorId: JANEK_ID,
+      },
+      historicalSupport: [
+        {
+          relation: "prior_same_actor_outcome",
+          sourceMatterId: "matter.ida.history.janek-a",
+          evidenceId: first.id,
+        },
+        {
+          relation: "prior_same_actor_outcome",
+          sourceMatterId: "matter.ida.history.janek-b",
+          evidenceId: second.id,
+        },
+      ],
+    });
+  });
+
   it("rejects a cloned grounded social capability while preserving the exact one-shot original", () => {
     const fixture = setup();
     const settlement = fixture.owner.settleCommitmentIntent(
@@ -240,4 +297,46 @@ function currentLife(fixture: Pick<ReturnType<typeof setup>, "kernel" | "focus" 
     arbitrator: fixture.arbitrator,
     matterIds: fixture.causal.acceptedMatterIds(),
   });
+}
+
+function recordTerminalRecipientEpisode(
+  kernel: ResidentContinuityKernel,
+  matterId: string,
+  runId: string,
+  tick: number,
+) {
+  const origin = kernel.recordEvidence({
+    id: `evidence.${matterId}.origin`,
+    tick,
+    kind: "life_context",
+    summary: "older factual communication with the same recipient",
+  });
+  kernel.openMatter({
+    id: matterId,
+    originEvidenceId: origin.id,
+    semanticCourse: "older factual communication with Janek",
+    semanticIntent: {
+      kind: "communicate_actor",
+      goal: "speak with Janek once",
+      targetActorId: JANEK_ID,
+      text: "Older bounded message to Janek.",
+    },
+  });
+  kernel.bindRun({
+    matterId,
+    taskId: `task.${matterId}`,
+    runId,
+  });
+  const reconciled = kernel.reconcileRunOutcome({
+    runId,
+    tick: tick + 1,
+    status: "succeeded",
+    summary: "factually delivered older bounded message to Janek",
+  });
+  expect(reconciled.status).toBe("recorded");
+  if (reconciled.status !== "recorded") {
+    throw new Error("same-recipient history fixture failed to reconcile");
+  }
+  kernel.resolveMatter(matterId);
+  return reconciled.evidence;
 }

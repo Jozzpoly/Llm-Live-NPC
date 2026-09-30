@@ -516,43 +516,81 @@ Primary question:
 
 **R3 — FIRST CAUSAL-PERSONHOOD MILESTONE: PASS.**
 
-**R4 — DENSE AUTHORED AFFORDANCE SURFACE: QUALIFIED PASS**
-at source SHA `0f7945d74db6b4ed6044f5d636b3c4696dce5201`.
+**R4 — DENSE AUTHORED AFFORDANCE SURFACE: QUALIFIED PASS.**
 
-R4 qualification now includes:
+**R5 — LLM AS SEMANTIC ESCALATION / REAL LUNA CAUSAL BOUNDARY: QUALIFIED PASS.**
 
-- R4-A baseline affordance characterization;
-- R4-B Janek blocked-path / alternate provider-free local life;
-- R4-C changed-World / legal private material reacquisition / local reactivation;
-- R4-D Mira ordinary-life negative capability in deterministic and real-Chromium evidence.
+**Current recovery target: R6 — COMPLEMENTARY RESIDENT PERSONHOOD.**
 
-The R4-D terminal boundary is deliberately unresolved semantically:
+Current R6 evidence is deliberately split by plane:
 
-- local bodily acknowledgement has completed;
-- body authority is idle;
-- one exact addressed-speech `CognitionReason` remains;
-- no synthetic matter was created merely to make that reason fit an API;
-- no provider has been invoked.
+- **R6-A — resident-originated standing social commitment: QUALIFIED BOUNDED PASS** at its documented source;
+- **R6-B — native standing social continuation: QUALIFIED BOUNDED PASS** at source `54fe9fbe2f615d4dd37e5f4e6a0577d2c359d3da`;
+- **R6-C Oren → Nela generated-history genericity: deterministic/domain GREEN**;
+- **direct-request history-sensitive real-model choice: BOUNDED POSITIVE FINDING** — same Ida request, control accepts departure while history Oren declines because earlier Nela responsibility still binds;
+- **exact counterparty release lifecycle: deterministic/domain GREEN**;
+- **endogenous history-after-outcome choice: MATERIAL BOUNDED POSITIVE FINDING** — exact runtime-generated no-fresh-command frames; control chooses no new matter, history chooses return to Nela from standing responsibility;
+- **factual World continuation: deterministic GREEN** — exact live history proposal survives local admission and Oren physically returns workshop → commons without fresh speech;
+- **factual standing fulfilment: LIVE-SEMANTIC + DETERMINISTIC LIFECYCLE GREEN** — one-call Luna run #23 selects `complete_standing` from the exact factual return outcome, then local authority resolves the standing matter;
+- **Check #1603: PASS** on integrated source `32bae5f34982ef942ef6d3ea58fc0000212f79ec` — 263 / 263 files, 961 / 961 tests, typecheck/build/preview green;
+- **Browser Evidence #827: PASS as regression evidence**, including dedicated Mira/Ida R6 and legacy R1–R5-C browser vetoes.
+- **stage-closure hardening `2c7adf94...`: PASS** — explicit stale-life rejection for `complete_standing`; Check #1605 **263 / 263 files, 962 / 962 tests**; Browser Evidence #829 PASS; no production/runtime semantic change after `32bae5f3...`.
+- **post-terminal factual-history probe: BOUNDED NEUTRAL FINDING** — exact matched Janek contexts with one terminal material episode only in history; Live Provider run #24 makes two Luna calls / zero retries and returns the same behavioral class in both twins while the history rationale explicitly consumes the earlier factual unavailability; exact proposals replay through local authority without reopening the old matter or granting material-action authority.
+- integrated single-opportunity closure head `b79793cf625da93d4909c644a3e56511febde67a`: **Check #1628 PASS — 266 / 266 files, 970 / 970 tests**; **Browser Evidence #852 PASS**.
+- **competing-future terminal-history support gap: CHARACTERIZED + NARROWLY REPAIRED** — exact terminal same-object `task_outcome` may become `prior_same_material_outcome` support while the old matter remains terminal/run-free; ordinary cross-candidate evidence remains forbidden.
+- **Live Provider run #25: APPARATUS / PROVIDER-CONTRACT FAILURE ONLY** — strict response schema used unsupported `uniqueItems`; both calls failed upstream before model output with zero token usage. Removing only that keyword restored provider compatibility while local duplicate rejection remained intact.
+- **Live Provider run #26: MATERIAL BOUNDED POSITIVE FINDING** at source `c9999f589886311125dd91a215d27f3b46371a5c` — exact matched competing-future twins; control `defer_all`, history `focus_matter(retry)`; history cites the exact terminal factual outcome; `exactBehaviorEqual = false`; exactly two GPT-5.6 Luna calls and zero semantic retries.
+- **exact run-#26 local replay: GREEN** at source `c3e2efb784520d17e520f3373a2de97bc8caab53` — both exact Luna proposals survive `ResidentLifeChoiceOwner` admission; old history remains resolved/run-free; Check #1653 **269 / 269 files, 979 / 979 tests**.
+- **delayed same-object factual-history gap: CHARACTERIZED + NARROWLY REPAIRED** — bounded terminal factual outcomes remain non-live archive provenance; exact current relevance may create a new C carrying typed `prior_same_material_outcome { sourceMatterId, evidenceId }`; ambiguous old episodes fail closed; support is released when C terminalizes.
+- **strengthened delayed endogenous chain: BOUNDED DETERMINISTIC PASS** at `b4861568d222f11f3f0b0621cae14c92088acdc9` — A leaves bounded recent/current life **before** reacquisition; archive-backed exact relevance later creates C, B independently yields D, and normal arbitration reaches `choice_required(C,D)` while A remains absent/run-free; Check #1725 **279 / 279 files, 1006 / 1006 tests**, typecheck/build/preview PASS.
+- **Live Provider run #27: MATERIAL BOUNDED POSITIVE FINDING** at `ebf41ab8d67c86dd4eb4b3e4c8a30978ef73b827` — matched C/D twins with A absent from both current-life frames; control `defer_all`, delayed-history `focus_matter(retry)`; history cites the exact old factual outcome carried only as candidate-scoped support on C; `exactBehaviorEqual = false`; exactly two GPT-5.6 Luna calls and zero semantic retries.
+- **exact run-#27 local replay: GREEN** at `31a162e7debd25ec1d2aa742963e34cc67a225fb` — both exact Luna proposals survive `ResidentLifeChoiceOwner` admission with A still absent from `life.matters`; Check #1724 **279 / 279 files, 1006 / 1006 tests**.
 
-**R5 — LLM AS SEMANTIC ESCALATION: QUALIFIED PASS.**
+Evidence hygiene / limits:
 
-**Current recovery target: R6 — COMPLEMENTARY RESIDENT FALSIFIERS / ORDINARY PERSONHOOD.**
+- Live Provider #21 at `4861abf6...` made two real Luna inferences but failed at the provider/local admission contract; it is apparatus/cost evidence, **not positive semantic evidence**;
+- canonical endogenous run #22 at `592a19ec...` made exactly two calls with no within-run semantic retry;
+- fulfilment run #23 at `9aff2659...` made exactly one call with no retry;
+- the no-fresh-command reflection point is an explicit one-outcome R6 opt-in; R2 still suppresses normal successful-completion echo globally;
+- the initial standing-history construction in this paired specimen is deterministic experiment setup;
+- runtime contexts are generated exactly and equality-bound to the live fixtures, then replayed through the real endpoint; this is not one uninterrupted live browser process;
+- one paired model observation is not a behavior distribution;
+- Live Provider run #24 is a neutral single-sample result: semantic uptake of terminal history is observed, but history-caused behavioral differentiation is **not** proven;
+- the visible reacquired crate is a strong current fact, so retrying remained coherent in both run-#24 twins; do not treat equal behavior as proof that terminal history is useless;
+- Live Provider run #25 is provider/schema apparatus evidence only: it produced no model proposal and zero token usage, so it cannot count as a semantic sample;
+- Live Provider runs #26 and #27 are each one paired positive observation, not behavioral distributions;
+- run #26 proves a bounded near-term factual-history effect; run #27 proves a bounded delayed candidate-scoped factual-history effect after A is absent from current life;
+- neither result proves learned aversion/preference, habit or generalized autobiography;
+- the strengthened `b4861568...` chain supplies the delayed normal-runtime causal provenance that the frozen live twins do not by themselves prove;
+- the dedicated R6 browser specimen still exercises Mira/Ida, so **browser-qualified Oren/Nela genericity remains UNPROVEN**;
+- explicit social obligation is now deeply exercised, but preference/aversion, habit, broader relationship history, ownership/self-interest and other personhood causes remain largely open;
+- no machine result here is Owner-observed ordinary aliveness.
 
-The first R5 falsifier must answer:
+Therefore do **not** promote:
 
-> **Can one genuine unresolved semantic reason escalate exactly once to higher cognition, remain causally inert during provider latency, be admitted only at an explicit resident/World boundary, produce only locally grounded durable meaning/action, settle or explicitly retain the originating pressure, and return to quiet without manufacturing another provider request?**
+- a broad R6 PASS;
+- browser-qualified cross-resident Oren/Nela personhood;
+- general social intelligence;
+- five distinct living people;
+- Owner-observed ordinary aliveness.
 
-R5 must reuse existing reason/batch cognition and causal-life authority before inventing new provider infrastructure.
+The active research boundary has now moved through five materially different steps:
 
-In particular:
+1. explicit standing obligation demonstrated one bounded endogenous history-caused World continuation and is closed;
+2. run #24 showed terminal-history semantic uptake in a single-opportunity frame without behavioral differentiation;
+3. competing-future pressure earned the narrow `prior_same_material_outcome` relation and run #26 showed a causally cited behavioral split;
+4. normal runtime generation then reproduced the A → C / B → D → `choice_required(C,D)` causal situation from bounded seeds;
+5. delayed-history pressure forced A beyond recent/current life, earned bounded factual archive + candidate-scoped causal genealogy, and run #27 again produced a causally cited behavioral split with A absent from both live current-life twins.
 
-- do not create a fake matter merely because older semantic-provider plumbing is matter-scoped;
-- prefer the existing resident cognition/life-intent path for a reason-native escalation;
-- provider output is semantic proposal, never World authority;
-- network completion is inert until explicit admission;
-- local grounding retains veto;
-- passage of time alone cannot create another semantic reason;
-- one completed causal version must not recursively request cognition again.
+The specific delayed same-object factual-history question is therefore **bounded CLOSED** across deterministic runtime causation, real-Luna judgement and exact local admission.
+
+The next highest-information question is no longer "can the same old crate fact survive longer?". It is a qualitatively different personhood pressure:
+
+> **Can several independently factual past experiences, none of which is itself an open obligation or exact same-object continuation, jointly alter a later endogenous choice in a causally attributable way without replacing resident life with generic personality/preference state?**
+
+Do not answer that by prebuilding preference, aversion, habit, relationship scores or a generic autobiographical store. First characterize where the current causal representation actually fails.
+
+Browser Oren/Nela genericity remains genuine promotion-plane debt. It must be obtained or the promotion contract deliberately revised before any claim that requires it, but it is not the highest-information research target.
 
 ---
 
@@ -653,79 +691,159 @@ Do not interpret `continue` as permission to merge to main.
 
 Current recovery order:
 
-1. **`docs/SPC_POST_STRESS_RECOVERY_PROGRAM.md`**
-   - canonical execution authority after the 18 September failure;
-2. latest explicit Owner correction;
-3. **`docs/SPC_R4_DENSE_AUTHORED_AFFORDANCE_EXPERIMENT.md`**
-   - preserved R4 experiment contract and anti-cheat boundary;
-4. **`docs/SPC_R4D_MIRA_ORDINARY_LIFE_PASS.md`**
-   - qualified second-resident ordinary-life / negative-capability evidence;
-5. **`docs/SPC_R4C_MATERIAL_REACQUISITION_PASS.md`**
-   - qualified changed-World / private reacquisition / local reactivation evidence;
-6. **`docs/SPC_R4B_DENSE_WORKSHOP_PASS.md`**
-   - qualified blocked-path / alternate-local-life evidence;
-7. **`docs/SPC_R3_CAUSAL_PERSONHOOD_PASS.md`**
-   - qualified R3 evidence boundary and non-claims;
-8. **`docs/SPC_R2_SEMANTIC_METABOLISM_PASS.md`**
-   - qualified R2 semantic-metabolism evidence boundary;
-9. **`docs/SPC_ZERO_PROVIDER_LOCAL_LIFE_R1_PASS.md`**
-   - qualified R1 zero-provider local-life evidence boundary;
-10. **`docs/SPC_NEXT_OWNER_INTENT_AND_GAP_AUDIT.md`**
-   - durable Owner/product guardrails;
-10. **`docs/SPC_FIVE_RESIDENT_PRESSURE_CAMPAIGN.md`**
-    - resident pressure donor map;
-11. **`docs/SPC_REOBSERVATION_FINDINGS_2026-09-16.md`**
-    - contract/oracle lessons;
-12. **`docs/SPC_LIVING_WORLD_EXECUTION_PROGRAM.md`**
-    - historical pre-stress execution snapshot only;
-13. older recovery/experiment documents
-    - historical evidence/donors, not current execution authority.
+1. **\`latest explicit Owner correction\`**
+   - outranks product-level interpretations for the same claim;
+2. **\`docs/SPC_POST_STRESS_RECOVERY_PROGRAM.md\`**
+   - canonical post-stress execution authority;
+3. **\`docs/SPC_R6_COMPLEMENTARY_PERSONHOOD_EXPERIMENT.md\`**
+   - binding current R6 experiment contract;
+4. **\`docs/SPC_R6_PLAN_REVISION_REFUSAL_FINDING.md\`**
+   - current plan-revision authority: bounded multi-matter relinquishment mechanism is deterministically defended; run #33 is live-neutral for actual relinquishment and must not be rerolled;
+5. **\`docs/SPC_R6_SYMMETRIC_SOCIAL_NONACTION_FINDING.md\`**
+   - preceding symmetric social/non-action authority: run #32 is behaviorally neutral, and the resulting causal-attribution gap for deliberate non-action is now deterministically repaired;
+6. **\`docs/SPC_R6_COUNTERPARTY_SOCIAL_HISTORY_FINDING.md\`**
+   - preceding counterparty-history authority: exact Nela release survives beyond recent/current life as bounded provenance and is cited by real Luna; run #31 is behaviorally neutral and does not prove relationship state;
+7. **\`docs/SPC_R6_SAME_CARDINALITY_OUTCOME_MEANING_FINDING.md\`**
+   - strongest own-outcome meaning result: at fixed actor/history count/support identities, two succeeded outcomes versus two blocked outcomes produced opposite real-Luna C-vs-D choices and both exact old facts were cited;
+8. **\`docs/SPC_R6_CUMULATIVE_SAME_ACTOR_HISTORY_FINDING.md\`**
+   - preceding cumulative-history result: two independent terminal same-actor factual outcomes jointly changed a later real-Luna C-vs-D judgement while old matters remained absent from current life;
+9. **\`docs/SPC_R6_DELAYED_FACTUAL_HISTORY_CHOICE_FINDING.md\`**
+   - preceding delayed-history result: A may leave recent/current life, become exact causal genealogy of current C after later relevance, and change a real-Luna C-vs-D choice without reopening A;
+10. **\`docs/SPC_R6_ENDOGENOUS_COMPETING_FUTURE_RUNTIME_FINDING.md\`**
+   - deterministic provenance/composition authority for the normal A → delayed reacquisition/C + B → D → genuine choice chain;
+11. **\`docs/SPC_R6_COMPETING_FUTURE_FACTUAL_HISTORY_FINDING.md\`**
+   - preceding near-term exact real-Luna competing-future split and local causal admission;
+12. **\`docs/SPC_R6_POST_TERMINAL_FACTUAL_HISTORY_FINDING.md\`**
+   - preceding single-opportunity neutral finding; authoritative for what run #24 did and did not prove;
+13. **\`docs/SPC_R6_ENDOGENOUS_ORDINARY_PERSONHOOD_FINDING.md\`**
+   - bounded positive endogenous standing-history finding and evidence/nonclaim boundary;
+14. **\`docs/SPC_R6B_NATIVE_STANDING_SOCIAL_CONTINUATION_PASS.md\`**
+   - qualified bounded R6 mechanism evidence;
+15. **\`docs/SPC_R6A_STANDING_SOCIAL_COMMITMENT_PASS.md\`**
+   - earlier bounded R6-A evidence and nonclaims;
+16. **R5 evidence documents**
+   - semantic escalation, stale attention, provider outcomes and real-Luna causal boundary;
+17. **R4 / R3 / R2 / R1 qualified evidence documents**
+   - preserved scoped evidence, not current feature sequence;
+18. **\`docs/SPC_NEXT_OWNER_INTENT_AND_GAP_AUDIT.md\`**, pressure/re-observation documents
+   - durable Owner/product guardrails and donor evidence;
+19. **\`docs/SPC_LIVING_WORLD_EXECUTION_PROGRAM.md\`** and older recovery/Pass-2 documents
+   - historical evidence only.
+
+\`docs/PROJECT_STATE.md\`, \`docs/FRESH_TAKEOVER.md\`, \`docs/SPC_NEXT_CURRENT_STATE_RECONCILIATION.md\` and older architecture-recovery documents must **not** be used as the current feature sequence.
 
 When prose conflicts with live evidence, live evidence wins and prose must be corrected.
-
 ---
 
 ## 13. Current work order
 
-Completed:
-1. preserve `c181...` as the forensic failure specimen;
-2. correct post-stress repository authority;
-3. **R1 — zero-provider local life — PASS**;
-4. **R2 — resident relevance / semantic metabolism — PASS**;
-5. **R3 — bounded causal-personhood milestone — PASS**;
-6. **R4-A — sparse-baseline affordance characterization — COMPLETE**;
-7. **R4-B — dense-workshop alternate local life — QUALIFIED PASS**
-   at source SHA `5548231763718f868186dd5c07877c65969f7f88`;
-8. **R4-C — changed World / legal material reacquisition — QUALIFIED PASS**
-   at source SHA `423c9ba1eaafdc9064136ed0a1a3c71b7b19b2ca`.
+Completed and retained only within their documented scopes:
+
+1. preserve `c181...` as the immutable composition-level failure specimen;
+2. R1 zero-provider local life — PASS;
+3. R2 semantic metabolism — PASS;
+4. R3 first causal-personhood milestone — PASS;
+5. R4 dense authored affordance surface — QUALIFIED PASS;
+6. R5 semantic escalation / provider safety / real-Luna causal boundary — QUALIFIED PASS;
+7. R6-A standing social commitment — QUALIFIED BOUNDED PASS;
+8. R6-B native standing social continuation — QUALIFIED BOUNDED PASS;
+9. Oren → Nela generated standing history and Worker-context join — deterministic/domain GREEN;
+10. direct-request real-Luna history-dependent Oren choice — POSITIVE FINDING;
+11. exact counterparty-grounded release — deterministic/domain GREEN;
+12. runtime-generated no-fresh-command endogenous standing-history twin — deterministic exact-context GREEN;
+13. canonical live Luna endogenous standing choice run #22 — MATERIAL POSITIVE FINDING;
+14. exact live history proposal replay → factual Oren return — deterministic World GREEN;
+15. `complete_standing` exact factual-outcome lifecycle — bounded deterministic GREEN;
+16. live Luna factual fulfilment run #23 + exact local replay — LIVE-SEMANTIC + deterministic lifecycle GREEN;
+17. post-terminal Janek single-opportunity factual-history probe + live run #24 + replay — BOUNDED NEUTRAL / semantic uptake only;
+18. competing-future terminal-history support + live run #26 + replay — MATERIAL BOUNDED POSITIVE / near-term history-caused behavioral difference observed;
+19. endogenous competing-future runtime generation — original BOUNDED DETERMINISTIC PASS at `d0163c78...`;
+20. delayed same-object factual-history durability — **BOUNDED DETERMINISTIC + LIVE-SEMANTIC POSITIVE**:
+    - strengthened endogenous chain `b4861568d222f11f3f0b0621cae14c92088acdc9`: A leaves recent/current life before reacquisition, then archive-backed relevance creates C and normal B outcome creates D; Check #1725 **279 / 279 files, 1006 / 1006 tests**;
+    - Live Provider run #27 `ebf41ab8d67c86dd4eb4b3e4c8a30978ef73b827`: control `defer_all`, delayed-history `focus_matter(retry)`, exact old factual outcome cited, exactly two Luna calls, zero retries;
+    - exact replay `31a162e7debd25ec1d2aa742963e34cc67a225fb`: local admission GREEN, Check #1724 **279 / 279 files, 1006 / 1006 tests**.
+21. cumulative same-actor factual history — **MATERIAL BOUNDED POSITIVE; bounded CLOSED**:
+    - characterized gap: two old Ida communication outcomes survive bounded archive but have no legal path into later Ida-vs-other choice;
+    - earned repair: bounded typed `prior_same_actor_outcome` genealogy on a current exact-same-actor `communicate_actor` matter, max 8 most recent, no score/sentiment;
+    - Live Provider run #29 `900d626b9049a43438993a96e7b442c6e59aa369`: control `defer_all`, history `focus_matter(other)`, **both** old Ida outcomes cited, exactly two Luna calls, zero retries;
+    - run #28 is zero-spend apparatus-only failure before inference;
+    - exact local replay `0bf8ad82e691c6fbd8accf7d975a0bb7d71574f8`: Check #1753 **284 / 284 files, 1020 / 1020 tests**, Browser Evidence #977 PASS.
+22. same-cardinality factual outcome meaning — **MATERIAL BOUNDED POSITIVE; bounded CLOSED**:
+    - deterministic World-grounded contrast creates exactly two structured same-actor communication outcomes in each history through `ResidentMessageDeliveryExecutor`: either `2×succeeded` or `2×blocked: recipient_absent_at_best_known_contact`;
+    - actor, eligible history count, source/evidence IDs, current C/D and body state are held fixed; existing `task_outcome.summary` preserves the factual distinction without new personhood representation;
+    - Worker frozen twin accepts both histories with identical legal evidence-ID/schema surfaces;
+    - Live Provider run #30 `d4dd09c0d6afefefaf60772ebdb169728128b548`: succeeded-history `focus_matter(current Janek C)`, blocked-history `focus_matter(unrelated D)`, both sides cite both exact old outcomes, exactly two Luna calls, zero semantic retries;
+    - exact local replay: Check #1766 **287 / 287 files, 1026 / 1026 tests**, typecheck/build/preview PASS.
+23. counterparty-caused social history — **BOUNDED NEUTRAL LIVE FINDING / PROVEN DURABLE PROVENANCE, BEHAVIORAL EFFECT UNPROVEN**:
+    - characterized gap: exact Nela release of Oren's standing commitment disappeared after recent-evidence churn and had no legal route into later Nela choice;
+    - earned repair: separate bounded terminal social-lifecycle archive + typed \`prior_counterparty_social_outcome\`, exact standing source/counterparty/World occurrence/release evidence, no relationship score;
+    - normal production later creates Nela C with that history automatically; snapshot/boundedness/Worker/local admission are defended;
+    - Live Provider run #31 \`14383cec2e7e75b07d8ed240d076aa1e935695f2\`: control \`focus_matter(C=Nela)\`, history also \`focus_matter(C=Nela)\`; history cites exact release; exactly two Luna calls, zero retries; classification \`COUNTERPARTY_SOCIAL_HISTORY_UPTAKE_WITHOUT_BEHAVIOR_CHANGE\`;
+    - exact replay \`ddef04f5a098ea7b6894dea57723879652d33943\`: Check #1789 **292 / 292 files, 1037 / 1037 tests**, typecheck/build/preview PASS.
+24. symmetric social-vs-social counterparty history + causal non-action — **BOUNDED NEUTRAL LIVE + DETERMINISTIC CONTRACT PASS**:
+    - deterministic generated Oren Nela-vs-Ida ambiguity: old Nela release fully settled in its own period, equal-salience current reasons originate together, normal causal cognition cadence forms both current social futures behind a carrier, old standing absent;
+    - Live Provider run #32 \`9a0086a0a06fcf2d108ea7bdca32053f3a388f60\`: control \`defer_all\`, history also \`defer_all\`; history rationale explicitly considers the release but old defer schema cannot cite it; exactly two Luna calls, zero retries; classification \`SYMMETRIC_SAME_DECISION_NO_COUNTERPARTY_HISTORY_USE\`;
+    - run #32 is not retroactively promoted after repair;
+    - earned gap: deliberate non-action had no causal evidence surface;
+    - repaired contract admits optional bounded \`defer_all.supportEvidenceIds\` from the frozen union of candidate support only, preserves legacy defer and rejects forged evidence;
+    - exact run-#32 replay remains legal; Check #1809 **296 / 296 files, 1045 / 1045 tests**.
+
+25. resident plan revision / refusal — **DETERMINISTIC MECHANISM PASS + BOUNDED NEUTRAL LIVE RELINQUISHMENT RESULT**:
+    - characterization proves `focus_matter(D)` and `defer_all` postpone C but do not remove C from resident life; after D ends, lone C auto-reacquires body authority;
+    - earned repair adds target-local evidence-grounded `relinquish_matter`, one-shot non-clonable revision grant and separate stale-safe `ResidentLifePlanRevisionAuthority`;
+    - ordinary origin/current wording alone cannot authorize plan deletion; exact factual support attached to the target is required;
+    - Live Provider run #33 `677df1acc0c029d8ad6761556f5840139326be37`: succeeded history `focus_matter(C)`, blocked history `focus_matter(D)`; both cite both old outcome facts, neither relinquishes C; exactly two Luna calls, zero retries;
+    - exact local replay `db6453abee0263eb4c8f1153d2d94f8082d2b5a9`: no revision grant is smuggled out of either focus decision; Check #1831 **300 / 300 files, 1057 / 1057 tests**, Browser Evidence #1055 PASS.
+
 
 Current:
 
-9. **R4-D — second-resident / Mira falsifier.**
+> **R6 personhood breadth — durable history now reaches action selection, factual outcome meaning, comparative social judgement, deliberate non-action and a bounded locally-authorized multi-matter plan-revision mechanism without becoming direct World/body authority. Run #33 did not exercise relinquishment, so live behavioral plan revision remains unproven. The next pressure is single-current-plan autonomous reappraisal.**
+
+The explicit-standing-obligation endogenous stage remains **bounded CLOSED**.
+
+The delayed same-object factual-history stage is now **bounded CLOSED**.
+
+The post-terminal material evidence sequence has four distinct layers:
+
+- run #24: terminal history reached real cognition and changed rationale, but not behavioral class;
+- run #26: near-term terminal factual history changed behavioral class in genuine competing futures and cited exact old evidence;
+- `b4861568...`: after unrelated evidence churn removes A from current life **before** reacquisition, normal resident/World authorities still create C with typed A provenance, independently create D and reach `choice_required(C,D)`;
+- run #27 + exact replay: with A absent from both provider current-life twins, candidate-scoped delayed history alone changes the behavioral class from `defer_all` to `focus_matter(retry)` and survives local admission.
+
+Canonical records:
+
+- `docs/SPC_R6_POST_TERMINAL_FACTUAL_HISTORY_FINDING.md`;
+- `docs/SPC_R6_COMPETING_FUTURE_FACTUAL_HISTORY_FINDING.md`;
+- `docs/SPC_R6_ENDOGENOUS_COMPETING_FUTURE_RUNTIME_FINDING.md`;
+- `docs/SPC_R6_DELAYED_FACTUAL_HISTORY_CHOICE_FINDING.md`;
+- `docs/SPC_R6_CUMULATIVE_SAME_ACTOR_HISTORY_FINDING.md`;
+- `docs/SPC_R6_SAME_CARDINALITY_OUTCOME_MEANING_FINDING.md`;
+- `docs/SPC_R6_COUNTERPARTY_SOCIAL_HISTORY_FINDING.md`;
+- `docs/SPC_R6_SYMMETRIC_SOCIAL_NONACTION_FINDING.md`;
+- `docs/SPC_R6_PLAN_REVISION_REFUSAL_FINDING.md`.
+
+Run #25 remains explicitly non-semantic apparatus evidence: strict-schema failure, no proposal, zero token usage.
 
 Immediate method:
 
-- begin from Mira's ordinary-life failure modes, not from a list of new objects;
-- reuse the same World/private-knowledge/continuity/relevance/arbitration seams where they actually fit;
-- construct a compact low-intensity specimen with multiple authored facts, only some of which are resident-relevant;
-- preserve the possibility that the correct state is quiet;
-- require resident-owned causal reasons before material/social facts become matters;
-- keep the player non-central to the specimen;
-- do not manufacture novelty, random chores or periodic movement;
-- do not use provider cognition in the critical path;
-- actively search for Janek-specific assumptions hiding inside supposedly shared R4 mechanisms;
-- if Mira requires a different primitive, prove the failure before adding it;
-- qualify deterministic + browser evidence and retain R1/R2/R3/R4-B/C vetoes.
+- preserve runs #24/#26/#27/#29/#30/#31/#32/#33 exactly as their canonical findings describe;
+- do not rerun #32 after causal defer-all repair and do not rerun #33 merely to obtain a relinquishment sample;
+- preserve the distinction between live neutral evidence and later deterministic contract repair;
+- keep history as bounded provenance, never direct body/World authority;
+- retain evidence-grounded `defer_all` as causal non-action, not a hidden priority score;
+- retain target-local `relinquish_matter` as a bounded multi-matter mechanism, not proof of generic refusal;
+- next characterize **single-current-plan autonomous reappraisal**: can one lone current legal matter be reconsidered for exact resident-owned reasons without manufacturing a competing D or a periodic provider heartbeat?
+- preserve terminal/history truth and stale-safe local lifecycle authority on any future revision path;
+- do not add preferences, aversion, trust, affinity, habits, gratitude or generic autobiographical state before a concrete failure earns them;
+- retain Browser Oren/Nela genericity as honest promotion-plane debt;
+- keep full R6 / five living residents / Owner-observed ordinary personhood **UNPROVEN**;
+- do not prepare an Owner gate or merge PR #148 by CI inertia.
 
-R4 promotion remains blocked until the second-resident falsifier is defended.
+Next research question:
 
-Later:
-10. R5 provider semantic escalation;
-11. R6 complementary resident falsifiers;
-12. R7 five-resident homeostasis;
-13. R8 bounded real-Luna campaigns;
-14. R9 endurance stress tests.
+> **Can one already-current plan be endogenously reconsidered and relinquished when it is the resident's only current legal future, because new or recovered resident-owned evidence changed its meaning — without requiring a competing future, periodic provider heartbeat or generic preference state?**
 
-The next milestone is:
+The earlier Nela-vs-Ida counterparty-history question remains behaviorally unproven, but it is no longer the highest-information frontier and must not displace the single-plan autonomy pressure by inertia.
 
-> **Mira can inhabit the same denser causal substrate without becoming a chore bot or player-service NPC, while nearby authored possibilities remain selective, resident-relative and compatible with legitimate quiet.**
+The architecture must continue to be earned by resident-life pressure, not by a desire to fill a personality feature list.

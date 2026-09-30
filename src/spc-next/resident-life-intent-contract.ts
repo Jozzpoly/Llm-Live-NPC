@@ -5,12 +5,54 @@ import {
   type ProposedActivity,
   type ResidentCognitionContext,
 } from "./cognition-contract";
+import type { ResidentStandingSocialCommitmentDescriptor } from "./resident-continuity-kernel";
+
+export interface ResidentLifeMaterialAcquisitionIntent {
+  kind: "acquire_material_object";
+  goal: string;
+  objectId: string;
+}
+
+export type ResidentLifeAcceptedIntent =
+  | ProposedActivity
+  | ResidentLifeMaterialAcquisitionIntent;
 
 export type ResidentLifeCommitmentDecision =
-  | { kind: "accept"; reason: string; intent: ProposedActivity }
+  | {
+      kind: "accept";
+      reason: string;
+      intent: ResidentLifeAcceptedIntent;
+      /**
+       * Explicit future social meaning attached to this accepted communication.
+       * Absence means ordinary communication; speech text alone never implies it.
+       */
+      standingSocialCommitment?: ResidentStandingSocialCommitmentDescriptor;
+    }
   | { kind: "decline"; reason: string }
   | { kind: "defer"; reason: string }
-  | { kind: "clarify"; reason: string; question: string };
+  | { kind: "clarify"; reason: string; question: string }
+  | {
+      kind: "continue_matter";
+      reason: string;
+      matterId: string;
+      supportEvidenceIds: readonly string[];
+    }
+  | {
+      kind: "relinquish_matter";
+      reason: string;
+      matterId: string;
+      supportEvidenceIds: readonly string[];
+    }
+  | {
+      kind: "release_standing";
+      reason: string;
+      matterId: string;
+    }
+  | {
+      kind: "complete_standing";
+      reason: string;
+      matterId: string;
+    };
 
 export interface ResidentLifeIntentProposal {
   version: 1;
@@ -35,6 +77,7 @@ const INTENT_KEYS = [
   "targetPosition",
   "text",
 ] as const;
+const MATERIAL_INTENT_KEYS = ["kind", "goal", "objectId"] as const;
 
 /**
  * Strict semantic contract for higher cognition deciding whether a newly perceived
@@ -56,7 +99,39 @@ export function parseResidentLifeIntentProposal(
   if (!isBoundedString(decision.kind, 32) || !isBoundedString(decision.reason, 1_200)) return null;
 
   if (decision.kind === "accept") {
-    if (!hasExactKeys(decision, ["kind", "reason", "intent"]) || !isRecord(decision.intent)) return null;
+    const hasStandingSocialCommitment = Object.hasOwn(
+      decision,
+      "standingSocialCommitment",
+    );
+    const acceptKeys = hasStandingSocialCommitment
+      ? ["kind", "reason", "intent", "standingSocialCommitment"] as const
+      : ["kind", "reason", "intent"] as const;
+    if (!hasExactKeys(decision, acceptKeys) || !isRecord(decision.intent)) return null;
+
+    if (decision.intent.kind === "acquire_material_object") {
+      if (hasStandingSocialCommitment
+        || !hasExactKeys(decision.intent, MATERIAL_INTENT_KEYS)
+        || !isBoundedString(decision.intent.goal, 1_200)
+        || !isBoundedString(decision.intent.objectId, 128)) return null;
+      const validated = validateSemanticUpdatesOnly(value, context, decision.reason);
+      if (!validated) return null;
+      return {
+        version: 1,
+        commitmentDecision: {
+          kind: "accept",
+          reason: decision.reason,
+          intent: {
+            kind: "acquire_material_object",
+            goal: decision.intent.goal,
+            objectId: decision.intent.objectId,
+          },
+        },
+        beliefs: structuredClone(validated.beliefs),
+        concerns: structuredClone(validated.concerns),
+        reviewAfterSeconds: validated.reviewAfterSeconds,
+      };
+    }
+
     if (!hasExactKeys(decision.intent, INTENT_KEYS)) return null;
 
     const validated = parseResidentCognitionProposal({
@@ -72,12 +147,31 @@ export function parseResidentLifeIntentProposal(
     }, context);
     if (!validated || validated.activityDirective.kind !== "replace") return null;
 
+    let standingSocialCommitment: ResidentStandingSocialCommitmentDescriptor | undefined;
+    if (hasStandingSocialCommitment) {
+      const rawStanding = decision.standingSocialCommitment;
+      if (!isRecord(rawStanding)
+        || !hasExactKeys(rawStanding, ["goal"])
+        || !isBoundedString(rawStanding.goal, 1_200)
+        || validated.activityDirective.activity.kind !== "communicate"
+        || validated.activityDirective.activity.targetActorId === null
+        || validated.activityDirective.activity.text === null) {
+        return null;
+      }
+      standingSocialCommitment = {
+        goal: rawStanding.goal,
+      };
+    }
+
     return {
       version: 1,
       commitmentDecision: {
         kind: "accept",
         reason: validated.activityDirective.reason,
         intent: structuredClone(validated.activityDirective.activity),
+        ...(standingSocialCommitment
+          ? { standingSocialCommitment: structuredClone(standingSocialCommitment) }
+          : {}),
       },
       beliefs: structuredClone(validated.beliefs),
       concerns: structuredClone(validated.concerns),
@@ -109,6 +203,51 @@ export function parseResidentLifeIntentProposal(
         kind: "clarify",
         reason: decision.reason,
         question: decision.question,
+      },
+      beliefs: structuredClone(validated.beliefs),
+      concerns: structuredClone(validated.concerns),
+      reviewAfterSeconds: validated.reviewAfterSeconds,
+    };
+  }
+
+  if (decision.kind === "continue_matter" || decision.kind === "relinquish_matter") {
+    if (!hasExactKeys(decision, ["kind", "reason", "matterId", "supportEvidenceIds"])
+      || !isBoundedString(decision.matterId, 128)
+      || !Array.isArray(decision.supportEvidenceIds)
+      || decision.supportEvidenceIds.length < 1
+      || decision.supportEvidenceIds.length > 8) return null;
+    const supportEvidenceIds: string[] = [];
+    for (const evidenceId of decision.supportEvidenceIds) {
+      if (!isBoundedString(evidenceId, 128) || supportEvidenceIds.includes(evidenceId)) return null;
+      supportEvidenceIds.push(evidenceId);
+    }
+    const validated = validateSemanticUpdatesOnly(value, context, decision.reason);
+    if (!validated) return null;
+    return {
+      version: 1,
+      commitmentDecision: {
+        kind: decision.kind,
+        reason: decision.reason,
+        matterId: decision.matterId,
+        supportEvidenceIds,
+      },
+      beliefs: structuredClone(validated.beliefs),
+      concerns: structuredClone(validated.concerns),
+      reviewAfterSeconds: validated.reviewAfterSeconds,
+    };
+  }
+
+  if (decision.kind === "release_standing" || decision.kind === "complete_standing") {
+    if (!hasExactKeys(decision, ["kind", "reason", "matterId"])
+      || !isBoundedString(decision.matterId, 128)) return null;
+    const validated = validateSemanticUpdatesOnly(value, context, decision.reason);
+    if (!validated) return null;
+    return {
+      version: 1,
+      commitmentDecision: {
+        kind: decision.kind,
+        reason: decision.reason,
+        matterId: decision.matterId,
       },
       beliefs: structuredClone(validated.beliefs),
       concerns: structuredClone(validated.concerns),

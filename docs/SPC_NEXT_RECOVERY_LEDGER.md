@@ -1,5 +1,7 @@
 # SPC Next — Live Recovery Ledger
 
+> **CURRENT EXECUTION NOTICE (2026-09-25): HISTORICAL RECOVERY LEDGER.** This ledger records the September 15 architecture-recovery campaign on PR #125. It is retained for causal provenance and donor evidence, not as a current roadmap or status source. Current authority: `docs/SPC_POST_STRESS_RECOVERY_PROGRAM.md`; current R6 contract: `docs/SPC_R6_COMPLEMENTARY_PERSONHOOD_EXPERIMENT.md`; latest bounded finding: `docs/SPC_R6_ENDOGENOUS_ORDINARY_PERSONHOOD_FINDING.md`.
+
 Updated: 2026-09-15
 
 This is the operational ledger for the long SPC Next architecture-recovery campaign on draft PR #125.

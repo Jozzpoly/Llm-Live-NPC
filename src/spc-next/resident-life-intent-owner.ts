@@ -13,6 +13,7 @@ import {
   type ResidentLifeCognitionContext,
 } from "./resident-life-cognition-context";
 import type { ResidentLifeCognitionView } from "./resident-life-cognition-view";
+import type { ResidentLifePlanRevisionGrant } from "./resident-life-choice-owner";
 import type { ResidentLifeSelfContext } from "./resident-life-self-context";
 import { ResidentRuntime, type ResidentCognitionRevision } from "./resident-runtime";
 
@@ -79,6 +80,7 @@ interface ActiveLifeIntentAttempt {
 export class ResidentLifeIntentOwner {
   private active: ActiveLifeIntentAttempt | null = null;
   private sequence = 0;
+  private readonly planRevisionGrants = new WeakMap<object, ResidentLifePlanRevisionGrant>();
 
   constructor(
     private readonly resident: ResidentRuntime,
@@ -134,7 +136,7 @@ export class ResidentLifeIntentOwner {
       context: ResidentLifeCognitionContext,
     ) => ResidentLifeIntentAdmission<T>,
   ): ResidentLifeCommitmentSettlement<T> {
-    return this.settleWithParser(
+    const settlement = this.settleWithParser(
       attempt,
       rawProposal,
       currentLife,
@@ -143,6 +145,30 @@ export class ResidentLifeIntentOwner {
       admit,
       commitmentSemanticUpdateProjection,
     );
+
+    if (settlement.status === "applied"
+      && (settlement.proposal.commitmentDecision.kind === "continue_matter"
+        || settlement.proposal.commitmentDecision.kind === "relinquish_matter")) {
+      const decision = settlement.proposal.commitmentDecision;
+      const target = attempt.context.life.matters.find(
+        (matter) => matter.id === decision.matterId,
+      ) ?? null;
+      if (!target || target.status !== "active") {
+        throw new Error("resident plan revision target lost frozen current authority");
+      }
+      this.planRevisionGrants.set(settlement as object, {
+        disposition: decision.kind === "continue_matter" ? "continue" : "relinquish",
+        residentId: attempt.residentId,
+        matterId: target.id,
+        runId: target.activeRun?.runId ?? null,
+        semanticRevision: target.semanticRevision,
+        reason: decision.reason,
+        supportEvidenceIds: [...decision.supportEvidenceIds],
+        settlementTick: tick,
+      });
+    }
+
+    return settlement;
   }
 
   /**
@@ -169,6 +195,13 @@ export class ResidentLifeIntentOwner {
       admit,
       (proposal) => proposal,
     );
+  }
+
+  claimPlanRevision(settlement: object): ResidentLifePlanRevisionGrant | null {
+    const grant = this.planRevisionGrants.get(settlement);
+    if (!grant) return null;
+    this.planRevisionGrants.delete(settlement);
+    return structuredClone(grant);
   }
 
   state(): { activeAttemptId: string | null } {
