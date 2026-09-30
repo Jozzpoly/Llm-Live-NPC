@@ -11,7 +11,7 @@ const C = "matter.janek.r6.single-plan-reappraisal";
 const C_RUN = "run.janek.r6.single-plan-reappraisal.semantic-1";
 
 describe("R6 single-current-plan autonomous reappraisal boundary", () => {
-  it("already has an event-driven factual review reason, but decline cannot revise the only current plan", () => {
+  it("has an event-driven factual review reason and refuses to mistake plain decline for current-plan revision", () => {
     const composition = createFiveResidentRegionComposition();
     const { world } = composition;
     const resident = composition.runtimes[JANEK];
@@ -79,8 +79,9 @@ describe("R6 single-current-plan autonomous reappraisal boundary", () => {
     expect(outcomeReason).toBeDefined();
     if (!outcomeReason) return;
 
-    // The resident can semantically decline the pressure, but this vocabulary means
-    // "do not create a new commitment". It has no authority over existing C.
+    // Plain decline means "do not create a new commitment". After the earned repair,
+    // it is deliberately rejected for this exact current-plan review pressure so it
+    // cannot consume the factual reason while leaving C stranded run-free.
     expect(cognition.settleCommitment(
       request,
       {
@@ -94,11 +95,12 @@ describe("R6 single-current-plan autonomous reappraisal boundary", () => {
         reviewAfterSeconds: 30,
       },
       outcomeReason.id,
-    )).toMatchObject({
-      status: "applied",
+    )).toEqual({
+      status: "rejected",
       residentId: JANEK,
-      decision: "decline",
-      commitment: null,
+      reason: "intent_rejected",
+      detail:
+        "single-plan factual outcome requires explicit continue, relinquish, defer or clarify",
     });
 
     const afterDecline = life.kernel.matter(C);
@@ -118,8 +120,8 @@ describe("R6 single-current-plan autonomous reappraisal boundary", () => {
       }),
     ]);
 
-    // No implicit restart hides the gap: decline did not semantically review C, so
-    // ordinary execution correctly refuses to manufacture a new run.
+    // No implicit restart hides the boundary: rejected decline did not semantically
+    // review C, so ordinary execution still refuses to manufacture a new run.
     const execution = new ResidentCausalExecutionCoordinator(life);
     expect(execution.reactivateReviewedMatter(C)).toEqual({
       status: "rejected",
