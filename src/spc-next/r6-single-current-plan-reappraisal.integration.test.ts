@@ -115,7 +115,7 @@ describe("R6 single-current-plan autonomous reappraisal", () => {
       "run.janek.r6.single-plan-reappraisal.semantic-2",
     )).toBe(true);
     expect(state.life.arbitrator.reconcile()).toMatchObject({
-      status: "already_focused",
+      status: "focused",
       runId: "run.janek.r6.single-plan-reappraisal.semantic-2",
     });
   });
