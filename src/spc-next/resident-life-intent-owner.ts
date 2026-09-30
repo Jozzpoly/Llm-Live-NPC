@@ -147,7 +147,8 @@ export class ResidentLifeIntentOwner {
     );
 
     if (settlement.status === "applied"
-      && settlement.proposal.commitmentDecision.kind === "relinquish_matter") {
+      && (settlement.proposal.commitmentDecision.kind === "continue_matter"
+        || settlement.proposal.commitmentDecision.kind === "relinquish_matter")) {
       const decision = settlement.proposal.commitmentDecision;
       const target = attempt.context.life.matters.find(
         (matter) => matter.id === decision.matterId,
@@ -156,6 +157,7 @@ export class ResidentLifeIntentOwner {
         throw new Error("resident plan revision target lost frozen current authority");
       }
       this.planRevisionGrants.set(settlement as object, {
+        disposition: decision.kind === "continue_matter" ? "continue" : "relinquish",
         residentId: attempt.residentId,
         matterId: target.id,
         runId: target.activeRun?.runId ?? null,
