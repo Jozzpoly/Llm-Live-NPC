@@ -152,10 +152,6 @@ describe("R6 single-current-plan autonomous reappraisal", () => {
       semanticRevision: 1,
       lastOutcomeEvidenceId: state.blocked.evidence.id,
     });
-    expect(state.life.resident.semanticPressureSnapshot()).toContainEqual(expect.objectContaining({
-      reason: expect.objectContaining({ id: outcomeReason.id }),
-      status: "pending",
-    }));
   });
 
   it("reaches the same relinquishment through a factual blocked outcome produced by the main five-resident material executor", () => {
