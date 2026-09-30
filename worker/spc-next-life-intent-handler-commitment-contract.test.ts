@@ -180,8 +180,25 @@ describe("SPC Next life-intent endpoint commitment contract", () => {
       "matterId",
     ]);
     expect(upstreamRequest.instructions).toContain("release_standing");
+
+    const relinquishVariant = commitmentVariants.find((variant: any) => (
+      variant.properties?.kind?.enum?.includes("relinquish_matter")
+    ));
+    expect(relinquishVariant).toBeTruthy();
+    expect(Object.keys(relinquishVariant.properties)).toEqual([
+      "kind",
+      "reason",
+      "matterId",
+      "supportEvidenceIds",
+    ]);
+    expect(relinquishVariant.properties.supportEvidenceIds).toMatchObject({
+      type: "array",
+      minItems: 1,
+      maxItems: 8,
+    });
+    expect(upstreamRequest.instructions).toContain("relinquish_matter");
     expect(upstreamRequest.instructions).toContain(
-      "bounded lifecycle exceptions are release_standing and complete_standing",
+      "bounded lifecycle exceptions are release_standing, complete_standing and relinquish_matter",
     );
     expect(upstreamRequest.instructions).toContain(
       "does not replace or complete recovered matters by implication",
