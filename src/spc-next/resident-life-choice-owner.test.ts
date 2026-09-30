@@ -263,6 +263,7 @@ describe("ResidentLifeChoiceOwner", () => {
     expect(owner.claimPlanRevision(cloned)).toBeNull();
 
     expect(owner.claimPlanRevision(settlement)).toEqual({
+      disposition: "relinquish",
       residentId: "resident.mira",
       matterId: "matter.mira.b",
       runId: "run.mira.b",
