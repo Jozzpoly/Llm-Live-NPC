@@ -180,24 +180,29 @@ export class ResidentCausalCognitionLane {
           const target = providerContext.life.matters.find(
             (candidate) => candidate.id === decision.matterId,
           ) ?? null;
-          const executableCurrent = providerContext.life.matters.filter((candidate) => (
-            candidate.status === "active"
-            && candidate.semanticIntent !== null
-            && (
-              candidate.semanticIntent.kind === "travel_region"
-              || candidate.semanticIntent.kind === "communicate_actor"
-              || candidate.semanticIntent.kind === "acquire_material_object"
-            )
-          ));
+          const executableCurrent = providerContext.life.matters.filter((candidate) => {
+            const intent = candidate.semanticIntent ?? null;
+            return candidate.status === "active"
+              && intent !== null
+              && (
+                intent.kind === "travel_region"
+                || intent.kind === "communicate_actor"
+                || intent.kind === "acquire_material_object"
+              );
+          });
           const outcomeEvidenceId = originReason.evidenceIds[0]!;
+          const kernelTarget = target ? this.life.kernel.matter(target.id) : null;
           if (!target
+            || !kernelTarget
             || target.status !== "active"
             || target.activeRun !== null
             || executableCurrent.length !== 1
             || executableCurrent[0]?.id !== target.id
             || target.lastOutcomeEvidence?.id !== outcomeEvidenceId
             || target.lastOutcomeEvidence.kind !== "task_outcome"
-            || target.lastOutcomeSemanticRevision !== target.semanticRevision) {
+            || kernelTarget.semanticRevision !== target.semanticRevision
+            || kernelTarget.lastOutcomeEvidenceId !== outcomeEvidenceId
+            || kernelTarget.lastOutcomeSemanticRevision !== kernelTarget.semanticRevision) {
             return {
               status: "rejected",
               detail: "single-plan relinquishment target is not the exact sole current run-free outcome-bearing plan",
