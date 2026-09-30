@@ -13,6 +13,7 @@ export interface ResidentLifePlanRevisionGrantSource {
 export type ResidentLifePlanRevisionResult =
   | {
       status: "applied";
+      disposition: "continue" | "relinquish";
       evidence: ResidentKernelEvidence;
       matter: ResidentMatter;
       retiredRunId: string | null;
@@ -24,21 +25,25 @@ export type ResidentLifePlanRevisionResult =
         | "invalid_tick"
         | "resident_mismatch"
         | "matter_changed"
-        | "run_authority_changed";
+        | "run_authority_changed"
+        | "continuation_requires_run_free_matter";
     };
 
 /**
- * Local lifecycle authority for one resident-owned plan relinquishment.
+ * Local lifecycle authority for one resident-owned plan review disposition.
  *
  * A provider response cannot call this directly: it must first survive one exact
  * resident semantic settlement and yield an identity-bound one-shot grant consumed
- * here. This authority then rechecks the exact current matter/run revision, records
- * a resident-owned semantic plan-change fact and terminalizes the matter as cancelled.
- * If a live run still exists, that exact binding is retired; a factually reconciled
- * run-free matter can be revised only while its frozen semantic revision still matches.
+ * here. This authority then rechecks the exact current matter/run revision and records
+ * a resident-owned semantic plan-change fact.
  *
- * It does not choose another plan and does not mutate World. Any remaining execution
- * demand is handled later by ordinary policy-free arbitration.
+ * Relinquish terminalizes the exact matter as cancelled and retires any still-live
+ * run. Continue is deliberately narrower: it is legal only for a run-free matter
+ * whose factual run has already reconciled, and advances semantic context without
+ * creating a replacement plan or run. Ordinary execution authority may separately
+ * reactivate that reviewed matter afterward.
+ *
+ * It does not choose another plan and does not mutate World.
  */
 export class ResidentLifePlanRevisionAuthority {
   constructor(
@@ -72,6 +77,9 @@ export class ResidentLifePlanRevisionAuthority {
     if (grant.runId !== null && !this.kernel.canRunMutateWorld(grant.runId)) {
       return { status: "rejected", reason: "run_authority_changed" };
     }
+    if (grant.disposition === "continue" && grant.runId !== null) {
+      return { status: "rejected", reason: "continuation_requires_run_free_matter" };
+    }
 
     const evidence = this.kernel.recordEvidence({
       id: deriveSpcIdentifier(
@@ -80,29 +88,43 @@ export class ResidentLifePlanRevisionAuthority {
           this.residentId,
           grant.matterId,
           grant.runId ?? "run-free",
+          grant.disposition,
           String(grant.semanticRevision),
         ].join("|"),
         String(tick),
       ),
       tick,
-      kind: "resident_relinquished_matter",
+      kind: grant.disposition === "continue"
+        ? "resident_continued_matter"
+        : "resident_relinquished_matter",
       summary:
-        `${grant.reason} · relinquished ${grant.matterId} · causal support `
+        `${grant.reason} · ${grant.disposition === "continue" ? "continued" : "relinquished"} ${grant.matterId} · causal support `
         + grant.supportEvidenceIds.join(", "),
     });
 
-    // Semantic revision first makes any still-live run stale before terminalization.
-    // A run-free blocked matter has already reconciled its factual run; cancellation
-    // here records resident-owned plan revision rather than mechanical completion.
+    // Every admitted review advances the semantic revision against exact resident
+    // evidence. Relinquishment then terminalizes. Continuation deliberately leaves
+    // the reviewed matter active and run-free; a separate execution authority must
+    // decide whether a new run can legally acquire the body.
     this.kernel.advanceSemanticContext(grant.matterId, evidence.id);
-    const cancelled = this.kernel.cancelMatter(grant.matterId);
-    if (grant.runId !== null) this.kernel.retireRun(grant.runId);
+    if (grant.disposition === "relinquish") {
+      const cancelled = this.kernel.cancelMatter(grant.matterId);
+      if (grant.runId !== null) this.kernel.retireRun(grant.runId);
+      return {
+        status: "applied",
+        disposition: grant.disposition,
+        evidence: structuredClone(evidence),
+        matter: this.kernel.matter(cancelled.id)!,
+        retiredRunId: grant.runId,
+      };
+    }
 
     return {
       status: "applied",
+      disposition: grant.disposition,
       evidence: structuredClone(evidence),
-      matter: this.kernel.matter(cancelled.id)!,
-      retiredRunId: grant.runId,
+      matter: this.kernel.matter(grant.matterId)!,
+      retiredRunId: null,
     };
   }
 }
