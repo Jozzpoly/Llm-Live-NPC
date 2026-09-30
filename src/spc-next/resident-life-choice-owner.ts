@@ -55,7 +55,7 @@ export interface ResidentLifeChoiceAttempt {
 export interface ResidentLifePlanRevisionGrant {
   readonly residentId: string;
   readonly matterId: string;
-  readonly runId: string;
+  readonly runId: string | null;
   readonly semanticRevision: number;
   readonly reason: string;
   readonly supportEvidenceIds: readonly string[];
