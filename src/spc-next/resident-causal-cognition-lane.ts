@@ -16,6 +16,11 @@ import type {
   ResidentCausalLifeSubstrate,
 } from "./resident-causal-life-substrate";
 import type { ResidentLifeIntentProposal } from "./resident-life-intent-contract";
+import {
+  allowedPlanRevisionSupportEvidenceIds,
+  deriveResidentLifeChoiceCandidateSupports,
+} from "./resident-life-choice-causal-support";
+import { ResidentLifePlanRevisionAuthority } from "./resident-life-plan-revision-authority";
 
 export interface ResidentCausalCognitionRequest {
   readonly id: string;
@@ -143,6 +148,11 @@ export class ResidentCausalCognitionLane {
           matterId: string;
           outcomeEvidenceId: string;
           reason: string;
+        }
+      | {
+          kind: "relinquish_current";
+          matterId: string;
+          reason: string;
         };
 
     const settlement = this.life.lifeIntentOwner.settleCommitmentIntent<Admission>(
@@ -151,6 +161,74 @@ export class ResidentCausalCognitionLane {
       this.life.currentLifeView(),
       this.life.world.tick,
       (proposal, providerContext) => {
+        if (proposal.commitmentDecision.kind === "relinquish_matter") {
+          const decision = proposal.commitmentDecision;
+          if (originReason.kind !== "activity_completed" || originReason.evidenceIds.length !== 1) {
+            return {
+              status: "rejected",
+              detail: "single-plan relinquishment requires one exact factual outcome origin",
+            };
+          }
+          if (providerContext.life.body.focusedRunId !== null
+            || providerContext.life.body.deferredRunIds.length !== 0) {
+            return {
+              status: "rejected",
+              detail: "single-plan relinquishment requires a free body with no competing deferred demand",
+            };
+          }
+
+          const target = providerContext.life.matters.find(
+            (candidate) => candidate.id === decision.matterId,
+          ) ?? null;
+          const executableCurrent = providerContext.life.matters.filter((candidate) => (
+            candidate.status === "active"
+            && candidate.semanticIntent !== null
+            && (
+              candidate.semanticIntent.kind === "travel_region"
+              || candidate.semanticIntent.kind === "communicate_actor"
+              || candidate.semanticIntent.kind === "acquire_material_object"
+            )
+          ));
+          const outcomeEvidenceId = originReason.evidenceIds[0]!;
+          if (!target
+            || target.status !== "active"
+            || target.activeRun !== null
+            || executableCurrent.length !== 1
+            || executableCurrent[0]?.id !== target.id
+            || target.lastOutcomeEvidence?.id !== outcomeEvidenceId
+            || target.lastOutcomeEvidence.kind !== "task_outcome"
+            || target.lastOutcomeSemanticRevision !== target.semanticRevision) {
+            return {
+              status: "rejected",
+              detail: "single-plan relinquishment target is not the exact sole current run-free outcome-bearing plan",
+            };
+          }
+
+          const supports = deriveResidentLifeChoiceCandidateSupports(
+            providerContext.life,
+            [target.id],
+          );
+          const allowedSupport = new Set(
+            allowedPlanRevisionSupportEvidenceIds(supports, target.id),
+          );
+          if (!decision.supportEvidenceIds.includes(outcomeEvidenceId)
+            || decision.supportEvidenceIds.some((evidenceId) => !allowedSupport.has(evidenceId))) {
+            return {
+              status: "rejected",
+              detail: "single-plan relinquishment lacks exact target-local factual support",
+            };
+          }
+
+          return {
+            status: "accepted",
+            intent: {
+              kind: "relinquish_current",
+              matterId: target.id,
+              reason: decision.reason,
+            },
+          };
+        }
+
         if (proposal.commitmentDecision.kind === "complete_standing") {
           const completionDecision = proposal.commitmentDecision;
           if (originReason.kind !== "activity_completed" || originReason.evidenceIds.length !== 1) {
@@ -325,7 +403,16 @@ export class ResidentCausalCognitionLane {
 
     const admitted = settlement.intent;
     let commitment: AcceptedCommitment | null = null;
-    if (admitted.kind === "speech_travel") {
+    if (admitted.kind === "relinquish_current") {
+      const revision = new ResidentLifePlanRevisionAuthority(
+        this.life.residentId,
+        this.life.lifeIntentOwner,
+        this.life.kernel,
+      ).apply(settlement, this.life.world.tick);
+      if (revision.status !== "applied") {
+        throw new Error(`single-plan revision authority rejected admitted settlement: ${revision.reason}`);
+      }
+    } else if (admitted.kind === "speech_travel") {
       commitment = this.life.travelCommitments.materializePrivateSpeechCommitment({
         attempt: local.prepared.attempt,
         occurrence: admitted.occurrence,
@@ -377,7 +464,7 @@ export class ResidentCausalCognitionLane {
     this.life.resident.reconcileCognitionSettlement({
       batch: local.prepared.batch,
       originReasonId,
-      decision,
+      decision: decision === "relinquish_matter" ? "decline" : decision,
       tick: this.life.world.tick,
       ...(retainOriginUntilTick === undefined ? {} : { retainOriginUntilTick }),
     });
