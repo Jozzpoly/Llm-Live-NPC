@@ -11,6 +11,7 @@ import type {
   AcceptedResidentCausalTravelCommitment,
   GroundedResidentCausalTravelCommitmentIntent,
 } from "./resident-causal-travel-commitment";
+import { ResidentCausalExecutionCoordinator } from "./resident-causal-execution-coordinator";
 import type {
   PreparedResidentCausalLifeIntent,
   ResidentCausalLifeSubstrate,
