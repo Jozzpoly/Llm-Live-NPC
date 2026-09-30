@@ -32,6 +32,12 @@ export type ResidentLifeCommitmentDecision =
   | { kind: "defer"; reason: string }
   | { kind: "clarify"; reason: string; question: string }
   | {
+      kind: "continue_matter";
+      reason: string;
+      matterId: string;
+      supportEvidenceIds: readonly string[];
+    }
+  | {
       kind: "relinquish_matter";
       reason: string;
       matterId: string;
@@ -204,7 +210,7 @@ export function parseResidentLifeIntentProposal(
     };
   }
 
-  if (decision.kind === "relinquish_matter") {
+  if (decision.kind === "continue_matter" || decision.kind === "relinquish_matter") {
     if (!hasExactKeys(decision, ["kind", "reason", "matterId", "supportEvidenceIds"])
       || !isBoundedString(decision.matterId, 128)
       || !Array.isArray(decision.supportEvidenceIds)
@@ -220,7 +226,7 @@ export function parseResidentLifeIntentProposal(
     return {
       version: 1,
       commitmentDecision: {
-        kind: "relinquish_matter",
+        kind: decision.kind,
         reason: decision.reason,
         matterId: decision.matterId,
         supportEvidenceIds,
