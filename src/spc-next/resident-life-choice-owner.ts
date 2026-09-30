@@ -53,6 +53,7 @@ export interface ResidentLifeChoiceAttempt {
 }
 
 export interface ResidentLifePlanRevisionGrant {
+  readonly disposition: "continue" | "relinquish";
   readonly residentId: string;
   readonly matterId: string;
   readonly runId: string | null;
@@ -212,6 +213,7 @@ export class ResidentLifeChoiceOwner {
         throw new Error("resident plan revision target lost frozen run authority");
       }
       this.planRevisionGrants.set(settlement as object, {
+        disposition: "relinquish",
         residentId: attempt.residentId,
         matterId: target.id,
         runId: target.activeRun.runId,
