@@ -11,8 +11,8 @@ const REQUEST_TIMEOUT_MS = 45_000;
 const EXPECTED_MODEL = "gpt-5.6-luna";
 const MAX_PROVIDER_REQUESTS = 2;
 const MATTER = "matter.janek.r6.single-current-review.crate";
-const OUTCOME = "task-outcome:run.janek.r6.single-current-review.crate.semantic-1:900";
-const REASON = "reason-life-outcome:janek-r6-single-current-review-crate-900";
+const OUTCOME = "task-outcome:7770162ef150b16f:900";
+const REASON = "reason-life-outcome:d2182df65e450c5a";
 
 if (!BASE_URL) throw new Error("LIVE_PROVIDER_BASE_URL is required");
 if (!SOURCE_SHA) throw new Error("SOURCE_SHA is required");
