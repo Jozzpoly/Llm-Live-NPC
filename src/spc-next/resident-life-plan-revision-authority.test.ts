@@ -46,6 +46,7 @@ describe("ResidentLifePlanRevisionAuthority", () => {
     const applied = authority.apply(settlement, 61);
     expect(applied).toMatchObject({
       status: "applied",
+      disposition: "relinquish",
       evidence: {
         tick: 61,
         kind: "resident_relinquished_matter",
