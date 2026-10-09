@@ -118,6 +118,53 @@ describe("R6 situated lived-stake research — authored conditions, not authored
     });
     expect(fixture.life.resident.pendingCognitionReasons()).toEqual([]);
   });
+
+  it("the normal five-resident World tick can autonomously recognize a grounded personal concern when starting stewardship is opted in", () => {
+    const composition = createFiveResidentRegionComposition();
+    const world = composition.world;
+    const crate = world.materialObject(CRATE);
+    if (!crate || crate.location.kind !== "free") throw new Error("crate missing");
+    world.addPlayer(MOVER, crate.location.position, { maxSpeed: 100_000 });
+    const runtime = new FiveResidentCausalLifeRuntime(composition, {
+      materialStewardships: { "resident.janek": [CRATE] },
+    });
+    const life = runtime.life("resident.janek");
+    if (!life) throw new Error("Janek not claimed");
+    // This fixture does not manually invoke a relevance bridge; the identical
+    // normal causal resident tick owns World/perception/relevance phase order.
+    const fixture = { world, runtime, life, stewardship: null };
+    displaceByActualPlayerActions(fixture);
+
+    const pressures = life.resident.pendingCognitionReasons();
+    expect(pressures).toHaveLength(1);
+    expect(pressures[0]).toMatchObject({
+      kind: "uncertainty",
+      evidenceIds: expect.arrayContaining([
+        expect.stringMatching(/^evidence_stewardship_origin:/),
+        expect.stringMatching(/^evidence_stewardship_displacement:/),
+      ]),
+    });
+    expect(runtime.claimedResidentIds()).toContain("resident.janek");
+    expect(life.currentLifeView().matters).toEqual([]);
+    for (let i = 0; i < 100; i += 1) {
+      const tick = runtime.advanceOneWorldTick();
+      expect(tick.stewardshipRelevance["resident.janek"]).toBeUndefined();
+    }
+    expect(life.resident.pendingCognitionReasons()).toHaveLength(1);
+
+    const attempts = runtime.takeReadyLifeIntentAttempts();
+    expect(attempts.find((entry) =>
+      entry.residentId === "resident.janek",
+    )?.batch.reasons.map((reason) => reason.id)).toContain(pressures[0]!.id);
+
+    console.info("SPC_STAKE_INTEGRATED", JSON.stringify({
+      reasonId: pressures[0]!.id,
+      activeMatterCount: life.currentLifeView().matters.length,
+      residentWorldActions: world.diagnostics().recentMaterialActions
+        .filter((action) => action.actorId === "resident.janek").length,
+      modelCalls: 0,
+    }));
+  });
 });
 
 function setup(withStewardship: boolean) {
