@@ -9,6 +9,34 @@ That earlier document remains valuable historical evidence describing the state 
 
 The frozen runtime `c1816785c89b5403889a7c57498843ecbbb69b97` is preserved as an **immutable forensic failure specimen**. Its narrow technical qualifications remain valid within scope, but the broader claim that it represented a credible living-world candidate is rejected by later evidence.
 
+
+## 2026-10-09 canonical reassessment — living-NPC goal
+
+**Latest Owner product truth overrides all older roadmap and machine-result optimism.** The target is *living characters in a shared game world*, not simulated biological organisms, courier/firefighting task runners, or superior instrumentation around tedious behavior. Owner directly rejected Cognitive Ecology Lab on 2026-10-09: **PRODUCT FAIL / TERMINATED**. Its authored policy tests and CI cannot moderate that verdict or supply a successor architecture. Prior September SPC stress/Owner FAIL also remains binding: strong transport/authority tests did not produce convincing ordinary resident life.
+
+**Verified current source**, draft PR #148 head `b43a4e892b7d3ca3e4d440f923cd5806e8ef4ed2`:
+- Single-current-plan review is **already implemented/tested**; live Luna run #34 is recorded in `evidence/r6-single-current-plan-review-outcome-meaning-live-result.json`. Both factual-outcome variants select `relinquish_matter`; wording changes rationale/cadence but **not** action class. The frozen live evidence identifiers were noncanonical. Later canonical-id local replay is *not* one end-to-end provider provenance proof. Sections 7 and 13 below describe older execution stages; their claim that single-plan reappraisal is still unimplemented is superseded.
+- The public five-resident starting World (`src/spc-next/five-resident-region.ts`) has **one physical material object**; residents' scripted initial paths finish dispersed. Nearest authored completion pair Mira–Janek is ~851 world units apart versus default sight radius 520. **This calculation concerns authored completions, not all possible real-model subsequent movements**.
+- `FiveResidentCausalLifeRuntime` permanently claims residents after scripted opening. Its provider-free integration test verifies bodies then stay motionless with no accepted recovered matters. This does not prove provider-enabled residents always remain motionless. Importantly, successful terminal recovered actions intentionally do **not** create endless higher-cognition reasons (`ResidentCausalExecutionCoordinator.finishRun`), preventing the observed September cognition treadmill. But the current resident-local intelligence does not yet sustain compelling independent ordinary-life goals, social encounters, and practical continuations in its place.
+- Main R6 executor (`resident-causal-execution-coordinator.ts`) only executes known-region travel, actor communication, and bounded object pickup. Older local `src/living/runtime.ts` contains additional embodied search/follow/fetch/drop procedures, and `resident-local-material-delivery-routine.ts` has an unintegrated carry/place donor. **Donor existence is not automatic parity or permission to copy obsolete semantics.**
+- Current strict five-resident Worker guidance constrains accepted bodily acts primarily to familiar-region travel, known-actor communication, idle and narrowly supported material acquisition. `FIVE_RESIDENT_LIFE_SELF` contains authored role/drives prose, not earned, ongoing resident-private self-interests. The real-model provider can make excellent bounded choices, but no one has demonstrated that these components yield intrinsically interesting, self-directed, continuous, shared-world NPC lives.
+- Draft **PR #149**, `experiment/r6-private-encounter-relevance-20261009`, at `fded5b80fcfc273bce08d8f0cfe4566b50219ed5`, wires existing actor-relative private sight relevance into the five-resident runtime. **Mechanistic-only**: 1072/1072 tests and typecheck/build PASS, Browser Evidence regression PASS at an earlier change; final head browser run was still in progress at the previous audit. It does not create resident motives, spontaneous conversations, real Luna choice, or Owner-visible aliveness. Remains draft/unmerged; do not treat it as an earned product capability or use machine PASS to justify merging.
+
+### Revised evidence-to-development rule
+
+**Main bottleneck is missing situated, continuing agency in a causally sparse World**, not missing dashboards, prompt cleverness, more provider calls, scripted tours or a longer run of predetermined activities. The old and new systems each have different valuable capabilities; neither is an accepted living-NPC product.
+
+Before promoting the next feature:
+1. Observe the existing five-resident runtime **without prescribing desired behavior** and explicitly separate legitimate quiet from practical/cognitive inertness. Identify resident-owned *reasons* to pursue matters, act locally, remember and change course.
+2. Select a compact but genuinely consequential **shared-world ordinary-life situation** with more than task completion: NPC–NPC encounter, material affordance, private knowledge, competing interests/obligations and factual afterstate. Authored starting circumstances are legitimate; authored desired decisions/outcome are not. The World must be a causal place, not a plot script.
+3. Test which missing link *causes* the absence of life: sparse real affordances, thin local competence, missing self-relative purpose/relevance, action-vocabulary bottleneck, or semantic-provider wiring. Import old donor skills **only after the lived-behavior failure earns them**.
+4. Make the NPC's own unforced decisions and physical/social consequences the unit of progress. Confirm provider provenance separately. No fake model decisions credited as agency, no provider-request volume credited as life.
+5. Retain performance/budget/regression evidence as narrower controls. **Owner's unscripted observed game experience alone can qualify or reject the product-level result.** Do not prepare another Owner demo on the strength of test green.
+
+**Current product verdict: NOT OWNER-QUALIFIED LIVING NPC.**
+**Current plan verdict: PR #149 is bounded research only, not the next release. R6 remains draft.** This checkpoint supersedes obsolete 'next single-current-plan reappraisal' work order below without erasing its historical evidence.
+
+
 ---
 
 ## 1. Product truth
