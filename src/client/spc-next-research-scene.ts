@@ -171,7 +171,25 @@ export class SpcNextResearchScene extends Phaser.Scene {
     this.syncActorViews();
     this.syncMaterialViews();
     if (this.materialFeedback && this.world.tick >= this.materialFeedbackUntilTick) {
-      this.materialFeedback.setVisible(false);
+      // Surface physical affordances already in the authoritative World;
+      // this hints at controls, never grants an interaction or invents a task.
+      const player = this.snapshot.actors.find((actor) => actor.id === PLAYER_ID);
+      const objects = this.world.materialObjects();
+      const held = objects.find((object) =>
+        object.location.kind === "held" && object.location.actorId === PLAYER_ID);
+      const near = player && !held
+        ? objects.filter((object) => object.location.kind === "free")
+            .filter((object) => object.location.kind === "free"
+              && Phaser.Math.Distance.Between(
+                player.position.x, player.position.y,
+                object.location.position.x, object.location.position.y,
+              ) <= 64)
+            .sort((a, b) => a.id.localeCompare(b.id))[0]
+        : null;
+      const prompt = held ? "E — Odłóż: " + held.label
+        : near ? "E — Podnieś: " + near.label
+        : "";
+      this.materialFeedback.setText(prompt).setVisible(prompt.length > 0);
     }
     this.syncSpeechViews();
     this.drawResearchOverlay();
