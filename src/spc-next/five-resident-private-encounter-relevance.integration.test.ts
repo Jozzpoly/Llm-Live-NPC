@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { createFiveResidentRegionComposition } from "./five-resident-region";
 import { FiveResidentCausalLifeRuntime } from "./five-resident-causal-life-runtime";
+import { ResidentCausalCognitionLane } from "./resident-causal-cognition-lane";
 
 const RESIDENT = "resident.janek";
 const VISITOR = "player.private-contact-witness";
@@ -112,6 +113,66 @@ describe("five-resident recovered life — actor-relative ordinary encounter",()
     for(let i=0;i<30;i++)history.runtime.advanceOneWorldTick();
     expect(history.life.resident.pendingCognitionReasons()
       .filter(reason=>reason.id===before)).toHaveLength(1);
+  });
+  it("can turn the earned private encounter into a provider-decided, World-factual resident follow-up",()=>{
+    const {runtime,life,standingId,matching,enter}=setup(true);
+    expect(matching).toHaveLength(1);
+    const cognition=new ResidentCausalCognitionLane(life);
+    let request=cognition.takeReadyRequest();
+    for(let i=0;i<120&&!request;i++){
+      runtime.advanceOneWorldTick();
+      request=cognition.takeReadyRequest();
+    }
+    expect(request).not.toBeNull();
+    if(!request||!standingId||!enter)throw new Error("private encounter produced no valid cognition origin");
+
+    const reason=request.batch.reasons.find(r=>r.id===matching[0]!.id);
+    expect(reason).toMatchObject({
+      kind:"uncertainty",
+      evidenceIds: expect.arrayContaining([enter.id,standingId]),
+    });
+    if(!reason)throw new Error("encounter reason was not admitted to the same resident's cognition batch");
+
+    expect(request.context.life.matters).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id:standingId,
+        semanticIntent: expect.objectContaining({
+          kind:"standing_social_commitment",
+          counterpartyActorId:VISITOR,
+        }),
+      }),
+    ]));
+
+    // Authored provider-shaped choice QUALIFIES MECHANICS ONLY. This is not a
+    // real-model inference; real higher cognition may accept, defer or ignore.
+    const followup="Wróciłeś. Pamiętam, że mieliśmy porozmawiać.";
+    const admitted=cognition.settleCommitment(request,{
+      version:1,
+      commitmentDecision:{
+        kind:"accept",
+        reason:"my own earlier factual social responsibility makes this familiar visitor meaningful",
+        intent:{
+          kind:"communicate",goal:"follow up on my earlier standing responsibility",
+          targetActorId:VISITOR,targetRegionId:null,targetPosition:null,text:followup,
+        },
+      },
+      beliefs:[],concerns:[],reviewAfterSeconds:30,
+    },reason.id);
+    expect(admitted.status).toBe("applied");
+    if(admitted.status!=="applied"||!admitted.commitment)throw new Error("semantic followup was not admitted");
+
+    let spoken=false;
+    for(let i=0;i<180&&!spoken;i++){
+      runtime.advanceOneWorldTick();
+      spoken=runtime.world.diagnostics().recentOccurrences.some(o=>
+        o.kind==="speech" && o.actorId===RESIDENT && o.text===followup
+          && o.addressedActorIds.includes(VISITOR),
+      );
+    }
+    expect(spoken).toBe(true);
+    expect(life.kernel.matter(admitted.commitment.matterId)).toMatchObject({
+      status:"resolved",activeRunId:null,
+    });
   });
   it("ending the exact commitment makes the same historical contact no longer demand semantic work",()=>{
     const {runtime,life,standingId,matching}=setup(true);
