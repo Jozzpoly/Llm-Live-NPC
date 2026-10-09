@@ -67,6 +67,66 @@ describe("R6 five-resident resident-owned purpose origin — negative controls",
     // reason to interact. Lack of a reason is not an instruction to chatter.
     console.info("SPC_ORIGIN_CONTROL_SPATIAL_ONLY", JSON.stringify(spatialOnly));
   });
+
+  it("a factual player-caused material change updates Janek's private knowledge without automatically creating an owned purpose", () => {
+    const composition = createFiveResidentRegionComposition();
+    const world = composition.world;
+    const runtime = new FiveResidentCausalLifeRuntime(composition);
+    const janek = runtime.life("resident.janek");
+    if (!janek) throw new Error("Janek was not claimed");
+    const crateId = "crate.workshop.01";
+    const initial = world.materialObject(crateId);
+    if (!initial || initial.location.kind !== "free") throw new Error("Workshop crate missing");
+
+    const mover = "player.material-negative-control";
+    world.addPlayer(mover, initial.location.position, { maxSpeed: 100_000 });
+    const pickup = world.attemptMaterialAction(mover, { kind: "pickup", objectId: crateId });
+    expect(pickup.status).toBe("succeeded");
+
+    // The participant physically carries the object; there is no authored NPC
+    // decision, no direct resident action and no synthetic "object changed" event.
+    const before = world.publicSnapshot().actors.find((actor) => actor.id === mover);
+    if (!before) throw new Error("World participant missing");
+    const dt = world.options.fixedDeltaSeconds;
+    world.setActorMotionIntent(mover, {
+      x: (2_090 - before.position.x) / dt,
+      y: (800 - before.position.y) / dt,
+    });
+    runtime.advanceOneWorldTick();
+    world.setActorMotionIntent(mover, { x: 0, y: 0 });
+    const current = world.publicSnapshot().actors.find((actor) => actor.id === mover);
+    if (!current) throw new Error("World participant disappeared");
+    const destination = { x: current.position.x + 32, y: current.position.y };
+    const place = world.attemptMaterialAction(mover, {
+      kind: "place",
+      objectId: crateId,
+      position: destination,
+    });
+    expect(place.status).toBe("succeeded");
+
+    for (let tick = 0; tick < 120; tick += 1) runtime.advanceOneWorldTick();
+    const objectAfter = world.materialObject(crateId);
+    if (!objectAfter || objectAfter.location.kind !== "free") {
+      throw new Error("Material World did not preserve the actual object placement");
+    }
+    expect(objectAfter.location.position).not.toEqual(initial.location.position);
+    expect(janek.materialKnowledge?.observation(crateId)).toMatchObject({
+      currentlyVisible: true,
+      lastKnownPosition: objectAfter.location.position,
+    });
+    expect(janek.currentLifeView().matters).toHaveLength(0);
+    expect(composition.runtimes["resident.janek"].pendingCognitionReasons()).toEqual([]);
+
+    // Negative test: World changed, the resident knows it changed, and it still
+    // does not imply that every familiar object creates a new personal task.
+    console.info("SPC_ORIGIN_CONTROL_MATERIAL_ONLY", JSON.stringify({
+      materialActionCount: world.diagnostics().recentMaterialActions.length,
+      finalWorldPosition: objectAfter.location.position,
+      knownPosition: janek.materialKnowledge?.observation(crateId)?.lastKnownPosition,
+      janekMatters: janek.currentLifeView().matters.length,
+      janekPendingReasons: composition.runtimes["resident.janek"].pendingCognitionReasons().length,
+    }));
+  });
 });
 
 function observe(spatialOnly: boolean) {
