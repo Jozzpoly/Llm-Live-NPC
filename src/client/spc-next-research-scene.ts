@@ -248,6 +248,11 @@ export class SpcNextResearchScene extends Phaser.Scene {
     return this.buildFrame();
   }
 
+  /** World-public material truth, available only to explicit browser evidence callers. */
+  currentWorldMaterialObjects() {
+    return this.world.materialObjects();
+  }
+
   currentCanonicalEvidenceSnapshot(): SpcCanonicalEvidenceSnapshotV1 {
     if (!this.manualWorldControl) {
       throw new Error("canonical evidence snapshot is available only in evidence control mode");
