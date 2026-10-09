@@ -52,6 +52,7 @@ describe("ResidentMaterialKnowledge", () => {
       lastKnownPosition: { x: 200, y: 100 },
       observedAtTick: 0,
       currentlyVisible: false,
+      observedLocationKind: "free", // stale private knowledge; no hidden-World update
     });
   });
 
@@ -87,6 +88,7 @@ describe("ResidentMaterialKnowledge", () => {
       objectId: "crate.workshop.01",
       lastKnownPosition: helper.position,
       currentlyVisible: true,
+      observedLocationKind: "held",
     });
     expect(observation).not.toHaveProperty("holderId");
     expect(observation).not.toHaveProperty("actorId");
