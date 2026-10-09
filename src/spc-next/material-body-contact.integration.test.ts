@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resolveMaterialBodyMotion } from "./material-body-contact";
+import { facingRelativePlacement, resolveMaterialBodyMotion } from "./material-body-contact";
 import { createFiveResidentRegionComposition } from "./five-resident-region";
 
 const CRATE = "crate.workshop.01";
@@ -90,6 +90,42 @@ describe("pre-Luna opt-in material topology: free crate is a World body obstruct
     expect(world.materialObject(CRATE)?.location).toMatchObject({
       kind: "held", actorId: PLAYER,
     });
+  });
+
+  it("uses an actor's real persistent facing for a directional World-validated drop", () => {
+    const world = createFiveResidentRegionComposition({
+      materialBodyCollision: true,
+      playerStart: { x: 1_905, y: 700 },
+    }).world;
+    expect(world.attemptMaterialAction(PLAYER, {
+      kind: "pickup", objectId: CRATE,
+    }).status).toBe("succeeded");
+
+    world.setActorMotionIntent(PLAYER, { x: -150, y: 0 });
+    for (let tick = 0; tick < 12; tick += 1) world.step();
+    world.setActorMotionIntent(PLAYER, { x: 0, y: 0 });
+    world.step();
+    const player = world.publicSnapshot().actors.find((actor) => actor.id === PLAYER)!;
+    expect(player.facing.x).toBeCloseTo(-1);
+    expect(player.velocity).toEqual({ x: 0, y: 0 });
+    const placement = facingRelativePlacement(player.position, player.facing, 42);
+    expect(placement.x).toBeLessThan(player.position.x - 41.9);
+    expect(placement.y).toBeCloseTo(player.position.y);
+    expect(facingRelativePlacement({ x: 12, y: 12 }, { x: 0, y: -7 }, 42))
+      .toEqual({ x: 12, y: -30 });
+
+    // UI proposes; the actual World retains control over whether the request
+    // may be executed. No client-relative teleport or object mutation bypass.
+    expect(world.attemptMaterialAction(PLAYER, {
+      kind: "place", objectId: CRATE, position: placement,
+    })).toMatchObject({ status: "succeeded", code: "placed" });
+    expect(world.materialObject(CRATE)?.location).toMatchObject({
+      kind: "free", position: placement,
+    });
+    world.setActorMotionIntent(PLAYER, { x: -150, y: 0 });
+    for (let tick = 0; tick < 30; tick += 1) world.step();
+    const obstructed = world.publicSnapshot().actors.find((actor) => actor.id === PLAYER)!;
+    expect(obstructed.position.x).toBeGreaterThan(placement.x + 35.9);
   });
 
   it("is absent from canonical R6 default World; no hidden semantic or physical upgrade", () => {
