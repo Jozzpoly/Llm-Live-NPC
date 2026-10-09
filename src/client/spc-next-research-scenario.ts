@@ -896,7 +896,12 @@ function createR6MiraStandingSocialCommitmentScenario(): SpcNextResearchScenario
  * It is intentionally distinct from the provider-enabled "unified-living" mode.
  */
 function createFiveResidentLocalScenario(): SpcNextResearchScenario {
-  const composition = createFiveResidentRegionComposition();
+  // Only the owner-facing pre-Luna material slice starts beside the workshop.
+  // The five NPCs and their own authored openings are otherwise untouched.
+  const composition = createFiveResidentRegionComposition({
+    playerStart: { x: 1_810, y: 705 },
+    materialBodyCollision: true,
+  });
   const local = new FiveResidentCausalLifeRuntime(composition);
   const janek = local.life("resident.janek");
   if (!janek) throw new Error("local world must claim idle Janek at construction");
