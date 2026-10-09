@@ -161,7 +161,7 @@ async function main() {
     // crate obstructs, pickup opens the route, placing closes it elsewhere.
     const material = async () => await evaluate(cdp, "window.__SPC_EVIDENCE__.materialObjects()");
     const key = async (code, down) => {
-      const keys = { KeyD: ["d", 68], KeyE: ["e", 69], KeyS: ["s", 83] };
+      const keys = { KeyA: ["a", 65], KeyD: ["d", 68], KeyE: ["e", 69], KeyS: ["s", 83] };
       const [letter, virtual] = keys[code] ?? [];
       if (!letter || !virtual) throw new Error("unknown browser evidence key: " + code);
       await cdp.send("Input.dispatchKeyEvent", {
@@ -219,8 +219,38 @@ async function main() {
     assert(report, "new crate position immediately obstructs the body again",
       reblockedX > throughX && reblockedX < placed.location.position.x - 35.9,
       { reblockedX, placed });
+    // A second real pickup and an about-face test the browser input binding:
+    // the object must be placed in front of the body's current physical facing,
+    // NOT teleported to the right of the screen.
+    await key("KeyE", true);
+    await sleep(110);
+    await key("KeyE", false);
+    await sleep(70);
+    const reacquired = (await material()).find((object) => object.id === "crate.workshop.01");
+    assert(report, "same physical crate can be reacquired from its moved location",
+      reacquired?.location?.kind === "held"
+        && reacquired?.location?.actorId === "player.jozz", reacquired);
+    await key("KeyA", true);
+    await sleep(70);
+    const reversing = await evaluate(cdp, "window.__SPC_EVIDENCE__.stepWorld(50)");
+    await key("KeyA", false);
+    const reversingPlayer = reversing.snapshot.actors.find((actor) => actor.id === "player.jozz");
+    assert(report, "player's physical facing reverses while carrying",
+      reversingPlayer?.facing.x < -0.99, reversingPlayer);
+    await key("KeyE", true);
+    await sleep(110);
+    await key("KeyE", false);
+    await sleep(70);
+    const facingDrop = (await material()).find((object) => object.id === "crate.workshop.01");
+    assert(report, "browser E drops on body's left when actually facing left",
+      facingDrop?.location?.kind === "free"
+        && facingDrop.location.position.x < reversingPlayer.position.x - 35,
+      { facingDrop, player: reversingPlayer });
+
     report.world.materialContact = {
-      blockedX, throughX, reblockedX, cratePosition: placed.location.position,
+      blockedX, throughX, reblockedX,
+      cratePosition: placed.location.position,
+      reverseFacingDrop: facingDrop.location.position,
     };
 
     await cdp.send("Page.navigate", { url: BASE_URL + "/?spc=1&scenario=five-resident-local" });
