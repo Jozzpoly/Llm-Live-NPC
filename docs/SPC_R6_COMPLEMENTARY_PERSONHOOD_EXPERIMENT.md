@@ -943,3 +943,28 @@ R6 is moving toward the question that matters more than any green provider trace
 > If nobody tells this resident what to do, does their accumulated private life make them behave like **someone** rather than like a safe orchestration pipeline?
 
 Do not claim that target has been reached until Owner-observed ordinary life supports it.
+
+## 13. Latest source checkpoint — 2026-10-09 · Owner-level behavior first
+
+This section supersedes the historic prospective `single-current-plan` wording in sections 7.11 and 11 **only as to stage progress**; their technical background and older findings remain valid within scope.
+
+### Already executed — do not implement again
+
+At current R6 draft-branch source `888cbdea4530dbbc125c93b57a0614170547d878`:
+
+- `r6-single-current-plan-reappraisal-gap.characterization.test.ts` and `r6-single-current-plan-reappraisal.integration.test.ts` exercise event-driven, exact-outcome review of the **only current resident-owned plan**, with explicit `continue_matter` or `relinquish_matter`, local authority, and World-owned blocked material outcome.
+- The actual provider result in `evidence/r6-single-current-plan-review-outcome-meaning-live-result.json` records **run #34**, two GPT-5.6 Luna calls, zero retries, no reroll: both blocked-outcome twins chose `relinquish_matter` with typed factual citations. The outcome wording affected rationale/review cadence but **did not** differentiate decision kind. This is a **bounded positive single-plan provider action**, not a demonstrated differential decision or living NPC.
+- The frozen run-#34 ids were **not** canonical kernel-derived ids. `r6-single-current-plan-live-provider-canonicalized-replay.integration.test.ts` deliberately substitutes actual derived ids and proves local admission/revision. That local replay and prior provider observations **must not** be merged into a claim of one exact end-to-end real-provider run with native provenance.
+- Exact R6 current-source GitHub Actions **Check #36789093803 PASS** and **Browser Evidence #36789093929 PASS** on that SHA. Neither qualifies natural resident life or Owner experience.
+
+### Correct next frontier — serious NPC life, not another decision micro-fixture
+
+The separate Cognitive Ecology Lab was **categorically rejected by Owner on 2026-10-09** because courier/firefighting/task-switching algorithms, despite extensive UI and passing tests, produced no interesting, convincingly cognitive **living NPC** behavior. This is an authoritative warning **against optimizing instruments instead of the subject**.
+
+The current five-resident public `unified-living` composition starts with authored movement. The provider-free life-runtime test explicitly proves that after its actors finish initial activity and are claimed into recovered causal execution, **they remain stationary without further locally grounded matters**. This test is deliberately provider-free; it is not a measured verdict on open-ended real-model dynamics.
+
+The next high-information goal is a coherent, world-visible **whole-life episode** rather than another paired prompt case: multiple residents inhabit one space, carry private continuing reasons, change ordinary actions because of lived World/counterparty consequences, initiate or decline interaction without perpetual player prompting, survive interruption and time apart, and leave observable material/social afterstate. Local brain should handle ordinary attention/reaction/execution; live higher cognition contributes semantic decisions where genuinely valuable. No fake provider output and no periodic request treadmill.
+
+Do not pre-script the wanted actions, hardcode named-resident choices, use random wandering as autonomy, assume a task runner is a person, or hide missing behavior behind the microscope. A world-only, unscripted Owner assessment is the product gate; a bounded implementation/test is only diagnostic until then.
+
+The **implementation path is not frozen** by this checkpoint. Re-evaluate the actual live scene, source authority, existing donors and demonstrated failure before adding code. Avoid another broad documentation/polish campaign. R6 remains draft; never merge on machine PASS alone.

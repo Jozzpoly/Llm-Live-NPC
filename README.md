@@ -2,6 +2,16 @@
 
 Experimental web laboratory for **persistent embodied residents whose cognition may use LLMs without letting the model become the world, the physics engine or the per-frame controller**.
 
+### Product-truth checkpoint — 2026-10-09 (latest Owner correction)
+
+**Owner north star: living NPC residents in a game world; not biology, couriers, incident dispatch, a richer research UI or mere algorithmic movement.** A separate cognitive lab was categorically rejected by Owner after machine-green task-executor demos. Do not import that prototype, its roadmap, its positive wording or its experimental carrier into this project. Living-world experience and genuinely changed NPC behavior outrank every technical PASS.
+
+**Source/history correction:** current R6 branch already contains `src/spc-next/r6-single-current-plan-reappraisal.integration.test.ts`, `src/spc-next/r6-single-current-plan-live-provider-canonicalized-replay.integration.test.ts` and real model evidence `evidence/r6-single-current-plan-review-outcome-meaning-live-result.json` (run #34). Earlier contract wording saying that single-current-plan reconsideration has yet to be implemented is now historical, not current execution state. See the appended current-source checkpoint in the R6 contract.
+
+**Research/Owner distinction:** the live five-resident unified runtime has genuine provider transport and resident-local World admission, but existing success claims center on bounded execution and paired decision fixtures. There is no Owner-qualified open-ended, spontaneously consequential, multi-resident ordinary-life experience. The provider-free integration test explicitly checks that actors become stationary after authored opening handoff with no recovered matters; this is a *no-provider control* and cannot alone establish that a live provider-controlled runtime is stationary.
+
+The next substantive proof must put actual private-world history, real model decisions where materially necessary and local embodied competence together in **sustained ordinary resident-to-resident and resident-to-world behavior**, without turning that pressure into automated provider churn or scripted tours. First test the world-only behavior; use the research lens only to explain it. Do not route Owner into another tiny isolated fixture as though it were a living NPC milestone.
+
 ## Current execution authority
 
 Active integration line:
