@@ -899,7 +899,7 @@ function createFiveResidentLocalScenario(): SpcNextResearchScenario {
   // Only the owner-facing pre-Luna material slice starts beside the workshop.
   // The five NPCs and their own authored openings are otherwise untouched.
   const composition = createFiveResidentRegionComposition({
-    playerStart: { x: 1_810, y: 720 },
+    playerStart: { x: 1_810, y: 705 },
     materialBodyCollision: true,
   });
   const local = new FiveResidentCausalLifeRuntime(composition);
