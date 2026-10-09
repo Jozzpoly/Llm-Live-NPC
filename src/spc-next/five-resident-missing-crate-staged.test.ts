@@ -25,6 +25,7 @@ describe("staged missing-crate causal boundary", () => {
       lastKnownPosition: { x: 1_952, y: 720 },
       observedAtTick: 0,
       currentlyVisible: false,
+      observedLocationKind: "free", // stale private observation, not a hidden-World refresh
     }]);
     expect(slice.kernel.matter(MATTER_ID)).toMatchObject({
       status: "active",
