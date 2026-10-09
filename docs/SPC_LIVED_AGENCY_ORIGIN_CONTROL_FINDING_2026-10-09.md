@@ -1,6 +1,6 @@
 # R6 — World-only resident-origin negative control — 2026-10-09
 
-**Authority / status:** SOURCE-LEVEL DIAGNOSTIC NEGATIVE, **not** Owner-level NPC-life qualification. Execution branch `research/r6-lived-agency-origin-control-20261009`, draft PR #151; parent R6 draft PR #148. Canonical product truth remains `docs/SPC_POST_STRESS_RECOVERY_PROGRAM.md`. This finding may be carried forward without merging test code until a broader integrated decision has been earned.
+**Authority / status:** SOURCE-LEVEL NEGATIVE CONTROLS + BOUNDED EXPERIMENTAL RELEVANCE PASS; **not** Owner-level NPC-life qualification. Execution branch `research/r6-lived-agency-origin-control-20261009`, draft PR #151; parent R6 draft PR #148. Canonical product truth remains `docs/SPC_POST_STRESS_RECOVERY_PROGRAM.md`. This finding may be carried forward without merging test code until a broader integrated decision has been earned.
 
 ## Question
 
@@ -53,6 +53,23 @@ This further isolates the *first personal-stake/meaning* gap from World material
 - `ResidentRuntime.completeActivity()` emits `activity_completed` reasons for authored opening completion; Janek begins idle and has **zero** reasons. Without an incoming cognition reason, the private `role/drives` prose is not even sent to higher cognition. That is an important *one-shot bootstrap and personal relevance* question, not a mandate for periodic provider polling.
 - Absence of initial task should not be "repaired" by treating every object or visual encounter as an obligation. R4-D intentionally showed material affordance does not automatically entail chore creation.
 - Already-existing positive control: `five-resident-causal-life-material-runtime.integration.test.ts` proves reacquisition → resident-recognized reason → test-supplied admitted intent → World pickup **when old matter and decisions are supplied**. This isolates a route for executing some existing purpose; it is **not** spontaneous origination of that purpose.
+
+## First bounded positive — private personal significance reaches the real resident scheduler (2026-10-09)
+
+**Source:** `research/r6-lived-agency-origin-control-20261009`, code head `e99e44d4eb3c1d6e41b06d4ff6e418268b0a81c5`. [Full Check #37998323582](https://github.com/Jozzpoly/Llm-Live-NPC/actions/runs/37998323582): **306/306 test files, 1076/1076 tests PASS**, typecheck/build/preview dry run. Separate Browser Evidence on that exact head was in progress at authoring; do not infer browser qualification from Check.
+
+**What was actually implemented and verified:**
+- `ResidentMaterialStewardshipRelevance` is a **research-only** optional private significance bridge. One explicitly authored starting relationship — Janek takes responsibility for the recognized workshop crate's familiar location — is grounded against a true private visual acquisition before any new event. The reference location is not read omnisciently from World. That authors *circumstances*, not Janek's later decisions.
+- With no starting personal stake, the very same legitimate player-caused pickup/move/place yields **zero** new Janek semantic reasons. With the stake enabled, a privately witnessed displacement yields **exactly one** `uncertainty` semantic reason with explicit `authored_stewardship_origin` + `private_material_displacement` provenance; repeated normal observations create no request treadmill. **Zero resident matters or resident actions are automatically created.**
+- Newly observed held/free state in `ResidentMaterialKnowledge` does **not** reveal holder identity; it stops treating an object still carried across the remembered workstation position as factually restored. Genuine witnessed placement back at that position invalidates the unresolved semantic pressure. Hidden relocation creates no omniscient pressure.
+- Most importantly, `FiveResidentCausalLifeRuntime` now contains an **opt-in**, default-off `materialStewardships` research configuration. The actual `advanceOneWorldTick()` world/perception/relevance pipeline can mint the resident-private reason and pass it to normal `takeReadyLifeIntentAttempts()`, **without manually invoking the bridge**, test-supplying a provider decision, or hijacking World/body authority. With the option omitted the existing R6 runtime is unchanged.
+- No real model was contacted; no autonomous proposal, social initiative, personally earned interest, World action or Owner-aliveness PASS is claimed.
+
+**What the result does NOT prove:** that inhabitants genuinely *develop* interests through their lives (the starting care relation is authored), that Luna will choose a meaningful action, that the limited R6 executor can carry out such an action, that the disposition is sustained through save/restore and cross-session history, or that multiple residents will spontaneously share a believable incident. The relevance bridge currently lives only as an experimental controlled opt-in.
+
+**Next causal bottleneck:** get personal stake *earned from prior factual resident-owned lived experience* (not injected as an authored policy) and test the specific valid options arising from it. Preserve deliberate non-action as a legitimate outcome. Next experiment should connect an earned stake, real higher cognition (only after independent budget safeguards), and a bodily/social consequence in a credible multi-resident episode. Do not repeat this source-level gate as a fake product milestone.
+
+---
 
 ## What remains UNTESTED
 
