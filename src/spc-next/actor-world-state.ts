@@ -1,6 +1,6 @@
 import { ChunkSpatialIndex, type SpatialQueryStats } from "./chunk-spatial-index";
 import type { MaterialObjectState } from "./material-world-state";
-import { resolveMaterialBodyMotion } from "./material-body-contact";
+import { MATERIAL_CARRY_SPEED_FACTOR, resolveMaterialBodyMotion } from "./material-body-contact";
 import type {
   ActorMotionConstraint,
   ActorMotionOutcome,
@@ -110,7 +110,14 @@ export class ActorWorldState {
         x: before.x + desiredVelocity.x * fixedDeltaSeconds,
         y: before.y + desiredVelocity.y * fixedDeltaSeconds,
       };
-      const boundedAfter = clampWorldPosition(intendedAfter, this.bounds);
+      const isCarrying = materialObstacles?.some((object) =>
+        object.location.kind === "held" && object.location.actorId === actorId) ?? false;
+      const loadFactor = isCarrying ? MATERIAL_CARRY_SPEED_FACTOR : 1;
+      const burdenedAfter = {
+        x: before.x + desiredVelocity.x * fixedDeltaSeconds * loadFactor,
+        y: before.y + desiredVelocity.y * fixedDeltaSeconds * loadFactor,
+      };
+      const boundedAfter = clampWorldPosition(burdenedAfter, this.bounds);
       const contact = materialObstacles
         ? resolveMaterialBodyMotion(before, boundedAfter, materialObstacles)
         : null;
@@ -120,7 +127,8 @@ export class ActorWorldState {
         y: (after.y - before.y) / fixedDeltaSeconds,
       });
       const constraints: ActorMotionConstraint[] = [];
-      if (!positionsEqual(boundedAfter, intendedAfter)) constraints.push("world_bounds");
+      if (!positionsEqual(boundedAfter, burdenedAfter)) constraints.push("world_bounds");
+      if (isCarrying && !positionsEqual(burdenedAfter, intendedAfter)) constraints.push("material_load");
       if (contact?.blockedByObjectId) constraints.push("material_object");
       const desiredDistance = Math.hypot(desiredVelocity.x, desiredVelocity.y) * fixedDeltaSeconds;
       const resolvedDistance = Math.hypot(after.x - before.x, after.y - before.y);
