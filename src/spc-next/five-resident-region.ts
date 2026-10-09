@@ -78,6 +78,8 @@ export type FiveResidentRuntimes = Readonly<Record<FiveResidentId, ResidentRunti
 export interface FiveResidentRegionWorldOptions {
   /** Authored participant start for bounded research specimens. Default preserves the baseline hearth start. */
   playerStart?: Vec2;
+  /** Optional pre-Luna embodiment experiment; keeps canonical R6 default unchanged. */
+  materialBodyCollision?: boolean;
 }
 
 export interface FiveResidentRegionComposition {
@@ -98,6 +100,7 @@ export function createFiveResidentRegionComposition(
     anchors: FIVE_RESIDENT_ANCHORS,
     chunkSize: 256,
     fixedDeltaSeconds: 1 / 60,
+    ...(options.materialBodyCollision ? { materialBodyCollision: true } : {}),
   });
 
   world.addPlayer("player.jozz", options.playerStart ?? { x: 620, y: 620 }, { maxSpeed: 150 });
