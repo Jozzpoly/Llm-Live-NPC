@@ -1,4 +1,5 @@
 import * as Phaser from "phaser";
+import { facingRelativePlacement } from "../spc-next/material-body-contact";
 import type { ResidentLifeCognitionView } from "../spc-next/resident-life-cognition-view";
 import type { FiveResidentLivingRuntimeDiagnostics } from "../spc-next/five-resident-unified-living-runtime";
 import type {
@@ -387,7 +388,9 @@ export class SpcNextResearchScene extends Phaser.Scene {
       const result = this.world.attemptMaterialAction(PLAYER_ID, {
         kind: "place",
         objectId: held.id,
-        position: { x: player.position.x + MATERIAL_PLACE_OFFSET, y: player.position.y },
+        position: this.scenario.kind === "five-resident-local"
+          ? facingRelativePlacement(player.position, player.facing, MATERIAL_PLACE_OFFSET)
+          : { x: player.position.x + MATERIAL_PLACE_OFFSET, y: player.position.y },
       });
       this.reportMaterialInteraction(result.status === "succeeded"
         ? "Odłożono: " + held.label
