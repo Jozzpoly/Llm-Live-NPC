@@ -95,8 +95,9 @@ function moveVisitor(runtime:FiveResidentCausalLifeRuntime,target:{x:number,y:nu
   world.setActorMotionIntent(VISITOR,{
     x:(target.x-current.x)/dt,y:(target.y-current.y)/dt,
   });
-  runtime.advanceOneWorldTick();
+  runtime.advanceOneWorldTick(); // World integrates the visitor's physical movement.
   world.setActorMotionIntent(VISITOR,{x:0,y:0});
+  runtime.advanceOneWorldTick(); // Next World tick samples sight from that new position.
 }
 describe("five-resident recovered life — actor-relative ordinary encounter",()=>{
   it("only factual resident-owned history turns the same new private sight into semantic relevance",()=>{
