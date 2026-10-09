@@ -113,6 +113,11 @@ export class SpcWorldRuntime {
     this.materialState = new MaterialWorldState({
       bounds: this.authoredOptions.bounds,
       interactionRange: MATERIAL_INTERACTION_RANGE,
+      // Only the explicitly opted-in material workshop uses solid contact.
+      // The authoritative World, not the player or resident, owns occupancy.
+      ...(this.authoredOptions.materialBodyCollision
+        ? { solidBodyPositions: () => this.actorState.snapshots().map((actor) => actor.position) }
+        : {}),
     });
     this.sightGeometry = new SightGeometry(this.authoredOptions.sightBlockers ?? []);
   }
@@ -480,7 +485,10 @@ export class SpcWorldRuntime {
       this.enforceResidentMotionAuthority(residentId);
     }
 
-    const motion = this.actorState.integrate(this.authoredOptions.fixedDeltaSeconds);
+    const motion = this.actorState.integrate(
+      this.authoredOptions.fixedDeltaSeconds,
+      this.authoredOptions.materialBodyCollision ? this.materialState.objects() : undefined,
+    );
     this.lastMotionOutcomes = structuredClone(motion);
     for (const outcome of motion) {
       const resident = this.residents.get(outcome.actorId);
