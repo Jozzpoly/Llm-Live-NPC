@@ -105,6 +105,67 @@ describe("pre-Luna opt-in material topology: free crate is a World body obstruct
       .not.toContain("material_object");
   });
 
+  it("makes a World-held object physically costly to carry, then restores normal pace when placed", () => {
+    const loadedComposition = createFiveResidentRegionComposition({
+      materialBodyCollision: true,
+      playerStart: { x: 1_905, y: 700 },
+    });
+    const ordinaryComposition = createFiveResidentRegionComposition({
+      materialBodyCollision: true,
+      playerStart: { x: 1_905, y: 700 },
+    });
+    const laden = loadedComposition.world;
+    const unladen = ordinaryComposition.world;
+    const getX = (world: typeof laden) =>
+      world.publicSnapshot().actors.find((actor) => actor.id === PLAYER)!.position.x;
+
+    expect(laden.attemptMaterialAction(PLAYER, {
+      kind: "pickup", objectId: CRATE,
+    })).toMatchObject({ status: "succeeded", code: "picked_up" });
+    for (const world of [laden, unladen]) {
+      world.setActorMotionIntent(PLAYER, { x: -150, y: 0 });
+      for (let tick = 0; tick < 60; tick += 1) world.step();
+    }
+    const loadedDistance = 1_905 - getX(laden);
+    const unladenDistance = 1_905 - getX(unladen);
+    expect(unladenDistance).toBeCloseTo(150, 4);
+    expect(loadedDistance).toBeCloseTo(102, 4);
+    expect(loadedDistance).toBeLessThan(unladenDistance);
+    const carryingOutcome = laden.diagnostics().lastMotionOutcomes
+      .find((outcome) => outcome.actorId === PLAYER)!;
+    expect(carryingOutcome.constraints).toEqual(["material_load"]);
+    expect(carryingOutcome.resolution).toBe("constrained");
+
+    laden.setActorMotionIntent(PLAYER, { x: 0, y: 0 });
+    laden.step();
+    expect(laden.diagnostics().lastMotionOutcomes.find((o) => o.actorId === PLAYER)?.constraints)
+      .toEqual([]);
+    const atRest = laden.publicSnapshot().actors.find((a) => a.id === PLAYER)!.position;
+    expect(laden.attemptMaterialAction(PLAYER, {
+      kind: "place", objectId: CRATE,
+      position: { x: atRest.x + 42, y: atRest.y },
+    })).toMatchObject({ status: "succeeded", code: "placed" });
+
+    const before = getX(laden);
+    laden.setActorMotionIntent(PLAYER, { x: -150, y: 0 });
+    for (let tick = 0; tick < 60; tick += 1) laden.step();
+    expect(before - getX(laden)).toBeCloseTo(150, 4);
+    expect(laden.diagnostics().lastMotionOutcomes.find((o) => o.actorId === PLAYER)?.constraints)
+      .not.toContain("material_load");
+    expect(laden.materialObject(CRATE)?.location).toMatchObject({ kind: "free" });
+
+    // Under the original R6 defaults, carrying never silently changes movement.
+    const canonical = createFiveResidentRegionComposition({
+      playerStart: { x: 1_905, y: 700 },
+    }).world;
+    expect(canonical.attemptMaterialAction(PLAYER, {
+      kind: "pickup", objectId: CRATE,
+    }).status).toBe("succeeded");
+    canonical.setActorMotionIntent(PLAYER, { x: -150, y: 0 });
+    for (let tick = 0; tick < 60; tick += 1) canonical.step();
+    expect(1_905 - getX(canonical)).toBeCloseTo(150, 4);
+  });
+
   it("does not tunnel through a free crate even with a high-speed World actor", () => {
     const obstacle = [{
       id: CRATE, label: "crate", radius: 18,
