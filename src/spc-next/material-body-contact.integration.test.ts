@@ -131,6 +131,48 @@ describe("pre-Luna opt-in material topology: free crate is a World body obstruct
     expect(obstructed.position.x).toBeGreaterThan(placement.x + 35.9);
   });
 
+  it("applies the same burden to a resident's factual carried material in authored locomotion", () => {
+    const make = (carrying: boolean) => {
+      const composition = createFiveResidentRegionComposition({
+        materialBodyCollision: true,
+      });
+      const world = composition.world;
+      if (carrying) world.addMaterialObject({
+        id: "crate.research.resident-held",
+        label: "Supply crate (initially carried research circumstance)",
+        radius: 14,
+        location: { kind: "held", actorId: "resident.janek" },
+      });
+      // Authored motor stimulus, NOT a genuine Janek decision or fake job.
+      world.setResidentActivity("resident.janek", {
+        id: "activity.janek.test-northward-travel",
+        kind: "travel",
+        targetActorId: null,
+        targetPosition: { x: 1_900, y: 570 },
+        text: null,
+        speed: 95,
+        reason: "bounded physical carrying locomotion test",
+      });
+      return world;
+    };
+    const loaded = make(true), free = make(false);
+    for (let i = 0; i < 45; i += 1) {
+      loaded.step();
+      free.step();
+    }
+    const y = (world: typeof loaded) => world.publicSnapshot().actors
+      .find((actor) => actor.id === "resident.janek")!.position.y;
+    expect(y(loaded)).toBeGreaterThan(y(free) + 15);
+    const loadedMotion = loaded.diagnostics().lastMotionOutcomes
+      .find((o) => o.actorId === "resident.janek");
+    expect(loadedMotion?.constraints).toContain("material_load");
+    expect(free.diagnostics().lastMotionOutcomes
+      .find((o) => o.actorId === "resident.janek")?.constraints)
+      .not.toContain("material_load");
+    expect(loaded.materialObject("crate.research.resident-held")?.location)
+      .toEqual({ kind: "held", actorId: "resident.janek" });
+  });
+
   it("is absent from canonical R6 default World; no hidden semantic or physical upgrade", () => {
     const composition = createFiveResidentRegionComposition({ playerStart: { x: 1_850, y: 720 } });
     const world = composition.world;
