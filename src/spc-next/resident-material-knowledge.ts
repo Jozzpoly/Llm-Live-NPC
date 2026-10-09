@@ -7,6 +7,8 @@ export interface ResidentKnownMaterialObject {
   lastKnownPosition: Vec2;
   observedAtTick: number;
   currentlyVisible: boolean;
+  /** Observed free/held state of the recognized visible object, never holder identity. */
+  observedLocationKind?: "free" | "held";
 }
 
 export interface ResidentMaterialCheckedAbsence {
@@ -61,6 +63,7 @@ export class ResidentMaterialKnowledge {
         lastKnownPosition: { ...visiblePosition },
         observedAtTick: this.world.tick,
         currentlyVisible: true,
+        observedLocationKind: object.location.kind,
       });
     }
 
