@@ -148,11 +148,13 @@ export class FiveResidentCausalLifeRuntime {
     // Do not look at omniscient World actor positions or replay old percepts as new.
     for (const residentId of this.claimedResidentIds()) {
       const lane = this.lanes.get(residentId)!;
-      const privateLife = lane.life.currentLifeView();
-      lane.relevance.reconcile(privateLife, this.world.tick);
-      for (const percept of this.world.residentDiagnostics(residentId).recentPercepts) {
-        if (percept.tick !== this.world.tick || percept.phenomenon !== "actor_sight_enter") continue;
-        lane.relevance.observe(percept, privateLife);
+      const sights = this.composition.runtimes[residentId].privateSightEntersAtTick(this.world.tick);
+      // Absent a new sight and with no previously owned relevant relation,
+      // do not construct the heavyweight per-resident historical life view.
+      if (sights.length > 0 || lane.relevance.activeMatterIds().length > 0) {
+        const privateLife = lane.life.currentLifeView();
+        lane.relevance.reconcile(privateLife, this.world.tick);
+        for (const percept of sights) lane.relevance.observe(percept, privateLife);
       }
       // Addressed contact can suspend the exact current run only after the
       // factual World percept, not through anticipation or global position.
