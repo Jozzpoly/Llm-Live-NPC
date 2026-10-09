@@ -157,6 +157,58 @@ async function main() {
     assert(report, "no resident-originated fictional matter from quiet alone", after.selectedLife?.matters.length === 0,
       { selectedLifeMatters: after.selectedLife?.matters.length });
     report.world = { initialTick: frame.snapshot.tick, finalTick: after.snapshot.tick, playerXBefore: xBefore, playerXAfter: xAfter };
+    // Live Chromium inputs and actual authoritative World changes: a free
+    // crate obstructs, pickup opens the route, placing closes it elsewhere.
+    const material = async () => await evaluate(cdp, "window.__SPC_EVIDENCE__.materialObjects()");
+    const key = async (code, down) => {
+      const virtual = code === "KeyD" ? 68 : 69;
+      await cdp.send("Input.dispatchKeyEvent", {
+        type: down ? "keyDown" : "keyUp",
+        key: code === "KeyD" ? "d" : "e",
+        code, windowsVirtualKeyCode: virtual, nativeVirtualKeyCode: virtual,
+      });
+    };
+    await key("KeyD", true);
+    await sleep(70);
+    const blocked = await evaluate(cdp, "window.__SPC_EVIDENCE__.stepWorld(110)");
+    await key("KeyD", false);
+    const blockedX = playerAt(blocked)?.x ?? -1;
+    assert(report, "real free crate obstructs keyboard-driven player passage", blockedX > 1_905
+      && blockedX < 1_922, { blockedX, material: await material() });
+    await key("KeyE", true);
+    await sleep(110);
+    await key("KeyE", false);
+    await sleep(70);
+    const held = (await material()).find((object) => object.id === "crate.workshop.01");
+    assert(report, "E physically picks up obstructing World crate", held?.location?.kind === "held"
+      && held?.location?.actorId === "player.jozz", held);
+
+    await key("KeyD", true);
+    await sleep(70);
+    const through = await evaluate(cdp, "window.__SPC_EVIDENCE__.stepWorld(95)");
+    await key("KeyD", false);
+    const throughX = playerAt(through)?.x ?? -1;
+    assert(report, "carried crate no longer blocks embodied passage", throughX > 2_100,
+      { throughX, oldCrateX: 1_952 });
+    await key("KeyE", true);
+    await sleep(110);
+    await key("KeyE", false);
+    await sleep(70);
+    const placed = (await material()).find((object) => object.id === "crate.workshop.01");
+    assert(report, "E physically places crate at an unoccupied new World location",
+      placed?.location?.kind === "free" && placed.location.position.x > throughX + 35,
+      placed);
+    await key("KeyD", true);
+    await sleep(70);
+    const reblocked = await evaluate(cdp, "window.__SPC_EVIDENCE__.stepWorld(70)");
+    await key("KeyD", false);
+    const reblockedX = playerAt(reblocked)?.x ?? -1;
+    assert(report, "new crate position immediately obstructs the body again",
+      reblockedX > throughX && reblockedX < placed.location.position.x - 35.9,
+      { reblockedX, placed });
+    report.world.materialContact = {
+      blockedX, throughX, reblockedX, cratePosition: placed.location.position,
+    };
 
     await cdp.send("Page.navigate", { url: BASE_URL + "/?spc=1&scenario=five-resident-local" });
     await waitFor(async () => await evaluate(cdp, "Boolean(document.querySelector('canvas') && document.querySelector('.spc-tick')?.textContent)"), "normal world-only play scene");
