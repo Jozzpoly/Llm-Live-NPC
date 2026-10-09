@@ -322,6 +322,7 @@ if (evidenceMode) {
       control: "manual-world";
       ready(): boolean;
       snapshot(): SpcNextResearchFrame;
+      materialObjects(): ReturnType<SpcNextResearchScene["currentWorldMaterialObjects"]>;
       canonicalSnapshot(): SpcCanonicalEvidenceSnapshotV1;
       stepWorld(steps?: number): SpcNextResearchFrame;
       scenarioAction(actionId: string): unknown;
