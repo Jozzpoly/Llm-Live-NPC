@@ -337,6 +337,7 @@ if (evidenceMode) {
       control: "manual-world" as const,
       ready: () => scene.evidenceReady(),
       snapshot: () => scene.currentFrame(),
+      materialObjects: () => scene.currentWorldMaterialObjects(),
       canonicalSnapshot: () => scene.currentCanonicalEvidenceSnapshot(),
       stepWorld: (steps = 1) => scene.stepEvidenceWorld(steps),
       scenarioAction: (actionId: string) => scene.runEvidenceScenarioAction(actionId),
