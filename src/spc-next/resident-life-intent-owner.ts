@@ -38,7 +38,7 @@ export type ResidentLifeSettlement<T, Proposal> =
     }
   | {
       status: "stale";
-      reason: "newer_addressed_attention" | "local_activity_changed_during_request" | "resident_life_changed_during_request";
+      reason: "newer_addressed_attention" | "local_activity_changed_during_request" | "resident_life_changed_during_request" | "semantic_pressure_changed_during_request";
     }
   | {
       status: "rejected";
@@ -55,6 +55,7 @@ export type ResidentLifeCommitmentSettlement<T> = ResidentLifeSettlement<T, Resi
 interface ActiveLifeIntentAttempt {
   attempt: ResidentLifeIntentAttempt;
   parserContext: ResidentCognitionContext;
+  semanticPressureInvalidationRevision: number;
 }
 
 /**
@@ -110,6 +111,7 @@ export class ResidentLifeIntentOwner {
     this.active = {
       attempt,
       parserContext: structuredClone(parserContext),
+      semanticPressureInvalidationRevision: this.resident.semanticPressureInvalidationRevision(),
     };
     return attempt;
   }
@@ -240,6 +242,16 @@ export class ResidentLifeIntentOwner {
     if (revision.activity !== attempt.revision.activity) {
       this.resident.requeueCognitionBatch(attempt.batch);
       return { status: "stale", reason: "local_activity_changed_during_request" };
+    }
+    // A World/resident-local fact may have settled the exact reason while the
+    // provider was thinking. Even a schema-valid proposal must not resurrect
+    // such work or produce an action from a now-obsolete private situation.
+    // Conservatively reject the batch if ANY outstanding pressure was settled;
+    // genuinely independent reasons survive the scheduler tombstone requeue.
+    if (this.resident.semanticPressureInvalidationRevision()
+      !== active.semanticPressureInvalidationRevision) {
+      this.resident.requeueCognitionBatch(attempt.batch);
+      return { status: "stale", reason: "semantic_pressure_changed_during_request" };
     }
     if (fingerprintLife(currentLife) !== attempt.lifeFingerprint) {
       this.resident.requeueCognitionBatch(attempt.batch);
