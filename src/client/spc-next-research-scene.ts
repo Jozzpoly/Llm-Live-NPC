@@ -542,7 +542,10 @@ export class SpcNextResearchScene extends Phaser.Scene {
         ? object.location.position
         : (() => {
             const holder = this.snapshot.actors.find((actor) => actor.id === object.location.actorId);
-            return holder ? { x: holder.position.x + 23, y: holder.position.y + 5 } : null;
+            if (!holder) return null;
+            return this.scenario.kind === "five-resident-local"
+              ? facingRelativePlacement(holder.position, holder.facing, 25)
+              : { x: holder.position.x + 23, y: holder.position.y + 5 };
           })();
       if (!position) continue;
 
