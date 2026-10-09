@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { facingRelativePlacement, resolveMaterialBodyMotion } from "./material-body-contact";
+import { MATERIAL_CARRY_SPEED_FACTOR, facingRelativePlacement, resolveMaterialBodyMotion } from "./material-body-contact";
 import { createFiveResidentRegionComposition } from "./five-resident-region";
 
 const CRATE = "crate.workshop.01";
@@ -34,7 +34,10 @@ describe("pre-Luna opt-in material topology: free crate is a World body obstruct
     world.setActorMotionIntent(PLAYER, { x: 150, y: 0 });
     for (let i = 0; i < 65; i += 1) world.step();
     const carrying = actor();
-    expect(carrying.position.x).toBeGreaterThan(2_055);
+    // The same crossing is slower because the body is carrying a real crate.
+    expect(carrying.position.x - obstructed.position.x)
+      .toBeCloseTo((65 * 150 / 60) * MATERIAL_CARRY_SPEED_FACTOR, 4);
+    expect(carrying.position.x).toBeGreaterThan(2_020);
     expect(world.diagnostics().lastMotionOutcomes.find((entry) => entry.actorId === PLAYER)?.constraints)
       .not.toContain("material_object");
 
