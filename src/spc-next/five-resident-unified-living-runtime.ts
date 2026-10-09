@@ -18,8 +18,16 @@ import {
   type FiveResidentRegionComposition,
 } from "./five-resident-region";
 import type { CognitionFetch } from "./resident-cognition-live-host";
+import {
+  createCognitionFetchHardBudget,
+  type CognitionFetchHardBudget,
+  type CognitionFetchHardBudgetSnapshot,
+} from "./cognition-fetch-hard-budget";
 
 const PROVIDER_EVENT_LIMIT = 128;
+
+/** Bounded default for an experimental live session, NOT a dollar/token spending limit. */
+export const DEFAULT_UNIFIED_LIVING_MAX_UPSTREAM_REQUESTS = 32;
 
 export interface FiveResidentLivingProviderEvent {
   sequence: number;
@@ -42,6 +50,7 @@ export interface FiveResidentLivingRuntimeDiagnostics {
   providerInFlightResidentIds: readonly string[];
   providerInboxCount: number;
   providerRequestCount: number;
+  providerHardBudget: CognitionFetchHardBudgetSnapshot;
   recentProviderEvents: readonly FiveResidentLivingProviderEvent[];
 }
 
@@ -50,6 +59,8 @@ export interface FiveResidentUnifiedLivingRuntimeOptions {
   maxConcurrentCognition?: number;
   endpoint?: string;
   fetcher?: CognitionFetch;
+  /** Deliberately finite; raise explicitly for a budgeted research campaign. */
+  maxUpstreamRequests?: number;
 }
 
 /**
@@ -71,6 +82,7 @@ export class FiveResidentUnifiedLivingRuntime {
   readonly lifeRuntime: FiveResidentCausalLifeRuntime;
   readonly cognition: FiveResidentCausalCognitionHost;
   readonly provider: FiveResidentCausalProviderTransport;
+  private readonly providerHardBudget: CognitionFetchHardBudget;
 
   private readonly arrivalInbox: FiveResidentCausalProviderArrival[] = [];
   private readonly providerInFlight = new Map<string, FiveResidentCausalCognitionRequest>();
@@ -85,9 +97,13 @@ export class FiveResidentUnifiedLivingRuntime {
       this.lifeRuntime,
       options.maxConcurrentCognition ?? 5,
     );
+    this.providerHardBudget = createCognitionFetchHardBudget(
+      options.fetcher ?? fetch,
+      options.maxUpstreamRequests ?? DEFAULT_UNIFIED_LIVING_MAX_UPSTREAM_REQUESTS,
+    );
     this.provider = new FiveResidentCausalProviderTransport(
       options.endpoint ?? "/api/spc-next/life-intent",
-      options.fetcher ?? fetch,
+      this.providerHardBudget.fetch,
     );
   }
 
@@ -112,6 +128,7 @@ export class FiveResidentUnifiedLivingRuntime {
         .sort(),
       providerInboxCount: this.arrivalInbox.length,
       providerRequestCount: this.providerRequestCount,
+      providerHardBudget: this.providerHardBudget.snapshot(),
       recentProviderEvents: this.recentProviderEvents.map((event) => structuredClone(event)),
     };
   }
@@ -129,6 +146,10 @@ export class FiveResidentUnifiedLivingRuntime {
   }
 
   private startReadyProviderRequests(): void {
+    // A session with exhausted physical upstream authority may keep running its
+    // World and local brain, but it must never generate further network attempts
+    // or an infinite provider-error/retry treadmill.
+    if (this.providerHardBudget.snapshot().exhausted) return;
     this.cognition.collectReadyBatches();
     for (const request of this.cognition.startReadyRequests()) {
       this.providerInFlight.set(request.id, request);
