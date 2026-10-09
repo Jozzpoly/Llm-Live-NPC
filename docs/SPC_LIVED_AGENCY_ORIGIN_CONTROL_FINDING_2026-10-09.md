@@ -30,6 +30,17 @@ Thus a real resident–resident visual encounter can occur while the existing, r
 
 This is a **negative diagnosis**; it is not evidence that every idle moment is pathological. Quiet is legitimate when a person has nothing meaningful to do.
 
+## Extended third control — factual material displacement, 2026-10-09
+
+Source `2f877317944d33e79d7a8937e6e1e2d6dc3a833b`, [GitHub Actions Check #37994093601](https://github.com/Jozzpoly/Llm-Live-NPC/actions/runs/37994093601): **PASS**, 305 files / 1072 tests. The third test does not fabricate a resident decision: a legitimate **player** performs actual World `pickup`, physically moves while holding the one recognized workshop crate, then performs actual World `place`. One continuous five-resident causal runtime advances and Janek samples the resulting material truth through its normal private observer.
+
+- 2 successful factual material actions;
+- final World crate position `{x:2122,y:800}`;
+- Janek's private `lastKnownPosition` **exactly** `{x:2122,y:800}`, currently visible;
+- Janek still has **0 resident-owned matters and 0 pending semantic reasons**.
+
+This further isolates the *first personal-stake/meaning* gap from World material action and perception wiring. It does **not** mean Janek ought to have reacted: no object-specific resident obligation or attachment existed. It also does not test autonomous NPC-NPC relocation, provider decisions, or long-horizon game-feel.
+
 ## Cause discrimination and role-capability audit
 
 **Not explained by physical isolation alone.** We forced the spatial condition without creating a social act or matter. It does *not* follow that physical distance is irrelevant to eventual dynamic lives; it only shows that one simple proximity change is insufficient in the no-provider control.
