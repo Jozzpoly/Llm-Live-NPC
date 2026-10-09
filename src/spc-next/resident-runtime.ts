@@ -130,6 +130,27 @@ export class ResidentRuntime {
     };
   }
 
+  /**
+   * Bounded, private, event-only handoff to the resident's causal-life layer.
+   * Do not clone full diagnostics/long percept history on every World frame.
+   * Only exact NEW World sight-enter events are eligible for matter relevance.
+   */
+  privateSightEntersAtTick(tick: number): ResidentPercept[] {
+    if (!Number.isSafeInteger(tick) || tick < 0) {
+      throw new Error("private sight tick must be a non-negative safe integer");
+    }
+    const observations: ResidentPercept[] = [];
+    for (let index = this.recentPercepts.length - 1; index >= 0; index -= 1) {
+      const p = this.recentPercepts[index]!;
+      if (p.tick < tick) break;
+      if (p.tick === tick && p.phenomenon === "actor_sight_enter") {
+        observations.push(structuredClone(p));
+      }
+    }
+    observations.reverse();
+    return observations;
+  }
+
   cognitionRevision(): ResidentCognitionRevision {
     return { attention: this.attentionRevisionValue, activity: this.activityRevisionValue };
   }
