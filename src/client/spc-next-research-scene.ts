@@ -781,6 +781,8 @@ function materialInteractionError(code: string): string {
     case "actor_already_holding": return "trzymasz już inny przedmiot";
     case "object_unavailable": return "przedmiot jest już zajęty";
     case "outside_world": return "miejsce jest poza światem";
+    case "body_occupied": return "stoi tu postać";
+    case "object_occupied": return "stoi tu inny przedmiot";
     default: return code;
   }
 }
