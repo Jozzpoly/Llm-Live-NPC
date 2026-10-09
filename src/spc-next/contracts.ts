@@ -61,7 +61,7 @@ export interface ActorState {
 }
 
 export type ActorMotionResolution = "full" | "constrained" | "blocked";
-export type ActorMotionConstraint = "world_bounds" | "material_object";
+export type ActorMotionConstraint = "world_bounds" | "material_object" | "material_load";
 
 /** Public physical causality for one actor in one World integration step. */
 export interface ActorMotionOutcome {
