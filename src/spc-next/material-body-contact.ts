@@ -12,6 +12,26 @@ export const MATERIAL_BODY_RADIUS = 18;
 /** Opt-in rough embodied burden: carrying a real crate reduces resolved speed. */
 export const MATERIAL_CARRY_SPEED_FACTOR = 0.68;
 
+/**
+ * UI-side placement suggestion along the actor's PHYSICAL facing.
+ * This is not permission to place: World still validates range, sight,
+ * other bodies and material. A rejected placement leaves possession intact.
+ */
+export function facingRelativePlacement(
+  position: Vec2,
+  facing: Vec2,
+  offset: number,
+): Vec2 {
+  if (![position.x, position.y, facing.x, facing.y, offset].every(Number.isFinite)
+    || offset <= 0) throw new Error("invalid facing-relative placement");
+  const length = Math.hypot(facing.x, facing.y);
+  if (length <= 1e-9) throw new Error("cannot place relative to zero facing");
+  return {
+    x: position.x + offset * facing.x / length,
+    y: position.y + offset * facing.y / length,
+  };
+}
+
 const EPSILON = 1e-5;
 const BACKOFF = 1e-4;
 
