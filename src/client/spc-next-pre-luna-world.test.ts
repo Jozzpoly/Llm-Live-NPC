@@ -53,7 +53,9 @@ describe("pre-Luna Owner world observation — actual R6 five-resident compositi
         y: crate.location.position.y - player.position.y,
       };
       const distance = Math.hypot(delta.x, delta.y);
-      if (distance < 30) {
+      // Solid World contact keeps the body outside crate radius + body radius.
+      // Reaching a pickup-range position, not its center, is the real goal.
+      if (distance < 54) {
         reached = true;
         break;
       }
@@ -88,6 +90,7 @@ describe("pre-Luna Owner world observation — actual R6 five-resident compositi
       .toMatchObject({ kind: "speech", addressedActorIds: ["resident.janek"] });
 
     expect(upstream).not.toHaveBeenCalled();
+    expect(world.options.materialBodyCollision).toBe(true);
     for (const id of [
       "resident.mira", "resident.janek", "resident.ida", "resident.oren", "resident.nela",
     ]) {
