@@ -84,6 +84,22 @@ This bug materially affects longer lived-world episodes: factual conditions can 
 
 ---
 
+## Five-resident whole-chain causal execution specimen — 2026-10-09
+
+**Code source `90c0f95b`, [Check #38002625776](https://github.com/Jozzpoly/Llm-Live-NPC/actions/runs/38002625776): 308/308 test files, 1078/1078 tests, typecheck/build/preview dry-run PASS.** Browser Evidence remains a separate qualification plane.
+
+- `FiveResidentUnifiedLivingRuntime` now accepts an optional `lifeOptions` research setting, forwarded to the real `FiveResidentCausalLifeRuntime`; **default remains unchanged and no hosted public preview has been promoted**.
+- New `five-resident-lived-stake-world-episode.integration.test.ts` runs one shared World, with a physically relocated object, Janek's explicitly authored/private material stewardship, factual semantic pressure, real async provider-transport and inbox admission boundaries, genuinely grounded and authorized resident movement/speech, an `accepted_cognition_commitment` matter and one factual World speech occurrence addressed to the player.
+- There was precisely **one injected upstream fetch**, zero paid/live model calls, and a **test-authored** commitment to speak to an actually recognized actor. The speech result is a **single resident utterance**, not a two-way conversation, an independently originated intention, a resident–resident shared life or a meaningful material resolution: the displaced crate remains displaced at `(2122,800)`.
+- Other four residents remain participants in the same composition, but this test does **not** establish they had new autonomous trajectories, counterparty reactions or independent interwoven decisions.
+- The earlier **red → green** test for settled pressure during provider latency remains an explicit guard against using a stale semantic response to move/speak after an issue disappeared.
+
+**Interpretation:** the source integration seam is now demonstrably available from factual World pressure to a consequential World action when a candidate decision exists. The remaining central problem is **quality and origin of that decision**, and missing physical affordances for independently meaningful work. The next body frontier should be earned by a real resident-owned need, not by auto-moving a crate or scripting another conversation. The living-world Owner FAIL remains unchanged.
+
+**Campaign guard:** no uncontrolled live-model test. PR #150's separate per-session max-upstream proposal still does not enforce account-wide USD/tokens or session-reset safety; before using real Luna, explicitly implement/verify independent hard budget enforcement and finite local/test request count, and keep model results distinct from local mechanism PASS. Do not infer a server hard spend cap from a green CI test.
+
+---
+
 ## What remains UNTESTED
 
 - A real model could take `activity_completed` reasons of four residents and generate new, partially valid self-directed episodes. A provider-free baseline cannot prove that a provider-enabled World stays still.
