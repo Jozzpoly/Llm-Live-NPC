@@ -186,7 +186,7 @@ export class SpcNextResearchScene extends Phaser.Scene {
               ) <= 64)
             .sort((a, b) => a.id.localeCompare(b.id))[0]
         : null;
-      const prompt = held ? "E — Odłóż: " + held.label
+      const prompt = held ? "E — Odłóż: " + held.label + " · ciężar spowalnia"
         : near ? "E — Podnieś: " + near.label
         : "";
       this.materialFeedback.setText(prompt).setVisible(prompt.length > 0);
