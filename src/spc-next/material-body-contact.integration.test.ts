@@ -57,6 +57,41 @@ describe("pre-Luna opt-in material topology: free crate is a World body obstruct
       .toContain("material_object");
   });
 
+  it("physically constrains a real resident's authored walk and lets the same World route reopen when the crate is lifted", () => {
+    const composition = createFiveResidentRegionComposition({
+      materialBodyCollision: true,
+      playerStart: { x: 2_008, y: 720 },
+    });
+    const world = composition.world;
+    world.setResidentActivity("resident.janek", {
+      id: "activity:janek:physical-topology-characterization",
+      kind: "travel",
+      targetActorId: null,
+      targetPosition: { x: 2_080, y: 720 },
+      text: null,
+      speed: 95,
+      reason: "research: actual World passage beside the workshop",
+    });
+
+    for (let i = 0; i < 100; i += 1) world.step();
+    const before = world.publicSnapshot().actors.find((actor) => actor.id === "resident.janek")!;
+    expect(before.position.x).toBeLessThan(1_921);
+    const blockedOutcome = world.diagnostics().lastMotionOutcomes
+      .find((outcome) => outcome.actorId === "resident.janek");
+    expect(blockedOutcome?.constraints).toContain("material_object");
+
+    // A participant on the other side lifts the identical real object.
+    expect(world.attemptMaterialAction(PLAYER, {
+      kind: "pickup", objectId: CRATE,
+    })).toMatchObject({ status: "succeeded", code: "picked_up" });
+    for (let i = 0; i < 180; i += 1) world.step();
+    const after = world.publicSnapshot().actors.find((actor) => actor.id === "resident.janek")!;
+    expect(after.position.x).toBeGreaterThan(1_952);
+    expect(world.materialObject(CRATE)?.location).toMatchObject({
+      kind: "held", actorId: PLAYER,
+    });
+  });
+
   it("is absent from canonical R6 default World; no hidden semantic or physical upgrade", () => {
     const composition = createFiveResidentRegionComposition({ playerStart: { x: 1_850, y: 720 } });
     const world = composition.world;
