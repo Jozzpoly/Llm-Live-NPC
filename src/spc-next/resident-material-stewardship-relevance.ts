@@ -79,6 +79,12 @@ export class ResidentMaterialStewardshipRelevance {
       > this.tolerance * this.tolerance;
     if (!differs) {
       if (this.activeReasonId === null) return { status: "unchanged", reasonId: null };
+      // A carried object briefly crossing its old position is not restoration.
+      // Require the resident's own currently visible FREE-state observation.
+      // Holder identity remains deliberately private/unknown here.
+      if (observed.observedLocationKind !== "free") {
+        return { status: "unchanged", reasonId: null };
+      }
       const reasonId = this.activeReasonId;
       this.activeReasonId = null;
       const settled = this.life.resident.invalidateSemanticPressure(
