@@ -9,6 +9,9 @@ import type { MaterialObjectState } from "./material-world-state";
  */
 export const MATERIAL_BODY_RADIUS = 18;
 
+/** Opt-in rough embodied burden: carrying a real crate reduces resolved speed. */
+export const MATERIAL_CARRY_SPEED_FACTOR = 0.68;
+
 const EPSILON = 1e-5;
 const BACKOFF = 1e-4;
 
