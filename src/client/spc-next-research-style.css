@@ -276,3 +276,21 @@
   #app.spc-next-mode .game-shell footer { display: none; }
   .spc-resident-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
+
+/* A factual pre-Luna World-only observation surface, not a fake resident demo. */
+#app.spc-preluna-mode #game .spc-preluna-caption {
+  position: absolute;
+  z-index: 3;
+  left: 14px;
+  bottom: 14px;
+  width: min(540px, calc(100% - 28px));
+  padding: 9px 12px;
+  border: 1px solid rgba(132, 154, 160, .42);
+  border-radius: 9px;
+  background: rgba(9, 18, 23, .86);
+  color: #c3d0d3;
+  font-size: 12px;
+  line-height: 1.5;
+  pointer-events: none;
+  user-select: none;
+}
