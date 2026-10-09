@@ -161,13 +161,24 @@ async function main() {
     // crate obstructs, pickup opens the route, placing closes it elsewhere.
     const material = async () => await evaluate(cdp, "window.__SPC_EVIDENCE__.materialObjects()");
     const key = async (code, down) => {
-      const virtual = code === "KeyD" ? 68 : 69;
+      const keys = { KeyD: ["d", 68], KeyE: ["e", 69], KeyS: ["s", 83] };
+      const [letter, virtual] = keys[code] ?? [];
+      if (!letter || !virtual) throw new Error("unknown browser evidence key: " + code);
       await cdp.send("Input.dispatchKeyEvent", {
         type: down ? "keyDown" : "keyUp",
-        key: code === "KeyD" ? "d" : "e",
+        key: letter,
         code, windowsVirtualKeyCode: virtual, nativeVirtualKeyCode: virtual,
       });
     };
+    // Approach the physical crate ON AXIS. The ordinary workshop entry is
+    // deliberately offset; off-axis movement may legally slide around it.
+    await key("KeyS", true);
+    await sleep(70);
+    const aligned = await evaluate(cdp, "window.__SPC_EVIDENCE__.stepWorld(6)");
+    await key("KeyS", false);
+    assert(report, "browser probe aligns body with the real crate for a frontal collision",
+      Math.abs((playerAt(aligned)?.y ?? -1) - 720) < 0.01,
+      { player: playerAt(aligned) });
     await key("KeyD", true);
     await sleep(70);
     const blocked = await evaluate(cdp, "window.__SPC_EVIDENCE__.stepWorld(110)");
