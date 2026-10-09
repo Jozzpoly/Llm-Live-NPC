@@ -85,6 +85,8 @@ export class ResidentRuntime {
   private attentionRevisionValue = 0;
   private activityRevisionValue = 0;
   private perceptionRevisionValue = 0;
+  /** Monotonic resident-local invalidation epoch; stale provider arrivals cannot resurrect settled work. */
+  private semanticPressureInvalidationEpoch = 0;
   private lastMovementTraceSignature: string | null = null;
   private lastBlockedSignature: string | null = null;
 
@@ -132,6 +134,11 @@ export class ResidentRuntime {
 
   cognitionRevision(): ResidentCognitionRevision {
     return { attention: this.attentionRevisionValue, activity: this.activityRevisionValue };
+  }
+
+  /** Only changes when factual local truth actually invalidates an unresolved reason. */
+  semanticPressureInvalidationRevision(): number {
+    return this.semanticPressureInvalidationEpoch;
   }
 
   cognitionScheduleDiagnostics(): CognitionScheduleDiagnostics {
@@ -198,6 +205,7 @@ export class ResidentRuntime {
     if (settled.status === "newer_pending_retained") return false;
 
     this.semanticPressureLifecycle.settle(state.reason, tick, detail);
+    this.semanticPressureInvalidationEpoch += 1;
     return true;
   }
 
