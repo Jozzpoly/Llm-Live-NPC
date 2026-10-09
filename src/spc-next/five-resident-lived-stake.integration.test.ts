@@ -75,6 +75,17 @@ describe("R6 situated lived-stake research — authored conditions, not authored
     expect(fixture.world.attemptMaterialAction(MOVER, { kind: "pickup", objectId: CRATE }).status)
       .toBe("succeeded");
     movePlayerOneTick(fixture, RETURN);
+    expect(fixture.life.materialKnowledge?.observation(CRATE)).toMatchObject({
+      currentlyVisible: true,
+      observedLocationKind: "held",
+      lastKnownPosition: RETURN,
+    });
+    // Passing through the correct position while CARRYING does not fix the
+    // workstation's real physical state; the concern must stay unresolved.
+    expect(fixture.stewardship!.observePrivateAfterWorldTick()).toEqual({
+      status: "unchanged", reasonId: null,
+    });
+    expect(fixture.life.resident.pendingCognitionReasons().some((r) => r.id === question.reasonId)).toBe(true);
     const movedPosition = playerPosition(fixture);
     expect(fixture.world.attemptMaterialAction(MOVER, {
       kind: "place",
