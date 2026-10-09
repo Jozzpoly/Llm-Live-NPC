@@ -26,6 +26,14 @@ The frozen runtime `c1816785c89b5403889a7c57498843ecbbb69b97` is preserved as an
 
 **Prepared next-campaign execution entry (2026-10-09):** `docs/SPC_LIVED_AGENCY_NEXT_CAMPAIGN_BOOTSTRAP_2026-10-09.md`. It is an evidence-first falsification and safety brief; it does **not** itself qualify resident behavior, replace this document, or authorize paid provider runs.
 
+### 2026-10-09 Owner preference — pre-Luna personal gameplay inspection
+
+**New explicit Owner feedback (2026-10-09 23:10Z):** before we connect Luna for the next live campaign, Owner will **probably want to personally inspect/play what the agent calls the “game.”** Owner explicitly does **not** impose a date or demand a preview immediately; the agent should independently recognize when this inspection is meaningful and tell Owner. Preserve this as a strong expected checkpoint, **not** an irrevocable rule or permission to declare product readiness.
+
+Operational consequence: develop/test the World, embodiment, movement, causal affordances, player-facing interaction and legibility sufficiently that an **ordinary player-facing browser build** can answer worthwhile experiential questions **without requiring real Luna**. When the agent has a verified deployment of the actual current branch (not old `main`, archived failure preview, or wrong default research scenario), a clear honest description of what is and is not implemented, safe zero-upstream operation, and something meaningful to feel/test, invite Owner to inspect it proactively. Prefer the smallest real playable slice that can expose shortcomings; do not turn this into a polished mock demo, canned resident acting, separate "fake game," or a long delay to reach a fictional aliveness threshold. It is **World/interaction/embodiment inspection**, not a declaration that the residents have already achieved autonomous lives.
+
+Owner's in-game observations and corrections will be authoritative for gameplay/product claims, even if mechanical tests or CI pass. Do not spend real-Luna tokens to hide unqualified world/player weaknesses; discuss any genuine necessity of Luna for a specific investigation rather than silently replacing this preferred pre-model checkpoint. This preference complements—not supersedes—the later unscripted autonomous-life Owner qualification.
+
 ### Revised evidence-to-development rule
 
 **Main bottleneck is missing situated, continuing agency in a causally sparse World**, not missing dashboards, prompt cleverness, more provider calls, scripted tours or a longer run of predetermined activities. The old and new systems each have different valuable capabilities; neither is an accepted living-NPC product.
