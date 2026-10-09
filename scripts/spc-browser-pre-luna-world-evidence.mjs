@@ -199,8 +199,10 @@ async function main() {
     const through = await evaluate(cdp, "window.__SPC_EVIDENCE__.stepWorld(95)");
     await key("KeyD", false);
     const throughX = playerAt(through)?.x ?? -1;
-    assert(report, "carried crate no longer blocks embodied passage", throughX > 2_100,
-      { throughX, oldCrateX: 1_952 });
+    const carryingDelta = throughX - blockedX;
+    assert(report, "carried crate opens the route but imposes real movement cost",
+      throughX > 2_050 && carryingDelta > 145 && carryingDelta < 175,
+      { throughX, blockedX, carryingDelta, oldCrateX: 1_952 });
     await key("KeyE", true);
     await sleep(110);
     await key("KeyE", false);
