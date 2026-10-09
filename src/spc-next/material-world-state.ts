@@ -25,7 +25,9 @@ export type MaterialActionResultCode =
   | "out_of_range"
   | "occluded"
   | "invalid_position"
-  | "outside_world";
+  | "outside_world"
+  | "body_occupied"
+  | "object_occupied";
 
 export interface MaterialActionResult {
   actionSeq: number;
