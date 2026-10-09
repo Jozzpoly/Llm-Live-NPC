@@ -149,7 +149,7 @@ async function main() {
     assert(report, "real keyboard movement advances embodied player in authoritative World", xAfter > xBefore + 35,
       { xBefore, xAfter });
     const after = await evaluate(cdp, "window.__SPC_EVIDENCE__.stepWorld(1500)");
-    assert(report, "World time and recovered claims continue without Lua/LLM", after.snapshot.tick === 1535
+    assert(report, "World time and recovered residents continue without Luna/LLM", after.snapshot.tick === 1535
       && after.snapshot.residents.length === 5
       && after.snapshot.residents.every((r) => r.pendingCognitionReasonCount >= 0), {
       tick: after.snapshot.tick, residents: after.snapshot.residents.length,
