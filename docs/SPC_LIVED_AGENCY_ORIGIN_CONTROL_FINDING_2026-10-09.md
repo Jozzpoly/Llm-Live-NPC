@@ -71,6 +71,19 @@ This further isolates the *first personal-stake/meaning* gap from World material
 
 ---
 
+## Provider-latency falsification and causal-pressure stale admission — 2026-10-09
+
+**Red → green, on the actual five-resident research composition.** New `five-resident-stewardship-stale-provider.integration.test.ts` first showed an **actual FAIL**: World physically moves the workshop crate away; Janek's opted-in, privately grounded stewardship creates one reason; the reason is dispatched as a five-resident cognition request; before a deliberately *test-supplied* proposal arrives, a real participant returns the crate; the local semantic-pressure lifecycle truthfully settles the reason. Nonetheless, without a new admission guard, the original `FiveResidentCausalCognitionHost.settleCommitment` **returned `applied`**. The stale proposal used a valid, familiar-region travel commitment; thus this was not just an invalid-JSON fixture.
+
+- Demonstrated red at original test commit `18357ca9`: [Check #38002224061](https://github.com/Jozzpoly/Llm-Live-NPC/actions/runs/38002224061), one new failure (old code accepted stale decision).
+- Narrow fix: `ResidentRuntime` increments a resident-local monotonically increasing semantic-pressure invalidation epoch **only after genuine local invalidation**. `ResidentLifeIntentOwner` captures the epoch at request preparation and rejects commitment settlement as `semantic_pressure_changed_during_request` if it changed. Pending batch requeue is subject to existing settled-version tombstones; an old resolved issue cannot be resurrected. The gate is deliberately conservative: if any relevant resident-local pressure expires while an answer is in flight, reject the whole answer rather than reuse an obsolete view. It grants neither new autonomy nor new body authority.
+- **Green:** [Check #38002315220](https://github.com/Jozzpoly/Llm-Live-NPC/actions/runs/38002315220) on implementation commit `f97c7ee22`: **307/307 files, 1077/1077 tests PASS**, typecheck/build/preview dry-run. The red test now proves a stale result, no resurrected resident matter, no post-restoration physical NPC action and released in-flight ownership.
+- **Provider epistemic limit:** the proposal was deliberately test-supplied to verify the admission boundary; **no real Luna inference, autonomous decision or Owner experience** is demonstrated. A browser qualification on a documentation-only later commit cannot turn this into a living-NPC PASS.
+
+This bug materially affects longer lived-world episodes: factual conditions can change during real asynchronous higher cognition. Guard admission at the resident-owned causal truth boundary before increasing cognition intensity. This does **not** solve how NPCs earn interests from their own experience or the R6 shortage of executable meaningful material/social actions.
+
+---
+
 ## What remains UNTESTED
 
 - A real model could take `activity_completed` reasons of four residents and generate new, partially valid self-directed episodes. A provider-free baseline cannot prove that a provider-enabled World stays still.
