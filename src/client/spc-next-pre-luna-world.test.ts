@@ -79,7 +79,7 @@ describe("pre-Luna Owner world observation — actual R6 five-resident compositi
     }
     world.setActorMotionIntent("player.jozz", { x: 0, y: 0 });
     const player = getPlayer();
-    const placement = { x: player.position.x + 35, y: player.position.y };
+    const placement = { x: player.position.x + 42, y: player.position.y };
     expect(world.attemptMaterialAction("player.jozz", {
       kind: "place", objectId: crate.id, position: placement,
     })).toMatchObject({ status: "succeeded", code: "placed" });
