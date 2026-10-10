@@ -139,6 +139,10 @@ async function main() {
       && frame.snapshot.actors.some((a) => a.id === "player.jozz"), {
       actors: frame.snapshot.actors.map((a) => a.id), tick: frame.snapshot.tick,
     });
+    assert(report, "workshop opens with Janek, the actually nearby resident, selected",
+      frame.selectedResidentId === "resident.janek", {
+        selectedResidentId: frame.selectedResidentId,
+      });
     assert(report, "workshop opens at readable local camera scale without changing zoom controls",
       frame.cameraZoom > 1 && frame.cameraZoom < 1.2,
       { cameraZoom: frame.cameraZoom });
