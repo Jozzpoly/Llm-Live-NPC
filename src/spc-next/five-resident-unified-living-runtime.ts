@@ -50,6 +50,8 @@ export interface FiveResidentUnifiedLivingRuntimeOptions {
   maxConcurrentCognition?: number;
   endpoint?: string;
   fetcher?: CognitionFetch;
+  /** Research opt-in ONLY: local body and provider must agree on capability. */
+  temporalStandingReview?: boolean;
 }
 
 /**
@@ -80,7 +82,9 @@ export class FiveResidentUnifiedLivingRuntime {
 
   constructor(options: FiveResidentUnifiedLivingRuntimeOptions = {}) {
     this.composition = options.composition ?? createFiveResidentRegionComposition();
-    this.lifeRuntime = new FiveResidentCausalLifeRuntime(this.composition);
+    this.lifeRuntime = new FiveResidentCausalLifeRuntime(this.composition, {
+      temporalStandingReview: options.temporalStandingReview === true,
+    });
     this.cognition = new FiveResidentCausalCognitionHost(
       this.lifeRuntime,
       options.maxConcurrentCognition ?? 5,
@@ -88,6 +92,7 @@ export class FiveResidentUnifiedLivingRuntime {
     this.provider = new FiveResidentCausalProviderTransport(
       options.endpoint ?? "/api/spc-next/life-intent",
       options.fetcher ?? fetch,
+      { temporalStandingReview: this.lifeRuntime.supportsTemporalStandingReview() },
     );
   }
 
