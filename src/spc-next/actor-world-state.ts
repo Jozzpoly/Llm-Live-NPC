@@ -122,7 +122,7 @@ export class ActorWorldState {
       // and never added to resident-private sight or cognition.
       // Sequential kinematic contact; this is not an impulse/crowd solver.
       const otherBodies: MaterialObjectState[] = actorBodyCollision
-        ? this.ids().filter((id) => id !== actorId).map((id) => ({
+        ? this.ids().filter((id) => id !== actorId).map((id): MaterialObjectState => ({
             id: "__actor_body_proxy__:" + id,
             label: "actor body",
             radius: MATERIAL_BODY_RADIUS,
