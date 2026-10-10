@@ -32,6 +32,25 @@ export function facingRelativePlacement(
   };
 }
 
+/**
+ * The player-facing proposal must clear the holder's physical body even for
+ * large objects. The World still adjudicates the range, line of sight and
+ * occupancy; this only chooses a geometrically plausible candidate.
+ */
+export function suggestBodyClearMaterialPlacement(
+  position: Vec2,
+  facing: Vec2,
+  objectRadius: number,
+  minimumOffset = 42,
+): Vec2 {
+  if (!Number.isFinite(objectRadius) || objectRadius <= 0
+    || !Number.isFinite(minimumOffset) || minimumOffset <= 0)
+    throw new Error("invalid material clearance");
+  return facingRelativePlacement(
+    position, facing, Math.max(minimumOffset, objectRadius + MATERIAL_BODY_RADIUS + 6),
+  );
+}
+
 const EPSILON = 1e-5;
 const BACKOFF = 1e-4;
 
