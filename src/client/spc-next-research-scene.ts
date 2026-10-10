@@ -15,6 +15,7 @@ import {
 } from "../evidence/spc-next-canonical-evidence-snapshot";
 import {
   createSpcNextResearchScenario,
+  isPreLunaWorkshopScenario,
   researchScenarioKindFromSearch,
   type SpcNextResearchScenario,
   type SpcNextResearchScenarioKind,
@@ -107,7 +108,7 @@ export class SpcNextResearchScene extends Phaser.Scene {
       ?? researchScenarioKindFromSearch(location.search);
     this.scenario = createSpcNextResearchScenario(scenarioKind);
     this.world = this.scenario.world;
-    if (this.scenario.kind === "five-resident-local") {
+    if (isPreLunaWorkshopScenario(this.scenario.kind)) {
       // The ordinary workshop inspection begins beside Janek, not with remote Mira.
       this.selectedResidentId = "resident.janek";
     }
@@ -123,7 +124,7 @@ export class SpcNextResearchScene extends Phaser.Scene {
     this.overlayGraphics = this.add.graphics().setDepth(40);
     this.drawRegions();
     this.drawAuthoredPlaces();
-    if (this.scenario.kind === "five-resident-local") {
+    if (isPreLunaWorkshopScenario(this.scenario.kind)) {
       this.materialFeedback = this.add.text(18, 18, "", {
         fontFamily: "Inter, system-ui, sans-serif",
         fontSize: "15px",
@@ -157,7 +158,7 @@ export class SpcNextResearchScene extends Phaser.Scene {
     this.followPlayer();
     // Inspect the actual small workshop interactions at legible scale.
     // Legacy research scenes retain their broad 0.72 World overview.
-    this.cameras.main.setZoom(this.scenario.kind === "five-resident-local" ? 1.08 : 0.72);
+    this.cameras.main.setZoom(isPreLunaWorkshopScenario(this.scenario.kind) ? 1.08 : 0.72);
     this.captureNewSpeechOccurrences();
     this.created = true;
     this.pushFrame(true);
@@ -394,7 +395,7 @@ export class SpcNextResearchScene extends Phaser.Scene {
       const result = this.world.attemptMaterialAction(PLAYER_ID, {
         kind: "place",
         objectId: held.id,
-        position: this.scenario.kind === "five-resident-local"
+        position: isPreLunaWorkshopScenario(this.scenario.kind)
           ? suggestBodyClearMaterialPlacement(player.position, player.facing, held.radius, MATERIAL_PLACE_OFFSET)
           : { x: player.position.x + MATERIAL_PLACE_OFFSET, y: player.position.y },
       });
@@ -498,7 +499,7 @@ export class SpcNextResearchScene extends Phaser.Scene {
       graphics.strokeCircle(anchor.position.x, anchor.position.y, anchor.radius);
       graphics.fillStyle(color, 0.22);
       graphics.fillCircle(anchor.position.x, anchor.position.y, 9);
-      const workshopLabel = this.scenario.kind === "five-resident-local"
+      const workshopLabel = isPreLunaWorkshopScenario(this.scenario.kind)
         && anchor.id === "anchor.workshop.bench";
       this.add.text(
         anchor.position.x, anchor.position.y + anchor.radius + (workshopLabel ? 66 : 14),
@@ -552,7 +553,7 @@ export class SpcNextResearchScene extends Phaser.Scene {
         : (() => {
             const holder = this.snapshot.actors.find((actor) => actor.id === object.location.actorId);
             if (!holder) return null;
-            return this.scenario.kind === "five-resident-local"
+            return isPreLunaWorkshopScenario(this.scenario.kind)
               ? facingRelativePlacement(holder.position, holder.facing, 25)
               : { x: holder.position.x + 23, y: holder.position.y + 5 };
           })();
@@ -560,7 +561,7 @@ export class SpcNextResearchScene extends Phaser.Scene {
 
       // Show the actual World-owned solid circle behind the temporary
       // rectangular specimen glyph; this is physical footprint, not scenery.
-      if (this.scenario.kind === "five-resident-local" && object.location.kind === "free") {
+      if (isPreLunaWorkshopScenario(this.scenario.kind) && object.location.kind === "free") {
         this.materialGraphics.fillStyle(0xb78652, 0.10);
         this.materialGraphics.fillCircle(position.x, position.y, object.radius);
         this.materialGraphics.lineStyle(1.4, 0xe7cb98, 0.5);
@@ -584,7 +585,7 @@ export class SpcNextResearchScene extends Phaser.Scene {
         }).setOrigin(0.5, 1).setDepth(7);
         this.materialLabels.set(object.id, label);
       }
-      const timberLabelOffset = this.scenario.kind === "five-resident-local"
+      const timberLabelOffset = isPreLunaWorkshopScenario(this.scenario.kind)
         && object.id === "crate.workshop.timber" ? 20 : 6;
       label.setPosition(position.x, position.y - half - timberLabelOffset).setVisible(true);
     }
