@@ -8,18 +8,9 @@ import { handleSpcNextLifeIntent, type SpcNextLifeIntentEnv } from "./spc-next-l
 import { handleSpcNextSemantic, type SpcNextSemanticEnv } from "./spc-next-semantic";
 import { operatorAuthorized, operatorConfigured, operatorLogin } from "./research-operator-auth";
 
-/** Research-only: no public caller may spend owner's provider quota by POST. */
-const PROTECTED_PROVIDER_POST_ROUTES = new Set([
-  "/api/agent/e1/decide",
-  "/api/first-presence/semantic/propose",
-  "/api/resident/converse",
-  "/api/hearth/cognition",
-  "/api/spc-next/cognition",
-  "/api/spc-next/life-intent",
-  "/api/spc-next/life-choice",
-  "/api/spc-next/semantic",
-  "/api/ai/qualify",
-]);
+/** All current AND future API POST routes are private by default.
+ * Operator login is handled before this gate, and read-only health stays public.
+ */
 const GATEWAY_ID = "default";
 const LIVE_STAGE = "e1-grounded-notice-fetch";
 const PROBE_PROMPT = "Reply with exactly one short sentence confirming that LLM Live NPC cognition is online.";
@@ -214,7 +205,7 @@ export default {
       });
     }
 
-    if (request.method === "POST" && PROTECTED_PROVIDER_POST_ROUTES.has(url.pathname)
+    if (request.method === "POST" && url.pathname.startsWith("/api/")
       && !(await operatorAuthorized(request, env.SPC_RESEARCH_OPERATOR_TOKEN))) {
       return json({
         ok: false,
