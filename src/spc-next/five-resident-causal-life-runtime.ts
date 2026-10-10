@@ -21,6 +21,7 @@ import {
 } from "./resident-causal-life-substrate";
 import { ResidentMaterialKnowledge } from "./resident-material-knowledge";
 import type { ResidentMaterialMatterRelevanceObservation } from "./resident-material-matter-relevance-bridge";
+import { ResidentTemporalStandingRelevance, type ResidentTemporalStandingObservation } from "./resident-temporal-standing-relevance";
 
 export type FiveResidentCausalLifeOwnership = "local_opening" | "recovered_life";
 
@@ -28,6 +29,7 @@ interface ResidentLane {
   life: ResidentCausalLifeSubstrate;
   execution: ResidentCausalExecutionCoordinator;
   interruption: ResidentAddressedInterruptionController;
+  temporalStanding: ResidentTemporalStandingRelevance | null;
 }
 
 export interface FiveResidentCausalLifeTick {
@@ -37,6 +39,9 @@ export interface FiveResidentCausalLifeTick {
   interruptions: Readonly<Partial<Record<FiveResidentId, ResidentAddressedInterruptionStep>>>;
   materialRelevance: Readonly<
     Partial<Record<FiveResidentId, readonly ResidentMaterialMatterRelevanceObservation[]>>
+  >;
+  temporalStanding?: Readonly<
+    Partial<Record<FiveResidentId, readonly ResidentTemporalStandingObservation[]>>
   >;
 }
 
@@ -68,7 +73,10 @@ export class FiveResidentCausalLifeRuntime {
   private readonly lanes = new Map<FiveResidentId, ResidentLane>();
   private readonly navigation = createFiveResidentNavigationGraph();
 
-  constructor(private readonly composition: FiveResidentRegionComposition) {
+  constructor(
+    private readonly composition: FiveResidentRegionComposition,
+    private readonly options: { temporalStandingReview?: boolean } = {},
+  ) {
     this.claimReadyResidents();
   }
 
@@ -140,6 +148,20 @@ export class FiveResidentCausalLifeRuntime {
       if (observations.length > 0) materialRelevance[residentId] = observations;
     }
 
+    const temporalStanding: Partial<
+      Record<FiveResidentId, readonly ResidentTemporalStandingObservation[]>
+    > = {};
+    // This is due to a resident's ALREADY factually spoken, time-annotated
+    // commitment, not elapsed time as a generic cognition trigger.
+    for (const residentId of this.claimedResidentIds()) {
+      const lane = this.lanes.get(residentId)!;
+      if (!lane.temporalStanding) continue;
+      const events = lane.temporalStanding.observe(
+        lane.life.currentLifeView(), this.composition.world.tick,
+      );
+      if (events.length > 0) temporalStanding[residentId] = events;
+    }
+
     // Perception is produced by the shared World step. Only after that boundary may
     // local contact logic discover a newly heard addressed utterance and suspend the
     // exact run for the *next* execution frame.
@@ -154,6 +176,9 @@ export class FiveResidentCausalLifeRuntime {
       execution: structuredClone(execution),
       interruptions: structuredClone(interruptions),
       materialRelevance: structuredClone(materialRelevance),
+      ...(this.options.temporalStandingReview
+        ? { temporalStanding: structuredClone(temporalStanding) }
+        : {}),
     };
   }
 
@@ -192,6 +217,9 @@ export class FiveResidentCausalLifeRuntime {
         life,
         execution: new ResidentCausalExecutionCoordinator(life),
         interruption: new ResidentAddressedInterruptionController(life),
+        temporalStanding: this.options.temporalStandingReview
+          ? new ResidentTemporalStandingRelevance(resident)
+          : null,
       });
     }
   }
