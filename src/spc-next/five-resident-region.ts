@@ -109,6 +109,8 @@ export interface FiveResidentRegionWorldOptions {
   playerStart?: Vec2;
   /** Optional pre-Luna embodiment experiment; keeps canonical R6 default unchanged. */
   materialBodyCollision?: boolean;
+  /** Distinct from material-body collision: preserve all existing routes by default. */
+  actorBodyCollision?: boolean;
 }
 
 export interface FiveResidentRegionComposition {
@@ -130,6 +132,7 @@ export function createFiveResidentRegionComposition(
     chunkSize: 256,
     fixedDeltaSeconds: 1 / 60,
     ...(options.materialBodyCollision ? { materialBodyCollision: true } : {}),
+    ...(options.actorBodyCollision ? { actorBodyCollision: true } : {}),
   });
 
   world.addPlayer("player.jozz", options.playerStart ?? { x: 620, y: 620 }, { maxSpeed: 150 });
