@@ -50,7 +50,7 @@ if (materialContinuationScene) {
 footer.innerHTML = [
   "<span>Ruch: WASD / strzałki</span>",
   ...(materialContinuationScene ? [
-    "<span>E: podnieś / odłóż skrzynkę · zabierz ją poza wzrok Janka i wróć</span>",
+    "<span>Masz skrzynkę w rękach · E: odłóż ją, aby zobaczyć reakcję Janka</span>",
     "<span>Uwaga: wcześniejsza sprawa Janka jest zadanym stanem początkowym, nie samodzielnie utworzonym celem</span>",
   ] : []),
   "<span>Wybór SPC: klik / Tab</span>",
