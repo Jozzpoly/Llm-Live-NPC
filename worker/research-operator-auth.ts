@@ -71,7 +71,7 @@ async function validCookie(request: Request, secret: string, now = Date.now()): 
   const signature = decodeBase64Url(parts[3] ?? "");
   if (nonce?.length !== 16 || signature?.length !== 32) return false;
   const signed = `${new URL(request.url).host}:${parts.slice(0, 3).join(".")}`;
-  return crypto.subtle.verify("HMAC", await signingKey(secret), signature, encoder.encode(signed));
+  return crypto.subtle.verify("HMAC", await signingKey(secret), new Uint8Array(signature), encoder.encode(signed));
 }
 
 function validOrigin(request: Request): boolean {
