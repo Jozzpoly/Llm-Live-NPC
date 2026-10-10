@@ -17,6 +17,12 @@ function specimen(enabled = true) {
   });
   const life = host.life(JAN);
   if (!life) throw new Error("Janek must own R6 private recovered life");
+  // World must actually give Janek private sight of the player BEFORE his
+  // pre-accepted speech can use it. No omniscient target injection.
+  host.advanceOneWorldTick();
+  expect(life.resident.perceptionSnapshot().recentPercepts.some(p=>
+    p.phenomenon === "actor_sight_enter" && p.actorId === PLAYER,
+  )).toBe(true);
   return { world: composition.world, host, life };
 }
 
