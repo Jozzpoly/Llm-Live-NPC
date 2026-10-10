@@ -24,11 +24,12 @@ export function planTouchedMaterialDetour(
   const forward = { x: dx / length, y: dy / length };
   const side = { x: -forward.y, y: forward.x };
   const r = contact.radius + MATERIAL_BODY_RADIUS + 14;
-  const clearance = contact.radius + MATERIAL_BODY_RADIUS + 2;
+  const clearance = contact.radius + MATERIAL_BODY_RADIUS - 1;
 
   // The goal is inside the obstructing body's clearance volume. A motor
   // bypass cannot make it reachable and must not claim semantic success.
-  if (Math.hypot(destination.x - contact.position.x, destination.y - contact.position.y) < clearance)
+  if (Math.hypot(destination.x - contact.position.x, destination.y - contact.position.y)
+      < contact.radius + MATERIAL_BODY_RADIUS + 2)
     return null;
 
   const possible: Vec2[][] = [];
