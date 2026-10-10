@@ -68,12 +68,14 @@ export class FiveResidentCausalCognitionHost {
     this.coordinator = new CognitionCoordinator(maxConcurrent);
   }
 
-  collectReadyBatches(): number {
+  collectReadyBatches(residentFilter?: readonly FiveResidentId[]): number {
+    const permitted = residentFilter ? new Set(residentFilter) : null;
     const state = this.coordinator.state();
     const inFlight = new Set(state.inFlightResidents);
     let collected = 0;
 
     for (const residentId of this.runtime.claimedResidentIds()) {
+      if (permitted && !permitted.has(residentId)) continue;
       if (inFlight.has(residentId)) continue;
       const retryNotBefore = this.retryNotBeforeTick.get(residentId) ?? 0;
       if (this.runtime.world.tick < retryNotBefore) continue;
