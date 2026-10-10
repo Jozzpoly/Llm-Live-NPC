@@ -100,6 +100,44 @@ describe("run-authorized tactile material detours without fictitious NPC cogniti
     });
   });
 
+  it("responds to a crate that the player physically puts INTO an already running route", () => {
+    const { world, executor, position } = fixture({ x: 2_080, y: 720 });
+    const mover = "player.route-change";
+    world.addPlayer(mover, { x: 2_008, y: 720 });
+    expect(world.attemptMaterialAction(mover, {
+      kind: "pickup", objectId: CRATE,
+    })).toMatchObject({ status: "succeeded", code: "picked_up" });
+    let result = executor.step();
+    expect(result.status).toBe("running");
+    for (let i = 0; i < 7; i += 1) {
+      world.step();
+      result = executor.step();
+    }
+    expect(position().x).toBeGreaterThan(1_909);
+    expect(position().x).toBeLessThan(1_915);
+    expect(world.attemptMaterialAction(mover, {
+      kind: "place", objectId: CRATE,
+      position: { x: 1_952, y: 720 },
+    })).toMatchObject({ status: "succeeded", code: "placed" });
+
+    let deviation = 0, contacted = false;
+    for (let i = 0; i < 450 && result.status === "running"; i += 1) {
+      world.step();
+      deviation = Math.max(deviation, Math.abs(position().y - 720));
+      if (world.diagnostics().lastMotionOutcomes.some((o) =>
+        o.actorId === RESIDENT && o.constraints.includes("material_object"))) contacted = true;
+      result = executor.step();
+    }
+    expect(contacted).toBe(true);
+    expect(deviation).toBeGreaterThan(38);
+    expect(result).toMatchObject({ status: "arrived", runId: RUN });
+    expect(world.diagnostics().recentMaterialActions.filter((a) =>
+      a.actorId === mover && a.status === "succeeded").map((a) => a.code))
+      .toEqual(["picked_up", "placed"]);
+    expect(world.materialObject(CRATE)?.location)
+      .toEqual({ kind: "free", position: { x: 1_952, y: 720 } });
+  });
+
   it("declines to invent passage when the actual target is inside the obstruction", () => {
     const { world, authority, executor } = fixture({ x: 1_952, y: 720 });
     let result = executor.step();
