@@ -67,6 +67,17 @@ export class ResidentMaterialKnowledge {
     return this.snapshot();
   }
 
+  /**
+   * A narrow resident-private physical affordance: the recognized material
+   * is currently, freshly VISIBLE and lies free in World space. This does not
+   * reveal any hidden holder or hidden current material location.
+   */
+  visiblyFree(objectId: string): boolean {
+    const observation = this.known.get(objectId);
+    if (!observation?.currentlyVisible || observation.observedAtTick !== this.world.tick) return false;
+    return this.world.materialObject(objectId)?.location.kind === "free";
+  }
+
   lastKnownPosition(objectId: string): Vec2 | null {
     const known = this.known.get(objectId);
     return known ? { ...known.lastKnownPosition } : null;
