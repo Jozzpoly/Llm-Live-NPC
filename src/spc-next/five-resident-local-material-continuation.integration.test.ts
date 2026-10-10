@@ -197,10 +197,7 @@ describe("five-resident R6 — material continuation from private changed realit
 
     const world = scene.world;
     const actorPosition = () => world.publicSnapshot().actors.find(a => a.id === "player.jozz")!.position;
-    expect(world.attemptMaterialAction("player.jozz", {
-      kind: "pickup", objectId: CRATE,
-    })).toMatchObject({ status: "succeeded", code: "picked_up" });
-
+    // The player actually starts holding it; no forced/scripted post-start event.
     world.setActorMotionIntent("player.jozz", { x: 150, y: 0 });
     for(let i=0;i<300;i++) scene.advanceOneWorldTick();
     expect(actorPosition().x).toBeGreaterThan(2_500);
