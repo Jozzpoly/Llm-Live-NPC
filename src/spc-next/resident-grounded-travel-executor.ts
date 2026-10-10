@@ -150,6 +150,12 @@ export class ResidentGroundedTravelExecutor {
       && distanceSquared(self.position, this.detour[0]!) <= DETOUR_WAYPOINT_RADIUS ** 2) {
       this.detour.shift();
     }
+    // The safety deadline belongs to the short CONTACT BYPASS, not to the
+    // resident's original (possibly kilometres-long) authorized journey.
+    if (this.detour.length === 0) {
+      this.detourStartedTick = null;
+      this.stalledTicks = 0;
+    }
     const steeringTarget = this.detour[0] ?? this.destination;
     const direction = normalizedDirection(self.position, steeringTarget);
     const speed = Math.min(self.maxSpeed, this.travelSpeed);
