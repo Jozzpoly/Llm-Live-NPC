@@ -151,7 +151,9 @@ export class SpcNextResearchScene extends Phaser.Scene {
       bounds.maxY - bounds.minY,
     );
     this.followPlayer();
-    this.cameras.main.setZoom(0.72);
+    // Inspect the actual small workshop interactions at legible scale.
+    // Legacy research scenes retain their broad 0.72 World overview.
+    this.cameras.main.setZoom(this.scenario.kind === "five-resident-local" ? 1.08 : 0.72);
     this.captureNewSpeechOccurrences();
     this.created = true;
     this.pushFrame(true);
