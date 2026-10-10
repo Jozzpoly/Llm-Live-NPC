@@ -181,6 +181,42 @@ describe("ResidentLifeIntentProposal contract", () => {
     expect(parseResidentLifeIntentProposal(proposal, socialContext)?.commitmentDecision)
       .toEqual(proposal.commitmentDecision);
 
+    // New time meaning is part of the original accepted promise, NEVER a
+    // reinterpretation of reviewAfterSeconds or natural-language speech.
+    const timed = {
+      ...proposal,
+      commitmentDecision: {
+        ...proposal.commitmentDecision,
+        standingSocialCommitment: {
+          goal: "remember a factually voiced social responsibility",
+          revisitAfterWorldTicks: 600,
+        },
+      },
+    };
+    expect(parseResidentLifeIntentProposal(timed, socialContext)?.commitmentDecision)
+      .toEqual(timed.commitmentDecision);
+    for (const malformed of [0, -1, 36_001, 3.5, "600", null]) {
+      expect(parseResidentLifeIntentProposal({
+        ...timed, commitmentDecision: {
+          ...timed.commitmentDecision,
+          standingSocialCommitment: {
+            goal: "a previous personally accepted matter",
+            revisitAfterWorldTicks: malformed,
+          },
+        },
+      }, socialContext)).toBeNull();
+    }
+    expect(parseResidentLifeIntentProposal({
+      ...timed, commitmentDecision: {
+        ...timed.commitmentDecision,
+        standingSocialCommitment: {
+          goal: "a previous personally accepted matter",
+          revisitAfterWorldTicks: 600,
+          injectedWorldTaskId: "task.fake",
+        },
+      },
+    }, socialContext)).toBeNull();
+
     expect(parseResidentLifeIntentProposal({
       ...proposal,
       commitmentDecision: {
