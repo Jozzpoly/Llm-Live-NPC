@@ -139,6 +139,9 @@ async function main() {
       && frame.snapshot.actors.some((a) => a.id === "player.jozz"), {
       actors: frame.snapshot.actors.map((a) => a.id), tick: frame.snapshot.tick,
     });
+    assert(report, "workshop opens at readable local camera scale without changing zoom controls",
+      frame.cameraZoom > 1 && frame.cameraZoom < 1.2,
+      { cameraZoom: frame.cameraZoom });
     const workshopObjects = await evaluate(cdp, "window.__SPC_EVIDENCE__.materialObjects()");
     assert(report, "the ordinary five-resident World has four nearby physical workshop objects",
       workshopObjects.length === 4
