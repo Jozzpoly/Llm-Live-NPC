@@ -76,6 +76,17 @@
   cursor: default;
 }
 
+.spc-operator-login {
+  font-size: 11px;
+  color: #98b5c2;
+  white-space: nowrap;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.spc-operator-login:hover,
+.spc-operator-login:focus-visible { color: #e3ebef; }
+.spc-operator-login[hidden] { display: none; }
+
 .spc-armed-status {
   max-width: 170px;
   min-width: 90px;
