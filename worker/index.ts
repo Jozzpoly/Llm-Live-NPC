@@ -6,6 +6,7 @@ import { handleSpcNextCognition } from "./spc-next-cognition";
 import { handleSpcNextLifeChoice, type SpcNextLifeChoiceEnv } from "./spc-next-life-choice";
 import { handleSpcNextLifeIntent, type SpcNextLifeIntentEnv } from "./spc-next-life-intent";
 import { handleSpcNextSemantic, type SpcNextSemanticEnv } from "./spc-next-semantic";
+import { operatorAuthorized, operatorConfigured, operatorLogin } from "./research-operator-auth";
 
 /** Research-only: no public caller may spend owner's provider quota by POST. */
 const PROTECTED_PROVIDER_POST_ROUTES = new Set([
@@ -19,30 +20,7 @@ const PROTECTED_PROVIDER_POST_ROUTES = new Set([
   "/api/spc-next/semantic",
   "/api/ai/qualify",
 ]);
-const MIN_OPERATOR_SECRET_LENGTH = 32;
 const GATEWAY_ID = "default";
-
-function researchAccessEnabled(secret: string | undefined): secret is string {
-  return typeof secret === "string" && secret.length >= MIN_OPERATOR_SECRET_LENGTH;
-}
-
-/** Equal-work byte check for two opaque high-entropy operator tokens. */
-function sameSecret(a: string, b: string): boolean {
-  let delta = a.length ^ b.length;
-  for (let i = 0; i < Math.max(a.length, b.length); i += 1) {
-    delta |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0);
-  }
-  return delta === 0;
-}
-
-function authorizedOperator(request: Request, secret: string | undefined): boolean {
-  if (!researchAccessEnabled(secret)) return false;
-  const value = request.headers.get("authorization");
-  if (!value || !value.startsWith("Bearer ")) return false;
-  const presented = value.slice(7);
-  if (presented.length < MIN_OPERATOR_SECRET_LENGTH || presented.length > 512) return false;
-  return sameSecret(presented, secret);
-}
 const LIVE_STAGE = "e1-grounded-notice-fetch";
 const PROBE_PROMPT = "Reply with exactly one short sentence confirming that LLM Live NPC cognition is online.";
 
@@ -200,6 +178,9 @@ export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
 
+    const operatorSession = await operatorLogin(request, env.SPC_RESEARCH_OPERATOR_TOKEN, env.AI_PROBE_LIMITER);
+    if (operatorSession) return operatorSession;
+
     if (url.pathname === "/api/health") {
       return json({
         ok: true,
@@ -227,14 +208,14 @@ export default {
         spcNextSemanticEndpoint: "/api/spc-next/semantic",
         spcNextSemanticModelConfigured: env.SPC_NEXT_SEMANTIC_MODEL ?? env.HEARTH_COGNITION_MODEL ?? "gpt-5.6-luna",
         hearthKeyConfigured: Boolean(env.OPENAI_API_KEY?.trim()),
-        providerResearchOperatorGateConfigured: researchAccessEnabled(env.SPC_RESEARCH_OPERATOR_TOKEN),
+        providerResearchOperatorGateConfigured: operatorConfigured(env.SPC_RESEARCH_OPERATOR_TOKEN),
         transportQualificationEndpoint: "/api/ai/qualify",
         probeCandidates: PROBE_CANDIDATES
       });
     }
 
     if (request.method === "POST" && PROTECTED_PROVIDER_POST_ROUTES.has(url.pathname)
-      && !authorizedOperator(request, env.SPC_RESEARCH_OPERATOR_TOKEN)) {
+      && !(await operatorAuthorized(request, env.SPC_RESEARCH_OPERATOR_TOKEN))) {
       return json({
         ok: false,
         code: "research_operator_access_required",
