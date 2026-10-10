@@ -549,6 +549,14 @@ export class SpcNextResearchScene extends Phaser.Scene {
           })();
       if (!position) continue;
 
+      // Show the actual World-owned solid circle behind the temporary
+      // rectangular specimen glyph; this is physical footprint, not scenery.
+      if (this.scenario.kind === "five-resident-local" && object.location.kind === "free") {
+        this.materialGraphics.fillStyle(0xb78652, 0.10);
+        this.materialGraphics.fillCircle(position.x, position.y, object.radius);
+        this.materialGraphics.lineStyle(1.4, 0xe7cb98, 0.5);
+        this.materialGraphics.strokeCircle(position.x, position.y, object.radius);
+      }
       const half = Math.max(10, object.radius * 0.9);
       this.materialGraphics.fillStyle(0xb78652, 0.96);
       this.materialGraphics.fillRect(position.x - half, position.y - half * 0.72, half * 2, half * 1.44);
