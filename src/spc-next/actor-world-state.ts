@@ -1,6 +1,6 @@
 import { ChunkSpatialIndex, type SpatialQueryStats } from "./chunk-spatial-index";
 import type { MaterialObjectState } from "./material-world-state";
-import { MATERIAL_CARRY_SPEED_FACTOR, resolveMaterialBodyMotion } from "./material-body-contact";
+import { MATERIAL_BODY_RADIUS, MATERIAL_CARRY_SPEED_FACTOR, resolveMaterialBodyMotion } from "./material-body-contact";
 import type {
   ActorMotionConstraint,
   ActorMotionOutcome,
@@ -96,7 +96,7 @@ export class ActorWorldState {
     return { ...desired };
   }
 
-  integrate(fixedDeltaSeconds: number, materialObstacles?: readonly MaterialObjectState[]): ActorMotionOutcome[] {
+  integrate(fixedDeltaSeconds: number, materialObstacles?: readonly MaterialObjectState[], actorBodyCollision = false): ActorMotionOutcome[] {
     if (!Number.isFinite(fixedDeltaSeconds) || fixedDeltaSeconds <= 0) {
       throw new Error("fixedDeltaSeconds must be positive and finite");
     }
@@ -118,8 +118,21 @@ export class ActorWorldState {
         y: before.y + desiredVelocity.y * fixedDeltaSeconds * loadFactor,
       };
       const boundedAfter = clampWorldPosition(burdenedAfter, this.bounds);
-      const contact = materialObstacles
-        ? resolveMaterialBodyMotion(before, boundedAfter, materialObstacles)
+      // Ephemeral collision circles: never published as material, never held,
+      // and never added to resident-private sight or cognition.
+      // Sequential kinematic contact; this is not an impulse/crowd solver.
+      const otherBodies: MaterialObjectState[] = actorBodyCollision
+        ? this.ids().filter((id) => id !== actorId).map((id) => ({
+            id: "__actor_body_proxy__:" + id,
+            label: "actor body",
+            radius: MATERIAL_BODY_RADIUS,
+            location: { kind: "free", position: { ...this.actors.get(id)!.position } },
+          }))
+        : [];
+      const bodyProxyIds = new Set(otherBodies.map((other) => other.id));
+      const obstacles = [...(materialObstacles ?? []), ...otherBodies];
+      const contact = obstacles.length > 0
+        ? resolveMaterialBodyMotion(before, boundedAfter, obstacles)
         : null;
       const after = contact?.position ?? boundedAfter;
       const resolvedVelocity = cleanVelocity({
@@ -129,7 +142,7 @@ export class ActorWorldState {
       const constraints: ActorMotionConstraint[] = [];
       if (!positionsEqual(boundedAfter, burdenedAfter)) constraints.push("world_bounds");
       if (isCarrying && !positionsEqual(burdenedAfter, intendedAfter)) constraints.push("material_load");
-      if (contact?.blockedByObjectId) constraints.push("material_object");
+      if (contact?.blockedByObjectId) constraints.push(bodyProxyIds.has(contact.blockedByObjectId) ? "actor_body" : "material_object");
       const desiredDistance = Math.hypot(desiredVelocity.x, desiredVelocity.y) * fixedDeltaSeconds;
       const resolvedDistance = Math.hypot(after.x - before.x, after.y - before.y);
       const resolution = constraints.length === 0
