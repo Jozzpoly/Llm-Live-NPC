@@ -256,10 +256,53 @@ async function main() {
         && facingDrop.location.position.x < reversingPlayer.position.x - 35,
       { facingDrop, player: reversingPlayer });
 
+    // Repeat with a genuinely larger object. The old hardcoded 42-unit
+    // placement would overlap the player's body and strand the timber parcel.
+    await key("KeyD", true);
+    await sleep(70);
+    await evaluate(cdp, "window.__SPC_EVIDENCE__.stepWorld(43)");
+    await key("KeyD", false);
+    await key("KeyS", true);
+    await sleep(70);
+    const nearTimber = await evaluate(cdp, "window.__SPC_EVIDENCE__.stepWorld(42)");
+    await key("KeyS", false);
+    const timberPlayer = playerAt(nearTimber);
+    const timberBefore = (await material()).find((object) => object.id === "crate.workshop.timber");
+    const distanceToTimber = Math.hypot(
+      (timberPlayer?.x ?? -1000) - (timberBefore?.location?.position?.x ?? 1000),
+      (timberPlayer?.y ?? -1000) - (timberBefore?.location?.position?.y ?? 1000),
+    );
+    assert(report, "ordinary browser keyboard can approach real larger timber parcel",
+      timberBefore?.location?.kind === "free"
+        && distanceToTimber > timberBefore.radius + 18
+        && distanceToTimber < 64,
+      { timberPlayer, timberBefore, distanceToTimber });
+    await key("KeyE", true);
+    await sleep(110);
+    await key("KeyE", false);
+    await sleep(70);
+    const timberHeld = (await material()).find((object) => object.id === "crate.workshop.timber");
+    assert(report, "E picks up physically larger timber parcel, without selecting a different nearby object",
+      timberHeld?.location?.kind === "held"
+        && timberHeld?.location?.actorId === "player.jozz", timberHeld);
+    await key("KeyE", true);
+    await sleep(110);
+    await key("KeyE", false);
+    await sleep(70);
+    const timberDropped = (await material()).find((object) => object.id === "crate.workshop.timber");
+    assert(report, "E places larger parcel in facing direction outside physical body radius",
+      timberDropped?.location?.kind === "free"
+        && timberDropped.location.position.y > timberPlayer.y + timberDropped.radius + 18
+        && Math.hypot(
+          timberDropped.location.position.x - timberPlayer.x,
+          timberDropped.location.position.y - timberPlayer.y,
+        ) < 64,
+      { timberPlayer, timberDropped });
     report.world.materialContact = {
       blockedX, throughX, reblockedX,
       cratePosition: placed.location.position,
       reverseFacingDrop: facingDrop.location.position,
+      timberDropped: timberDropped.location.position,
     };
 
     await cdp.send("Page.navigate", { url: BASE_URL + "/?spc=1&scenario=five-resident-local" });
