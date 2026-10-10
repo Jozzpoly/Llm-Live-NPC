@@ -102,6 +102,22 @@ function setWorldOnly(enabled: boolean): void {
 
 function renderPanel(frame: SpcNextResearchFrame): void {
   lastFrame = frame;
+  if (armedResearchMode && oneShotButton.disabled) {
+    const latest = frame.livingDiagnostics?.recentProviderEvents.at(-1);
+    if (latest?.status === "provider_error" || latest?.status === "transport_internal_error") {
+      oneShotStatus.textContent = "Luna: błąd transportu lub limitu; jedna próba zużyta. Świat działa dalej.";
+    } else if (latest?.status === "admitted") {
+      oneShotStatus.textContent = latest.detail.startsWith("applied ")
+        ? latest.detail.includes("no new matter")
+          ? "Luna podjęła decyzję bez nowego zadania. Zobacz ślad w badaniach."
+          : "Decyzja Luny przyjęta. Obserwuj, czy w World zajdą faktyczne skutki."
+        : "Odpowiedź Luny nie przeszła lokalnej kontroli. Szczegóły w badaniach.";
+    } else if (latest?.status === "arrival_ready") {
+      oneShotStatus.textContent = "Odpowiedź dotarła. Czeka na granicę przyjęcia w World.";
+    } else if (latest?.status === "request_started") {
+      oneShotStatus.textContent = "Luna: jedna próba poznawcza w toku.";
+    }
+  }
   const selected = frame.selectedDiagnostics;
   const selectedActor = frame.selectedResidentId
     ? frame.snapshot.actors.find((actor) => actor.id === frame.selectedResidentId) ?? null
