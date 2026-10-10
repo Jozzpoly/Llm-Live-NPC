@@ -138,6 +138,59 @@ describe("five-resident unified living runtime", () => {
     expect(upstream).toHaveBeenCalledTimes(1);
   });
 
+  it("keeps the genuine World running in manual mode with ZERO network until one explicitly selected resident press", async () => {
+    const upstream = vi.fn(async () => new Response(JSON.stringify({
+      ok: false, code: "global_limit",
+    }), { status: 429, headers: { "content-type": "application/json" } }));
+    const living = new FiveResidentUnifiedLivingRuntime({
+      providerDispatchMode: "manual",
+      fetcher: upstream,
+      maxConcurrentCognition: 1,
+      maxUpstreamRequests: 1,
+    });
+
+    while (living.world.tick < 2_600) living.advanceOneWorldTick();
+    expect(living.lifeRuntime.claimedResidentIds()).toHaveLength(5);
+    expect(living.diagnostics().providerRequestCount).toBe(0);
+    expect(upstream).not.toHaveBeenCalled();
+    // Only an explicit deliberate selection can consume existing private pressure.
+    const decisions = living.lifeRuntime.claimedResidentIds().map((id) => ({
+      id, status: living.requestOneResidentCognition(id),
+    }));
+    const chosen = decisions.find((entry) => entry.status === "started");
+    expect(chosen).toBeDefined();
+    expect(decisions.filter((entry) => entry.status === "started")).toHaveLength(1);
+    expect(living.diagnostics().providerHardBudget).toMatchObject({
+      maxUpstreamRequests: 1, upstreamRequestsStarted: 1, exhausted: true,
+    });
+    expect(upstream).toHaveBeenCalledTimes(1);
+    expect(living.diagnostics().recentProviderEvents.filter(
+      (event) => event.status === "request_started",
+    )).toHaveLength(1);
+    expect(living.diagnostics().recentProviderEvents.find(
+      (event) => event.status === "request_started",
+    )?.residentId).toBe(chosen!.id);
+
+    await flushMicrotasks();
+    for (let step = 0; step < 1200; step++) {
+      living.advanceOneWorldTick();
+      if (step % 40 === 0) await flushMicrotasks();
+    }
+    expect(living.diagnostics().providerRequestCount).toBe(1);
+    expect(upstream).toHaveBeenCalledTimes(1);
+    expect(living.requestOneResidentCognition(chosen!.id)).toBe("budget_exhausted");
+    expect(living.world.tick).toBe(3_800);
+  });
+
+  it("rejects manual invocation in automatic mode rather than granting a second provider path", () => {
+    const living = new FiveResidentUnifiedLivingRuntime({
+      fetcher: vi.fn(async () => Response.json({ok:false,code:"global_limit"},{status:429})),
+    });
+    expect(() => living.requestOneResidentCognition("resident.janek")).toThrow(
+      /manual cognition cannot be invoked/,
+    );
+  });
+
   it("does not permit silently disabling the finite upstream request ceiling", () => {
     expect(() => new FiveResidentUnifiedLivingRuntime({
       fetcher: vi.fn(),
