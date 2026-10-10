@@ -14,6 +14,7 @@ import { FIVE_RESIDENT_LIFE_SELF } from "./five-resident-life-self";
 import {
   ResidentCausalExecutionCoordinator,
   type ResidentCausalExecutionStep,
+  type ResidentCausalExecutionReactivation,
 } from "./resident-causal-execution-coordinator";
 import {
   ResidentCausalLifeSubstrate,
