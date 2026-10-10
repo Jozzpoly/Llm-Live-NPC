@@ -52,6 +52,7 @@ describe("ResidentMaterialKnowledge", () => {
       lastKnownPosition: { x: 200, y: 100 },
       observedAtTick: 0,
       currentlyVisible: false,
+      observedLocationKind: "free",
     });
   });
 
