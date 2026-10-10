@@ -26,8 +26,12 @@ describe("pre-Luna Owner world observation — actual R6 five-resident compositi
     const initial = mode.world.publicSnapshot();
     expect(initial.actors.filter((actor) => actor.kind === "resident")).toHaveLength(5);
     expect(initial.actors.some((actor) => actor.id === "player.jozz")).toBe(true);
-    expect(mode.world.materialObjects()).toEqual([
-      expect.objectContaining({ id: "crate.workshop.01" }),
+    expect(mode.world.materialObjects()).toHaveLength(4);
+    expect(mode.world.materialObjects().map((object) => object.id)).toEqual([
+      "crate.workshop.01",
+      "crate.workshop.spare",
+      "crate.workshop.timber",
+      "crate.workshop.tools",
     ]);
 
     // Let the identical local opening finish without substituting decisions or
