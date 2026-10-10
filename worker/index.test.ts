@@ -60,6 +60,12 @@ describe("Worker SPC Next routing", () => {
         expect(rejected.status, pathname).toBe(403);
       }
     }
+    // Fail closed for FUTURE API routes too; otherwise a new paid handler
+    // could silently become publicly callable when added to the Worker.
+    const future = await worker.fetch(new Request("https://example.test/api/future-model-spend", {
+      method: "POST",
+    }), { ...env(), OPENAI_API_KEY: "test-not-real" });
+    expect(future.status).toBe(403);
   });
 
   it("health remains read-only while reporting gate status without disclosing its token", async () => {
