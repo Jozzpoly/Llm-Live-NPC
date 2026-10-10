@@ -8,7 +8,7 @@ import {
   FiveResidentUnifiedLivingRuntime,
   type FiveResidentLivingRuntimeDiagnostics,
 } from "../spc-next/five-resident-unified-living-runtime";
-import type { FiveResidentId } from "../spc-next/five-resident-region";
+import { createFiveResidentRegionComposition, type FiveResidentId } from "../spc-next/five-resident-region";
 import type { SpcWorldRuntime } from "../spc-next/spc-world-runtime";
 import { createFiveResidentJanekMaterialSlice } from "../spc-next/five-resident-material-slice";
 import { createFiveResidentJanekMissingCrateStagedSlice } from "../spc-next/five-resident-missing-crate-slice";
@@ -888,6 +888,11 @@ function createR6MiraStandingSocialCommitmentScenario(): SpcNextResearchScenario
 
 function createUnifiedLivingScenario(manual = false): SpcNextResearchScenario {
   const living = new FiveResidentUnifiedLivingRuntime(manual ? {
+    // Authored encounter setup: start within natural speech range of Mira,
+    // never fabricate a percept, social motive or subsequent response.
+    composition: createFiveResidentRegionComposition({
+      playerStart: { x: 900, y: 680 },
+    }),
     providerDispatchMode: "manual",
     maxConcurrentCognition: 1,
     maxUpstreamRequests: 1,
