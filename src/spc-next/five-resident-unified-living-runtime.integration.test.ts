@@ -278,6 +278,88 @@ describe("five-resident unified living runtime", () => {
     expect(living.diagnostics().providerHardBudget.exhausted).toBe(true);
   });
 
+  it("refuses a completed manual model answer when its actual private World-speech reason was locally invalidated in flight", async () => {
+    const gate: { release?: (response: Response) => void } = {};
+    const captured: Array<{
+      resident: { id: string };
+      reasons: Array<{ id: string; kind: string }>;
+    }> = [];
+    const upstream = vi.fn((_url: RequestInfo | URL, init?: RequestInit) => {
+      captured.push(JSON.parse(String(init?.body)));
+      return new Promise<Response>((resolve) => { gate.release = resolve; });
+    });
+    const living = new FiveResidentUnifiedLivingRuntime({
+      composition: createFiveResidentRegionComposition({ playerStart: { x: 1000, y: 700 } }),
+      providerDispatchMode: "manual",
+      maxUpstreamRequests: 1,
+      fetcher: upstream,
+    });
+    while (living.world.tick < 2_600) living.advanceOneWorldTick();
+    const actualSpeech = living.world.speak(
+      "player.jozz", "Mira, czy rozmawiamy?", 420, ["resident.mira"],
+    );
+    expect(actualSpeech.kind).toBe("speech");
+    living.advanceOneWorldTick();
+    expect(living.requestOneResidentCognition("resident.mira")).toBe("started");
+    expect(upstream).toHaveBeenCalledTimes(1);
+    expect(captured[0]?.resident.id).toBe("resident.mira");
+    const heard = captured[0]?.reasons.find((reason) => reason.kind === "heard_speech");
+    expect(heard).toBeDefined();
+    if (!heard || !gate.release) throw new Error("no in-flight private speech request");
+
+    // Independently model a local settlement WHILE the real transport is pending.
+    // This is a deliberately controlled local fact, not a claim of emergent agency.
+    const mira = living.life("resident.mira")!;
+    expect(mira.resident.invalidateSemanticPressure(
+      heard.id, living.world.tick, "resident-local reason no longer needs judgement",
+    )).toBe(true);
+
+    gate.release(Response.json({
+      ok: true,
+      originReasonId: heard.id,
+      proposal: {
+        version: 1,
+        commitmentDecision: {
+          kind: "accept",
+          reason: "answer the privately heard player",
+          intent: {
+            kind: "communicate",
+            goal: "reply to heard address",
+            targetActorId: "player.jozz",
+            targetRegionId: null,
+            targetPosition: null,
+            text: "Mogę porozmawiać.",
+          },
+        },
+        beliefs: [],
+        concerns: [],
+        reviewAfterSeconds: 30,
+      },
+    }));
+    await flushMicrotasks();
+    expect(living.diagnostics().providerInboxCount).toBe(1);
+    expect(mira.matterScope.matterIds()).toEqual([]);
+    living.advanceOneWorldTick();
+
+    expect(living.diagnostics().recentProviderEvents.some(
+      (event) => event.residentId === "resident.mira"
+        && event.status === "admitted"
+        && event.detail.includes("stale: semantic_pressure_changed_during_request"),
+    )).toBe(true);
+    expect(mira.matterScope.matterIds()).toEqual([]);
+    expect(mira.resident.pendingCognitionReasons().some(
+      (reason) => reason.id === heard.id,
+    )).toBe(false);
+    for (let tick = 0; tick < 120; tick += 1) living.advanceOneWorldTick();
+    expect(living.world.diagnostics().recentOccurrences.some(
+      (occurrence) => occurrence.kind === "speech"
+        && occurrence.actorId === "resident.mira"
+        && occurrence.text === "Mogę porozmawiać.",
+    )).toBe(false);
+    expect(living.diagnostics().providerHardBudget.upstreamRequestsStarted).toBe(1);
+    expect(upstream).toHaveBeenCalledTimes(1);
+  });
+
   it("rejects manual invocation in automatic mode rather than granting a second provider path", () => {
     const living = new FiveResidentUnifiedLivingRuntime({
       fetcher: vi.fn(async () => Response.json({ok:false,code:"global_limit"},{status:429})),
