@@ -78,9 +78,9 @@ oneShotButton.textContent = "Zapytaj Lunę (1×)";
 oneShotButton.title = "Tylko wybrany mieszkaniec, jeden istniejący prywatny powód, najwyżej jedno zapytanie w tej sesji.";
 oneShotButton.hidden = !armedResearchMode;
 const oneShotStatus = document.createElement("span");
-oneShotStatus.className = "spc-log-sub";
+oneShotStatus.className = "spc-armed-status";
 oneShotStatus.hidden = !armedResearchMode;
-oneShotStatus.textContent = armedResearchMode ? "Luna uśpiona — świat działa lokalnie" : "";
+oneShotStatus.textContent = armedResearchMode ? "Luna: bez zapytań" : "";
 
 const headerActions = document.createElement("div");
 headerActions.className = "spc-header-actions";
@@ -105,17 +105,18 @@ function renderPanel(frame: SpcNextResearchFrame): void {
   if (armedResearchMode && oneShotButton.disabled) {
     const latest = frame.livingDiagnostics?.recentProviderEvents.at(-1);
     if (latest?.status === "provider_error" || latest?.status === "transport_internal_error") {
-      oneShotStatus.textContent = "Luna: błąd transportu lub limitu; jedna próba zużyta. Świat działa dalej.";
+      oneShotStatus.textContent = "Luna: błąd API";
+      oneShotStatus.title = "Próba została wykorzystana. Świat działa dalej, ale odpowiedź modelu nie została przyjęta.";
     } else if (latest?.status === "admitted") {
       oneShotStatus.textContent = latest.detail.startsWith("applied ")
         ? latest.detail.includes("no new matter")
-          ? "Luna podjęła decyzję bez nowego zadania. Zobacz ślad w badaniach."
-          : "Decyzja Luny przyjęta. Obserwuj, czy w World zajdą faktyczne skutki."
-        : "Odpowiedź Luny nie przeszła lokalnej kontroli. Szczegóły w badaniach.";
+          ? "Decyzja: bez nowego zadania"
+          : "Zamiar przyjęty; obserwuj World"
+        : "Zamiar odrzucony (szczegóły w logu).";
     } else if (latest?.status === "arrival_ready") {
-      oneShotStatus.textContent = "Odpowiedź dotarła. Czeka na granicę przyjęcia w World.";
+      oneShotStatus.textContent = "Odpowiedź czeka na World";
     } else if (latest?.status === "request_started") {
-      oneShotStatus.textContent = "Luna: jedna próba poznawcza w toku.";
+      oneShotStatus.textContent = "Luna: oczekiwanie";
     }
   }
   const selected = frame.selectedDiagnostics;
@@ -365,15 +366,16 @@ oneShotButton.addEventListener("click", () => {
   if (!armedResearchMode || oneShotButton.disabled) return;
   const status = scene.requestSelectedResidentCognition();
   if (status === "started") {
-    oneShotStatus.textContent = "Wysłano jedno żądanie do wybranego mieszkańca. Dalsze wywołania są zablokowane.";
+    oneShotStatus.textContent = "Wysłano 1/1";
     oneShotButton.disabled = true;
   } else if (status === "budget_exhausted") {
-    oneShotStatus.textContent = "Limit jednej próby wyczerpany.";
+    oneShotStatus.textContent = "Limit 1/1 wyczerpany";
     oneShotButton.disabled = true;
   } else if (status === "no_reason") {
-    oneShotStatus.textContent = "Brak dostępnego prywatnego powodu. Podejdź i odezwij się, a następnie spróbuj ponownie.";
+    oneShotStatus.textContent = "Brak prywatnego powodu";
+    oneShotStatus.title = "Podejdź, odezwij się i odczekaj jeden World tick, a następnie spróbuj ponownie.";
   } else {
-    oneShotStatus.textContent = "Mieszkaniec nie przejął jeszcze autonomicznego runtime. Świat nadal działa.";
+    oneShotStatus.textContent = "Mieszkaniec jeszcze niegotowy";
   }
 });
 
