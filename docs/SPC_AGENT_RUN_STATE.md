@@ -1,4 +1,6 @@
 # LLM Live NPC / SPC — active agent run state and continuity
+**Cross-chat re-entry:** [SPC_NEXT_CHAT_BOOTSTRAP_2026-10-10.md](SPC_NEXT_CHAT_BOOTSTRAP_2026-10-10.md) is a *short summary and retrieval pointer*, NOT a replacement for this active control. Latest Owner message requested transition to a new conversation after Oct-10 long chat; preserve mission and continue from live repo/feedback instead of making Owner reconstruct history.
+
 **Checkpoint:** 2026-10-10 UTC. **Purpose:** low-attention owner collaboration and durable agent re-entry across long runs/chat limits. This file is an *execution index*, not a roadmap, GDD, acceptance test, source-code authority, or substitute for newer Owner feedback.
 
 ## ACTIVE CONTROL — one current owner-facing mission (updated 2026-10-10)
