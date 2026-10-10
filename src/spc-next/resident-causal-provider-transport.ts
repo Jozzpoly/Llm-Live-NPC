@@ -56,6 +56,8 @@ interface ArrivalAuthority<Request extends ResidentCausalCognitionRequest> {
 
 export interface ResidentCausalProviderTransportOptions {
   runtimeMode?: string | null;
+  /** Client declaration; never grants local model/action authority. */
+  temporalStandingReview?: boolean;
 }
 
 const MAX_RESPONSE_CHARACTERS = 262_144;
@@ -78,6 +80,7 @@ export class ResidentCausalProviderTransport<
   private readonly active = new Set<ResidentCausalProviderArrival>();
   private readonly admitted = new WeakSet<object>();
   private readonly runtimeMode: string | null;
+  private readonly temporalStandingReview: boolean;
 
   constructor(
     private readonly endpoint = "/api/spc-next/life-intent",
@@ -85,6 +88,7 @@ export class ResidentCausalProviderTransport<
     options: ResidentCausalProviderTransportOptions = {},
   ) {
     this.runtimeMode = options.runtimeMode?.trim() || null;
+    this.temporalStandingReview = options.temporalStandingReview === true;
   }
 
   async request(
@@ -95,6 +99,9 @@ export class ResidentCausalProviderTransport<
       "content-type": "application/json",
     };
     if (this.runtimeMode) headers["x-spc-life-runtime"] = this.runtimeMode;
+    if (this.temporalStandingReview) {
+      headers["x-spc-life-capabilities"] = "temporal-standing-v1";
+    }
 
     let response: Response;
     try {
