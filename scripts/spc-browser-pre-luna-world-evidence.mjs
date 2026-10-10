@@ -139,6 +139,15 @@ async function main() {
       && frame.snapshot.actors.some((a) => a.id === "player.jozz"), {
       actors: frame.snapshot.actors.map((a) => a.id), tick: frame.snapshot.tick,
     });
+    const workshopObjects = await evaluate(cdp, "window.__SPC_EVIDENCE__.materialObjects()");
+    assert(report, "the ordinary five-resident World has four nearby physical workshop objects",
+      workshopObjects.length === 4
+      && ["crate.workshop.01", "crate.workshop.spare", "crate.workshop.timber", "crate.workshop.tools"]
+        .every((id) => workshopObjects.some((o) => o.id === id && o.location.kind === "free"))
+      && workshopObjects.every((o) => o.location.position.x >= 1800
+        && o.location.position.x <= 2100 && o.location.position.y >= 680
+        && o.location.position.y <= 870),
+      workshopObjects);
     const playerAt = (f) => f.snapshot.actors.find((a) => a.id === "player.jozz")?.position;
     await cdp.send("Input.dispatchKeyEvent", { type: "keyDown", key: "d", code: "KeyD", windowsVirtualKeyCode: 68, nativeVirtualKeyCode: 68 });
     await sleep(60);
