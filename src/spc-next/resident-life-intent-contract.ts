@@ -150,9 +150,18 @@ export function parseResidentLifeIntentProposal(
     let standingSocialCommitment: ResidentStandingSocialCommitmentDescriptor | undefined;
     if (hasStandingSocialCommitment) {
       const rawStanding = decision.standingSocialCommitment;
+      const hasExplicitRevisit = isRecord(rawStanding)
+        && Object.hasOwn(rawStanding, "revisitAfterWorldTicks");
       if (!isRecord(rawStanding)
-        || !hasExactKeys(rawStanding, ["goal"])
+        || !hasExactKeys(rawStanding, hasExplicitRevisit
+          ? ["goal", "revisitAfterWorldTicks"]
+          : ["goal"])
         || !isBoundedString(rawStanding.goal, 1_200)
+        || (hasExplicitRevisit &&
+          (typeof rawStanding.revisitAfterWorldTicks !== "number"
+            || !Number.isSafeInteger(rawStanding.revisitAfterWorldTicks)
+            || rawStanding.revisitAfterWorldTicks < 1
+            || rawStanding.revisitAfterWorldTicks > 36_000))
         || validated.activityDirective.activity.kind !== "communicate"
         || validated.activityDirective.activity.targetActorId === null
         || validated.activityDirective.activity.text === null) {
@@ -160,6 +169,9 @@ export function parseResidentLifeIntentProposal(
       }
       standingSocialCommitment = {
         goal: rawStanding.goal,
+        ...(hasExplicitRevisit
+          ? { revisitAfterWorldTicks: rawStanding.revisitAfterWorldTicks as number }
+          : {}),
       };
     }
 

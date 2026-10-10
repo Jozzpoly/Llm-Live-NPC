@@ -21,6 +21,7 @@ export interface PreparedResidentOriginatedSocialCommitment {
   readonly expectedSpeechText: string;
   readonly goal: string;
   readonly commitment: string;
+  readonly revisitAfterWorldTicks?: number;
 }
 
 interface PreparedAuthority {
@@ -82,12 +83,19 @@ export class ResidentOriginatedSocialCommitmentAuthority {
     expectedSpeechText: string;
     goal: string;
     commitment: string;
+    revisitAfterWorldTicks?: number;
   }): PreparedResidentOriginatedSocialCommitment {
     assertNonEmpty(input.sourceMatterId, "social commitment source matter id");
     assertNonEmpty(input.counterpartyActorId, "social commitment counterparty actor id");
     assertNonEmpty(input.expectedSpeechText, "social commitment speech text");
     assertNonEmpty(input.goal, "social commitment goal");
     assertNonEmpty(input.commitment, "social commitment meaning");
+    if (input.revisitAfterWorldTicks !== undefined
+      && (!Number.isSafeInteger(input.revisitAfterWorldTicks)
+        || input.revisitAfterWorldTicks < 1
+        || input.revisitAfterWorldTicks > 36_000)) {
+      throw new Error("social commitment revisit delay must be 1..36000 World ticks");
+    }
 
     const source = this.options.kernel.matter(input.sourceMatterId);
     if (!source
@@ -95,7 +103,9 @@ export class ResidentOriginatedSocialCommitmentAuthority {
       || source.activeRunId === null
       || source.semanticIntent?.kind !== "communicate_actor"
       || source.semanticIntent.targetActorId !== input.counterpartyActorId
-      || source.semanticIntent.text !== input.expectedSpeechText) {
+      || source.semanticIntent.text !== input.expectedSpeechText
+      || source.semanticIntent.standingSocialCommitment?.revisitAfterWorldTicks
+        !== input.revisitAfterWorldTicks) {
       throw new Error(
         "standing social commitment preparation requires one exact active communicate matter/run",
       );
@@ -110,6 +120,9 @@ export class ResidentOriginatedSocialCommitmentAuthority {
       expectedSpeechText: input.expectedSpeechText,
       goal: input.goal,
       commitment: input.commitment,
+      ...(input.revisitAfterWorldTicks !== undefined
+        ? { revisitAfterWorldTicks: input.revisitAfterWorldTicks }
+        : {}),
     }) satisfies PreparedResidentOriginatedSocialCommitment;
 
     this.prepared.set(capability, {
@@ -141,6 +154,9 @@ export class ResidentOriginatedSocialCommitmentAuthority {
       expectedSpeechText: source.semanticIntent.text,
       goal: source.semanticIntent.standingSocialCommitment.goal,
       commitment: source.semanticIntent.text,
+      ...(source.semanticIntent.standingSocialCommitment.revisitAfterWorldTicks !== undefined
+        ? { revisitAfterWorldTicks: source.semanticIntent.standingSocialCommitment.revisitAfterWorldTicks }
+        : {}),
     });
   }
 
@@ -218,6 +234,10 @@ export class ResidentOriginatedSocialCommitmentAuthority {
       sourceRunId: authority.sourceRunId,
     });
 
+    if (capability.revisitAfterWorldTicks !== undefined
+      && !Number.isSafeInteger(occurrence.tick + capability.revisitAfterWorldTicks)) {
+      throw new Error("social standing revisit tick overflows World time");
+    }
     const matter = this.options.kernel.openMatter({
       id: matterId,
       originEvidenceId: originEvidence.id,
@@ -227,6 +247,9 @@ export class ResidentOriginatedSocialCommitmentAuthority {
         goal: capability.goal,
         counterpartyActorId: capability.counterpartyActorId,
         commitment: capability.commitment,
+        ...(capability.revisitAfterWorldTicks !== undefined
+          ? { revisitAtWorldTick: occurrence.tick + capability.revisitAfterWorldTicks }
+          : {}),
       },
     });
     this.matterScope.track(matter.id);

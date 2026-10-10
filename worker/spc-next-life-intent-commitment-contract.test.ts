@@ -115,6 +115,57 @@ describe("SPC Next resident-life commitment proposal extraction", () => {
       .toEqual(acceptedFieldsProposal());
   });
 
+  it("accepts a factual-speech-bound timed standing promise through strict worker ingress", () => {
+    const privateContext = {
+      ...context,
+      recentPercepts: context.recentPercepts.map(p=>({
+        ...p, actorId: "player.jozz",
+      })),
+      knownActors: [{
+        id: "player.jozz", label: "player.jozz",
+        lastKnownPosition: { x: 20, y: 5 }, lastObservedTick: 120,
+        currentlyVisible: true, visibilityChangedTick: 120,
+        lastHeardDirection: { x: 1, y: 0 },
+        lastHeardDistanceBand: "near", lastHeardTick: 120,
+      }],
+    };
+    const proposal = {
+      version: 1,
+      commitmentDecision: {
+        kind: "accept",
+        reason: "I choose to speak and retain one explicit revisit commitment",
+        intent: {
+          kind: "communicate",
+          goal: "make my own stated promise",
+          targetActorId: "player.jozz",
+          targetRegionId: null,
+          targetPosition: null,
+          text: "Wrócę do tej sprawy za dziesięć sekund.",
+        },
+        standingSocialCommitment: {
+          goal: "reconsider my statement after the future spoken promise",
+          revisitAfterWorldTicks: 600,
+        },
+      },
+      beliefs: [],
+      concerns: [],
+      reviewAfterSeconds: 30,
+    };
+    expect(extractSpcNextLifeCommitmentProposal(responseBody(proposal), privateContext))
+      .toEqual(proposal);
+
+    for (const invalid of [-1, 0, 36_001, 6.5, "600"]) {
+      const forged = structuredClone(proposal) as any;
+      forged.commitmentDecision.standingSocialCommitment.revisitAfterWorldTicks = invalid;
+      expect(extractSpcNextLifeCommitmentProposal(responseBody(forged), privateContext))
+        .toBeNull();
+    }
+    const extra = structuredClone(proposal) as any;
+    extra.commitmentDecision.standingSocialCommitment.materialTask = "fake";
+    expect(extractSpcNextLifeCommitmentProposal(responseBody(extra), privateContext))
+      .toBeNull();
+  });
+
   it("rejects hidden targets and execution-method leakage", () => {
     expect(extractSpcNextLifeCommitmentProposal(
       responseBody(acceptedFieldsProposal("hidden-global-region")),
