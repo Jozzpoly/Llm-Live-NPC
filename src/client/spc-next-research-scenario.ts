@@ -902,7 +902,12 @@ function createFiveResidentLocalScenario(): SpcNextResearchScenario {
     playerStart: { x: 1_810, y: 705 },
     materialBodyCollision: true,
   });
-  const local = new FiveResidentCausalLifeRuntime(composition);
+  // Explicit RESEARCH-ONLY authored starting relation. It creates no NPC
+  // task, body command or scripted dialog and never contacts a provider.
+  // Only this isolated experimental branch opts Janek into the PR151 seam.
+  const local = new FiveResidentCausalLifeRuntime(composition, {
+    materialStewardships: { "resident.janek": ["crate.workshop.01"] },
+  });
   const janek = local.life("resident.janek");
   if (!janek) throw new Error("local world must claim idle Janek at construction");
 

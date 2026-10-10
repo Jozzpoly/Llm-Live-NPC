@@ -21,13 +21,23 @@ import {
 } from "./resident-causal-life-substrate";
 import { ResidentMaterialKnowledge } from "./resident-material-knowledge";
 import type { ResidentMaterialMatterRelevanceObservation } from "./resident-material-matter-relevance-bridge";
+import {
+  ResidentMaterialStewardshipRelevance,
+  type StewardshipObservation,
+} from "./resident-material-stewardship-relevance";
 
 export type FiveResidentCausalLifeOwnership = "local_opening" | "recovered_life";
+
+/** Explicit starting relation, not an earned goal or an NPC decision. */
+export interface FiveResidentCausalLifeOptions {
+  materialStewardships?: Readonly<Partial<Record<FiveResidentId, readonly string[]>>>;
+}
 
 interface ResidentLane {
   life: ResidentCausalLifeSubstrate;
   execution: ResidentCausalExecutionCoordinator;
   interruption: ResidentAddressedInterruptionController;
+  stewardships: readonly ResidentMaterialStewardshipRelevance[];
 }
 
 export interface FiveResidentCausalLifeTick {
@@ -38,6 +48,7 @@ export interface FiveResidentCausalLifeTick {
   materialRelevance: Readonly<
     Partial<Record<FiveResidentId, readonly ResidentMaterialMatterRelevanceObservation[]>>
   >;
+  stewardshipRelevance: Readonly<Partial<Record<FiveResidentId, readonly StewardshipObservation[]>>>;
 }
 
 export interface FiveResidentPreparedLifeIntent {
@@ -68,7 +79,10 @@ export class FiveResidentCausalLifeRuntime {
   private readonly lanes = new Map<FiveResidentId, ResidentLane>();
   private readonly navigation: ReturnType<typeof createFiveResidentNavigationGraph>;
 
-  constructor(private readonly composition: FiveResidentRegionComposition) {
+  constructor(
+    private readonly composition: FiveResidentRegionComposition,
+    private readonly options: FiveResidentCausalLifeOptions = {},
+  ) {
     this.navigation = createFiveResidentNavigationGraph({
       materialBodyCollision: composition.world.options.materialBodyCollision === true,
     });
@@ -122,6 +136,7 @@ export class FiveResidentCausalLifeRuntime {
     const materialRelevance: Partial<
       Record<FiveResidentId, readonly ResidentMaterialMatterRelevanceObservation[]>
     > = {};
+    const stewardshipRelevance: Partial<Record<FiveResidentId, readonly StewardshipObservation[]>> = {};
 
     for (const residentId of this.claimedResidentIds()) {
       const lane = this.lanes.get(residentId)!;
@@ -139,8 +154,13 @@ export class FiveResidentCausalLifeRuntime {
     // Only genuine resident-private reacquisition transitions may become semantic
     // pressure; first sight and hidden World changes remain non-semantic here.
     for (const residentId of this.claimedResidentIds()) {
-      const observations = this.lanes.get(residentId)!.life.sampleMaterialRelevance();
+      const lane = this.lanes.get(residentId)!;
+      const observations = lane.life.sampleMaterialRelevance();
       if (observations.length > 0) materialRelevance[residentId] = observations;
+      const significance = lane.stewardships
+        .map((entry) => entry.observePrivateAfterWorldTick())
+        .filter((entry) => entry.status !== "unchanged" && entry.status !== "unseen");
+      if (significance.length > 0) stewardshipRelevance[residentId] = significance;
     }
 
     // Perception is produced by the shared World step. Only after that boundary may
@@ -157,6 +177,7 @@ export class FiveResidentCausalLifeRuntime {
       execution: structuredClone(execution),
       interruptions: structuredClone(interruptions),
       materialRelevance: structuredClone(materialRelevance),
+      stewardshipRelevance: structuredClone(stewardshipRelevance),
     };
   }
 
@@ -191,10 +212,17 @@ export class FiveResidentCausalLifeRuntime {
         selfContext: FIVE_RESIDENT_LIFE_SELF[residentId],
         ...(materialKnowledge ? { materialKnowledge } : {}),
       });
+      const stewardships = (this.options.materialStewardships?.[residentId] ?? []).map((objectId) => {
+        if (!materialKnowledge) throw new Error("private material knowledge required for assigned stewardship");
+        const relation = new ResidentMaterialStewardshipRelevance(life, objectId);
+        relation.primeFromPrivateSight();
+        return relation;
+      });
       this.lanes.set(residentId, {
         life,
         execution: new ResidentCausalExecutionCoordinator(life),
         interruption: new ResidentAddressedInterruptionController(life),
+        stewardships,
       });
     }
   }
