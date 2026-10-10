@@ -125,7 +125,7 @@ export class FiveResidentCausalLifeRuntime {
       Record<FiveResidentId, readonly ResidentMaterialMatterRelevanceObservation[]>
     > = {};
     const localMaterialResumption: Partial<
-      Record<FiveResidentId, readonly ResidentCausalExecutionReactivation[]>
+      Record<FiveResidentId, ResidentCausalExecutionReactivation[]>
     > = {};
 
     for (const residentId of this.claimedResidentIds()) {
