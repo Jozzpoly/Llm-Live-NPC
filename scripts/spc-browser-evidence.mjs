@@ -297,6 +297,30 @@ async function run() {
     timelineRunning = false;
     await timelinePromise;
 
+    // Explicit opt-in R6 five-resident local-continuation World. This is a
+    // BROWSER APPEARANCE/ROUTE check, not evidence of resident-originated goals.
+    await cdp.send("Page.navigate", {
+      url: `${BASE_URL}/?spc=1&scenario=five-resident-material-continuation&evidence=1`,
+    });
+    await waitUntil(async () => await evaluate(cdp,
+      "Boolean(window.__SPC_EVIDENCE__?.ready() && document.querySelector('canvas'))"),
+    20_000, "actual five-resident continuation World");
+    const localWorld = await evaluate(cdp, "window.__SPC_EVIDENCE__.snapshot()");
+    assert(report, "R6 local-continuation route mounts the actual World with five residents",
+      localWorld.snapshot?.residents?.length === 5
+      && localWorld.snapshot?.actors?.some((a) =>
+        a.id === "player.jozz" && a.position.x === 2_004 && a.position.y === 720),
+      localWorld.snapshot?.actors?.map((a) => ({ id: a.id, position: a.position })));
+    await click(cdp, '[data-resident="resident.janek"]');
+    const janekWorld = await evaluate(cdp, "window.__SPC_EVIDENCE__.snapshot()");
+    assert(report, "browser Janek begins with one openly authored unfinished material matter",
+      janekWorld.selectedLife?.matters?.some((m) =>
+        m.id === "matter.janek.pre-luna-existing-material-concern"
+        && m.status === "active" && m.activeRun === null
+        && m.semanticIntent?.kind === "acquire_material_object"),
+      janekWorld.selectedLife?.matters ?? null);
+    await checkpoint(cdp, report, "07-r6-real-world-pre-luna-local-continuation", await panelSnapshot(cdp), true);
+
     const hardFailures = report.assertions.filter((entry) => entry.pass === false && entry.severity !== "finding");
     const browserErrors = report.runtimeExceptions.length + report.logErrors.length;
     assert(report, "no uncaught browser/runtime errors", browserErrors === 0, {
