@@ -85,7 +85,10 @@ export class ResidentCausalCognitionLane {
   private readonly authority = new WeakMap<ResidentCausalCognitionRequest, RequestAuthority>();
   private readonly active = new Set<ResidentCausalCognitionRequest>();
 
-  constructor(readonly life: ResidentCausalLifeSubstrate) {}
+  constructor(
+    readonly life: ResidentCausalLifeSubstrate,
+    private readonly options: { allowTimedStandingReview?: boolean } = {},
+  ) {}
 
   takeReadyRequest(requestId?: string): ResidentCausalCognitionRequest | null {
     const prepared = this.life.takeReadyLifeIntentAttempt();
@@ -168,6 +171,16 @@ export class ResidentCausalCognitionLane {
       this.life.currentLifeView(),
       this.life.world.tick,
       (proposal, providerContext) => {
+        // An upstream hint or a syntactically valid model proposal must NEVER
+        // install a future commitment this actual World cannot reconsider.
+        if (proposal.commitmentDecision.kind === "accept"
+          && proposal.commitmentDecision.standingSocialCommitment?.revisitAfterWorldTicks !== undefined
+          && this.options.allowTimedStandingReview !== true) {
+          return {
+            status: "rejected",
+            detail: "timed social commitment unsupported by this local World runtime",
+          };
+        }
         const singlePlanReview = exactSinglePlanOutcomeReviewTarget(
           providerContext.life,
           originReason,
