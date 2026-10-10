@@ -39,7 +39,7 @@ export function createCognitionFetchHardBudget(
   let upstreamRequestsStarted = 0;
   let blockedRequests = 0;
 
-  const fetcher: CognitionFetch = async function (
+  const fetcher: CognitionFetch = function (
     input: RequestInfo | URL,
     init?: RequestInit,
   ): Promise<Response> {
@@ -47,7 +47,7 @@ export function createCognitionFetchHardBudget(
 
     if (upstreamRequestsStarted >= maxUpstreamRequests) {
       blockedRequests += 1;
-      return new Response(JSON.stringify({
+      return Promise.resolve(new Response(JSON.stringify({
         ok: false,
         code: "experiment_request_budget_exhausted",
       }), {
@@ -56,10 +56,11 @@ export function createCognitionFetchHardBudget(
           "content-type": "application/json; charset=utf-8",
           "cache-control": "no-store",
         },
-      });
+      }));
     }
 
-    // Consume authority synchronously before the first await.
+    // Consume authority synchronously before any upstream call; preserve
+    // the transport's ordinary Promise/microtask completion depth.
     upstreamRequestsStarted += 1;
     return upstream.call(globalThis, input, init);
   };

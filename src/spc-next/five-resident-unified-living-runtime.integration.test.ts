@@ -97,6 +97,57 @@ describe("five-resident unified living runtime", () => {
     expect(guard).toBeLessThan(5_000);
     expect(firstWaveResolved(living, firstWave)).toBe(true);
   });
+
+  it("hard-stops upstream traffic even if a live resident has more semantic pressure", async () => {
+    // This must be a literal PHYSICAL network-call ceiling, not a count of
+    // successful admissions, rendered diagnostics, retries or settled reasons.
+    const upstream = vi.fn(async () => new Response(JSON.stringify({
+      ok: false,
+      code: "global_limit",
+    }), {
+      status: 429,
+      headers: { "content-type": "application/json" },
+    }));
+    const living = new FiveResidentUnifiedLivingRuntime({
+      fetcher: upstream,
+      maxUpstreamRequests: 1,
+      maxConcurrentCognition: 5,
+    });
+
+    // No manual player input, extra NPC matters, simulated provider response
+    // that opens a new run, or bypass of the genuine unified scheduling path.
+    while (living.world.tick < 2_300) living.advanceOneWorldTick();
+    await flushMicrotasks();
+    const before = living.diagnostics();
+    expect(before.providerHardBudget).toMatchObject({
+      maxUpstreamRequests: 1,
+      upstreamRequestsStarted: 1,
+      exhausted: true,
+    });
+    expect(upstream).toHaveBeenCalledTimes(1);
+
+    // The World and the local brain keep ticking after budget exhaustion.
+    const oldTick = living.world.tick;
+    for (let i = 0; i < 360; i += 1) {
+      living.advanceOneWorldTick();
+      await flushMicrotasks();
+    }
+    expect(living.world.tick).toBe(oldTick + 360);
+    expect(living.diagnostics().providerHardBudget.upstreamRequestsStarted).toBe(1);
+    expect(living.diagnostics().providerHardBudget.exhausted).toBe(true);
+    expect(upstream).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not permit silently disabling the finite upstream request ceiling", () => {
+    expect(() => new FiveResidentUnifiedLivingRuntime({
+      fetcher: vi.fn(),
+      maxUpstreamRequests: 0,
+    })).toThrow(/positive safe integer/);
+    expect(() => new FiveResidentUnifiedLivingRuntime({
+      fetcher: vi.fn(),
+      maxUpstreamRequests: Number.POSITIVE_INFINITY,
+    })).toThrow(/positive safe integer/);
+  });
 });
 
 async function flushMicrotasks(): Promise<void> {
