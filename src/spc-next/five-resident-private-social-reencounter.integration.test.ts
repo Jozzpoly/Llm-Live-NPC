@@ -113,6 +113,14 @@ describe("real five-resident R6: encounter gains meaning ONLY from personal exis
       m.status==="active" && m.semanticIntent?.kind==="standing_social_commitment",
     )).toHaveLength(1);
 
+    // A second ordinary leave/return adds NO new semantic pressure for the
+    // exact unchanged matter. The first review/question already exists.
+    expect(movePlayerUntil(s, 1_050)).toHaveLength(0);
+    expect(movePlayerUntil(s, 1_750)).toHaveLength(0);
+    expect(s.life.resident.pendingCognitionReasons().filter(r=>
+      r.id===socialReasons[0]!.id,
+    )).toHaveLength(1);
+
     // Explicit TEST-SUPPLIED release: local relevance must settle, and cannot
     // revive solely from seeing the same actor later with no remaining promise.
     s.life.originatedSocialCommitments.release({
