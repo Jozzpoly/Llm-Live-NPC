@@ -6,10 +6,10 @@ const ORIGINAL = "crate.workshop.01";
 const UNRELATED = "crate.workshop.tools";
 const MOVER = "player.workshop-private-experience";
 
-function fixture(withAuthoredRelation: boolean) {
+function fixture(withAuthoredRelation: boolean, moverStart = { x: 2_004, y: 720 }) {
   const composition = createFiveResidentRegionComposition({ materialBodyCollision: true });
   const world = composition.world;
-  world.addPlayer(MOVER, { x: 2_004, y: 720 }, { maxSpeed: 100_000 });
+  world.addPlayer(MOVER, moverStart, { maxSpeed: 100_000 });
   const runtime = new FiveResidentCausalLifeRuntime(composition,
     withAuthoredRelation ? { materialStewardships: { "resident.janek": [ORIGINAL] } } : {});
   const janek = runtime.life("resident.janek");
@@ -123,13 +123,12 @@ describe("real pre-Luna physical workshop × resident-private significance (PR15
   });
 
   it("does not promote unrelated workshop objects into Janek's private concern", () => {
-    const { world, runtime, janek, physicallyMove } = fixture(true);
-    physicallyMove({ x: 1_893, y: 800 });
+    const { world, runtime, janek, physicallyMove } = fixture(true, { x: 1_820, y: 800 });
     expect(world.attemptMaterialAction(MOVER, { kind: "pickup", objectId: UNRELATED }))
       .toMatchObject({ status: "succeeded", code: "picked_up" });
-    physicallyMove({ x: 1_795, y: 785 });
+    physicallyMove({ x: 1_770, y: 785 });
     expect(world.attemptMaterialAction(MOVER, {
-      kind: "place", objectId: UNRELATED, position: { x: 1_757, y: 785 },
+      kind: "place", objectId: UNRELATED, position: { x: 1_728, y: 785 },
     })).toMatchObject({ status: "succeeded", code: "placed" });
     const outcome = runtime.advanceOneWorldTick();
     expect(outcome.stewardshipRelevance["resident.janek"]).toBeUndefined();
