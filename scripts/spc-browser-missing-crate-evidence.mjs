@@ -22,6 +22,40 @@ const MID_INSPECTION_CAPTURE_STEPS = 24;
 mkdirSync(OUTPUT_DIR, { recursive: true });
 const sleep = (ms) => new Promise((resolveSleep) => setTimeout(resolveSleep, ms));
 
+async function waitForChildExit(child, timeoutMs) {
+  if (child.exitCode !== null || child.signalCode !== null) return true;
+  return await new Promise((resolveExit) => {
+    let settled = false;
+    const onExit = () => finish(true);
+    const timer = setTimeout(() => finish(false), timeoutMs);
+    function finish(exited) {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      child.off("exit", onExit);
+      resolveExit(exited);
+    }
+    child.once("exit", onExit);
+  });
+}
+
+async function cleanupChromeProfile(path) {
+  let lastError = null;
+  for (let attempt = 0; attempt < 10; attempt += 1) {
+    try {
+      rmSync(path, { recursive: true, force: true, maxRetries: 3, retryDelay: 80 });
+      return true;
+    } catch (error) {
+      lastError = error;
+      await sleep(120 + attempt * 80);
+    }
+  }
+  console.warn(
+    `Browser evidence completed, but temporary Chrome profile cleanup remained unavailable: ${lastError instanceof Error ? lastError.message : String(lastError)}`,
+  );
+  return false;
+}
+
 function chromeExecutable() {
   const candidates = [
     process.env.CHROME_PATH,
@@ -242,10 +276,14 @@ async function run() {
     if (report.outcome !== "PASS") process.exitCode = 1;
   } finally {
     cdp?.close();
-    chrome.kill("SIGTERM");
+    if (chrome.exitCode === null && chrome.signalCode === null) chrome.kill("SIGTERM");
+    const exitedGracefully = await waitForChildExit(chrome, 1_200);
+    if (!exitedGracefully && chrome.exitCode === null && chrome.signalCode === null) {
+      chrome.kill("SIGKILL");
+      await waitForChildExit(chrome, 1_200);
+    }
     await sleep(120);
-    if (!chrome.killed) chrome.kill("SIGKILL");
-    rmSync(userDataDir, { recursive: true, force: true, maxRetries: 6, retryDelay: 100 });
+    await cleanupChromeProfile(userDataDir);
   }
 }
 

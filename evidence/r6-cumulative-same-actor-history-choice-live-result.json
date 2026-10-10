@@ -1,0 +1,112 @@
+{
+  "schemaVersion": 1,
+  "sourceSha": "900d626b9049a43438993a96e7b442c6e59aa369",
+  "workflowRun": 29,
+  "priorApparatusRun": {
+    "workflowRun": 28,
+    "sourceSha": "1315eb8ae07c729da562c1f0a1183a393b8940bf",
+    "semanticSample": false,
+    "providerRequestsAttempted": 0,
+    "note": "Qualifier resolution failed before preview/provider inference. Zero model requests/token spend."
+  },
+  "purpose": "R6 cumulative same-actor factual-history live qualification. Matched Mira twins have the same two current legal futures and no old matters in current life. The history twin differs only because current Ida future C owns two exact typed factual outcomes from independent earlier Ida communication episodes. Exactly two real GPT-5.6 Luna requests; no semantic retry and no preferred winner.",
+  "startedAt": "2026-09-27T13:57:43.545Z",
+  "finishedAt": "2026-09-27T13:57:50.614Z",
+  "providerRequestsAttempted": 2,
+  "semanticRetries": 0,
+  "observations": {
+    "preflight": {
+      "status": 200,
+      "endpoint": "/api/spc-next/life-choice",
+      "model": "gpt-5.6-luna",
+      "keyConfigured": true
+    },
+    "control_without_cumulative_history": {
+      "label": "control_without_cumulative_history",
+      "status": 200,
+      "elapsedMs": 2373,
+      "ok": true,
+      "code": null,
+      "upstreamStatus": null,
+      "proposal": {
+        "version": 1,
+        "decision": {
+          "kind": "defer_all",
+          "reason": "Both matters are independently grounded and currently active, but the available context provides no sufficient basis to prioritize speaking with Ida over visiting the workshop or vice versa.",
+          "reviewAfterSeconds": 120
+        }
+      },
+      "usage": {
+        "model": "gpt-5.6-luna",
+        "inputTokens": 1714,
+        "outputTokens": 65,
+        "totalTokens": 1779,
+        "elapsedMs": 2292
+      }
+    },
+    "history_with_two_same_actor_outcomes": {
+      "label": "history_with_two_same_actor_outcomes",
+      "status": 200,
+      "elapsedMs": 4256,
+      "ok": true,
+      "code": null,
+      "upstreamStatus": null,
+      "proposal": {
+        "version": 1,
+        "decision": {
+          "kind": "focus_matter",
+          "matterId": "matter.mira.r6.cumulative-same-actor.other",
+          "reason": "The workshop matter has a current independent ordinary commitment, while the Ida matter is comparatively supported by two prior same-actor exchange outcomes; allocating the free body to the workshop avoids giving semantic priority to another already-repeated Ida exchange without erasing either matter.",
+          "supportEvidenceIds": [
+            "evidence:mira:r6:cumulative-same-actor:other-origin",
+            "task-outcome:run.mira.r6.cumulative-same-actor.old-a:91",
+            "task-outcome:run.mira.r6.cumulative-same-actor.old-b:121"
+          ],
+          "reviewAfterSeconds": 60
+        }
+      },
+      "usage": {
+        "model": "gpt-5.6-luna",
+        "inputTokens": 2135,
+        "outputTokens": 267,
+        "totalTokens": 2402,
+        "elapsedMs": 4225
+      }
+    },
+    "comparison": {
+      "control": {
+        "kind": "defer_all",
+        "matterId": null,
+        "reason": "Both matters are independently grounded and currently active, but the available context provides no sufficient basis to prioritize speaking with Ida over visiting the workshop or vice versa.",
+        "supportEvidenceIds": null,
+        "reviewAfterSeconds": 120
+      },
+      "history": {
+        "kind": "focus_matter",
+        "matterId": "matter.mira.r6.cumulative-same-actor.other",
+        "reason": "The workshop matter has a current independent ordinary commitment, while the Ida matter is comparatively supported by two prior same-actor exchange outcomes; allocating the free body to the workshop avoids giving semantic priority to another already-repeated Ida exchange without erasing either matter.",
+        "supportEvidenceIds": [
+          "evidence:mira:r6:cumulative-same-actor:other-origin",
+          "task-outcome:run.mira.r6.cumulative-same-actor.old-a:91",
+          "task-outcome:run.mira.r6.cumulative-same-actor.old-b:121"
+        ],
+        "reviewAfterSeconds": 60
+      },
+      "controlBehavior": {
+        "kind": "defer_all"
+      },
+      "historyBehavior": {
+        "kind": "focus_matter",
+        "matterId": "matter.mira.r6.cumulative-same-actor.other"
+      },
+      "exactBehaviorEqual": false,
+      "citedOldOutcomes": [
+        "task-outcome:run.mira.r6.cumulative-same-actor.old-a:91",
+        "task-outcome:run.mira.r6.cumulative-same-actor.old-b:121"
+      ],
+      "historyCitesBothOldOutcomes": true
+    }
+  },
+  "classification": "CUMULATIVE_SAME_ACTOR_HISTORY_CAUSAL_DIFFERENCE_OBSERVED",
+  "outcome": "CUMULATIVE_SAME_ACTOR_HISTORY_CAUSAL_DIFFERENCE_OBSERVED"
+}

@@ -97,6 +97,27 @@ function matter(id: string, runId: string, semanticCourse: string) {
   };
 }
 
+function lifeViewWithRevisionHistory(): ResidentLifeCognitionView {
+  const life = structuredClone(lifeView()) as any;
+  life.matters[0].semanticIntent = {
+    kind: "acquire_material_object",
+    goal: "retry the familiar crate",
+    objectId: "crate.owner.plan-revision",
+  };
+  life.matters[0].historicalSupport = [{
+    relation: "prior_same_material_outcome",
+    sourceMatterId: "matter.mira.old-plan-revision",
+    evidence: {
+      id: "evidence:owner:old-plan-revision-outcome",
+      tick: 0,
+      kind: "task_outcome",
+      summary: "blocked: factual earlier attempt returned object_unavailable",
+      sourceRunId: "run.mira.old-plan-revision",
+    },
+  }];
+  return life;
+}
+
 function choose(matterId = "matter.mira.b") {
   return {
     version: 1,
@@ -210,6 +231,68 @@ describe("ResidentLifeChoiceOwner", () => {
         kind: "uncertainty",
       }),
     ]);
+  });
+
+  it("admits factual target-local plan relinquishment and issues one exact non-clonable revision grant", () => {
+    const { resident, owner, batch } = setup();
+    const life = lifeViewWithRevisionHistory();
+    const attempt = owner.prepare(batch, life)!;
+
+    const settlement = owner.settle(attempt, {
+      version: 1,
+      decision: {
+        kind: "relinquish_matter",
+        matterId: "matter.mira.b",
+        reason: "the exact earlier factual failure changed my plan; stop carrying this retry",
+        supportEvidenceIds: ["evidence:owner:old-plan-revision-outcome"],
+        reviewAfterSeconds: 30,
+      },
+    }, life, 32);
+
+    expect(settlement).toMatchObject({
+      status: "applied",
+      decision: {
+        kind: "relinquish_matter",
+        matterId: "matter.mira.b",
+        supportEvidenceIds: ["evidence:owner:old-plan-revision-outcome"],
+      },
+    });
+    expect(resident.pendingCognitionReasons()).toEqual([]);
+
+    const cloned = structuredClone(settlement);
+    expect(owner.claimPlanRevision(cloned)).toBeNull();
+
+    expect(owner.claimPlanRevision(settlement)).toEqual({
+      disposition: "relinquish",
+      residentId: "resident.mira",
+      matterId: "matter.mira.b",
+      runId: "run.mira.b",
+      semanticRevision: 1,
+      reason: "the exact earlier factual failure changed my plan; stop carrying this retry",
+      supportEvidenceIds: ["evidence:owner:old-plan-revision-outcome"],
+      settlementTick: 32,
+    });
+    expect(owner.claimPlanRevision(settlement)).toBeNull();
+  });
+
+  it("rejects plan relinquishment backed only by current origin/context rather than factual target history", () => {
+    const { owner, batch } = setup();
+    const life = lifeView();
+    const attempt = owner.prepare(batch, life)!;
+
+    expect(owner.settle(attempt, {
+      version: 1,
+      decision: {
+        kind: "relinquish_matter",
+        matterId: "matter.mira.b",
+        reason: "delete this current plan without a factual resident-owned reason",
+        supportEvidenceIds: ["evidence:choice-origin:matter.mira.b"],
+        reviewAfterSeconds: 30,
+      },
+    }, life, 32)).toEqual({
+      status: "rejected",
+      reason: "proposal_invalid",
+    });
   });
 
   it("rejects a fabricated matter choice and requeues the causal batch", () => {

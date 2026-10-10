@@ -1,0 +1,195 @@
+{
+  "control": {
+    "contract": "resident_life_cognition_v1",
+    "resident": { "id": "resident.janek", "name": "Janek" },
+    "tick": 32,
+    "currentRegionId": "yard",
+    "reasons": [{
+      "id": "reason:resident.janek:r6:material-reacquired",
+      "tick": 2,
+      "kind": "direct_world_change",
+      "salience": 0.75,
+      "summary": "Familiar material object crate.r6.post-terminal is visibly present again near the workshop after an earlier absence.",
+      "evidenceIds": ["evidence:janek:r6:material-reacquired:2"]
+    }],
+    "localActivity": {
+      "id": "activity:resident.janek:idle:0",
+      "kind": "idle",
+      "targetActorId": null,
+      "targetPosition": null,
+      "text": null,
+      "speed": null,
+      "reason": "initial idle"
+    },
+    "recentPercepts": [
+      {
+        "id": "percept:resident.janek:1:0",
+        "occurrenceId": "sight:actor_sight_enter:resident.janek:player.fixture:1",
+        "tick": 1,
+        "phenomenon": "actor_sight_enter",
+        "modality": "sight",
+        "actorId": "player.fixture",
+        "subjectId": "player.fixture",
+        "spatial": { "kind": "exact", "position": { "x": 480, "y": 150 } },
+        "summary": "actor player.fixture entered sight",
+        "text": null,
+        "addressed": false
+      },
+      {
+        "id": "percept:resident.janek:2:1",
+        "occurrenceId": "sight:actor_sight_exit:resident.janek:player.fixture:2",
+        "tick": 2,
+        "phenomenon": "actor_sight_exit",
+        "modality": "sight",
+        "actorId": "player.fixture",
+        "subjectId": "player.fixture",
+        "spatial": { "kind": "none" },
+        "summary": "actor player.fixture left sight",
+        "text": null,
+        "addressed": false
+      },
+      {
+        "id": "percept:resident.janek:3:2",
+        "occurrenceId": "sight:actor_sight_enter:resident.janek:player.fixture:3",
+        "tick": 3,
+        "phenomenon": "actor_sight_enter",
+        "modality": "sight",
+        "actorId": "player.fixture",
+        "subjectId": "player.fixture",
+        "spatial": { "kind": "exact", "position": { "x": 480, "y": 150 } },
+        "summary": "actor player.fixture entered sight",
+        "text": null,
+        "addressed": false
+      }
+    ],
+    "concerns": [],
+    "beliefs": [],
+    "knownActors": [{
+      "id": "player.fixture",
+      "label": "player.fixture",
+      "lastKnownPosition": { "x": 480, "y": 150 },
+      "lastObservedTick": 3,
+      "currentlyVisible": true,
+      "visibilityChangedTick": 3,
+      "lastHeardDirection": null,
+      "lastHeardDistanceBand": null,
+      "lastHeardTick": null
+    }],
+    "knownRegions": [
+      { "id": "yard", "label": "Yard", "knowledge": "visited", "lastVisitedTick": 32 },
+      { "id": "workshop", "label": "Workshop", "knowledge": "familiar", "lastVisitedTick": null }
+    ],
+    "life": {
+      "version": 1,
+      "matters": [],
+      "body": { "focusedRunId": null, "deferredRunIds": [] }
+    }
+  },
+  "history": {
+    "contract": "resident_life_cognition_v1",
+    "resident": { "id": "resident.janek", "name": "Janek" },
+    "tick": 32,
+    "currentRegionId": "yard",
+    "reasons": [{
+      "id": "reason:resident.janek:r6:material-reacquired",
+      "tick": 2,
+      "kind": "direct_world_change",
+      "salience": 0.75,
+      "summary": "Familiar material object crate.r6.post-terminal is visibly present again near the workshop after an earlier absence.",
+      "evidenceIds": ["evidence:janek:r6:material-reacquired:2"]
+    }],
+    "localActivity": {
+      "id": "activity:resident.janek:idle:0",
+      "kind": "idle",
+      "targetActorId": null,
+      "targetPosition": null,
+      "text": null,
+      "speed": null,
+      "reason": "initial idle"
+    },
+    "recentPercepts": [
+      {
+        "id": "percept:resident.janek:1:0",
+        "occurrenceId": "sight:actor_sight_enter:resident.janek:player.fixture:1",
+        "tick": 1,
+        "phenomenon": "actor_sight_enter",
+        "modality": "sight",
+        "actorId": "player.fixture",
+        "subjectId": "player.fixture",
+        "spatial": { "kind": "exact", "position": { "x": 480, "y": 150 } },
+        "summary": "actor player.fixture entered sight",
+        "text": null,
+        "addressed": false
+      },
+      {
+        "id": "percept:resident.janek:2:1",
+        "occurrenceId": "sight:actor_sight_exit:resident.janek:player.fixture:2",
+        "tick": 2,
+        "phenomenon": "actor_sight_exit",
+        "modality": "sight",
+        "actorId": "player.fixture",
+        "subjectId": "player.fixture",
+        "spatial": { "kind": "none" },
+        "summary": "actor player.fixture left sight",
+        "text": null,
+        "addressed": false
+      },
+      {
+        "id": "percept:resident.janek:3:2",
+        "occurrenceId": "sight:actor_sight_enter:resident.janek:player.fixture:3",
+        "tick": 3,
+        "phenomenon": "actor_sight_enter",
+        "modality": "sight",
+        "actorId": "player.fixture",
+        "subjectId": "player.fixture",
+        "spatial": { "kind": "exact", "position": { "x": 480, "y": 150 } },
+        "summary": "actor player.fixture entered sight",
+        "text": null,
+        "addressed": false
+      }
+    ],
+    "concerns": [],
+    "beliefs": [],
+    "knownActors": [{
+      "id": "player.fixture",
+      "label": "player.fixture",
+      "lastKnownPosition": { "x": 480, "y": 150 },
+      "lastObservedTick": 3,
+      "currentlyVisible": true,
+      "visibilityChangedTick": 3,
+      "lastHeardDirection": null,
+      "lastHeardDistanceBand": null,
+      "lastHeardTick": null
+    }],
+    "knownRegions": [
+      { "id": "yard", "label": "Yard", "knowledge": "visited", "lastVisitedTick": 32 },
+      { "id": "workshop", "label": "Workshop", "knowledge": "familiar", "lastVisitedTick": null }
+    ],
+    "life": {
+      "version": 1,
+      "matters": [{
+        "id": "matter.janek.r6.post-terminal-friction",
+        "status": "resolved",
+        "semanticRevision": 1,
+        "semanticCourse": "try to acquire the familiar material object once",
+        "semanticIntent": {
+          "kind": "acquire_material_object",
+          "goal": "try the familiar material object once",
+          "objectId": "crate.r6.post-terminal"
+        },
+        "suspendedByMatterId": null,
+        "originEvidence": null,
+        "semanticEvidence": null,
+        "lastOutcomeEvidence": {
+          "id": "task-outcome:a970ba5589f844d7:0",
+          "tick": 0,
+          "kind": "task_outcome",
+          "summary": "blocked: factual material attempt returned object_unavailable",
+          "sourceRunId": "run.janek.r6.post-terminal-friction"
+        },
+        "activeRun": null
+      }],
+      "body": { "focusedRunId": null, "deferredRunIds": [] }
+    }
+  }
+}

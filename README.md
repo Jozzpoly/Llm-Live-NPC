@@ -2,15 +2,25 @@
 
 Experimental web laboratory for **persistent embodied residents whose cognition may use LLMs without letting the model become the world, the physics engine or the per-frame controller**.
 
+### Product-truth checkpoint — 2026-10-09 (latest Owner correction)
+
+**Owner north star: living NPC residents in a game world; not biology, couriers, incident dispatch, a richer research UI or mere algorithmic movement.** A separate cognitive lab was categorically rejected by Owner after machine-green task-executor demos. Do not import that prototype, its roadmap, its positive wording or its experimental carrier into this project. Living-world experience and genuinely changed NPC behavior outrank every technical PASS.
+
+**Source/history correction:** current R6 branch already contains `src/spc-next/r6-single-current-plan-reappraisal.integration.test.ts`, `src/spc-next/r6-single-current-plan-live-provider-canonicalized-replay.integration.test.ts` and real model evidence `evidence/r6-single-current-plan-review-outcome-meaning-live-result.json` (run #34). Earlier contract wording saying that single-current-plan reconsideration has yet to be implemented is now historical, not current execution state. See the appended current-source checkpoint in the R6 contract.
+
+**Research/Owner distinction:** the live five-resident unified runtime has genuine provider transport and resident-local World admission, but existing success claims center on bounded execution and paired decision fixtures. There is no Owner-qualified open-ended, spontaneously consequential, multi-resident ordinary-life experience. The provider-free integration test explicitly checks that actors become stationary after authored opening handoff with no recovered matters; this is a *no-provider control* and cannot alone establish that a live provider-controlled runtime is stationary.
+
+The next substantive proof must put actual private-world history, real model decisions where materially necessary and local embodied competence together in **sustained ordinary resident-to-resident and resident-to-world behavior**, without turning that pressure into automated provider churn or scripted tours. First test the world-only behavior; use the research lens only to explain it. Do not route Owner into another tiny isolated fixture as though it were a living NPC milestone.
+
 ## Current execution authority
 
 Active integration line:
 
-`integration/spc-next-owner-living-runtime-v1`
+`recovery/spc-post-stress-complementary-personhood-r6`
 
 Draft PR:
 
-**#141 — integration: five-resident owner living runtime v1**
+**#148 — recovery: R6 complementary resident personhood (draft/open)**
 
 Current execution / roadmap authority:
 
@@ -42,14 +52,19 @@ The major post-stress diagnosis is now **homeostasis / missing-middle intelligen
 
 Read in this order:
 
-1. **`docs/SPC_POST_STRESS_RECOVERY_PROGRAM.md`** — canonical post-stress objective, current R2 gate, roadmap and `CONTINUE` semantics;
-2. **`docs/SPC_ZERO_PROVIDER_LOCAL_LIFE_R1_PASS.md`** — exact R1 qualification and nonclaims;
-3. **`docs/SPC_ZERO_PROVIDER_LOCAL_LIFE_EXPERIMENT.md`** — satisfied R1 experiment contract;
-4. **`docs/SPC_NEXT_OWNER_INTENT_AND_GAP_AUDIT.md`** — durable Owner/product guardrails and anti-drift intent;
-5. **`docs/SPC_FIVE_RESIDENT_PRESSURE_CAMPAIGN.md`** — resident pressure dimensions and scenario donors;
-6. **`docs/SPC_REOBSERVATION_FINDINGS_2026-09-16.md`** — evidence about oracle/instrumentation failures and the pre-unified composition gap;
-7. **`docs/SPC_LIVING_WORLD_EXECUTION_PROGRAM.md`** — historical pre-stress execution snapshot only;
-8. older Pass-2 / First Presence documents and `src/research` — donor invariants and evidence, not current execution authority.
+1. **`docs/SPC_POST_STRESS_RECOVERY_PROGRAM.md`** — canonical post-stress objective, promotion boundaries and `CONTINUE` semantics;
+2. **`docs/SPC_R6_COMPLEMENTARY_PERSONHOOD_EXPERIMENT.md`** — binding current R6 experiment contract and current frontier;
+3. **`docs/SPC_R6_ENDOGENOUS_ORDINARY_PERSONHOOD_FINDING.md`** — current strongest bounded R6 finding: runtime-generated private history changes no-fresh-command choice, causes factual return and is later fulfilled;
+4. **`docs/SPC_R6_HISTORY_DEPENDENT_CHOICE_FINDING.md`** — earlier direct-request real-Luna history-sensitive choice finding;
+5. **`docs/SPC_R6B_NATIVE_STANDING_SOCIAL_CONTINUATION_PASS.md`** — formally qualified bounded R6-B mechanism evidence;
+6. **`docs/SPC_R6A_STANDING_SOCIAL_COMMITMENT_PASS.md`** — earlier bounded R6-A evidence and nonclaims;
+7. **`docs/SPC_ZERO_PROVIDER_LOCAL_LIFE_R1_PASS.md`** — exact R1 qualification and nonclaims;
+8. **`docs/SPC_ZERO_PROVIDER_LOCAL_LIFE_EXPERIMENT.md`** — satisfied R1 experiment contract;
+9. **`docs/SPC_NEXT_OWNER_INTENT_AND_GAP_AUDIT.md`** — durable Owner/product guardrails and anti-drift intent;
+10. **`docs/SPC_FIVE_RESIDENT_PRESSURE_CAMPAIGN.md`** — resident pressure dimensions and scenario donors;
+11. **`docs/SPC_REOBSERVATION_FINDINGS_2026-09-16.md`** — evidence about oracle/instrumentation failures and the pre-unified composition gap;
+12. **`docs/SPC_LIVING_WORLD_EXECUTION_PROGRAM.md`** — historical pre-stress execution snapshot only;
+13. older Pass-2 / First Presence documents and `src/research` — donor invariants and evidence, not current execution authority.
 
 `docs/PROJECT_STATE.md`, `docs/FRESH_TAKEOVER.md`, `docs/SPC_NEXT_CURRENT_STATE_RECONCILIATION.md` and the old Architecture Recovery Gate are historically important but **must not be used as the current feature sequence**.
 
@@ -132,7 +147,9 @@ The previous **Owner Living Sandbox** promotion is superseded by post-stress evi
 
 R1 has earned **LOCAL-LIFE PASS**: one resident can sustain grounded causal continuity, interruption, factual consequence, legitimate quiet and later local wake without provider cognition manufacturing life.
 
-The current recovery target is **R2 resident relevance / semantic metabolism**: a noisy causal world must produce only the small, explainable set of unresolved semantic pressures that genuinely deserve higher cognition.
+The current recovery target is **R6 complementary resident personhood**. R1–R5 remain qualified only in their documented scopes. R6-A and R6-B remain bounded qualified mechanism passes. R6 has now additionally produced a material bounded endogenous-personhood finding: exact runtime-generated no-fresh-command frames were sent to real GPT-5.6 Luna; the control chose coherent non-action while the otherwise-matched history resident chose to return to Nela because of prior standing responsibility; that exact proposal survived local admission, caused factual World return, and a later one-call Luna judgement correctly completed the standing responsibility from the factual return outcome. Integrated code source `32bae5f34982ef942ef6d3ea58fc0000212f79ec` passes Check #1603 (**263 / 263 files, 961 / 961 tests**) and Browser Evidence #827 as regression evidence. This is **not broad R6 PASS**: the reflection points are explicit factual-outcome opt-ins, browser-qualified Oren/Nela genericity, non-obligation personhood dimensions, five distinct living people and Owner-observed ordinary aliveness remain unproven.
+
+Closure hardening at `2c7adf9415eefff5f2c7236ead7a59b10a3f8ab0` adds stale-life rejection coverage for `complete_standing` and cleans historical takeover authority. Check #1605 passes **263 / 263 files, 962 / 962 tests** and Browser Evidence #829 passes. This hardening changes no production/runtime semantics after `32bae5f3...`.
 
 ## Evidence language
 
@@ -168,7 +185,7 @@ They are valuable because they preserve earned behavior and falsifiers. They do 
 
 ## Current promotion boundary
 
-PR #141 remains draft.
+PR #148 remains draft/open.
 
 Do not merge or declare broad Owner-ready quality merely because CI is green.
 
@@ -176,9 +193,13 @@ Current order:
 
 **`POST-STRESS RECOVERY`**
 → `R1 ZERO-PROVIDER LOCAL LIFE — PASS`
-→ **`R2 RELEVANCE / SEMANTIC METABOLISM — CURRENT`**
-→ `R3 causal personhood / R4 affordance pressure`
-→ `R5 reintroduce real Luna only after semantic escalation deserves to exist`.
+→ `R2 RELEVANCE / SEMANTIC METABOLISM — PASS`
+→ `R3 FIRST CAUSAL-PERSONHOOD MILESTONE — PASS`
+→ `R4 DENSE AUTHORED AFFORDANCE SURFACE — QUALIFIED PASS`
+→ `R5 SEMANTIC ESCALATION / REAL LUNA BOUNDARY — QUALIFIED PASS`
+→ **`R6 COMPLEMENTARY RESIDENT PERSONHOOD — CURRENT`**.
+
+Current R6 evidence must remain split by plane: R6-A/B are bounded qualified passes; the Oren→Nela cross-resident path is deterministic/domain evidence on current HEAD, not yet a broad R6 or Owner-observed personhood promotion.
 
 Later work must not rewrite the historical identity of the frozen `c181...` specimen.
 

@@ -1,8 +1,14 @@
 import type { ResidentCognitionContext } from "./cognition-contract";
+import {
+  derivePriorCounterpartySocialOutcomeSupport,
+  derivePriorSameActorOutcomeSupport,
+} from "./resident-cumulative-history-support";
 import type { CognitionReason } from "./contracts";
 import type {
+  ResidentAcquireMaterialObjectMatterIntent,
   ResidentCommunicateActorMatterIntent,
   ResidentContinuityKernel,
+  ResidentKernelEvidence,
   ResidentMatter,
   ResidentMatterIntent,
   ResidentTravelRegionMatterIntent,
@@ -19,6 +25,11 @@ import type {
   ResidentLifeIntentAttempt,
 } from "./resident-life-intent-owner";
 import { ResidentLifeMatterScope } from "./resident-life-matter-scope";
+import type { ResidentMaterialKnowledge } from "./resident-material-knowledge";
+import {
+  materialReacquiredEvidenceId,
+  materialReacquiredOpportunityReasonId,
+} from "./resident-material-matter-relevance-bridge";
 import type { ResidentRuntime } from "./resident-runtime";
 import type { ResidentWorldExecutionAuthority } from "./resident-world-execution-authority";
 import type { SpcWorldRuntime } from "./spc-world-runtime";
@@ -44,6 +55,16 @@ export type GroundedResidentCausalReasonCommitmentIntent =
       semanticCourse: string;
       semanticIntent: ResidentCommunicateActorMatterIntent;
       routeRegionIds: readonly [];
+    }
+  | {
+      originReasonId: string;
+      originReasonKind: "direct_world_change";
+      sourceMatterId: string;
+      reacquisitionEvidenceId: string;
+      priorOutcomeEvidenceId: string;
+      semanticCourse: string;
+      semanticIntent: ResidentAcquireMaterialObjectMatterIntent;
+      routeRegionIds: readonly [];
     };
 
 export interface AcceptedResidentCausalReasonCommitment {
@@ -62,6 +83,8 @@ export interface ResidentCausalReasonCommitmentAuthorityOptions {
   kernel: ResidentContinuityKernel;
   arbitrator: ResidentExecutionArbitrator;
   authority: ResidentWorldExecutionAuthority;
+  /** Required only for acquire_material_object reason commitments. */
+  materialKnowledge?: ResidentMaterialKnowledge;
   matterScope?: ResidentLifeMatterScope;
   identityNamespace?: string;
 }
@@ -137,15 +160,16 @@ export class ResidentCausalReasonCommitmentAuthority {
     if (decision.kind !== "accept") {
       return { status: "rejected", detail: "expected accepted resident commitment" };
     }
+    const acceptedIntent = decision.intent;
 
-    if (decision.intent.kind === "travel" && decision.intent.targetRegionId !== null) {
+    if (acceptedIntent.kind === "travel" && acceptedIntent.targetRegionId !== null) {
       const currentRegionId = input.groundingContext.currentRegionId;
       if (!currentRegionId) {
         return { status: "rejected", detail: "current resident region is unavailable at admission" };
       }
       const known = new Set(input.groundingContext.knownRegions.map((region) => region.id));
       known.add(currentRegionId);
-      const targetRegionId = decision.intent.targetRegionId;
+      const targetRegionId = acceptedIntent.targetRegionId;
       const route = this.options.navigation.route(currentRegionId, targetRegionId, known);
       const destination = this.options.navigation.destinationPoint(targetRegionId);
       if (!route || !destination) {
@@ -155,10 +179,10 @@ export class ResidentCausalReasonCommitmentAuthority {
       const intent = Object.freeze({
         originReasonId: originReason.id,
         originReasonKind: originReason.kind,
-        semanticCourse: `${decision.reason} · ${decision.intent.goal}`,
+        semanticCourse: `${decision.reason} · ${acceptedIntent.goal}`,
         semanticIntent: Object.freeze({
           kind: "travel_region" as const,
-          goal: decision.intent.goal,
+          goal: acceptedIntent.goal,
           targetRegionId,
         }),
         routeRegionIds: Object.freeze([...route.regionIds]),
@@ -172,11 +196,54 @@ export class ResidentCausalReasonCommitmentAuthority {
       return { status: "accepted", intent };
     }
 
-    if (decision.intent.kind === "communicate"
-      && decision.intent.targetActorId !== null
-      && decision.intent.text !== null) {
+    if (acceptedIntent.kind === "acquire_material_object") {
+      const material = this.exactMaterialReacquisition(
+        input.providerContext,
+        originReason,
+        acceptedIntent.objectId,
+      );
+      if (!material) {
+        return {
+          status: "rejected",
+          detail: "material commitment lacks exact current private reacquisition authority",
+        };
+      }
+
+      const identity = this.materialIdentityFor(material.reacquisitionEvidence.id);
+      if (this.options.kernel.matter(identity.matterId)) {
+        return { status: "rejected", detail: `commitment already accepted: ${identity.matterId}` };
+      }
+
+      const intent = Object.freeze({
+        originReasonId: originReason.id,
+        originReasonKind: "direct_world_change" as const,
+        sourceMatterId: material.sourceMatterId,
+        reacquisitionEvidenceId: material.reacquisitionEvidence.id,
+        priorOutcomeEvidenceId: material.priorOutcomeEvidence.id,
+        semanticCourse: `${decision.reason} · ${acceptedIntent.goal}`,
+        semanticIntent: Object.freeze({
+          kind: "acquire_material_object" as const,
+          goal: acceptedIntent.goal,
+          objectId: acceptedIntent.objectId,
+        }),
+        routeRegionIds: [] as const,
+      }) satisfies GroundedResidentCausalReasonCommitmentIntent;
+      this.grounded.set(intent, {
+        attempt: input.attempt,
+        originReason: structuredClone(originReason),
+        proposal: input.proposal,
+        identity,
+      });
+      return { status: "accepted", intent };
+    }
+
+    if (acceptedIntent.kind === "communicate"
+      && "targetActorId" in acceptedIntent
+      && "text" in acceptedIntent
+      && acceptedIntent.targetActorId !== null
+      && acceptedIntent.text !== null) {
       const knownActor = input.groundingContext.knownActors.find(
-        (actor) => actor.id === decision.intent.targetActorId,
+        (actor) => actor.id === acceptedIntent.targetActorId,
       );
       if (!knownActor) {
         return { status: "rejected", detail: "reason commitment target actor is not privately known" };
@@ -185,12 +252,12 @@ export class ResidentCausalReasonCommitmentAuthority {
       const intent = Object.freeze({
         originReasonId: originReason.id,
         originReasonKind: originReason.kind,
-        semanticCourse: `${decision.reason} · ${decision.intent.goal}`,
+        semanticCourse: `${decision.reason} · ${acceptedIntent.goal}`,
         semanticIntent: Object.freeze({
           kind: "communicate_actor" as const,
-          goal: decision.intent.goal,
-          targetActorId: decision.intent.targetActorId,
-          text: decision.intent.text,
+          goal: acceptedIntent.goal,
+          targetActorId: acceptedIntent.targetActorId,
+          text: acceptedIntent.text,
         }),
         routeRegionIds: [] as const,
       }) satisfies GroundedResidentCausalReasonCommitmentIntent;
@@ -205,7 +272,7 @@ export class ResidentCausalReasonCommitmentAuthority {
 
     return {
       status: "rejected",
-      detail: "reason commitment currently supports known-region travel or known-actor communication",
+      detail: "reason commitment currently supports known-region travel, known-actor communication or exact reacquired material",
     };
   }
 
@@ -223,7 +290,14 @@ export class ResidentCausalReasonCommitmentAuthority {
     const originReason = input.attempt.context.reasons.find(
       (reason) => reason.id === input.originReasonId,
     ) ?? null;
-    const identity = originReason ? this.identityFor(originReason.id) : null;
+    const materialIntent = isGroundedMaterialCommitmentIntent(input.intent)
+      ? input.intent
+      : null;
+    const identity = originReason
+      ? materialIntent
+        ? this.materialIdentityFor(materialIntent.reacquisitionEvidenceId)
+        : this.identityFor(originReason.id)
+      : null;
     const grounded = this.grounded.get(input.intent);
     if (!originReason
       || !identity
@@ -235,7 +309,9 @@ export class ResidentCausalReasonCommitmentAuthority {
       || grounded.identity.taskId !== identity.taskId
       || grounded.identity.runId !== identity.runId
       || input.intent.originReasonId !== originReason.id
-      || !SELF_ORIGIN_REASON_KINDS.has(originReason.kind)) {
+      || !SELF_ORIGIN_REASON_KINDS.has(originReason.kind)
+      || (materialIntent
+        && !this.materialIntentStillGrounded(input.attempt.context, originReason, materialIntent))) {
       this.grounded.delete(input.intent);
       throw new Error("grounded causal reason intent lacks exact admitted authority");
     }
@@ -250,11 +326,32 @@ export class ResidentCausalReasonCommitmentAuthority {
       kind: "accepted_cognition_commitment",
       summary: `${input.intent.semanticCourse}; origin reason ${originReason.kind} ${originReason.id}: ${originReason.summary}`,
     });
+    const communicateHistory = input.intent.semanticIntent.kind === "communicate_actor"
+      ? [
+          ...derivePriorSameActorOutcomeSupport(
+            this.options.kernel,
+            input.intent.semanticIntent.targetActorId,
+          ),
+          ...derivePriorCounterpartySocialOutcomeSupport(
+            this.options.kernel,
+            input.intent.semanticIntent.targetActorId,
+          ),
+        ]
+      : [];
     const matter = this.options.kernel.openMatter({
       id: identity.matterId,
       originEvidenceId: origin.id,
       semanticCourse: input.intent.semanticCourse,
       semanticIntent: input.intent.semanticIntent as ResidentMatterIntent,
+      ...(materialIntent ? {
+        historicalSupport: [{
+          relation: "prior_same_material_outcome" as const,
+          sourceMatterId: materialIntent.sourceMatterId,
+          evidenceId: materialIntent.priorOutcomeEvidenceId,
+        }],
+      } : communicateHistory.length > 0 ? {
+        historicalSupport: communicateHistory,
+      } : {}),
     });
     this.options.kernel.bindRun({
       matterId: matter.id,
@@ -280,6 +377,127 @@ export class ResidentCausalReasonCommitmentAuthority {
     };
   }
 
+  private exactMaterialReacquisition(
+    context: ResidentLifeCognitionContext,
+    originReason: CognitionReason,
+    objectId: string,
+  ): {
+    sourceMatterId: string;
+    reacquisitionEvidence: ResidentKernelEvidence;
+    priorOutcomeEvidence: ResidentKernelEvidence;
+  } | null {
+    if (originReason.kind !== "direct_world_change"
+      || originReason.id !== materialReacquiredOpportunityReasonId(this.options.residentId, objectId)
+      || !this.options.materialKnowledge) return null;
+
+    // A recent terminal episode may still be projected in life. An older one may
+    // exist only in the bounded factual terminal archive. Both routes must identify
+    // the same exact kernel matter + task outcome; neither grants the old matter any
+    // current execution or body authority.
+    const sources = new Map<string, ResidentKernelEvidence>();
+    for (const matter of context.life.matters) {
+      if ((matter.status !== "resolved" && matter.status !== "cancelled")
+        || matter.activeRun !== null
+        || matter.semanticIntent?.kind !== "acquire_material_object"
+        || matter.semanticIntent.objectId !== objectId
+        || matter.lastOutcomeEvidence?.kind !== "task_outcome"
+        || !matter.lastOutcomeEvidence.summary.startsWith("blocked:")
+        || !originReason.evidenceIds.includes(matter.lastOutcomeEvidence.id)) continue;
+      sources.set(matter.id, structuredClone(matter.lastOutcomeEvidence));
+    }
+
+    for (const entry of this.options.kernel.terminalOutcomeArchiveSnapshot()) {
+      const matter = this.options.kernel.matter(entry.matterId);
+      if (!matter
+        || (matter.status !== "resolved" && matter.status !== "cancelled")
+        || matter.activeRunId !== null
+        || matter.semanticIntent?.kind !== "acquire_material_object"
+        || matter.semanticIntent.objectId !== objectId
+        || matter.lastOutcomeEvidenceId !== entry.evidence.id
+        || entry.evidence.kind !== "task_outcome"
+        || !entry.evidence.summary.startsWith("blocked:")
+        || !originReason.evidenceIds.includes(entry.evidence.id)) continue;
+
+      const existing = sources.get(matter.id);
+      if (existing && !sameKernelEvidence(existing, entry.evidence)) return null;
+      sources.set(matter.id, structuredClone(entry.evidence));
+    }
+
+    if (sources.size !== 1) return null;
+    const [sourceMatterId, projectedOutcome] = [...sources.entries()][0]!;
+
+    const reacquisitionId = materialReacquiredEvidenceId(
+      this.options.residentId,
+      sourceMatterId,
+      objectId,
+      originReason.tick,
+    );
+    if (!originReason.evidenceIds.includes(reacquisitionId)) return null;
+
+    const recent = this.options.kernel.recentEvidenceSnapshot();
+    const reacquisitionEvidence = recent.find((evidence) => evidence.id === reacquisitionId) ?? null;
+    const archivedOutcome = this.options.kernel.archivedTerminalOutcomeEvidence(sourceMatterId);
+    const recentOutcome = recent.find((evidence) => evidence.id === projectedOutcome.id) ?? null;
+    const priorOutcomeEvidence = archivedOutcome ?? recentOutcome;
+    if (!reacquisitionEvidence
+      || reacquisitionEvidence.kind !== "material_reacquired"
+      || reacquisitionEvidence.tick !== originReason.tick
+      || !priorOutcomeEvidence
+      || !sameKernelEvidence(priorOutcomeEvidence, projectedOutcome)) return null;
+
+    const kernelSource = this.options.kernel.matter(sourceMatterId);
+    if (!kernelSource
+      || (kernelSource.status !== "resolved" && kernelSource.status !== "cancelled")
+      || kernelSource.activeRunId !== null
+      || kernelSource.semanticIntent?.kind !== "acquire_material_object"
+      || kernelSource.semanticIntent.objectId !== objectId
+      || kernelSource.lastOutcomeEvidenceId !== priorOutcomeEvidence.id) return null;
+
+    this.options.materialKnowledge.sample();
+    const current = this.options.materialKnowledge.observation(objectId);
+    if (!current?.currentlyVisible) return null;
+
+    const openSameObject = context.life.matters.some((matter) => (
+      (matter.status === "active" || matter.status === "suspended")
+      && matter.semanticIntent?.kind === "acquire_material_object"
+      && matter.semanticIntent.objectId === objectId
+    ));
+    if (openSameObject) return null;
+
+    return {
+      sourceMatterId,
+      reacquisitionEvidence,
+      priorOutcomeEvidence: structuredClone(priorOutcomeEvidence),
+    };
+  }
+
+  private materialIntentStillGrounded(
+    context: ResidentLifeCognitionContext,
+    originReason: CognitionReason,
+    intent: Extract<
+      GroundedResidentCausalReasonCommitmentIntent,
+      { semanticIntent: ResidentAcquireMaterialObjectMatterIntent }
+    >,
+  ): boolean {
+    const current = this.exactMaterialReacquisition(
+      context,
+      originReason,
+      intent.semanticIntent.objectId,
+    );
+    return Boolean(current
+      && current.sourceMatterId === intent.sourceMatterId
+      && current.reacquisitionEvidence.id === intent.reacquisitionEvidenceId
+      && current.priorOutcomeEvidence.id === intent.priorOutcomeEvidenceId);
+  }
+
+  private materialIdentityFor(reacquisitionEvidenceId: string): CausalIdentity {
+    return {
+      matterId: `matter.${this.identityNamespace}.causal.material:${reacquisitionEvidenceId}`,
+      taskId: `task.${this.identityNamespace}.causal.material:${reacquisitionEvidenceId}.semantic-1`,
+      runId: `run.${this.identityNamespace}.causal.material:${reacquisitionEvidenceId}.semantic-1`,
+    };
+  }
+
   private identityFor(reasonId: string): CausalIdentity {
     return {
       matterId: `matter.${this.identityNamespace}.causal.reason:${reasonId}`,
@@ -287,6 +505,29 @@ export class ResidentCausalReasonCommitmentAuthority {
       runId: `run.${this.identityNamespace}.causal.reason:${reasonId}.semantic-1`,
     };
   }
+}
+
+function isGroundedMaterialCommitmentIntent(
+  intent: GroundedResidentCausalReasonCommitmentIntent,
+): intent is Extract<
+  GroundedResidentCausalReasonCommitmentIntent,
+  { semanticIntent: ResidentAcquireMaterialObjectMatterIntent }
+> {
+  return intent.semanticIntent.kind === "acquire_material_object"
+    && "reacquisitionEvidenceId" in intent
+    && "priorOutcomeEvidenceId" in intent
+    && "sourceMatterId" in intent;
+}
+
+function sameKernelEvidence(
+  left: ResidentKernelEvidence,
+  right: ResidentKernelEvidence,
+): boolean {
+  return left.id === right.id
+    && left.tick === right.tick
+    && left.kind === right.kind
+    && left.summary === right.summary
+    && left.sourceRunId === right.sourceRunId;
 }
 
 function exactReason(

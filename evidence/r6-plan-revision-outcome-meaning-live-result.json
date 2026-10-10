@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "liveProviderRun": 33,
+  "sourceSha": "677df1acc0c029d8ad6761556f5840139326be37",
+  "model": "gpt-5.6-luna",
+  "providerRequestsAttempted": 2,
+  "semanticRetries": 0,
+  "classification": "OUTCOME_MEANING_BEHAVIOR_DIFFERENCE_WITHOUT_PLAN_RELINQUISHMENT",
+  "startedAt": "2026-09-28T13:38:59.308Z",
+  "finishedAt": "2026-09-28T13:39:08.462Z",
+  "succeededHistory": {
+    "proposal": {
+      "version": 1,
+      "decision": {
+        "kind": "focus_matter",
+        "matterId": "matter.ida.r6.same-cardinality.current-janek",
+        "reason": "The current bounded reason to speak with Janek has greater immediate interpersonal significance than the unrelated ordinary workshop visit, and prior successful speech outcomes with Janek support continuity of this course.",
+        "supportEvidenceIds": [
+          "evidence:ida:r6:same-cardinality:janek-origin",
+          "task-outcome:run.ida.r6.same-cardinality.old-a:90",
+          "task-outcome:run.ida.r6.same-cardinality.old-b:120"
+        ],
+        "reviewAfterSeconds": 120
+      }
+    },
+    "usage": {
+      "inputTokens": 2466,
+      "outputTokens": 206,
+      "totalTokens": 2672,
+      "elapsedMs": 3932
+    }
+  },
+  "blockedHistory": {
+    "proposal": {
+      "version": 1,
+      "decision": {
+        "kind": "focus_matter",
+        "matterId": "matter.ida.r6.same-cardinality.other",
+        "reason": "Both matters have current grounding, but Ida's two prior structured attempts to communicate with Janek ended with the recipient absent at the best known contact. The familiar workshop visit is therefore the better next use of the free body without concluding that the current Janek matter is impossible.",
+        "supportEvidenceIds": [
+          "evidence:ida:r6:same-cardinality:other-origin",
+          "task-outcome:run.ida.r6.same-cardinality.old-a:90",
+          "task-outcome:run.ida.r6.same-cardinality.old-b:120"
+        ],
+        "reviewAfterSeconds": 120
+      }
+    },
+    "usage": {
+      "inputTokens": 2478,
+      "outputTokens": 318,
+      "totalTokens": 2796,
+      "elapsedMs": 4122
+    }
+  },
+  "comparison": {
+    "exactBehaviorEqual": false,
+    "succeededRelinquishesCurrent": false,
+    "blockedRelinquishesCurrent": false,
+    "blockedCitesBothOldOutcomes": true,
+    "defendedInterpretation": "Outcome meaning again changes immediate priority, but this sample does not show resident plan relinquishment. The blocked-history rationale explicitly avoids concluding that current Janek C is impossible."
+  }
+}

@@ -1,6 +1,6 @@
 # SPC Next — Architecture Recovery Gate
 
-> **CURRENT EXECUTION NOTICE (2026-09-18):** This recovery gate is preserved as historical architecture debt/evidence. It is no longer the current stop-line or execution sequence after the unified five-resident runtime recovery. Use `docs/SPC_LIVING_WORLD_EXECUTION_PROGRAM.md` for current gates and roadmap; re-open obligations here only when live evidence proves they remain material.
+> **CURRENT EXECUTION NOTICE (2026-09-25): HISTORICAL ARCHITECTURE DEBT / EVIDENCE.** This recovery gate is not the current stop-line or execution sequence. Its earlier pointer to `docs/SPC_LIVING_WORLD_EXECUTION_PROGRAM.md` is itself superseded. Use `docs/SPC_POST_STRESS_RECOVERY_PROGRAM.md` for current execution authority, `docs/SPC_R6_COMPLEMENTARY_PERSONHOOD_EXPERIMENT.md` for the active R6 contract, and re-open obligations here only when current evidence proves they remain material.
 
 
 Status: **STOP-THE-LINE RECOVERY GATE**  

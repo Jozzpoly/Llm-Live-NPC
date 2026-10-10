@@ -1,5 +1,7 @@
 # LLM Live NPC — Project State
 
+> **CURRENT EXECUTION NOTICE (2026-09-25): HISTORICAL ONLY.** This file is the 8 September Pass-2/P2-E12 project-state snapshot. It is **not** current execution authority and its branch/frontier instructions must not be followed for present work. Current authority: `docs/SPC_POST_STRESS_RECOVERY_PROGRAM.md`. Current R6 contract: `docs/SPC_R6_COMPLEMENTARY_PERSONHOOD_EXPERIMENT.md`. Latest bounded finding: `docs/SPC_R6_ENDOGENOUS_ORDINARY_PERSONHOOD_FINDING.md`.
+
 Updated: 2026-09-08
 
 ## 1. Current phase

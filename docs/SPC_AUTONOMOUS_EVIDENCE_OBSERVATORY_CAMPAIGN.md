@@ -1,5 +1,7 @@
 # SPC Autonomous Evidence Observatory — Research and Campaign Contract
 
+> **CURRENT EXECUTION NOTICE (2026-09-25): HISTORICAL RESEARCH-INSTRUMENT CAMPAIGN, NOT CURRENT PROJECT STATUS.** Its evidence-plane principles remain useful donors, but “current live qualification” statements below are snapshots from 15 September. Current execution authority is `docs/SPC_POST_STRESS_RECOVERY_PROGRAM.md`; current promotion boundaries live in `docs/SPC_R6_COMPLEMENTARY_PERSONHOOD_EXPERIMENT.md`.
+
 Updated: 2026-09-15
 Grounded live head before this document: `f306931ee36b6cce0740685cf31c0763e1035162`
 Scope: `refoundation/spc-next-five-resident-world` / draft PR #125

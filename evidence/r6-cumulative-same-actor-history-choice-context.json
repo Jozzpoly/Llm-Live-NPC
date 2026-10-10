@@ -1,0 +1,278 @@
+{
+  "control": {
+    "contract": "resident_life_cognition_v1",
+    "resident": {
+      "id": "resident.mira",
+      "name": "Mira"
+    },
+    "tick": 300,
+    "currentRegionId": "hearth",
+    "reasons": [
+      {
+        "id": "reason:mira:r6:cumulative-same-actor:choice:300",
+        "tick": 300,
+        "kind": "uncertainty",
+        "salience": 0.82,
+        "summary": "Two already-grounded current resident futures are waiting for the same currently-free body.",
+        "evidenceIds": [
+          "run.mira.r6.cumulative-same-actor.ida",
+          "run.mira.r6.cumulative-same-actor.other"
+        ]
+      }
+    ],
+    "localActivity": {
+      "id": "activity:resident.mira:idle:r6-cumulative-same-actor",
+      "kind": "idle",
+      "targetActorId": null,
+      "targetPosition": null,
+      "text": null,
+      "speed": null,
+      "reason": "Mira currently has no body-owning local activity."
+    },
+    "recentPercepts": [],
+    "concerns": [],
+    "beliefs": [],
+    "knownActors": [],
+    "knownRegions": [
+      {
+        "id": "hearth",
+        "label": "Hearth",
+        "knowledge": "visited",
+        "lastVisitedTick": 300
+      },
+      {
+        "id": "workshop",
+        "label": "Workshop",
+        "knowledge": "visited",
+        "lastVisitedTick": 220
+      }
+    ],
+    "life": {
+      "version": 1,
+      "matters": [
+        {
+          "id": "matter.mira.r6.cumulative-same-actor.ida",
+          "status": "active",
+          "semanticRevision": 1,
+          "semanticCourse": "speak with Ida about the current situation",
+          "semanticIntent": {
+            "kind": "communicate_actor",
+            "goal": "speak with Ida about the current situation",
+            "targetActorId": "resident.ida",
+            "text": "Ida, chcę z tobą porozmawiać o tym, co dzieje się teraz."
+          },
+          "suspendedByMatterId": null,
+          "originEvidence": {
+            "id": "evidence:mira:r6:cumulative-same-actor:ida-origin",
+            "tick": 290,
+            "kind": "accepted_cognition_commitment",
+            "summary": "Mira independently has one current bounded reason to speak with Ida now."
+          },
+          "semanticEvidence": {
+            "id": "evidence:mira:r6:cumulative-same-actor:ida-origin",
+            "tick": 290,
+            "kind": "accepted_cognition_commitment",
+            "summary": "Mira independently has one current bounded reason to speak with Ida now."
+          },
+          "lastOutcomeEvidence": null,
+          "activeRun": {
+            "runId": "run.mira.r6.cumulative-same-actor.ida",
+            "taskId": "task.mira.r6.cumulative-same-actor.ida",
+            "semanticRevision": 1,
+            "canMutateWorld": true,
+            "bodyState": "deferred"
+          }
+        },
+        {
+          "id": "matter.mira.r6.cumulative-same-actor.other",
+          "status": "active",
+          "semanticRevision": 1,
+          "semanticCourse": "visit the familiar workshop for an unrelated ordinary reason",
+          "semanticIntent": {
+            "kind": "travel_region",
+            "goal": "visit the familiar workshop",
+            "targetRegionId": "workshop"
+          },
+          "suspendedByMatterId": null,
+          "originEvidence": {
+            "id": "evidence:mira:r6:cumulative-same-actor:other-origin",
+            "tick": 292,
+            "kind": "accepted_cognition_commitment",
+            "summary": "Mira independently has one ordinary current reason to visit the familiar workshop."
+          },
+          "semanticEvidence": {
+            "id": "evidence:mira:r6:cumulative-same-actor:other-origin",
+            "tick": 292,
+            "kind": "accepted_cognition_commitment",
+            "summary": "Mira independently has one ordinary current reason to visit the familiar workshop."
+          },
+          "lastOutcomeEvidence": null,
+          "activeRun": {
+            "runId": "run.mira.r6.cumulative-same-actor.other",
+            "taskId": "task.mira.r6.cumulative-same-actor.other",
+            "semanticRevision": 1,
+            "canMutateWorld": true,
+            "bodyState": "deferred"
+          }
+        }
+      ],
+      "body": {
+        "focusedRunId": null,
+        "deferredRunIds": [
+          "run.mira.r6.cumulative-same-actor.ida",
+          "run.mira.r6.cumulative-same-actor.other"
+        ]
+      }
+    }
+  },
+  "history": {
+    "contract": "resident_life_cognition_v1",
+    "resident": {
+      "id": "resident.mira",
+      "name": "Mira"
+    },
+    "tick": 300,
+    "currentRegionId": "hearth",
+    "reasons": [
+      {
+        "id": "reason:mira:r6:cumulative-same-actor:choice:300",
+        "tick": 300,
+        "kind": "uncertainty",
+        "salience": 0.82,
+        "summary": "Two already-grounded current resident futures are waiting for the same currently-free body.",
+        "evidenceIds": [
+          "run.mira.r6.cumulative-same-actor.ida",
+          "run.mira.r6.cumulative-same-actor.other"
+        ]
+      }
+    ],
+    "localActivity": {
+      "id": "activity:resident.mira:idle:r6-cumulative-same-actor",
+      "kind": "idle",
+      "targetActorId": null,
+      "targetPosition": null,
+      "text": null,
+      "speed": null,
+      "reason": "Mira currently has no body-owning local activity."
+    },
+    "recentPercepts": [],
+    "concerns": [],
+    "beliefs": [],
+    "knownActors": [],
+    "knownRegions": [
+      {
+        "id": "hearth",
+        "label": "Hearth",
+        "knowledge": "visited",
+        "lastVisitedTick": 300
+      },
+      {
+        "id": "workshop",
+        "label": "Workshop",
+        "knowledge": "visited",
+        "lastVisitedTick": 220
+      }
+    ],
+    "life": {
+      "version": 1,
+      "matters": [
+        {
+          "id": "matter.mira.r6.cumulative-same-actor.ida",
+          "status": "active",
+          "semanticRevision": 1,
+          "semanticCourse": "speak with Ida about the current situation",
+          "semanticIntent": {
+            "kind": "communicate_actor",
+            "goal": "speak with Ida about the current situation",
+            "targetActorId": "resident.ida",
+            "text": "Ida, chcę z tobą porozmawiać o tym, co dzieje się teraz."
+          },
+          "suspendedByMatterId": null,
+          "originEvidence": {
+            "id": "evidence:mira:r6:cumulative-same-actor:ida-origin",
+            "tick": 290,
+            "kind": "accepted_cognition_commitment",
+            "summary": "Mira independently has one current bounded reason to speak with Ida now."
+          },
+          "semanticEvidence": {
+            "id": "evidence:mira:r6:cumulative-same-actor:ida-origin",
+            "tick": 290,
+            "kind": "accepted_cognition_commitment",
+            "summary": "Mira independently has one current bounded reason to speak with Ida now."
+          },
+          "lastOutcomeEvidence": null,
+          "activeRun": {
+            "runId": "run.mira.r6.cumulative-same-actor.ida",
+            "taskId": "task.mira.r6.cumulative-same-actor.ida",
+            "semanticRevision": 1,
+            "canMutateWorld": true,
+            "bodyState": "deferred"
+          },
+          "historicalSupport": [
+            {
+              "relation": "prior_same_actor_outcome",
+              "sourceMatterId": "matter.mira.r6.cumulative-same-actor.old-a",
+              "evidence": {
+                "id": "task-outcome:run.mira.r6.cumulative-same-actor.old-a:91",
+                "tick": 91,
+                "kind": "task_outcome",
+                "summary": "factually delivered first independent ordinary exchange with Ida",
+                "sourceRunId": "run.mira.r6.cumulative-same-actor.old-a"
+              }
+            },
+            {
+              "relation": "prior_same_actor_outcome",
+              "sourceMatterId": "matter.mira.r6.cumulative-same-actor.old-b",
+              "evidence": {
+                "id": "task-outcome:run.mira.r6.cumulative-same-actor.old-b:121",
+                "tick": 121,
+                "kind": "task_outcome",
+                "summary": "factually delivered second independent ordinary exchange with Ida",
+                "sourceRunId": "run.mira.r6.cumulative-same-actor.old-b"
+              }
+            }
+          ]
+        },
+        {
+          "id": "matter.mira.r6.cumulative-same-actor.other",
+          "status": "active",
+          "semanticRevision": 1,
+          "semanticCourse": "visit the familiar workshop for an unrelated ordinary reason",
+          "semanticIntent": {
+            "kind": "travel_region",
+            "goal": "visit the familiar workshop",
+            "targetRegionId": "workshop"
+          },
+          "suspendedByMatterId": null,
+          "originEvidence": {
+            "id": "evidence:mira:r6:cumulative-same-actor:other-origin",
+            "tick": 292,
+            "kind": "accepted_cognition_commitment",
+            "summary": "Mira independently has one ordinary current reason to visit the familiar workshop."
+          },
+          "semanticEvidence": {
+            "id": "evidence:mira:r6:cumulative-same-actor:other-origin",
+            "tick": 292,
+            "kind": "accepted_cognition_commitment",
+            "summary": "Mira independently has one ordinary current reason to visit the familiar workshop."
+          },
+          "lastOutcomeEvidence": null,
+          "activeRun": {
+            "runId": "run.mira.r6.cumulative-same-actor.other",
+            "taskId": "task.mira.r6.cumulative-same-actor.other",
+            "semanticRevision": 1,
+            "canMutateWorld": true,
+            "bodyState": "deferred"
+          }
+        }
+      ],
+      "body": {
+        "focusedRunId": null,
+        "deferredRunIds": [
+          "run.mira.r6.cumulative-same-actor.ida",
+          "run.mira.r6.cumulative-same-actor.other"
+        ]
+      }
+    }
+  }
+}

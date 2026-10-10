@@ -6,11 +6,15 @@ import type {
   ResidentLifeMatterView,
   ResidentLifeRunView,
 } from "../src/spc-next/resident-life-cognition-view";
-import type { ResidentMatterIntent } from "../src/spc-next/resident-continuity-kernel";
+import type {
+  ResidentMatterHistoricalSupportRelation,
+  ResidentMatterIntent,
+} from "../src/spc-next/resident-continuity-kernel";
 import { isSpcIdentifier } from "../src/spc-next/identity-contract";
 import { sanitizeSpcNextContext } from "./spc-next-cognition";
 
 const MAX_MATTERS = 32;
+const MAX_HISTORICAL_SUPPORT_PER_MATTER = 8;
 const MAX_SELF_DRIVES = 8;
 
 const record = (value: unknown): value is Record<string, unknown> =>
@@ -171,7 +175,11 @@ function sanitizeMatter(value: unknown, contextTick: number): ResidentLifeMatter
     "id", "status", "semanticRevision", "semanticCourse", "suspendedByMatterId",
     "originEvidence", "semanticEvidence", "lastOutcomeEvidence", "activeRun",
   ] as const;
-  if (!record(value) || !hasRequiredAndOptionalKeys(value, required, ["semanticIntent"])) return null;
+  if (!record(value) || !hasRequiredAndOptionalKeys(
+    value,
+    required,
+    ["semanticIntent", "historicalSupport"],
+  )) return null;
 
   const id = identifier(value.id);
   const status = ["active", "suspended", "resolved", "cancelled"].includes(String(value.status))
@@ -195,6 +203,25 @@ function sanitizeMatter(value: unknown, contextTick: number): ResidentLifeMatter
     || (semanticEvidence === null && value.semanticEvidence !== null)
     || (lastOutcomeEvidence === null && value.lastOutcomeEvidence !== null)) return null;
 
+  const historicalSupport = Object.hasOwn(value, "historicalSupport")
+    ? sanitizeHistoricalSupport(value.historicalSupport, contextTick)
+    : null;
+  if (Object.hasOwn(value, "historicalSupport") && historicalSupport === null) return null;
+  if (historicalSupport && historicalSupport.length > 0) {
+    if (status !== "active" && status !== "suspended") return null;
+    if (historicalSupport.some((entry) => (
+      (entry.relation === "prior_same_material_outcome"
+        && (semanticIntent?.kind !== "acquire_material_object"
+          || entry.evidence.kind !== "task_outcome"))
+      || (entry.relation === "prior_same_actor_outcome"
+        && (semanticIntent?.kind !== "communicate_actor"
+          || entry.evidence.kind !== "task_outcome"))
+      || (entry.relation === "prior_counterparty_social_outcome"
+        && (semanticIntent?.kind !== "communicate_actor"
+          || entry.evidence.kind !== "resident_released_social_commitment"))
+    ))) return null;
+  }
+
   const activeRun = value.activeRun === null ? null : sanitizeRun(value.activeRun);
   if (activeRun === null && value.activeRun !== null) return null;
 
@@ -208,8 +235,44 @@ function sanitizeMatter(value: unknown, contextTick: number): ResidentLifeMatter
     originEvidence,
     semanticEvidence,
     lastOutcomeEvidence,
+    ...(historicalSupport && historicalSupport.length > 0 ? { historicalSupport } : {}),
     activeRun,
   };
+}
+
+function sanitizeHistoricalSupport(
+  value: unknown,
+  contextTick: number,
+): Array<{
+  relation: ResidentMatterHistoricalSupportRelation;
+  sourceMatterId: string;
+  evidence: ResidentLifeEvidenceView;
+}> | null {
+  if (!Array.isArray(value) || value.length > MAX_HISTORICAL_SUPPORT_PER_MATTER) return null;
+  const result: Array<{
+    relation: ResidentMatterHistoricalSupportRelation;
+    sourceMatterId: string;
+    evidence: ResidentLifeEvidenceView;
+  }> = [];
+  const seen = new Set<string>();
+  for (const raw of value) {
+    if (!record(raw) || !hasOnlyKeys(raw, ["relation", "sourceMatterId", "evidence"])) return null;
+    if (raw.relation !== "prior_same_material_outcome"
+      && raw.relation !== "prior_same_actor_outcome"
+      && raw.relation !== "prior_counterparty_social_outcome") return null;
+    const sourceMatterId = identifier(raw.sourceMatterId);
+    const evidence = sanitizeEvidence(raw.evidence, contextTick);
+    if (!sourceMatterId || !evidence) return null;
+    const key = `${raw.relation}|${sourceMatterId}|${evidence.id}`;
+    if (seen.has(key)) return null;
+    seen.add(key);
+    result.push({
+      relation: raw.relation,
+      sourceMatterId,
+      evidence,
+    });
+  }
+  return result;
 }
 
 function sanitizeMatterIntent(value: unknown): ResidentMatterIntent | null {
@@ -224,12 +287,58 @@ function sanitizeMatterIntent(value: unknown): ResidentMatterIntent | null {
   }
 
   if (value.kind === "communicate_actor") {
-    if (!hasOnlyKeys(value, ["kind", "goal", "targetActorId", "text"])) return null;
+    if (!hasRequiredAndOptionalKeys(
+      value,
+      ["kind", "goal", "targetActorId", "text"],
+      ["standingSocialCommitment"],
+    )) return null;
     const goal = boundedText(value.goal, 1_200);
     const targetActorId = identifier(value.targetActorId);
     const text = boundedText(value.text, 1_200);
     if (!goal || !targetActorId || !text) return null;
-    return { kind: "communicate_actor", goal, targetActorId, text };
+
+    let standingSocialCommitment: { goal: string } | undefined;
+    if (Object.hasOwn(value, "standingSocialCommitment")) {
+      const rawStanding = value.standingSocialCommitment;
+      if (!record(rawStanding) || !hasOnlyKeys(rawStanding, ["goal"])) return null;
+      const standingGoal = boundedText(rawStanding.goal, 1_200);
+      if (!standingGoal) return null;
+      standingSocialCommitment = { goal: standingGoal };
+    }
+
+    return {
+      kind: "communicate_actor",
+      goal,
+      targetActorId,
+      text,
+      ...(standingSocialCommitment ? { standingSocialCommitment } : {}),
+    };
+  }
+
+  if (value.kind === "acquire_material_object") {
+    if (!hasOnlyKeys(value, ["kind", "goal", "objectId"])) return null;
+    const goal = boundedText(value.goal, 1_200);
+    const objectId = identifier(value.objectId);
+    if (!goal || !objectId) return null;
+    return {
+      kind: "acquire_material_object",
+      goal,
+      objectId,
+    };
+  }
+
+  if (value.kind === "standing_social_commitment") {
+    if (!hasOnlyKeys(value, ["kind", "goal", "counterpartyActorId", "commitment"])) return null;
+    const goal = boundedText(value.goal, 1_200);
+    const counterpartyActorId = identifier(value.counterpartyActorId);
+    const commitment = boundedText(value.commitment, 1_200);
+    if (!goal || !counterpartyActorId || !commitment) return null;
+    return {
+      kind: "standing_social_commitment",
+      goal,
+      counterpartyActorId,
+      commitment,
+    };
   }
 
   return null;

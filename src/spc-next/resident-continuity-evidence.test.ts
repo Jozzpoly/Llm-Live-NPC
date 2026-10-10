@@ -94,7 +94,7 @@ describe("ResidentContinuityKernel live matter evidence", () => {
     expect(() => kernel.advanceSemanticContext("matter.work", first.evidence.id)).toThrow("unknown evidence");
   });
 
-  it("releases all live evidence pins when a matter terminalizes instead of silently becoming a historical archive", () => {
+  it("releases all live evidence pins at terminal state while retaining factual outcome only in the separate bounded archive", () => {
     const kernel = new ResidentContinuityKernel({ recentEvidenceLimit: 1 });
     const origin = kernel.recordEvidence(evidence("evidence.origin", 1));
     kernel.openMatter({ id: "matter.work", originEvidenceId: origin.id, semanticCourse: "work" });
@@ -115,6 +115,9 @@ describe("ResidentContinuityKernel live matter evidence", () => {
     expect(kernel.originEvidence("matter.work")).toBeNull();
     expect(kernel.semanticEvidence("matter.work")).toBeNull();
     expect(kernel.lastOutcomeEvidence("matter.work")).toBeNull();
+    expect(kernel.archivedTerminalOutcomeEvidence("matter.work")).toEqual(
+      outcome.status === "recorded" ? outcome.evidence : null,
+    );
   });
 
   it("does not create a new live outcome pin when a factual run result is reconciled after semantic terminalization", () => {
@@ -132,8 +135,14 @@ describe("ResidentContinuityKernel live matter evidence", () => {
     });
     expect(outcome.status).toBe("recorded");
     expect(kernel.lastOutcomeEvidence("matter.work")).toBeNull();
+    expect(kernel.archivedTerminalOutcomeEvidence("matter.work")).toEqual(
+      outcome.status === "recorded" ? outcome.evidence : null,
+    );
 
     kernel.recordEvidence(evidence("filler.3", 3));
     expect(kernel.recentEvidenceSnapshot().some((item) => item.id.startsWith("task-outcome:"))).toBe(false);
+    expect(kernel.archivedTerminalOutcomeEvidence("matter.work")).toEqual(
+      outcome.status === "recorded" ? outcome.evidence : null,
+    );
   });
 });

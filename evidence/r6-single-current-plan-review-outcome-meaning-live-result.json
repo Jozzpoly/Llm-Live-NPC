@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "runNumber": 34,
+  "sourceSha": "74dbb6dccb9be68fe4b09d8660728431ee143f8e",
+  "workflowRunId": 36788527145,
+  "model": "gpt-5.6-luna",
+  "providerRequestsAttempted": 2,
+  "semanticRetries": 0,
+  "rerolled": false,
+  "frozenFixture": "evidence/r6-single-current-plan-review-outcome-meaning-context.json",
+  "harnessClassification": "SAME_EXPLICIT_PLAN_REVIEW_DECISION_WITH_CAUSAL_CITATION",
+  "projectClassification": "BOUNDED_PROVIDER_POSITIVE_WITH_NONCANONICAL_PROVENANCE_IDS",
+  "observations": {
+    "pickup_time_unavailable": {
+      "originReasonId": "reason-life-outcome:janek-r6-single-current-review-crate-900",
+      "decision": {
+        "kind": "relinquish_matter",
+        "matterId": "matter.janek.r6.single-current-review.crate",
+        "reason": "The sole current plan to acquire the workshop crate is blocked because the object became unavailable at pickup time, so I will stop carrying this plan rather than retry without current evidence.",
+        "supportEvidenceIds": [
+          "task-outcome:run.janek.r6.single-current-review.crate.semantic-1:900"
+        ],
+        "reviewAfterSeconds": 120
+      },
+      "usage": {
+        "inputTokens": 3719,
+        "outputTokens": 228,
+        "totalTokens": 3947,
+        "elapsedMs": 4363
+      }
+    },
+    "bounded_inspection_absent": {
+      "originReasonId": "reason-life-outcome:janek-r6-single-current-review-crate-900",
+      "decision": {
+        "kind": "relinquish_matter",
+        "matterId": "matter.janek.r6.single-current-review.crate",
+        "reason": "The bounded attempt to acquire the workshop crate ended because the object was not visible after local inspection, so I will stop carrying this current plan rather than repeat it without new evidence.",
+        "supportEvidenceIds": [
+          "task-outcome:run.janek.r6.single-current-review.crate.semantic-1:900"
+        ],
+        "reviewAfterSeconds": 60
+      },
+      "usage": {
+        "inputTokens": 3721,
+        "outputTokens": 200,
+        "totalTokens": 3921,
+        "elapsedMs": 3936
+      }
+    }
+  },
+  "findings": {
+    "singleCurrentPlanRelinquishmentSelectedByProvider": true,
+    "exactFrozenOutcomeCitedByBoth": true,
+    "outcomeMeaningChangedDecisionKind": false,
+    "outcomeMeaningChangedRationaleOrReviewCadence": true,
+    "fullExactRuntimeProvenanceProof": false
+  },
+  "provenanceAudit": {
+    "frozenRunId": "run.janek.r6.single-current-review.crate.semantic-1",
+    "frozenOutcomeTick": 900,
+    "frozenOutcomeEvidenceId": "task-outcome:run.janek.r6.single-current-review.crate.semantic-1:900",
+    "kernelDerivedExpectedOutcomeEvidenceId": "task-outcome:7770162ef150b16f:900",
+    "frozenReasonId": "reason-life-outcome:janek-r6-single-current-review-crate-900",
+    "outcomeReviewBridgeExpectedReasonId": "reason-life-outcome:d2182df65e450c5a",
+    "consequence": "The frozen ids were valid bounded SPC identifiers and the live provider contract used them consistently, but they were not the exact ids produced by ResidentContinuityKernel.reconcileRunOutcome and ResidentLifeOutcomeReviewBridge for this run. Therefore run #34 is provider-level semantic evidence, not exact end-to-end runtime provenance evidence."
+  },
+  "interpretation": "Both matched blocked-outcome frames caused GPT-5.6 Luna to explicitly relinquish the sole current plan C and cite the supplied exact frozen outcome. This proves the provider can use the new single-plan relinquishment vocabulary without a competing future. It does not prove that the two factual outcome meanings change behavior, because both chose relinquish_matter. It also does not by itself close exact live runtime provenance because the frozen outcome/reason ids were later found to be noncanonical derivations. No reroll is permitted."
+}

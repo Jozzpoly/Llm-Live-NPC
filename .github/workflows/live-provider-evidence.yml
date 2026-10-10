@@ -7,6 +7,7 @@ on:
       - research/i2-mira-live-cognition-bridge
       - integration/spc-next-owner-living-runtime-v1
       - recovery/spc-post-stress-semantic-escalation-r5
+      - recovery/spc-post-stress-complementary-personhood-r6
     paths:
       - "evidence/live-provider-request.json"
   workflow_dispatch:
@@ -39,7 +40,7 @@ jobs:
           const qualifiers = Array.isArray(request.qualifiers)
             ? request.qualifiers
             : ['lifecycle', 'interruption'];
-          const allowed = new Set(['lifecycle', 'interruption', 'life-choice', 'life-intent', 'unified-addressed', 'r5-judgement']);
+          const allowed = new Set(['lifecycle', 'interruption', 'life-choice', 'life-intent', 'unified-addressed', 'r5-judgement', 'r6-history-choice-twin', 'r6-endogenous-history-outcome-twin', 'r6-endogenous-standing-fulfillment', 'r6-post-terminal-factual-history-twin', 'r6-competing-future-terminal-history-choice-twin', 'r6-delayed-competing-future-history-choice-twin', 'r6-cumulative-same-actor-history-choice-twin', 'r6-same-cardinality-outcome-meaning-choice-twin', 'r6-plan-revision-outcome-meaning-choice-twin', 'r6-single-current-plan-review-outcome-meaning-twin', 'r6-counterparty-social-history-choice-twin', 'r6-symmetric-counterparty-social-choice-twin']);
           if (qualifiers.length === 0 || qualifiers.some((value) => !allowed.has(value))) {
             throw new Error(`invalid live-provider qualifiers: ${JSON.stringify(qualifiers)}`);
           }
@@ -49,6 +50,18 @@ jobs:
           process.stdout.write(`RUN_LIFE_INTENT=${qualifiers.includes('life-intent') ? '1' : '0'}\n`);
           process.stdout.write(`RUN_UNIFIED_ADDRESSED=${qualifiers.includes('unified-addressed') ? '1' : '0'}\n`);
           process.stdout.write(`RUN_R5_JUDGEMENT=${qualifiers.includes('r5-judgement') ? '1' : '0'}\n`);
+          process.stdout.write(`RUN_R6_HISTORY_CHOICE_TWIN=${qualifiers.includes('r6-history-choice-twin') ? '1' : '0'}\n`);
+          process.stdout.write(`RUN_R6_ENDOGENOUS_HISTORY_OUTCOME_TWIN=${qualifiers.includes('r6-endogenous-history-outcome-twin') ? '1' : '0'}\n`);
+          process.stdout.write(`RUN_R6_ENDOGENOUS_STANDING_FULFILLMENT=${qualifiers.includes('r6-endogenous-standing-fulfillment') ? '1' : '0'}\n`);
+          process.stdout.write(`RUN_R6_POST_TERMINAL_FACTUAL_HISTORY_TWIN=${qualifiers.includes('r6-post-terminal-factual-history-twin') ? '1' : '0'}\n`);
+          process.stdout.write(`RUN_R6_COMPETING_FUTURE_TERMINAL_HISTORY_CHOICE_TWIN=${qualifiers.includes('r6-competing-future-terminal-history-choice-twin') ? '1' : '0'}\n`);
+          process.stdout.write(`RUN_R6_DELAYED_COMPETING_FUTURE_HISTORY_CHOICE_TWIN=${qualifiers.includes('r6-delayed-competing-future-history-choice-twin') ? '1' : '0'}\n`);
+          process.stdout.write(`RUN_R6_CUMULATIVE_SAME_ACTOR_HISTORY_CHOICE_TWIN=${qualifiers.includes('r6-cumulative-same-actor-history-choice-twin') ? '1' : '0'}\n`);
+          process.stdout.write(`RUN_R6_SAME_CARDINALITY_OUTCOME_MEANING_CHOICE_TWIN=${qualifiers.includes('r6-same-cardinality-outcome-meaning-choice-twin') ? '1' : '0'}\n`);
+          process.stdout.write(`RUN_R6_PLAN_REVISION_OUTCOME_MEANING_CHOICE_TWIN=${qualifiers.includes('r6-plan-revision-outcome-meaning-choice-twin') ? '1' : '0'}\n`);
+          process.stdout.write(`RUN_R6_SINGLE_CURRENT_PLAN_REVIEW_OUTCOME_MEANING_TWIN=${qualifiers.includes('r6-single-current-plan-review-outcome-meaning-twin') ? '1' : '0'}\n`);
+          process.stdout.write(`RUN_R6_COUNTERPARTY_SOCIAL_HISTORY_CHOICE_TWIN=${qualifiers.includes('r6-counterparty-social-history-choice-twin') ? '1' : '0'}\n`);
+          process.stdout.write(`RUN_R6_SYMMETRIC_COUNTERPARTY_SOCIAL_CHOICE_TWIN=${qualifiers.includes('r6-symmetric-counterparty-social-choice-twin') ? '1' : '0'}\n`);
           process.stdout.write(`REQUESTED_QUALIFIERS=${qualifiers.join(',')}\n`);
           NODE
 
@@ -215,6 +228,118 @@ jobs:
           LIVE_PROVIDER_OUTPUT: evidence/live-provider/r5-mira-live-judgement.json
         run: node scripts/spc-browser-r5-mira-live-judgement-evidence.mjs
 
+      - name: Qualify R6 history-dependent choice twin with real Luna
+        if: env.RUN_R6_HISTORY_CHOICE_TWIN == '1'
+        env:
+          LIVE_PROVIDER_OUTPUT: evidence/live-provider/r6-history-choice-twin.json
+        run: node scripts/spc-live-provider-r6-history-choice-twin-evidence.mjs
+
+      - name: Validate R6 endogenous history-after-outcome qualifier harness
+        if: env.RUN_R6_ENDOGENOUS_HISTORY_OUTCOME_TWIN == '1'
+        run: node --check scripts/spc-live-provider-r6-endogenous-history-outcome-twin-evidence.mjs
+
+      - name: Qualify R6 endogenous history-after-outcome twin with real Luna
+        if: env.RUN_R6_ENDOGENOUS_HISTORY_OUTCOME_TWIN == '1'
+        env:
+          LIVE_PROVIDER_OUTPUT: evidence/live-provider/r6-endogenous-history-outcome-twin.json
+        run: node scripts/spc-live-provider-r6-endogenous-history-outcome-twin-evidence.mjs
+
+      - name: Qualify R6 endogenous standing fulfillment with real Luna
+        if: env.RUN_R6_ENDOGENOUS_STANDING_FULFILLMENT == '1'
+        env:
+          LIVE_PROVIDER_OUTPUT: evidence/live-provider/r6-endogenous-standing-fulfillment.json
+        run: node scripts/spc-live-provider-r6-endogenous-standing-fulfillment-evidence.mjs
+
+      - name: Validate R6 post-terminal factual-history twin harness
+        if: env.RUN_R6_POST_TERMINAL_FACTUAL_HISTORY_TWIN == '1'
+        run: node --check scripts/spc-live-provider-r6-post-terminal-factual-history-twin-evidence.mjs
+
+      - name: Qualify R6 post-terminal factual-history twin with real Luna
+        if: env.RUN_R6_POST_TERMINAL_FACTUAL_HISTORY_TWIN == '1'
+        env:
+          LIVE_PROVIDER_OUTPUT: evidence/live-provider/r6-post-terminal-factual-history-twin.json
+        run: node scripts/spc-live-provider-r6-post-terminal-factual-history-twin-evidence.mjs
+
+      - name: Validate R6 competing-future terminal-history choice twin harness
+        if: env.RUN_R6_COMPETING_FUTURE_TERMINAL_HISTORY_CHOICE_TWIN == '1'
+        run: node --check scripts/spc-live-provider-r6-competing-future-terminal-history-choice-twin-evidence.mjs
+
+      - name: Qualify R6 competing-future terminal-history choice twin with real Luna
+        if: env.RUN_R6_COMPETING_FUTURE_TERMINAL_HISTORY_CHOICE_TWIN == '1'
+        env:
+          LIVE_PROVIDER_OUTPUT: evidence/live-provider/r6-competing-future-terminal-history-choice-twin.json
+        run: node scripts/spc-live-provider-r6-competing-future-terminal-history-choice-twin-evidence.mjs
+
+      - name: Validate R6 delayed competing-future history-choice twin harness
+        if: env.RUN_R6_DELAYED_COMPETING_FUTURE_HISTORY_CHOICE_TWIN == '1'
+        run: node --check scripts/spc-live-provider-r6-delayed-competing-future-history-choice-twin-evidence.mjs
+
+      - name: Qualify R6 delayed competing-future history-choice twin with real Luna
+        if: env.RUN_R6_DELAYED_COMPETING_FUTURE_HISTORY_CHOICE_TWIN == '1'
+        env:
+          LIVE_PROVIDER_OUTPUT: evidence/live-provider/r6-delayed-competing-future-history-choice-twin.json
+        run: node scripts/spc-live-provider-r6-delayed-competing-future-history-choice-twin-evidence.mjs
+
+      - name: Validate R6 cumulative same-actor history choice twin harness
+        if: env.RUN_R6_CUMULATIVE_SAME_ACTOR_HISTORY_CHOICE_TWIN == '1'
+        run: node --check scripts/spc-live-provider-r6-cumulative-same-actor-history-choice-twin-evidence.mjs
+
+      - name: Qualify R6 cumulative same-actor history choice twin with real Luna
+        if: env.RUN_R6_CUMULATIVE_SAME_ACTOR_HISTORY_CHOICE_TWIN == '1'
+        env:
+          LIVE_PROVIDER_OUTPUT: evidence/live-provider/r6-cumulative-same-actor-history-choice-twin.json
+        run: node scripts/spc-live-provider-r6-cumulative-same-actor-history-choice-twin-evidence.mjs
+
+      - name: Validate R6 same-cardinality outcome-meaning choice twin harness
+        if: env.RUN_R6_SAME_CARDINALITY_OUTCOME_MEANING_CHOICE_TWIN == '1'
+        run: node --check scripts/spc-live-provider-r6-same-cardinality-outcome-meaning-choice-twin-evidence.mjs
+
+      - name: Qualify R6 same-cardinality outcome-meaning choice twin with real Luna
+        if: env.RUN_R6_SAME_CARDINALITY_OUTCOME_MEANING_CHOICE_TWIN == '1'
+        env:
+          LIVE_PROVIDER_OUTPUT: evidence/live-provider/r6-same-cardinality-outcome-meaning-choice-twin.json
+        run: node scripts/spc-live-provider-r6-same-cardinality-outcome-meaning-choice-twin-evidence.mjs
+
+      - name: Validate R6 plan-revision outcome-meaning choice twin harness
+        if: env.RUN_R6_PLAN_REVISION_OUTCOME_MEANING_CHOICE_TWIN == '1'
+        run: node --check scripts/spc-live-provider-r6-plan-revision-outcome-meaning-choice-twin-evidence.mjs
+
+      - name: Qualify R6 plan-revision outcome-meaning choice twin with real Luna
+        if: env.RUN_R6_PLAN_REVISION_OUTCOME_MEANING_CHOICE_TWIN == '1'
+        env:
+          LIVE_PROVIDER_OUTPUT: evidence/live-provider/r6-plan-revision-outcome-meaning-choice-twin.json
+        run: node scripts/spc-live-provider-r6-plan-revision-outcome-meaning-choice-twin-evidence.mjs
+
+      - name: Validate R6 single-current-plan review outcome-meaning twin harness
+        if: env.RUN_R6_SINGLE_CURRENT_PLAN_REVIEW_OUTCOME_MEANING_TWIN == '1'
+        run: node --check scripts/spc-live-provider-r6-single-current-plan-review-outcome-meaning-twin-evidence.mjs
+
+      - name: Qualify R6 single-current-plan review outcome-meaning twin with real Luna
+        if: env.RUN_R6_SINGLE_CURRENT_PLAN_REVIEW_OUTCOME_MEANING_TWIN == '1'
+        env:
+          LIVE_PROVIDER_OUTPUT: evidence/live-provider/r6-single-current-plan-review-outcome-meaning-twin.json
+        run: node scripts/spc-live-provider-r6-single-current-plan-review-outcome-meaning-twin-evidence.mjs
+
+      - name: Validate R6 counterparty social-history choice twin harness
+        if: env.RUN_R6_COUNTERPARTY_SOCIAL_HISTORY_CHOICE_TWIN == '1'
+        run: node --check scripts/spc-live-provider-r6-counterparty-social-history-choice-twin-evidence.mjs
+
+      - name: Qualify R6 counterparty social-history choice twin with real Luna
+        if: env.RUN_R6_COUNTERPARTY_SOCIAL_HISTORY_CHOICE_TWIN == '1'
+        env:
+          LIVE_PROVIDER_OUTPUT: evidence/live-provider/r6-counterparty-social-history-choice-twin.json
+        run: node scripts/spc-live-provider-r6-counterparty-social-history-choice-twin-evidence.mjs
+
+      - name: Validate R6 symmetric counterparty social choice twin harness
+        if: env.RUN_R6_SYMMETRIC_COUNTERPARTY_SOCIAL_CHOICE_TWIN == '1'
+        run: node --check scripts/spc-live-provider-r6-symmetric-counterparty-social-choice-twin-evidence.mjs
+
+      - name: Qualify R6 symmetric counterparty social choice twin with real Luna
+        if: env.RUN_R6_SYMMETRIC_COUNTERPARTY_SOCIAL_CHOICE_TWIN == '1'
+        env:
+          LIVE_PROVIDER_OUTPUT: evidence/live-provider/r6-symmetric-counterparty-social-choice-twin.json
+        run: node scripts/spc-live-provider-r6-symmetric-counterparty-social-choice-twin-evidence.mjs
+
       - name: Print live-provider evidence summary
         if: always()
         shell: bash
@@ -262,6 +387,90 @@ jobs:
           echo "--- R5 one-shot real-Luna judgement evidence ---"
           if [ "${RUN_R5_JUDGEMENT:-0}" = "1" ]; then
             cat evidence/live-provider/r5-mira-live-judgement.json 2>/dev/null || true
+          else
+            echo "not requested in this run"
+          fi
+
+          echo "--- R6 history-dependent choice twin evidence ---"
+          if [ "${RUN_R6_HISTORY_CHOICE_TWIN:-0}" = "1" ]; then
+            cat evidence/live-provider/r6-history-choice-twin.json 2>/dev/null || true
+          else
+            echo "not requested in this run"
+          fi
+
+          echo "--- R6 endogenous history-after-outcome twin evidence ---"
+          if [ "${RUN_R6_ENDOGENOUS_HISTORY_OUTCOME_TWIN:-0}" = "1" ]; then
+            cat evidence/live-provider/r6-endogenous-history-outcome-twin.json 2>/dev/null || true
+          else
+            echo "not requested in this run"
+          fi
+
+          echo "--- R6 endogenous standing fulfillment evidence ---"
+          if [ "${RUN_R6_ENDOGENOUS_STANDING_FULFILLMENT:-0}" = "1" ]; then
+            cat evidence/live-provider/r6-endogenous-standing-fulfillment.json 2>/dev/null || true
+          else
+            echo "not requested in this run"
+          fi
+
+          echo "--- R6 post-terminal factual-history twin evidence ---"
+          if [ "${RUN_R6_POST_TERMINAL_FACTUAL_HISTORY_TWIN:-0}" = "1" ]; then
+            cat evidence/live-provider/r6-post-terminal-factual-history-twin.json 2>/dev/null || true
+          else
+            echo "not requested in this run"
+          fi
+
+          echo "--- R6 competing-future terminal-history choice twin evidence ---"
+          if [ "${RUN_R6_COMPETING_FUTURE_TERMINAL_HISTORY_CHOICE_TWIN:-0}" = "1" ]; then
+            cat evidence/live-provider/r6-competing-future-terminal-history-choice-twin.json 2>/dev/null || true
+          else
+            echo "not requested in this run"
+          fi
+
+          echo "--- R6 cumulative same-actor history choice twin evidence ---"
+          if [ "${RUN_R6_CUMULATIVE_SAME_ACTOR_HISTORY_CHOICE_TWIN:-0}" = "1" ]; then
+            cat evidence/live-provider/r6-cumulative-same-actor-history-choice-twin.json 2>/dev/null || true
+          else
+            echo "not requested in this run"
+          fi
+
+          echo "--- R6 same-cardinality outcome-meaning choice twin evidence ---"
+          if [ "${RUN_R6_SAME_CARDINALITY_OUTCOME_MEANING_CHOICE_TWIN:-0}" = "1" ]; then
+            cat evidence/live-provider/r6-same-cardinality-outcome-meaning-choice-twin.json 2>/dev/null || true
+          else
+            echo "not requested in this run"
+          fi
+
+          echo "--- R6 plan-revision outcome-meaning choice twin evidence ---"
+          if [ "${RUN_R6_PLAN_REVISION_OUTCOME_MEANING_CHOICE_TWIN:-0}" = "1" ]; then
+            cat evidence/live-provider/r6-plan-revision-outcome-meaning-choice-twin.json 2>/dev/null || true
+          else
+            echo "not requested in this run"
+          fi
+
+          echo "--- R6 single-current-plan review outcome-meaning twin evidence ---"
+          if [ "${RUN_R6_SINGLE_CURRENT_PLAN_REVIEW_OUTCOME_MEANING_TWIN:-0}" = "1" ]; then
+            cat evidence/live-provider/r6-single-current-plan-review-outcome-meaning-twin.json 2>/dev/null || true
+          else
+            echo "not requested in this run"
+          fi
+
+          echo "--- R6 counterparty social-history choice twin evidence ---"
+          if [ "${RUN_R6_COUNTERPARTY_SOCIAL_HISTORY_CHOICE_TWIN:-0}" = "1" ]; then
+            cat evidence/live-provider/r6-counterparty-social-history-choice-twin.json 2>/dev/null || true
+          else
+            echo "not requested in this run"
+          fi
+
+          echo "--- R6 symmetric counterparty social choice twin evidence ---"
+          if [ "${RUN_R6_SYMMETRIC_COUNTERPARTY_SOCIAL_CHOICE_TWIN:-0}" = "1" ]; then
+            cat evidence/live-provider/r6-symmetric-counterparty-social-choice-twin.json 2>/dev/null || true
+          else
+            echo "not requested in this run"
+          fi
+
+          echo "--- R6 delayed competing-future history-choice twin evidence ---"
+          if [ "${RUN_R6_DELAYED_COMPETING_FUTURE_HISTORY_CHOICE_TWIN:-0}" = "1" ]; then
+            cat evidence/live-provider/r6-delayed-competing-future-history-choice-twin.json 2>/dev/null || true
           else
             echo "not requested in this run"
           fi

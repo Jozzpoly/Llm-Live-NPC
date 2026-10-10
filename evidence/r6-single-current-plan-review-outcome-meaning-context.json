@@ -1,0 +1,180 @@
+{
+  "pickup_time_unavailable": {
+    "contract": "resident_life_cognition_v1",
+    "resident": {
+      "id": "resident.janek",
+      "name": "Janek"
+    },
+    "tick": 930,
+    "currentRegionId": "workshop",
+    "reasons": [
+      {
+        "id": "reason-life-outcome:d2182df65e450c5a",
+        "tick": 900,
+        "kind": "activity_completed",
+        "salience": 0.65,
+        "summary": "Factual run outcome requires resident interpretation: blocked: material acquisition crate.workshop.01 blocked: visible material object became unavailable at pickup time",
+        "evidenceIds": [
+          "task-outcome:7770162ef150b16f:900"
+        ]
+      }
+    ],
+    "localActivity": {
+      "id": "activity:resident.janek:idle:r6-single-current-review",
+      "kind": "idle",
+      "targetActorId": null,
+      "targetPosition": null,
+      "text": null,
+      "speed": null,
+      "reason": "the factual material run has ended and the coarse body is free"
+    },
+    "recentPercepts": [],
+    "concerns": [],
+    "beliefs": [],
+    "knownActors": [],
+    "knownRegions": [
+      {
+        "id": "workshop",
+        "label": "Workshop",
+        "knowledge": "visited",
+        "lastVisitedTick": 900
+      },
+      {
+        "id": "hearth",
+        "label": "Hearth",
+        "knowledge": "visited",
+        "lastVisitedTick": 650
+      }
+    ],
+    "life": {
+      "version": 1,
+      "matters": [
+        {
+          "id": "matter.janek.r6.single-current-review.crate",
+          "status": "active",
+          "semanticRevision": 1,
+          "semanticCourse": "try to acquire the familiar workshop crate",
+          "semanticIntent": {
+            "kind": "acquire_material_object",
+            "goal": "try to acquire the familiar workshop crate",
+            "objectId": "crate.workshop.01"
+          },
+          "suspendedByMatterId": null,
+          "originEvidence": {
+            "id": "evidence:janek:r6:single-current-review:origin",
+            "tick": 700,
+            "kind": "accepted_cognition_commitment",
+            "summary": "Janek chose one bounded plan concerning the familiar workshop crate."
+          },
+          "semanticEvidence": {
+            "id": "evidence:janek:r6:single-current-review:origin",
+            "tick": 700,
+            "kind": "accepted_cognition_commitment",
+            "summary": "Janek chose one bounded plan concerning the familiar workshop crate."
+          },
+          "lastOutcomeEvidence": {
+            "id": "task-outcome:7770162ef150b16f:900",
+            "tick": 900,
+            "kind": "task_outcome",
+            "summary": "blocked: material acquisition crate.workshop.01 blocked: visible material object became unavailable at pickup time",
+            "sourceRunId": "run.janek.r6.single-current-review.crate.semantic-1"
+          },
+          "activeRun": null
+        }
+      ],
+      "body": {
+        "focusedRunId": null,
+        "deferredRunIds": []
+      }
+    }
+  },
+  "bounded_inspection_absent": {
+    "contract": "resident_life_cognition_v1",
+    "resident": {
+      "id": "resident.janek",
+      "name": "Janek"
+    },
+    "tick": 930,
+    "currentRegionId": "workshop",
+    "reasons": [
+      {
+        "id": "reason-life-outcome:d2182df65e450c5a",
+        "tick": 900,
+        "kind": "activity_completed",
+        "salience": 0.65,
+        "summary": "Factual run outcome requires resident interpretation: blocked: material acquisition crate.workshop.01 blocked: material object is not visible after bounded local inspection",
+        "evidenceIds": [
+          "task-outcome:7770162ef150b16f:900"
+        ]
+      }
+    ],
+    "localActivity": {
+      "id": "activity:resident.janek:idle:r6-single-current-review",
+      "kind": "idle",
+      "targetActorId": null,
+      "targetPosition": null,
+      "text": null,
+      "speed": null,
+      "reason": "the factual material run has ended and the coarse body is free"
+    },
+    "recentPercepts": [],
+    "concerns": [],
+    "beliefs": [],
+    "knownActors": [],
+    "knownRegions": [
+      {
+        "id": "workshop",
+        "label": "Workshop",
+        "knowledge": "visited",
+        "lastVisitedTick": 900
+      },
+      {
+        "id": "hearth",
+        "label": "Hearth",
+        "knowledge": "visited",
+        "lastVisitedTick": 650
+      }
+    ],
+    "life": {
+      "version": 1,
+      "matters": [
+        {
+          "id": "matter.janek.r6.single-current-review.crate",
+          "status": "active",
+          "semanticRevision": 1,
+          "semanticCourse": "try to acquire the familiar workshop crate",
+          "semanticIntent": {
+            "kind": "acquire_material_object",
+            "goal": "try to acquire the familiar workshop crate",
+            "objectId": "crate.workshop.01"
+          },
+          "suspendedByMatterId": null,
+          "originEvidence": {
+            "id": "evidence:janek:r6:single-current-review:origin",
+            "tick": 700,
+            "kind": "accepted_cognition_commitment",
+            "summary": "Janek chose one bounded plan concerning the familiar workshop crate."
+          },
+          "semanticEvidence": {
+            "id": "evidence:janek:r6:single-current-review:origin",
+            "tick": 700,
+            "kind": "accepted_cognition_commitment",
+            "summary": "Janek chose one bounded plan concerning the familiar workshop crate."
+          },
+          "lastOutcomeEvidence": {
+            "id": "task-outcome:7770162ef150b16f:900",
+            "tick": 900,
+            "kind": "task_outcome",
+            "summary": "blocked: material acquisition crate.workshop.01 blocked: material object is not visible after bounded local inspection",
+            "sourceRunId": "run.janek.r6.single-current-review.crate.semantic-1"
+          },
+          "activeRun": null
+        }
+      ],
+      "body": {
+        "focusedRunId": null,
+        "deferredRunIds": []
+      }
+    }
+  }
+}

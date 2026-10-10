@@ -1,5 +1,7 @@
 # SPC Next — five-resident living-world refoundation
 
+> **CURRENT EXECUTION NOTICE (2026-09-25): HISTORICAL FOUNDATION / DONOR CONTRACT.** The architectural commitments here remain useful donor constraints where later evidence has not overturned them, but the document's “fresh refoundation branch” status and campaign sequencing are obsolete. Do not use it as current execution authority. Current authority: `docs/SPC_POST_STRESS_RECOVERY_PROGRAM.md`; current R6 contract: `docs/SPC_R6_COMPLEMENTARY_PERSONHOOD_EXPERIMENT.md`.
+
 Status: fresh aggressive refoundation branch. The existing First Hearth runtime is a donor and regression specimen, not an architecture constraint.
 
 ## Product target

@@ -1,0 +1,256 @@
+{
+  "control": {
+    "contract": "resident_life_cognition_v1",
+    "resident": {
+      "id": "resident.oren",
+      "name": "Oren"
+    },
+    "tick": 240,
+    "currentRegionId": "r6-symmetric-social-room",
+    "reasons": [
+      {
+        "id": "reason:oren:r6:symmetric-social:choice:240",
+        "tick": 240,
+        "kind": "uncertainty",
+        "salience": 0.82,
+        "summary": "Two current social futures, one involving Nela and one involving Ida, compete for the same currently-free body.",
+        "evidenceIds": [
+          "run.oren.r6.symmetric-social.nela",
+          "run.oren.r6.symmetric-social.ida"
+        ]
+      }
+    ],
+    "localActivity": {
+      "id": "activity:resident.oren:idle:r6-symmetric-social",
+      "kind": "idle",
+      "targetActorId": null,
+      "targetPosition": null,
+      "text": null,
+      "speed": null,
+      "reason": "Oren currently has no body-owning local activity."
+    },
+    "recentPercepts": [],
+    "concerns": [],
+    "beliefs": [],
+    "knownActors": [],
+    "knownRegions": [
+      {
+        "id": "r6-symmetric-social-room",
+        "label": "R6 Symmetric Social Room",
+        "knowledge": "visited",
+        "lastVisitedTick": 240
+      }
+    ],
+    "life": {
+      "version": 1,
+      "matters": [
+        {
+          "id": "matter.oren.r6.symmetric-social.nela",
+          "status": "active",
+          "semanticRevision": 1,
+          "semanticCourse": "speak with Nela about the current situation",
+          "semanticIntent": {
+            "kind": "communicate_actor",
+            "goal": "speak with Nela about the current situation",
+            "targetActorId": "resident.nela",
+            "text": "Nela, porozmawiajmy o tym, co dzieje się teraz."
+          },
+          "suspendedByMatterId": null,
+          "originEvidence": {
+            "id": "evidence.oren.r6.symmetric-social.nela-origin",
+            "tick": 210,
+            "kind": "accepted_cognition_commitment",
+            "summary": "Oren independently has one current reason to speak with Nela about the current situation."
+          },
+          "semanticEvidence": {
+            "id": "evidence.oren.r6.symmetric-social.nela-origin",
+            "tick": 210,
+            "kind": "accepted_cognition_commitment",
+            "summary": "Oren independently has one current reason to speak with Nela about the current situation."
+          },
+          "lastOutcomeEvidence": null,
+          "activeRun": {
+            "runId": "run.oren.r6.symmetric-social.nela",
+            "taskId": "task.oren.r6.symmetric-social.nela",
+            "semanticRevision": 1,
+            "canMutateWorld": true,
+            "bodyState": "deferred"
+          }
+        },
+        {
+          "id": "matter.oren.r6.symmetric-social.ida",
+          "status": "active",
+          "semanticRevision": 1,
+          "semanticCourse": "speak with Ida about the current situation",
+          "semanticIntent": {
+            "kind": "communicate_actor",
+            "goal": "speak with Ida about the current situation",
+            "targetActorId": "resident.ida",
+            "text": "Ida, porozmawiajmy o tym, co dzieje się teraz."
+          },
+          "suspendedByMatterId": null,
+          "originEvidence": {
+            "id": "evidence.oren.r6.symmetric-social.ida-origin",
+            "tick": 213,
+            "kind": "accepted_cognition_commitment",
+            "summary": "Oren independently has one current reason to speak with Ida about the current situation."
+          },
+          "semanticEvidence": {
+            "id": "evidence.oren.r6.symmetric-social.ida-origin",
+            "tick": 213,
+            "kind": "accepted_cognition_commitment",
+            "summary": "Oren independently has one current reason to speak with Ida about the current situation."
+          },
+          "lastOutcomeEvidence": null,
+          "activeRun": {
+            "runId": "run.oren.r6.symmetric-social.ida",
+            "taskId": "task.oren.r6.symmetric-social.ida",
+            "semanticRevision": 1,
+            "canMutateWorld": true,
+            "bodyState": "deferred"
+          }
+        }
+      ],
+      "body": {
+        "focusedRunId": null,
+        "deferredRunIds": [
+          "run.oren.r6.symmetric-social.nela",
+          "run.oren.r6.symmetric-social.ida"
+        ]
+      }
+    }
+  },
+  "history": {
+    "contract": "resident_life_cognition_v1",
+    "resident": {
+      "id": "resident.oren",
+      "name": "Oren"
+    },
+    "tick": 240,
+    "currentRegionId": "r6-symmetric-social-room",
+    "reasons": [
+      {
+        "id": "reason:oren:r6:symmetric-social:choice:240",
+        "tick": 240,
+        "kind": "uncertainty",
+        "salience": 0.82,
+        "summary": "Two current social futures, one involving Nela and one involving Ida, compete for the same currently-free body.",
+        "evidenceIds": [
+          "run.oren.r6.symmetric-social.nela",
+          "run.oren.r6.symmetric-social.ida"
+        ]
+      }
+    ],
+    "localActivity": {
+      "id": "activity:resident.oren:idle:r6-symmetric-social",
+      "kind": "idle",
+      "targetActorId": null,
+      "targetPosition": null,
+      "text": null,
+      "speed": null,
+      "reason": "Oren currently has no body-owning local activity."
+    },
+    "recentPercepts": [],
+    "concerns": [],
+    "beliefs": [],
+    "knownActors": [],
+    "knownRegions": [
+      {
+        "id": "r6-symmetric-social-room",
+        "label": "R6 Symmetric Social Room",
+        "knowledge": "visited",
+        "lastVisitedTick": 240
+      }
+    ],
+    "life": {
+      "version": 1,
+      "matters": [
+        {
+          "id": "matter.oren.r6.symmetric-social.nela",
+          "status": "active",
+          "semanticRevision": 1,
+          "semanticCourse": "speak with Nela about the current situation",
+          "semanticIntent": {
+            "kind": "communicate_actor",
+            "goal": "speak with Nela about the current situation",
+            "targetActorId": "resident.nela",
+            "text": "Nela, porozmawiajmy o tym, co dzieje się teraz."
+          },
+          "suspendedByMatterId": null,
+          "originEvidence": {
+            "id": "evidence.oren.r6.symmetric-social.nela-origin",
+            "tick": 210,
+            "kind": "accepted_cognition_commitment",
+            "summary": "Oren independently has one current reason to speak with Nela about the current situation."
+          },
+          "semanticEvidence": {
+            "id": "evidence.oren.r6.symmetric-social.nela-origin",
+            "tick": 210,
+            "kind": "accepted_cognition_commitment",
+            "summary": "Oren independently has one current reason to speak with Nela about the current situation."
+          },
+          "lastOutcomeEvidence": null,
+          "activeRun": {
+            "runId": "run.oren.r6.symmetric-social.nela",
+            "taskId": "task.oren.r6.symmetric-social.nela",
+            "semanticRevision": 1,
+            "canMutateWorld": true,
+            "bodyState": "deferred"
+          },
+          "historicalSupport": [
+            {
+              "relation": "prior_counterparty_social_outcome",
+              "sourceMatterId": "matter.oren.r6.symmetric-social.old-standing",
+              "evidence": {
+                "id": "evidence-social-commitment-release:r6-symmetric-social-old-nela-release",
+                "tick": 80,
+                "kind": "resident_released_social_commitment",
+                "summary": "Nela explicitly released Oren from the earlier standing responsibility after factual addressed World speech."
+              }
+            }
+          ]
+        },
+        {
+          "id": "matter.oren.r6.symmetric-social.ida",
+          "status": "active",
+          "semanticRevision": 1,
+          "semanticCourse": "speak with Ida about the current situation",
+          "semanticIntent": {
+            "kind": "communicate_actor",
+            "goal": "speak with Ida about the current situation",
+            "targetActorId": "resident.ida",
+            "text": "Ida, porozmawiajmy o tym, co dzieje się teraz."
+          },
+          "suspendedByMatterId": null,
+          "originEvidence": {
+            "id": "evidence.oren.r6.symmetric-social.ida-origin",
+            "tick": 213,
+            "kind": "accepted_cognition_commitment",
+            "summary": "Oren independently has one current reason to speak with Ida about the current situation."
+          },
+          "semanticEvidence": {
+            "id": "evidence.oren.r6.symmetric-social.ida-origin",
+            "tick": 213,
+            "kind": "accepted_cognition_commitment",
+            "summary": "Oren independently has one current reason to speak with Ida about the current situation."
+          },
+          "lastOutcomeEvidence": null,
+          "activeRun": {
+            "runId": "run.oren.r6.symmetric-social.ida",
+            "taskId": "task.oren.r6.symmetric-social.ida",
+            "semanticRevision": 1,
+            "canMutateWorld": true,
+            "bodyState": "deferred"
+          }
+        }
+      ],
+      "body": {
+        "focusedRunId": null,
+        "deferredRunIds": [
+          "run.oren.r6.symmetric-social.nela",
+          "run.oren.r6.symmetric-social.ida"
+        ]
+      }
+    }
+  }
+}

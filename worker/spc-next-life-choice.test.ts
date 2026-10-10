@@ -162,6 +162,375 @@ describe("SPC Next resident-life choice Worker", () => {
     expect(sanitizeSpcNextLifeChoiceContext(leakedMethod)).toBeNull();
   });
 
+  it("carries only candidate-scoped delayed factual history into Worker choice support", () => {
+    const delayed = structuredClone(context) as any;
+    delayed.life.matters[0].semanticIntent = {
+      kind: "acquire_material_object",
+      goal: "try the familiar crate again",
+      objectId: "crate.worker.delayed-history",
+    };
+    delayed.life.matters[0].historicalSupport = [{
+      relation: "prior_same_material_outcome",
+      sourceMatterId: "matter.mira.worker.old-terminal",
+      evidence: {
+        id: "evidence:mira:worker:old-terminal-outcome",
+        tick: 20,
+        kind: "task_outcome",
+        summary: "blocked: factual material attempt returned object_unavailable",
+        sourceRunId: "run.mira.worker.old-terminal",
+      },
+    }];
+    delayed.life.matters[1].semanticIntent = {
+      kind: "travel_region",
+      goal: "take an unrelated current future",
+      targetRegionId: "hearth",
+    };
+
+    const sanitized = sanitizeSpcNextLifeChoiceContext(delayed);
+    expect(sanitized).not.toBeNull();
+    const materialSupport = sanitized?.candidateSupports.find(
+      (candidate) => candidate.matterId === B,
+    );
+    expect(materialSupport?.facts).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        evidenceId: "evidence:mira:worker:old-terminal-outcome",
+        sourceMatterId: "matter.mira.worker.old-terminal",
+        relation: "prior_same_material_outcome",
+        evidenceKind: "task_outcome",
+      }),
+    ]));
+    const otherSupport = sanitized?.candidateSupports.find(
+      (candidate) => candidate.matterId === C,
+    );
+    expect(otherSupport?.facts.some(
+      (fact) => fact.evidenceId === "evidence:mira:worker:old-terminal-outcome",
+    )).toBe(false);
+
+    expect(extractSpcNextLifeChoiceDecision(
+      responseBody({
+        kind: "focus_matter",
+        matterId: C,
+        reason: "the exact earlier material failure belongs to the competing retry, so take C instead",
+        supportEvidenceIds: [
+          "evidence:mira:worker:old-terminal-outcome",
+          "evidence:c:origin",
+        ],
+        reviewAfterSeconds: 12,
+      }),
+      sanitized!.candidateMatterIds,
+      sanitized!.candidateSupports,
+    )).toMatchObject({
+      kind: "focus_matter",
+      matterId: C,
+      supportEvidenceIds: [
+        "evidence:mira:worker:old-terminal-outcome",
+        "evidence:c:origin",
+      ],
+    });
+
+    const illegalTravelHistory = structuredClone(delayed);
+    illegalTravelHistory.life.matters[0].semanticIntent = {
+      kind: "travel_region",
+      goal: "ordinary travel",
+      targetRegionId: "hearth",
+    };
+    expect(sanitizeSpcNextLifeChoiceContext(illegalTravelHistory)).toBeNull();
+
+    const nonOutcomeHistory = structuredClone(delayed);
+    nonOutcomeHistory.life.matters[0].historicalSupport[0].evidence.kind = "life_context";
+    expect(sanitizeSpcNextLifeChoiceContext(nonOutcomeHistory)).toBeNull();
+  });
+
+  it("exposes plan relinquishment only for exact candidate-local factual history", async () => {
+    const delayed = structuredClone(context) as any;
+    delayed.life.matters[0].semanticIntent = {
+      kind: "acquire_material_object",
+      goal: "try the familiar crate again",
+      objectId: "crate.worker.plan-revision",
+    };
+    delayed.life.matters[0].historicalSupport = [{
+      relation: "prior_same_material_outcome",
+      sourceMatterId: "matter.mira.worker.plan-revision-old",
+      evidence: {
+        id: "evidence:mira:worker:plan-revision-old-outcome",
+        tick: 20,
+        kind: "task_outcome",
+        summary: "blocked: factual material attempt returned object_unavailable",
+        sourceRunId: "run.mira.worker.plan-revision-old",
+      },
+    }];
+    delayed.life.matters[1].semanticIntent = {
+      kind: "travel_region",
+      goal: "take an unrelated current future",
+      targetRegionId: "hearth",
+    };
+
+    const sanitized = sanitizeSpcNextLifeChoiceContext(delayed);
+    expect(sanitized).not.toBeNull();
+    if (!sanitized) throw new Error("plan revision fixture failed sanitization");
+
+    const relinquish = {
+      kind: "relinquish_matter",
+      matterId: B,
+      reason: "the exact earlier factual failure changed this current retry plan",
+      supportEvidenceIds: ["evidence:mira:worker:plan-revision-old-outcome"],
+      reviewAfterSeconds: 30,
+    };
+
+    expect(extractSpcNextLifeChoiceDecision(
+      responseBody(relinquish),
+      sanitized.candidateMatterIds,
+      sanitized.candidateSupports,
+    )).toEqual(relinquish);
+
+    expect(extractSpcNextLifeChoiceDecision(
+      responseBody({
+        ...relinquish,
+        matterId: C,
+      }),
+      sanitized.candidateMatterIds,
+      sanitized.candidateSupports,
+    )).toBeNull();
+
+    expect(extractSpcNextLifeChoiceDecision(
+      responseBody({
+        ...relinquish,
+        supportEvidenceIds: ["evidence:b"],
+      }),
+      sanitized.candidateMatterIds,
+      sanitized.candidateSupports,
+    )).toBeNull();
+
+    let capturedSchema: any = null;
+    const fetchMock = vi.fn(async (_url: string, init?: RequestInit) => {
+      const body = JSON.parse(String(init?.body));
+      capturedSchema = body.text.format.schema;
+      return new Response(JSON.stringify(responseBody(relinquish)), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const env: SpcNextLifeChoiceEnv = {
+      OPENAI_API_KEY: "test-key",
+      SPC_NEXT_LIFE_CHOICE_MODEL: "gpt-5.6-luna",
+      SPC_NEXT_LIFE_CHOICE_REASONING: "low",
+      SPC_NEXT_LIFE_CHOICE_MAX_OUTPUT_TOKENS: "512",
+      HEARTH_COGNITION_LIMITER: { limit: vi.fn(async () => ({ success: true })) },
+    };
+
+    const response = await handleSpcNextLifeChoice(new Request(
+      "https://example.test/api/spc-next/life-choice",
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(delayed),
+      },
+    ), env);
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({
+      ok: true,
+      proposal: { version: 1, decision: relinquish },
+    });
+
+    const variants = capturedSchema.properties.decision.anyOf;
+    const relinquishVariants = variants.filter(
+      (variant: any) => variant.properties?.kind?.enum?.includes("relinquish_matter"),
+    );
+    expect(relinquishVariants).toHaveLength(1);
+    expect(relinquishVariants[0].properties.matterId.enum).toEqual([B]);
+    expect(relinquishVariants[0].properties.supportEvidenceIds.items.enum)
+      .toEqual(["evidence:mira:worker:plan-revision-old-outcome"]);
+  });
+
+  it("carries several exact same-actor factual outcomes only on the current communication candidate", () => {
+    const social = structuredClone(context) as any;
+    social.life.matters[0].semanticIntent = {
+      kind: "communicate_actor",
+      goal: "speak with Ida about the current situation",
+      targetActorId: "resident.ida",
+      text: "Ida, porozmawiajmy o tym, co dzieje się teraz.",
+    };
+    social.life.matters[0].historicalSupport = [
+      {
+        relation: "prior_same_actor_outcome",
+        sourceMatterId: "matter.mira.worker.ida-old-a",
+        evidence: {
+          id: "evidence:mira:worker:ida-old-a-outcome",
+          tick: 12,
+          kind: "task_outcome",
+          summary: "factually delivered first old Ida exchange",
+          sourceRunId: "run.mira.worker.ida-old-a",
+        },
+      },
+      {
+        relation: "prior_same_actor_outcome",
+        sourceMatterId: "matter.mira.worker.ida-old-b",
+        evidence: {
+          id: "evidence:mira:worker:ida-old-b-outcome",
+          tick: 18,
+          kind: "task_outcome",
+          summary: "factually delivered second old Ida exchange",
+          sourceRunId: "run.mira.worker.ida-old-b",
+        },
+      },
+    ];
+    social.life.matters[1].semanticIntent = {
+      kind: "travel_region",
+      goal: "take an unrelated current future",
+      targetRegionId: "hearth",
+    };
+
+    const sanitized = sanitizeSpcNextLifeChoiceContext(social);
+    expect(sanitized).not.toBeNull();
+
+    const idaSupport = sanitized?.candidateSupports.find(
+      (candidate) => candidate.matterId === B,
+    );
+    expect(idaSupport?.facts).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        evidenceId: "evidence:mira:worker:ida-old-a-outcome",
+        sourceMatterId: "matter.mira.worker.ida-old-a",
+        relation: "prior_same_actor_outcome",
+        evidenceKind: "task_outcome",
+      }),
+      expect.objectContaining({
+        evidenceId: "evidence:mira:worker:ida-old-b-outcome",
+        sourceMatterId: "matter.mira.worker.ida-old-b",
+        relation: "prior_same_actor_outcome",
+        evidenceKind: "task_outcome",
+      }),
+    ]));
+
+    const otherSupport = sanitized?.candidateSupports.find(
+      (candidate) => candidate.matterId === C,
+    );
+    expect(otherSupport?.facts.some((fact) => (
+      fact.evidenceId === "evidence:mira:worker:ida-old-a-outcome"
+      || fact.evidenceId === "evidence:mira:worker:ida-old-b-outcome"
+    ))).toBe(false);
+
+    expect(extractSpcNextLifeChoiceDecision(
+      responseBody({
+        kind: "focus_matter",
+        matterId: C,
+        reason: "the two prior Ida outcomes belong to the competing Ida future, so take the unrelated current future instead",
+        supportEvidenceIds: [
+          "evidence:mira:worker:ida-old-a-outcome",
+          "evidence:mira:worker:ida-old-b-outcome",
+          "evidence:c:origin",
+        ],
+        reviewAfterSeconds: 20,
+      }),
+      sanitized!.candidateMatterIds,
+      sanitized!.candidateSupports,
+    )).toMatchObject({
+      kind: "focus_matter",
+      matterId: C,
+      supportEvidenceIds: [
+        "evidence:mira:worker:ida-old-a-outcome",
+        "evidence:mira:worker:ida-old-b-outcome",
+        "evidence:c:origin",
+      ],
+    });
+
+    const illegalTravelHistory = structuredClone(social);
+    illegalTravelHistory.life.matters[0].semanticIntent = {
+      kind: "travel_region",
+      goal: "ordinary travel",
+      targetRegionId: "hearth",
+    };
+    expect(sanitizeSpcNextLifeChoiceContext(illegalTravelHistory)).toBeNull();
+
+    const forgedMaterialRelation = structuredClone(social);
+    forgedMaterialRelation.life.matters[0].historicalSupport[0].relation = "prior_same_material_outcome";
+    expect(sanitizeSpcNextLifeChoiceContext(forgedMaterialRelation)).toBeNull();
+  });
+
+  it("carries exact counterparty-caused standing release only on a current communication candidate", () => {
+    const social = structuredClone(context) as any;
+    social.life.matters[0].semanticIntent = {
+      kind: "communicate_actor",
+      goal: "speak with Nela about the current situation",
+      targetActorId: "resident.nela",
+      text: "Nela, porozmawiajmy o tym, co dzieje się teraz.",
+    };
+    social.life.matters[0].historicalSupport = [{
+      relation: "prior_counterparty_social_outcome",
+      sourceMatterId: "matter.oren.worker.old-standing-nela",
+      evidence: {
+        id: "evidence:oren:worker:nela-release",
+        tick: 18,
+        kind: "resident_released_social_commitment",
+        summary: "Nela explicitly released Oren from the standing responsibility · factual counterparty speech occurrence:r6:worker:nela-release",
+      },
+    }];
+    social.life.matters[1].semanticIntent = {
+      kind: "travel_region",
+      goal: "take an unrelated current future",
+      targetRegionId: "hearth",
+    };
+
+    const sanitized = sanitizeSpcNextLifeChoiceContext(social);
+    expect(sanitized).not.toBeNull();
+
+    const nelaSupport = sanitized?.candidateSupports.find(
+      (candidate) => candidate.matterId === B,
+    );
+    expect(nelaSupport?.facts).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        evidenceId: "evidence:oren:worker:nela-release",
+        sourceMatterId: "matter.oren.worker.old-standing-nela",
+        relation: "prior_counterparty_social_outcome",
+        evidenceKind: "resident_released_social_commitment",
+      }),
+    ]));
+    const otherSupport = sanitized?.candidateSupports.find(
+      (candidate) => candidate.matterId === C,
+    );
+    expect(otherSupport?.facts.some(
+      (fact) => fact.evidenceId === "evidence:oren:worker:nela-release",
+    )).toBe(false);
+
+    expect(extractSpcNextLifeChoiceDecision(
+      responseBody({
+        kind: "focus_matter",
+        matterId: C,
+        reason: "Nela's earlier factual release belongs to the competing Nela future, so choose the unrelated future instead",
+        supportEvidenceIds: [
+          "evidence:oren:worker:nela-release",
+          "evidence:c:origin",
+        ],
+        reviewAfterSeconds: 20,
+      }),
+      sanitized!.candidateMatterIds,
+      sanitized!.candidateSupports,
+    )).toMatchObject({
+      kind: "focus_matter",
+      matterId: C,
+      supportEvidenceIds: [
+        "evidence:oren:worker:nela-release",
+        "evidence:c:origin",
+      ],
+    });
+
+    const illegalTravelHistory = structuredClone(social);
+    illegalTravelHistory.life.matters[0].semanticIntent = {
+      kind: "travel_region",
+      goal: "ordinary travel",
+      targetRegionId: "hearth",
+    };
+    expect(sanitizeSpcNextLifeChoiceContext(illegalTravelHistory)).toBeNull();
+
+    const forgedTaskOutcome = structuredClone(social);
+    forgedTaskOutcome.life.matters[0].historicalSupport[0].evidence.kind = "task_outcome";
+    expect(sanitizeSpcNextLifeChoiceContext(forgedTaskOutcome)).toBeNull();
+
+    const forgedSameActorRelation = structuredClone(social);
+    forgedSameActorRelation.life.matters[0].historicalSupport[0].relation = "prior_same_actor_outcome";
+    expect(sanitizeSpcNextLifeChoiceContext(forgedSameActorRelation)).toBeNull();
+  });
+
   it("extracts only a bounded choice among supplied matters or an explicit defer-all", () => {
     expect(extractSpcNextLifeChoiceDecision(
       responseBody(focusB()),

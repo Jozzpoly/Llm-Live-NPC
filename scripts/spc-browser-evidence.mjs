@@ -315,7 +315,12 @@ async function run() {
     chrome.kill("SIGTERM");
     await sleep(150);
     if (!chrome.killed) chrome.kill("SIGKILL");
-    rmSync(userDataDir, { recursive: true, force: true });
+    rmSync(userDataDir, {
+      recursive: true,
+      force: true,
+      maxRetries: 6,
+      retryDelay: 100,
+    });
   }
 }
 

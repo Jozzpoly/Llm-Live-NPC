@@ -1,5 +1,7 @@
 # SPC Next — Cross-project donor map
 
+> **CURRENT EXECUTION NOTICE (2026-09-25): HISTORICAL NON-BINDING DONOR SYNTHESIS.** The separation-law insights remain useful research input. The “canonical recovery authority” list below records the state when this map was written and is not current authority. Current execution authority is `docs/SPC_POST_STRESS_RECOVERY_PROGRAM.md`; imported donor ideas still require local falsifiable evidence.
+
 Date: **2026-09-15**  
 Status: **RESEARCH SYNTHESIS / NON-BINDING DONOR MAP**
 

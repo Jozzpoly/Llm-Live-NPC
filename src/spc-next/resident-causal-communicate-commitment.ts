@@ -1,4 +1,8 @@
 import type { ResidentCognitionContext } from "./cognition-contract";
+import {
+  derivePriorCounterpartySocialOutcomeSupport,
+  derivePriorSameActorOutcomeSupport,
+} from "./resident-cumulative-history-support";
 import type { WorldOccurrence } from "./contracts";
 import type {
   ResidentCommunicateActorMatterIntent,
@@ -138,6 +142,9 @@ export class ResidentCausalCommunicateCommitmentAuthority {
       return { status: "rejected", detail: `commitment already accepted: ${identity.matterId}` };
     }
 
+    const standingSocialCommitment = decision.standingSocialCommitment
+      ? Object.freeze(structuredClone(decision.standingSocialCommitment))
+      : undefined;
     const intent = Object.freeze({
       originPerceptId: originPercept.id,
       semanticCourse: `${decision.reason} · ${decision.intent.goal}`,
@@ -146,6 +153,7 @@ export class ResidentCausalCommunicateCommitmentAuthority {
         goal: decision.intent.goal,
         targetActorId,
         text: decision.intent.text,
+        ...(standingSocialCommitment ? { standingSocialCommitment } : {}),
       }),
     }) satisfies GroundedResidentCausalCommunicateCommitmentIntent;
 
@@ -196,11 +204,22 @@ export class ResidentCausalCommunicateCommitmentAuthority {
       kind: "accepted_social_commitment",
       summary: `${input.intent.semanticCourse}; origin occurrence ${originPercept.occurrenceId}`,
     });
+    const historicalSupport = [
+      ...derivePriorSameActorOutcomeSupport(
+        this.options.kernel,
+        input.intent.semanticIntent.targetActorId,
+      ),
+      ...derivePriorCounterpartySocialOutcomeSupport(
+        this.options.kernel,
+        input.intent.semanticIntent.targetActorId,
+      ),
+    ];
     const matter = this.options.kernel.openMatter({
       id: identity.matterId,
       originEvidenceId: origin.id,
       semanticCourse: input.intent.semanticCourse,
       semanticIntent: input.intent.semanticIntent,
+      ...(historicalSupport.length > 0 ? { historicalSupport } : {}),
     });
     this.options.kernel.bindRun({
       matterId: identity.matterId,

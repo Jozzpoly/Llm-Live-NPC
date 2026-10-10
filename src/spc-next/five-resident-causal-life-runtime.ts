@@ -4,6 +4,7 @@ import {
   type ResidentAddressedInterruptionStep,
 } from "./resident-addressed-interruption-controller";
 import {
+  FIVE_RESIDENT_MATERIAL_FAMILIARITY,
   FIVE_RESIDENT_ROLE_PRESSURES,
   type FiveResidentId,
   type FiveResidentRegionComposition,
@@ -18,6 +19,8 @@ import {
   ResidentCausalLifeSubstrate,
   type PreparedResidentCausalLifeIntent,
 } from "./resident-causal-life-substrate";
+import { ResidentMaterialKnowledge } from "./resident-material-knowledge";
+import type { ResidentMaterialMatterRelevanceObservation } from "./resident-material-matter-relevance-bridge";
 
 export type FiveResidentCausalLifeOwnership = "local_opening" | "recovered_life";
 
@@ -32,6 +35,9 @@ export interface FiveResidentCausalLifeTick {
   claimedResidentIds: readonly FiveResidentId[];
   execution: Readonly<Partial<Record<FiveResidentId, ResidentCausalExecutionStep>>>;
   interruptions: Readonly<Partial<Record<FiveResidentId, ResidentAddressedInterruptionStep>>>;
+  materialRelevance: Readonly<
+    Partial<Record<FiveResidentId, readonly ResidentMaterialMatterRelevanceObservation[]>>
+  >;
 }
 
 export interface FiveResidentPreparedLifeIntent {
@@ -110,6 +116,9 @@ export class FiveResidentCausalLifeRuntime {
   advanceOneWorldTick(): FiveResidentCausalLifeTick {
     const execution: Partial<Record<FiveResidentId, ResidentCausalExecutionStep>> = {};
     const interruptions: Partial<Record<FiveResidentId, ResidentAddressedInterruptionStep>> = {};
+    const materialRelevance: Partial<
+      Record<FiveResidentId, readonly ResidentMaterialMatterRelevanceObservation[]>
+    > = {};
 
     for (const residentId of this.claimedResidentIds()) {
       const lane = this.lanes.get(residentId)!;
@@ -122,6 +131,14 @@ export class FiveResidentCausalLifeRuntime {
 
     this.composition.world.step();
     this.claimReadyResidents();
+
+    // Material knowledge follows the same post-World private-observation boundary.
+    // Only genuine resident-private reacquisition transitions may become semantic
+    // pressure; first sight and hidden World changes remain non-semantic here.
+    for (const residentId of this.claimedResidentIds()) {
+      const observations = this.lanes.get(residentId)!.life.sampleMaterialRelevance();
+      if (observations.length > 0) materialRelevance[residentId] = observations;
+    }
 
     // Perception is produced by the shared World step. Only after that boundary may
     // local contact logic discover a newly heard addressed utterance and suspend the
@@ -136,6 +153,7 @@ export class FiveResidentCausalLifeRuntime {
       claimedResidentIds: this.claimedResidentIds(),
       execution: structuredClone(execution),
       interruptions: structuredClone(interruptions),
+      materialRelevance: structuredClone(materialRelevance),
     };
   }
 
@@ -149,6 +167,18 @@ export class FiveResidentCausalLifeRuntime {
       // causal-life state and never hands authority back to legacy execution.
       if (resident.publicState().activity.kind !== "idle") continue;
 
+      const recognizedMaterialObjectIds = FIVE_RESIDENT_MATERIAL_FAMILIARITY[residentId];
+      const materialKnowledge = recognizedMaterialObjectIds.length > 0
+        ? new ResidentMaterialKnowledge(
+            residentId,
+            recognizedMaterialObjectIds,
+            this.composition.world,
+          )
+        : undefined;
+      // Initial sight is acquisition, not reacquisition. Prime private knowledge
+      // before the recovered-life substrate begins post-World transition sampling.
+      materialKnowledge?.sample();
+
       const life = new ResidentCausalLifeSubstrate({
         residentId,
         resident,
@@ -156,6 +186,7 @@ export class FiveResidentCausalLifeRuntime {
         navigation: this.navigation,
         identityNamespace: residentId.split(".").at(-1) ?? residentId,
         selfContext: FIVE_RESIDENT_LIFE_SELF[residentId],
+        ...(materialKnowledge ? { materialKnowledge } : {}),
       });
       this.lanes.set(residentId, {
         life,

@@ -1,0 +1,254 @@
+{
+  "control": {
+    "contract": "resident_life_cognition_v1",
+    "resident": {
+      "id": "resident.oren",
+      "name": "Oren"
+    },
+    "tick": 160,
+    "currentRegionId": "r6-counterparty-support-room",
+    "reasons": [
+      {
+        "id": "reason:oren:r6:counterparty-support:choice:160",
+        "tick": 160,
+        "kind": "uncertainty",
+        "salience": 0.82,
+        "summary": "Two already-grounded current resident futures are waiting for the same currently-free body.",
+        "evidenceIds": [
+          "run.oren-r6-counterparty-support.causal.reason:reason:oren:r6:counterparty-support:current-nela.semantic-1",
+          "run.oren.r6.counterparty-support.other"
+        ]
+      }
+    ],
+    "localActivity": {
+      "id": "activity:resident.oren:idle:r6-counterparty-support",
+      "kind": "idle",
+      "targetActorId": null,
+      "targetPosition": null,
+      "text": null,
+      "speed": null,
+      "reason": "Oren currently has no body-owning local activity."
+    },
+    "recentPercepts": [],
+    "concerns": [],
+    "beliefs": [],
+    "knownActors": [],
+    "knownRegions": [
+      {
+        "id": "r6-counterparty-support-room",
+        "label": "R6 Counterparty Support Room",
+        "knowledge": "visited",
+        "lastVisitedTick": 160
+      }
+    ],
+    "life": {
+      "version": 1,
+      "matters": [
+        {
+          "id": "matter.oren-r6-counterparty-support.causal.reason:reason:oren:r6:counterparty-support:current-nela",
+          "status": "active",
+          "semanticRevision": 1,
+          "semanticCourse": "speak with Nela about the current situation",
+          "semanticIntent": {
+            "kind": "communicate_actor",
+            "goal": "speak with Nela about the current situation",
+            "targetActorId": "resident.nela",
+            "text": "Nela, porozmawiajmy o tym, co dzieje się teraz."
+          },
+          "suspendedByMatterId": null,
+          "originEvidence": {
+            "id": "evidence:oren-r6-counterparty-support:accepted-reason:reason:oren:r6:counterparty-support:current-nela:82",
+            "tick": 82,
+            "kind": "accepted_cognition_commitment",
+            "summary": "I have one current reason to speak with Nela now. · speak with Nela about the current situation; origin reason uncertainty reason:oren:r6:counterparty-support:current-nela: Oren independently has one current reason to speak with Nela."
+          },
+          "semanticEvidence": {
+            "id": "evidence:oren-r6-counterparty-support:accepted-reason:reason:oren:r6:counterparty-support:current-nela:82",
+            "tick": 82,
+            "kind": "accepted_cognition_commitment",
+            "summary": "I have one current reason to speak with Nela now. · speak with Nela about the current situation; origin reason uncertainty reason:oren:r6:counterparty-support:current-nela: Oren independently has one current reason to speak with Nela."
+          },
+          "lastOutcomeEvidence": null,
+          "activeRun": {
+            "runId": "run.oren-r6-counterparty-support.causal.reason:reason:oren:r6:counterparty-support:current-nela.semantic-1",
+            "taskId": "task.oren-r6-counterparty-support.causal.reason:reason:oren:r6:counterparty-support:current-nela.semantic-1",
+            "semanticRevision": 1,
+            "canMutateWorld": true,
+            "bodyState": "deferred"
+          }
+        },
+        {
+          "id": "matter.oren.r6.counterparty-support.other",
+          "status": "active",
+          "semanticRevision": 1,
+          "semanticCourse": "take the unrelated current route",
+          "semanticIntent": {
+            "kind": "travel_region",
+            "goal": "take the unrelated current route",
+            "targetRegionId": "r6-counterparty-support-room"
+          },
+          "suspendedByMatterId": null,
+          "originEvidence": {
+            "id": "evidence.oren.r6.counterparty-support.other-origin",
+            "tick": 82,
+            "kind": "accepted_cognition_commitment",
+            "summary": "Oren independently has one unrelated current room future."
+          },
+          "semanticEvidence": {
+            "id": "evidence.oren.r6.counterparty-support.other-origin",
+            "tick": 82,
+            "kind": "accepted_cognition_commitment",
+            "summary": "Oren independently has one unrelated current room future."
+          },
+          "lastOutcomeEvidence": null,
+          "activeRun": {
+            "runId": "run.oren.r6.counterparty-support.other",
+            "taskId": "task.oren.r6.counterparty-support.other",
+            "semanticRevision": 1,
+            "canMutateWorld": true,
+            "bodyState": "deferred"
+          }
+        }
+      ],
+      "body": {
+        "focusedRunId": null,
+        "deferredRunIds": [
+          "run.oren-r6-counterparty-support.causal.reason:reason:oren:r6:counterparty-support:current-nela.semantic-1",
+          "run.oren.r6.counterparty-support.other"
+        ]
+      }
+    }
+  },
+  "history": {
+    "contract": "resident_life_cognition_v1",
+    "resident": {
+      "id": "resident.oren",
+      "name": "Oren"
+    },
+    "tick": 160,
+    "currentRegionId": "r6-counterparty-support-room",
+    "reasons": [
+      {
+        "id": "reason:oren:r6:counterparty-support:choice:160",
+        "tick": 160,
+        "kind": "uncertainty",
+        "salience": 0.82,
+        "summary": "Two already-grounded current resident futures are waiting for the same currently-free body.",
+        "evidenceIds": [
+          "run.oren-r6-counterparty-support.causal.reason:reason:oren:r6:counterparty-support:current-nela.semantic-1",
+          "run.oren.r6.counterparty-support.other"
+        ]
+      }
+    ],
+    "localActivity": {
+      "id": "activity:resident.oren:idle:r6-counterparty-support",
+      "kind": "idle",
+      "targetActorId": null,
+      "targetPosition": null,
+      "text": null,
+      "speed": null,
+      "reason": "Oren currently has no body-owning local activity."
+    },
+    "recentPercepts": [],
+    "concerns": [],
+    "beliefs": [],
+    "knownActors": [],
+    "knownRegions": [
+      {
+        "id": "r6-counterparty-support-room",
+        "label": "R6 Counterparty Support Room",
+        "knowledge": "visited",
+        "lastVisitedTick": 160
+      }
+    ],
+    "life": {
+      "version": 1,
+      "matters": [
+        {
+          "id": "matter.oren-r6-counterparty-support.causal.reason:reason:oren:r6:counterparty-support:current-nela",
+          "status": "active",
+          "semanticRevision": 1,
+          "semanticCourse": "speak with Nela about the current situation",
+          "semanticIntent": {
+            "kind": "communicate_actor",
+            "goal": "speak with Nela about the current situation",
+            "targetActorId": "resident.nela",
+            "text": "Nela, porozmawiajmy o tym, co dzieje się teraz."
+          },
+          "suspendedByMatterId": null,
+          "originEvidence": {
+            "id": "evidence:oren-r6-counterparty-support:accepted-reason:reason:oren:r6:counterparty-support:current-nela:82",
+            "tick": 82,
+            "kind": "accepted_cognition_commitment",
+            "summary": "I have one current reason to speak with Nela now. · speak with Nela about the current situation; origin reason uncertainty reason:oren:r6:counterparty-support:current-nela: Oren independently has one current reason to speak with Nela."
+          },
+          "semanticEvidence": {
+            "id": "evidence:oren-r6-counterparty-support:accepted-reason:reason:oren:r6:counterparty-support:current-nela:82",
+            "tick": 82,
+            "kind": "accepted_cognition_commitment",
+            "summary": "I have one current reason to speak with Nela now. · speak with Nela about the current situation; origin reason uncertainty reason:oren:r6:counterparty-support:current-nela: Oren independently has one current reason to speak with Nela."
+          },
+          "lastOutcomeEvidence": null,
+          "activeRun": {
+            "runId": "run.oren-r6-counterparty-support.causal.reason:reason:oren:r6:counterparty-support:current-nela.semantic-1",
+            "taskId": "task.oren-r6-counterparty-support.causal.reason:reason:oren:r6:counterparty-support:current-nela.semantic-1",
+            "semanticRevision": 1,
+            "canMutateWorld": true,
+            "bodyState": "deferred"
+          },
+          "historicalSupport": [
+            {
+              "relation": "prior_counterparty_social_outcome",
+              "sourceMatterId": "matter.oren.r6.counterparty-support.standing",
+              "evidence": {
+                "id": "evidence-social-commitment-release:994176f47a5d7832",
+                "tick": 2,
+                "kind": "resident_released_social_commitment",
+                "summary": "Nela explicitly released the standing responsibility. · factual counterparty speech occurrence:r6:counterparty-support:nela-release"
+              }
+            }
+          ]
+        },
+        {
+          "id": "matter.oren.r6.counterparty-support.other",
+          "status": "active",
+          "semanticRevision": 1,
+          "semanticCourse": "take the unrelated current route",
+          "semanticIntent": {
+            "kind": "travel_region",
+            "goal": "take the unrelated current route",
+            "targetRegionId": "r6-counterparty-support-room"
+          },
+          "suspendedByMatterId": null,
+          "originEvidence": {
+            "id": "evidence.oren.r6.counterparty-support.other-origin",
+            "tick": 82,
+            "kind": "accepted_cognition_commitment",
+            "summary": "Oren independently has one unrelated current room future."
+          },
+          "semanticEvidence": {
+            "id": "evidence.oren.r6.counterparty-support.other-origin",
+            "tick": 82,
+            "kind": "accepted_cognition_commitment",
+            "summary": "Oren independently has one unrelated current room future."
+          },
+          "lastOutcomeEvidence": null,
+          "activeRun": {
+            "runId": "run.oren.r6.counterparty-support.other",
+            "taskId": "task.oren.r6.counterparty-support.other",
+            "semanticRevision": 1,
+            "canMutateWorld": true,
+            "bodyState": "deferred"
+          }
+        }
+      ],
+      "body": {
+        "focusedRunId": null,
+        "deferredRunIds": [
+          "run.oren-r6-counterparty-support.causal.reason:reason:oren:r6:counterparty-support:current-nela.semantic-1",
+          "run.oren.r6.counterparty-support.other"
+        ]
+      }
+    }
+  }
+}

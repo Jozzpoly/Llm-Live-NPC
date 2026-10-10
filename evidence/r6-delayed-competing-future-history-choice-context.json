@@ -1,0 +1,277 @@
+{
+  "control": {
+    "contract": "resident_life_cognition_v1",
+    "resident": {
+      "id": "resident.janek",
+      "name": "Janek"
+    },
+    "tick": 220,
+    "currentRegionId": "yard",
+    "reasons": [
+      {
+        "id": "reason:janek:r6:delayed-competing-future:220",
+        "tick": 220,
+        "kind": "uncertainty",
+        "salience": 0.82,
+        "summary": "Two already-grounded current resident futures are waiting for the same currently-free body.",
+        "evidenceIds": [
+          "run.janek.r6.delayed-competing-future.retry",
+          "run.janek.r6.delayed-competing-future.other"
+        ]
+      }
+    ],
+    "localActivity": {
+      "id": "activity:resident.janek:idle:r6-delayed-competing-future",
+      "kind": "idle",
+      "targetActorId": null,
+      "targetPosition": null,
+      "text": null,
+      "speed": null,
+      "reason": "Janek currently has no body-owning local activity."
+    },
+    "recentPercepts": [],
+    "concerns": [],
+    "beliefs": [],
+    "knownActors": [],
+    "knownRegions": [
+      {
+        "id": "yard",
+        "label": "Yard",
+        "knowledge": "visited",
+        "lastVisitedTick": 220
+      },
+      {
+        "id": "workshop",
+        "label": "Workshop",
+        "knowledge": "visited",
+        "lastVisitedTick": 160
+      },
+      {
+        "id": "fields",
+        "label": "Fields",
+        "knowledge": "visited",
+        "lastVisitedTick": 140
+      }
+    ],
+    "life": {
+      "version": 1,
+      "matters": [
+        {
+          "id": "matter.janek.r6.delayed-competing-future.retry",
+          "status": "active",
+          "semanticRevision": 1,
+          "semanticCourse": "decide whether to try the now-visible familiar crate again",
+          "semanticIntent": {
+            "kind": "acquire_material_object",
+            "goal": "try the now-visible familiar crate again",
+            "objectId": "crate.r6.delayed-competing-future"
+          },
+          "suspendedByMatterId": null,
+          "originEvidence": {
+            "id": "evidence:janek:r6:delayed-competing-future:retry-origin",
+            "tick": 210,
+            "kind": "accepted_cognition_commitment",
+            "summary": "The familiar crate is currently available again and one new bounded retry is active."
+          },
+          "semanticEvidence": {
+            "id": "evidence:janek:r6:delayed-competing-future:retry-origin",
+            "tick": 210,
+            "kind": "accepted_cognition_commitment",
+            "summary": "The familiar crate is currently available again and one new bounded retry is active."
+          },
+          "lastOutcomeEvidence": null,
+          "activeRun": {
+            "runId": "run.janek.r6.delayed-competing-future.retry",
+            "taskId": "task.janek.r6.delayed-competing-future.retry",
+            "semanticRevision": 1,
+            "canMutateWorld": true,
+            "bodyState": "deferred"
+          }
+        },
+        {
+          "id": "matter.janek.r6.delayed-competing-future.other",
+          "status": "active",
+          "semanticRevision": 1,
+          "semanticCourse": "visit the familiar fields for an unrelated ordinary reason",
+          "semanticIntent": {
+            "kind": "travel_region",
+            "goal": "visit the familiar fields",
+            "targetRegionId": "fields"
+          },
+          "suspendedByMatterId": null,
+          "originEvidence": {
+            "id": "evidence:janek:r6:delayed-competing-future:other-origin",
+            "tick": 212,
+            "kind": "accepted_cognition_commitment",
+            "summary": "Janek independently has one ordinary current reason to visit the familiar fields."
+          },
+          "semanticEvidence": {
+            "id": "evidence:janek:r6:delayed-competing-future:other-origin",
+            "tick": 212,
+            "kind": "accepted_cognition_commitment",
+            "summary": "Janek independently has one ordinary current reason to visit the familiar fields."
+          },
+          "lastOutcomeEvidence": null,
+          "activeRun": {
+            "runId": "run.janek.r6.delayed-competing-future.other",
+            "taskId": "task.janek.r6.delayed-competing-future.other",
+            "semanticRevision": 1,
+            "canMutateWorld": true,
+            "bodyState": "deferred"
+          }
+        }
+      ],
+      "body": {
+        "focusedRunId": null,
+        "deferredRunIds": [
+          "run.janek.r6.delayed-competing-future.retry",
+          "run.janek.r6.delayed-competing-future.other"
+        ]
+      }
+    }
+  },
+  "history": {
+    "contract": "resident_life_cognition_v1",
+    "resident": {
+      "id": "resident.janek",
+      "name": "Janek"
+    },
+    "tick": 220,
+    "currentRegionId": "yard",
+    "reasons": [
+      {
+        "id": "reason:janek:r6:delayed-competing-future:220",
+        "tick": 220,
+        "kind": "uncertainty",
+        "salience": 0.82,
+        "summary": "Two already-grounded current resident futures are waiting for the same currently-free body.",
+        "evidenceIds": [
+          "run.janek.r6.delayed-competing-future.retry",
+          "run.janek.r6.delayed-competing-future.other"
+        ]
+      }
+    ],
+    "localActivity": {
+      "id": "activity:resident.janek:idle:r6-delayed-competing-future",
+      "kind": "idle",
+      "targetActorId": null,
+      "targetPosition": null,
+      "text": null,
+      "speed": null,
+      "reason": "Janek currently has no body-owning local activity."
+    },
+    "recentPercepts": [],
+    "concerns": [],
+    "beliefs": [],
+    "knownActors": [],
+    "knownRegions": [
+      {
+        "id": "yard",
+        "label": "Yard",
+        "knowledge": "visited",
+        "lastVisitedTick": 220
+      },
+      {
+        "id": "workshop",
+        "label": "Workshop",
+        "knowledge": "visited",
+        "lastVisitedTick": 160
+      },
+      {
+        "id": "fields",
+        "label": "Fields",
+        "knowledge": "visited",
+        "lastVisitedTick": 140
+      }
+    ],
+    "life": {
+      "version": 1,
+      "matters": [
+        {
+          "id": "matter.janek.r6.delayed-competing-future.retry",
+          "status": "active",
+          "semanticRevision": 1,
+          "semanticCourse": "decide whether to try the now-visible familiar crate again",
+          "semanticIntent": {
+            "kind": "acquire_material_object",
+            "goal": "try the now-visible familiar crate again",
+            "objectId": "crate.r6.delayed-competing-future"
+          },
+          "suspendedByMatterId": null,
+          "originEvidence": {
+            "id": "evidence:janek:r6:delayed-competing-future:retry-origin",
+            "tick": 210,
+            "kind": "accepted_cognition_commitment",
+            "summary": "The familiar crate is currently available again and one new bounded retry is active."
+          },
+          "semanticEvidence": {
+            "id": "evidence:janek:r6:delayed-competing-future:retry-origin",
+            "tick": 210,
+            "kind": "accepted_cognition_commitment",
+            "summary": "The familiar crate is currently available again and one new bounded retry is active."
+          },
+          "lastOutcomeEvidence": null,
+          "activeRun": {
+            "runId": "run.janek.r6.delayed-competing-future.retry",
+            "taskId": "task.janek.r6.delayed-competing-future.retry",
+            "semanticRevision": 1,
+            "canMutateWorld": true,
+            "bodyState": "deferred"
+          },
+          "historicalSupport": [
+            {
+              "relation": "prior_same_material_outcome",
+              "sourceMatterId": "matter.janek.r6.delayed-competing-future.old-material",
+              "evidence": {
+                "id": "task-outcome:run.janek.r6.delayed-competing-future.old-material:90",
+                "tick": 90,
+                "kind": "task_outcome",
+                "summary": "blocked: factual material pickup returned object_unavailable",
+                "sourceRunId": "run.janek.r6.delayed-competing-future.old-material"
+              }
+            }
+          ]
+        },
+        {
+          "id": "matter.janek.r6.delayed-competing-future.other",
+          "status": "active",
+          "semanticRevision": 1,
+          "semanticCourse": "visit the familiar fields for an unrelated ordinary reason",
+          "semanticIntent": {
+            "kind": "travel_region",
+            "goal": "visit the familiar fields",
+            "targetRegionId": "fields"
+          },
+          "suspendedByMatterId": null,
+          "originEvidence": {
+            "id": "evidence:janek:r6:delayed-competing-future:other-origin",
+            "tick": 212,
+            "kind": "accepted_cognition_commitment",
+            "summary": "Janek independently has one ordinary current reason to visit the familiar fields."
+          },
+          "semanticEvidence": {
+            "id": "evidence:janek:r6:delayed-competing-future:other-origin",
+            "tick": 212,
+            "kind": "accepted_cognition_commitment",
+            "summary": "Janek independently has one ordinary current reason to visit the familiar fields."
+          },
+          "lastOutcomeEvidence": null,
+          "activeRun": {
+            "runId": "run.janek.r6.delayed-competing-future.other",
+            "taskId": "task.janek.r6.delayed-competing-future.other",
+            "semanticRevision": 1,
+            "canMutateWorld": true,
+            "bodyState": "deferred"
+          }
+        }
+      ],
+      "body": {
+        "focusedRunId": null,
+        "deferredRunIds": [
+          "run.janek.r6.delayed-competing-future.retry",
+          "run.janek.r6.delayed-competing-future.other"
+        ]
+      }
+    }
+  }
+}

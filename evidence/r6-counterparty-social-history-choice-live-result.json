@@ -1,0 +1,590 @@
+{
+  "schemaVersion": 1,
+  "sourceSha": "14383cec2e7e75b07d8ed240d076aa1e935695f2",
+  "candidateBaseUrl": "https://3a6e903a-llm-live-npc.jozzpoly.workers.dev",
+  "purpose": "R6 counterparty-caused social-history falsifier. Matched Oren twins have the same two current legal futures and no old standing matter in current life. History differs only because current Nela future C owns one exact typed factual Nela release outcome. Exactly two real GPT-5.6 Luna requests; no semantic retry and no preferred winner.",
+  "startedAt": "2026-09-27T20:24:59.720Z",
+  "assertions": [
+    {
+      "name": "spend-free preflight resolves exact life-choice endpoint and Luna configuration",
+      "pass": true,
+      "detail": {
+        "status": 200,
+        "endpoint": "/api/spc-next/life-choice",
+        "model": "gpt-5.6-luna",
+        "keyConfigured": true
+      }
+    },
+    {
+      "name": "spend-free method probe reaches dedicated handler before inference",
+      "pass": true,
+      "detail": {
+        "status": 405,
+        "body": {
+          "ok": false,
+          "code": "method_not_allowed"
+        }
+      }
+    },
+    {
+      "name": "twins are identical after removing only current C counterparty historical support",
+      "pass": true,
+      "detail": {
+        "control": {
+          "contract": "resident_life_cognition_v1",
+          "resident": {
+            "id": "resident.oren",
+            "name": "Oren"
+          },
+          "tick": 160,
+          "currentRegionId": "r6-counterparty-support-room",
+          "reasons": [
+            {
+              "id": "reason:oren:r6:counterparty-support:choice:160",
+              "tick": 160,
+              "kind": "uncertainty",
+              "salience": 0.82,
+              "summary": "Two already-grounded current resident futures are waiting for the same currently-free body.",
+              "evidenceIds": [
+                "run.oren-r6-counterparty-support.causal.reason:reason:oren:r6:counterparty-support:current-nela.semantic-1",
+                "run.oren.r6.counterparty-support.other"
+              ]
+            }
+          ],
+          "localActivity": {
+            "id": "activity:resident.oren:idle:r6-counterparty-support",
+            "kind": "idle",
+            "targetActorId": null,
+            "targetPosition": null,
+            "text": null,
+            "speed": null,
+            "reason": "Oren currently has no body-owning local activity."
+          },
+          "recentPercepts": [],
+          "concerns": [],
+          "beliefs": [],
+          "knownActors": [],
+          "knownRegions": [
+            {
+              "id": "r6-counterparty-support-room",
+              "label": "R6 Counterparty Support Room",
+              "knowledge": "visited",
+              "lastVisitedTick": 160
+            }
+          ],
+          "life": {
+            "version": 1,
+            "matters": [
+              {
+                "id": "matter.oren-r6-counterparty-support.causal.reason:reason:oren:r6:counterparty-support:current-nela",
+                "status": "active",
+                "semanticRevision": 1,
+                "semanticCourse": "speak with Nela about the current situation",
+                "semanticIntent": {
+                  "kind": "communicate_actor",
+                  "goal": "speak with Nela about the current situation",
+                  "targetActorId": "resident.nela",
+                  "text": "Nela, porozmawiajmy o tym, co dzieje się teraz."
+                },
+                "suspendedByMatterId": null,
+                "originEvidence": {
+                  "id": "evidence:oren-r6-counterparty-support:accepted-reason:reason:oren:r6:counterparty-support:current-nela:82",
+                  "tick": 82,
+                  "kind": "accepted_cognition_commitment",
+                  "summary": "I have one current reason to speak with Nela now. · speak with Nela about the current situation; origin reason uncertainty reason:oren:r6:counterparty-support:current-nela: Oren independently has one current reason to speak with Nela."
+                },
+                "semanticEvidence": {
+                  "id": "evidence:oren-r6-counterparty-support:accepted-reason:reason:oren:r6:counterparty-support:current-nela:82",
+                  "tick": 82,
+                  "kind": "accepted_cognition_commitment",
+                  "summary": "I have one current reason to speak with Nela now. · speak with Nela about the current situation; origin reason uncertainty reason:oren:r6:counterparty-support:current-nela: Oren independently has one current reason to speak with Nela."
+                },
+                "lastOutcomeEvidence": null,
+                "activeRun": {
+                  "runId": "run.oren-r6-counterparty-support.causal.reason:reason:oren:r6:counterparty-support:current-nela.semantic-1",
+                  "taskId": "task.oren-r6-counterparty-support.causal.reason:reason:oren:r6:counterparty-support:current-nela.semantic-1",
+                  "semanticRevision": 1,
+                  "canMutateWorld": true,
+                  "bodyState": "deferred"
+                }
+              },
+              {
+                "id": "matter.oren.r6.counterparty-support.other",
+                "status": "active",
+                "semanticRevision": 1,
+                "semanticCourse": "take the unrelated current route",
+                "semanticIntent": {
+                  "kind": "travel_region",
+                  "goal": "take the unrelated current route",
+                  "targetRegionId": "r6-counterparty-support-room"
+                },
+                "suspendedByMatterId": null,
+                "originEvidence": {
+                  "id": "evidence.oren.r6.counterparty-support.other-origin",
+                  "tick": 82,
+                  "kind": "accepted_cognition_commitment",
+                  "summary": "Oren independently has one unrelated current room future."
+                },
+                "semanticEvidence": {
+                  "id": "evidence.oren.r6.counterparty-support.other-origin",
+                  "tick": 82,
+                  "kind": "accepted_cognition_commitment",
+                  "summary": "Oren independently has one unrelated current room future."
+                },
+                "lastOutcomeEvidence": null,
+                "activeRun": {
+                  "runId": "run.oren.r6.counterparty-support.other",
+                  "taskId": "task.oren.r6.counterparty-support.other",
+                  "semanticRevision": 1,
+                  "canMutateWorld": true,
+                  "bodyState": "deferred"
+                }
+              }
+            ],
+            "body": {
+              "focusedRunId": null,
+              "deferredRunIds": [
+                "run.oren-r6-counterparty-support.causal.reason:reason:oren:r6:counterparty-support:current-nela.semantic-1",
+                "run.oren.r6.counterparty-support.other"
+              ]
+            }
+          }
+        },
+        "history": {
+          "contract": "resident_life_cognition_v1",
+          "resident": {
+            "id": "resident.oren",
+            "name": "Oren"
+          },
+          "tick": 160,
+          "currentRegionId": "r6-counterparty-support-room",
+          "reasons": [
+            {
+              "id": "reason:oren:r6:counterparty-support:choice:160",
+              "tick": 160,
+              "kind": "uncertainty",
+              "salience": 0.82,
+              "summary": "Two already-grounded current resident futures are waiting for the same currently-free body.",
+              "evidenceIds": [
+                "run.oren-r6-counterparty-support.causal.reason:reason:oren:r6:counterparty-support:current-nela.semantic-1",
+                "run.oren.r6.counterparty-support.other"
+              ]
+            }
+          ],
+          "localActivity": {
+            "id": "activity:resident.oren:idle:r6-counterparty-support",
+            "kind": "idle",
+            "targetActorId": null,
+            "targetPosition": null,
+            "text": null,
+            "speed": null,
+            "reason": "Oren currently has no body-owning local activity."
+          },
+          "recentPercepts": [],
+          "concerns": [],
+          "beliefs": [],
+          "knownActors": [],
+          "knownRegions": [
+            {
+              "id": "r6-counterparty-support-room",
+              "label": "R6 Counterparty Support Room",
+              "knowledge": "visited",
+              "lastVisitedTick": 160
+            }
+          ],
+          "life": {
+            "version": 1,
+            "matters": [
+              {
+                "id": "matter.oren-r6-counterparty-support.causal.reason:reason:oren:r6:counterparty-support:current-nela",
+                "status": "active",
+                "semanticRevision": 1,
+                "semanticCourse": "speak with Nela about the current situation",
+                "semanticIntent": {
+                  "kind": "communicate_actor",
+                  "goal": "speak with Nela about the current situation",
+                  "targetActorId": "resident.nela",
+                  "text": "Nela, porozmawiajmy o tym, co dzieje się teraz."
+                },
+                "suspendedByMatterId": null,
+                "originEvidence": {
+                  "id": "evidence:oren-r6-counterparty-support:accepted-reason:reason:oren:r6:counterparty-support:current-nela:82",
+                  "tick": 82,
+                  "kind": "accepted_cognition_commitment",
+                  "summary": "I have one current reason to speak with Nela now. · speak with Nela about the current situation; origin reason uncertainty reason:oren:r6:counterparty-support:current-nela: Oren independently has one current reason to speak with Nela."
+                },
+                "semanticEvidence": {
+                  "id": "evidence:oren-r6-counterparty-support:accepted-reason:reason:oren:r6:counterparty-support:current-nela:82",
+                  "tick": 82,
+                  "kind": "accepted_cognition_commitment",
+                  "summary": "I have one current reason to speak with Nela now. · speak with Nela about the current situation; origin reason uncertainty reason:oren:r6:counterparty-support:current-nela: Oren independently has one current reason to speak with Nela."
+                },
+                "lastOutcomeEvidence": null,
+                "activeRun": {
+                  "runId": "run.oren-r6-counterparty-support.causal.reason:reason:oren:r6:counterparty-support:current-nela.semantic-1",
+                  "taskId": "task.oren-r6-counterparty-support.causal.reason:reason:oren:r6:counterparty-support:current-nela.semantic-1",
+                  "semanticRevision": 1,
+                  "canMutateWorld": true,
+                  "bodyState": "deferred"
+                }
+              },
+              {
+                "id": "matter.oren.r6.counterparty-support.other",
+                "status": "active",
+                "semanticRevision": 1,
+                "semanticCourse": "take the unrelated current route",
+                "semanticIntent": {
+                  "kind": "travel_region",
+                  "goal": "take the unrelated current route",
+                  "targetRegionId": "r6-counterparty-support-room"
+                },
+                "suspendedByMatterId": null,
+                "originEvidence": {
+                  "id": "evidence.oren.r6.counterparty-support.other-origin",
+                  "tick": 82,
+                  "kind": "accepted_cognition_commitment",
+                  "summary": "Oren independently has one unrelated current room future."
+                },
+                "semanticEvidence": {
+                  "id": "evidence.oren.r6.counterparty-support.other-origin",
+                  "tick": 82,
+                  "kind": "accepted_cognition_commitment",
+                  "summary": "Oren independently has one unrelated current room future."
+                },
+                "lastOutcomeEvidence": null,
+                "activeRun": {
+                  "runId": "run.oren.r6.counterparty-support.other",
+                  "taskId": "task.oren.r6.counterparty-support.other",
+                  "semanticRevision": 1,
+                  "canMutateWorld": true,
+                  "bodyState": "deferred"
+                }
+              }
+            ],
+            "body": {
+              "focusedRunId": null,
+              "deferredRunIds": [
+                "run.oren-r6-counterparty-support.causal.reason:reason:oren:r6:counterparty-support:current-nela.semantic-1",
+                "run.oren.r6.counterparty-support.other"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "old standing matter is absent from current life in both twins",
+      "pass": true,
+      "detail": {
+        "controlMatterIds": [
+          "matter.oren-r6-counterparty-support.causal.reason:reason:oren:r6:counterparty-support:current-nela",
+          "matter.oren.r6.counterparty-support.other"
+        ],
+        "historyMatterIds": [
+          "matter.oren-r6-counterparty-support.causal.reason:reason:oren:r6:counterparty-support:current-nela",
+          "matter.oren.r6.counterparty-support.other"
+        ]
+      }
+    },
+    {
+      "name": "history twin alone carries exactly one typed factual counterparty release on current C",
+      "pass": true,
+      "detail": {
+        "historySupport": [
+          {
+            "relation": "prior_counterparty_social_outcome",
+            "sourceMatterId": "matter.oren.r6.counterparty-support.standing",
+            "evidence": {
+              "id": "evidence-social-commitment-release:994176f47a5d7832",
+              "tick": 2,
+              "kind": "resident_released_social_commitment",
+              "summary": "Nela explicitly released the standing responsibility. · factual counterparty speech occurrence:r6:counterparty-support:nela-release"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "both frames retain one free body, identical current pressure and no fresh speech/self",
+      "pass": true,
+      "detail": {
+        "controlBody": {
+          "focusedRunId": null,
+          "deferredRunIds": [
+            "run.oren-r6-counterparty-support.causal.reason:reason:oren:r6:counterparty-support:current-nela.semantic-1",
+            "run.oren.r6.counterparty-support.other"
+          ]
+        },
+        "historyBody": {
+          "focusedRunId": null,
+          "deferredRunIds": [
+            "run.oren-r6-counterparty-support.causal.reason:reason:oren:r6:counterparty-support:current-nela.semantic-1",
+            "run.oren.r6.counterparty-support.other"
+          ]
+        }
+      }
+    },
+    {
+      "name": "control_without_counterparty_history completes through exact resident life-choice endpoint",
+      "pass": true,
+      "detail": {
+        "label": "control_without_counterparty_history",
+        "status": 200,
+        "elapsedMs": 3044,
+        "ok": true,
+        "code": null,
+        "upstreamStatus": null,
+        "proposal": {
+          "version": 1,
+          "decision": {
+            "kind": "focus_matter",
+            "matterId": "matter.oren-r6-counterparty-support.causal.reason:reason:oren:r6:counterparty-support:current-nela",
+            "reason": "Prioritize the current grounded reason to speak with Nela over the unrelated route, since it directly addresses the resident's salient uncertainty about the current situation.",
+            "supportEvidenceIds": [
+              "evidence:oren-r6-counterparty-support:accepted-reason:reason:oren:r6:counterparty-support:current-nela:82"
+            ],
+            "reviewAfterSeconds": 120
+          }
+        },
+        "usage": {
+          "model": "gpt-5.6-luna",
+          "inputTokens": 1918,
+          "outputTokens": 129,
+          "totalTokens": 2047,
+          "elapsedMs": 2845
+        }
+      }
+    },
+    {
+      "name": "control_without_counterparty_history remains inside C/D/defer-all semantic authority",
+      "pass": true,
+      "detail": {
+        "kind": "focus_matter",
+        "matterId": "matter.oren-r6-counterparty-support.causal.reason:reason:oren:r6:counterparty-support:current-nela",
+        "reason": "Prioritize the current grounded reason to speak with Nela over the unrelated route, since it directly addresses the resident's salient uncertainty about the current situation.",
+        "supportEvidenceIds": [
+          "evidence:oren-r6-counterparty-support:accepted-reason:reason:oren:r6:counterparty-support:current-nela:82"
+        ],
+        "reviewAfterSeconds": 120
+      }
+    },
+    {
+      "name": "control_without_counterparty_history uses intended GPT-5.6 Luna with non-zero usage",
+      "pass": true,
+      "detail": {
+        "label": "control_without_counterparty_history",
+        "status": 200,
+        "elapsedMs": 3044,
+        "ok": true,
+        "code": null,
+        "upstreamStatus": null,
+        "proposal": {
+          "version": 1,
+          "decision": {
+            "kind": "focus_matter",
+            "matterId": "matter.oren-r6-counterparty-support.causal.reason:reason:oren:r6:counterparty-support:current-nela",
+            "reason": "Prioritize the current grounded reason to speak with Nela over the unrelated route, since it directly addresses the resident's salient uncertainty about the current situation.",
+            "supportEvidenceIds": [
+              "evidence:oren-r6-counterparty-support:accepted-reason:reason:oren:r6:counterparty-support:current-nela:82"
+            ],
+            "reviewAfterSeconds": 120
+          }
+        },
+        "usage": {
+          "model": "gpt-5.6-luna",
+          "inputTokens": 1918,
+          "outputTokens": 129,
+          "totalTokens": 2047,
+          "elapsedMs": 2845
+        }
+      }
+    },
+    {
+      "name": "history_with_counterparty_release completes through exact resident life-choice endpoint",
+      "pass": true,
+      "detail": {
+        "label": "history_with_counterparty_release",
+        "status": 200,
+        "elapsedMs": 3810,
+        "ok": true,
+        "code": null,
+        "upstreamStatus": null,
+        "proposal": {
+          "version": 1,
+          "decision": {
+            "kind": "focus_matter",
+            "matterId": "matter.oren-r6-counterparty-support.causal.reason:reason:oren:r6:counterparty-support:current-nela",
+            "reason": "Prioritize the current, independently grounded conversation with Nela; the earlier explicit release of the standing responsibility provides additional social context for addressing this matter before the unrelated route.",
+            "supportEvidenceIds": [
+              "evidence-social-commitment-release:994176f47a5d7832",
+              "evidence:oren-r6-counterparty-support:accepted-reason:reason:oren:r6:counterparty-support:current-nela:82"
+            ],
+            "reviewAfterSeconds": 120
+          }
+        },
+        "usage": {
+          "model": "gpt-5.6-luna",
+          "inputTokens": 2135,
+          "outputTokens": 223,
+          "totalTokens": 2358,
+          "elapsedMs": 3774
+        }
+      }
+    },
+    {
+      "name": "history_with_counterparty_release remains inside C/D/defer-all semantic authority",
+      "pass": true,
+      "detail": {
+        "kind": "focus_matter",
+        "matterId": "matter.oren-r6-counterparty-support.causal.reason:reason:oren:r6:counterparty-support:current-nela",
+        "reason": "Prioritize the current, independently grounded conversation with Nela; the earlier explicit release of the standing responsibility provides additional social context for addressing this matter before the unrelated route.",
+        "supportEvidenceIds": [
+          "evidence-social-commitment-release:994176f47a5d7832",
+          "evidence:oren-r6-counterparty-support:accepted-reason:reason:oren:r6:counterparty-support:current-nela:82"
+        ],
+        "reviewAfterSeconds": 120
+      }
+    },
+    {
+      "name": "history_with_counterparty_release uses intended GPT-5.6 Luna with non-zero usage",
+      "pass": true,
+      "detail": {
+        "label": "history_with_counterparty_release",
+        "status": 200,
+        "elapsedMs": 3810,
+        "ok": true,
+        "code": null,
+        "upstreamStatus": null,
+        "proposal": {
+          "version": 1,
+          "decision": {
+            "kind": "focus_matter",
+            "matterId": "matter.oren-r6-counterparty-support.causal.reason:reason:oren:r6:counterparty-support:current-nela",
+            "reason": "Prioritize the current, independently grounded conversation with Nela; the earlier explicit release of the standing responsibility provides additional social context for addressing this matter before the unrelated route.",
+            "supportEvidenceIds": [
+              "evidence-social-commitment-release:994176f47a5d7832",
+              "evidence:oren-r6-counterparty-support:accepted-reason:reason:oren:r6:counterparty-support:current-nela:82"
+            ],
+            "reviewAfterSeconds": 120
+          }
+        },
+        "usage": {
+          "model": "gpt-5.6-luna",
+          "inputTokens": 2135,
+          "outputTokens": 223,
+          "totalTokens": 2358,
+          "elapsedMs": 3774
+        }
+      }
+    },
+    {
+      "name": "hard experiment budget is exactly two real provider requests with no semantic retry",
+      "pass": true,
+      "detail": {
+        "attempted": 2,
+        "semanticRetries": 0,
+        "max": 2
+      }
+    }
+  ],
+  "observations": {
+    "preflight": {
+      "status": 200,
+      "endpoint": "/api/spc-next/life-choice",
+      "model": "gpt-5.6-luna",
+      "keyConfigured": true
+    },
+    "control_without_counterparty_history": {
+      "label": "control_without_counterparty_history",
+      "status": 200,
+      "elapsedMs": 3044,
+      "ok": true,
+      "code": null,
+      "upstreamStatus": null,
+      "proposal": {
+        "version": 1,
+        "decision": {
+          "kind": "focus_matter",
+          "matterId": "matter.oren-r6-counterparty-support.causal.reason:reason:oren:r6:counterparty-support:current-nela",
+          "reason": "Prioritize the current grounded reason to speak with Nela over the unrelated route, since it directly addresses the resident's salient uncertainty about the current situation.",
+          "supportEvidenceIds": [
+            "evidence:oren-r6-counterparty-support:accepted-reason:reason:oren:r6:counterparty-support:current-nela:82"
+          ],
+          "reviewAfterSeconds": 120
+        }
+      },
+      "usage": {
+        "model": "gpt-5.6-luna",
+        "inputTokens": 1918,
+        "outputTokens": 129,
+        "totalTokens": 2047,
+        "elapsedMs": 2845
+      }
+    },
+    "history_with_counterparty_release": {
+      "label": "history_with_counterparty_release",
+      "status": 200,
+      "elapsedMs": 3810,
+      "ok": true,
+      "code": null,
+      "upstreamStatus": null,
+      "proposal": {
+        "version": 1,
+        "decision": {
+          "kind": "focus_matter",
+          "matterId": "matter.oren-r6-counterparty-support.causal.reason:reason:oren:r6:counterparty-support:current-nela",
+          "reason": "Prioritize the current, independently grounded conversation with Nela; the earlier explicit release of the standing responsibility provides additional social context for addressing this matter before the unrelated route.",
+          "supportEvidenceIds": [
+            "evidence-social-commitment-release:994176f47a5d7832",
+            "evidence:oren-r6-counterparty-support:accepted-reason:reason:oren:r6:counterparty-support:current-nela:82"
+          ],
+          "reviewAfterSeconds": 120
+        }
+      },
+      "usage": {
+        "model": "gpt-5.6-luna",
+        "inputTokens": 2135,
+        "outputTokens": 223,
+        "totalTokens": 2358,
+        "elapsedMs": 3774
+      }
+    },
+    "comparison": {
+      "control": {
+        "kind": "focus_matter",
+        "matterId": "matter.oren-r6-counterparty-support.causal.reason:reason:oren:r6:counterparty-support:current-nela",
+        "reason": "Prioritize the current grounded reason to speak with Nela over the unrelated route, since it directly addresses the resident's salient uncertainty about the current situation.",
+        "supportEvidenceIds": [
+          "evidence:oren-r6-counterparty-support:accepted-reason:reason:oren:r6:counterparty-support:current-nela:82"
+        ],
+        "reviewAfterSeconds": 120
+      },
+      "history": {
+        "kind": "focus_matter",
+        "matterId": "matter.oren-r6-counterparty-support.causal.reason:reason:oren:r6:counterparty-support:current-nela",
+        "reason": "Prioritize the current, independently grounded conversation with Nela; the earlier explicit release of the standing responsibility provides additional social context for addressing this matter before the unrelated route.",
+        "supportEvidenceIds": [
+          "evidence-social-commitment-release:994176f47a5d7832",
+          "evidence:oren-r6-counterparty-support:accepted-reason:reason:oren:r6:counterparty-support:current-nela:82"
+        ],
+        "reviewAfterSeconds": 120
+      },
+      "controlBehavior": {
+        "kind": "focus_matter",
+        "matterId": "matter.oren-r6-counterparty-support.causal.reason:reason:oren:r6:counterparty-support:current-nela"
+      },
+      "historyBehavior": {
+        "kind": "focus_matter",
+        "matterId": "matter.oren-r6-counterparty-support.causal.reason:reason:oren:r6:counterparty-support:current-nela"
+      },
+      "exactBehaviorEqual": true,
+      "historyCitesRelease": true
+    }
+  },
+  "providerRequestsAttempted": 2,
+  "semanticRetries": 0,
+  "classification": "COUNTERPARTY_SOCIAL_HISTORY_UPTAKE_WITHOUT_BEHAVIOR_CHANGE",
+  "finishedAt": "2026-09-27T20:25:06.972Z",
+  "outcome": "COUNTERPARTY_SOCIAL_HISTORY_UPTAKE_WITHOUT_BEHAVIOR_CHANGE",
+  "workflowRun": 31
+}
