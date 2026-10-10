@@ -68,7 +68,10 @@ export class FiveResidentCausalLifeRuntime {
   private readonly lanes = new Map<FiveResidentId, ResidentLane>();
   private readonly navigation = createFiveResidentNavigationGraph();
 
-  constructor(private readonly composition: FiveResidentRegionComposition) {
+  constructor(
+    private readonly composition: FiveResidentRegionComposition,
+    private readonly options: { idlePhysicalAttention?: boolean } = {},
+  ) {
     this.claimReadyResidents();
   }
 
@@ -191,7 +194,9 @@ export class FiveResidentCausalLifeRuntime {
       this.lanes.set(residentId, {
         life,
         execution: new ResidentCausalExecutionCoordinator(life),
-        interruption: new ResidentAddressedInterruptionController(life),
+        interruption: new ResidentAddressedInterruptionController(life, {
+          allowIdleAttention: this.options.idlePhysicalAttention === true,
+        }),
       });
     }
   }
