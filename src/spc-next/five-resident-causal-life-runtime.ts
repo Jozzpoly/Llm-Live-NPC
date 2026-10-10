@@ -39,6 +39,10 @@ export interface FiveResidentCausalLifeTick {
   materialRelevance: Readonly<
     Partial<Record<FiveResidentId, readonly ResidentMaterialMatterRelevanceObservation[]>>
   >;
+  /** Same already-open material matter only; never a newly chosen resident goal. */
+  localMaterialResumption: Readonly<
+    Partial<Record<FiveResidentId, readonly ResidentCausalExecutionReactivation[]>>
+  >;
 }
 
 export interface FiveResidentPreparedLifeIntent {
