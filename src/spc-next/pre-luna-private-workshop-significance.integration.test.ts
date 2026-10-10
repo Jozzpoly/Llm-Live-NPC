@@ -69,7 +69,9 @@ describe("real pre-Luna physical workshop × resident-private significance (PR15
       observedLocationKind: "free",
     });
     expect(janek.resident.pendingCognitionReasons()).toEqual([]);
-    expect(runtime.takeReadyLifeIntentAttempts()).toEqual([]);
+    // Other residents can truthfully have authored-opening completion reasons;
+    // they are not Janek's new matters or permission to invent a proposal.
+    expect(janek.resident.pendingCognitionReasons()).toEqual([]);
     expect(janek.currentLifeView().matters).toEqual([]);
     expect(world.materialObjects()).toHaveLength(4);
   });
@@ -123,7 +125,9 @@ describe("real pre-Luna physical workshop × resident-private significance (PR15
         observedLocationKind: "free", lastKnownPosition: { x: 1_952, y: 720 },
       });
       expect(janek.resident.pendingCognitionReasons()).toEqual([]);
-      expect(runtime.takeReadyLifeIntentAttempts()).toEqual([]);
+      // Other residents can truthfully have authored-opening completion reasons;
+    // they are not Janek's new matters or permission to invent a proposal.
+    expect(janek.resident.pendingCognitionReasons()).toEqual([]);
       expect(janek.currentLifeView().matters).toEqual([]);
       expect(world.diagnostics().recentMaterialActions.filter((a) => a.actorId === "resident.janek"))
         .toEqual([]);
