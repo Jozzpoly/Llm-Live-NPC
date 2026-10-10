@@ -99,7 +99,11 @@ describe("five-resident R6 — material continuation from private changed realit
     expect(observed.localMaterialResumption[JAN]).toContainEqual(expect.objectContaining({
       status: "acquired", matterId: MATTER,
     }));
-    const runId = observed.localMaterialResumption[JAN]![0]!.runId;
+    const acquired = observed.localMaterialResumption[JAN]?.[0];
+    if (!acquired || acquired.status !== "acquired") {
+      throw new Error("private reappearance did not acquire exactly the old matter's new run");
+    }
+    const runId = acquired.runId;
     expect(runId).not.toBe(PRIOR_RUN);
     expect(s.life.focus.focusedRun()).toBe(runId);
     expect(s.life.kernel.matter(MATTER)).toMatchObject({
