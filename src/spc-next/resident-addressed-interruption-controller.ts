@@ -13,17 +13,41 @@ export interface ResidentAddressedInterruptionSnapshot {
   remainingHoldTicks: number;
 }
 
+export interface ResidentIdleContactSnapshot {
+  status: "active" | "completed";
+  originPerceptId: string;
+  interruptMatterId: string;
+  interruptRunId: string;
+  mainMatterId: null;
+  mainRunId: null;
+  responseOccurrenceId: null;
+  remainingHoldTicks: number;
+  oriented: boolean;
+}
+
+interface ActiveIdleContact {
+  perceptId: string;
+  runId: string;
+  matterId: string;
+  privateHearingDirection: { x: number; y: number } | null;
+  remainingHoldTicks: number;
+  oriented: boolean;
+}
+
 export type ResidentAddressedInterruptionObservation =
   | { status: "none" }
   | { status: "heard_without_preemption"; perceptId: string }
   | { status: "already_active"; interruption: ResidentAddressedInterruptionSnapshot }
-  | { status: "started"; interruption: ResidentAddressedInterruptionSnapshot };
+  | { status: "started"; interruption: ResidentAddressedInterruptionSnapshot }
+  | { status: "already_attending_idle"; attention: ResidentIdleContactSnapshot }
+  | { status: "started_idle"; attention: ResidentIdleContactSnapshot };
 
 export type ResidentAddressedInterruptionStep =
   | { status: "idle" }
   | { status: "responded"; interruption: ResidentAddressedInterruptionSnapshot }
   | { status: "holding"; interruption: ResidentAddressedInterruptionSnapshot }
-  | { status: "resumed"; interruption: ResidentAddressedInterruptionSnapshot };
+  | { status: "resumed"; interruption: ResidentAddressedInterruptionSnapshot }
+  | { status: "attended_idle" | "holding_idle" | "settled_idle"; attention: ResidentIdleContactSnapshot };
 
 interface ActiveInterruption {
   originPerceptId: string;
@@ -42,6 +66,10 @@ interface ActiveInterruption {
 export interface ResidentAddressedInterruptionOptions {
   responseText?: string;
   holdTicks?: number;
+  /** Research-only resident attention while idle, disabled by default. */
+  allowIdleAttention?: boolean;
+  /** Minimal quiet interval before a fresh idle physical attention episode. */
+  idleAttentionCooldownTicks?: number;
 }
 
 const DEFAULT_RESPONSE_TEXT = "Tak?";
@@ -64,6 +92,10 @@ export class ResidentAddressedInterruptionController {
   private readonly holdTicks: number;
   private lastPerceptionRevision = -1;
   private active: ActiveInterruption | null = null;
+  private idleContact: ActiveIdleContact | null = null;
+  private readonly allowIdleAttention: boolean;
+  private readonly idleAttentionCooldownTicks: number;
+  private lastIdleContactTick = Number.NEGATIVE_INFINITY;
 
   constructor(
     private readonly life: ResidentCausalLifeSubstrate,
@@ -71,6 +103,13 @@ export class ResidentAddressedInterruptionController {
   ) {
     this.responseText = options.responseText ?? DEFAULT_RESPONSE_TEXT;
     this.holdTicks = options.holdTicks ?? DEFAULT_HOLD_TICKS;
+    this.allowIdleAttention = options.allowIdleAttention ?? false;
+    this.idleAttentionCooldownTicks = options.idleAttentionCooldownTicks ?? 90;
+    if (typeof this.allowIdleAttention !== "boolean"
+      || !Number.isSafeInteger(this.idleAttentionCooldownTicks)
+      || this.idleAttentionCooldownTicks < 0) {
+      throw new Error("idle attention options must be well-formed");
+    }
     if (this.responseText.trim().length === 0) {
       throw new Error("addressed interruption response text must be non-empty");
     }
@@ -82,6 +121,9 @@ export class ResidentAddressedInterruptionController {
   observePrivateAddressedSpeech(): ResidentAddressedInterruptionObservation {
     if (this.active) {
       return { status: "already_active", interruption: this.snapshot(this.active, "active") };
+    }
+    if (this.idleContact) {
+      return { status: "already_attending_idle", attention: this.idleSnapshot(this.idleContact, "active") };
     }
 
     const perception = this.life.resident.perceptionSnapshot();
@@ -95,6 +137,16 @@ export class ResidentAddressedInterruptionController {
       this.handledPerceptIds.add(percept.id);
       const focusedRunId = this.life.focus.focusedRun();
       if (!focusedRunId) {
+        // No meaningful semantic response is fabricated: just a tiny
+        // World-authorized orient/hold action from private hearing. A no-prior
+        // focus is a DIFFERENT contact from interrupting an existing matter.
+        if (this.allowIdleAttention
+          && percept.tick - this.lastIdleContactTick >= this.idleAttentionCooldownTicks
+          && this.life.arbitrator.deferredRunIds().length === 0) {
+          this.idleContact = this.beginIdle(percept);
+          this.lastIdleContactTick = percept.tick;
+          return { status: "started_idle", attention: this.idleSnapshot(this.idleContact, "active") };
+        }
         return { status: "heard_without_preemption", perceptId: percept.id };
       }
 
@@ -116,6 +168,7 @@ export class ResidentAddressedInterruptionController {
   }
 
   advanceOneExecutionFrame(): ResidentAddressedInterruptionStep {
+    if (this.idleContact) return this.stepIdleContact(this.idleContact);
     const active = this.active;
     if (!active) return { status: "idle" };
 
@@ -181,8 +234,94 @@ export class ResidentAddressedInterruptionController {
     return { status: "resumed", interruption: completed };
   }
 
-  current(): ResidentAddressedInterruptionSnapshot | null {
-    return this.active ? this.snapshot(this.active, "active") : null;
+  current(): ResidentAddressedInterruptionSnapshot | ResidentIdleContactSnapshot | null {
+    if (this.active) return this.snapshot(this.active, "active");
+    return this.idleContact ? this.idleSnapshot(this.idleContact, "active") : null;
+  }
+
+  private beginIdle(percept: ResidentPercept): ActiveIdleContact {
+    const suffix = percept.id;
+    const matterId = `matter.${this.life.residentId}.idle-attention:${suffix}`;
+    const runId = `run.${this.life.residentId}.idle-attention:${suffix}.semantic-1`;
+    const evidence = this.life.kernel.recordEvidence({
+      id: `evidence.${this.life.residentId}.idle-attention:${suffix}`,
+      tick: percept.tick,
+      kind: "addressed_speech_physical_attention",
+      summary: "Exact addressed private hearing: local bodily attention only; content unresolved.",
+    });
+    this.life.kernel.openMatter({
+      id: matterId,
+      originEvidenceId: evidence.id,
+      semanticCourse: "Briefly orient to the privately heard direct speaker without speaking or interpreting their request",
+    });
+    this.life.kernel.bindRun({
+      matterId, taskId: `task.${this.life.residentId}.idle-attention:${suffix}.semantic-1`, runId,
+    });
+    this.life.matterScope.track(matterId);
+    const focus = this.life.arbitrator.request(runId);
+    if (focus.status !== "acquired") {
+      // Do not ever turn an intended micro-action into a deferred resident
+      // obligation or override some other execution just for busyness.
+      this.life.kernel.retireRun(runId);
+      this.life.kernel.cancelMatter(matterId);
+      throw new Error("idle attention unexpectedly failed to acquire the empty body");
+    }
+    return {
+      perceptId: percept.id, matterId, runId,
+      privateHearingDirection: percept.spatial.kind === "directional"
+        && Math.hypot(percept.spatial.direction.x, percept.spatial.direction.y) > 1e-9
+        ? { ...percept.spatial.direction } : null,
+      remainingHoldTicks: this.holdTicks,
+      oriented: false,
+    };
+  }
+
+  private stepIdleContact(idle: ActiveIdleContact): ResidentAddressedInterruptionStep {
+    if (!idle.oriented) {
+      const applied = this.life.worldAuthority.apply({
+        runId: idle.runId,
+        effects: [
+          { kind: "motion", desiredVelocity: { x: 0, y: 0 } },
+          ...(idle.privateHearingDirection
+            ? [{ kind: "look" as const, direction: { ...idle.privateHearingDirection } }] : []),
+        ],
+      });
+      if (applied.status !== "applied") {
+        throw new Error("idle attention could not apply the exact World-authorized bodily response");
+      }
+      idle.oriented = true;
+      return { status: "attended_idle", attention: this.idleSnapshot(idle, "active") };
+    }
+    if (idle.remainingHoldTicks > 0) {
+      idle.remainingHoldTicks -= 1;
+      return { status: "holding_idle", attention: this.idleSnapshot(idle, "active") };
+    }
+    const outcome = this.life.kernel.reconcileRunOutcome({
+      runId: idle.runId, tick: this.life.world.tick, status: "succeeded",
+      summary: "local body attended to addressed private speech; content remains semantically unsettled",
+    });
+    if (outcome.status !== "recorded") throw new Error("idle physical contact outcome did not reconcile");
+    this.life.kernel.resolveMatter(idle.matterId);
+    this.life.worldAuthority.enforceMotionAuthority();
+    this.idleContact = null;
+    return { status: "settled_idle", attention: this.idleSnapshot(idle, "completed") };
+  }
+
+  private idleSnapshot(
+    idle: ActiveIdleContact,
+    status: ResidentIdleContactSnapshot["status"],
+  ): ResidentIdleContactSnapshot {
+    return {
+      status,
+      originPerceptId: idle.perceptId,
+      interruptMatterId: idle.matterId,
+      interruptRunId: idle.runId,
+      mainMatterId: null,
+      mainRunId: null,
+      responseOccurrenceId: null,
+      remainingHoldTicks: idle.remainingHoldTicks,
+      oriented: idle.oriented,
+    };
   }
 
   private begin(percept: ResidentPercept, mainRunBinding: ResidentTaskRunBinding): ActiveInterruption {

@@ -297,6 +297,40 @@ async function run() {
     timelineRunning = false;
     await timelinePromise;
 
+    // Explicit zero-provider idle-attention test on the REAL 5-resident R6
+    // host. Use genuine player->World addressed speech, not a mock NPC command.
+    await cdp.send("Page.navigate", {
+      url: `${BASE_URL}/?spc=1&scenario=five-resident-idle-attention&evidence=1`,
+    });
+    await waitUntil(async () => await evaluate(cdp,
+      "Boolean(window.__SPC_EVIDENCE__?.ready() && document.querySelector('canvas'))"),
+      20_000, "R6 idle-attention World");
+    let contactFrame = await evaluate(cdp, "window.__SPC_EVIDENCE__.snapshot()");
+    assert(report, "idle physical-attention route has real five-resident shared World",
+      contactFrame.snapshot?.residents?.length === 5
+      && contactFrame.snapshot?.actors?.find(a=>a.id==="player.jozz")?.position.x === 1750,
+      contactFrame.snapshot?.actors?.map(a=>({id:a.id,position:a.position})));
+    await click(cdp, '[data-resident="resident.janek"]');
+    await checkpoint(cdp, report, "09-r6-idle-contact-before", await panelSnapshot(cdp), true);
+    await evaluate(cdp, 'window.__SPC_EVIDENCE__.addressResident("resident.janek", "Janek, słuchasz mnie?")');
+    contactFrame = await evaluate(cdp, "window.__SPC_EVIDENCE__.stepWorld(1)");
+    assert(report, "privately addressed idle Janek acquires only a short physical-attention run",
+      Boolean(contactFrame.selectedLife?.body.focusedRunId?.includes("idle-attention")),
+      contactFrame.selectedLife?.body);
+    contactFrame = await evaluate(cdp, "window.__SPC_EVIDENCE__.stepWorld(1)");
+    const janekFacing = contactFrame.snapshot.actors.find(a=>a.id==="resident.janek")?.facing;
+    assert(report, "idle Janek physically turns west toward heard speaker without authored semantic reply",
+      janekFacing?.x < -0.95
+      && contactFrame.recentOccurrences.every(o=>
+        o.actorId!=="resident.janek" || o.kind!=="speech"),
+      { facing:janekFacing, occurrences:contactFrame.recentOccurrences });
+    await checkpoint(cdp, report, "10-r6-idle-contact-oriented", await panelSnapshot(cdp), true);
+    contactFrame = await evaluate(cdp, "window.__SPC_EVIDENCE__.stepWorld(35)");
+    assert(report, "bounded attention releases body while keeping addressed semantic meaning unresolved",
+      contactFrame.selectedLife?.body.focusedRunId === null
+      && contactFrame.snapshot.residents.find(r=>r.id==="resident.janek")?.pendingCognitionReasonCount > 0,
+      {body:contactFrame.selectedLife?.body,resident:contactFrame.snapshot.residents.find(r=>r.id==="resident.janek")});
+
     const hardFailures = report.assertions.filter((entry) => entry.pass === false && entry.severity !== "finding");
     const browserErrors = report.runtimeExceptions.length + report.logErrors.length;
     assert(report, "no uncaught browser/runtime errors", browserErrors === 0, {

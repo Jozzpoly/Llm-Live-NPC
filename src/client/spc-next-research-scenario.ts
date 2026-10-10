@@ -8,7 +8,8 @@ import {
   FiveResidentUnifiedLivingRuntime,
   type FiveResidentLivingRuntimeDiagnostics,
 } from "../spc-next/five-resident-unified-living-runtime";
-import type { FiveResidentId } from "../spc-next/five-resident-region";
+import { createFiveResidentRegionComposition, type FiveResidentId } from "../spc-next/five-resident-region";
+import { FiveResidentCausalLifeRuntime } from "../spc-next/five-resident-causal-life-runtime";
 import type { SpcWorldRuntime } from "../spc-next/spc-world-runtime";
 import { createFiveResidentJanekMaterialSlice } from "../spc-next/five-resident-material-slice";
 import { createFiveResidentJanekMissingCrateStagedSlice } from "../spc-next/five-resident-missing-crate-slice";
@@ -47,7 +48,8 @@ export type SpcNextResearchScenarioKind =
   | "r5-mira-semantic-escalation"
   | "r5-mira-live-semantic-escalation"
   | "r6-mira-standing-social-commitment"
-  | "unified-living";
+  | "unified-living"
+  | "five-resident-idle-attention";
 
 export interface SpcNextResearchScenario {
   readonly kind: SpcNextResearchScenarioKind;
@@ -83,6 +85,7 @@ export function createSpcNextResearchScenario(kind: SpcNextResearchScenarioKind)
   if (kind === "r5-mira-live-semantic-escalation") return createR5MiraLiveSemanticEscalationScenario();
   if (kind === "r6-mira-standing-social-commitment") return createR6MiraStandingSocialCommitmentScenario();
   if (kind === "unified-living") return createUnifiedLivingScenario();
+  if (kind === "five-resident-idle-attention") return createFiveResidentIdleAttentionScenario();
   return createBaselineDeliveryScenario();
 }
 
@@ -102,6 +105,7 @@ export function researchScenarioKindFromSearch(search: string): SpcNextResearchS
   if (requested === "r5-mira-live-semantic-escalation") return "r5-mira-live-semantic-escalation";
   if (requested === "r6-mira-standing-social-commitment") return "r6-mira-standing-social-commitment";
   if (requested === "unified-living") return "unified-living";
+  if (requested === "five-resident-idle-attention") return "five-resident-idle-attention";
   throw new Error(`unknown SPC Next research scenario: ${requested}`);
 }
 
@@ -879,6 +883,40 @@ function createR6MiraStandingSocialCommitmentScenario(): SpcNextResearchScenario
 }
 
 
+
+/**
+ * Physically truthful, no-LLM resident attention in the SAME 5-resident World,
+ * opt-in only. No NPC is given a chore or a semantic reply. Direct player
+ * address is a real World speech action, never a hidden script trigger.
+ */
+function createFiveResidentIdleAttentionScenario(): SpcNextResearchScenario {
+  const composition = createFiveResidentRegionComposition({
+    playerStart: { x: 1_750, y: 720 },
+  });
+  const living = new FiveResidentCausalLifeRuntime(composition, {
+    idlePhysicalAttention: true,
+  });
+  const janek = living.life("resident.janek");
+  if (!janek) throw new Error("idle attention browser requires recovered Janek life");
+  return {
+    kind: "five-resident-idle-attention",
+    evidenceScenarioId: "browser-five-resident-idle-attention",
+    residentId: "resident.janek",
+    matterId: "matter.research.idle-attention-not-a-task",
+    world: composition.world,
+    kernel: janek.kernel,
+    materialKnowledge: janek.materialKnowledge,
+    authority: janek.worldAuthority,
+    canonicalEvidenceSupported: false,
+    residentLifeView(residentId: string): ResidentLifeCognitionView | null {
+      if (!composition.world.publicSnapshot().residents.some(r=>r.id===residentId)) return null;
+      return living.life(residentId as FiveResidentId)?.currentLifeView() ?? null;
+    },
+    advanceOneWorldTick(): void {
+      living.advanceOneWorldTick();
+    },
+  };
+}
 
 function createUnifiedLivingScenario(): SpcNextResearchScenario {
   const living = new FiveResidentUnifiedLivingRuntime();

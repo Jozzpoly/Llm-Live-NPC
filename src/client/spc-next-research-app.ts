@@ -41,8 +41,18 @@ eyebrow.textContent = "Living world · embodied cognition research";
 stageNode.textContent = "WORLD / EPISTEMIC LAB";
 stageNode.classList.add("is-active");
 gameNode.setAttribute("aria-label", "SPC Next living-world research scene");
+const idleContactSpecimen = params.get("scenario") === "five-resident-idle-attention";
+if (idleContactSpecimen) {
+  stageNode.textContent = "R6 · ŚWIAT / 0 LLM · UWAGA";
+  heading.textContent = "R6 · kontakt z mieszkańcem";
+  eyebrow.textContent = "Pięciu mieszkańców · czy bezczynny Janek reaguje na skierowane do niego słowa?";
+}
 footer.innerHTML = [
   "<span>Ruch: WASD / strzałki</span>",
+  ...(idleContactSpecimen ? [
+    "<span>Wybierz Janka, napisz do niego i obserwuj zwrot ciała · 0 automatycznych dialogów</span>",
+    "<span>Uwaga nie rozstrzyga znaczenia wypowiedzi. To test lokalnej percepcji, nie osobowości.</span>",
+  ] : []),
   "<span>Wybór SPC: klik / Tab</span>",
   "<span>Zawołaj: H · mikroskop: R</span>",
   "<span>Śledź SPC: F · gracz: P · cały świat: O</span>",
