@@ -21,6 +21,10 @@ import {
 } from "./resident-causal-life-substrate";
 import { ResidentMaterialKnowledge } from "./resident-material-knowledge";
 import type { ResidentMaterialMatterRelevanceObservation } from "./resident-material-matter-relevance-bridge";
+import {
+  ResidentMatterRelevanceBridge,
+  type ResidentMatterRelevanceObservation,
+} from "./resident-matter-relevance-bridge";
 
 export type FiveResidentCausalLifeOwnership = "local_opening" | "recovered_life";
 
@@ -28,6 +32,8 @@ interface ResidentLane {
   life: ResidentCausalLifeSubstrate;
   execution: ResidentCausalExecutionCoordinator;
   interruption: ResidentAddressedInterruptionController;
+  /** Opt-in resident-private standing history → meaningful actor encounter. */
+  socialRelevance: ResidentMatterRelevanceBridge | null;
 }
 
 export interface FiveResidentCausalLifeTick {
@@ -38,6 +44,11 @@ export interface FiveResidentCausalLifeTick {
   materialRelevance: Readonly<
     Partial<Record<FiveResidentId, readonly ResidentMaterialMatterRelevanceObservation[]>>
   >;
+  /** This is *not* a model decision or a new accepted action. */
+  socialRelevance: Readonly<
+    Partial<Record<FiveResidentId, readonly ResidentMatterRelevanceObservation[]>>
+  >;
+  settledSocialReasons: Readonly<Partial<Record<FiveResidentId, readonly string[]>>>;
 }
 
 export interface FiveResidentPreparedLifeIntent {
@@ -68,7 +79,10 @@ export class FiveResidentCausalLifeRuntime {
   private readonly lanes = new Map<FiveResidentId, ResidentLane>();
   private readonly navigation = createFiveResidentNavigationGraph();
 
-  constructor(private readonly composition: FiveResidentRegionComposition) {
+  constructor(
+    private readonly composition: FiveResidentRegionComposition,
+    private readonly options: { socialReencounter?: boolean } = {},
+  ) {
     this.claimReadyResidents();
   }
 
@@ -119,6 +133,10 @@ export class FiveResidentCausalLifeRuntime {
     const materialRelevance: Partial<
       Record<FiveResidentId, readonly ResidentMaterialMatterRelevanceObservation[]>
     > = {};
+    const socialRelevance: Partial<
+      Record<FiveResidentId, readonly ResidentMatterRelevanceObservation[]>
+    > = {};
+    const settledSocialReasons: Partial<Record<FiveResidentId, readonly string[]>> = {};
 
     for (const residentId of this.claimedResidentIds()) {
       const lane = this.lanes.get(residentId)!;
@@ -140,6 +158,30 @@ export class FiveResidentCausalLifeRuntime {
       if (observations.length > 0) materialRelevance[residentId] = observations;
     }
 
+    // Resident-private actor sight can become relevant only to an exact already
+    // open resident matter (e.g., a *factually* spoken standing promise).
+    // The World still owns the sight event; this merely notices personal meaning.
+    // No provider request, body action or semantic decision happens here.
+    for (const residentId of this.claimedResidentIds()) {
+      const lane = this.lanes.get(residentId)!;
+      if (!lane.socialRelevance) continue;
+      const freshSight = lane.life.resident.perceptionSnapshot().recentPercepts
+        .filter((percept) => (
+          percept.tick === this.composition.world.tick
+          && percept.phenomenon === "actor_sight_enter"
+        ));
+      const observations = freshSight.map((percept) =>
+        lane.socialRelevance!.observe(percept, lane.life.currentLifeView()),
+      ).filter((observation) => observation.status === "promoted");
+      if (observations.length > 0) socialRelevance[residentId] = observations;
+      const settled = lane.socialRelevance.reconcile(
+        lane.life.currentLifeView(), this.composition.world.tick,
+      );
+      if (settled.invalidatedReasonIds.length > 0) {
+        settledSocialReasons[residentId] = settled.invalidatedReasonIds;
+      }
+    }
+
     // Perception is produced by the shared World step. Only after that boundary may
     // local contact logic discover a newly heard addressed utterance and suspend the
     // exact run for the *next* execution frame.
@@ -154,6 +196,8 @@ export class FiveResidentCausalLifeRuntime {
       execution: structuredClone(execution),
       interruptions: structuredClone(interruptions),
       materialRelevance: structuredClone(materialRelevance),
+      socialRelevance: structuredClone(socialRelevance),
+      settledSocialReasons: structuredClone(settledSocialReasons),
     };
   }
 
@@ -192,6 +236,9 @@ export class FiveResidentCausalLifeRuntime {
         life,
         execution: new ResidentCausalExecutionCoordinator(life),
         interruption: new ResidentAddressedInterruptionController(life),
+        socialRelevance: this.options.socialReencounter
+          ? new ResidentMatterRelevanceBridge(resident)
+          : null,
       });
     }
   }

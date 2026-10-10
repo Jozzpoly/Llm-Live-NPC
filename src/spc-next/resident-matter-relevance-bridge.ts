@@ -74,6 +74,17 @@ export class ResidentMatterRelevanceBridge {
     const match = matchingActorMatter(life, percept.actorId);
     if (!match) return { status: "not_relevant", evidenceId: percept.id };
 
+    // Seeing the same relevant person again does NOT create a second semantic
+    // question while the exact earlier resident-owned matter relationship is
+    // already under review. Repeated sight edges must not become a request
+    // treadmill. Reconciliation below invalidates this latch on factual release.
+    const existing = this.activeReasonByMatterId.get(match.matter.id);
+    if (existing
+      && existing.actorId === match.actorId
+      && existing.kind === match.kind) {
+      return { status: "not_relevant", evidenceId: percept.id };
+    }
+
     const reasonId = deriveSpcIdentifier(
       "reason-matter-relevance",
       `${this.resident.profile.id}:${match.matter.id}`,
