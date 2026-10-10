@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { MATERIAL_CARRY_SPEED_FACTOR } from "./material-body-contact";
 import {
   createFiveResidentRegionComposition,
   FIVE_RESIDENT_MATERIAL_OBJECTS,
@@ -71,7 +72,10 @@ describe("pre-Luna workshop: physical choices, not decorative props or scripted 
     world.setActorMotionIntent(PLAYER, { x: 0, y: -150 });
     for (let i = 0; i < 20; i++) world.step();
     world.setActorMotionIntent(PLAYER, { x: 0, y: 0 });
-    expect(y()).toBeCloseTo(816, 4); // actual 0.68 carrying burden
+    const playerMaxSpeed = world.publicSnapshot().actors.find((a) => a.id === PLAYER)!.maxSpeed;
+    expect(y()).toBeCloseTo(
+      850 - 20 * Math.min(150, playerMaxSpeed) / 60 * MATERIAL_CARRY_SPEED_FACTOR, 4,
+    );
 
     const newBlocker = { x: 2_002, y: 770 };
     expect(world.attemptMaterialAction(PLAYER, {
