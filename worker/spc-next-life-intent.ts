@@ -422,7 +422,7 @@ const lifeAcceptedIntentSchema = {
     materialAcquisitionIntentSchema,
   ],
 };
-const proposalSchema = objectSchema({
+const proposalSchemaForCapabilities = (allowTimedStandingReview: boolean) => objectSchema({
   version: { type: "integer", enum: [1] },
   commitmentDecision: {
     anyOf: [
@@ -435,7 +435,9 @@ const proposalSchema = objectSchema({
         kind: { type: "string", enum: ["accept"] },
         reason: stringSchema(1200),
         intent: lifeAcceptedIntentSchema,
-        standingSocialCommitment: standingSocialCommitmentSchema,
+        standingSocialCommitment: allowTimedStandingReview
+          ? standingSocialCommitmentSchema
+          : objectSchema({ goal: stringSchema(1200) }),
       }),
       objectSchema({ kind: { type: "string", enum: ["decline"] }, reason: stringSchema(1200) }),
       objectSchema({ kind: { type: "string", enum: ["defer"] }, reason: stringSchema(1200) }),
@@ -482,9 +484,9 @@ const proposalSchema = objectSchema({
   concerns: concernsSchema,
   reviewAfterSeconds: { type: "number", minimum: 0.25, maximum: 600 },
 });
-const commitmentEnvelopeSchema = objectSchema({
+const commitmentEnvelopeSchemaForCapabilities = (allowTimedStandingReview: boolean) => objectSchema({
   originReasonId: idSchema,
-  proposal: proposalSchema,
+  proposal: proposalSchemaForCapabilities(allowTimedStandingReview),
 });
 
 function configuration(env: SpcNextLifeIntentEnv) {
@@ -537,9 +539,18 @@ export async function handleSpcNextLifeIntent(request: Request, env: SpcNextLife
     }, 400);
   }
   const runtimeMode = request.headers.get("x-spc-life-runtime");
-  const instructions = runtimeMode === "five-resident-causal-v1"
-    ? `${SYSTEM_PROMPT}\n\n${FIVE_RESIDENT_CAUSAL_V1_GUIDANCE}`
-    : SYSTEM_PROMPT;
+  // Client hint is not an authorization token. Actual local R6 admission
+  // must independently reject unsupported timing even if a client spoofs this.
+  const allowTimedStandingReview =
+    runtimeMode === "five-resident-causal-v1"
+    && request.headers.get("x-spc-life-capabilities") === "temporal-standing-v1";
+  const instructions = [
+    SYSTEM_PROMPT,
+    ...(runtimeMode === "five-resident-causal-v1" ? [FIVE_RESIDENT_CAUSAL_V1_GUIDANCE] : []),
+    allowTimedStandingReview
+      ? "The local World explicitly supports one typed time-derived standing-social review. You MAY choose revisitAfterWorldTicks only for a meaningful first-person promise consistent with your actual proposed speech."
+      : "The current local World DOES NOT support timed standing-social revisits. Do NOT include revisitAfterWorldTicks, even when an earlier message mentions a time; the exact JSON schema allows only goal.",
+  ].join("\n\n");
 
   try {
     if (!await allowed(env, "spc-next-life-intent:global")) {
@@ -577,7 +588,7 @@ export async function handleSpcNextLifeIntent(request: Request, env: SpcNextLife
             type: "json_schema",
             name: "spc_next_resident_life_commitment",
             strict: true,
-            schema: commitmentEnvelopeSchema,
+            schema: commitmentEnvelopeSchemaForCapabilities(allowTimedStandingReview),
           },
         },
       }),
@@ -608,6 +619,14 @@ export async function handleSpcNextLifeIntent(request: Request, env: SpcNextLife
     const usage = observedUsage(result, config.model, Date.now() - started);
     const originReasonId = extraction.originReasonId
       ?? (context.reasons.length === 1 ? context.reasons[0]!.id : null);
+    if (extraction.proposal?.commitmentDecision.kind === "accept"
+      && extraction.proposal.commitmentDecision.standingSocialCommitment?.revisitAfterWorldTicks !== undefined
+      && !allowTimedStandingReview) {
+      return json({
+        ok: false, code: "timed_standing_capability_not_enabled",
+        usage,
+      }, 502);
+    }
     if (!extraction.proposal || originReasonId === null) {
       return json({
         ok: false,
