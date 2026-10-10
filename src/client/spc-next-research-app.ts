@@ -69,9 +69,22 @@ chatSend.className = "spc-chat-send";
 chatSend.textContent = "Powiedz";
 chatForm.append(chatInput, chatSend);
 
+// Deliberate one-shot research control. No implicit Luna calls on World ticks.
+const armedResearchMode = params.get("scenario") === "unified-armed";
+const oneShotButton = document.createElement("button");
+oneShotButton.type = "button";
+oneShotButton.className = "spc-chat-send";
+oneShotButton.textContent = "Zapytaj Lunę (1×)";
+oneShotButton.title = "Tylko wybrany mieszkaniec, jeden istniejący prywatny powód, najwyżej jedno zapytanie w tej sesji.";
+oneShotButton.hidden = !armedResearchMode;
+const oneShotStatus = document.createElement("span");
+oneShotStatus.className = "spc-log-sub";
+oneShotStatus.hidden = !armedResearchMode;
+oneShotStatus.textContent = armedResearchMode ? "Luna uśpiona — świat działa lokalnie" : "";
+
 const headerActions = document.createElement("div");
 headerActions.className = "spc-header-actions";
-headerActions.append(stageNode, chatForm, worldModeButton);
+headerActions.append(stageNode, chatForm, oneShotButton, oneShotStatus, worldModeButton);
 header.append(headerActions);
 
 let scene: SpcNextResearchScene;
@@ -331,6 +344,22 @@ if (evidenceMode) {
     }),
   });
 }
+
+oneShotButton.addEventListener("click", () => {
+  if (!armedResearchMode || oneShotButton.disabled) return;
+  const status = scene.requestSelectedResidentCognition();
+  if (status === "started") {
+    oneShotStatus.textContent = "Wysłano jedno żądanie do wybranego mieszkańca. Dalsze wywołania są zablokowane.";
+    oneShotButton.disabled = true;
+  } else if (status === "budget_exhausted") {
+    oneShotStatus.textContent = "Limit jednej próby wyczerpany.";
+    oneShotButton.disabled = true;
+  } else if (status === "no_reason") {
+    oneShotStatus.textContent = "Brak dostępnego prywatnego powodu. Podejdź i odezwij się, a następnie spróbuj ponownie.";
+  } else {
+    oneShotStatus.textContent = "Mieszkaniec nie przejął jeszcze autonomicznego runtime. Świat nadal działa.";
+  }
+});
 
 chatForm.addEventListener("submit", (event) => {
   event.preventDefault();
