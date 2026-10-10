@@ -95,9 +95,14 @@ export class ResidentMaterialMatterRelevanceBridge {
     previous: ResidentKnownMaterialObject | null,
     current: ResidentKnownMaterialObject | null,
     life: ResidentLifeCognitionView,
+    options: { becameFreeWhileStillVisible?: boolean } = {},
   ): ResidentMaterialMatterRelevanceObservation {
     const objectId = current?.objectId ?? previous?.objectId ?? "";
-    if (!objectId || !current || !current.currentlyVisible || previous?.currentlyVisible !== false) {
+    // Separate first private sight/reacquisition from newly free material:
+    // held -> placed can occur entirely while the object remains in view.
+    // The caller must establish that exact visual free-state transition.
+    if (!objectId || !current || !current.currentlyVisible
+      || (previous?.currentlyVisible !== false && !options.becameFreeWhileStillVisible)) {
       return { status: "not_relevant", objectId };
     }
 
@@ -120,8 +125,9 @@ export class ResidentMaterialMatterRelevanceBridge {
         ),
         tick: current.observedAtTick,
         kind: "material_reacquired",
-        summary:
-          `Recognized material object ${objectId} became privately visible again at (${current.lastKnownPosition.x}, ${current.lastKnownPosition.y}).`,
+        summary: options.becameFreeWhileStillVisible
+          ? `Recognized material object ${objectId} became visibly free to approach at (${current.lastKnownPosition.x}, ${current.lastKnownPosition.y}).`
+          : `Recognized material object ${objectId} became privately visible again at (${current.lastKnownPosition.x}, ${current.lastKnownPosition.y}).`,
       });
 
       this.kernel.advanceSemanticContext(matter.id, evidence.id);
