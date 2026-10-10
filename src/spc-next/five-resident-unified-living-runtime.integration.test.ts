@@ -216,6 +216,68 @@ describe("five-resident unified living runtime", () => {
     expect(living.requestOneResidentCognition("resident.mira")).toBe("budget_exhausted");
   });
 
+  it("admits a single explicitly chosen private speech response into the SAME World after manual press", async () => {
+    const intendedText = "Słyszę cię. Chętnie porozmawiam.";
+    const upstream = vi.fn(async (_url: RequestInfo | URL, init?: RequestInit) => {
+      const context = JSON.parse(String(init?.body)) as {
+        resident: {id:string}; reasons: Array<{id:string;kind:string}>;
+      };
+      expect(context.resident.id).toBe("resident.mira");
+      const heard = context.reasons.find((r) => r.kind === "heard_speech");
+      expect(heard).toBeDefined();
+      return Response.json({
+        ok: true,
+        originReasonId: heard!.id,
+        proposal: {
+          version: 1,
+          commitmentDecision: {
+            kind: "accept",
+            reason: "I truly heard addressed player speech and choose one reply.",
+            intent: {
+              kind: "communicate",
+              goal: "reply to the actually heard player",
+              targetActorId: "player.jozz",
+              targetRegionId: null,
+              targetPosition: null,
+              text: intendedText,
+            },
+          },
+          beliefs: [],
+          concerns: [],
+          reviewAfterSeconds: 30,
+        },
+      });
+    });
+    const living = new FiveResidentUnifiedLivingRuntime({
+      composition: createFiveResidentRegionComposition({ playerStart: { x: 1000, y: 700 } }),
+      providerDispatchMode: "manual",
+      maxUpstreamRequests: 1,
+      fetcher: upstream,
+    });
+    while (living.world.tick < 2_600) living.advanceOneWorldTick();
+    living.world.speak("player.jozz", "Mira, porozmawiaj ze mną.", 420, ["resident.mira"]);
+    living.advanceOneWorldTick();
+    expect(upstream).not.toHaveBeenCalled();
+    expect(living.requestOneResidentCognition("resident.mira")).toBe("started");
+    await flushMicrotasks();
+    // Provider completion is inert until the next World boundary.
+    expect(living.life("resident.mira")!.matterScope.matterIds()).toEqual([]);
+    living.advanceOneWorldTick();
+    expect(living.diagnostics().recentProviderEvents.some(
+      e => e.status === "admitted" && e.residentId === "resident.mira",
+    )).toBe(true);
+    let factual = false;
+    for(let tick=0; tick<300; tick++) {
+      living.advanceOneWorldTick();
+      if (living.world.diagnostics().recentOccurrences.some(o =>
+        o.kind === "speech" && o.actorId === "resident.mira" && o.text === intendedText
+      )) { factual = true; break; }
+    }
+    expect(factual).toBe(true);
+    expect(upstream).toHaveBeenCalledTimes(1);
+    expect(living.diagnostics().providerHardBudget.exhausted).toBe(true);
+  });
+
   it("rejects manual invocation in automatic mode rather than granting a second provider path", () => {
     const living = new FiveResidentUnifiedLivingRuntime({
       fetcher: vi.fn(async () => Response.json({ok:false,code:"global_limit"},{status:429})),
