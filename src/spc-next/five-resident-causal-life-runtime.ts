@@ -21,6 +21,7 @@ import {
 } from "./resident-causal-life-substrate";
 import { ResidentMaterialKnowledge } from "./resident-material-knowledge";
 import type { ResidentMaterialMatterRelevanceObservation } from "./resident-material-matter-relevance-bridge";
+import { ResidentMatterRelevanceBridge } from "./resident-matter-relevance-bridge";
 
 export type FiveResidentCausalLifeOwnership = "local_opening" | "recovered_life";
 
@@ -28,6 +29,7 @@ interface ResidentLane {
   life: ResidentCausalLifeSubstrate;
   execution: ResidentCausalExecutionCoordinator;
   interruption: ResidentAddressedInterruptionController;
+  relevance: ResidentMatterRelevanceBridge;
 }
 
 export interface FiveResidentCausalLifeTick {
@@ -140,11 +142,22 @@ export class FiveResidentCausalLifeRuntime {
       if (observations.length > 0) materialRelevance[residentId] = observations;
     }
 
-    // Perception is produced by the shared World step. Only after that boundary may
-    // local contact logic discover a newly heard addressed utterance and suspend the
-    // exact run for the *next* execution frame.
+    // The shared World has now produced genuinely private actor observations.
+    // A sight-enter is meaningful only when this resident already owns exactly
+    // one still-current actor-relative matter. Raw sight remains observation-only.
+    // Do not look at omniscient World actor positions or replay old percepts as new.
     for (const residentId of this.claimedResidentIds()) {
       const lane = this.lanes.get(residentId)!;
+      const sights = this.composition.runtimes[residentId].privateSightEntersAtTick(this.world.tick);
+      // Absent a new sight and with no previously owned relevant relation,
+      // do not construct the heavyweight per-resident historical life view.
+      if (sights.length > 0 || lane.relevance.activeMatterIds().length > 0) {
+        const privateLife = lane.life.currentLifeView();
+        lane.relevance.reconcile(privateLife, this.world.tick);
+        for (const percept of sights) lane.relevance.observe(percept, privateLife);
+      }
+      // Addressed contact can suspend the exact current run only after the
+      // factual World percept, not through anticipation or global position.
       if (!lane.interruption.current()) lane.interruption.observePrivateAddressedSpeech();
     }
 
@@ -192,6 +205,7 @@ export class FiveResidentCausalLifeRuntime {
         life,
         execution: new ResidentCausalExecutionCoordinator(life),
         interruption: new ResidentAddressedInterruptionController(life),
+        relevance: new ResidentMatterRelevanceBridge(resident),
       });
     }
   }
