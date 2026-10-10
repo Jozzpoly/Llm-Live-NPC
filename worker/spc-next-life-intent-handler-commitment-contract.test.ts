@@ -120,6 +120,40 @@ function env(): SpcNextLifeIntentEnv {
 afterEach(() => vi.unstubAllGlobals());
 
 describe("SPC Next life-intent endpoint commitment contract", () => {
+  it("exposes timed standing schema ONLY for explicitly capable five-resident runtime", async () => {
+    let upstreamRequest: any = null;
+    vi.stubGlobal("fetch", vi.fn(async (_url: string, init?: RequestInit) => {
+      upstreamRequest = JSON.parse(String(init?.body));
+      return new Response(JSON.stringify(providerResponse({
+        originReasonId: "reason:mira:speech:120",
+        proposal: acceptedFieldsProposal,
+      })), { status: 200, headers: { "content-type": "application/json" } });
+    }));
+    const res = await handleSpcNextLifeIntent(
+      new Request("https://example.test/api/spc-next/life-intent", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-spc-life-runtime": "five-resident-causal-v1",
+          "x-spc-life-capabilities": "temporal-standing-v1",
+        },
+        body: JSON.stringify(context),
+      }),
+      env(),
+    );
+    expect(res.ok).toBe(true);
+    const decisions = upstreamRequest.text.format.schema.properties.proposal
+      .properties.commitmentDecision.anyOf;
+    const standing = decisions.find((x: any) => x.properties?.standingSocialCommitment);
+    expect(standing.properties.standingSocialCommitment.anyOf.map((v: any) =>
+      Object.keys(v.properties))).toEqual([
+      ["goal"], ["goal", "revisitAfterWorldTicks"],
+    ]);
+    expect(standing.properties.standingSocialCommitment.anyOf[1].properties.revisitAfterWorldTicks)
+      .toEqual({ type: "integer", minimum: 1, maximum: 36_000 });
+    expect(upstreamRequest.instructions).toContain("MAY choose revisitAfterWorldTicks");
+  });
+
   it("asks the provider for commitment decisions instead of body activity replacement", async () => {
     let upstreamRequest: any = null;
     vi.stubGlobal("fetch", vi.fn(async (_url: string, init?: RequestInit) => {
@@ -154,20 +188,10 @@ describe("SPC Next life-intent endpoint commitment contract", () => {
       variant.properties?.standingSocialCommitment
     ));
     expect(standingVariant).toBeTruthy();
-    const standingShapes = standingVariant.properties.standingSocialCommitment.anyOf;
-    expect(standingShapes).toHaveLength(2);
-    expect(standingShapes.map((variant: any) =>
-      Object.keys(variant.properties))).toEqual([
-      ["goal"],
-      ["goal", "revisitAfterWorldTicks"],
-    ]);
-    expect(standingShapes[1].properties.revisitAfterWorldTicks).toEqual({
-      type: "integer", minimum: 1, maximum: 36_000,
-    });
-    expect(standingShapes.every((variant: any) =>
-      variant.additionalProperties === false
-      && variant.required.length === Object.keys(variant.properties).length,
-    )).toBe(true);
+    expect(Object.keys(standingVariant.properties.standingSocialCommitment.properties))
+      .toEqual(["goal"]);
+    expect(standingVariant.properties.standingSocialCommitment.additionalProperties).toBe(false);
+    expect(upstreamRequest.instructions).toContain("DO NOT include revisitAfterWorldTicks");
     expect(upstreamRequest.instructions).toContain("commitmentDecision");
     expect(upstreamRequest.instructions).toContain("does not seize the body");
     expect(upstreamRequest.instructions).toContain("standingSocialCommitment");

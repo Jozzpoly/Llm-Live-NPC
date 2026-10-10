@@ -84,6 +84,11 @@ export class FiveResidentCausalLifeRuntime {
     return this.composition.world;
   }
 
+  /** Real local ability, not a provider-prompt claim. */
+  supportsTemporalStandingReview(): boolean {
+    return this.options.temporalStandingReview === true;
+  }
+
   ownership(residentId: FiveResidentId): FiveResidentCausalLifeOwnership {
     return this.lanes.has(residentId) ? "recovered_life" : "local_opening";
   }

@@ -2,6 +2,33 @@ import { describe, expect, it, vi } from "vitest";
 import { FiveResidentUnifiedLivingRuntime } from "./five-resident-unified-living-runtime";
 
 describe("five-resident unified living runtime", () => {
+  it("exports the temporal capability header only when the actual five-resident World supports it", async () => {
+    async function firstHeader(optIn: boolean): Promise<Headers> {
+      const captures: Headers[] = [];
+      const fetcher = vi.fn(async (_url: RequestInfo | URL, init?: RequestInit) => {
+        captures.push(new Headers(init?.headers));
+        return new Response(JSON.stringify({ok:false,code:"global_limit"}),{
+          status:429,headers:{"content-type":"application/json"},
+        });
+      });
+      const living = new FiveResidentUnifiedLivingRuntime({
+        fetcher, temporalStandingReview: optIn,
+      });
+      expect(living.lifeRuntime.supportsTemporalStandingReview()).toBe(optIn);
+      for(let i=0;i<2500 && captures.length===0;i++) {
+        living.advanceOneWorldTick();
+        if(i%100===0) await flushMicrotasks();
+      }
+      expect(captures.length).toBeGreaterThan(0);
+      return captures[0]!;
+    }
+    const normal = await firstHeader(false);
+    expect(normal.get("x-spc-life-runtime")).toBe("five-resident-causal-v1");
+    expect(normal.get("x-spc-life-capabilities")).toBeNull();
+    const research = await firstHeader(true);
+    expect(research.get("x-spc-life-capabilities")).toBe("temporal-standing-v1");
+  });
+
   it("keeps five asynchronous provider completions inert until the next World admission boundary", async () => {
     const fetcher = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
       const context = JSON.parse(String(init?.body)) as {

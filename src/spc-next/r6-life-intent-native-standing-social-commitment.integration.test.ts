@@ -11,6 +11,57 @@ const PROMISE_GOAL = "pozostać dostępną dla Idy jeszcze przez chwilę";
 const EXECUTION_GUARD = 600;
 
 describe("R6-B native life-intent standing social continuation", () => {
+  it("rejects an otherwise valid timed promise when this R5 life has NO temporal World capability", async () => {
+    const fetcher = vi.fn(async (_url: RequestInfo | URL, init?: RequestInit) => {
+      const context = JSON.parse(String(init?.body));
+      const originReasonId = context.reasons[0]?.id;
+      if (!originReasonId) throw new Error("missing private reason");
+      const proposal: ResidentLifeIntentProposal = {
+        version: 1,
+        commitmentDecision: {
+          kind: "accept",
+          reason: "try a bounded future statement",
+          intent: {
+            kind: "communicate",
+            goal: "tell Ida a time-bound promise",
+            targetActorId: R5_IDA_ID,
+            targetRegionId: null, targetPosition: null,
+            text: "Wrócę do tej sprawy za dziesięć sekund.",
+          },
+          standingSocialCommitment: {
+            goal: "keep a meaningful social promise",
+            revisitAfterWorldTicks: 600,
+          },
+        },
+        beliefs: [], concerns: [], reviewAfterSeconds: 30,
+      };
+      return new Response(JSON.stringify({ok:true,originReasonId,proposal}),{
+        status:200,headers:{"content-type":"application/json"},
+      });
+    });
+    const slice = createR5MiraSemanticEscalationSlice(fetcher);
+    slice.advanceOneWorldTick();
+    slice.idaAddressMira();
+    slice.advanceOneWorldTick();
+    await flushMicrotasks();
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(slice.diagnostics().providerInboxCount).toBe(1);
+
+    const rejected = slice.advanceOneWorldTick().admissions[0];
+    expect(rejected).toMatchObject({
+      status: "rejected",
+      residentId: R5_MIRA_ID,
+      reason: "intent_rejected",
+      detail: "timed social commitment unsupported by this local World runtime",
+    });
+    expect(slice.life.currentLifeView().matters).toEqual([]);
+    expect(slice.life.focus.focusedRun()).toBeNull();
+    expect(slice.world.diagnostics().recentOccurrences.some(o=>
+      o.actorId === R5_MIRA_ID && o.kind === "speech"
+        && o.text === "Wrócę do tej sprawy za dziesięć sekund.",
+    )).toBe(false);
+  });
+
   it("carries declared future social meaning through normal admission and materializes it only after factual self speech", async () => {
     const fetcher = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
       const context = JSON.parse(String(init?.body));

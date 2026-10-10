@@ -32,11 +32,15 @@ export class FiveResidentCausalProviderTransport {
   constructor(
     endpoint = "/api/spc-next/life-intent",
     fetcher: CognitionFetch = fetch,
+    options: { temporalStandingReview?: boolean } = {},
   ) {
     this.transport = new ResidentCausalProviderTransport(
       endpoint,
       fetcher,
-      { runtimeMode: "five-resident-causal-v1" },
+      {
+        runtimeMode: "five-resident-causal-v1",
+        temporalStandingReview: options.temporalStandingReview === true,
+      },
     );
   }
 

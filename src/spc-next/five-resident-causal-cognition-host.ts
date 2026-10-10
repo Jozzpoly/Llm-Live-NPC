@@ -195,7 +195,9 @@ export class FiveResidentCausalCognitionHost {
     const life = this.runtime.life(residentId);
     if (!life) return null;
 
-    const lane = new ResidentCausalCognitionLane(life);
+    const lane = new ResidentCausalCognitionLane(life, {
+      allowTimedStandingReview: this.runtime.supportsTemporalStandingReview(),
+    });
     this.lanes.set(residentId, lane);
     return lane;
   }
