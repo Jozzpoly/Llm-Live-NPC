@@ -181,6 +181,10 @@ describe("five-resident R6 — material continuation from private changed realit
     expect(scene.canonicalEvidenceSupported).toBe(false);
     expect(scene.world.publicSnapshot().residents).toHaveLength(5);
     expect(scene.world.materialObjects()).toHaveLength(1);
+    expect(scene.world.materialObject(CRATE)?.location)
+      .toEqual({ kind: "held", actorId: "player.jozz" });
+    expect(scene.materialKnowledge?.observation(CRATE)?.currentlyVisible).toBe(true);
+    expect(scene.materialKnowledge?.visiblyFree(CRATE)).toBe(false);
     const janek = scene.residentLifeView?.(JAN);
     expect(janek?.matters).toContainEqual(expect.objectContaining({
       id: "matter.janek.pre-luna-existing-material-concern",
