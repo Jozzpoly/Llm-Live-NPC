@@ -100,16 +100,23 @@ export class ResidentGroundedTravelExecutor {
         && physical.outcome.constraints.includes("material_object")
         && this.detourAttempts < MAX_MATERIAL_DETOURS) {
         const touch = this.authority.touchedMaterial(this.runId);
-        const plan = touch
-          ? planTouchedMaterialDetour(self.position, this.destination, touch, this.world.options.bounds)
-          : null;
-        if (plan) {
+        if (!touch) {
+          // The actor really hit an obstacle last tick, but another participant
+          // may already have picked it up. The current local tactile condition
+          // has disappeared: retry the SAME run rather than declaring a stale
+          // physical failure or pretending to know the absent object's history.
+          this.detour = [];
+          this.detourAttempts += 1;
+          this.stalledTicks = 0;
+        } else {
+          const plan = planTouchedMaterialDetour(
+            self.position, this.destination, touch, this.world.options.bounds,
+          );
+          if (!plan) return this.finishBlocked([...physical.outcome.constraints]);
           this.detour = plan.map((point) => ({ ...point }));
           this.detourAttempts += 1;
           this.detourStartedTick = this.world.tick;
           this.stalledTicks = 0;
-        } else {
-          return this.finishBlocked([...physical.outcome.constraints]);
         }
       } else {
         return this.finishBlocked([...physical.outcome.constraints]);
