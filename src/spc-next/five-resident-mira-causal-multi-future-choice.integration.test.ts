@@ -128,6 +128,7 @@ describe("Mira fully causal multi-future life choice", () => {
       AI_PROBE_LIMITER: limiter,
       HEARTH_COGNITION_LIMITER: limiter,
       OPENAI_API_KEY: "test-key",
+      SPC_RESEARCH_OPERATOR_TOKEN: "test-only-operator-secret-NEVER-PRODUCTION-0123456789",
       SPC_NEXT_LIFE_CHOICE_MODEL: "gpt-5.6-luna",
       SPC_NEXT_LIFE_CHOICE_REASONING: "low",
       SPC_NEXT_LIFE_CHOICE_MAX_OUTPUT_TOKENS: "512",
@@ -136,7 +137,13 @@ describe("Mira fully causal multi-future life choice", () => {
       owner,
       "/api/spc-next/life-choice",
       async (input, init) => worker.fetch(
-        new Request(new URL(String(input), "https://worker.test"), init),
+        new Request(new URL(String(input), "https://worker.test"), {
+          ...init,
+          headers: {
+            ...Object.fromEntries(new Headers(init?.headers)),
+            authorization: "Bearer test-only-operator-secret-NEVER-PRODUCTION-0123456789",
+          },
+        }),
         env,
       ),
     );
@@ -240,6 +247,7 @@ describe("Mira fully causal multi-future life choice", () => {
       AI_PROBE_LIMITER: limiter,
       HEARTH_COGNITION_LIMITER: limiter,
       OPENAI_API_KEY: "test-key",
+      SPC_RESEARCH_OPERATOR_TOKEN: "test-only-operator-secret-NEVER-PRODUCTION-0123456789",
       SPC_NEXT_LIFE_CHOICE_MODEL: "gpt-5.6-luna",
       SPC_NEXT_LIFE_CHOICE_REASONING: "low",
       SPC_NEXT_LIFE_CHOICE_MAX_OUTPUT_TOKENS: "512",
@@ -248,7 +256,13 @@ describe("Mira fully causal multi-future life choice", () => {
       choiceOwner,
       "/api/spc-next/life-choice",
       async (input, init) => worker.fetch(
-        new Request(new URL(String(input), "https://worker.test"), init),
+        new Request(new URL(String(input), "https://worker.test"), {
+          ...init,
+          headers: {
+            ...Object.fromEntries(new Headers(init?.headers)),
+            authorization: "Bearer test-only-operator-secret-NEVER-PRODUCTION-0123456789",
+          },
+        }),
         env,
       ),
     );
