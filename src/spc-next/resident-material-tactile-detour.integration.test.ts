@@ -64,6 +64,42 @@ describe("run-authorized tactile material detours without fictitious NPC cogniti
     }));
   });
 
+  it("retries the same run when player removes the obstacle between physical contact and local response", () => {
+    const { world, authority, executor, position } = fixture({ x: 2_080, y: 720 });
+    world.addPlayer("player.local-clearer", { x: 2_004, y: 720 });
+    let result = executor.step();
+    let contacted = false;
+    for (let i = 0; i < 150 && result.status === "running"; i += 1) {
+      world.step();
+      if (authority.lastMotionOutcome()?.outcome.constraints.includes("material_object")) {
+        contacted = true;
+        break;
+      }
+      result = executor.step();
+    }
+    expect(contacted).toBe(true);
+    expect(authority.touchedMaterial(RUN)).toMatchObject({
+      position: { x: 1_952, y: 720 }, radius: 18,
+    });
+    // Between World collision and the next resident motor frame, a participant
+    // actually picks up the contacting object under the ordinary World rules.
+    expect(world.attemptMaterialAction("player.local-clearer", {
+      kind: "pickup", objectId: CRATE,
+    })).toMatchObject({ status: "succeeded", code: "picked_up" });
+    expect(authority.touchedMaterial(RUN)).toBeNull();
+    result = executor.step();
+    expect(result.status).toBe("running");
+    for (let i = 0; i < 180 && result.status === "running"; i += 1) {
+      world.step();
+      result = executor.step();
+    }
+    expect(result.status).toBe("arrived");
+    expect(position().x).toBeGreaterThan(2_050);
+    expect(world.materialObject(CRATE)?.location).toEqual({
+      kind: "held", actorId: "player.local-clearer",
+    });
+  });
+
   it("declines to invent passage when the actual target is inside the obstruction", () => {
     const { world, authority, executor } = fixture({ x: 1_952, y: 720 });
     let result = executor.step();
