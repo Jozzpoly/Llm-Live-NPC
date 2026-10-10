@@ -1,0 +1,50 @@
+# SPC Next — decide whether a resident can own a *next* future, not just execute
+**Date:** 2026-10-10 · **Authority:** working falsifiable research design, NOT Owner-approved architecture or implementation order. Subordinate to the latest Owner feedback and `SPC_POST_STRESS_RECOVERY_PROGRAM.md`.
+**Current product classification:** OWNER FAIL. No gameplay/agency promotion based on a machine PASS.
+
+## 1. Recovered reason for this campaign
+The Owner's aim is a shared, playable 2D World lived in by Mira, Janek, Ida, Oren and Nela, who privately experience and interpret facts, have changing relations, memory and ongoing self-owned commitments, retain meaningful inaction, and may continue off-camera. The player can join, interfere and leave. World is causal truth; local brain maintains embodied life; a strong LLM contributes actual semantic judgement only when it matters. World mechanics/observatory/PR counts are not the product.
+
+**What 2026-10-10 actually falsified (head-sourced):**
+- PR #156 (`0694eb0`) proved one R6 resident's *authored existing* blocked material acquisition resumes locally after a private observed real item drop, then ends in a factual pickup, not in a new goal or delivery. 1074 tests and real Chromium PASS. Actual screenshot: empty-looking scene, player/Janek body and labels overlap. Product FAIL.
+- PR #157 (`e787eea`) proved opt-in idle Janek turns toward the actual privately heard addressed player while not speaking or settling semantic meaning. 1073 tests, both Chromium jobs and Workers PASS. Inspected exact artifact `11657619938`: screenshot pair `09-r6-idle-contact-before.jpg` / `10-r6-idle-contact-oriented.jpg`; bodily difference is a tiny heading marker, visually very weak. Product FAIL. Preserve as opt-in local-contact donor only.
+- PR #152 (`538d0a3`) established a more capable pre-Luna material playground, with four objects and actual physical pick/place, opt-in contact/detour. Inspected `pre-luna-world.png` from artifact `11652993303`: more objects/labels/contact circle but still large uninhabited plane. Donor, NOT a credible inhabited game.
+- Code, R6 `FiveResidentCausalLifeRuntime` / integration test: after one-way handoff, no focused run means the embodied coordinator is idle; all five can remain still after authored openings. `FIVE_RESIDENT_LIFE_SELF` is authored prose of roles and drives, not resident-owned actionable evidence. `CognitionScheduler` correctly cannot create `CognitionReason` from elapsed quiet time. The five-resident provider host only dispatches **existing unresolved** reasons. Consequently neither adding physical objects nor local acknowledgement makes a *next self-owned matter* arise.
+- Genuine earlier bounded real-Luna Oren/Nela standing-commitment outcomes showed personally meaningful history can change choices under a deliberately selected review. They do not show ordinary, ongoing, self-initiated life. Re-using that result as a spontaneous-initiative PASS is prohibited.
+- The 18 Sep stress record (1,313 requests in its export) already falsifies generating life with frequent undifferentiated event/quiet-time→provider pressure. Do not restart this treadmill.
+
+## 2. Correct target question and competing explanations
+**Question:** After an existing, honestly labelled starting situation produces a *new genuine factual experience*, is there a resident-private reason that deserves deliberation about their next course, such that the resident may continue, adapt, choose something new, wait, decline or stop **without a fixture picking the branch**?
+
+Distinguish these failure mechanisms instead of treating them as one:
+1. **Material affordance deficit.** The World has no relevant physical next action, even if the resident wants one.
+2. **Local capability deficit.** A grounded current intent exists, but R6 can only travel/communicate/pick up; desired multistep World action cannot execute.
+3. **Self-relative meaning / next-future deficit.** World affords action and previous intentions have actually ended, but no first-person, private question remains to choose what matters next. An authored role string or a provider heartbeat is not such a question.
+4. **Perception/presentation deficit.** The body does something factual but the player cannot perceive/understand a meaningful reaction or consequence.
+5. **Provider/safety deficit.** An external semantic decision would materially help but hard budget, arrival epoch, provenance or endpoint/Owner gate is not secured; this must stop a live run, not be hidden.
+
+## 3. Discriminating progression — deliberate decision gates
+**A · Actual World affordance audit (zero-provider, no new feature PR by inertia).** Inventory which interactions, reachable destinations, material situations, private observations and socially legible consequences REALLY exist in canonical R6 vs opt-in #152–155 donors. Identify ONE ordinary situation for which a resident could legitimately have a continuing personal reason. Do not manufacture an environment event simply to trigger the preferred response. If neither available World nor safe donor supports a meaningful physical/social outcome, work on that material ground first; not on cognition prompts.
+
+**B · Genuine resident current-question boundary, not a new autonomous 'brain' product.** Start from an explicitly labelled first-person existing interest/standing concern with exact causal provenance, then let the normal shared World produce independently changed facts. A *local* gate may surface a reviewable question **only when existing resident-private unresolved significance changes** (e.g. a factual contradiction or an unfinished personal commitment acquiring relevant evidence), not because an object moved anywhere, time ticked, or a scripted event demanded activity. Do not declare that question an actual decision. Quiet and refusal remain valid.
+   - **With-relation vs without-relation:** same World action; only the historically implicated actor may find it pertinent. 
+   - **Witnessed vs hidden:** unperceived change must not rewrite a private question. 
+   - **Unchanged evidence vs new evidence:** no periodic repeated semantic review without changed causal support. 
+   - **Resolved/relinquished vs unresolved matter:** no after-success work treadmill.
+   - **Sibling residents:** no broadcast reason, no synthetic unanimous desires, no duplicate answers.
+   - **Loss/competition:** real local body/run/interrupt arbitration must retain a factual outcome and genuine stop path.
+
+**C · Controlled semantic agency, NOT the same as local policy.** Only after A/B pass, test a **separately identified decision source** on the same private frozen context: deterministic provider fixture is a pipe/contract test ONLY, never a self-originated decision; actual strong-model judgement (if authorized/gated) must demonstrate with/without-history and unchanged/changed facts divergence plus a materially different WORLD action/inaction. Avoid writing the expected choice or response into the fixture. Record true independent reasoning/provenance/latency/cost, no rhetorical classification of 'felt alive' from a text answer.
+
+**D · Owner lived World gate.** In the actual browser, without debug telemetry or scripted player steps: enter, observe a quiet world, act unpredictably, depart/return; detect whether people have legible causal persistence and genuinely independent affairs. No Owner invite before there is meaningful experimental value and safe zero-Luna access. Owner's experience can remain FAIL regardless of all previous PASS.
+
+**Parallel but separate:** Build/qualify a usable **pre-Luna World interaction specimen** from opt-in physical donors (especially #152), with truthful materiality, adequate view, interaction and access. That is a player/gameplay acceptance gate, NOT automatic promotion of NPC cognition. Avoid prematurely merging multiple stacked drafts or inventing scenery/scripting NPCs merely to fill the screen. Respect Owner's future art-direction control.
+
+## 4. First concrete next operation
+1. Map canonically runnable actions, existing genuine resident-private long-lived evidence and admission edges. Mark each A/B/C/D limitation, with source paths/SHAs and what cannot honestly be demonstrated. Do **not** rerun the already closed PR156/157 CI.
+2. Select a *non-crate* ordinary episode where World consequences can be expressed through currently real legal actions. Explicitly write what the actor knows, what they do not, what comes from the authored past, and what World facts occur independently after start. An episode with no meaningful unforced choice is rejected before code.
+3. If an actual local *unresolved-question* seam can be defined without task injection or a generic poll, isolate it in a new draft only then. Preregister negative controls **before** building an executor. If implementing this inevitably becomes 'periodic life-review' with generic pressure, document FAIL and stop.
+4. If meaningful semantic choice genuinely requires a model, **do not fake it with a deterministic response and call it life**. Preserve an exact staged test pending a separately bounded actual provider campaign (hard spend guard, #151 epoch protection, no unbounded autonomous use) and first deliver a defensible pre-Luna owner playability view.
+
+## 5. Hard anti-goals / authority
+No need bars as proxy for motives; no 'random walks'; no NPC speech ping-pong; no staged player obedience; no automatic new tasks upon every completed matter; no 'turns toward player' interpreted as new relationship; no beautiful empty World presented as living. Keep PR #156/#157 **draft** and main unchanged. Continue in evidence batches while material progress exists; Owner correction supersedes this working hypothesis. Persist the live next action in `SPC_AGENT_RUN_STATE.md` rather than duplicating competing instructions.
