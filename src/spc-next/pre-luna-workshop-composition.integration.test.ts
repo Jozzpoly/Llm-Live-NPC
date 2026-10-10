@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { MATERIAL_CARRY_SPEED_FACTOR } from "./material-body-contact";
+import { MATERIAL_CARRY_SPEED_FACTOR, suggestBodyClearMaterialPlacement } from "./material-body-contact";
 import {
   createFiveResidentRegionComposition,
   FIVE_RESIDENT_MATERIAL_OBJECTS,
@@ -46,6 +46,38 @@ describe("pre-Luna workshop: physical choices, not decorative props or scripted 
     expect(optIn.runtimes["resident.janek"].publicState().activity.kind).toBe("idle");
     expect(optIn.world.options.materialBodyCollision).toBe(true);
     expect(standard.world.options.materialBodyCollision).toBeUndefined();
+  });
+
+  it("prevents a large parcel becoming permanently held because of a fixed small-object drop offset", () => {
+    const world = createFiveResidentRegionComposition({ materialBodyCollision: true }).world;
+    const residentNeutral = "player.larger-parcel-test";
+    world.addPlayer(residentNeutral, { x: 2_115, y: 825 });
+    const parcel = world.materialObject(TIMBER);
+    expect(parcel?.radius).toBe(25);
+    expect(world.attemptMaterialAction(residentNeutral, {
+      kind: "pickup", objectId: TIMBER,
+    })).toMatchObject({ status: "succeeded", code: "picked_up" });
+
+    const player = world.publicSnapshot().actors.find((actor) => actor.id === residentNeutral)!;
+    const oldDrop = { x: player.position.x + 42, y: player.position.y };
+    expect(world.attemptMaterialAction(residentNeutral, {
+      kind: "place", objectId: TIMBER, position: oldDrop,
+    })).toMatchObject({ status: "rejected", code: "body_occupied" });
+    expect(world.materialObject(TIMBER)?.location.kind).toBe("held");
+
+    const clearDrop = suggestBodyClearMaterialPlacement(
+      player.position, player.facing, parcel!.radius,
+    );
+    expect(Math.hypot(
+      clearDrop.x - player.position.x,
+      clearDrop.y - player.position.y,
+    )).toBeGreaterThan(parcel!.radius + 18);
+    expect(world.attemptMaterialAction(residentNeutral, {
+      kind: "place", objectId: TIMBER, position: clearDrop,
+    })).toMatchObject({ status: "succeeded", code: "placed" });
+    expect(world.materialObject(TIMBER)?.location).toEqual({
+      kind: "free", position: clearDrop,
+    });
   });
 
   it("lets the player build and reopen an actual obstruction, with real multi-object occupancy veto", () => {
