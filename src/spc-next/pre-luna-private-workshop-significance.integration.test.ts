@@ -85,7 +85,7 @@ describe("real pre-Luna physical workshop × resident-private significance (PR15
         expect(tick.stewardshipRelevance["resident.janek"]).toBeUndefined();
       }
       expect(janek.resident.pendingCognitionReasons()).toHaveLength(1);
-      expect(janek.materialKnowledge?.knownObjects().map((o) => o.id)).toEqual([ORIGINAL]);
+      expect(janek.materialKnowledge?.snapshot().map((o) => o.objectId)).toEqual([ORIGINAL]);
 
       // Return only via ordinary World pickup, embodied travel and placement.
       // No resident decision or run is inserted at any point.
@@ -133,7 +133,7 @@ describe("real pre-Luna physical workshop × resident-private significance (PR15
     })).toMatchObject({ status: "succeeded", code: "placed" });
     const outcome = runtime.advanceOneWorldTick();
     expect(outcome.stewardshipRelevance["resident.janek"]).toBeUndefined();
-    expect(janek.materialKnowledge?.knownObjects().map((o) => o.id)).toEqual([ORIGINAL]);
+    expect(janek.materialKnowledge?.snapshot().map((o) => o.objectId)).toEqual([ORIGINAL]);
     expect(janek.resident.pendingCognitionReasons()).toEqual([]);
     expect(janek.currentLifeView().matters).toEqual([]);
   });
