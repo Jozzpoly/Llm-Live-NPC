@@ -41,8 +41,18 @@ eyebrow.textContent = "Living world · embodied cognition research";
 stageNode.textContent = "WORLD / EPISTEMIC LAB";
 stageNode.classList.add("is-active");
 gameNode.setAttribute("aria-label", "SPC Next living-world research scene");
+const materialContinuationScene = params.get("scenario") === "five-resident-material-continuation";
+if (materialContinuationScene) {
+  stageNode.textContent = "R6 · WORLD / 0 LLM · BADANIE";
+  heading.textContent = "R6 · lokalna ciągłość";
+  eyebrow.textContent = "Pięciu mieszkańców, wspólny świat · test powrotu do istniejącej sprawy";
+}
 footer.innerHTML = [
   "<span>Ruch: WASD / strzałki</span>",
+  ...(materialContinuationScene ? [
+    "<span>E: podnieś / odłóż skrzynkę · zabierz ją poza wzrok Janka i wróć</span>",
+    "<span>Uwaga: wcześniejsza sprawa Janka jest zadanym stanem początkowym, nie samodzielnie utworzonym celem</span>",
+  ] : []),
   "<span>Wybór SPC: klik / Tab</span>",
   "<span>Zawołaj: H · mikroskop: R</span>",
   "<span>Śledź SPC: F · gracz: P · cały świat: O</span>",
