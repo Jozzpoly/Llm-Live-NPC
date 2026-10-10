@@ -91,14 +91,14 @@ function fixture(occupyOriginal = false) {
 }
 
 function runUntil(
-  fixture: ReturnType<typeof fixture>,
+  scenario: ReturnType<typeof fixture>,
   stop: (step: ResidentRunMaterialRelocationStep) => boolean,
   max = 1_400,
 ) {
-  let step = fixture.executor.step();
+  let step = scenario.executor.step();
   for (let i = 0; i < max && !stop(step); i += 1) {
-    fixture.world.step();
-    step = fixture.executor.step();
+    scenario.world.step();
+    step = scenario.executor.step();
   }
   return step;
 }
