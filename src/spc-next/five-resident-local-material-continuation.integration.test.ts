@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { createFiveResidentRegionComposition } from "./five-resident-region";
 import { FiveResidentCausalLifeRuntime } from "./five-resident-causal-life-runtime";
+import {
+  createSpcNextResearchScenario,
+  researchScenarioKindFromSearch,
+} from "../client/spc-next-research-scenario";
 
 const JAN = "resident.janek";
 const CRATE = "crate.workshop.01";
@@ -165,6 +169,61 @@ describe("five-resident R6 — material continuation from private changed realit
     expect(observed.localMaterialResumption[JAN]).toBeUndefined();
     expect(s.life.focus.focusedRun()).toBeNull();
     expect(s.world.materialObject(CRATE)?.location).toEqual({kind:"held",actorId:MOVER});
+  });
+
+  it("in the REAL browser-exposed World responds to ordinary-speed player carrying, then placing in plain sight", () => {
+    expect(researchScenarioKindFromSearch("?spc=1&scenario=five-resident-material-continuation"))
+      .toBe("five-resident-material-continuation");
+    const scene = createSpcNextResearchScenario("five-resident-material-continuation");
+    expect(scene.canonicalEvidenceSupported).toBe(false);
+    expect(scene.world.publicSnapshot().residents).toHaveLength(5);
+    expect(scene.world.materialObjects()).toHaveLength(1);
+    const janek = scene.residentLifeView?.(JAN);
+    expect(janek?.matters).toContainEqual(expect.objectContaining({
+      id: "matter.janek.pre-luna-existing-material-concern",
+      status: "active",
+      activeRun: null,
+      semanticIntent: { kind: "acquire_material_object", objectId: CRATE,
+        goal: "Continue previously accepted familiar workshop material acquisition" },
+    }));
+    expect(janek?.body.focusedRunId).toBeNull();
+
+    const world = scene.world;
+    const actorPosition = () => world.publicSnapshot().actors.find(a => a.id === "player.jozz")!.position;
+    expect(world.attemptMaterialAction("player.jozz", {
+      kind: "pickup", objectId: CRATE,
+    })).toMatchObject({ status: "succeeded", code: "picked_up" });
+
+    world.setActorMotionIntent("player.jozz", { x: 150, y: 0 });
+    for(let i=0;i<300;i++) scene.advanceOneWorldTick();
+    expect(actorPosition().x).toBeGreaterThan(2_500);
+    expect(scene.materialKnowledge?.observation(CRATE)?.currentlyVisible).toBe(false);
+
+    world.setActorMotionIntent("player.jozz", { x: -150, y: 0 });
+    for(let i=0;i<240;i++) scene.advanceOneWorldTick();
+    world.setActorMotionIntent("player.jozz", { x: 0, y: 0 });
+    expect(scene.materialKnowledge?.observation(CRATE)?.currentlyVisible).toBe(true);
+    expect(scene.materialKnowledge?.visiblyFree(CRATE)).toBe(false);
+    expect(scene.residentLifeView?.(JAN)?.body.focusedRunId).toBeNull();
+
+    const drop = { x: actorPosition().x + 42, y: actorPosition().y };
+    expect(world.attemptMaterialAction("player.jozz", {
+      kind: "place", objectId: CRATE, position: drop,
+    })).toMatchObject({ status: "succeeded", code: "placed" });
+    scene.advanceOneWorldTick();
+    expect(scene.materialKnowledge?.visiblyFree(CRATE)).toBe(true);
+    expect(scene.residentLifeView?.(JAN)?.body.focusedRunId).not.toBeNull();
+    let completed = false;
+    for(let i=0;i<500;i++) {
+      scene.advanceOneWorldTick();
+      if(scene.residentLifeView?.(JAN)?.matters.some(m =>
+        m.id==="matter.janek.pre-luna-existing-material-concern"
+        && m.status==="resolved"
+      )) { completed = true; break; }
+    }
+    expect(completed).toBe(true);
+    expect(world.materialObject(CRATE)?.location).toEqual({kind:"held",actorId:JAN});
+    expect(world.publicSnapshot().residents).toHaveLength(5);
   });
 
   it("never repeats a renewed run merely because free material remains in view", () => {
