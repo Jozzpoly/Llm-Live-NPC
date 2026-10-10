@@ -121,6 +121,12 @@ export class ResidentWorldExecutionAuthority {
     return this.world.residentAuthorizedMotionOutcome(this.residentId);
   }
 
+  /** Touch-only motor signal for the exact currently authorized run. */
+  touchedMaterial(runId: string): { position: { x: number; y: number }; radius: number } | null {
+    this.assertActive();
+    return this.world.residentRunTouchedMaterial(this.residentId, runId);
+  }
+
   private assertActive(): void {
     if (this.released) throw new Error("resident World execution authority is released");
   }
