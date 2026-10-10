@@ -150,6 +150,36 @@ describe("run-authorized tactile material detours without fictitious NPC cogniti
     expect(position().x).toBeGreaterThan(2_830);
   });
 
+  it("cannot continue its local detour after the resident's exact run is revoked", () => {
+    const { world, kernel, authority, executor, position } = fixture({ x: 2_080, y: 720 });
+    let result = executor.step();
+    let bypassAttempted = false;
+    for (let i = 0; i < 150 && result.status === "running"; i += 1) {
+      world.step();
+      const physical = authority.lastMotionOutcome();
+      result = executor.step();
+      if (physical?.outcome.constraints.includes("material_object")) {
+        bypassAttempted = true;
+        break;
+      }
+    }
+    expect(bypassAttempted).toBe(true);
+    expect(result.status).toBe("running");
+    const before = position();
+    kernel.recordEvidence({
+      id: "evidence.janek.local-detour-revoked",
+      tick: world.tick,
+      kind: "direct_world_change",
+      summary: "Test: previous run's authority is no longer valid.",
+    });
+    kernel.advanceSemanticContext(MATTER, "evidence.janek.local-detour-revoked");
+    expect(kernel.canRunMutateWorld(RUN)).toBe(false);
+    expect(executor.step()).toEqual({ status: "authority_lost", runId: RUN });
+    expect(authority.enforceMotionAuthority()).toEqual({ status: "revoked", runId: RUN });
+    world.step();
+    expect(position()).toEqual(before);
+  });
+
   it("declines to invent passage when the actual target is inside the obstruction", () => {
     const { world, authority, executor } = fixture({ x: 1_952, y: 720 });
     let result = executor.step();
