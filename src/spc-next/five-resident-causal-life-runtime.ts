@@ -66,9 +66,12 @@ export interface FiveResidentPreparedLifeIntent {
  */
 export class FiveResidentCausalLifeRuntime {
   private readonly lanes = new Map<FiveResidentId, ResidentLane>();
-  private readonly navigation = createFiveResidentNavigationGraph();
+  private readonly navigation: ReturnType<typeof createFiveResidentNavigationGraph>;
 
   constructor(private readonly composition: FiveResidentRegionComposition) {
+    this.navigation = createFiveResidentNavigationGraph({
+      materialBodyCollision: composition.world.options.materialBodyCollision === true,
+    });
     this.claimReadyResidents();
   }
 
