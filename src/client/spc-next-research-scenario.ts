@@ -897,6 +897,15 @@ function createFiveResidentMaterialContinuationScenario(): SpcNextResearchScenar
   const composition = createFiveResidentRegionComposition({
     playerStart: { x: 2_004, y: 720 },
   });
+  // Authored PHYSICAL opening: the player already carries Janek's crate.
+  // The current blocked matter has a factual counterpart in the shared World;
+  // this does not prescribe what Janek chooses after the player drops it.
+  const carried = composition.world.attemptMaterialAction("player.jozz", {
+    kind: "pickup", objectId: "crate.workshop.01",
+  });
+  if (carried.status !== "succeeded" || carried.code !== "picked_up") {
+    throw new Error("five-resident pre-Luna scenario must begin with actual held material");
+  }
   const living = new FiveResidentCausalLifeRuntime(composition);
   const life = living.life("resident.janek");
   if (!life) throw new Error("R6 material continuation requires Janek's claimed recovered-life authority");
