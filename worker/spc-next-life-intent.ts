@@ -549,7 +549,7 @@ export async function handleSpcNextLifeIntent(request: Request, env: SpcNextLife
     ...(runtimeMode === "five-resident-causal-v1" ? [FIVE_RESIDENT_CAUSAL_V1_GUIDANCE] : []),
     allowTimedStandingReview
       ? "The local World explicitly supports one typed time-derived standing-social review. You MAY choose revisitAfterWorldTicks only for a meaningful first-person promise consistent with your actual proposed speech."
-      : "The current local World DOES NOT support timed standing-social revisits. Do NOT include revisitAfterWorldTicks, even when an earlier message mentions a time; the exact JSON schema allows only goal.",
+      : "The current local World DOES NOT support timed standing-social revisits. DO NOT include revisitAfterWorldTicks, even when an earlier message mentions a time; the exact JSON schema allows only goal.",
   ].join("\n\n");
 
   try {
