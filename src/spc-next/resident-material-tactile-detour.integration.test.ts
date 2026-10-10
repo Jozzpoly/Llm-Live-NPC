@@ -138,6 +138,18 @@ describe("run-authorized tactile material detours without fictitious NPC cogniti
       .toEqual({ kind: "free", position: { x: 1_952, y: 720 } });
   });
 
+  it("does not mistake a finished contact bypass for a permanent deadline on distant travel", () => {
+    const { world, executor, position } = fixture({ x: 2_850, y: 720 });
+    let result = executor.step();
+    for (let i = 0; i < 850 && result.status === "running"; i += 1) {
+      world.step();
+      result = executor.step();
+    }
+    expect(world.tick).toBeGreaterThan(360);
+    expect(result).toMatchObject({ status: "arrived", destination: { x: 2_850, y: 720 } });
+    expect(position().x).toBeGreaterThan(2_830);
+  });
+
   it("declines to invent passage when the actual target is inside the obstruction", () => {
     const { world, authority, executor } = fixture({ x: 1_952, y: 720 });
     let result = executor.step();
