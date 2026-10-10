@@ -42,6 +42,13 @@ The **full** Browser Evidence suite for `212856de...` subsequently completed PAS
 
 **Current available tools:** GitHub connector read/write, GitHub Actions exact-head validation/logs, source browser artifacts, Cloudflare exact-commit preview metadata. Local isolated shell has Node 22 but outbound git clone DNS fails; Opera Browser Connector currently reports 'Browser not connected'. Do not burn time on repetitive circumventions or use costly browser agents/TinyFish for broad exploration. Work/Cloud Browser is a separate product mode, not a capability silently active in this chat.
 
+### Observed execution-process lessons from the #155 campaign
+- Worked through a full research cycle with one Owner `kontynuuj`: inspect existing exact-head visual/JSON evidence, select a discriminating gameplay hypothesis, write opt-in World candidate, run 1103 tests, red-team negative resident navigation behavior, qualify real Chromium, inspect the real screenshot and update durable canonical run state.
+- **Improvement:** group independent GitHub reads, keep writes on an explicit experimental branch, create draft PR only when a coherent test batch exists; use job-step status instead of spamming full logs. Artifacts from GitHub Actions can be downloaded directly via the GitHub connector into the container and examined without Opera, so do not claim that visuals require a connected browser.
+- **Self-critique:** two overlong un-preflighted Code-mode scripts failed at JavaScript parsing before any effect. Small, simple sequential connector edits were more reliable. Opening #155 before designing the later actor-blockage red-team test caused a second expensive complete CI/Chromium pass; next time specify likely negative controls before opening the PR, or use targeted checks before full workflow.
+- **Attention:** do not make Owner watch frequent raw updates; report only durable changes, material findings, genuine blockers and decision needs. At the same time, don't silently stop a half-complete CI run when results are obtainable; complete exact-head evidence and preserve the true artifact/result.
+- **Anti-inertia:** after this successful contact specimen, *do not* start #156 merely to sustain momentum. First ask whether person-contact motor response improves real life/playability or repeats the prior mechanistic-test trap. Product FAIL and owner test remain open.
+
 ## 4 · Longer-run operating loop (not a rigid clock or claim of background operation)
 **On entry:** verify repo identity, exact head/PR/CI, changed authority docs, latest Owner correction, current unresolved question. If already green, do not automatically rerun. Classify source fact / test / live provider / actual World/gameplay / Owner judgement separately.
 
