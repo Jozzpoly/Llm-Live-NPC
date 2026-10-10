@@ -74,6 +74,29 @@ describe("real five-resident R6 causal-life travel with material geometry enable
     }));
   });
 
+  it("reports a genuinely blocked matter if the player moves a crate onto the physical workshop landing", () => {
+    const { composition, runtime, life, matterId } = createRun("workshop");
+    const world = composition.world;
+    const mover = "player.workshop-placer";
+    world.addPlayer(mover, { x: 1_952, y: 760 });
+    expect(world.attemptMaterialAction(mover, {
+      kind: "pickup", objectId: "crate.workshop.01",
+    })).toMatchObject({ status: "succeeded", code: "picked_up" });
+    expect(world.attemptMaterialAction(mover, {
+      kind: "place", objectId: "crate.workshop.01", position: { x: 1_900, y: 760 },
+    })).toMatchObject({ status: "succeeded", code: "placed" });
+    let terminal: "blocked" | "completed" | null = null;
+    for (let i = 0; i < 240 && terminal === null; i += 1) {
+      const result = runtime.advanceOneWorldTick().execution[JAN];
+      if (result?.status === "completed" || result?.status === "blocked") terminal = result.status;
+    }
+    expect(terminal).toBe("blocked");
+    expect(life.kernel.matter(matterId)).toMatchObject({ status: "active" });
+    expect(world.materialObject("crate.workshop.01")?.location).toEqual({
+      kind: "free", position: { x: 1_900, y: 760 },
+    });
+  });
+
   it("uses a reachable physical workshop landing point and resolves the existing R6 matter honestly", () => {
     const { composition, runtime, life, matterId } = createRun("workshop");
     let terminal: string | null = null;
