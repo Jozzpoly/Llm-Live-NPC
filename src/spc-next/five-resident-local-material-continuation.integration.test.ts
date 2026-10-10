@@ -96,6 +96,9 @@ describe("five-resident R6 — material continuation from private changed realit
     const s = specimen();
     carryOutsideJanekSight(s);
     const destination = returnCarriedAndPutFree(s);
+    // A separate procedural observer can sample the same event before the
+    // five-resident host; the one-shot resident relevance must still survive.
+    s.life.materialKnowledge!.sample();
     const observed = s.lifeHost.advanceOneWorldTick();
     expect(observed.materialRelevance[JAN]).toContainEqual(expect.objectContaining({
       status: "reactivatable", matterId: MATTER, objectId: CRATE,
