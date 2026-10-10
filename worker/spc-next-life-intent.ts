@@ -69,7 +69,7 @@ For complete_standing, only target an exact open life matter whose semanticInten
 
 For continue_matter or relinquish_matter, originReasonId must select the exact activity_completed reason produced by that same current matter's latest factual outcome. Cite that outcome in supportEvidenceIds. Other target-local factual support already shown in life may also contribute, but ordinary matter origin/current prose alone is insufficient. Do not use continue_matter or relinquish_matter merely because another future looks better; multi-matter priority remains the separate life-choice plane. When the selected pressure is exactly the latest factual outcome of the sole current executable run-free plan, use continue_matter to affirm it, relinquish_matter to stop carrying it, or defer/clarify if judgement is genuinely unresolved. Plain decline is not a lifecycle decision for that existing plan.
 
-For accept+communicate only, use standingSocialCommitment when the resident deliberately intends that exact future speech to create one continuing social responsibility after it is factually spoken. The field contains only goal. Omit it for ordinary acknowledgement or conversation. The exact supplied speech text becomes the durable commitment wording only if that speech factually succeeds; do not provide a second paraphrased commitment claim. The declaration does not make the promise true, does not grant body authority and does not create standing history by itself.
+For accept+communicate only, use standingSocialCommitment when the resident deliberately intends that exact future speech to create one continuing social responsibility after it is factually spoken. It contains goal, and may OPTIONALLY contain revisitAfterWorldTicks (integer 1..36000) ONLY when the resident deliberately chooses a one-time future reconsideration and the actual speech text agrees with that timing. This is simulation ticks, 60 ticks/second, measured after the eventual factual speech, NOT reviewAfterSeconds, NOT a request cadence or a generic schedule. Omit the timing for ordinary social promises or acknowledgement. The exact supplied speech text becomes the durable commitment wording only if that speech factually succeeds; do not supply an inferred deadline from heard prose. The declaration does not make the promise true, grant body authority or create standing history by itself.
 
 Do not output trajectories, routes, execution steps, matter ids to invent, run ids to invent, body-focus decisions, or claims that an action already happened. The local system owns execution and will re-ground any accepted semantic destination or target from current state at admission time.
 
@@ -253,9 +253,17 @@ function strictCommitmentProposalShape(value: unknown): boolean {
         || decision.intent.targetActorId === null
         || decision.intent.text === null
         || !record(decision.standingSocialCommitment)
-        || !hasExactKeys(decision.standingSocialCommitment, ["goal"])
+        || !hasExactKeys(decision.standingSocialCommitment,
+          Object.hasOwn(decision.standingSocialCommitment, "revisitAfterWorldTicks")
+            ? ["goal", "revisitAfterWorldTicks"]
+            : ["goal"])
         || typeof decision.standingSocialCommitment.goal !== "string"
-        || !decision.standingSocialCommitment.goal.trim()) return false;
+        || !decision.standingSocialCommitment.goal.trim()
+        || (Object.hasOwn(decision.standingSocialCommitment, "revisitAfterWorldTicks")
+          && (typeof decision.standingSocialCommitment.revisitAfterWorldTicks !== "number"
+            || !Number.isSafeInteger(decision.standingSocialCommitment.revisitAfterWorldTicks)
+            || decision.standingSocialCommitment.revisitAfterWorldTicks < 1
+            || decision.standingSocialCommitment.revisitAfterWorldTicks > 36_000))) return false;
     }
   } else if (decision.kind === "decline" || decision.kind === "defer") {
     if (!hasExactKeys(decision, ["kind", "reason"])) return false;
@@ -394,9 +402,15 @@ const concernsSchema = { type: "array", maxItems: 8, items: objectSchema({
   status: { type: "string", enum: ["open", "resolved"] },
   evidenceIds: evidenceSchema,
 }) };
-const standingSocialCommitmentSchema = objectSchema({
-  goal: stringSchema(1200),
-});
+const standingSocialCommitmentSchema = {
+  anyOf: [
+    objectSchema({ goal: stringSchema(1200) }),
+    objectSchema({
+      goal: stringSchema(1200),
+      revisitAfterWorldTicks: { type: "integer", minimum: 1, maximum: 36_000 },
+    }),
+  ],
+};
 const materialAcquisitionIntentSchema = objectSchema({
   kind: { type: "string", enum: ["acquire_material_object"] },
   goal: stringSchema(1200),
