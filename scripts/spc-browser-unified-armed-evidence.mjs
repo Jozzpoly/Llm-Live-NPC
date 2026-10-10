@@ -73,8 +73,15 @@ try{
   });
   cdp=new Cdp(target.webSocketDebuggerUrl);await cdp.open();
   cdp.on("Network.requestWillBeSent",({request})=>{
-    if(request?.url?.includes("/api/spc-next/life-intent"))
-      report.requests.push({url:request.url,method:request.method});
+    if(request?.url?.includes("/api/spc-next/life-intent")) {
+      let context = null;
+      try { context = JSON.parse(request.postData ?? ""); } catch {}
+      report.requests.push({
+        url:request.url,method:request.method,
+        residentId:context?.resident?.id??null,
+        reasonKinds:Array.isArray(context?.reasons)?context.reasons.map(x=>x.kind):[],
+      });
+    }
   });
   cdp.on("Runtime.exceptionThrown",({exceptionDetails})=>{
     report.exceptions.push(exceptionDetails?.exception?.description??exceptionDetails?.text??"unknown");
@@ -100,6 +107,10 @@ try{
   check("one explicit click disables itself",clicked===true,{clicked});
   await until(()=>report.requests.length>=1,5000);
   check("exactly one network attempt",report.requests.length===1,report.requests);
+  check("Mira alone forwards genuine heard player speech, not an invented provider reason",
+    report.requests[0]?.residentId==="resident.mira"
+    &&report.requests[0]?.reasonKinds?.includes("heard_speech"),
+    report.requests[0]);
   await runIn(cdp,"window.__SPC_EVIDENCE__.stepWorld(500)");
   await wait(200);
   const after=await runIn(cdp,"window.__SPC_EVIDENCE__.snapshot()");
