@@ -50,7 +50,8 @@ describe("pre-Luna workshop: physical choices, not decorative props or scripted 
 
   it("lets the player build and reopen an actual obstruction, with real multi-object occupancy veto", () => {
     const world = createFiveResidentRegionComposition({ materialBodyCollision: true }).world;
-    world.addPlayer(PLAYER, { x: 2_010, y: 850 });
+    // Spawn OUTSIDE both nominal actor/object collision envelopes.
+    world.addPlayer(PLAYER, { x: 2_020, y: 877 });
 
     // The same World admits exactly one carried item. Trying to place into
     // the real timber parcel must fail, not replace or teleport either item.
@@ -68,31 +69,33 @@ describe("pre-Luna workshop: physical choices, not decorative props or scripted 
       kind: "free", position: { x: 2_055, y: 825 },
     });
 
-    const y = () => world.publicSnapshot().actors.find((actor) => actor.id === PLAYER)!.position.y;
-    world.setActorMotionIntent(PLAYER, { x: 0, y: -150 });
-    for (let i = 0; i < 20; i++) world.step();
-    world.setActorMotionIntent(PLAYER, { x: 0, y: 0 });
+    const x = () => world.publicSnapshot().actors.find((actor) => actor.id === PLAYER)!.position.x;
     const playerMaxSpeed = world.publicSnapshot().actors.find((a) => a.id === PLAYER)!.maxSpeed;
-    expect(y()).toBeCloseTo(
-      850 - 20 * Math.min(150, playerMaxSpeed) / 60 * MATERIAL_CARRY_SPEED_FACTOR, 4,
+    world.setActorMotionIntent(PLAYER, { x: -150, y: 0 });
+    for (let i = 0; i < 10; i++) world.step();
+    world.setActorMotionIntent(PLAYER, { x: 0, y: 0 });
+    expect(x()).toBeCloseTo(
+      2020 - 10 * Math.min(150, playerMaxSpeed) / 60 * MATERIAL_CARRY_SPEED_FACTOR, 4,
     );
 
-    const newBlocker = { x: 2_002, y: 770 };
+    // The participant itself creates a new World blocker on the path it just
+    // crossed while carrying. It is not an authored puzzle trigger.
+    const newBlocker = { x: 1_956, y: 877 };
     expect(world.attemptMaterialAction(PLAYER, {
       kind: "place", objectId: SPARE, position: newBlocker,
     })).toMatchObject({ status: "succeeded", code: "placed" });
-    world.setActorMotionIntent(PLAYER, { x: 0, y: -150 });
+    world.setActorMotionIntent(PLAYER, { x: -150, y: 0 });
     for (let i = 0; i < 30; i++) world.step();
-    const stopped = y();
-    expect(stopped).toBeGreaterThan(800);
-    expect(stopped).toBeLessThan(816);
+    const stopped = x();
+    expect(stopped).toBeGreaterThan(1_992);
+    expect(stopped).toBeLessThan(2_005);
     expect(world.diagnostics().lastMotionOutcomes.find((o) => o.actorId === PLAYER)?.constraints)
       .toContain("material_object");
 
     expect(world.attemptMaterialAction(PLAYER, { kind: "pickup", objectId: SPARE }))
       .toMatchObject({ status: "succeeded", code: "picked_up" });
     for (let i = 0; i < 30; i++) world.step();
-    expect(y()).toBeLessThan(775);
+    expect(x()).toBeLessThan(1_960);
     expect(world.diagnostics().lastMotionOutcomes.find((o) => o.actorId === PLAYER)?.constraints)
       .not.toContain("material_object");
     expect(world.materialObject(SPARE)?.location.kind).toBe("held");
