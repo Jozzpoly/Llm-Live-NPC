@@ -254,6 +254,9 @@ export class ResidentCausalLifeSubstrate {
       if (!after?.currentlyVisible) continue;
       const becameFreeWhileVisible = before.currentlyVisible
         && this.materialKnowledge.becameVisiblyFree(before.objectId);
+      // A normal hidden -> visible reacquisition already owns the edge. Consume
+      // any free-state marker now so it cannot replay on the next local tick.
+      if (!before.currentlyVisible) this.materialKnowledge.becameVisiblyFree(before.objectId);
       if (before.currentlyVisible && !becameFreeWhileVisible) continue;
 
       const life = this.currentLifeView();
