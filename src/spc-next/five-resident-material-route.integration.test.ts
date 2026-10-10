@@ -74,15 +74,17 @@ describe("real five-resident R6 causal-life travel with material geometry enable
     }));
   });
 
-  it("does not mark an authored workshop destination INSIDE its solid crate as successful", () => {
+  it("uses a reachable physical workshop landing point and resolves the existing R6 matter honestly", () => {
     const { composition, runtime, life, matterId } = createRun("workshop");
     let terminal: string | null = null;
     for (let i = 0; i < 240 && !terminal; i += 1) {
       const state = runtime.advanceOneWorldTick().execution[JAN];
       if (state?.status === "completed" || state?.status === "blocked") terminal = state.status;
     }
-    expect(terminal).toBe("blocked");
-    expect(life.kernel.matter(matterId)).toMatchObject({ status: "active" });
+    expect(terminal).toBe("completed");
+    expect(life.kernel.matter(matterId)).toMatchObject({ status: "resolved" });
+    const janek = composition.world.publicSnapshot().actors.find((a) => a.id === JAN)!;
+    expect(Math.hypot(janek.position.x - 1_900, janek.position.y - 760)).toBeLessThanOrEqual(18);
     expect(composition.world.materialObject("crate.workshop.01")?.location.kind).toBe("free");
   });
 });
