@@ -25,12 +25,13 @@ const completion = (value: unknown = proposal()) => ({
   }], usage: { input_tokens: 201, output_tokens: 41, total_tokens: 242 }
 });
 const environment = () => ({
+  SPC_RESEARCH_OPERATOR_TOKEN: "test-only-operator-secret-NEVER-PRODUCTION-0123456789",
   OPENAI_API_KEY: "test-placeholder-never-a-real-key",
   HEARTH_COGNITION_LIMITER: { limit: vi.fn(async (_options: { key: string }) => ({ success: true })) },
   AI_PROBE_LIMITER: { limit: vi.fn(async () => ({ success: true })) }, AI: { run: vi.fn(async () => ({})) }
 });
 const request = (body: unknown = context(), signal?: AbortSignal) => new Request("https://hearth.test/api/hearth/cognition", {
-  method: "POST", headers: { "content-type": "application/json", "cf-connecting-ip": "192.0.2.1" }, body: JSON.stringify(body), signal
+  method: "POST", headers: { "content-type": "application/json", "cf-connecting-ip": "192.0.2.1", authorization: "Bearer test-only-operator-secret-NEVER-PRODUCTION-0123456789" }, body: JSON.stringify(body), signal
 });
 const upstream = (body: unknown = completion()) => vi.fn<typeof fetch>(async () => Response.json(body));
 const streamingRequest = (body: ReadableStream<Uint8Array>) => {
