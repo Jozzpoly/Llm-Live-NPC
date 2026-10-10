@@ -21,6 +21,7 @@ import {
   type WorldRegion,
 } from "./contracts";
 import { ActorWorldState } from "./actor-world-state";
+import { MATERIAL_BODY_RADIUS } from "./material-body-contact";
 import {
   MaterialWorldState,
   type MaterialActionResult,
@@ -293,6 +294,34 @@ export class SpcWorldRuntime {
   residentAuthorizedMotionOutcome(residentId: string): ResidentAuthorizedMotionOutcome | null {
     const outcome = this.requireResidentExecutionAuthority(residentId).lastMotionOutcome;
     return outcome ? structuredClone(outcome) : null;
+  }
+
+  /**
+   * Narrow physical/tactile query: returns ONLY the shape currently contacting
+   * an authorized resident's body after their exact run was obstructed.
+   * No remote objects, hidden holders, identity or inferred prior causes.
+   * The shape is a motor stimulus, not resident semantic knowledge.
+   */
+  residentRunTouchedMaterial(residentId: string, runId: string): {
+    position: Vec2;
+    radius: number;
+  } | null {
+    if (!this.authoredOptions.materialBodyCollision) return null;
+    const lease = this.requireResidentExecutionAuthority(residentId);
+    const physical = lease.lastMotionOutcome;
+    if (!lease.authority.canRunMutateWorld(runId)
+      || !physical || physical.runId !== runId || physical.tick !== this.tickValue
+      || !physical.outcome.constraints.includes("material_object")) return null;
+    const self = this.requireActor(residentId);
+    const matching = this.materialState.objects()
+      .filter((object) => object.location.kind === "free")
+      .filter((object) => object.location.kind === "free"
+        && Math.hypot(object.location.position.x - self.position.x,
+          object.location.position.y - self.position.y)
+        <= object.radius + MATERIAL_BODY_RADIUS + 1)
+      .sort((a, b) => a.id.localeCompare(b.id))[0];
+    if (!matching || matching.location.kind !== "free") return null;
+    return { position: { ...matching.location.position }, radius: matching.radius };
   }
 
   applyResidentExecutionFrame(
