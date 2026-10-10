@@ -25,20 +25,22 @@ function fixture(withAuthoredRelation: boolean, moverStart = { x: 2_004, y: 720 
     world.setActorMotionIntent(MOVER, {
       x: (to.x - now.x) / dt, y: (to.y - now.y) / dt,
     });
-    runtime.advanceOneWorldTick();
+    const tick = runtime.advanceOneWorldTick();
     world.setActorMotionIntent(MOVER, { x: 0, y: 0 });
     expect(mover().x).toBeCloseTo(to.x, 4);
     expect(mover().y).toBeCloseTo(to.y, 4);
+    return tick;
   }
   function moveCrateOut() {
     expect(world.attemptMaterialAction(MOVER, { kind: "pickup", objectId: ORIGINAL }))
       .toMatchObject({ status: "succeeded", code: "picked_up" });
-    physicallyMove({ x: 2_135, y: 760 });
+    const inTransit = physicallyMove({ x: 2_135, y: 760 });
     const destination = { x: 2_182, y: 760 };
     expect(world.attemptMaterialAction(MOVER, {
       kind: "place", objectId: ORIGINAL, position: destination,
     })).toMatchObject({ status: "succeeded", code: "placed" });
-    return runtime.advanceOneWorldTick();
+    const afterPlacement = runtime.advanceOneWorldTick();
+    return { inTransit, afterPlacement };
   }
   return { world, runtime, janek, mover, physicallyMove, moveCrateOut };
 }
@@ -47,7 +49,8 @@ describe("real pre-Luna physical workshop × resident-private significance (PR15
   it("does not manufacture purpose from an ordinary World displacement when no relation exists", () => {
     const { world, runtime, janek, moveCrateOut } = fixture(false);
     const outcome = moveCrateOut();
-    expect(outcome.stewardshipRelevance["resident.janek"]).toBeUndefined();
+    expect(outcome.inTransit.stewardshipRelevance["resident.janek"]).toBeUndefined();
+    expect(outcome.afterPlacement.stewardshipRelevance["resident.janek"]).toBeUndefined();
     expect(janek.materialKnowledge?.observation(ORIGINAL)).toMatchObject({
       currentlyVisible: true,
       lastKnownPosition: { x: 2_182, y: 760 },
@@ -66,7 +69,13 @@ describe("real pre-Luna physical workshop × resident-private significance (PR15
       const { world, runtime, janek, moveCrateOut, physicallyMove } = fixture(true);
       expect(janek.resident.pendingCognitionReasons()).toEqual([]);
       const outcome = moveCrateOut();
-      expect(outcome.stewardshipRelevance["resident.janek"]).toEqual([
+      // A genuinely visible displacement may be noticed while held IN TRANSIT,
+      // not only after placement. Preserve the actual World/perception boundary.
+      const transitions = [
+        ...(outcome.inTransit.stewardshipRelevance["resident.janek"] ?? []),
+        ...(outcome.afterPlacement.stewardshipRelevance["resident.janek"] ?? []),
+      ];
+      expect(transitions).toEqual([
         expect.objectContaining({ status: "needs_judgement" }),
       ]);
       const [reason] = janek.resident.pendingCognitionReasons();
