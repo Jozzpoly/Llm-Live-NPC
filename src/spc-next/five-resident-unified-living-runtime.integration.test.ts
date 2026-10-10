@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { FiveResidentUnifiedLivingRuntime } from "./five-resident-unified-living-runtime";
+import { createFiveResidentRegionComposition } from "./five-resident-region";
 
 describe("five-resident unified living runtime", () => {
   it("keeps five asynchronous provider completions inert until the next World admission boundary", async () => {
@@ -180,6 +181,39 @@ describe("five-resident unified living runtime", () => {
     expect(upstream).toHaveBeenCalledTimes(1);
     expect(living.requestOneResidentCognition(chosen!.id)).toBe("budget_exhausted");
     expect(living.world.tick).toBe(3_800);
+  });
+
+  it("only a deliberate button request forwards an actually heard player utterance from the shared World", async () => {
+    const forwarded: Array<{ resident: { id: string }, reasons: Array<{ kind: string }> }> = [];
+    const upstream = vi.fn(async (_url: RequestInfo | URL, init?: RequestInit) => {
+      forwarded.push(JSON.parse(String(init?.body)));
+      return new Response(JSON.stringify({ok:false,code:"global_limit"}), {
+        status:429, headers:{"content-type":"application/json"},
+      });
+    });
+    const living = new FiveResidentUnifiedLivingRuntime({
+      composition: createFiveResidentRegionComposition({ playerStart: { x: 1000, y: 700 } }),
+      providerDispatchMode: "manual",
+      maxUpstreamRequests: 1,
+      fetcher: upstream,
+    });
+    while (living.world.tick < 2_600) living.advanceOneWorldTick();
+    const playerSpeech = living.world.speak(
+      "player.jozz", "Mira, czy możemy chwilę porozmawiać?", 420, ["resident.mira"],
+    );
+    expect(playerSpeech.kind).toBe("speech");
+    living.advanceOneWorldTick();
+    expect(upstream).not.toHaveBeenCalled();
+    expect(living.requestOneResidentCognition("resident.mira")).toBe("started");
+    expect(upstream).toHaveBeenCalledTimes(1);
+    expect(forwarded).toHaveLength(1);
+    expect(forwarded[0]!.resident.id).toBe("resident.mira");
+    expect(forwarded[0]!.reasons.some((reason) => reason.kind === "heard_speech")).toBe(true);
+    // Nothing else can be triggered by the next ticks or a second press.
+    await flushMicrotasks();
+    for(let i=0;i<500;i++) living.advanceOneWorldTick();
+    expect(upstream).toHaveBeenCalledTimes(1);
+    expect(living.requestOneResidentCognition("resident.mira")).toBe("budget_exhausted");
   });
 
   it("rejects manual invocation in automatic mode rather than granting a second provider path", () => {
