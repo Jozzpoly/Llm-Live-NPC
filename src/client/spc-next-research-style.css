@@ -76,6 +76,17 @@
   cursor: default;
 }
 
+.spc-armed-status {
+  max-width: 170px;
+  min-width: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  color: #98b5c2;
+}
+.spc-armed-status[hidden] { display: none; }
+
 .spc-world-mode-toggle {
   padding: 6px 9px;
   border: 1px solid #34434c;
