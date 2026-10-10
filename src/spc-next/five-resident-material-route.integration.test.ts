@@ -46,7 +46,8 @@ describe("real five-resident R6 causal-life travel with material geometry enable
       const outcome = composition.world.diagnostics().lastMotionOutcomes
         .find((motion) => motion.actorId === JAN);
       if (outcome?.constraints.includes("material_object")) contacts += 1;
-      deviation = Math.max(deviation, Math.abs(body.position.y - 720));
+      const straightLineY = 720 + (body.position.x - 1_900) * (200 / 1_300);
+      deviation = Math.max(deviation, Math.abs(body.position.y - straightLineY));
     }
     expect(contacts).toBeGreaterThan(0);
     expect(deviation).toBeGreaterThan(38);
