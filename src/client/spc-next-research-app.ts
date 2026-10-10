@@ -4,7 +4,7 @@ import "./spc-next-research-style.css";
 import type { SpcCanonicalEvidenceSnapshotV1 } from "../evidence/spc-next-canonical-evidence-snapshot";
 import { FIVE_RESIDENT_ROLE_PRESSURES } from "../spc-next/five-resident-region";
 import type { ResidentPercept, ResidentTraceEvent, WorldOccurrence } from "../spc-next/contracts";
-import { researchScenarioKindFromSearch } from "./spc-next-research-scenario";
+import { isPreLunaWorkshopScenario, researchScenarioKindFromSearch } from "./spc-next-research-scenario";
 import {
   SPC_PLAYER_SPEECH_RADIUS,
   SpcNextResearchScene,
@@ -13,7 +13,7 @@ import {
 
 const params = new URLSearchParams(location.search);
 const evidenceMode = params.get("evidence") === "1";
-const localWorldInspection = researchScenarioKindFromSearch(location.search) === "five-resident-local";
+const localWorldInspection = isPreLunaWorkshopScenario(researchScenarioKindFromSearch(location.search));
 
 const appRoot = document.querySelector<HTMLElement>("#app");
 const debugRoot = document.querySelector<HTMLElement>("#debug");

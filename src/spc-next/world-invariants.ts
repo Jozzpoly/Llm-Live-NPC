@@ -16,6 +16,9 @@ export function validateWorldOptions(options: SpcWorldOptions): void {
   if (options.materialBodyCollision !== undefined && typeof options.materialBodyCollision !== "boolean") {
     throw new Error("materialBodyCollision must be boolean");
   }
+  if (options.actorBodyCollision !== undefined && typeof options.actorBodyCollision !== "boolean") {
+    throw new Error("actorBodyCollision must be boolean");
+  }
   if (!Number.isFinite(options.fixedDeltaSeconds) || options.fixedDeltaSeconds <= 0) {
     throw new Error("fixedDeltaSeconds must be positive and finite");
   }

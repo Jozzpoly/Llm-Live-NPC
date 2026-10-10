@@ -61,7 +61,7 @@ export interface ActorState {
 }
 
 export type ActorMotionResolution = "full" | "constrained" | "blocked";
-export type ActorMotionConstraint = "world_bounds" | "material_object" | "material_load";
+export type ActorMotionConstraint = "world_bounds" | "material_object" | "material_load" | "actor_body";
 
 /** Public physical causality for one actor in one World integration step. */
 export interface ActorMotionOutcome {
@@ -229,6 +229,8 @@ export interface SpcWorldOptions {
   sightBlockers?: readonly SightBlocker[];
   /** Research-only solid free material contact. Off for all existing scenarios. */
   materialBodyCollision?: boolean;
+  /** Isolated opt-in actor contact; off in existing Worlds. */
+  actorBodyCollision?: boolean;
   chunkSize: number;
   fixedDeltaSeconds: number;
 }

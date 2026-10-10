@@ -517,6 +517,7 @@ export class SpcWorldRuntime {
     const motion = this.actorState.integrate(
       this.authoredOptions.fixedDeltaSeconds,
       this.authoredOptions.materialBodyCollision ? this.materialState.objects() : undefined,
+      this.authoredOptions.actorBodyCollision === true,
     );
     this.lastMotionOutcomes = structuredClone(motion);
     for (const outcome of motion) {

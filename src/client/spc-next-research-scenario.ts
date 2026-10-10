@@ -52,7 +52,12 @@ export type SpcNextResearchScenarioKind =
   | "r5-mira-live-semantic-escalation"
   | "r6-mira-standing-social-commitment"
   | "five-resident-local"
+  | "five-resident-contact-lab"
   | "unified-living";
+
+export function isPreLunaWorkshopScenario(kind: SpcNextResearchScenarioKind): boolean {
+  return kind === "five-resident-local" || kind === "five-resident-contact-lab";
+}
 
 export interface SpcNextResearchScenario {
   readonly kind: SpcNextResearchScenarioKind;
@@ -88,6 +93,7 @@ export function createSpcNextResearchScenario(kind: SpcNextResearchScenarioKind)
   if (kind === "r5-mira-live-semantic-escalation") return createR5MiraLiveSemanticEscalationScenario();
   if (kind === "r6-mira-standing-social-commitment") return createR6MiraStandingSocialCommitmentScenario();
   if (kind === "five-resident-local") return createFiveResidentLocalScenario();
+  if (kind === "five-resident-contact-lab") return createFiveResidentLocalScenario(true);
   if (kind === "unified-living") return createUnifiedLivingScenario();
   return createBaselineDeliveryScenario();
 }
@@ -108,6 +114,7 @@ export function researchScenarioKindFromSearch(search: string): SpcNextResearchS
   if (requested === "r5-mira-live-semantic-escalation") return "r5-mira-live-semantic-escalation";
   if (requested === "r6-mira-standing-social-commitment") return "r6-mira-standing-social-commitment";
   if (requested === "five-resident-local") return "five-resident-local";
+  if (requested === "five-resident-contact-lab") return "five-resident-contact-lab";
   if (requested === "unified-living") return "unified-living";
   throw new Error(`unknown SPC Next research scenario: ${requested}`);
 }
@@ -895,12 +902,14 @@ function createR6MiraStandingSocialCommitmentScenario(): SpcNextResearchScenario
  * provider scheduler, fake proposal, task or scripted post-opening NPC decision.
  * It is intentionally distinct from the provider-enabled "unified-living" mode.
  */
-function createFiveResidentLocalScenario(): SpcNextResearchScenario {
+function createFiveResidentLocalScenario(actorBodyCollision = false): SpcNextResearchScenario {
   // Only the owner-facing pre-Luna material slice starts beside the workshop.
   // The five NPCs and their own authored openings are otherwise untouched.
   const composition = createFiveResidentRegionComposition({
-    playerStart: { x: 1_810, y: 705 },
+    // Contact probe starts ON Janek's axis; incumbent material test keeps the old offset.
+    playerStart: { x: 1_810, y: actorBodyCollision ? 720 : 705 },
     materialBodyCollision: true,
+    ...(actorBodyCollision ? { actorBodyCollision: true } : {}),
   });
   // Explicit RESEARCH-ONLY authored starting relation. It creates no NPC
   // task, body command or scripted dialog and never contacts a provider.
@@ -912,8 +921,8 @@ function createFiveResidentLocalScenario(): SpcNextResearchScenario {
   if (!janek) throw new Error("local world must claim idle Janek at construction");
 
   return {
-    kind: "five-resident-local",
-    evidenceScenarioId: "browser-five-resident-local",
+    kind: actorBodyCollision ? "five-resident-contact-lab" : "five-resident-local",
+    evidenceScenarioId: actorBodyCollision ? "browser-five-resident-contact-lab" : "browser-five-resident-local",
     residentId: "resident.janek",
     matterId: "matter.five-resident-local.no-seeded-matters",
     world: local.world,
