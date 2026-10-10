@@ -1,0 +1,136 @@
+import { describe, expect, it } from "vitest";
+import { MATERIAL_CARRY_SPEED_FACTOR, suggestBodyClearMaterialPlacement } from "./material-body-contact";
+import {
+  createFiveResidentRegionComposition,
+  FIVE_RESIDENT_MATERIAL_OBJECTS,
+  FIVE_RESIDENT_PRE_LUNA_WORKSHOP_MATERIAL_OBJECTS,
+} from "./five-resident-region";
+
+const PLAYER = "player.workshop-tester";
+const SPARE = "crate.workshop.spare";
+const TIMBER = "crate.workshop.timber";
+
+describe("pre-Luna workshop: physical choices, not decorative props or scripted jobs", () => {
+  it("preserves canonical R6 while composing four real manipulable, non-overlapping objects in workshop-only mode", () => {
+    const standard = createFiveResidentRegionComposition();
+    const optIn = createFiveResidentRegionComposition({ materialBodyCollision: true });
+    expect(standard.world.materialObjects()).toEqual(FIVE_RESIDENT_MATERIAL_OBJECTS);
+    expect(optIn.world.materialObjects()).toHaveLength(4);
+    expect(optIn.world.materialObjects().map((o) => o.id).sort()).toEqual([
+      ...FIVE_RESIDENT_MATERIAL_OBJECTS,
+      ...FIVE_RESIDENT_PRE_LUNA_WORKSHOP_MATERIAL_OBJECTS,
+    ].map((o) => o.id).sort());
+
+    const free = optIn.world.materialObjects();
+    for (let i = 0; i < free.length; i++) {
+      const object = free[i]!;
+      if (object.location.kind !== "free") throw new Error("workshop initial object must be physical and free");
+      for (const other of free.slice(i + 1)) {
+        if (other.location.kind !== "free") throw new Error("workshop other object must be free");
+        const distance = Math.hypot(
+          object.location.position.x - other.location.position.x,
+          object.location.position.y - other.location.position.y,
+        );
+        expect(distance).toBeGreaterThan(object.radius + other.radius + 8);
+      }
+      for (const actor of optIn.world.publicSnapshot().actors) {
+        const distance = Math.hypot(
+          object.location.position.x - actor.position.x,
+          object.location.position.y - actor.position.y,
+        );
+        expect(distance).toBeGreaterThan(object.radius + 18 + 2);
+      }
+    }
+    // Workshop extra objects do NOT teach Janek new purposes or knowledge;
+    // his sole existing material identity is the canonical original crate.
+    expect(optIn.runtimes["resident.janek"].publicState().activity.kind).toBe("idle");
+    expect(optIn.world.options.materialBodyCollision).toBe(true);
+    expect(standard.world.options.materialBodyCollision).toBeUndefined();
+  });
+
+  it("prevents a large parcel becoming permanently held because of a fixed small-object drop offset", () => {
+    const world = createFiveResidentRegionComposition({ materialBodyCollision: true }).world;
+    const residentNeutral = "player.larger-parcel-test";
+    world.addPlayer(residentNeutral, { x: 2_115, y: 825 });
+    const parcel = world.materialObject(TIMBER);
+    expect(parcel?.radius).toBe(25);
+    expect(world.attemptMaterialAction(residentNeutral, {
+      kind: "pickup", objectId: TIMBER,
+    })).toMatchObject({ status: "succeeded", code: "picked_up" });
+
+    const player = world.publicSnapshot().actors.find((actor) => actor.id === residentNeutral)!;
+    const oldDrop = { x: player.position.x + 42, y: player.position.y };
+    expect(world.attemptMaterialAction(residentNeutral, {
+      kind: "place", objectId: TIMBER, position: oldDrop,
+    })).toMatchObject({ status: "rejected", code: "body_occupied" });
+    expect(world.materialObject(TIMBER)?.location.kind).toBe("held");
+
+    const clearDrop = suggestBodyClearMaterialPlacement(
+      player.position, player.facing, parcel!.radius,
+    );
+    expect(Math.hypot(
+      clearDrop.x - player.position.x,
+      clearDrop.y - player.position.y,
+    )).toBeGreaterThan(parcel!.radius + 18);
+    expect(world.attemptMaterialAction(residentNeutral, {
+      kind: "place", objectId: TIMBER, position: clearDrop,
+    })).toMatchObject({ status: "succeeded", code: "placed" });
+    expect(world.materialObject(TIMBER)?.location).toEqual({
+      kind: "free", position: clearDrop,
+    });
+  });
+
+  it("lets the player build and reopen an actual obstruction, with real multi-object occupancy veto", () => {
+    const world = createFiveResidentRegionComposition({ materialBodyCollision: true }).world;
+    // Spawn OUTSIDE both nominal actor/object collision envelopes.
+    world.addPlayer(PLAYER, { x: 2_020, y: 877 });
+
+    // The same World admits exactly one carried item. Trying to place into
+    // the real timber parcel must fail, not replace or teleport either item.
+    expect(world.attemptMaterialAction(PLAYER, { kind: "pickup", objectId: SPARE }))
+      .toMatchObject({ status: "succeeded", code: "picked_up" });
+    expect(world.attemptMaterialAction(PLAYER, { kind: "pickup", objectId: TIMBER }))
+      .toMatchObject({ status: "rejected", code: "actor_already_holding" });
+    expect(world.attemptMaterialAction(PLAYER, {
+      kind: "place", objectId: SPARE, position: { x: 2_055, y: 825 },
+    })).toMatchObject({ status: "rejected", code: "object_occupied" });
+    expect(world.materialObject(SPARE)?.location).toEqual({
+      kind: "held", actorId: PLAYER,
+    });
+    expect(world.materialObject(TIMBER)?.location).toEqual({
+      kind: "free", position: { x: 2_055, y: 825 },
+    });
+
+    const x = () => world.publicSnapshot().actors.find((actor) => actor.id === PLAYER)!.position.x;
+    const playerMaxSpeed = world.publicSnapshot().actors.find((a) => a.id === PLAYER)!.maxSpeed;
+    world.setActorMotionIntent(PLAYER, { x: -150, y: 0 });
+    for (let i = 0; i < 10; i++) world.step();
+    world.setActorMotionIntent(PLAYER, { x: 0, y: 0 });
+    expect(x()).toBeCloseTo(
+      2020 - 10 * Math.min(150, playerMaxSpeed) / 60 * MATERIAL_CARRY_SPEED_FACTOR, 4,
+    );
+
+    // The participant itself creates a new World blocker on the path it just
+    // crossed while carrying. It is not an authored puzzle trigger.
+    const newBlocker = { x: 1_956, y: 877 };
+    expect(world.attemptMaterialAction(PLAYER, {
+      kind: "place", objectId: SPARE, position: newBlocker,
+    })).toMatchObject({ status: "succeeded", code: "placed" });
+    world.setActorMotionIntent(PLAYER, { x: -150, y: 0 });
+    for (let i = 0; i < 30; i++) world.step();
+    const stopped = x();
+    expect(stopped).toBeGreaterThan(1_992);
+    expect(stopped).toBeLessThan(2_005);
+    expect(world.diagnostics().lastMotionOutcomes.find((o) => o.actorId === PLAYER)?.constraints)
+      .toContain("material_object");
+
+    expect(world.attemptMaterialAction(PLAYER, { kind: "pickup", objectId: SPARE }))
+      .toMatchObject({ status: "succeeded", code: "picked_up" });
+    for (let i = 0; i < 30; i++) world.step();
+    expect(x()).toBeLessThan(1_960);
+    expect(world.diagnostics().lastMotionOutcomes.find((o) => o.actorId === PLAYER)?.constraints)
+      .not.toContain("material_object");
+    expect(world.materialObject(SPARE)?.location.kind).toBe("held");
+    expect(world.materialObject(TIMBER)?.location.kind).toBe("free");
+  });
+});

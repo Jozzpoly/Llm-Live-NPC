@@ -34,6 +34,35 @@ export const FIVE_RESIDENT_MATERIAL_OBJECTS: readonly MaterialObjectState[] = [
   },
 ];
 
+/**
+ * Optional, physically manipulable pre-Luna workshop composition.
+ *
+ * These are ordinary World material identities, NOT jobs, visual props,
+ * fake benches or resident assignments. Deliberately sparse: four objects
+ * near Janek provide actual alternative passages and different clearances.
+ * Canonical R6 has only the original familiar crate.
+ */
+export const FIVE_RESIDENT_PRE_LUNA_WORKSHOP_MATERIAL_OBJECTS: readonly MaterialObjectState[] = [
+  {
+    id: "crate.workshop.tools",
+    label: "Skrzynka narzędzi",
+    radius: 12,
+    location: { kind: "free", position: { x: 1_850, y: 850 } },
+  },
+  {
+    id: "crate.workshop.spare",
+    label: "Skrzynia zapasowa",
+    radius: 19,
+    location: { kind: "free", position: { x: 1_985, y: 842 } },
+  },
+  {
+    id: "crate.workshop.timber",
+    label: "Pakunek desek",
+    radius: 25,
+    location: { kind: "free", position: { x: 2_055, y: 825 } },
+  },
+];
+
 export interface FiveResidentRolePressure {
   residentId: string;
   name: string;
@@ -78,6 +107,8 @@ export type FiveResidentRuntimes = Readonly<Record<FiveResidentId, ResidentRunti
 export interface FiveResidentRegionWorldOptions {
   /** Authored participant start for bounded research specimens. Default preserves the baseline hearth start. */
   playerStart?: Vec2;
+  /** Optional pre-Luna embodiment experiment; keeps canonical R6 default unchanged. */
+  materialBodyCollision?: boolean;
 }
 
 export interface FiveResidentRegionComposition {
@@ -98,6 +129,7 @@ export function createFiveResidentRegionComposition(
     anchors: FIVE_RESIDENT_ANCHORS,
     chunkSize: 256,
     fixedDeltaSeconds: 1 / 60,
+    ...(options.materialBodyCollision ? { materialBodyCollision: true } : {}),
   });
 
   world.addPlayer("player.jozz", options.playerStart ?? { x: 620, y: 620 }, { maxSpeed: 150 });
@@ -109,6 +141,11 @@ export function createFiveResidentRegionComposition(
     "resident.nela": world.addResident("resident.nela", "Nela", { x: 6_950, y: 1_100 }),
   };
   for (const object of FIVE_RESIDENT_MATERIAL_OBJECTS) world.addMaterialObject(object);
+  if (options.materialBodyCollision) {
+    for (const object of FIVE_RESIDENT_PRE_LUNA_WORKSHOP_MATERIAL_OBJECTS) {
+      world.addMaterialObject(object);
+    }
+  }
 
   for (const [residentId, familiarRegions] of Object.entries(FIVE_RESIDENT_FAMILIARITY)) {
     world.familiarizeResidentWithRegions(residentId, familiarRegions);

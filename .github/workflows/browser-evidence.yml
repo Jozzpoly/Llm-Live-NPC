@@ -7,6 +7,7 @@ on:
       - "worker/**"
       - "scripts/spc-browser-evidence.mjs"
       - "scripts/spc-browser-manual-control-evidence.mjs"
+      - "scripts/spc-browser-pre-luna-world-evidence.mjs"
       - "scripts/spc-browser-missing-crate-evidence.mjs"
       - "scripts/spc-browser-missing-crate-recovery-evidence.mjs"
       - "scripts/spc-browser-missing-crate-interruption-evidence.mjs"
@@ -96,6 +97,15 @@ jobs:
           MANUAL_CONTROL_OUTPUT: evidence/browser/manual-control.json
           SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: node scripts/spc-browser-manual-control-evidence.mjs
+
+      - name: Qualify pre-Luna five-resident browser World (no provider)
+        if: success()
+        env:
+          EVIDENCE_BASE_URL: http://127.0.0.1:4173
+          PRE_LUNA_WORLD_OUTPUT: evidence/browser/pre-luna-world.json
+          PRE_LUNA_WORLD_SCREENSHOT: evidence/browser/pre-luna-world.png
+          SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: node scripts/spc-browser-pre-luna-world-evidence.mjs
 
       - name: Qualify missing-crate epistemic boundary
         if: success()

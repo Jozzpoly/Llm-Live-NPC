@@ -1,4 +1,5 @@
 import * as Phaser from "phaser";
+import { facingRelativePlacement, suggestBodyClearMaterialPlacement } from "../spc-next/material-body-contact";
 import type { ResidentLifeCognitionView } from "../spc-next/resident-life-cognition-view";
 import type { FiveResidentLivingRuntimeDiagnostics } from "../spc-next/five-resident-unified-living-runtime";
 import type {
@@ -86,6 +87,8 @@ export class SpcNextResearchScene extends Phaser.Scene {
   private regionGraphics!: Phaser.GameObjects.Graphics;
   private materialGraphics!: Phaser.GameObjects.Graphics;
   private overlayGraphics!: Phaser.GameObjects.Graphics;
+  private materialFeedback: Phaser.GameObjects.Text | null = null;
+  private materialFeedbackUntilTick = 0;
   private cursors: Phaser.Types.Input.Keyboard.CursorKeys | null = null;
   private keys: MovementKeys | null = null;
   private accumulatorMs = 0;
@@ -104,6 +107,10 @@ export class SpcNextResearchScene extends Phaser.Scene {
       ?? researchScenarioKindFromSearch(location.search);
     this.scenario = createSpcNextResearchScenario(scenarioKind);
     this.world = this.scenario.world;
+    if (this.scenario.kind === "five-resident-local") {
+      // The ordinary workshop inspection begins beside Janek, not with remote Mira.
+      this.selectedResidentId = "resident.janek";
+    }
     this.snapshot = this.world.publicSnapshot();
     if (!this.snapshot.residents.some((resident) => resident.id === this.selectedResidentId)) {
       this.selectedResidentId = this.snapshot.residents[0]?.id ?? null;
@@ -115,6 +122,16 @@ export class SpcNextResearchScene extends Phaser.Scene {
     this.materialGraphics = this.add.graphics().setDepth(6);
     this.overlayGraphics = this.add.graphics().setDepth(40);
     this.drawRegions();
+    this.drawAuthoredPlaces();
+    if (this.scenario.kind === "five-resident-local") {
+      this.materialFeedback = this.add.text(18, 18, "", {
+        fontFamily: "Inter, system-ui, sans-serif",
+        fontSize: "15px",
+        color: "#e7ecdd",
+        backgroundColor: "#17232ae8",
+        padding: { x: 10, y: 7 },
+      }).setScrollFactor(0).setDepth(150).setVisible(false);
+    }
     this.syncActorViews();
     this.syncMaterialViews();
 
@@ -138,7 +155,9 @@ export class SpcNextResearchScene extends Phaser.Scene {
       bounds.maxY - bounds.minY,
     );
     this.followPlayer();
-    this.cameras.main.setZoom(0.72);
+    // Inspect the actual small workshop interactions at legible scale.
+    // Legacy research scenes retain their broad 0.72 World overview.
+    this.cameras.main.setZoom(this.scenario.kind === "five-resident-local" ? 1.08 : 0.72);
     this.captureNewSpeechOccurrences();
     this.created = true;
     this.pushFrame(true);
@@ -158,6 +177,27 @@ export class SpcNextResearchScene extends Phaser.Scene {
 
     this.syncActorViews();
     this.syncMaterialViews();
+    if (this.materialFeedback && this.world.tick >= this.materialFeedbackUntilTick) {
+      // Surface physical affordances already in the authoritative World;
+      // this hints at controls, never grants an interaction or invents a task.
+      const player = this.snapshot.actors.find((actor) => actor.id === PLAYER_ID);
+      const objects = this.world.materialObjects();
+      const held = objects.find((object) =>
+        object.location.kind === "held" && object.location.actorId === PLAYER_ID);
+      const near = player && !held
+        ? objects.filter((object) => object.location.kind === "free")
+            .filter((object) => object.location.kind === "free"
+              && Phaser.Math.Distance.Between(
+                player.position.x, player.position.y,
+                object.location.position.x, object.location.position.y,
+              ) <= 64)
+            .sort((a, b) => a.id.localeCompare(b.id))[0]
+        : null;
+      const prompt = held ? "E — Odłóż: " + held.label + " · ciężar spowalnia"
+        : near ? "E — Podnieś: " + near.label
+        : "";
+      this.materialFeedback.setText(prompt).setVisible(prompt.length > 0);
+    }
     this.syncSpeechViews();
     this.drawResearchOverlay();
 
@@ -231,6 +271,11 @@ export class SpcNextResearchScene extends Phaser.Scene {
 
   currentFrame(): SpcNextResearchFrame {
     return this.buildFrame();
+  }
+
+  /** World-public material truth, available only to explicit browser evidence callers. */
+  currentWorldMaterialObjects() {
+    return this.world.materialObjects();
   }
 
   currentCanonicalEvidenceSnapshot(): SpcCanonicalEvidenceSnapshotV1 {
@@ -346,11 +391,16 @@ export class SpcNextResearchScene extends Phaser.Scene {
     const objects = this.world.materialObjects();
     const held = objects.find((object) => object.location.kind === "held" && object.location.actorId === PLAYER_ID);
     if (held) {
-      this.world.attemptMaterialAction(PLAYER_ID, {
+      const result = this.world.attemptMaterialAction(PLAYER_ID, {
         kind: "place",
         objectId: held.id,
-        position: { x: player.position.x + MATERIAL_PLACE_OFFSET, y: player.position.y },
+        position: this.scenario.kind === "five-resident-local"
+          ? suggestBodyClearMaterialPlacement(player.position, player.facing, held.radius, MATERIAL_PLACE_OFFSET)
+          : { x: player.position.x + MATERIAL_PLACE_OFFSET, y: player.position.y },
       });
+      this.reportMaterialInteraction(result.status === "succeeded"
+        ? "Odłożono: " + held.label
+        : "Nie można odłożyć: " + materialInteractionError(result.code));
       this.syncMaterialViews();
       this.pushFrame(true);
       return;
@@ -365,10 +415,22 @@ export class SpcNextResearchScene extends Phaser.Scene {
           : Number.POSITIVE_INFINITY,
       }))
       .sort((a, b) => a.distance - b.distance || a.object.id.localeCompare(b.object.id))[0];
-    if (!nearest) return;
-    this.world.attemptMaterialAction(PLAYER_ID, { kind: "pickup", objectId: nearest.object.id });
+    if (!nearest) {
+      this.reportMaterialInteraction("Nie ma tu przedmiotów do podniesienia.");
+      return;
+    }
+    const result = this.world.attemptMaterialAction(PLAYER_ID, { kind: "pickup", objectId: nearest.object.id });
+    this.reportMaterialInteraction(result.status === "succeeded"
+      ? "Podniesiono: " + nearest.object.label
+      : "Nie można podnieść: " + materialInteractionError(result.code));
     this.syncMaterialViews();
     this.pushFrame(true);
+  }
+
+  private reportMaterialInteraction(message: string): void {
+    if (!this.materialFeedback) return;
+    this.materialFeedback.setText(message).setVisible(true);
+    this.materialFeedbackUntilTick = this.world.tick + 180;
   }
 
   private cycleResidentSelection(): void {
@@ -423,6 +485,33 @@ export class SpcNextResearchScene extends Phaser.Scene {
     );
   }
 
+  /** Static authored places are orientation cues, not physical objects or usable stations. */
+  private drawAuthoredPlaces(): void {
+    const graphics = this.add.graphics().setDepth(-8);
+    for (const anchor of this.world.anchors()) {
+      const color = anchor.kind === "resource" ? 0x83b9a1
+        : anchor.kind === "work" ? 0xd5b080
+        : anchor.kind === "social" ? 0xe6be8e
+        : anchor.kind === "exploration" ? 0x9ba9d4
+        : 0x9db8c5;
+      graphics.lineStyle(2, color, 0.72);
+      graphics.strokeCircle(anchor.position.x, anchor.position.y, anchor.radius);
+      graphics.fillStyle(color, 0.22);
+      graphics.fillCircle(anchor.position.x, anchor.position.y, 9);
+      const workshopLabel = this.scenario.kind === "five-resident-local"
+        && anchor.id === "anchor.workshop.bench";
+      this.add.text(
+        anchor.position.x, anchor.position.y + anchor.radius + (workshopLabel ? 66 : 14),
+        anchor.label, {
+          fontFamily: "Inter, system-ui, sans-serif",
+          fontSize: "17px",
+          color: "#c2cfd4",
+          backgroundColor: "#10191ac4",
+          padding: { x: 5, y: 2 },
+        }).setOrigin(0.5, 0).setDepth(-7);
+    }
+  }
+
   private syncActorViews(): void {
     for (const actor of this.snapshot.actors) {
       let view = this.actorViews.get(actor.id);
@@ -462,10 +551,21 @@ export class SpcNextResearchScene extends Phaser.Scene {
         ? object.location.position
         : (() => {
             const holder = this.snapshot.actors.find((actor) => actor.id === object.location.actorId);
-            return holder ? { x: holder.position.x + 23, y: holder.position.y + 5 } : null;
+            if (!holder) return null;
+            return this.scenario.kind === "five-resident-local"
+              ? facingRelativePlacement(holder.position, holder.facing, 25)
+              : { x: holder.position.x + 23, y: holder.position.y + 5 };
           })();
       if (!position) continue;
 
+      // Show the actual World-owned solid circle behind the temporary
+      // rectangular specimen glyph; this is physical footprint, not scenery.
+      if (this.scenario.kind === "five-resident-local" && object.location.kind === "free") {
+        this.materialGraphics.fillStyle(0xb78652, 0.10);
+        this.materialGraphics.fillCircle(position.x, position.y, object.radius);
+        this.materialGraphics.lineStyle(1.4, 0xe7cb98, 0.5);
+        this.materialGraphics.strokeCircle(position.x, position.y, object.radius);
+      }
       const half = Math.max(10, object.radius * 0.9);
       this.materialGraphics.fillStyle(0xb78652, 0.96);
       this.materialGraphics.fillRect(position.x - half, position.y - half * 0.72, half * 2, half * 1.44);
@@ -484,7 +584,9 @@ export class SpcNextResearchScene extends Phaser.Scene {
         }).setOrigin(0.5, 1).setDepth(7);
         this.materialLabels.set(object.id, label);
       }
-      label.setPosition(position.x, position.y - half - 6).setVisible(true);
+      const timberLabelOffset = this.scenario.kind === "five-resident-local"
+        && object.id === "crate.workshop.timber" ? 20 : 6;
+      label.setPosition(position.x, position.y - half - timberLabelOffset).setVisible(true);
     }
 
     for (const [id, label] of this.materialLabels) {
@@ -717,4 +819,18 @@ function textEntryActive(): boolean {
   return active instanceof HTMLInputElement
     || active instanceof HTMLTextAreaElement
     || active instanceof HTMLSelectElement;
+}
+
+/** Plain rendering text for authoritative World material rejection codes. */
+function materialInteractionError(code: string): string {
+  switch (code) {
+    case "out_of_range": return "podejdź bliżej przedmiotu";
+    case "occluded": return "brak dostępu / zasłonięte";
+    case "actor_already_holding": return "trzymasz już inny przedmiot";
+    case "object_unavailable": return "przedmiot jest już zajęty";
+    case "outside_world": return "miejsce jest poza światem";
+    case "body_occupied": return "stoi tu postać";
+    case "object_occupied": return "stoi tu inny przedmiot";
+    default: return code;
+  }
 }

@@ -8,7 +8,11 @@ import {
   FiveResidentUnifiedLivingRuntime,
   type FiveResidentLivingRuntimeDiagnostics,
 } from "../spc-next/five-resident-unified-living-runtime";
-import type { FiveResidentId } from "../spc-next/five-resident-region";
+import {
+  createFiveResidentRegionComposition,
+  type FiveResidentId,
+} from "../spc-next/five-resident-region";
+import { FiveResidentCausalLifeRuntime } from "../spc-next/five-resident-causal-life-runtime";
 import type { SpcWorldRuntime } from "../spc-next/spc-world-runtime";
 import { createFiveResidentJanekMaterialSlice } from "../spc-next/five-resident-material-slice";
 import { createFiveResidentJanekMissingCrateStagedSlice } from "../spc-next/five-resident-missing-crate-slice";
@@ -47,6 +51,7 @@ export type SpcNextResearchScenarioKind =
   | "r5-mira-semantic-escalation"
   | "r5-mira-live-semantic-escalation"
   | "r6-mira-standing-social-commitment"
+  | "five-resident-local"
   | "unified-living";
 
 export interface SpcNextResearchScenario {
@@ -82,6 +87,7 @@ export function createSpcNextResearchScenario(kind: SpcNextResearchScenarioKind)
   if (kind === "r5-mira-semantic-escalation") return createR5MiraSemanticEscalationScenario();
   if (kind === "r5-mira-live-semantic-escalation") return createR5MiraLiveSemanticEscalationScenario();
   if (kind === "r6-mira-standing-social-commitment") return createR6MiraStandingSocialCommitmentScenario();
+  if (kind === "five-resident-local") return createFiveResidentLocalScenario();
   if (kind === "unified-living") return createUnifiedLivingScenario();
   return createBaselineDeliveryScenario();
 }
@@ -101,6 +107,7 @@ export function researchScenarioKindFromSearch(search: string): SpcNextResearchS
   if (requested === "r5-mira-semantic-escalation") return "r5-mira-semantic-escalation";
   if (requested === "r5-mira-live-semantic-escalation") return "r5-mira-live-semantic-escalation";
   if (requested === "r6-mira-standing-social-commitment") return "r6-mira-standing-social-commitment";
+  if (requested === "five-resident-local") return "five-resident-local";
   if (requested === "unified-living") return "unified-living";
   throw new Error(`unknown SPC Next research scenario: ${requested}`);
 }
@@ -879,6 +886,47 @@ function createR6MiraStandingSocialCommitmentScenario(): SpcNextResearchScenario
 }
 
 
+
+/**
+ * Owner-directed pre-Luna WORLD INSPECTION path, not a claim of living NPCs.
+ *
+ * It runs the exact canonical five-resident composition through its real
+ * resident-causal-life and World ticks, but creates no provider transport,
+ * provider scheduler, fake proposal, task or scripted post-opening NPC decision.
+ * It is intentionally distinct from the provider-enabled "unified-living" mode.
+ */
+function createFiveResidentLocalScenario(): SpcNextResearchScenario {
+  // Only the owner-facing pre-Luna material slice starts beside the workshop.
+  // The five NPCs and their own authored openings are otherwise untouched.
+  const composition = createFiveResidentRegionComposition({
+    playerStart: { x: 1_810, y: 705 },
+    materialBodyCollision: true,
+  });
+  const local = new FiveResidentCausalLifeRuntime(composition);
+  const janek = local.life("resident.janek");
+  if (!janek) throw new Error("local world must claim idle Janek at construction");
+
+  return {
+    kind: "five-resident-local",
+    evidenceScenarioId: "browser-five-resident-local",
+    residentId: "resident.janek",
+    matterId: "matter.five-resident-local.no-seeded-matters",
+    world: local.world,
+    kernel: janek.kernel,
+    materialKnowledge: null,
+    authority: janek.worldAuthority,
+    canonicalEvidenceSupported: false,
+    residentLifeView(residentId: string): ResidentLifeCognitionView | null {
+      if (!local.world.publicSnapshot().residents.some((r) => r.id === residentId)) return null;
+      return local.life(residentId as FiveResidentId)?.currentLifeView() ?? null;
+    },
+    advanceOneWorldTick(): void {
+      // The same resident execution authority, perception and player World as R6.
+      // No Luna/Worker/fetch path exists here — quiet stays honestly quiet.
+      local.advanceOneWorldTick();
+    },
+  };
+}
 
 function createUnifiedLivingScenario(): SpcNextResearchScenario {
   const living = new FiveResidentUnifiedLivingRuntime();

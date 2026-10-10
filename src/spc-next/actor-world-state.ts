@@ -1,4 +1,6 @@
 import { ChunkSpatialIndex, type SpatialQueryStats } from "./chunk-spatial-index";
+import type { MaterialObjectState } from "./material-world-state";
+import { MATERIAL_CARRY_SPEED_FACTOR, resolveMaterialBodyMotion } from "./material-body-contact";
 import type {
   ActorMotionConstraint,
   ActorMotionOutcome,
@@ -94,7 +96,7 @@ export class ActorWorldState {
     return { ...desired };
   }
 
-  integrate(fixedDeltaSeconds: number): ActorMotionOutcome[] {
+  integrate(fixedDeltaSeconds: number, materialObstacles?: readonly MaterialObjectState[]): ActorMotionOutcome[] {
     if (!Number.isFinite(fixedDeltaSeconds) || fixedDeltaSeconds <= 0) {
       throw new Error("fixedDeltaSeconds must be positive and finite");
     }
@@ -108,14 +110,26 @@ export class ActorWorldState {
         x: before.x + desiredVelocity.x * fixedDeltaSeconds,
         y: before.y + desiredVelocity.y * fixedDeltaSeconds,
       };
-      const after = clampWorldPosition(intendedAfter, this.bounds);
+      const isCarrying = materialObstacles?.some((object) =>
+        object.location.kind === "held" && object.location.actorId === actorId) ?? false;
+      const loadFactor = isCarrying ? MATERIAL_CARRY_SPEED_FACTOR : 1;
+      const burdenedAfter = {
+        x: before.x + desiredVelocity.x * fixedDeltaSeconds * loadFactor,
+        y: before.y + desiredVelocity.y * fixedDeltaSeconds * loadFactor,
+      };
+      const boundedAfter = clampWorldPosition(burdenedAfter, this.bounds);
+      const contact = materialObstacles
+        ? resolveMaterialBodyMotion(before, boundedAfter, materialObstacles)
+        : null;
+      const after = contact?.position ?? boundedAfter;
       const resolvedVelocity = cleanVelocity({
         x: (after.x - before.x) / fixedDeltaSeconds,
         y: (after.y - before.y) / fixedDeltaSeconds,
       });
-      const constraints: ActorMotionConstraint[] = positionsEqual(after, intendedAfter)
-        ? []
-        : ["world_bounds"];
+      const constraints: ActorMotionConstraint[] = [];
+      if (!positionsEqual(boundedAfter, burdenedAfter)) constraints.push("world_bounds");
+      if (isCarrying && !positionsEqual(burdenedAfter, intendedAfter)) constraints.push("material_load");
+      if (contact?.blockedByObjectId) constraints.push("material_object");
       const desiredDistance = Math.hypot(desiredVelocity.x, desiredVelocity.y) * fixedDeltaSeconds;
       const resolvedDistance = Math.hypot(after.x - before.x, after.y - before.y);
       const resolution = constraints.length === 0

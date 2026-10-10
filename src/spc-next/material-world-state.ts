@@ -1,4 +1,5 @@
 import type { Vec2, WorldBounds } from "./contracts";
+import { materialPlacementOverlapsBody, materialPlacementOverlapsObject } from "./material-body-contact";
 
 export type MaterialObjectLocation =
   | { kind: "free"; position: Vec2; actorId?: never }
@@ -25,7 +26,9 @@ export type MaterialActionResultCode =
   | "out_of_range"
   | "occluded"
   | "invalid_position"
-  | "outside_world";
+  | "outside_world"
+  | "body_occupied"
+  | "object_occupied";
 
 export interface MaterialActionResult {
   actionSeq: number;
@@ -42,6 +45,8 @@ export interface MaterialActionResult {
 export interface MaterialWorldStateOptions {
   bounds: WorldBounds;
   interactionRange: number;
+  /** Opt-in World-owned physical actor positions; no resident authority bypass. */
+  solidBodyPositions?: () => readonly Vec2[];
 }
 
 /**
@@ -62,6 +67,7 @@ export class MaterialWorldState {
   private actionSequence = 0;
   private readonly bounds: WorldBounds;
   private readonly interactionRange: number;
+  private readonly solidBodyPositions: (() => readonly Vec2[]) | undefined;
 
   constructor(options: MaterialWorldStateOptions) {
     validateBounds(options.bounds);
@@ -70,6 +76,7 @@ export class MaterialWorldState {
     }
     this.bounds = structuredClone(options.bounds);
     this.interactionRange = options.interactionRange;
+    this.solidBodyPositions = options.solidBodyPositions;
   }
 
   addObject(object: MaterialObjectState): MaterialObjectState {
@@ -144,6 +151,14 @@ export class MaterialWorldState {
     }
     if (!request.lineOfSight) {
       return rejected(actionSeq, tick, request, "occluded", before);
+    }
+    if (this.solidBodyPositions) {
+      if (materialPlacementOverlapsBody(request.position, object.radius, this.solidBodyPositions())) {
+        return rejected(actionSeq, tick, request, "body_occupied", before);
+      }
+      if (materialPlacementOverlapsObject(request.position, object.radius, this.objects(), object.id)) {
+        return rejected(actionSeq, tick, request, "object_occupied", before);
+      }
     }
 
     object.location = { kind: "free", position: { ...request.position } };

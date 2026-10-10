@@ -1,9 +1,14 @@
 import { RegionNavigationGraph, bidirectionalEdge } from "./region-navigation";
 
-export function createFiveResidentNavigationGraph(): RegionNavigationGraph {
+export function createFiveResidentNavigationGraph(options: {
+  /** Opt-in collision world needs an actually reachable landing, not crate volume. */
+  materialBodyCollision?: boolean;
+} = {}): RegionNavigationGraph {
   const nodes = [
     { id: "hearth", destinationPoint: { x: 780, y: 720 } },
-    { id: "workshop", destinationPoint: { x: 1_950, y: 720 } },
+    { id: "workshop", destinationPoint: options.materialBodyCollision
+      ? { x: 1_900, y: 760 } // physical workshop bench, outside the free crate's body volume
+      : { x: 1_950, y: 720 } },
     { id: "crossroads", destinationPoint: { x: 3_200, y: 920 } },
     { id: "fields", destinationPoint: { x: 2_250, y: 2_450 } },
     { id: "forest-edge", destinationPoint: { x: 4_550, y: 2_850 } },

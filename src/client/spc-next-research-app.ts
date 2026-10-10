@@ -4,6 +4,7 @@ import "./spc-next-research-style.css";
 import type { SpcCanonicalEvidenceSnapshotV1 } from "../evidence/spc-next-canonical-evidence-snapshot";
 import { FIVE_RESIDENT_ROLE_PRESSURES } from "../spc-next/five-resident-region";
 import type { ResidentPercept, ResidentTraceEvent, WorldOccurrence } from "../spc-next/contracts";
+import { researchScenarioKindFromSearch } from "./spc-next-research-scenario";
 import {
   SPC_PLAYER_SPEECH_RADIUS,
   SpcNextResearchScene,
@@ -12,6 +13,7 @@ import {
 
 const params = new URLSearchParams(location.search);
 const evidenceMode = params.get("evidence") === "1";
+const localWorldInspection = researchScenarioKindFromSearch(location.search) === "five-resident-local";
 
 const appRoot = document.querySelector<HTMLElement>("#app");
 const debugRoot = document.querySelector<HTMLElement>("#debug");
@@ -32,19 +34,24 @@ const gameNode: HTMLElement = gameRoot;
 const stageNode: HTMLElement = stageChip;
 
 appNode.classList.add("spc-next-mode");
+if (localWorldInspection) appNode.classList.add("spc-world-only", "spc-preluna-mode");
 debugNode.hidden = false;
 debugNode.className = "debug-shell spc-next-research-panel";
 document.documentElement.lang = "pl";
-document.title = "SPC Next — Living World Research";
-heading.textContent = "SPC Next";
-eyebrow.textContent = "Living world · embodied cognition research";
-stageNode.textContent = "WORLD / EPISTEMIC LAB";
+document.title = localWorldInspection
+  ? "SPC Next — test świata bez Luny"
+  : "SPC Next — Living World Research";
+heading.textContent = localWorldInspection ? "SPC Next · Świat" : "SPC Next";
+eyebrow.textContent = localWorldInspection
+  ? "Mechanika i obecność · bez modelu · eksperyment"
+  : "Living world · embodied cognition research";
+stageNode.textContent = localWorldInspection ? "WORLD · 0 LLM" : "WORLD / EPISTEMIC LAB";
 stageNode.classList.add("is-active");
 gameNode.setAttribute("aria-label", "SPC Next living-world research scene");
 footer.innerHTML = [
   "<span>Ruch: WASD / strzałki</span>",
   "<span>Wybór SPC: klik / Tab</span>",
-  "<span>Zawołaj: H · mikroskop: R</span>",
+  "<span>Przedmiot: E · zawołaj: H · mikroskop: R</span>",
   "<span>Śledź SPC: F · gracz: P · cały świat: O</span>",
   "<span>Tylko świat / badania: G · zoom: kółko</span>",
 ].join("");
@@ -52,8 +59,8 @@ footer.innerHTML = [
 const worldModeButton = document.createElement("button");
 worldModeButton.type = "button";
 worldModeButton.className = "spc-world-mode-toggle";
-worldModeButton.textContent = "Tylko świat";
-worldModeButton.setAttribute("aria-pressed", "false");
+worldModeButton.textContent = localWorldInspection ? "Otwórz badania" : "Tylko świat";
+worldModeButton.setAttribute("aria-pressed", String(localWorldInspection));
 const chatForm = document.createElement("form");
 chatForm.className = "spc-chat-form";
 const chatInput = document.createElement("input");
@@ -75,7 +82,7 @@ headerActions.append(stageNode, chatForm, worldModeButton);
 header.append(headerActions);
 
 let scene: SpcNextResearchScene;
-let worldOnly = false;
+let worldOnly = localWorldInspection;
 let lastFrame: SpcNextResearchFrame | null = null;
 
 function setWorldOnly(enabled: boolean): void {
@@ -83,7 +90,9 @@ function setWorldOnly(enabled: boolean): void {
   appNode.classList.toggle("spc-world-only", enabled);
   worldModeButton.textContent = enabled ? "Otwórz badania" : "Tylko świat";
   worldModeButton.setAttribute("aria-pressed", String(enabled));
-  stageNode.textContent = enabled ? "WORLD VIEW · NO TELEMETRY" : "WORLD / EPISTEMIC LAB";
+  stageNode.textContent = localWorldInspection
+    ? enabled ? "WORLD · 0 LLM" : "BADANIA · 0 LLM"
+    : enabled ? "WORLD VIEW · NO TELEMETRY" : "WORLD / EPISTEMIC LAB";
   if (enabled) scene.setResearchOverlay(false);
 }
 
@@ -280,6 +289,15 @@ function escapeHtml(value: string): string {
     .replaceAll("'", "&#039;");
 }
 
+if (localWorldInspection) {
+  const notice = document.createElement("aside");
+  notice.className = "spc-preluna-caption";
+  notice.setAttribute("role", "note");
+  notice.textContent = "Bez Luny. To rzeczywisty świat R6: ruch, mieszkańcy, mowa i przedmioty. " +
+    "Po początkowych trasach NPC mogą pozostać bezczynni — samodzielne życie nie jest jeszcze gotowe.";
+  gameNode.append(notice);
+}
+
 scene = new SpcNextResearchScene(renderPanel, { manualWorldControl: evidenceMode });
 const game = new Phaser.Game({
   type: Phaser.AUTO,
@@ -304,6 +322,7 @@ if (evidenceMode) {
       control: "manual-world";
       ready(): boolean;
       snapshot(): SpcNextResearchFrame;
+      materialObjects(): ReturnType<SpcNextResearchScene["currentWorldMaterialObjects"]>;
       canonicalSnapshot(): SpcCanonicalEvidenceSnapshotV1;
       stepWorld(steps?: number): SpcNextResearchFrame;
       scenarioAction(actionId: string): unknown;
@@ -318,6 +337,7 @@ if (evidenceMode) {
       control: "manual-world" as const,
       ready: () => scene.evidenceReady(),
       snapshot: () => scene.currentFrame(),
+      materialObjects: () => scene.currentWorldMaterialObjects(),
       canonicalSnapshot: () => scene.currentCanonicalEvidenceSnapshot(),
       stepWorld: (steps = 1) => scene.stepEvidenceWorld(steps),
       scenarioAction: (actionId: string) => scene.runEvidenceScenarioAction(actionId),

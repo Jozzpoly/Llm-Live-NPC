@@ -1,9 +1,14 @@
 import { distanceSquared, normalizedDirection, type Vec2 } from "./contracts";
+import { planTouchedMaterialDetour } from "./material-contact-detour";
 import { ResidentWorldExecutionAuthority } from "./resident-world-execution-authority";
 import { SpcWorldRuntime } from "./spc-world-runtime";
 
 const DEFAULT_TRAVEL_SPEED = 95;
 const DEFAULT_ARRIVAL_DISTANCE = 18;
+const MAX_MATERIAL_DETOURS = 2;
+const MAX_DETOUR_TICKS = 360;
+const MAX_STALLED_TICKS = 24;
+const DETOUR_WAYPOINT_RADIUS = 10;
 
 export type ResidentGroundedTravelStep =
   | {
@@ -41,6 +46,11 @@ export type ResidentGroundedTravelStep =
 export class ResidentGroundedTravelExecutor {
   private terminal: ResidentGroundedTravelStep | null = null;
   private readonly destination: Vec2;
+  private detour: Vec2[] = [];
+  private detourAttempts = 0;
+  private detourStartedTick: number | null = null;
+  private lastObservedPosition: Vec2 | null = null;
+  private stalledTicks = 0;
 
   constructor(
     readonly runId: string,
@@ -70,23 +80,52 @@ export class ResidentGroundedTravelExecutor {
     if (!self) return this.finishAuthorityLost();
 
     const physical = this.authority.lastMotionOutcome();
+    if (this.detourStartedTick !== null) {
+      if (this.world.tick - this.detourStartedTick > MAX_DETOUR_TICKS) {
+        return this.finishBlocked(["material_detour_timeout"]);
+      }
+      if (this.lastObservedPosition
+        && distanceSquared(self.position, this.lastObservedPosition) < 0.05 ** 2) {
+        this.stalledTicks += 1;
+      } else {
+        this.stalledTicks = 0;
+      }
+      if (this.stalledTicks >= MAX_STALLED_TICKS) {
+        return this.finishBlocked(["material_detour_stalled"]);
+      }
+    }
+    this.lastObservedPosition = { ...self.position };
     if (physical?.runId === this.runId && physical.outcome.resolution === "blocked") {
-      const stopped = this.authority.apply({
-        runId: this.runId,
-        effects: [{ kind: "motion", desiredVelocity: { x: 0, y: 0 } }],
-      });
-      if (stopped.status !== "applied") return this.finishAuthorityLost();
-      this.terminal = {
-        status: "blocked",
-        runId: this.runId,
-        destination: { ...this.destination },
-        constraints: [...physical.outcome.constraints],
-      };
-      return structuredClone(this.terminal);
+      if (this.world.options.materialBodyCollision
+        && physical.outcome.constraints.includes("material_object")
+        && this.detourAttempts < MAX_MATERIAL_DETOURS) {
+        const touch = this.authority.touchedMaterial(this.runId);
+        if (!touch) {
+          // The actor really hit an obstacle last tick, but another participant
+          // may already have picked it up. The current local tactile condition
+          // has disappeared: retry the SAME run rather than declaring a stale
+          // physical failure or pretending to know the absent object's history.
+          this.detour = [];
+          this.detourAttempts += 1;
+          this.stalledTicks = 0;
+        } else {
+          const plan = planTouchedMaterialDetour(
+            self.position, this.destination, touch, this.world.options.bounds,
+          );
+          if (!plan) return this.finishBlocked([...physical.outcome.constraints]);
+          this.detour = plan.map((point) => ({ ...point }));
+          this.detourAttempts += 1;
+          this.detourStartedTick = this.world.tick;
+          this.stalledTicks = 0;
+        }
+      } else {
+        return this.finishBlocked([...physical.outcome.constraints]);
+      }
     }
 
     const distanceRemainingSquared = distanceSquared(self.position, this.destination);
     if (distanceRemainingSquared <= this.arrivalDistance ** 2) {
+
       const direction = normalizedDirection(self.position, this.destination);
       const effects = [
         { kind: "motion" as const, desiredVelocity: { x: 0, y: 0 } },
@@ -105,7 +144,20 @@ export class ResidentGroundedTravelExecutor {
       return structuredClone(this.terminal);
     }
 
-    const direction = normalizedDirection(self.position, this.destination);
+    // Detour is a purely local motor subgoal under the original exact run.
+    // It cannot create a new matter, target, commitment or activity.
+    while (this.detour.length > 0
+      && distanceSquared(self.position, this.detour[0]!) <= DETOUR_WAYPOINT_RADIUS ** 2) {
+      this.detour.shift();
+    }
+    // The safety deadline belongs to the short CONTACT BYPASS, not to the
+    // resident's original (possibly kilometres-long) authorized journey.
+    if (this.detour.length === 0) {
+      this.detourStartedTick = null;
+      this.stalledTicks = 0;
+    }
+    const steeringTarget = this.detour[0] ?? this.destination;
+    const direction = normalizedDirection(self.position, steeringTarget);
     const speed = Math.min(self.maxSpeed, this.travelSpeed);
     const applied = this.authority.apply({
       runId: this.runId,
@@ -122,6 +174,21 @@ export class ResidentGroundedTravelExecutor {
       destination: { ...this.destination },
       distanceRemaining: Math.sqrt(distanceRemainingSquared),
     };
+  }
+
+  private finishBlocked(constraints: readonly string[]): ResidentGroundedTravelStep {
+    const stopped = this.authority.apply({
+      runId: this.runId,
+      effects: [{ kind: "motion", desiredVelocity: { x: 0, y: 0 } }],
+    });
+    if (stopped.status !== "applied") return this.finishAuthorityLost();
+    this.terminal = {
+      status: "blocked",
+      runId: this.runId,
+      destination: { ...this.destination },
+      constraints: [...constraints],
+    };
+    return structuredClone(this.terminal);
   }
 
   private finishAuthorityLost(): ResidentGroundedTravelStep {
