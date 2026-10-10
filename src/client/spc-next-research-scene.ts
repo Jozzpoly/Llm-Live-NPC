@@ -177,6 +177,19 @@ export class SpcNextResearchScene extends Phaser.Scene {
     this.pushFrame(true);
   }
 
+  /** A direct player/operator choice; ordinary World ticks never call the provider
+   * in the unified-armed research mode.
+   */
+  requestSelectedResidentCognition():
+    "started" | "no_reason" | "resident_unavailable" | "budget_exhausted" {
+    if (!this.selectedResidentId || !this.scenario.requestOneResidentCognition) {
+      return "resident_unavailable";
+    }
+    const result = this.scenario.requestOneResidentCognition(this.selectedResidentId);
+    this.pushFrame(true);
+    return result;
+  }
+
   playerCall(text = "Hej!"): void {
     this.world.speak(PLAYER_ID, text, SPC_PLAYER_SPEECH_RADIUS);
     this.captureNewSpeechOccurrences();
