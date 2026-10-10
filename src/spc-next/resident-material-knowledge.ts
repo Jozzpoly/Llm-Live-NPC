@@ -28,6 +28,9 @@ export class ResidentMaterialKnowledge {
   private readonly recognizedObjectIds: readonly string[];
   private readonly sight: SightGeometry;
   private readonly known = new Map<string, ResidentKnownMaterialObject>();
+  /** Local percept-only availability transitions, not a second World store. */
+  private visibleFreeObjectIds = new Set<string>();
+  private newlyVisiblyFreeObjectIds = new Set<string>();
 
   constructor(
     readonly residentId: string,
@@ -45,6 +48,9 @@ export class ResidentMaterialKnowledge {
     const observer = snapshot.actors.find((actor) => actor.id === this.residentId);
     if (!observer) throw new Error(`material knowledge resident actor missing: ${this.residentId}`);
 
+    const previouslyFree = this.visibleFreeObjectIds;
+    this.visibleFreeObjectIds = new Set();
+    this.newlyVisiblyFreeObjectIds = new Set();
     for (const known of this.known.values()) known.currentlyVisible = false;
 
     for (const objectId of this.recognizedObjectIds) {
@@ -62,6 +68,10 @@ export class ResidentMaterialKnowledge {
         observedAtTick: this.world.tick,
         currentlyVisible: true,
       });
+      if (object.location.kind === "free") {
+        this.visibleFreeObjectIds.add(objectId);
+        if (!previouslyFree.has(objectId)) this.newlyVisiblyFreeObjectIds.add(objectId);
+      }
     }
 
     return this.snapshot();
@@ -75,7 +85,12 @@ export class ResidentMaterialKnowledge {
   visiblyFree(objectId: string): boolean {
     const observation = this.known.get(objectId);
     if (!observation?.currentlyVisible || observation.observedAtTick !== this.world.tick) return false;
-    return this.world.materialObject(objectId)?.location.kind === "free";
+    return this.visibleFreeObjectIds.has(objectId);
+  }
+
+  /** Free material just became privately available, including held -> placed within sight. */
+  becameVisiblyFree(objectId: string): boolean {
+    return this.visiblyFree(objectId) && this.newlyVisiblyFreeObjectIds.has(objectId);
   }
 
   lastKnownPosition(objectId: string): Vec2 | null {
