@@ -8,7 +8,8 @@ import {
   FiveResidentUnifiedLivingRuntime,
   type FiveResidentLivingRuntimeDiagnostics,
 } from "../spc-next/five-resident-unified-living-runtime";
-import type { FiveResidentId } from "../spc-next/five-resident-region";
+import { createFiveResidentRegionComposition, type FiveResidentId } from "../spc-next/five-resident-region";
+import { FiveResidentCausalLifeRuntime } from "../spc-next/five-resident-causal-life-runtime";
 import type { SpcWorldRuntime } from "../spc-next/spc-world-runtime";
 import { createFiveResidentJanekMaterialSlice } from "../spc-next/five-resident-material-slice";
 import { createFiveResidentJanekMissingCrateStagedSlice } from "../spc-next/five-resident-missing-crate-slice";
@@ -47,7 +48,8 @@ export type SpcNextResearchScenarioKind =
   | "r5-mira-semantic-escalation"
   | "r5-mira-live-semantic-escalation"
   | "r6-mira-standing-social-commitment"
-  | "unified-living";
+  | "unified-living"
+  | "five-resident-material-continuation";
 
 export interface SpcNextResearchScenario {
   readonly kind: SpcNextResearchScenarioKind;
@@ -83,6 +85,7 @@ export function createSpcNextResearchScenario(kind: SpcNextResearchScenarioKind)
   if (kind === "r5-mira-live-semantic-escalation") return createR5MiraLiveSemanticEscalationScenario();
   if (kind === "r6-mira-standing-social-commitment") return createR6MiraStandingSocialCommitmentScenario();
   if (kind === "unified-living") return createUnifiedLivingScenario();
+  if (kind === "five-resident-material-continuation") return createFiveResidentMaterialContinuationScenario();
   return createBaselineDeliveryScenario();
 }
 
@@ -102,6 +105,7 @@ export function researchScenarioKindFromSearch(search: string): SpcNextResearchS
   if (requested === "r5-mira-live-semantic-escalation") return "r5-mira-live-semantic-escalation";
   if (requested === "r6-mira-standing-social-commitment") return "r6-mira-standing-social-commitment";
   if (requested === "unified-living") return "unified-living";
+  if (requested === "five-resident-material-continuation") return "five-resident-material-continuation";
   throw new Error(`unknown SPC Next research scenario: ${requested}`);
 }
 
@@ -879,6 +883,86 @@ function createR6MiraStandingSocialCommitmentScenario(): SpcNextResearchScenario
 }
 
 
+
+/**
+ * REAL five-resident R6 World in the actual browser shell (zero provider).
+ * Initial previously accepted material concern and blocked past are explicitly
+ * authored scenario history. Player is an independent physical participant.
+ * NOTHING automatically tells Janek what to do when the player acts later.
+ *
+ * Opt-in: ?spc=1&scenario=five-resident-material-continuation
+ * Only for research/playability inspection; NOT Owner-validated living NPCs.
+ */
+function createFiveResidentMaterialContinuationScenario(): SpcNextResearchScenario {
+  const composition = createFiveResidentRegionComposition({
+    playerStart: { x: 2_004, y: 720 },
+  });
+  // Authored PHYSICAL opening: the player already carries Janek's crate.
+  // The current blocked matter has a factual counterpart in the shared World;
+  // this does not prescribe what Janek chooses after the player drops it.
+  const carried = composition.world.attemptMaterialAction("player.jozz", {
+    kind: "pickup", objectId: "crate.workshop.01",
+  });
+  if (carried.status !== "succeeded" || carried.code !== "picked_up") {
+    throw new Error("five-resident pre-Luna scenario must begin with actual held material");
+  }
+  const living = new FiveResidentCausalLifeRuntime(composition);
+  const life = living.life("resident.janek");
+  if (!life) throw new Error("R6 material continuation requires Janek's claimed recovered-life authority");
+
+  const origin = life.kernel.recordEvidence({
+    id: "evidence.janek.authored-ordinary-continuation-opening",
+    tick: composition.world.tick,
+    kind: "life_context",
+    summary: "Authored prior situation only: Janek has an unresolved personal workshop crate acquisition.",
+  });
+  const matter = life.kernel.openMatter({
+    id: "matter.janek.pre-luna-existing-material-concern",
+    originEvidenceId: origin.id,
+    semanticCourse: "Previously accepted attempt to acquire Janek's familiar workshop crate",
+    semanticIntent: {
+      kind: "acquire_material_object",
+      goal: "Continue previously accepted familiar workshop material acquisition",
+      objectId: "crate.workshop.01",
+    },
+  });
+  life.matterScope.track(matter.id);
+  const priorRun = "run.janek.pre-luna-previous-blocked-material-attempt";
+  life.kernel.bindRun({
+    matterId: matter.id,
+    taskId: "task.janek.pre-luna-previous-blocked-material-attempt",
+    runId: priorRun,
+  });
+  const initial = life.kernel.reconcileRunOutcome({
+    runId: priorRun,
+    tick: composition.world.tick,
+    status: "blocked",
+    summary: "authored prior fact: the familiar crate was absent at the last checked place",
+  });
+  if (initial.status !== "recorded") {
+    throw new Error("failed to establish honest, labelled existing material concern");
+  }
+  life.outcomeReviewBridge.observe(initial.evidence, composition.world.tick);
+
+  return {
+    kind: "five-resident-material-continuation",
+    evidenceScenarioId: "browser-five-resident-material-continuation",
+    residentId: "resident.janek",
+    matterId: matter.id,
+    world: composition.world,
+    kernel: life.kernel,
+    materialKnowledge: life.materialKnowledge,
+    authority: life.worldAuthority,
+    canonicalEvidenceSupported: false,
+    residentLifeView(residentId: string): ResidentLifeCognitionView | null {
+      if (!composition.world.publicSnapshot().residents.some((r) => r.id === residentId)) return null;
+      return living.life(residentId as FiveResidentId)?.currentLifeView() ?? null;
+    },
+    advanceOneWorldTick(): void {
+      living.advanceOneWorldTick();
+    },
+  };
+}
 
 function createUnifiedLivingScenario(): SpcNextResearchScenario {
   const living = new FiveResidentUnifiedLivingRuntime();

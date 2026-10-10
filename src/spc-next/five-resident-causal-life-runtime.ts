@@ -14,6 +14,7 @@ import { FIVE_RESIDENT_LIFE_SELF } from "./five-resident-life-self";
 import {
   ResidentCausalExecutionCoordinator,
   type ResidentCausalExecutionStep,
+  type ResidentCausalExecutionReactivation,
 } from "./resident-causal-execution-coordinator";
 import {
   ResidentCausalLifeSubstrate,
@@ -37,6 +38,10 @@ export interface FiveResidentCausalLifeTick {
   interruptions: Readonly<Partial<Record<FiveResidentId, ResidentAddressedInterruptionStep>>>;
   materialRelevance: Readonly<
     Partial<Record<FiveResidentId, readonly ResidentMaterialMatterRelevanceObservation[]>>
+  >;
+  /** Same already-open material matter only; never a newly chosen resident goal. */
+  localMaterialResumption: Readonly<
+    Partial<Record<FiveResidentId, readonly ResidentCausalExecutionReactivation[]>>
   >;
 }
 
@@ -119,6 +124,9 @@ export class FiveResidentCausalLifeRuntime {
     const materialRelevance: Partial<
       Record<FiveResidentId, readonly ResidentMaterialMatterRelevanceObservation[]>
     > = {};
+    const localMaterialResumption: Partial<
+      Record<FiveResidentId, ResidentCausalExecutionReactivation[]>
+    > = {};
 
     for (const residentId of this.claimedResidentIds()) {
       const lane = this.lanes.get(residentId)!;
@@ -138,6 +146,32 @@ export class FiveResidentCausalLifeRuntime {
     for (const residentId of this.claimedResidentIds()) {
       const observations = this.lanes.get(residentId)!.life.sampleMaterialRelevance();
       if (observations.length > 0) materialRelevance[residentId] = observations;
+
+      // Zero-provider resident-local CONTINUATION, not goal creation.
+      // Only a uniquely matching existing, factually blocked material matter
+      // with newer PRIVATE sight evidence may renew its exact body run.
+      // A visible object held by somebody is not an available free pickup.
+      const lane = this.lanes.get(residentId)!;
+      for (const observation of observations) {
+        if (observation.status !== "reactivatable") continue;
+        if (!lane.life.materialKnowledge?.visiblyFree(observation.objectId)) continue;
+        const resumed = lane.execution.reactivateReviewedMatter(observation.matterId);
+        if (resumed.status !== "acquired" && resumed.status !== "already_focused"
+          && resumed.status !== "deferred") continue;
+        (localMaterialResumption[residentId] ??= []).push(resumed);
+        // This exact past blockage is now handled by a factual renewed run.
+        // Leave unrelated/sibling semantic reasons strictly untouched.
+        const prior = lane.life.kernel.lastOutcomeEvidence(observation.matterId);
+        if (!prior) continue;
+        for (const reason of this.composition.runtimes[residentId].pendingCognitionReasons()) {
+          if (reason.kind === "activity_completed" && reason.evidenceIds.includes(prior.id)) {
+            this.composition.runtimes[residentId].invalidateSemanticPressure(
+              reason.id, this.composition.world.tick,
+              "private free-state reacquisition resumed the same accepted material matter",
+            );
+          }
+        }
+      }
     }
 
     // Perception is produced by the shared World step. Only after that boundary may
@@ -154,6 +188,7 @@ export class FiveResidentCausalLifeRuntime {
       execution: structuredClone(execution),
       interruptions: structuredClone(interruptions),
       materialRelevance: structuredClone(materialRelevance),
+      localMaterialResumption: structuredClone(localMaterialResumption),
     };
   }
 

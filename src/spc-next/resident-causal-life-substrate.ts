@@ -251,11 +251,31 @@ export class ResidentCausalLifeSubstrate {
     const observations: ResidentMaterialMatterRelevanceObservation[] = [];
     for (const before of previous) {
       const after = currentByObjectId.get(before.objectId) ?? null;
-      if (before.currentlyVisible || !after?.currentlyVisible) continue;
+      if (!after?.currentlyVisible) continue;
+      const becameFreeWhileVisible = before.currentlyVisible
+        && this.materialKnowledge.becameVisiblyFree(before.objectId);
+      // A normal hidden -> visible reacquisition already owns the edge. Consume
+      // any free-state marker now so it cannot replay on the next local tick.
+      if (!before.currentlyVisible) this.materialKnowledge.becameVisiblyFree(before.objectId);
+      if (before.currentlyVisible && !becameFreeWhileVisible) continue;
+
+      const life = this.currentLifeView();
+      if (becameFreeWhileVisible) {
+        // A free-state change can resume an already accepted BLOCKED material
+        // concern. It must NOT manufacture new concerns for every placed prop.
+        const currentBlockedMatter = life.matters.some((matter) => (
+          matter.status === "active"
+          && matter.activeRun === null
+          && matter.semanticIntent?.kind === "acquire_material_object"
+          && matter.semanticIntent.objectId === before.objectId
+          && matter.lastOutcomeEvidence?.summary.startsWith("blocked:")
+        ));
+        if (!currentBlockedMatter) continue;
+      }
+
       observations.push(this.materialRelevanceBridge.observeReacquisition(
-        before,
-        after,
-        this.currentLifeView(),
+        before, after, life,
+        becameFreeWhileVisible ? { becameFreeWhileStillVisible: true } : {},
       ));
     }
     return observations.map((entry) => structuredClone(entry));
