@@ -59,7 +59,7 @@ export const FIVE_RESIDENT_PRE_LUNA_WORKSHOP_MATERIAL_OBJECTS: readonly Material
     id: "crate.workshop.timber",
     label: "Pakunek desek",
     radius: 25,
-    location: { kind: "free", position: { x: 2_055, y: 700 } },
+    location: { kind: "free", position: { x: 2_055, y: 825 } },
   },
 ];
 
