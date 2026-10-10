@@ -35,6 +35,10 @@ export interface ResidentStandingSocialCommitmentDescriptor {
    * second provider-authored paraphrase.
    */
   goal: string;
+  /** Explicitly accepted ONE-TIME revisit delay after the factual speech (World ticks).
+   * Not a deadline inferred from text, not the LLM transport review interval.
+   */
+  revisitAfterWorldTicks?: number;
 }
 
 export interface ResidentCommunicateActorMatterIntent {
@@ -75,6 +79,8 @@ export interface ResidentStandingSocialCommitmentMatterIntent {
   goal: string;
   counterpartyActorId: string;
   commitment: string;
+  /** World tick derived from an explicitly declared delay at ACTUAL speech time. */
+  revisitAtWorldTick?: number;
 }
 
 export type ResidentMatterIntent =
@@ -1428,6 +1434,10 @@ function validateMatterIntent(intent: ResidentMatterIntent): void {
           intent.standingSocialCommitment.goal,
           "standing social continuation goal",
         );
+        const delay = intent.standingSocialCommitment.revisitAfterWorldTicks;
+        if (delay !== undefined && (!Number.isSafeInteger(delay) || delay < 1 || delay > 36_000)) {
+          throw new Error("standing social revisit delay must be 1..36000 World ticks");
+        }
       }
       return;
     case "acquire_material_object":
@@ -1436,6 +1446,10 @@ function validateMatterIntent(intent: ResidentMatterIntent): void {
     case "standing_social_commitment":
       assertNonEmpty(intent.counterpartyActorId, "standing social commitment counterparty actor id");
       assertNonEmpty(intent.commitment, "standing social commitment meaning");
+      if (intent.revisitAtWorldTick !== undefined &&
+        (!Number.isSafeInteger(intent.revisitAtWorldTick) || intent.revisitAtWorldTick < 1)) {
+        throw new Error("standing social revisit tick must be a positive safe World tick");
+      }
       return;
   }
 }
