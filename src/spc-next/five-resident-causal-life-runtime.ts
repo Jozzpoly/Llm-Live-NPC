@@ -124,6 +124,9 @@ export class FiveResidentCausalLifeRuntime {
     const materialRelevance: Partial<
       Record<FiveResidentId, readonly ResidentMaterialMatterRelevanceObservation[]>
     > = {};
+    const localMaterialResumption: Partial<
+      Record<FiveResidentId, readonly ResidentCausalExecutionReactivation[]>
+    > = {};
 
     for (const residentId of this.claimedResidentIds()) {
       const lane = this.lanes.get(residentId)!;
