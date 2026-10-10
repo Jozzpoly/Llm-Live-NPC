@@ -1,5 +1,7 @@
 # SPC Post-Stress Recovery Program
 
+> **2026-10-10 AGENT CONTINUITY / LONG RUNS:** read [`docs/SPC_AGENT_RUN_STATE.md`](SPC_AGENT_RUN_STATE.md) for current PR #154 exact-head findings, recovered Owner-facing zero-Luna inspection, disconnected Opera/local Git limitations, the bounded execution loop, and safe re-entry. This agent checkpoint is operational guidance, **not** a new architecture or override of later Owner correction.
+
 Status: **CANONICAL CURRENT EXECUTION AUTHORITY**
 Date: **2026-09-20**
 Repository: `Jozzpoly/Llm-Live-NPC`
