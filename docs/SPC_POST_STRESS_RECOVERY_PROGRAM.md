@@ -1,6 +1,6 @@
 # SPC Post-Stress Recovery Program
 
-> **2026-10-10 AGENT CONTINUITY / LONG RUNS:** read [`docs/SPC_AGENT_RUN_STATE.md`](SPC_AGENT_RUN_STATE.md) for current PR #154 exact-head findings, recovered Owner-facing zero-Luna inspection, disconnected Opera/local Git limitations, the bounded execution loop, and safe re-entry. This agent checkpoint is operational guidance, **not** a new architecture or override of later Owner correction.
+> **ACTIVE AGENT CONTINUITY (2026-10-10):** the single current autonomous run objective, supersession rules, execution/stop policy, exact draft evidence and owner-facing boundaries live in [`SPC_AGENT_RUN_STATE.md`](SPC_AGENT_RUN_STATE.md). Its current research falsifier is [`SPC_ORDINARY_LIFE_COMPOSITION_EXPERIMENT_2026-10-10.md`](SPC_ORDINARY_LIFE_COMPOSITION_EXPERIMENT_2026-10-10.md). Old #152–#155 capability findings are historical controls, not a standing instruction to build #156. Latest Owner correction and live source truth always override these documents.
 
 Status: **CANONICAL CURRENT EXECUTION AUTHORITY**
 Date: **2026-09-20**
