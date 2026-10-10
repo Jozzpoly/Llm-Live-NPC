@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-09-26T08:41:58.702Z",
+  "sourceSha": "f3968f5600f5cb462b212b9bbd5312424da105b4",
+  "liveProviderRun": 24,
+  "candidateBaseUrl": "https://61d2fef3-llm-live-npc.jozzpoly.workers.dev",
+  "providerRequestsAttempted": 2,
+  "semanticRetries": 0,
+  "model": "gpt-5.6-luna",
+  "classification": "SAME_BEHAVIORAL_DECISION_OBSERVED",
+  "comparison": {
+    "exactBehaviorEqual": true,
+    "controlLocallyExecutableClass": true,
+    "historyLocallyExecutableClass": true
+  },
+  "control": {
+    "originReasonId": "reason:resident.janek:r6:material-reacquired",
+    "proposal": {
+      "version": 1,
+      "commitmentDecision": {
+        "kind": "accept",
+        "reason": "The familiar material object has reappeared near the workshop, creating a grounded reason to go there and inspect the situation.",
+        "intent": {
+          "kind": "travel",
+          "goal": "Go to the workshop to inspect the familiar material object that has reappeared there.",
+          "targetActorId": null,
+          "targetRegionId": "workshop",
+          "targetPosition": null,
+          "text": null
+        }
+      },
+      "beliefs": [],
+      "concerns": [],
+      "reviewAfterSeconds": 30
+    },
+    "usage": {
+      "inputTokens": 3139,
+      "outputTokens": 278,
+      "totalTokens": 3417,
+      "elapsedMs": 6494
+    }
+  },
+  "history": {
+    "originReasonId": "reason:resident.janek:r6:material-reacquired",
+    "proposal": {
+      "version": 1,
+      "commitmentDecision": {
+        "kind": "accept",
+        "reason": "The familiar material object is visibly present again, creating a grounded reason to revisit the workshop and make another attempt after the earlier unavailability.",
+        "intent": {
+          "kind": "travel",
+          "goal": "Go to the workshop to inspect and attempt to acquire the familiar material object again.",
+          "targetActorId": null,
+          "targetRegionId": "workshop",
+          "targetPosition": null,
+          "text": null
+        }
+      },
+      "beliefs": [],
+      "concerns": [],
+      "reviewAfterSeconds": 30
+    },
+    "usage": {
+      "inputTokens": 3283,
+      "outputTokens": 278,
+      "totalTokens": 3561,
+      "elapsedMs": 5228
+    }
+  }
+}

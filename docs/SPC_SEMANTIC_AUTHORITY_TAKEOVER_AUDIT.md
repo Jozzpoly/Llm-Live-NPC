@@ -1,5 +1,7 @@
 # SPC Next — Semantic Authority Takeover Audit
 
+> **CURRENT EXECUTION NOTICE (2026-09-25): HISTORICAL BLOCKER / RESOLVED AS A CURRENT STOP CONDITION.** This audit correctly identified the old dual-authority danger, but its “PRE-LIVE-PROVIDER BLOCKER” status and recovery-authority pointers belong to the 15 September architecture campaign. Later R5/R6 work replaced that execution boundary with resident-life-native admission. Preserve this file as causal rationale; use `docs/SPC_POST_STRESS_RECOVERY_PROGRAM.md`, `docs/SPC_R6_COMPLEMENTARY_PERSONHOOD_EXPERIMENT.md`, and live evidence for current work.
+
 Date: **2026-09-15**  
 Status: **ACTIVE RECOVERY FINDING / PRE-LIVE-PROVIDER BLOCKER**
 

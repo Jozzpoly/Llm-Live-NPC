@@ -63,6 +63,16 @@ export type FiveResidentId =
   | "resident.oren"
   | "resident.nela";
 
+export const FIVE_RESIDENT_MATERIAL_FAMILIARITY: Readonly<
+  Record<FiveResidentId, readonly string[]>
+> = {
+  "resident.mira": [],
+  "resident.janek": ["crate.workshop.01"],
+  "resident.ida": [],
+  "resident.oren": [],
+  "resident.nela": [],
+};
+
 export type FiveResidentRuntimes = Readonly<Record<FiveResidentId, ResidentRuntime>>;
 
 export interface FiveResidentRegionWorldOptions {

@@ -1,6 +1,6 @@
 # SPC Re-observation — Findings Ledger
 
-> **CURRENT EXECUTION NOTICE (2026-09-18):** These findings remain valid evidence within their recorded scope, especially the contract-to-oracle warnings. Some composition gaps have since advanced materially. Use `docs/SPC_LIVING_WORLD_EXECUTION_PROGRAM.md` for current execution state and do not promote this ledger's old stop-line as today's roadmap.
+> **CURRENT EXECUTION NOTICE (2026-09-25): HISTORICAL FINDINGS / DURABLE METHODOLOGY.** The contract-to-oracle warnings and scoped findings remain valuable, but the old stop-line and its former Living World authority pointer are superseded. Current execution authority is `docs/SPC_POST_STRESS_RECOVERY_PROGRAM.md`; later evidence must be read through the current R6 contract and live repository state.
 
 
 Date: **2026-09-16**  

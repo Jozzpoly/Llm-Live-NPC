@@ -1,6 +1,6 @@
 # SPC Next — Owner intent recovery and live gap audit
 
-> **CURRENT EXECUTION NOTICE (2026-09-18):** The Owner/product guardrails in this document remain durable and important, but many implementation-gap statements describe the pre-unified runtime. Current execution order and live qualification state are owned by `docs/SPC_LIVING_WORLD_EXECUTION_PROGRAM.md`.
+> **CURRENT EXECUTION NOTICE (2026-09-25): DURABLE OWNER/PRODUCT GUARDRAILS, NOT EXECUTION ROADMAP.** The Owner intent in this document remains important; many implementation-gap statements are historical. Current execution authority is `docs/SPC_POST_STRESS_RECOVERY_PROGRAM.md`; the active R6 contract is `docs/SPC_R6_COMPLEMENTARY_PERSONHOOD_EXPERIMENT.md`; latest bounded empirical finding is `docs/SPC_R6_ENDOGENOUS_ORDINARY_PERSONHOOD_FINDING.md`.
 
 
 Status: **binding direction/reality guardrail for the current refoundation, not a frozen architecture**  

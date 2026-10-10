@@ -11,11 +11,22 @@ import type {
   AcceptedResidentCausalTravelCommitment,
   GroundedResidentCausalTravelCommitmentIntent,
 } from "./resident-causal-travel-commitment";
+import { ResidentCausalExecutionCoordinator } from "./resident-causal-execution-coordinator";
 import type {
   PreparedResidentCausalLifeIntent,
   ResidentCausalLifeSubstrate,
 } from "./resident-causal-life-substrate";
 import type { ResidentLifeIntentProposal } from "./resident-life-intent-contract";
+import type { ResidentContinuityKernel } from "./resident-continuity-kernel";
+import type {
+  ResidentLifeCognitionView,
+  ResidentLifeMatterView,
+} from "./resident-life-cognition-view";
+import {
+  allowedPlanRevisionSupportEvidenceIds,
+  deriveResidentLifeChoiceCandidateSupports,
+} from "./resident-life-choice-causal-support";
+import { ResidentLifePlanRevisionAuthority } from "./resident-life-plan-revision-authority";
 
 export interface ResidentCausalCognitionRequest {
   readonly id: string;
@@ -131,6 +142,24 @@ export class ResidentCausalCognitionLane {
       | {
           kind: "reason";
           intent: GroundedResidentCausalReasonCommitmentIntent;
+        }
+      | {
+          kind: "release_standing";
+          matterId: string;
+          occurrence: WorldOccurrence;
+          reason: string;
+        }
+      | {
+          kind: "complete_standing";
+          matterId: string;
+          outcomeEvidenceId: string;
+          reason: string;
+        }
+      | {
+          kind: "review_current";
+          disposition: "continue" | "relinquish";
+          matterId: string;
+          reason: string;
         };
 
     const settlement = this.life.lifeIntentOwner.settleCommitmentIntent<Admission>(
@@ -139,6 +168,151 @@ export class ResidentCausalCognitionLane {
       this.life.currentLifeView(),
       this.life.world.tick,
       (proposal, providerContext) => {
+        const singlePlanReview = exactSinglePlanOutcomeReviewTarget(
+          providerContext.life,
+          originReason,
+          this.life.kernel,
+        );
+
+        if (proposal.commitmentDecision.kind === "continue_matter"
+          || proposal.commitmentDecision.kind === "relinquish_matter") {
+          const decision = proposal.commitmentDecision;
+          if (!singlePlanReview || decision.matterId !== singlePlanReview.matter.id) {
+            return {
+              status: "rejected",
+              detail: "single-plan review target is not the exact sole current run-free outcome-bearing plan",
+            };
+          }
+          if (decision.kind === "continue_matter"
+            && singlePlanReview.matter.semanticIntent?.kind === "acquire_material_object"
+            && !this.life.materialKnowledge) {
+            return {
+              status: "rejected",
+              detail: "single-plan continuation lacks local material execution substrate",
+            };
+          }
+
+          const supports = deriveResidentLifeChoiceCandidateSupports(
+            providerContext.life,
+            [singlePlanReview.matter.id],
+          );
+          const allowedSupport = new Set(
+            allowedPlanRevisionSupportEvidenceIds(supports, singlePlanReview.matter.id),
+          );
+          if (!decision.supportEvidenceIds.includes(singlePlanReview.outcomeEvidenceId)
+            || decision.supportEvidenceIds.some((evidenceId) => !allowedSupport.has(evidenceId))) {
+            return {
+              status: "rejected",
+              detail: "single-plan review lacks exact target-local factual support",
+            };
+          }
+
+          return {
+            status: "accepted",
+            intent: {
+              kind: "review_current",
+              disposition: decision.kind === "continue_matter" ? "continue" : "relinquish",
+              matterId: singlePlanReview.matter.id,
+              reason: decision.reason,
+            },
+          };
+        }
+
+        if (singlePlanReview
+          && (proposal.commitmentDecision.kind === "decline"
+            || proposal.commitmentDecision.kind === "accept")) {
+          return {
+            status: "rejected",
+            detail:
+              "single-plan factual outcome requires explicit continue, relinquish, defer or clarify",
+          };
+        }
+
+        if (proposal.commitmentDecision.kind === "complete_standing") {
+          const completionDecision = proposal.commitmentDecision;
+          if (originReason.kind !== "activity_completed" || originReason.evidenceIds.length !== 1) {
+            return {
+              status: "rejected",
+              detail: "standing completion requires one exact activity-completed outcome origin",
+            };
+          }
+          const outcomeEvidenceId = originReason.evidenceIds[0]!;
+          const outcomeEvidence = this.life.kernel.recentEvidenceSnapshot().find(
+            (candidate) => candidate.id === outcomeEvidenceId,
+          ) ?? null;
+          if (!outcomeEvidence
+            || outcomeEvidence.kind !== "task_outcome"
+            || !outcomeEvidence.sourceRunId) {
+            return {
+              status: "rejected",
+              detail: "standing completion factual task outcome unavailable",
+            };
+          }
+          const matter = providerContext.life.matters.find(
+            (candidate) => candidate.id === completionDecision.matterId,
+          ) ?? null;
+          if (!matter
+            || (matter.status !== "active" && matter.status !== "suspended")
+            || matter.activeRun !== null
+            || matter.semanticIntent?.kind !== "standing_social_commitment") {
+            return {
+              status: "rejected",
+              detail: "standing completion target is not one open run-free standing commitment",
+            };
+          }
+          return {
+            status: "accepted",
+            intent: {
+              kind: "complete_standing",
+              matterId: matter.id,
+              outcomeEvidenceId,
+              reason: completionDecision.reason,
+            },
+          };
+        }
+
+        if (proposal.commitmentDecision.kind === "release_standing") {
+          const releaseDecision = proposal.commitmentDecision;
+          if (originReason.kind !== "heard_speech") {
+            return {
+              status: "rejected",
+              detail: "standing commitment release requires exact heard-speech origin",
+            };
+          }
+          const occurrence = exactSpeechOccurrence(this.life, local.prepared, originReason);
+          if (!occurrence) {
+            return { status: "rejected", detail: "standing release speech occurrence unavailable" };
+          }
+          const matter = providerContext.life.matters.find(
+            (candidate) => candidate.id === releaseDecision.matterId,
+          ) ?? null;
+          if (!matter
+            || (matter.status !== "active" && matter.status !== "suspended")
+            || matter.activeRun !== null
+            || matter.semanticIntent?.kind !== "standing_social_commitment") {
+            return {
+              status: "rejected",
+              detail: "standing release target is not one open run-free standing commitment",
+            };
+          }
+          if (occurrence.actorId !== matter.semanticIntent.counterpartyActorId
+            || !occurrence.addressedActorIds.includes(this.life.residentId)) {
+            return {
+              status: "rejected",
+              detail: "standing release origin is not factual addressed speech from its counterparty",
+            };
+          }
+          return {
+            status: "accepted",
+            intent: {
+              kind: "release_standing",
+              matterId: matter.id,
+              occurrence,
+              reason: releaseDecision.reason,
+            },
+          };
+        }
+
         if (proposal.commitmentDecision.kind !== "accept"
           || proposal.commitmentDecision.intent.kind === "idle") {
           return { status: "accepted", intent: { kind: "no_commitment" } };
@@ -228,7 +402,29 @@ export class ResidentCausalCognitionLane {
 
     const admitted = settlement.intent;
     let commitment: AcceptedCommitment | null = null;
-    if (admitted.kind === "speech_travel") {
+    if (admitted.kind === "review_current") {
+      const revision = new ResidentLifePlanRevisionAuthority(
+        this.life.residentId,
+        this.life.lifeIntentOwner,
+        this.life.kernel,
+      ).apply(settlement, this.life.world.tick);
+      if (revision.status !== "applied" || revision.disposition !== admitted.disposition) {
+        throw new Error(
+          revision.status === "applied"
+            ? "single-plan revision authority returned wrong disposition"
+            : `single-plan revision authority rejected admitted settlement: ${revision.reason}`,
+        );
+      }
+      if (admitted.disposition === "continue") {
+        const reactivated = new ResidentCausalExecutionCoordinator(this.life)
+          .reactivateReviewedMatter(admitted.matterId);
+        if (reactivated.status === "rejected") {
+          throw new Error(
+            `single-plan continuation failed local execution reactivation: ${reactivated.reason}`,
+          );
+        }
+      }
+    } else if (admitted.kind === "speech_travel") {
       commitment = this.life.travelCommitments.materializePrivateSpeechCommitment({
         attempt: local.prepared.attempt,
         occurrence: admitted.occurrence,
@@ -250,6 +446,20 @@ export class ResidentCausalCognitionLane {
         intent: admitted.intent,
         tick: this.life.world.tick,
       });
+    } else if (admitted.kind === "release_standing") {
+      this.life.originatedSocialCommitments.releaseAfterCounterpartySpeech({
+        matterId: admitted.matterId,
+        occurrenceId: admitted.occurrence.id,
+        tick: this.life.world.tick,
+        reason: admitted.reason,
+      });
+    } else if (admitted.kind === "complete_standing") {
+      this.life.originatedSocialCommitments.completeAfterFactualOutcome({
+        matterId: admitted.matterId,
+        outcomeEvidenceId: admitted.outcomeEvidenceId,
+        tick: this.life.world.tick,
+        reason: admitted.reason,
+      });
     }
 
     const decision = settlement.proposal.commitmentDecision.kind;
@@ -266,7 +476,11 @@ export class ResidentCausalCognitionLane {
     this.life.resident.reconcileCognitionSettlement({
       batch: local.prepared.batch,
       originReasonId,
-      decision,
+      decision: decision === "relinquish_matter"
+        ? "decline"
+        : decision === "continue_matter"
+          ? "accept"
+          : decision,
       tick: this.life.world.tick,
       ...(retainOriginUntilTick === undefined ? {} : { retainOriginUntilTick }),
     });
@@ -331,6 +545,46 @@ export class ResidentCausalCognitionLane {
     this.active.delete(request);
     return local;
   }
+}
+
+function exactSinglePlanOutcomeReviewTarget(
+  life: ResidentLifeCognitionView,
+  originReason: CognitionReason,
+  kernel: ResidentContinuityKernel,
+): { matter: ResidentLifeMatterView; outcomeEvidenceId: string } | null {
+  if (originReason.kind !== "activity_completed" || originReason.evidenceIds.length !== 1) {
+    return null;
+  }
+  if (life.body.focusedRunId !== null || life.body.deferredRunIds.length !== 0) return null;
+
+  const executableCurrent = life.matters.filter((candidate) => {
+    const intent = candidate.semanticIntent ?? null;
+    return candidate.status === "active"
+      && intent !== null
+      && (
+        intent.kind === "travel_region"
+        || intent.kind === "communicate_actor"
+        || intent.kind === "acquire_material_object"
+      );
+  });
+  if (executableCurrent.length !== 1) return null;
+
+  const matter = executableCurrent[0]!;
+  const outcomeEvidenceId = originReason.evidenceIds[0]!;
+  const kernelMatter = kernel.matter(matter.id);
+  if (!kernelMatter
+    || matter.activeRun !== null
+    || matter.lastOutcomeEvidence?.id !== outcomeEvidenceId
+    || matter.lastOutcomeEvidence.kind !== "task_outcome"
+    || kernelMatter.status !== "active"
+    || kernelMatter.activeRunId !== null
+    || kernelMatter.semanticRevision !== matter.semanticRevision
+    || kernelMatter.lastOutcomeEvidenceId !== outcomeEvidenceId
+    || kernelMatter.lastOutcomeSemanticRevision !== kernelMatter.semanticRevision) {
+    return null;
+  }
+
+  return { matter, outcomeEvidenceId };
 }
 
 function exactSpeechOccurrence(

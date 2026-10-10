@@ -1,6 +1,6 @@
 # SPC Next — Five-Resident Pressure Campaign
 
-> **CURRENT EXECUTION NOTICE (2026-09-18):** Keep this document as the resident-pressure/scenario donor map. Its historical "immediate order" is not binding after the unified five-resident runtime breakthrough. Current phase/order is owned by `docs/SPC_LIVING_WORLD_EXECUTION_PROGRAM.md`.
+> **CURRENT EXECUTION NOTICE (2026-09-25): RESIDENT-PRESSURE / SCENARIO DONOR MAP.** Keep the pressure dimensions and anti-special-case principles here, but do not follow its historical immediate order as a roadmap. Current execution authority is `docs/SPC_POST_STRESS_RECOVERY_PROGRAM.md`; current R6 direction is `docs/SPC_R6_COMPLEMENTARY_PERSONHOOD_EXPERIMENT.md`.
 
 
 Date: **2026-09-15**  

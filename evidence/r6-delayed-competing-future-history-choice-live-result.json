@@ -1,0 +1,606 @@
+{
+  "schemaVersion": 1,
+  "sourceSha": "ebf41ab8d67c86dd4eb4b3e4c8a30978ef73b827",
+  "candidateBaseUrl": "https://15a47030-llm-live-npc.jozzpoly.workers.dev",
+  "purpose": "R6 delayed accumulated-history falsifier. Matched Janek twins have the same two current deferred futures and free body; neither exposes the old terminal matter. The history twin alone carries one exact candidate-scoped prior_same_material_outcome on the material retry. Exactly two real GPT-5.6 Luna requests; no semantic retry and no preferred winner.",
+  "startedAt": "2026-09-27T11:49:49.653Z",
+  "assertions": [
+    {
+      "name": "spend-free preflight resolves exact life-choice endpoint and Luna configuration",
+      "pass": true,
+      "detail": {
+        "status": 200,
+        "endpoint": "/api/spc-next/life-choice",
+        "model": "gpt-5.6-luna",
+        "keyConfigured": true
+      }
+    },
+    {
+      "name": "spend-free method probe reaches dedicated handler before inference",
+      "pass": true,
+      "detail": {
+        "status": 405,
+        "body": {
+          "ok": false,
+          "code": "method_not_allowed"
+        }
+      }
+    },
+    {
+      "name": "twins are identical after removing the one candidate-scoped delayed support",
+      "pass": true,
+      "detail": {
+        "control": {
+          "contract": "resident_life_cognition_v1",
+          "resident": {
+            "id": "resident.janek",
+            "name": "Janek"
+          },
+          "tick": 220,
+          "currentRegionId": "yard",
+          "reasons": [
+            {
+              "id": "reason:janek:r6:delayed-competing-future:220",
+              "tick": 220,
+              "kind": "uncertainty",
+              "salience": 0.82,
+              "summary": "Two already-grounded current resident futures are waiting for the same currently-free body.",
+              "evidenceIds": [
+                "run.janek.r6.delayed-competing-future.retry",
+                "run.janek.r6.delayed-competing-future.other"
+              ]
+            }
+          ],
+          "localActivity": {
+            "id": "activity:resident.janek:idle:r6-delayed-competing-future",
+            "kind": "idle",
+            "targetActorId": null,
+            "targetPosition": null,
+            "text": null,
+            "speed": null,
+            "reason": "Janek currently has no body-owning local activity."
+          },
+          "recentPercepts": [],
+          "concerns": [],
+          "beliefs": [],
+          "knownActors": [],
+          "knownRegions": [
+            {
+              "id": "yard",
+              "label": "Yard",
+              "knowledge": "visited",
+              "lastVisitedTick": 220
+            },
+            {
+              "id": "workshop",
+              "label": "Workshop",
+              "knowledge": "visited",
+              "lastVisitedTick": 160
+            },
+            {
+              "id": "fields",
+              "label": "Fields",
+              "knowledge": "visited",
+              "lastVisitedTick": 140
+            }
+          ],
+          "life": {
+            "version": 1,
+            "matters": [
+              {
+                "id": "matter.janek.r6.delayed-competing-future.retry",
+                "status": "active",
+                "semanticRevision": 1,
+                "semanticCourse": "decide whether to try the now-visible familiar crate again",
+                "semanticIntent": {
+                  "kind": "acquire_material_object",
+                  "goal": "try the now-visible familiar crate again",
+                  "objectId": "crate.r6.delayed-competing-future"
+                },
+                "suspendedByMatterId": null,
+                "originEvidence": {
+                  "id": "evidence:janek:r6:delayed-competing-future:retry-origin",
+                  "tick": 210,
+                  "kind": "accepted_cognition_commitment",
+                  "summary": "The familiar crate is currently available again and one new bounded retry is active."
+                },
+                "semanticEvidence": {
+                  "id": "evidence:janek:r6:delayed-competing-future:retry-origin",
+                  "tick": 210,
+                  "kind": "accepted_cognition_commitment",
+                  "summary": "The familiar crate is currently available again and one new bounded retry is active."
+                },
+                "lastOutcomeEvidence": null,
+                "activeRun": {
+                  "runId": "run.janek.r6.delayed-competing-future.retry",
+                  "taskId": "task.janek.r6.delayed-competing-future.retry",
+                  "semanticRevision": 1,
+                  "canMutateWorld": true,
+                  "bodyState": "deferred"
+                }
+              },
+              {
+                "id": "matter.janek.r6.delayed-competing-future.other",
+                "status": "active",
+                "semanticRevision": 1,
+                "semanticCourse": "visit the familiar fields for an unrelated ordinary reason",
+                "semanticIntent": {
+                  "kind": "travel_region",
+                  "goal": "visit the familiar fields",
+                  "targetRegionId": "fields"
+                },
+                "suspendedByMatterId": null,
+                "originEvidence": {
+                  "id": "evidence:janek:r6:delayed-competing-future:other-origin",
+                  "tick": 212,
+                  "kind": "accepted_cognition_commitment",
+                  "summary": "Janek independently has one ordinary current reason to visit the familiar fields."
+                },
+                "semanticEvidence": {
+                  "id": "evidence:janek:r6:delayed-competing-future:other-origin",
+                  "tick": 212,
+                  "kind": "accepted_cognition_commitment",
+                  "summary": "Janek independently has one ordinary current reason to visit the familiar fields."
+                },
+                "lastOutcomeEvidence": null,
+                "activeRun": {
+                  "runId": "run.janek.r6.delayed-competing-future.other",
+                  "taskId": "task.janek.r6.delayed-competing-future.other",
+                  "semanticRevision": 1,
+                  "canMutateWorld": true,
+                  "bodyState": "deferred"
+                }
+              }
+            ],
+            "body": {
+              "focusedRunId": null,
+              "deferredRunIds": [
+                "run.janek.r6.delayed-competing-future.retry",
+                "run.janek.r6.delayed-competing-future.other"
+              ]
+            }
+          }
+        },
+        "history": {
+          "contract": "resident_life_cognition_v1",
+          "resident": {
+            "id": "resident.janek",
+            "name": "Janek"
+          },
+          "tick": 220,
+          "currentRegionId": "yard",
+          "reasons": [
+            {
+              "id": "reason:janek:r6:delayed-competing-future:220",
+              "tick": 220,
+              "kind": "uncertainty",
+              "salience": 0.82,
+              "summary": "Two already-grounded current resident futures are waiting for the same currently-free body.",
+              "evidenceIds": [
+                "run.janek.r6.delayed-competing-future.retry",
+                "run.janek.r6.delayed-competing-future.other"
+              ]
+            }
+          ],
+          "localActivity": {
+            "id": "activity:resident.janek:idle:r6-delayed-competing-future",
+            "kind": "idle",
+            "targetActorId": null,
+            "targetPosition": null,
+            "text": null,
+            "speed": null,
+            "reason": "Janek currently has no body-owning local activity."
+          },
+          "recentPercepts": [],
+          "concerns": [],
+          "beliefs": [],
+          "knownActors": [],
+          "knownRegions": [
+            {
+              "id": "yard",
+              "label": "Yard",
+              "knowledge": "visited",
+              "lastVisitedTick": 220
+            },
+            {
+              "id": "workshop",
+              "label": "Workshop",
+              "knowledge": "visited",
+              "lastVisitedTick": 160
+            },
+            {
+              "id": "fields",
+              "label": "Fields",
+              "knowledge": "visited",
+              "lastVisitedTick": 140
+            }
+          ],
+          "life": {
+            "version": 1,
+            "matters": [
+              {
+                "id": "matter.janek.r6.delayed-competing-future.retry",
+                "status": "active",
+                "semanticRevision": 1,
+                "semanticCourse": "decide whether to try the now-visible familiar crate again",
+                "semanticIntent": {
+                  "kind": "acquire_material_object",
+                  "goal": "try the now-visible familiar crate again",
+                  "objectId": "crate.r6.delayed-competing-future"
+                },
+                "suspendedByMatterId": null,
+                "originEvidence": {
+                  "id": "evidence:janek:r6:delayed-competing-future:retry-origin",
+                  "tick": 210,
+                  "kind": "accepted_cognition_commitment",
+                  "summary": "The familiar crate is currently available again and one new bounded retry is active."
+                },
+                "semanticEvidence": {
+                  "id": "evidence:janek:r6:delayed-competing-future:retry-origin",
+                  "tick": 210,
+                  "kind": "accepted_cognition_commitment",
+                  "summary": "The familiar crate is currently available again and one new bounded retry is active."
+                },
+                "lastOutcomeEvidence": null,
+                "activeRun": {
+                  "runId": "run.janek.r6.delayed-competing-future.retry",
+                  "taskId": "task.janek.r6.delayed-competing-future.retry",
+                  "semanticRevision": 1,
+                  "canMutateWorld": true,
+                  "bodyState": "deferred"
+                }
+              },
+              {
+                "id": "matter.janek.r6.delayed-competing-future.other",
+                "status": "active",
+                "semanticRevision": 1,
+                "semanticCourse": "visit the familiar fields for an unrelated ordinary reason",
+                "semanticIntent": {
+                  "kind": "travel_region",
+                  "goal": "visit the familiar fields",
+                  "targetRegionId": "fields"
+                },
+                "suspendedByMatterId": null,
+                "originEvidence": {
+                  "id": "evidence:janek:r6:delayed-competing-future:other-origin",
+                  "tick": 212,
+                  "kind": "accepted_cognition_commitment",
+                  "summary": "Janek independently has one ordinary current reason to visit the familiar fields."
+                },
+                "semanticEvidence": {
+                  "id": "evidence:janek:r6:delayed-competing-future:other-origin",
+                  "tick": 212,
+                  "kind": "accepted_cognition_commitment",
+                  "summary": "Janek independently has one ordinary current reason to visit the familiar fields."
+                },
+                "lastOutcomeEvidence": null,
+                "activeRun": {
+                  "runId": "run.janek.r6.delayed-competing-future.other",
+                  "taskId": "task.janek.r6.delayed-competing-future.other",
+                  "semanticRevision": 1,
+                  "canMutateWorld": true,
+                  "bodyState": "deferred"
+                }
+              }
+            ],
+            "body": {
+              "focusedRunId": null,
+              "deferredRunIds": [
+                "run.janek.r6.delayed-competing-future.retry",
+                "run.janek.r6.delayed-competing-future.other"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "old terminal matter is absent from both current-life twins",
+      "pass": true,
+      "detail": {
+        "controlMatterIds": [
+          "matter.janek.r6.delayed-competing-future.retry",
+          "matter.janek.r6.delayed-competing-future.other"
+        ],
+        "historyMatterIds": [
+          "matter.janek.r6.delayed-competing-future.retry",
+          "matter.janek.r6.delayed-competing-future.other"
+        ]
+      }
+    },
+    {
+      "name": "history twin alone carries one exact typed old outcome on current retry C",
+      "pass": true,
+      "detail": {
+        "support": [
+          {
+            "relation": "prior_same_material_outcome",
+            "sourceMatterId": "matter.janek.r6.delayed-competing-future.old-material",
+            "evidence": {
+              "id": "task-outcome:run.janek.r6.delayed-competing-future.old-material:90",
+              "tick": 90,
+              "kind": "task_outcome",
+              "summary": "blocked: factual material pickup returned object_unavailable",
+              "sourceRunId": "run.janek.r6.delayed-competing-future.old-material"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "both twins retain one free body, identical C/D demands and no fresh speech/self",
+      "pass": true,
+      "detail": {
+        "controlBody": {
+          "focusedRunId": null,
+          "deferredRunIds": [
+            "run.janek.r6.delayed-competing-future.retry",
+            "run.janek.r6.delayed-competing-future.other"
+          ]
+        },
+        "historyBody": {
+          "focusedRunId": null,
+          "deferredRunIds": [
+            "run.janek.r6.delayed-competing-future.retry",
+            "run.janek.r6.delayed-competing-future.other"
+          ]
+        },
+        "reasons": [
+          {
+            "id": "reason:janek:r6:delayed-competing-future:220",
+            "tick": 220,
+            "kind": "uncertainty",
+            "salience": 0.82,
+            "summary": "Two already-grounded current resident futures are waiting for the same currently-free body.",
+            "evidenceIds": [
+              "run.janek.r6.delayed-competing-future.retry",
+              "run.janek.r6.delayed-competing-future.other"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "control_without_delayed_history completes through exact resident life-choice endpoint",
+      "pass": true,
+      "detail": {
+        "label": "control_without_delayed_history",
+        "status": 200,
+        "elapsedMs": 3335,
+        "ok": true,
+        "code": null,
+        "upstreamStatus": null,
+        "proposal": {
+          "version": 1,
+          "decision": {
+            "kind": "defer_all",
+            "reason": "Both matters are independently grounded and currently eligible, but the available context provides no justified basis to prioritize the retry over the unrelated visit or vice versa.",
+            "reviewAfterSeconds": 30
+          }
+        },
+        "usage": {
+          "model": "gpt-5.6-luna",
+          "inputTokens": 1725,
+          "outputTokens": 108,
+          "totalTokens": 1833,
+          "elapsedMs": 3196
+        }
+      }
+    },
+    {
+      "name": "control_without_delayed_history remains inside C/D/defer-all semantic authority",
+      "pass": true,
+      "detail": {
+        "kind": "defer_all",
+        "matterId": null,
+        "reason": "Both matters are independently grounded and currently eligible, but the available context provides no justified basis to prioritize the retry over the unrelated visit or vice versa.",
+        "supportEvidenceIds": null,
+        "reviewAfterSeconds": 30
+      }
+    },
+    {
+      "name": "control_without_delayed_history uses intended GPT-5.6 Luna with non-zero usage",
+      "pass": true,
+      "detail": {
+        "label": "control_without_delayed_history",
+        "status": 200,
+        "elapsedMs": 3335,
+        "ok": true,
+        "code": null,
+        "upstreamStatus": null,
+        "proposal": {
+          "version": 1,
+          "decision": {
+            "kind": "defer_all",
+            "reason": "Both matters are independently grounded and currently eligible, but the available context provides no justified basis to prioritize the retry over the unrelated visit or vice versa.",
+            "reviewAfterSeconds": 30
+          }
+        },
+        "usage": {
+          "model": "gpt-5.6-luna",
+          "inputTokens": 1725,
+          "outputTokens": 108,
+          "totalTokens": 1833,
+          "elapsedMs": 3196
+        }
+      }
+    },
+    {
+      "name": "history_with_candidate_scoped_delayed_outcome completes through exact resident life-choice endpoint",
+      "pass": true,
+      "detail": {
+        "label": "history_with_candidate_scoped_delayed_outcome",
+        "status": 200,
+        "elapsedMs": 2158,
+        "ok": true,
+        "code": null,
+        "upstreamStatus": null,
+        "proposal": {
+          "version": 1,
+          "decision": {
+            "kind": "focus_matter",
+            "matterId": "matter.janek.r6.delayed-competing-future.retry",
+            "reason": "The retry is an active bounded commitment concerning the familiar crate, while the prior same-material outcome was blocked; giving it the body allows the newly grounded retry to be tested rather than leaving the earlier uncertainty unresolved.",
+            "supportEvidenceIds": [
+              "evidence:janek:r6:delayed-competing-future:retry-origin",
+              "task-outcome:run.janek.r6.delayed-competing-future.old-material:90"
+            ],
+            "reviewAfterSeconds": 90
+          }
+        },
+        "usage": {
+          "model": "gpt-5.6-luna",
+          "inputTokens": 1938,
+          "outputTokens": 135,
+          "totalTokens": 2073,
+          "elapsedMs": 2135
+        }
+      }
+    },
+    {
+      "name": "history_with_candidate_scoped_delayed_outcome remains inside C/D/defer-all semantic authority",
+      "pass": true,
+      "detail": {
+        "kind": "focus_matter",
+        "matterId": "matter.janek.r6.delayed-competing-future.retry",
+        "reason": "The retry is an active bounded commitment concerning the familiar crate, while the prior same-material outcome was blocked; giving it the body allows the newly grounded retry to be tested rather than leaving the earlier uncertainty unresolved.",
+        "supportEvidenceIds": [
+          "evidence:janek:r6:delayed-competing-future:retry-origin",
+          "task-outcome:run.janek.r6.delayed-competing-future.old-material:90"
+        ],
+        "reviewAfterSeconds": 90
+      }
+    },
+    {
+      "name": "history_with_candidate_scoped_delayed_outcome uses intended GPT-5.6 Luna with non-zero usage",
+      "pass": true,
+      "detail": {
+        "label": "history_with_candidate_scoped_delayed_outcome",
+        "status": 200,
+        "elapsedMs": 2158,
+        "ok": true,
+        "code": null,
+        "upstreamStatus": null,
+        "proposal": {
+          "version": 1,
+          "decision": {
+            "kind": "focus_matter",
+            "matterId": "matter.janek.r6.delayed-competing-future.retry",
+            "reason": "The retry is an active bounded commitment concerning the familiar crate, while the prior same-material outcome was blocked; giving it the body allows the newly grounded retry to be tested rather than leaving the earlier uncertainty unresolved.",
+            "supportEvidenceIds": [
+              "evidence:janek:r6:delayed-competing-future:retry-origin",
+              "task-outcome:run.janek.r6.delayed-competing-future.old-material:90"
+            ],
+            "reviewAfterSeconds": 90
+          }
+        },
+        "usage": {
+          "model": "gpt-5.6-luna",
+          "inputTokens": 1938,
+          "outputTokens": 135,
+          "totalTokens": 2073,
+          "elapsedMs": 2135
+        }
+      }
+    },
+    {
+      "name": "hard experiment budget is exactly two real provider requests with no semantic retry",
+      "pass": true,
+      "detail": {
+        "attempted": 2,
+        "max": 2
+      }
+    }
+  ],
+  "observations": {
+    "preflight": {
+      "status": 200,
+      "endpoint": "/api/spc-next/life-choice",
+      "model": "gpt-5.6-luna",
+      "keyConfigured": true
+    },
+    "control_without_delayed_history": {
+      "label": "control_without_delayed_history",
+      "status": 200,
+      "elapsedMs": 3335,
+      "ok": true,
+      "code": null,
+      "upstreamStatus": null,
+      "proposal": {
+        "version": 1,
+        "decision": {
+          "kind": "defer_all",
+          "reason": "Both matters are independently grounded and currently eligible, but the available context provides no justified basis to prioritize the retry over the unrelated visit or vice versa.",
+          "reviewAfterSeconds": 30
+        }
+      },
+      "usage": {
+        "model": "gpt-5.6-luna",
+        "inputTokens": 1725,
+        "outputTokens": 108,
+        "totalTokens": 1833,
+        "elapsedMs": 3196
+      }
+    },
+    "history_with_candidate_scoped_delayed_outcome": {
+      "label": "history_with_candidate_scoped_delayed_outcome",
+      "status": 200,
+      "elapsedMs": 2158,
+      "ok": true,
+      "code": null,
+      "upstreamStatus": null,
+      "proposal": {
+        "version": 1,
+        "decision": {
+          "kind": "focus_matter",
+          "matterId": "matter.janek.r6.delayed-competing-future.retry",
+          "reason": "The retry is an active bounded commitment concerning the familiar crate, while the prior same-material outcome was blocked; giving it the body allows the newly grounded retry to be tested rather than leaving the earlier uncertainty unresolved.",
+          "supportEvidenceIds": [
+            "evidence:janek:r6:delayed-competing-future:retry-origin",
+            "task-outcome:run.janek.r6.delayed-competing-future.old-material:90"
+          ],
+          "reviewAfterSeconds": 90
+        }
+      },
+      "usage": {
+        "model": "gpt-5.6-luna",
+        "inputTokens": 1938,
+        "outputTokens": 135,
+        "totalTokens": 2073,
+        "elapsedMs": 2135
+      }
+    },
+    "comparison": {
+      "control": {
+        "kind": "defer_all",
+        "matterId": null,
+        "reason": "Both matters are independently grounded and currently eligible, but the available context provides no justified basis to prioritize the retry over the unrelated visit or vice versa.",
+        "supportEvidenceIds": null,
+        "reviewAfterSeconds": 30
+      },
+      "history": {
+        "kind": "focus_matter",
+        "matterId": "matter.janek.r6.delayed-competing-future.retry",
+        "reason": "The retry is an active bounded commitment concerning the familiar crate, while the prior same-material outcome was blocked; giving it the body allows the newly grounded retry to be tested rather than leaving the earlier uncertainty unresolved.",
+        "supportEvidenceIds": [
+          "evidence:janek:r6:delayed-competing-future:retry-origin",
+          "task-outcome:run.janek.r6.delayed-competing-future.old-material:90"
+        ],
+        "reviewAfterSeconds": 90
+      },
+      "controlBehavior": {
+        "kind": "defer_all"
+      },
+      "historyBehavior": {
+        "kind": "focus_matter",
+        "matterId": "matter.janek.r6.delayed-competing-future.retry"
+      },
+      "exactBehaviorEqual": false,
+      "historyCitesOldOutcome": true
+    }
+  },
+  "providerRequestsAttempted": 2,
+  "classification": "DELAYED_HISTORY_CAUSAL_COMPETING_FUTURE_DIFFERENCE_OBSERVED",
+  "finishedAt": "2026-09-27T11:49:55.328Z",
+  "outcome": "DELAYED_HISTORY_CAUSAL_COMPETING_FUTURE_DIFFERENCE_OBSERVED"
+}

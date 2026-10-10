@@ -2,6 +2,8 @@ import type { ResidentLifeCognitionContext } from "../src/spc-next/resident-life
 import type { ResidentLifeChoiceDecision } from "../src/spc-next/resident-life-choice-owner";
 import {
   allowedChoiceSupportEvidenceIds,
+  allowedDeferAllSupportEvidenceIds,
+  allowedPlanRevisionSupportEvidenceIds,
   deriveResidentLifeChoiceCandidateSupports,
   type ResidentLifeChoiceCandidateSupport,
 } from "../src/spc-next/resident-life-choice-causal-support";
@@ -42,15 +44,16 @@ This request exists because the resident has a currently-free coarse body resour
 
 The field localActivity is only the older/local-brain activity projection. It is NOT the complete truth about what the resident is doing or cares about. The life field is authoritative for recovered continuing matters, their current semantic courses, exact run authority and body demand. Do not erase a matter merely because localActivity says idle.
 
-Choose exactly one of two bounded outcomes:
+Choose exactly one of three bounded outcomes:
 - focus_matter: select one candidate matter id that should receive the free body next;
+- relinquish_matter: stop carrying one exact already-current candidate as a resident plan, but only when the schema exposes factual support attached to that exact candidate;
 - defer_all: deliberately give none of the candidates the body yet.
 
-A choice is semantic priority only. It does not move the resident, complete a task, create a World fact, prove an outcome, change a route, or grant execution authority. The local system will revalidate and execute separately after admission.
+A focus/defer choice is semantic priority only. relinquish_matter is a bounded resident plan revision, not proof that the task completed, failed or became impossible. It cannot mutate World and cannot directly delete anything: the local system will revalidate the exact current matter/run before recording resident-owned revision evidence and cancelling that one plan. All outcomes are executed separately after admission.
 
 Use the resident's reasons, private percepts, concerns, beliefs, known actors/regions, semantic courses and resident-life evidence when useful. Do not infer hidden World truth. Do not invent matter ids, run ids, facts, evidence or completed outcomes. A run marked canMutateWorld means it currently has resident semantic authority to attempt factual execution; it does not mean the task succeeded.
 
-The input also contains choiceSupport, a read-only projection of causal facts that existed before this decision. For focus_matter, cite one or more supportEvidenceIds from the selected matter's choiceSupport entry. Do not cite evidence from another matter and do not invent evidence. The support citation proves causal grounding; it does not force one candidate to win.
+The input also contains choiceSupport, a read-only projection of causal facts that existed before this decision. For focus_matter, cite one or more supportEvidenceIds allowed by the schema. For relinquish_matter, cite one or more factual supportEvidenceIds attached to the exact matter being relinquished; ordinary matter origin/current wording alone is intentionally insufficient. For defer_all, if specific resident-owned facts materially contribute to the deliberate non-action, use the supported defer_all variant and cite them; the legacy no-citation defer_all remains valid when no positive fact is doing causal work. Ordinary matter-origin/current-context evidence remains candidate-local. Typed historical relations such as prior_same_material_outcome, prior_same_actor_outcome and prior_counterparty_social_outcome are exact resident-owned past facts attached to one current candidate. They may be comparative evidence for choosing that candidate, choosing another candidate instead, or deliberately deferring the ambiguity when the fact is relevant but insufficient to establish priority. They do not reopen old matters, create preferences/relationship scores, grant body authority or imply any fixed direction. Do not invent evidence. Support citation proves causal grounding; it does not force one candidate to win.
 
 If the available context does not justify choosing among the candidates, defer_all is valid. Set reviewAfterSeconds from 0.25 to 600 according to how soon the ambiguity deserves reconsideration. Do not mechanically poll.
 
@@ -159,9 +162,68 @@ export function extractSpcNextLifeChoiceDecision(
       reviewAfterSeconds,
     };
   }
+  if (decision.kind === "relinquish_matter") {
+    if (!hasOnlyKeys(decision, [
+      "kind",
+      "matterId",
+      "reason",
+      "supportEvidenceIds",
+      "reviewAfterSeconds",
+    ])) return null;
+    if (typeof decision.matterId !== "string"
+      || !candidateMatterIds.includes(decision.matterId)) return null;
+
+    const allowedSupport = new Set(
+      allowedPlanRevisionSupportEvidenceIds(candidateSupports, decision.matterId),
+    );
+    if (!Array.isArray(decision.supportEvidenceIds)
+      || decision.supportEvidenceIds.length < 1
+      || decision.supportEvidenceIds.length > 8) return null;
+    const supportEvidenceIds: string[] = [];
+    for (const evidenceId of decision.supportEvidenceIds) {
+      if (typeof evidenceId !== "string"
+        || !allowedSupport.has(evidenceId)
+        || supportEvidenceIds.includes(evidenceId)) return null;
+      supportEvidenceIds.push(evidenceId);
+    }
+    return {
+      kind: "relinquish_matter",
+      matterId: decision.matterId,
+      reason,
+      supportEvidenceIds,
+      reviewAfterSeconds,
+    };
+  }
   if (decision.kind === "defer_all") {
-    if (!hasOnlyKeys(decision, ["kind", "reason", "reviewAfterSeconds"])) return null;
-    return { kind: "defer_all", reason, reviewAfterSeconds };
+    if (!hasOnlyKeys(decision, [
+      "kind",
+      "reason",
+      "supportEvidenceIds",
+      "reviewAfterSeconds",
+    ])) return null;
+    if (decision.supportEvidenceIds === undefined) {
+      return { kind: "defer_all", reason, reviewAfterSeconds };
+    }
+
+    const allowedSupport = new Set(
+      allowedDeferAllSupportEvidenceIds(candidateSupports),
+    );
+    if (!Array.isArray(decision.supportEvidenceIds)
+      || decision.supportEvidenceIds.length < 1
+      || decision.supportEvidenceIds.length > 8) return null;
+    const supportEvidenceIds: string[] = [];
+    for (const evidenceId of decision.supportEvidenceIds) {
+      if (typeof evidenceId !== "string"
+        || !allowedSupport.has(evidenceId)
+        || supportEvidenceIds.includes(evidenceId)) return null;
+      supportEvidenceIds.push(evidenceId);
+    }
+    return {
+      kind: "defer_all",
+      reason,
+      supportEvidenceIds,
+      reviewAfterSeconds,
+    };
   }
   return null;
 }
@@ -185,23 +247,56 @@ function decisionSchema(
         type: "array",
         minItems: 1,
         maxItems: Math.min(8, supportIds.length),
-        uniqueItems: true,
         items: { type: "string", enum: supportIds },
       },
       reviewAfterSeconds: { type: "number", minimum: 0.25, maximum: 600 },
     })];
   });
 
+  const relinquishVariants = candidateMatterIds.flatMap((matterId) => {
+    const supportIds = allowedPlanRevisionSupportEvidenceIds(candidateSupports, matterId);
+    if (supportIds.length === 0) return [];
+    return [objectSchema({
+      kind: { type: "string", enum: ["relinquish_matter"] },
+      matterId: { type: "string", enum: [matterId] },
+      reason: stringSchema(MAX_REASON_LENGTH),
+      supportEvidenceIds: {
+        type: "array",
+        minItems: 1,
+        maxItems: Math.min(8, supportIds.length),
+        items: { type: "string", enum: supportIds },
+      },
+      reviewAfterSeconds: { type: "number", minimum: 0.25, maximum: 600 },
+    })];
+  });
+
+  const deferSupportIds = allowedDeferAllSupportEvidenceIds(candidateSupports);
+  const deferVariants = [
+    objectSchema({
+      kind: { type: "string", enum: ["defer_all"] },
+      reason: stringSchema(MAX_REASON_LENGTH),
+      reviewAfterSeconds: { type: "number", minimum: 0.25, maximum: 600 },
+    }),
+    ...(deferSupportIds.length > 0 ? [objectSchema({
+      kind: { type: "string", enum: ["defer_all"] },
+      reason: stringSchema(MAX_REASON_LENGTH),
+      supportEvidenceIds: {
+        type: "array",
+        minItems: 1,
+        maxItems: Math.min(8, deferSupportIds.length),
+        items: { type: "string", enum: deferSupportIds },
+      },
+      reviewAfterSeconds: { type: "number", minimum: 0.25, maximum: 600 },
+    })] : []),
+  ];
+
   return objectSchema({
     version: { type: "integer", enum: [1] },
     decision: {
       anyOf: [
         ...focusVariants,
-        objectSchema({
-          kind: { type: "string", enum: ["defer_all"] },
-          reason: stringSchema(MAX_REASON_LENGTH),
-          reviewAfterSeconds: { type: "number", minimum: 0.25, maximum: 600 },
-        }),
+        ...relinquishVariants,
+        ...deferVariants,
       ],
     },
   });

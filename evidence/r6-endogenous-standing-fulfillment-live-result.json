@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-09-25T11:39:20.886Z",
+  "sourceSha": "9aff2659118a780cc9b82014d5666537832842e3",
+  "liveProviderRun": 23,
+  "candidateBaseUrl": "https://e557daed-llm-live-npc.jozzpoly.workers.dev",
+  "providerRequestsAttempted": 1,
+  "semanticRetries": 0,
+  "model": "gpt-5.6-luna",
+  "classification": "FACTUAL_STANDING_FULFILLMENT_RECOGNIZED",
+  "originReasonId": "reason-life-outcome:f95d76820b5c50eb",
+  "proposal": {
+    "version": 1,
+    "commitmentDecision": {
+      "kind": "complete_standing",
+      "reason": "The factual outcome confirms that I returned to the commons after completing the workshop check, fulfilling the standing commitment to Nela.",
+      "matterId": "matter-social-commitment:471529c708005f28"
+    },
+    "beliefs": [],
+    "concerns": [],
+    "reviewAfterSeconds": 600
+  },
+  "usage": {
+    "inputTokens": 4739,
+    "outputTokens": 152,
+    "totalTokens": 4891,
+    "elapsedMs": 3891
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-09-25T00:15:21.640Z",
+  "sourceSha": "592a19ecdb34598968690812310996aef8f2b0f7",
+  "liveProviderRun": 22,
+  "candidateBaseUrl": "https://1fa244b2-llm-live-npc.jozzpoly.workers.dev",
+  "providerRequestsAttempted": 2,
+  "semanticRetries": 0,
+  "model": "gpt-5.6-luna",
+  "classification": "ENDOGENOUS_HISTORY_CONTINUATION_OBSERVED",
+  "control": {
+    "originReasonId": "reason-life-outcome:cb52fc401956c159",
+    "proposal": {
+      "version": 1,
+      "commitmentDecision": {
+        "kind": "decline",
+        "reason": "The bounded workshop commitment is complete, and the available private context does not ground a distinct new continuing matter."
+      },
+      "beliefs": [],
+      "concerns": [],
+      "reviewAfterSeconds": 600
+    },
+    "usage": {
+      "inputTokens": 3748,
+      "outputTokens": 152,
+      "totalTokens": 3900,
+      "elapsedMs": 3362
+    }
+  },
+  "history": {
+    "originReasonId": "reason-life-outcome:cb52fc401956c159",
+    "proposal": {
+      "version": 1,
+      "commitmentDecision": {
+        "kind": "accept",
+        "reason": "The bounded workshop check is complete, and the active standing commitment requires returning to Nela in the commons afterward.",
+        "intent": {
+          "kind": "travel",
+          "goal": "return to Nela in the commons after completing the workshop check",
+          "targetActorId": null,
+          "targetRegionId": "commons",
+          "targetPosition": null,
+          "text": null
+        }
+      },
+      "beliefs": [],
+      "concerns": [],
+      "reviewAfterSeconds": 1
+    },
+    "usage": {
+      "inputTokens": 4116,
+      "outputTokens": 226,
+      "totalTokens": 4342,
+      "elapsedMs": 3650
+    }
+  }
+}
