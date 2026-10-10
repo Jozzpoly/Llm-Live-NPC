@@ -155,6 +155,9 @@ async function main() {
         && o.location.position.x <= 2100 && o.location.position.y >= 680
         && o.location.position.y <= 870),
       workshopObjects);
+    assert(report, "no fabricated Janek concern before the player's real material disruption",
+      (frame.snapshot.residents.find((r) => r.id === "resident.janek")?.pendingCognitionReasonCount ?? -1) === 0,
+      { janek: frame.snapshot.residents.find((r) => r.id === "resident.janek") });
     const playerAt = (f) => f.snapshot.actors.find((a) => a.id === "player.jozz")?.position;
     await cdp.send("Input.dispatchKeyEvent", { type: "keyDown", key: "d", code: "KeyD", windowsVirtualKeyCode: 68, nativeVirtualKeyCode: 68 });
     await sleep(60);
@@ -219,6 +222,16 @@ async function main() {
     assert(report, "carried crate opens the route but imposes real movement cost",
       throughX > 2_050 && carryingDelta > 145 && carryingDelta < 175,
       { throughX, blockedX, carryingDelta, oldCrateX: 1_952 });
+    // PR153 research-only: this is NOT a model decision or autonomous task.
+    // It proves that the real player's physical perturbation passes the same
+    // resident-private observation boundary in Chromium without upstream calls.
+    const janekAfterRealMove = through.snapshot.residents.find((r) => r.id === "resident.janek");
+    assert(report, "Janek recognizes exactly one private authored-stake question after witnessed displacement",
+      janekAfterRealMove?.pendingCognitionReasonCount === 1
+        && through.selectedResidentId === "resident.janek"
+        && through.selectedLife?.matters.length === 0,
+      { janekAfterRealMove, selectedResidentId: through.selectedResidentId,
+        selectedLifeMatters: through.selectedLife?.matters.length });
     await key("KeyE", true);
     await sleep(110);
     await key("KeyE", false);
