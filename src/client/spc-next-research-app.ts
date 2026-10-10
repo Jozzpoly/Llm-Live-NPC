@@ -71,6 +71,12 @@ chatForm.append(chatInput, chatSend);
 
 // Deliberate one-shot research control. No implicit Luna calls on World ticks.
 const armedResearchMode = params.get("scenario") === "unified-armed";
+const operatorLoginLink = document.createElement("a");
+operatorLoginLink.className = "spc-operator-login";
+operatorLoginLink.href = "/api/operator/login";
+operatorLoginLink.textContent = "Logowanie";
+operatorLoginLink.title = "Jednorazowe logowanie operatora do prywatnej sesji (bez Zero Trust).";
+operatorLoginLink.hidden = !armedResearchMode;
 const oneShotButton = document.createElement("button");
 oneShotButton.type = "button";
 oneShotButton.className = "spc-chat-send";
@@ -84,7 +90,7 @@ oneShotStatus.textContent = armedResearchMode ? "Luna: bez zapytań" : "";
 
 const headerActions = document.createElement("div");
 headerActions.className = "spc-header-actions";
-headerActions.append(stageNode, chatForm, oneShotButton, oneShotStatus, worldModeButton);
+headerActions.append(stageNode, chatForm, operatorLoginLink, oneShotButton, oneShotStatus, worldModeButton);
 header.append(headerActions);
 
 let scene: SpcNextResearchScene;
