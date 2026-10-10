@@ -9,7 +9,7 @@ const MOVER = "player.workshop-private-experience";
 function fixture(withAuthoredRelation: boolean, moverStart = { x: 2_004, y: 720 }) {
   const composition = createFiveResidentRegionComposition({ materialBodyCollision: true });
   const world = composition.world;
-  world.addPlayer(MOVER, moverStart, { maxSpeed: 100_000 });
+  world.addPlayer(MOVER, moverStart, { maxSpeed: 150 });
   const runtime = new FiveResidentCausalLifeRuntime(composition,
     withAuthoredRelation ? { materialStewardships: { "resident.janek": [ORIGINAL] } } : {});
   const janek = runtime.life("resident.janek");
@@ -20,27 +20,39 @@ function fixture(withAuthoredRelation: boolean, moverStart = { x: 2_004, y: 720 
     return actor.position;
   };
   function physicallyMove(to: { x: number; y: number }) {
-    const now = mover();
-    const dt = world.options.fixedDeltaSeconds;
-    world.setActorMotionIntent(MOVER, {
-      x: (to.x - now.x) / dt, y: (to.y - now.y) / dt,
-    });
-    const tick = runtime.advanceOneWorldTick();
+    const detectedTransitions: string[] = [];
+    // Legitimate bounded 60 Hz movement: the World owns max speed, free-object
+    // collision and the real carrying load (0.68). Never teleport the actor or
+    // compensate for carrying burden with a fabricated high-speed input.
+    for (let step = 0; step < 360; step += 1) {
+      const now = mover();
+      const dx = to.x - now.x;
+      const dy = to.y - now.y;
+      const distance = Math.hypot(dx, dy);
+      if (distance < 1.8) break;
+      const speed = Math.min(150, distance / world.options.fixedDeltaSeconds);
+      world.setActorMotionIntent(MOVER, {
+        x: dx / distance * speed, y: dy / distance * speed,
+      });
+      const tick = runtime.advanceOneWorldTick();
+      for (const observation of tick.stewardshipRelevance["resident.janek"] ?? []) {
+        detectedTransitions.push(observation.status);
+      }
+    }
     world.setActorMotionIntent(MOVER, { x: 0, y: 0 });
-    expect(mover().x).toBeCloseTo(to.x, 4);
-    expect(mover().y).toBeCloseTo(to.y, 4);
-    return tick;
+    expect(Math.hypot(mover().x - to.x, mover().y - to.y)).toBeLessThan(1.8);
+    return detectedTransitions;
   }
   function moveCrateOut() {
     expect(world.attemptMaterialAction(MOVER, { kind: "pickup", objectId: ORIGINAL }))
       .toMatchObject({ status: "succeeded", code: "picked_up" });
-    const inTransit = physicallyMove({ x: 2_135, y: 760 });
+    const inTransitTransitions = physicallyMove({ x: 2_135, y: 760 });
     const destination = { x: 2_182, y: 760 };
     expect(world.attemptMaterialAction(MOVER, {
       kind: "place", objectId: ORIGINAL, position: destination,
     })).toMatchObject({ status: "succeeded", code: "placed" });
     const afterPlacement = runtime.advanceOneWorldTick();
-    return { inTransit, afterPlacement };
+    return { inTransitTransitions, afterPlacement };
   }
   return { world, runtime, janek, mover, physicallyMove, moveCrateOut };
 }
@@ -49,7 +61,7 @@ describe("real pre-Luna physical workshop × resident-private significance (PR15
   it("does not manufacture purpose from an ordinary World displacement when no relation exists", () => {
     const { world, runtime, janek, moveCrateOut } = fixture(false);
     const outcome = moveCrateOut();
-    expect(outcome.inTransit.stewardshipRelevance["resident.janek"]).toBeUndefined();
+    expect(outcome.inTransitTransitions).toEqual([]);
     expect(outcome.afterPlacement.stewardshipRelevance["resident.janek"]).toBeUndefined();
     expect(janek.materialKnowledge?.observation(ORIGINAL)).toMatchObject({
       currentlyVisible: true,
@@ -72,12 +84,11 @@ describe("real pre-Luna physical workshop × resident-private significance (PR15
       // A genuinely visible displacement may be noticed while held IN TRANSIT,
       // not only after placement. Preserve the actual World/perception boundary.
       const transitions = [
-        ...(outcome.inTransit.stewardshipRelevance["resident.janek"] ?? []),
-        ...(outcome.afterPlacement.stewardshipRelevance["resident.janek"] ?? []),
+        ...outcome.inTransitTransitions,
+        ...(outcome.afterPlacement.stewardshipRelevance["resident.janek"] ?? [])
+          .map((observation) => observation.status),
       ];
-      expect(transitions).toEqual([
-        expect.objectContaining({ status: "needs_judgement" }),
-      ]);
+      expect(transitions).toEqual(["needs_judgement"]);
       const [reason] = janek.resident.pendingCognitionReasons();
       expect(reason).toMatchObject({
         kind: "uncertainty",
