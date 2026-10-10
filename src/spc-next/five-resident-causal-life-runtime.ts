@@ -21,13 +21,23 @@ import {
 } from "./resident-causal-life-substrate";
 import { ResidentMaterialKnowledge } from "./resident-material-knowledge";
 import type { ResidentMaterialMatterRelevanceObservation } from "./resident-material-matter-relevance-bridge";
+import {
+  ResidentMaterialStewardshipRelevance,
+  type StewardshipObservation,
+} from "./resident-material-stewardship-relevance";
 
 export type FiveResidentCausalLifeOwnership = "local_opening" | "recovered_life";
+
+/** Research-only opt-in authored starting circumstances. Default owns no stakes. */
+export interface FiveResidentCausalLifeOptions {
+  materialStewardships?: Readonly<Partial<Record<FiveResidentId, readonly string[]>>>;
+}
 
 interface ResidentLane {
   life: ResidentCausalLifeSubstrate;
   execution: ResidentCausalExecutionCoordinator;
   interruption: ResidentAddressedInterruptionController;
+  stewardships: readonly ResidentMaterialStewardshipRelevance[];
 }
 
 export interface FiveResidentCausalLifeTick {
@@ -38,6 +48,7 @@ export interface FiveResidentCausalLifeTick {
   materialRelevance: Readonly<
     Partial<Record<FiveResidentId, readonly ResidentMaterialMatterRelevanceObservation[]>>
   >;
+  stewardshipRelevance: Readonly<Partial<Record<FiveResidentId, readonly StewardshipObservation[]>>>;
 }
 
 export interface FiveResidentPreparedLifeIntent {
@@ -68,7 +79,10 @@ export class FiveResidentCausalLifeRuntime {
   private readonly lanes = new Map<FiveResidentId, ResidentLane>();
   private readonly navigation = createFiveResidentNavigationGraph();
 
-  constructor(private readonly composition: FiveResidentRegionComposition) {
+  constructor(
+    private readonly composition: FiveResidentRegionComposition,
+    private readonly options: FiveResidentCausalLifeOptions = {},
+  ) {
     this.claimReadyResidents();
   }
 
@@ -119,6 +133,7 @@ export class FiveResidentCausalLifeRuntime {
     const materialRelevance: Partial<
       Record<FiveResidentId, readonly ResidentMaterialMatterRelevanceObservation[]>
     > = {};
+    const stewardshipRelevance: Partial<Record<FiveResidentId, readonly StewardshipObservation[]>> = {};
 
     for (const residentId of this.claimedResidentIds()) {
       const lane = this.lanes.get(residentId)!;
@@ -138,6 +153,12 @@ export class FiveResidentCausalLifeRuntime {
     for (const residentId of this.claimedResidentIds()) {
       const observations = this.lanes.get(residentId)!.life.sampleMaterialRelevance();
       if (observations.length > 0) materialRelevance[residentId] = observations;
+      // Private material knowledge has already sampled THIS World tick. Starting
+      // stewardship is opt-in research pressure, never default NPC work.
+      const stewardship = this.lanes.get(residentId)!.stewardships
+        .map((entry) => entry.observePrivateAfterWorldTick())
+        .filter((entry) => entry.status !== "unchanged" && entry.status !== "unseen");
+      if (stewardship.length > 0) stewardshipRelevance[residentId] = stewardship;
     }
 
     // Perception is produced by the shared World step. Only after that boundary may
@@ -154,6 +175,7 @@ export class FiveResidentCausalLifeRuntime {
       execution: structuredClone(execution),
       interruptions: structuredClone(interruptions),
       materialRelevance: structuredClone(materialRelevance),
+      stewardshipRelevance: structuredClone(stewardshipRelevance),
     };
   }
 
@@ -188,10 +210,16 @@ export class FiveResidentCausalLifeRuntime {
         selfContext: FIVE_RESIDENT_LIFE_SELF[residentId],
         ...(materialKnowledge ? { materialKnowledge } : {}),
       });
+      const stewardships = (this.options.materialStewardships?.[residentId] ?? []).map((objectId) => {
+        const stake = new ResidentMaterialStewardshipRelevance(life, objectId);
+        stake.primeFromPrivateSight();
+        return stake;
+      });
       this.lanes.set(residentId, {
         life,
         execution: new ResidentCausalExecutionCoordinator(life),
         interruption: new ResidentAddressedInterruptionController(life),
+        stewardships,
       });
     }
   }

@@ -18,6 +18,7 @@ import {
   type FiveResidentRegionComposition,
 } from "./five-resident-region";
 import type { CognitionFetch } from "./resident-cognition-live-host";
+import type { FiveResidentCausalLifeOptions } from "./five-resident-causal-life-runtime";
 
 const PROVIDER_EVENT_LIMIT = 128;
 
@@ -47,6 +48,8 @@ export interface FiveResidentLivingRuntimeDiagnostics {
 
 export interface FiveResidentUnifiedLivingRuntimeOptions {
   composition?: FiveResidentRegionComposition;
+  /** Explicit research-only starting-stake configuration. Never enabled by default. */
+  lifeOptions?: FiveResidentCausalLifeOptions;
   maxConcurrentCognition?: number;
   endpoint?: string;
   fetcher?: CognitionFetch;
@@ -80,7 +83,7 @@ export class FiveResidentUnifiedLivingRuntime {
 
   constructor(options: FiveResidentUnifiedLivingRuntimeOptions = {}) {
     this.composition = options.composition ?? createFiveResidentRegionComposition();
-    this.lifeRuntime = new FiveResidentCausalLifeRuntime(this.composition);
+    this.lifeRuntime = new FiveResidentCausalLifeRuntime(this.composition, options.lifeOptions);
     this.cognition = new FiveResidentCausalCognitionHost(
       this.lifeRuntime,
       options.maxConcurrentCognition ?? 5,
