@@ -103,7 +103,9 @@ export class ResidentOriginatedSocialCommitmentAuthority {
       || source.activeRunId === null
       || source.semanticIntent?.kind !== "communicate_actor"
       || source.semanticIntent.targetActorId !== input.counterpartyActorId
-      || source.semanticIntent.text !== input.expectedSpeechText) {
+      || source.semanticIntent.text !== input.expectedSpeechText
+      || source.semanticIntent.standingSocialCommitment?.revisitAfterWorldTicks
+        !== input.revisitAfterWorldTicks) {
       throw new Error(
         "standing social commitment preparation requires one exact active communicate matter/run",
       );
@@ -232,6 +234,10 @@ export class ResidentOriginatedSocialCommitmentAuthority {
       sourceRunId: authority.sourceRunId,
     });
 
+    if (capability.revisitAfterWorldTicks !== undefined
+      && !Number.isSafeInteger(occurrence.tick + capability.revisitAfterWorldTicks)) {
+      throw new Error("social standing revisit tick overflows World time");
+    }
     const matter = this.options.kernel.openMatter({
       id: matterId,
       originEvidenceId: originEvidence.id,
