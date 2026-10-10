@@ -188,6 +188,7 @@ export class FiveResidentCausalLifeRuntime {
       execution: structuredClone(execution),
       interruptions: structuredClone(interruptions),
       materialRelevance: structuredClone(materialRelevance),
+      localMaterialResumption: structuredClone(localMaterialResumption),
     };
   }
 
