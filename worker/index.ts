@@ -6,7 +6,20 @@ import { handleSpcNextCognition } from "./spc-next-cognition";
 import { handleSpcNextLifeChoice, type SpcNextLifeChoiceEnv } from "./spc-next-life-choice";
 import { handleSpcNextLifeIntent, type SpcNextLifeIntentEnv } from "./spc-next-life-intent";
 import { handleSpcNextSemantic, type SpcNextSemanticEnv } from "./spc-next-semantic";
+import { operatorAuthorized, operatorConfigured, operatorLogin } from "./research-operator-auth";
 
+/** Research-only: no public caller may spend owner's provider quota by POST. */
+const PROTECTED_PROVIDER_POST_ROUTES = new Set([
+  "/api/agent/e1/decide",
+  "/api/first-presence/semantic/propose",
+  "/api/resident/converse",
+  "/api/hearth/cognition",
+  "/api/spc-next/cognition",
+  "/api/spc-next/life-intent",
+  "/api/spc-next/life-choice",
+  "/api/spc-next/semantic",
+  "/api/ai/qualify",
+]);
 const GATEWAY_ID = "default";
 const LIVE_STAGE = "e1-grounded-notice-fetch";
 const PROBE_PROMPT = "Reply with exactly one short sentence confirming that LLM Live NPC cognition is online.";
@@ -32,6 +45,8 @@ interface RateLimitBinding {
 }
 
 interface Env extends SpcNextSemanticEnv, SpcNextLifeChoiceEnv, SpcNextLifeIntentEnv {
+  /** Cloudflare Worker secret, never expose in frontend/client bundle or health. */
+  SPC_RESEARCH_OPERATOR_TOKEN?: string;
   AI: AiBinding;
   AI_PROBE_LIMITER: RateLimitBinding;
 }
@@ -163,6 +178,9 @@ export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
 
+    const operatorSession = await operatorLogin(request, env.SPC_RESEARCH_OPERATOR_TOKEN, env.AI_PROBE_LIMITER);
+    if (operatorSession) return operatorSession;
+
     if (url.pathname === "/api/health") {
       return json({
         ok: true,
@@ -190,9 +208,18 @@ export default {
         spcNextSemanticEndpoint: "/api/spc-next/semantic",
         spcNextSemanticModelConfigured: env.SPC_NEXT_SEMANTIC_MODEL ?? env.HEARTH_COGNITION_MODEL ?? "gpt-5.6-luna",
         hearthKeyConfigured: Boolean(env.OPENAI_API_KEY?.trim()),
+        providerResearchOperatorGateConfigured: operatorConfigured(env.SPC_RESEARCH_OPERATOR_TOKEN),
         transportQualificationEndpoint: "/api/ai/qualify",
         probeCandidates: PROBE_CANDIDATES
       });
+    }
+
+    if (request.method === "POST" && PROTECTED_PROVIDER_POST_ROUTES.has(url.pathname)
+      && !(await operatorAuthorized(request, env.SPC_RESEARCH_OPERATOR_TOKEN))) {
+      return json({
+        ok: false,
+        code: "research_operator_access_required",
+      }, { status: 403 });
     }
 
     if (url.pathname === "/api/agent/e1/decide") {

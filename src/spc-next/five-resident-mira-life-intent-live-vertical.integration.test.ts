@@ -53,6 +53,7 @@ describe("Mira resident-life live intent vertical", () => {
       AI_PROBE_LIMITER: limiter,
       HEARTH_COGNITION_LIMITER: limiter,
       OPENAI_API_KEY: "test-key",
+      SPC_RESEARCH_OPERATOR_TOKEN: "test-only-operator-secret-NEVER-PRODUCTION-0123456789",
       SPC_NEXT_LIFE_INTENT_MODEL: "gpt-5.6-luna",
       SPC_NEXT_LIFE_INTENT_REASONING: "low",
       SPC_NEXT_LIFE_INTENT_MAX_OUTPUT_TOKENS: "1024",
@@ -61,7 +62,13 @@ describe("Mira resident-life live intent vertical", () => {
       slice.lifeIntentOwner,
       "/api/spc-next/life-intent",
       async (input, init) => worker.fetch(
-        new Request(new URL(String(input), "https://worker.test"), init),
+        new Request(new URL(String(input), "https://worker.test"), {
+          ...init,
+          headers: {
+            ...Object.fromEntries(new Headers(init?.headers)),
+            authorization: "Bearer test-only-operator-secret-NEVER-PRODUCTION-0123456789",
+          },
+        }),
         env,
       ),
     );

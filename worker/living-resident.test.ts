@@ -32,15 +32,16 @@ function toolCall(output: unknown = reply) {
 
 function env(result: unknown = toolCall()) {
   return {
+    SPC_RESEARCH_OPERATOR_TOKEN: "test-only-operator-secret-NEVER-PRODUCTION-0123456789",
     AI: { aiGatewayLogId: "private-gateway-id", run: vi.fn(async () => result) },
     AI_PROBE_LIMITER: { limit: vi.fn(async (_options: { key: string }) => ({ success: true })) }
-  } satisfies LivingResidentEnv;
+  } satisfies LivingResidentEnv & { SPC_RESEARCH_OPERATOR_TOKEN: string };
 }
 
 function request(body: unknown = input()) {
   return new Request("https://example.test/api/resident/converse", {
     method: "POST",
-    headers: { "content-type": "application/json", "cf-connecting-ip": "192.0.2.8" },
+    headers: { "content-type": "application/json", "cf-connecting-ip": "192.0.2.8", authorization: "Bearer test-only-operator-secret-NEVER-PRODUCTION-0123456789" },
     body: JSON.stringify(body)
   });
 }
