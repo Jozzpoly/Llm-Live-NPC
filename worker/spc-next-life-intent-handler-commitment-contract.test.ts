@@ -154,8 +154,20 @@ describe("SPC Next life-intent endpoint commitment contract", () => {
       variant.properties?.standingSocialCommitment
     ));
     expect(standingVariant).toBeTruthy();
-    expect(Object.keys(standingVariant.properties.standingSocialCommitment.properties))
-      .toEqual(["goal"]);
+    const standingShapes = standingVariant.properties.standingSocialCommitment.anyOf;
+    expect(standingShapes).toHaveLength(2);
+    expect(standingShapes.map((variant: any) =>
+      Object.keys(variant.properties))).toEqual([
+      ["goal"],
+      ["goal", "revisitAfterWorldTicks"],
+    ]);
+    expect(standingShapes[1].properties.revisitAfterWorldTicks).toEqual({
+      type: "integer", minimum: 1, maximum: 36_000,
+    });
+    expect(standingShapes.every((variant: any) =>
+      variant.additionalProperties === false
+      && variant.required.length === Object.keys(variant.properties).length,
+    )).toBe(true);
     expect(upstreamRequest.instructions).toContain("commitmentDecision");
     expect(upstreamRequest.instructions).toContain("does not seize the body");
     expect(upstreamRequest.instructions).toContain("standingSocialCommitment");
