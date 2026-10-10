@@ -77,6 +77,14 @@ describe("Worker SPC Next routing", () => {
     expect(guardedBody).toMatchObject({ providerResearchOperatorGateConfigured: true });
     expect(JSON.stringify(guardedBody)).not.toContain(authorizedEnv().SPC_RESEARCH_OPERATOR_TOKEN);
   });
+  it("makes public health read-only even when an anonymous caller uses POST", async () => {
+    const result = await worker.fetch(new Request("https://example.test/api/health", {
+      method: "POST", body: "{}", headers: { "content-type": "application/json" },
+    }), env());
+    expect(result.status).toBe(405);
+    await expect(result.json()).resolves.toMatchObject({ code: "method_not_allowed" });
+  });
+
   it("advertises resident cognition, resident-life intent/choice and matter semantic endpoints", async () => {
     const response = await worker.fetch(new Request("https://example.test/api/health"), env());
     expect(response.status).toBe(200);

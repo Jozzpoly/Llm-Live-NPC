@@ -173,6 +173,9 @@ export default {
     if (operatorSession) return operatorSession;
 
     if (url.pathname === "/api/health") {
+      if (request.method !== "GET" && request.method !== "HEAD") {
+        return json({ ok: false, code: "method_not_allowed" }, { status: 405 });
+      }
       return json({
         ok: true,
         service: "llm-live-npc",

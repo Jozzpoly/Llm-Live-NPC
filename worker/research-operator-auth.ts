@@ -31,7 +31,10 @@ function decodeBase64Url(value: string): Uint8Array | null {
   if (!/^[A-Za-z0-9_-]{20,128}$/u.test(value)) return null;
   try {
     const padded = value.replaceAll("-", "+").replaceAll("_", "/");
-    return Uint8Array.from(atob(padded + "=".repeat((4 - padded.length % 4) % 4)), ch => ch.charCodeAt(0));
+    const decoded = Uint8Array.from(atob(padded + "=".repeat((4 - padded.length % 4) % 4)), ch => ch.charCodeAt(0));
+    // A 32-byte MAC has 4 unused base64url pad bits. Reject noncanonical
+    // encodings: different cookie text must not decode to the same signature.
+    return base64Url(decoded) === value ? decoded : null;
   } catch {
     return null;
   }

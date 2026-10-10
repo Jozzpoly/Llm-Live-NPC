@@ -100,6 +100,21 @@ describe("SPC independent Worker operator session (no Zero Trust)", () => {
     expect((await worker.fetch(provider(cookie, { origin: "" }), env())).status).toBe(403);
   });
 
+  it("rejects noncanonical alternate encoding of an otherwise identical valid HMAC", async () => {
+    const response = await worker.fetch(login(), env());
+    const cookie = cookieOf(response);
+    expect(await operatorAuthorized(provider(cookie), SECRET)).toBe(true);
+    const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+    const tail = cookie.at(-1) ?? "";
+    const index = alphabet.indexOf(tail);
+    expect(index).toBeGreaterThanOrEqual(0);
+    // For a 32-byte MAC the last base64url character uses only two upper
+    // bits. Flip an unused bit: identical MAC bytes, different cookie string.
+    const alias = cookie.slice(0, -1) + alphabet[index ^ 1]!;
+    expect(alias).not.toBe(cookie);
+    expect(await operatorAuthorized(provider(alias), SECRET)).toBe(false);
+  });
+
   it("rejects expired sessions even when the cookie MAC was originally valid", async () => {
     const initialTime = Date.now();
     const now = vi.spyOn(Date, "now");
