@@ -321,6 +321,35 @@ async function run() {
       janekWorld.selectedLife?.matters ?? null);
     await checkpoint(cdp, report, "07-r6-real-world-pre-luna-local-continuation", await panelSnapshot(cdp), true);
 
+    // Real Phaser keyboard interaction: E places the crate already physically
+    // held by the player, then normal R6 World ticks must do the local work.
+    // This MUST NOT call a special evidence action to tell Janek to respond.
+    await cdp.send("Input.dispatchKeyEvent", {
+      type: "keyDown", key: "e", code: "KeyE",
+      windowsVirtualKeyCode: 69, nativeVirtualKeyCode: 69,
+    });
+    await sleep(130);
+    await cdp.send("Input.dispatchKeyEvent", {
+      type: "keyUp", key: "e", code: "KeyE",
+      windowsVirtualKeyCode: 69, nativeVirtualKeyCode: 69,
+    });
+    const placed = await evaluate(cdp, "window.__SPC_EVIDENCE__.stepWorld(1)");
+    assert(report, "real E-key material release triggers Janek local same-matter resumption",
+      placed.selectedLife?.body.focusedRunId !== null
+      && placed.selectedLife?.matters.some((m) =>
+        m.id === "matter.janek.pre-luna-existing-material-concern"
+        && m.status === "active" && m.activeRun !== null),
+      { focused: placed.selectedLife?.body.focusedRunId,
+        matters: placed.selectedLife?.matters });
+    const settled = await evaluate(cdp, "window.__SPC_EVIDENCE__.stepWorld(240)");
+    assert(report, "same Janek matter actually closes after resident bodily World pickup",
+      settled.selectedLife?.matters.some((m) =>
+        m.id === "matter.janek.pre-luna-existing-material-concern"
+        && m.status === "resolved")
+      && settled.selectedLife?.body.focusedRunId === null,
+      settled.selectedLife?.matters);
+    await checkpoint(cdp, report, "08-r6-janek-local-continuation-world-afterstate", await panelSnapshot(cdp), true);
+
     const hardFailures = report.assertions.filter((entry) => entry.pass === false && entry.severity !== "finding");
     const browserErrors = report.runtimeExceptions.length + report.logErrors.length;
     assert(report, "no uncaught browser/runtime errors", browserErrors === 0, {
