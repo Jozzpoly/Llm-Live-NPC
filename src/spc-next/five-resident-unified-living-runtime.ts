@@ -61,6 +61,8 @@ export interface FiveResidentUnifiedLivingRuntimeOptions {
   fetcher?: CognitionFetch;
   /** Deliberately finite; raise explicitly for a budgeted research campaign. */
   maxUpstreamRequests?: number;
+  /** Keep the original multi-resident automatic mode unless explicitly researching manual dispatch. */
+  providerDispatchMode?: "automatic" | "manual";
 }
 
 /**
@@ -83,6 +85,7 @@ export class FiveResidentUnifiedLivingRuntime {
   readonly cognition: FiveResidentCausalCognitionHost;
   readonly provider: FiveResidentCausalProviderTransport;
   private readonly providerHardBudget: CognitionFetchHardBudget;
+  private readonly providerDispatchMode: "automatic" | "manual";
 
   private readonly arrivalInbox: FiveResidentCausalProviderArrival[] = [];
   private readonly providerInFlight = new Map<string, FiveResidentCausalCognitionRequest>();
@@ -91,6 +94,7 @@ export class FiveResidentUnifiedLivingRuntime {
   private providerEventSequence = 0;
 
   constructor(options: FiveResidentUnifiedLivingRuntimeOptions = {}) {
+    this.providerDispatchMode = options.providerDispatchMode ?? "automatic";
     this.composition = options.composition ?? createFiveResidentRegionComposition();
     this.lifeRuntime = new FiveResidentCausalLifeRuntime(this.composition);
     this.cognition = new FiveResidentCausalCognitionHost(
@@ -99,7 +103,9 @@ export class FiveResidentUnifiedLivingRuntime {
     );
     this.providerHardBudget = createCognitionFetchHardBudget(
       options.fetcher ?? fetch,
-      options.maxUpstreamRequests ?? DEFAULT_UNIFIED_LIVING_MAX_UPSTREAM_REQUESTS,
+      options.maxUpstreamRequests ?? (this.providerDispatchMode === "manual"
+        ? 1
+        : DEFAULT_UNIFIED_LIVING_MAX_UPSTREAM_REQUESTS),
     );
     this.provider = new FiveResidentCausalProviderTransport(
       options.endpoint ?? "/api/spc-next/life-intent",
@@ -114,7 +120,7 @@ export class FiveResidentUnifiedLivingRuntime {
   advanceOneWorldTick(): FiveResidentCausalLifeTick {
     const tick = this.lifeRuntime.advanceOneWorldTick();
     this.admitProviderInbox();
-    this.startReadyProviderRequests();
+    if (this.providerDispatchMode === "automatic") this.startReadyProviderRequests();
     return tick;
   }
 
@@ -137,6 +143,25 @@ export class FiveResidentUnifiedLivingRuntime {
     return this.lifeRuntime.life(residentId);
   }
 
+  /** Manual research: advance World independently, then initiate at most one
+   * resident's already-earned private cognition batch by explicit operator action.
+   * No synthetic cognition reason is created and no unanswered batch is fabricated.
+   * A session hard cap is consumed before any physical fetch.
+   */
+  requestOneResidentCognition(residentId: FiveResidentId):
+    "started" | "no_reason" | "resident_unavailable" | "budget_exhausted" {
+    if (this.providerDispatchMode !== "manual") {
+      throw new Error("manual cognition cannot be invoked in automatic mode");
+    }
+    if (!this.lifeRuntime.claimedResidentIds().includes(residentId)) {
+      return "resident_unavailable";
+    }
+    if (this.providerHardBudget.snapshot().exhausted) return "budget_exhausted";
+    return this.startReadyProviderRequests(residentId) === 1
+      ? "started"
+      : "no_reason";
+  }
+
   private admitProviderInbox(): void {
     const ready = this.arrivalInbox.splice(0, this.arrivalInbox.length);
     for (const arrival of ready) {
@@ -145,13 +170,19 @@ export class FiveResidentUnifiedLivingRuntime {
     }
   }
 
-  private startReadyProviderRequests(): void {
+  private startReadyProviderRequests(residentId?: FiveResidentId): number {
     // A session with exhausted physical upstream authority may keep running its
     // World and local brain, but it must never generate further network attempts
     // or an infinite provider-error/retry treadmill.
-    if (this.providerHardBudget.snapshot().exhausted) return;
-    this.cognition.collectReadyBatches();
+    if (this.providerHardBudget.snapshot().exhausted) return 0;
+    this.cognition.collectReadyBatches(residentId ? [residentId] : undefined);
+    let started = 0;
     for (const request of this.cognition.startReadyRequests()) {
+      if (residentId && request.residentId !== residentId) {
+        this.cognition.abandon(request);
+        continue;
+      }
+      started += 1;
       this.providerInFlight.set(request.id, request);
       this.providerRequestCount += 1;
       this.recordProviderEvent(
@@ -183,6 +214,7 @@ export class FiveResidentUnifiedLivingRuntime {
         );
       });
     }
+    return started;
   }
 
   private recordAdmission(
