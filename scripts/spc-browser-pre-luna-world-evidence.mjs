@@ -344,6 +344,48 @@ async function main() {
     const shot = await cdp.send("Page.captureScreenshot", { format: "png", captureBeyondViewport: false });
     writeFileSync(IMAGE, Buffer.from(shot.data, "base64"));
     assert(report, "real playable Chromium scene produced a screenshot", Buffer.from(shot.data, "base64").length > 2000);
+    // A separate opt-in browser specimen: do not rewrite the already-qualified
+    // four-object workshop nor fabricate an NPC task to demonstrate contact.
+    await cdp.send("Page.navigate", { url: BASE_URL + "/?spc=1&scenario=five-resident-contact-lab&evidence=1" });
+    await waitFor(async () => await evaluate(cdp,
+      "Boolean(window.__SPC_EVIDENCE__?.ready?.() && document.querySelector('canvas'))"),
+      "actor contact lab browser scene");
+    const contactBefore = await evaluate(cdp, "window.__SPC_EVIDENCE__.snapshot()");
+    const startPlayer = contactBefore.snapshot.actors.find((a) => a.id === "player.jozz");
+    const startJanek = contactBefore.snapshot.actors.find((a) => a.id === "resident.janek");
+    assert(report, "contact probe retains all five residents without seeding another task",
+      contactBefore.snapshot.residents.length === 5
+      && startPlayer?.position.x === 1810
+      && startPlayer?.position.y === 720
+      && startJanek?.position.x === 1900
+      && contactBefore.selectedLife?.matters.length === 0,
+      { startPlayer, startJanek });
+    await key("KeyD", true);
+    await sleep(70);
+    const contact = await evaluate(cdp, "window.__SPC_EVIDENCE__.stepWorld(100)");
+    await key("KeyD", false);
+    const player = contact.snapshot.actors.find((a) => a.id === "player.jozz");
+    const janek = contact.snapshot.actors.find((a) => a.id === "resident.janek");
+    const separation = Math.hypot(player.position.x - janek.position.x, player.position.y - janek.position.y);
+    const playerMotion = contact.motionOutcomes.find((m) => m.actorId === "player.jozz");
+    assert(report, "physical player actually collides with Janek in Chromium",
+      player.position.x > startPlayer.position.x + 25
+      && player.position.x < startJanek.position.x - 35.9
+      && separation >= 35.99
+      && playerMotion?.constraints.includes("actor_body"),
+      { player: player.position, janek: janek.position, separation, playerMotion });
+    assert(report, "real body contact neither creates material identity nor a resident commitment",
+      contact.selectedLife?.matters.length === 0
+      && (await evaluate(cdp, "window.__SPC_EVIDENCE__.materialObjects()")).length === 4,
+      { residentMatterCount: contact.selectedLife?.matters.length });
+    report.world.actorContactLab = {
+      playerAtContact: player.position, janek: janek.position, separation,
+      constraints: playerMotion?.constraints,
+    };
+    const contactShot = await cdp.send("Page.captureScreenshot", { format: "png", captureBeyondViewport: false });
+    writeFileSync(resolve(dirname(IMAGE), "pre-luna-body-contact.png"), Buffer.from(contactShot.data, "base64"));
+    assert(report, "opt-in body-contact browser screenshot recorded",
+      Buffer.from(contactShot.data, "base64").length > 2000);
     assert(report, "zero provider-like HTTP requests across both routes", report.providerLikeRequests.length === 0, report.providerLikeRequests);
     assert(report, "no uncaught browser exceptions", report.uncaughtExceptions.length === 0, report.uncaughtExceptions);
     report.outcome = "PASS";
