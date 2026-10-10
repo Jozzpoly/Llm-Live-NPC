@@ -269,6 +269,37 @@ describe("ResidentLifeIntentOwner", () => {
     });
   });
 
+  it("refuses a valid old answer after a private initiating reason is independently settled", () => {
+    const { resident, owner, batch } = setup();
+    const life = lifeView();
+    const attempt = owner.prepare(batch, life)!;
+    const originalReasonId = batch.reasons[0]?.id;
+    if (!originalReasonId) throw new Error("missing exact originating reason");
+    const admit = vi.fn(admitWorkshop());
+
+    // New resident-local truth settles the reason while the provider is in flight.
+    // No newer speech, activity revision or matter fingerprint change is needed.
+    expect(resident.invalidateSemanticPressure(
+      originalReasonId, 2, "the private reason is now factually obsolete",
+    )).toBe(true);
+    const epoch = resident.semanticPressureInvalidationRevision();
+    expect(epoch).toBe(1);
+    expect(resident.invalidateSemanticPressure(
+      originalReasonId, 3, "duplicate obsolete observation",
+    )).toBe(false);
+    expect(resident.semanticPressureInvalidationRevision()).toBe(epoch);
+
+    expect(owner.settleIntent(attempt, proposal(), life, 3, admit)).toEqual({
+      status: "stale",
+      reason: "semantic_pressure_changed_during_request",
+    });
+    expect(admit).not.toHaveBeenCalled();
+    expect(resident.pendingCognitionReasons().some(
+      (reason) => reason.id === originalReasonId,
+    )).toBe(false);
+    expect(owner.state().activeAttemptId).toBeNull();
+  });
+
   it("requeues the causal batch when the active attempt is abandoned", () => {
     const { resident, owner, batch } = setup();
     const attempt = owner.prepare(batch, lifeView())!;
