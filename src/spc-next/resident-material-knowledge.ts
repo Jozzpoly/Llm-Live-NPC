@@ -50,7 +50,8 @@ export class ResidentMaterialKnowledge {
 
     const previouslyFree = this.visibleFreeObjectIds;
     this.visibleFreeObjectIds = new Set();
-    this.newlyVisiblyFreeObjectIds = new Set();
+    // Pending transitions persist across multiple observations until local
+    // relevance consumes them, not just until the next arbitrary sample().
     for (const known of this.known.values()) known.currentlyVisible = false;
 
     for (const objectId of this.recognizedObjectIds) {
@@ -62,6 +63,7 @@ export class ResidentMaterialKnowledge {
       if (!visiblePosition) continue;
       if (distanceSquared(observer.position, visiblePosition) > observer.sightRadius ** 2) continue;
       if (!this.sight.hasLineOfSight(observer.position, visiblePosition)) continue;
+      const previouslyKnown = this.known.has(objectId);
       this.known.set(objectId, {
         objectId,
         lastKnownPosition: { ...visiblePosition },
@@ -70,10 +72,19 @@ export class ResidentMaterialKnowledge {
       });
       if (object.location.kind === "free") {
         this.visibleFreeObjectIds.add(objectId);
-        if (!previouslyFree.has(objectId)) this.newlyVisiblyFreeObjectIds.add(objectId);
+        // First EVER sight is knowledge acquisition, not a renewed opportunity.
+        if (previouslyKnown && !previouslyFree.has(objectId)) {
+          this.newlyVisiblyFreeObjectIds.add(objectId);
+        }
       }
     }
 
+    // No pending opportunity may survive losing sight or somebody taking it.
+    for (const objectId of this.newlyVisiblyFreeObjectIds) {
+      if (!this.visibleFreeObjectIds.has(objectId)) {
+        this.newlyVisiblyFreeObjectIds.delete(objectId);
+      }
+    }
     return this.snapshot();
   }
 
@@ -90,7 +101,7 @@ export class ResidentMaterialKnowledge {
 
   /** Free material just became privately available, including held -> placed within sight. */
   becameVisiblyFree(objectId: string): boolean {
-    return this.visiblyFree(objectId) && this.newlyVisiblyFreeObjectIds.has(objectId);
+    return this.visiblyFree(objectId) && this.newlyVisiblyFreeObjectIds.delete(objectId);
   }
 
   lastKnownPosition(objectId: string): Vec2 | null {
