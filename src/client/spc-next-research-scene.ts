@@ -107,6 +107,10 @@ export class SpcNextResearchScene extends Phaser.Scene {
       ?? researchScenarioKindFromSearch(location.search);
     this.scenario = createSpcNextResearchScenario(scenarioKind);
     this.world = this.scenario.world;
+    if (this.scenario.kind === "five-resident-local") {
+      // The ordinary workshop inspection begins beside Janek, not with remote Mira.
+      this.selectedResidentId = "resident.janek";
+    }
     this.snapshot = this.world.publicSnapshot();
     if (!this.snapshot.residents.some((resident) => resident.id === this.selectedResidentId)) {
       this.selectedResidentId = this.snapshot.residents[0]?.id ?? null;
@@ -494,7 +498,10 @@ export class SpcNextResearchScene extends Phaser.Scene {
       graphics.strokeCircle(anchor.position.x, anchor.position.y, anchor.radius);
       graphics.fillStyle(color, 0.22);
       graphics.fillCircle(anchor.position.x, anchor.position.y, 9);
-      this.add.text(anchor.position.x, anchor.position.y + anchor.radius + 14,
+      const workshopLabel = this.scenario.kind === "five-resident-local"
+        && anchor.id === "anchor.workshop.bench";
+      this.add.text(
+        anchor.position.x, anchor.position.y + anchor.radius + (workshopLabel ? 66 : 14),
         anchor.label, {
           fontFamily: "Inter, system-ui, sans-serif",
           fontSize: "17px",
@@ -577,7 +584,9 @@ export class SpcNextResearchScene extends Phaser.Scene {
         }).setOrigin(0.5, 1).setDepth(7);
         this.materialLabels.set(object.id, label);
       }
-      label.setPosition(position.x, position.y - half - 6).setVisible(true);
+      const timberLabelOffset = this.scenario.kind === "five-resident-local"
+        && object.id === "crate.workshop.timber" ? 20 : 6;
+      label.setPosition(position.x, position.y - half - timberLabelOffset).setVisible(true);
     }
 
     for (const [id, label] of this.materialLabels) {
