@@ -47,7 +47,8 @@ export type SpcNextResearchScenarioKind =
   | "r5-mira-semantic-escalation"
   | "r5-mira-live-semantic-escalation"
   | "r6-mira-standing-social-commitment"
-  | "unified-living";
+  | "unified-living"
+  | "unified-armed";
 
 export interface SpcNextResearchScenario {
   readonly kind: SpcNextResearchScenarioKind;
@@ -63,6 +64,9 @@ export interface SpcNextResearchScenario {
   readonly canonicalEvidenceSupported?: boolean;
   readonly residentLifeView?: (residentId: string) => ResidentLifeCognitionView | null;
   readonly livingDiagnostics?: () => FiveResidentLivingRuntimeDiagnostics | null;
+  /** Only on the opt-in, one-call, manually dispatched research scenario. */
+  readonly requestOneResidentCognition?: (residentId: string) =>
+    "started" | "no_reason" | "resident_unavailable" | "budget_exhausted";
   /** Optional evidence-only explicit causal boundary for a bounded research fixture. */
   readonly evidenceAction?: (actionId: string) => unknown;
   /** Advances exactly one authoritative World tick. */
@@ -83,6 +87,7 @@ export function createSpcNextResearchScenario(kind: SpcNextResearchScenarioKind)
   if (kind === "r5-mira-live-semantic-escalation") return createR5MiraLiveSemanticEscalationScenario();
   if (kind === "r6-mira-standing-social-commitment") return createR6MiraStandingSocialCommitmentScenario();
   if (kind === "unified-living") return createUnifiedLivingScenario();
+  if (kind === "unified-armed") return createUnifiedLivingScenario(true);
   return createBaselineDeliveryScenario();
 }
 
@@ -102,6 +107,7 @@ export function researchScenarioKindFromSearch(search: string): SpcNextResearchS
   if (requested === "r5-mira-live-semantic-escalation") return "r5-mira-live-semantic-escalation";
   if (requested === "r6-mira-standing-social-commitment") return "r6-mira-standing-social-commitment";
   if (requested === "unified-living") return "unified-living";
+  if (requested === "unified-armed") return "unified-armed";
   throw new Error(`unknown SPC Next research scenario: ${requested}`);
 }
 
@@ -880,16 +886,20 @@ function createR6MiraStandingSocialCommitmentScenario(): SpcNextResearchScenario
 
 
 
-function createUnifiedLivingScenario(): SpcNextResearchScenario {
-  const living = new FiveResidentUnifiedLivingRuntime();
+function createUnifiedLivingScenario(manual = false): SpcNextResearchScenario {
+  const living = new FiveResidentUnifiedLivingRuntime(manual ? {
+    providerDispatchMode: "manual",
+    maxConcurrentCognition: 1,
+    maxUpstreamRequests: 1,
+  } : {});
   const janek = living.life("resident.janek");
   if (!janek) {
     throw new Error("unified living runtime must claim idle Janek at construction");
   }
 
   return {
-    kind: "unified-living",
-    evidenceScenarioId: "browser-unified-living",
+    kind: manual ? "unified-armed" : "unified-living",
+    evidenceScenarioId: manual ? "browser-unified-armed" : "browser-unified-living",
     // Compatibility fields exist only because the older research shell is centered
     // on one canonical target. Unified canonical evidence is explicitly disabled.
     residentId: "resident.janek",
@@ -908,6 +918,14 @@ function createUnifiedLivingScenario(): SpcNextResearchScenario {
     livingDiagnostics(): FiveResidentLivingRuntimeDiagnostics {
       return living.diagnostics();
     },
+    ...(manual ? {
+      requestOneResidentCognition(residentId: string) {
+        if (!living.world.publicSnapshot().residents.some((actor) => actor.id === residentId)) {
+          return "resident_unavailable" as const;
+        }
+        return living.requestOneResidentCognition(residentId as FiveResidentId);
+      },
+    } : {}),
     advanceOneWorldTick(): void {
       living.advanceOneWorldTick();
     },
