@@ -336,6 +336,53 @@ describe("five-resident unified living runtime", () => {
     expect(living.diagnostics().providerHardBudget.exhausted).toBe(true);
   });
 
+  it("keeps a deliberate decline as a valid cognition choice, NOT a World success", async () => {
+    const upstream = vi.fn(async (_url: RequestInfo | URL, init?: RequestInit) => {
+      const context = JSON.parse(String(init?.body)) as {
+        resident: { id: string }; reasons: Array<{ id: string; kind: string }>;
+      };
+      expect(context.resident.id).toBe("resident.mira");
+      const ownOrigin = context.reasons.find(reason => reason.kind === "activity_completed");
+      expect(ownOrigin).toBeDefined();
+      return Response.json({
+        ok: true, originReasonId: ownOrigin!.id,
+        proposal: {
+          version: 1,
+          commitmentDecision: { kind: "decline", reason: "I choose not to take new work." },
+          beliefs: [], concerns: [], reviewAfterSeconds: 60,
+        },
+      });
+    });
+    const living = new FiveResidentUnifiedLivingRuntime({
+      providerDispatchMode: "manual", maxUpstreamRequests: 1, fetcher: upstream,
+    });
+    while (living.world.tick < 2_600) living.advanceOneWorldTick();
+    const life = living.life("resident.mira")!;
+    const origin = life.resident.pendingCognitionReasons().find(
+      reason => reason.kind === "activity_completed",
+    );
+    expect(origin).toBeDefined();
+    const before = living.world.publicSnapshot().actors.find(
+      actor => actor.id === "resident.mira",
+    )!.position;
+    expect(living.requestOneResidentCognition("resident.mira")).toBe("started");
+    await flushMicrotasks();
+    expect(living.diagnostics().recentProviderEvents.some(e => e.admittedChoice)).toBe(false);
+    living.advanceOneWorldTick();
+    const admitted = living.diagnostics().recentProviderEvents.find(
+      e => e.residentId === "resident.mira" && e.status === "admitted",
+    );
+    expect(admitted?.admittedChoice).toEqual({
+      originReasonId: origin!.id, kind: "decline", matterId: null, runId: null,
+    });
+    expect(life.matterScope.matterIds()).toEqual([]);
+    for (let i = 0; i < 360; i++) living.advanceOneWorldTick();
+    expect(living.world.publicSnapshot().actors.find(
+      actor => actor.id === "resident.mira",
+    )!.position).toEqual(before);
+    expect(upstream).toHaveBeenCalledTimes(1);
+  });
+
   it("refuses a completed manual model answer when its actual private World-speech reason was locally invalidated in flight", async () => {
     const gate: { release?: (response: Response) => void } = {};
     const captured: Array<{
@@ -405,6 +452,7 @@ describe("five-resident unified living runtime", () => {
         && event.detail.includes("stale: semantic_pressure_changed_during_request"),
     )).toBe(true);
     expect(mira.matterScope.matterIds()).toEqual([]);
+    expect(living.diagnostics().recentProviderEvents.some(e => e.admittedChoice)).toBe(false);
     expect(mira.resident.pendingCognitionReasons().some(
       (reason) => reason.id === heard.id,
     )).toBe(false);
