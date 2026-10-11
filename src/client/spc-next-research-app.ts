@@ -168,6 +168,17 @@ function renderPanel(frame: SpcNextResearchFrame): void {
     ? life.matters.find((matter) => matter.activeRun?.runId === life.body.focusedRunId) ?? null
     : null;
   const living = frame.livingDiagnostics;
+  const admittedEvent = living?.recentProviderEvents.findLast(
+    (event) => event.status === "admitted"
+      && event.residentId === frame.selectedResidentId
+      && event.admittedChoice !== undefined,
+  ) ?? null;
+  const admittedChoice = admittedEvent?.admittedChoice ?? null;
+  const chosenMatter = admittedChoice?.matterId
+    ? life?.matters.find((matter) => matter.id === admittedChoice.matterId) ?? null
+    : null;
+  // Outcome is projected from CURRENT resident-owned kernel evidence, not model prose.
+  const chosenOutcome = chosenMatter?.lastOutcomeEvidence ?? null;
   const providerEvents = living?.recentProviderEvents.slice(-7).reverse().map((event) => `
     <li>
       <span class="spc-log-main">t${event.tick} · ${escapeHtml(event.status)} · ${escapeHtml(event.residentId)}</span>
@@ -242,6 +253,25 @@ function renderPanel(frame: SpcNextResearchFrame): void {
           <p class="spc-activity-reason"><strong>legacy reason:</strong> ${escapeHtml(activity?.reason ?? "")}</p>
         ` : '<p class="spc-empty">Kliknij residenta w świecie albo wybierz go z listy.</p>'}
       </section>
+
+      ${armedResearchMode ? `
+      <section class="debug-section">
+        <h3 class="debug-section-title">Decyzja cognition → World</h3>
+        ${admittedChoice ? `
+          <dl class="spc-facts">
+            <div><dt>Przyczyna (prywatna)</dt><dd>${escapeHtml(admittedChoice.originReasonId)}</dd></div>
+            <div><dt>Decyzja przyjęta lokalnie</dt><dd>${escapeHtml(admittedChoice.kind)}</dd></div>
+            <div><dt>Nowe zobowiązanie</dt><dd>${escapeHtml(admittedChoice.matterId ?? "brak")}</dd></div>
+            <div><dt>Aktualny stan matter</dt><dd>${escapeHtml(chosenMatter?.status ?? (admittedChoice.matterId ? "poza bieżącą projekcją" : "bez nowego matter"))}</dd></div>
+            <div><dt>Autoryzowany run</dt><dd>${escapeHtml(admittedChoice.runId ?? "brak")}</dd></div>
+          </dl>
+          ${chosenMatter ? `<p class="spc-activity-reason"><strong>Własny cel:</strong> ${escapeHtml(chosenMatter.semanticCourse)}</p>` : ""}
+          <p class="spc-activity-reason"><strong>Faktyczny wynik w World:</strong> ${chosenOutcome
+            ? `t${chosenOutcome.tick} · ${escapeHtml(chosenOutcome.kind)} · ${escapeHtml(chosenOutcome.summary)}`
+            : "Brak potwierdzonego wyniku wykonania."}</p>
+        ` : '<p class="spc-empty">Brak lokalnie przyjętej decyzji dla wybranego SPC. Próba API lub nieprawidłowa propozycja nie są decyzją.</p>'}
+        <p class="debug-note">Uznanie zamiaru nie jest wykonaniem. Nawet factual outcome nie oznacza automatycznie sukcesu; czytaj status, rodzaj i treść dowodu.</p>
+      </section>` : ""}
 
       ${living ? `
       <section class="debug-section">
