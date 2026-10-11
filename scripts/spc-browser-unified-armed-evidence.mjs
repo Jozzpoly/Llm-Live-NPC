@@ -229,6 +229,68 @@ try{
       report.modelRouteRequests.length===before,
       {route:legacyScenario, attempts:report.modelRouteRequests.slice(before)});
   }
+  // New zero-provider resident↔resident actual-World browser specimen.
+  // This is not a model-generated choice and may not be presented as one.
+  const beforeRelationalNetwork = report.modelRouteRequests.length;
+  await cdp.send("Page.navigate",{
+    url:base.replace(/[/]$/u,"")+"/?spc=1&evidence=1&scenario=relational-episode"
+  });
+  await until(()=>runIn(cdp,
+    'Boolean(location.search.includes("scenario=relational-episode") && window.__SPC_EVIDENCE__?.ready?.() && document.querySelector("canvas"))'),20000);
+  check("real five residents in a clearly authored, zero-provider browser episode",
+    await runIn(cdp,'window.__SPC_EVIDENCE__.snapshot().snapshot.residents.length===5'));
+  check("test response control is visible, real Luna operator control hidden",
+    await runIn(cdp,'Array.from(document.querySelectorAll("button")).some(b=>b.textContent==="Test: odpowiedz"&&!b.hidden) && !Array.from(document.querySelectorAll("button")).some(b=>b.textContent?.includes("Zapytaj Lunę")&&!b.hidden)'));
+  let episode=null;
+  for(let i=0;i<65;i++){
+    await runIn(cdp,"window.__SPC_EVIDENCE__.stepWorld(24)");
+    episode=await runIn(cdp,'window.__SPC_EVIDENCE__.scenarioAction("episode-status")');
+    if(episode?.phase==="awaiting_choice"||episode?.phase==="failed")break;
+  }
+  check("actual Ida return becomes one Janek-private grounded question in browser",
+    episode?.phase==="awaiting_choice"&&!!episode.standingMatterId
+      &&!!episode.privateReturnReasonId &&episode.modelCalls===0,
+    episode);
+  check("no model or response before TEST operator action",
+    report.modelRouteRequests.length===beforeRelationalNetwork
+      &&episode.localDecision==="not_selected"&&!episode.factualReply);
+  const relationalBefore=await cdp.send("Page.captureScreenshot",{format:"png"});
+  writeFileSync(resolve(dirname(output),"relational-episode-before-choice.png"),
+    Buffer.from(relationalBefore.data,"base64"));
+  check("EXPLICIT test injection accepted",
+    await runIn(cdp,'window.__SPC_EVIDENCE__.scenarioAction("test-respond")')==="accepted");
+  for(let i=0;i<35;i++){
+    await runIn(cdp,"window.__SPC_EVIDENCE__.stepWorld(12)");
+    episode=await runIn(cdp,'window.__SPC_EVIDENCE__.scenarioAction("episode-status")');
+    if(episode?.phase==="spoken"||episode?.phase==="failed")break;
+  }
+  check("Janek factually speaks to Ida from accepted TEST-INJECTED local cognition",
+    episode?.phase==="spoken" && episode.factualReply && episode.modelCalls===0,episode);
+  const relationalAfter=await cdp.send("Page.captureScreenshot",{format:"png"});
+  writeFileSync(resolve(dirname(output),"relational-episode-after-test-choice.png"),
+    Buffer.from(relationalAfter.data,"base64"));
+  check("resident↔resident browser scene NEVER posts model API",
+    report.modelRouteRequests.length===beforeRelationalNetwork);
+
+  await cdp.send("Page.navigate",{
+    url:base.replace(/[/]$/u,"")+"/?spc=1&evidence=1&scenario=relational-episode&case=no-standing"
+  });
+  await until(()=>runIn(cdp,
+    'Boolean(location.search.includes("case=no-standing") && window.__SPC_EVIDENCE__?.ready?.() && document.querySelector("canvas"))'),20000);
+  let control=null;
+  for(let i=0;i<65;i++){
+    await runIn(cdp,"window.__SPC_EVIDENCE__.stepWorld(24)");
+    control=await runIn(cdp,'window.__SPC_EVIDENCE__.scenarioAction("episode-status")');
+    if(control?.phase==="control_complete"||control?.phase==="failed")break;
+  }
+  check("matched physical Ida return without Janek history creates NO personal reason",
+    control?.phase==="control_complete"&&!control.standingMatterId
+      &&!control.privateReturnReasonId&&!control.factualReply,control);
+  check("no-history control cannot invoke test response",
+    await runIn(cdp,'window.__SPC_EVIDENCE__.scenarioAction("test-respond")')==="not_ready");
+  check("no API in either authored relational case",
+    report.modelRouteRequests.length===beforeRelationalNetwork);
+
   // The default First Hearth (no ?spc=1) used to invoke its initial
   // model review automatically, including after operator authentication.
   // Waiting real browser time here catches implicit default-route API posts.
