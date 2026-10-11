@@ -205,6 +205,19 @@ try{
       report.modelRouteRequests.length===before,
       {route:legacyScenario, attempts:report.modelRouteRequests.slice(before)});
   }
+  // The default First Hearth (no ?spc=1) used to invoke its initial
+  // model review automatically, including after operator authentication.
+  // Waiting real browser time here catches implicit default-route API posts.
+  const beforeLegacyHearth = report.modelRouteRequests.length;
+  await cdp.send("Page.navigate", {
+    url: base.replace(/[/]$/u, "") + "/"
+  });
+  await until(()=>runIn(cdp,'Boolean(document.querySelector("#game canvas") && document.querySelector("#e1-stage-chip"))'));
+  await wait(1800);
+  check("default First Hearth never auto-posts a model after page load",
+    report.modelRouteRequests.length===beforeLegacyHearth,
+    report.modelRouteRequests.slice(beforeLegacyHearth));
+
   report.outcome="PASS";
 }catch(e){report.outcome="FAIL";report.failure=e instanceof Error?e.stack:String(e);process.exitCode=1;}
 finally{

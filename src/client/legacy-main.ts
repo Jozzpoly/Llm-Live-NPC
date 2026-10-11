@@ -49,7 +49,7 @@ function updateNpcUi(): void {
   if (resident) {
     livingPanel?.update(resident);
     if (researchPanel?.isOpen()) researchPanel.update(scene.residentResearchState());
-    stageChipNode.textContent = "Wspólny świat";
+    stageChipNode.textContent = "Wspólny świat · cognition offline";
     stageChipNode.classList.add("is-active");
     return;
   }
