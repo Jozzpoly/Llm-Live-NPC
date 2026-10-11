@@ -126,7 +126,7 @@ try{
   // The authored opening is a factual starting condition, NOT self-created motive.
   const beforeQuiet=report.requests.length;
   await cdp.send("Page.navigate",{
-    url:base.replace(/\\/$/u,"")+"/?spc=1&evidence=1&scenario=unified-armed&case=quiet-self-future"
+    url:base.replace(/[/]$/u,"")+"/?spc=1&evidence=1&scenario=unified-armed&case=quiet-self-future"
   });
   await until(()=>runIn(cdp,'Boolean(location.search.includes("case=quiet-self-future") && window.__SPC_EVIDENCE__?.ready?.() && document.querySelector("canvas"))'));
   const quietAtStart=await runIn(cdp,"window.__SPC_EVIDENCE__.snapshot()");
