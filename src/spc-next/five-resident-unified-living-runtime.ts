@@ -34,8 +34,8 @@ export const DEFAULT_UNIFIED_LIVING_MAX_UPSTREAM_REQUESTS = 32;
 export interface FiveResidentAdmittedCognitionChoice {
   originReasonId: string;
   kind: Extract<FiveResidentCausalCognitionSettlement, { status: "applied" }>["decision"];
-  /** Stated reasoning from the accepted proposal, NOT observed causal truth. */
-  declaredRationale: string;
+  /** Model-stated reason from an already locally admitted proposal; never World evidence. */
+  declaredRationale: string | null;
   matterId: string | null;
   runId: string | null;
 }
@@ -269,7 +269,7 @@ export class FiveResidentUnifiedLivingRuntime {
         ? {
             originReasonId: arrival.originReasonId,
             kind: admission.decision,
-            declaredRationale: admission.declaredRationale,
+            declaredRationale: readAdmittedProposalRationale(arrival.proposal),
             matterId: admission.commitment?.matterId ?? null,
             runId: admission.commitment?.runId ?? null,
           }
@@ -299,6 +299,20 @@ export class FiveResidentUnifiedLivingRuntime {
       this.recentProviderEvents.shift();
     }
   }
+}
+
+/** Presentation-only; the model's raw words have no authority of their own.
+ * This is called ONLY after the resident-local admission returned "applied".
+ * Local proposal validation independently enforces the bounded reason contract.
+ */
+function readAdmittedProposalRationale(raw: unknown): string | null {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  const decision = (raw as { commitmentDecision?: unknown }).commitmentDecision;
+  if (!decision || typeof decision !== "object" || Array.isArray(decision)) return null;
+  const reason = (decision as { reason?: unknown }).reason;
+  return typeof reason === "string" && reason.trim().length > 0 && reason.length <= 1_200
+    ? reason
+    : null;
 }
 
 function settlementDetail(admission: FiveResidentCausalCognitionSettlement): string {
