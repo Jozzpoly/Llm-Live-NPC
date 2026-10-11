@@ -117,9 +117,6 @@ export class FiveResidentUnifiedLivingRuntime {
     this.provider = new FiveResidentCausalProviderTransport(
       options.endpoint ?? "/api/spc-next/life-intent",
       this.providerHardBudget.fetch,
-      // Explicit contract with Worker: it must use the narrower five-resident
-      // embodied affordance instructions, not the general SPC proposal schema.
-      { runtimeMode: "five-resident-causal-v1" },
     );
   }
 
