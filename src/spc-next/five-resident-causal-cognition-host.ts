@@ -28,7 +28,6 @@ export type FiveResidentCausalCognitionSettlement =
       status: "applied";
       residentId: FiveResidentId;
       decision: Extract<ResidentCausalCognitionSettlement, { status: "applied" }>["decision"];
-      declaredRationale: string;
       commitment: {
         matterId: string;
         runId: string;
@@ -161,7 +160,6 @@ export class FiveResidentCausalCognitionHost {
       status: "applied",
       residentId: request.residentId,
       decision: settlement.decision,
-      declaredRationale: settlement.declaredRationale,
       commitment: settlement.commitment
         ? structuredClone(settlement.commitment)
         : null,
