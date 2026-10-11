@@ -94,6 +94,7 @@ try{
   await cdp.send("Page.navigate",{url:base.replace(/\/$/u,"")+"/?spc=1&evidence=1&scenario=unified-armed"});
   await until(()=>runIn(cdp,'Boolean(window.__SPC_EVIDENCE__?.ready?.() && document.querySelector("canvas"))'));
   check("explicit one-shot UI",await runIn(cdp,'Array.from(document.querySelectorAll("button")).some(b=>b.textContent?.includes("Zapytaj Lunę")&&!b.hidden)'));
+  check("private evidence export hidden BEFORE operator action",await runIn(cdp,'Array.from(document.querySelectorAll("button")).some(b=>b.textContent?.includes("Zapisz dowody JSON")&&b.hidden)'));
   const initial=await runIn(cdp,"window.__SPC_EVIDENCE__.snapshot()");
   check("no API at load",initial.livingDiagnostics?.providerRequestCount===0&&report.requests.length===0);
   await runIn(cdp,"window.__SPC_EVIDENCE__.stepWorld(2600)");
@@ -109,6 +110,8 @@ try{
   check("player utterance not automatically billed",report.requests.length===0);
   const clicked=await runIn(cdp,'(()=>{const b=Array.from(document.querySelectorAll("button")).find(b=>b.textContent?.includes("Zapytaj Lunę"));b?.click();return b?.disabled??null;})()');
   check("one explicit click disables itself",clicked===true,{clicked});
+  check("private research export available ONLY after explicit operator attempt",
+    await runIn(cdp,'Array.from(document.querySelectorAll("button")).some(b=>b.textContent?.includes("Zapisz dowody JSON")&&!b.hidden)'));
   await until(()=>report.requests.length>=1,5000);
   check("exactly one network attempt",report.requests.length===1,report.requests);
   check("Mira alone forwards genuine heard player speech, not an invented provider reason",
@@ -122,6 +125,25 @@ try{
     report.requests.length===1
     &&after.livingDiagnostics?.providerHardBudget?.upstreamRequestsStarted===1,
     {attempts:report.requests.length,budget:after.livingDiagnostics?.providerHardBudget});
+
+  // Intercept browser-local Blob creation without writing/download-uploading private
+  // data. The explicit export click must not make a SECOND provider request.
+  await runIn(cdp,`(()=>{const old=URL.createObjectURL.bind(URL);URL.createObjectURL=(blob)=>{window.__SPC_OPERATOR_EXPORT_BLOB__=blob;return old(blob);};const b=Array.from(document.querySelectorAll("button")).find(x=>x.textContent?.includes("Zapisz dowody JSON"));b?.click();return true;})()`);
+  const exportedText=await runIn(cdp,'window.__SPC_OPERATOR_EXPORT_BLOB__?.text()');
+  const exported=exportedText?JSON.parse(exportedText):null;
+  check("local probe JSON preserves exact dispatched context and genuine private heard speech",
+    exported?.schemaVersion===1
+    &&exported.subject?.residentId==="resident.mira"
+    &&exported.modelExchange?.exactSubmittedContext?.resident?.id==="resident.mira"
+    &&exported.modelExchange?.dispatchedReasonBatch?.some(r=>r.kind==="heard_speech")
+    &&exported.scope?.serverTelemetry===false,
+    {subject:exported?.subject,source:exported?.modelExchange?.exactSubmittedContext?.resident?.id});
+  check("exported denied-provider attempt is NOT claimed as locally admitted World success",
+    exported?.trace?.admittedChoice===null
+    &&exported?.trace?.outcomeProved===false
+    &&exported?.scope?.isAutonomousLifePass===false
+    &&report.requests.length===1,
+    {admission:exported?.modelExchange?.localSettlement?.status,requests:report.requests.length});
   check("no browser exception",report.exceptions.length===0,report.exceptions);
   const screenshot=await cdp.send("Page.captureScreenshot",{format:"png"});
   writeFileSync(resolve(dirname(output),"unified-armed.png"),Buffer.from(screenshot.data,"base64"));
@@ -175,6 +197,8 @@ try{
     && report.requests.length===beforeBrowseOnly);
   check("browse-only exposes no manual Luna click",
     await runIn(cdp,'!Array.from(document.querySelectorAll("button")).some(b=>b.textContent?.includes("Zapytaj Lunę")&&!b.hidden)'));
+  check("browse-only NEVER offers export of private operator cognition",
+    await runIn(cdp,'!Array.from(document.querySelectorAll("button")).some(b=>b.textContent?.includes("Zapisz dowody JSON")&&!b.hidden)'));
   await runIn(cdp, "window.__SPC_EVIDENCE__.stepWorld(3600)");
   const browseEnd = await runIn(cdp, "window.__SPC_EVIDENCE__.snapshot()");
   check("3600 browse-only World ticks with real private pressures cannot call any model",
