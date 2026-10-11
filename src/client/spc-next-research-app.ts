@@ -571,6 +571,14 @@ debugNode.addEventListener("click", (event) => {
   const residentId = target.dataset.resident;
   if (residentId) {
     scene.selectResident(residentId);
+    // In the actual FIVE-person living World, choosing a resident must
+    // immediately let the Owner *see* their embodied work and whereabouts.
+    // Pure selection in an 8,192-unit World otherwise feels like a dead UI.
+    // Press P to return the camera to the player.
+    if (params.get("scenario") === "unified-living"
+      || params.get("scenario") === "unified-armed") {
+      scene.focusSelected();
+    }
     return;
   }
   switch (target.dataset.action) {

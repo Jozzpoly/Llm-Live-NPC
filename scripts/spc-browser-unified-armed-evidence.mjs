@@ -199,8 +199,31 @@ try{
     await runIn(cdp,'!Array.from(document.querySelectorAll("button")).some(b=>b.textContent?.includes("Zapytaj Lunę")&&!b.hidden)'));
   check("browse-only NEVER offers export of private operator cognition",
     await runIn(cdp,'!Array.from(document.querySelectorAll("button")).some(b=>b.textContent?.includes("Zapisz dowody JSON")&&!b.hidden)'));
+  // REAL playable five-person World, not the authored Janek↔Ida test scene.
+  // Observe Janek in the middle of a genuinely embodied supply job and then
+  // qualify factual completed placement. Never request provider cognition.
+  check("a playable resident starts with one actually authorized material delivery",
+    await runIn(cdp, 'Boolean(window.__SPC_EVIDENCE__.snapshot().snapshot.residents.length===5 && document.querySelector("[data-resident=\\\"resident.janek\\\"]"))'));
+  await runIn(cdp, 'document.querySelector("[data-resident=\\\"resident.janek\\\"]").click()');
+  await runIn(cdp, "window.__SPC_EVIDENCE__.stepWorld(200)");
+  const workingJanek = await runIn(cdp, "window.__SPC_EVIDENCE__.snapshot()");
+  check("Janek is doing ordinary material work in the actual five-resident game",
+    workingJanek.selectedResidentId === "resident.janek"
+      && workingJanek.selectedLife?.body?.focusedRunId === "run.janek.workshop-opening.delivery"
+      && workingJanek.selectedLife?.matters?.some(m =>
+        m.id === "matter.janek.workshop-opening.delivery" && m.status === "active"
+          && m.semanticIntent?.kind === "deliver_material_object"),
+    {selected:workingJanek.selectedResidentId,focused:workingJanek.selectedLife?.body?.focusedRunId});
+  const realWorkImage = await cdp.send("Page.captureScreenshot",{format:"png"});
+  writeFileSync(resolve(dirname(output),"unified-living-janek-material-work.png"),
+    Buffer.from(realWorkImage.data,"base64"));
   await runIn(cdp, "window.__SPC_EVIDENCE__.stepWorld(3600)");
   const browseEnd = await runIn(cdp, "window.__SPC_EVIDENCE__.snapshot()");
+  check("Janek actually completes the material delivery into World, not just a fake work badge",
+    browseEnd.selectedLife?.matters?.some(m =>
+      m.id === "matter.janek.workshop-opening.delivery" && m.status === "resolved"
+      && m.lastOutcomeEvidence?.summary?.includes("physically delivered")),
+    {selected:browseEnd.selectedResidentId,matters:browseEnd.selectedLife?.matters?.length});
   check("3600 browse-only World ticks with real private pressures cannot call any model",
     report.requests.length===beforeBrowseOnly
     && browseEnd.livingDiagnostics?.providerRequestCount===0,
