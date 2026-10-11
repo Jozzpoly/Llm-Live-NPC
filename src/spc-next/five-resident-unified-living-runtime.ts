@@ -30,6 +30,14 @@ const PROVIDER_EVENT_LIMIT = 128;
 /** Bounded default for an experimental live session, NOT a dollar/token spending limit. */
 export const DEFAULT_UNIFIED_LIVING_MAX_UPSTREAM_REQUESTS = 32;
 
+/** Locally admitted semantic choice, never a provider claim of physical success. */
+export interface FiveResidentAdmittedCognitionChoice {
+  originReasonId: string;
+  kind: Extract<FiveResidentCausalCognitionSettlement, { status: "applied" }>["decision"];
+  matterId: string | null;
+  runId: string | null;
+}
+
 export interface FiveResidentLivingProviderEvent {
   sequence: number;
   tick: number;
@@ -44,6 +52,8 @@ export interface FiveResidentLivingProviderEvent {
   detail: string;
   /** Parsed from Worker output; not proof of billed spend or free-tier eligibility. */
   usage?: ResidentCausalProviderUsage;
+  /** Present only after local causal admission, not on upstream arrival or rejection. */
+  admittedChoice?: FiveResidentAdmittedCognitionChoice;
 }
 
 export interface FiveResidentLivingRuntimeDiagnostics {
@@ -252,6 +262,15 @@ export class FiveResidentUnifiedLivingRuntime {
       arrival.requestId,
       "admitted",
       settlementDetail(admission),
+      undefined,
+      admission.status === "applied" && arrival.status === "proposal"
+        ? {
+            originReasonId: arrival.originReasonId,
+            kind: admission.decision,
+            matterId: admission.commitment?.matterId ?? null,
+            runId: admission.commitment?.runId ?? null,
+          }
+        : undefined,
     );
   }
 
@@ -261,6 +280,7 @@ export class FiveResidentUnifiedLivingRuntime {
     status: FiveResidentLivingProviderEvent["status"],
     detail: string,
     usage?: ResidentCausalProviderUsage,
+    admittedChoice?: FiveResidentAdmittedCognitionChoice,
   ): void {
     this.recentProviderEvents.push({
       sequence: this.providerEventSequence++,
@@ -270,6 +290,7 @@ export class FiveResidentUnifiedLivingRuntime {
       status,
       detail,
       ...(usage ? { usage: structuredClone(usage) } : {}),
+      ...(admittedChoice ? { admittedChoice: structuredClone(admittedChoice) } : {}),
     });
     while (this.recentProviderEvents.length > PROVIDER_EVENT_LIMIT) {
       this.recentProviderEvents.shift();
