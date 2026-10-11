@@ -43,6 +43,24 @@ jobs:
               echo "PASS: exact candidate Worker answers health with project key, operator gate and configured GPT-5.6 Luna."
               break
             fi
+            # Once the isolated Worker exists, a 200 with missing capability
+            # flags is a SPECIFIC missing runtime binding, not a deployment wait.
+            # Report only boolean presence, NEVER a credential value.
+            if [ "$status" = "200" ]; then
+              python3 - /tmp/spc-research-health.json <<'PY'
+          import json,sys
+          try:
+              d=json.load(open(sys.argv[1]))
+              print("RESEARCH_RUNTIME_BINDINGS",
+                    "operator_gate=" + str(d.get("providerResearchOperatorGateConfigured")),
+                    "openai_key=" + str(d.get("hearthKeyConfigured")),
+                    "model_is_luna56=" + str(d.get("spcNextLifeIntentModelConfigured")=="gpt-5.6-luna"))
+          except (OSError, ValueError):
+              print("RESEARCH_RUNTIME_BINDINGS: invalid health JSON")
+          PY
+              echo "::error::Research Worker health is reachable but required secure runtime bindings or model configuration are missing. No provider request attempted."
+              exit 1
+            fi
             echo "Awaiting safe research health ($attempt/25; HTTP=${status:-network_error})"
             sleep 12
           done
