@@ -303,13 +303,30 @@ describe("five-resident unified living runtime", () => {
     expect(heardReasonId).toBeTruthy();
     expect(upstream).not.toHaveBeenCalled();
     expect(living.requestOneResidentCognition("resident.mira")).toBe("started");
+    const submitted = living.manualResearchProbe();
+    expect(submitted).toMatchObject({
+      requestId: expect.any(String),
+      residentId: "resident.mira",
+      dispatchedAtTick: living.world.tick,
+      providerArrival: null,
+      localSettlement: null,
+    });
+    expect(submitted?.reasons.some(reason => reason.id === heardReasonId)).toBe(true);
+    expect(submitted?.submitted.reasons.some(reason => reason.id === heardReasonId)).toBe(true);
     await flushMicrotasks();
+    const readyProbe = living.manualResearchProbe();
+    expect(readyProbe?.providerArrival?.status).toBe("proposal");
+    expect(readyProbe?.localSettlement).toBeNull();
     // Provider completion is inert until the next World boundary.
     expect(living.life("resident.mira")!.matterScope.matterIds()).toEqual([]);
     living.advanceOneWorldTick();
     const accepted = living.diagnostics().recentProviderEvents.find(
       e => e.status === "admitted" && e.residentId === "resident.mira",
     );
+    expect(living.manualResearchProbe()?.localSettlement).toMatchObject({
+      status: "applied",
+      decision: "accept",
+    });
     expect(accepted?.admittedChoice).toMatchObject({
       kind: "accept",
       originReasonId: heardReasonId,
@@ -373,6 +390,11 @@ describe("five-resident unified living runtime", () => {
     const admitted = living.diagnostics().recentProviderEvents.find(
       e => e.residentId === "resident.mira" && e.status === "admitted",
     );
+    expect(living.manualResearchProbe()?.localSettlement).toMatchObject({
+      status: "applied",
+      decision: "decline",
+      commitment: null,
+    });
     expect(admitted?.admittedChoice).toEqual({
       originReasonId: origin!.id,
       kind: "decline",
@@ -457,6 +479,10 @@ describe("five-resident unified living runtime", () => {
     )).toBe(true);
     expect(mira.matterScope.matterIds()).toEqual([]);
     expect(living.diagnostics().recentProviderEvents.some(e => e.admittedChoice)).toBe(false);
+    expect(living.manualResearchProbe()?.localSettlement).toMatchObject({
+      status: "stale",
+      reason: "semantic_pressure_changed_during_request",
+    });
     expect(mira.resident.pendingCognitionReasons().some(
       (reason) => reason.id === heard.id,
     )).toBe(false);
