@@ -264,6 +264,7 @@ function renderPanel(frame: SpcNextResearchFrame): void {
           <dl class="spc-facts">
             <div><dt>Przyczyna (prywatna)</dt><dd>${escapeHtml(admittedChoice.originReasonId)}</dd></div>
             <div><dt>Decyzja przyjęta lokalnie</dt><dd>${escapeHtml(admittedChoice.kind)}</dd></div>
+            <div><dt>Uzasadnienie modelu (deklaracja)</dt><dd>${escapeHtml(admittedChoice.declaredRationale)}</dd></div>
             <div><dt>Nowe zobowiązanie</dt><dd>${escapeHtml(admittedChoice.matterId ?? "brak")}</dd></div>
             <div><dt>Aktualny stan matter</dt><dd>${escapeHtml(chosenMatter?.status ?? (admittedChoice.matterId ? "poza bieżącą projekcją" : "bez nowego matter"))}</dd></div>
             <div><dt>Autoryzowany run</dt><dd>${escapeHtml(admittedChoice.runId ?? "brak")}</dd></div>
