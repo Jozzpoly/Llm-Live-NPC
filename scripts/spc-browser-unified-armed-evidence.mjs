@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 
 const base = process.env.EVIDENCE_BASE_URL ?? "http://127.0.0.1:4173";
 const output = resolve(process.env.UNIFIED_ARMED_OUTPUT ?? "evidence/browser/unified-armed.json");
-const report = { sourceSha: process.env.SOURCE_SHA ?? "local", assertions: [], requests: [], exceptions: [] };
+const report = { sourceSha: process.env.SOURCE_SHA ?? "local", assertions: [], requests: [], modelRouteRequests: [], exceptions: [] };
 const wait = ms => new Promise(r => setTimeout(r,ms));
 mkdirSync(dirname(output),{recursive:true});
 function check(name,ok,detail=null) {
@@ -73,6 +73,9 @@ try{
   });
   cdp=new Cdp(target.webSocketDebuggerUrl);await cdp.open();
   cdp.on("Network.requestWillBeSent",({request})=>{
+    if(request?.method==="POST" && /[/]api[/](?:spc-next|ai)[/]/u.test(request.url??"")) {
+      report.modelRouteRequests.push({ url: request.url, method: request.method });
+    }
     if(request?.url?.includes("/api/spc-next/life-intent")) {
       let context = null;
       try { context = JSON.parse(request.postData ?? ""); } catch {}
@@ -179,6 +182,29 @@ try{
     && browseEnd.livingDiagnostics?.providerRequestCount===0,
     {newRequests:report.requests.length-beforeBrowseOnly,
       providerCount:browseEnd.livingDiagnostics?.providerRequestCount});
+  // Test archival browser routes too. They historically started a provider
+  // automatically; opening them after operator login must not silently spend.
+  const silentLegacyRoutes = [
+    "missing-crate-live-provider",
+    "missing-crate-live-provider-interruption",
+    "r5-mira-live-semantic-escalation",
+  ];
+  for (const legacyScenario of silentLegacyRoutes) {
+    const before = report.modelRouteRequests.length;
+    await cdp.send("Page.navigate", {
+      url: base.replace(/[/]$/u, "") + "/?spc=1&evidence=1&scenario=" + legacyScenario
+    });
+    await until(()=>runIn(cdp,
+      'Boolean(location.search.includes("scenario=' + legacyScenario + '") && window.__SPC_EVIDENCE__?.ready?.() && document.querySelector("canvas"))'));
+    if (legacyScenario === "r5-mira-live-semantic-escalation") {
+      await runIn(cdp, 'window.__SPC_EVIDENCE__.scenarioAction("ida-address-mira")');
+    }
+    await runIn(cdp, "window.__SPC_EVIDENCE__.stepWorld(1800)");
+    await wait(50);
+    check("legacy " + legacyScenario + " has zero model POST even when the World advances",
+      report.modelRouteRequests.length===before,
+      {route:legacyScenario, attempts:report.modelRouteRequests.slice(before)});
+  }
   report.outcome="PASS";
 }catch(e){report.outcome="FAIL";report.failure=e instanceof Error?e.stack:String(e);process.exitCode=1;}
 finally{
