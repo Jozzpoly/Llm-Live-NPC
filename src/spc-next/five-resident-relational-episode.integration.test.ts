@@ -47,7 +47,7 @@ function authoredResidentAct(
 ) {
   const life = s.host.life(residentId);
   if (!life) throw new Error("actual five-resident World never claimed " + residentId);
-  const matterId = `matter.${residentId}.${stem}`;
+  const matterId = `matter.${residentId.split(".").at(-1)}.${stem}`;
   const runId = `run.${residentId}.${stem}`;
   const origin = life.kernel.recordEvidence({
     id: `evidence.${residentId}.${stem}.authored-initial-choice`,
