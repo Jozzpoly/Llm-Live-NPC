@@ -165,6 +165,7 @@ describe("Full manual SPC browser-session Worker/World research boundary", () =>
     // Production-shaped route, same-origin HttpOnly session cookie, no Bearer in JS.
     const fetcher = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
       const headers = new Headers(init?.headers);
+      expect(headers.get("x-spc-life-runtime")).toBe("five-resident-causal-v1");
       headers.set("origin", "https://spc.test");
       headers.set("sec-fetch-site", "same-origin");
       headers.set("cookie", cookie);
