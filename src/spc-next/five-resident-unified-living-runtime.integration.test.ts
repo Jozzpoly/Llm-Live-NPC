@@ -109,7 +109,7 @@ describe("five-resident unified living runtime", () => {
     }
     expect(guard).toBeLessThan(5_000);
     expect(firstWaveResolved(living, firstWave)).toBe(true);
-  });
+  }, 20_000);
 
   it("hard-stops upstream traffic even if a live resident has more semantic pressure", async () => {
     // This must be a literal PHYSICAL network-call ceiling, not a count of

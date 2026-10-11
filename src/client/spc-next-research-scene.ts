@@ -239,7 +239,9 @@ export class SpcNextResearchScene extends Phaser.Scene {
     const view = this.actorViews.get(this.selectedResidentId);
     if (!view) return;
     this.cameras.main.startFollow(view.container, true, 0.12, 0.12);
-    this.cameras.main.setZoom(Math.max(this.cameras.main.zoom, 0.62));
+    // Only the camera changes. A selected living resident must be readable.
+    const minObservableZoom = this.scenario.kind === "unified-living" ? 1.12 : 0.62;
+    this.cameras.main.setZoom(Math.max(this.cameras.main.zoom, minObservableZoom));
     this.pushFrame(true);
   }
 

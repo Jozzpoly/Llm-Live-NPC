@@ -41,6 +41,12 @@ heading.textContent = "SPC Next";
 eyebrow.textContent = "Living world · embodied cognition research";
 stageNode.textContent = "WORLD / EPISTEMIC LAB";
 stageNode.classList.add("is-active");
+if (params.get("scenario") === "unified-living" && !evidenceMode) {
+  document.title = "SPC — Świat pięciu mieszkańców";
+  heading.textContent = "SPC • Pięciu mieszkańców";
+  eyebrow.textContent = "Wspólny świat · codzienne życie · rzeczywiste działania";
+  stageNode.textContent = "ŚWIAT · BEZ AUTOMATYCZNEGO API";
+}
 gameNode.setAttribute("aria-label", "SPC Next living-world research scene");
 footer.innerHTML = [
   "<span>Ruch: WASD / strzałki</span>",
@@ -207,9 +213,12 @@ function renderPanel(frame: SpcNextResearchFrame): void {
     const actor = frame.snapshot.actors.find((candidate) => candidate.id === resident.id);
     const speed = actor ? Math.hypot(actor.velocity.x, actor.velocity.y) : 0;
     const embodied = speed > 1 ? `moving ${speed.toFixed(0)}` : "still";
+    const activityLabel = params.get("scenario") === "unified-living"
+      ? `${embodied} · C${resident.pendingCognitionReasonCount}`
+      : `${embodied} · legacy ${resident.activity.kind} · C${resident.pendingCognitionReasonCount}`;
     return `<button class="spc-resident-button${active}" data-resident="${escapeHtml(resident.id)}">
       <span>${escapeHtml(resident.name)}</span>
-      <small>${embodied} · legacy ${escapeHtml(resident.activity.kind)} · C${resident.pendingCognitionReasonCount}</small>
+      <small>${escapeHtml(activityLabel)}</small>
     </button>`;
   }).join("");
 
