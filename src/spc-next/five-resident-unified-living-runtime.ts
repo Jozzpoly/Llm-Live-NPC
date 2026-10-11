@@ -34,6 +34,8 @@ export const DEFAULT_UNIFIED_LIVING_MAX_UPSTREAM_REQUESTS = 32;
 export interface FiveResidentAdmittedCognitionChoice {
   originReasonId: string;
   kind: Extract<FiveResidentCausalCognitionSettlement, { status: "applied" }>["decision"];
+  /** Stated reasoning from the accepted proposal, NOT observed causal truth. */
+  declaredRationale: string;
   matterId: string | null;
   runId: string | null;
 }
@@ -267,6 +269,7 @@ export class FiveResidentUnifiedLivingRuntime {
         ? {
             originReasonId: arrival.originReasonId,
             kind: admission.decision,
+            declaredRationale: admission.declaredRationale,
             matterId: admission.commitment?.matterId ?? null,
             runId: admission.commitment?.runId ?? null,
           }
