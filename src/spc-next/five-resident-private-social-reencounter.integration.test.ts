@@ -1,6 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { createFiveResidentRegionComposition } from "./five-resident-region";
 import { FiveResidentCausalLifeRuntime } from "./five-resident-causal-life-runtime";
+import { FiveResidentUnifiedLivingRuntime } from "./five-resident-unified-living-runtime";
 
 const JAN = "resident.janek";
 const PLAYER = "player.jozz";
@@ -92,6 +93,60 @@ function movePlayerUntil(
 }
 
 describe("real five-resident R6: encounter gains meaning ONLY from personal existing history", () => {
+  it("feeds a factually re-encountered private standing question to exactly one manually dispatched resident request", async () => {
+    const composition = createFiveResidentRegionComposition({ playerStart: { x: 1_750, y: 720 } });
+    const outbound: unknown[] = [];
+    const fetcher = vi.fn(async (_url: RequestInfo | URL, init?: RequestInit) => {
+      outbound.push(JSON.parse(String(init?.body)));
+      // Deliberate local error fixture, never an upstream provider or model choice.
+      return Response.json({ ok: false, code: "test_no_provider" }, { status: 503 });
+    });
+    const living = new FiveResidentUnifiedLivingRuntime({
+      composition, providerDispatchMode: "manual",
+      socialReencounter: true, fetcher, maxUpstreamRequests: 1,
+      maxConcurrentCognition: 1,
+    });
+    const life = living.life(JAN);
+    if (!life) throw new Error("missing resident");
+    const s = { world: living.world, host: living.lifeRuntime, life };
+    s.host.advanceOneWorldTick();
+    const standingId = establishActualSpokenCommitment(s);
+    expect(movePlayerUntil(s, 1_050)).toHaveLength(0);
+    expect(movePlayerUntil(s, 1_750)).toEqual([{ residentId: JAN, matterId: standingId }]);
+
+    const privateQuestion = life.resident.pendingCognitionReasons().find(r =>
+      r.kind === "uncertainty" && r.summary.includes(standingId));
+    expect(privateQuestion?.id).toBeTruthy();
+    expect(fetcher).not.toHaveBeenCalled();
+    expect(living.diagnostics().providerRequestCount).toBe(0);
+    expect(living.requestOneResidentCognition(JAN)).toBe("started");
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    const posted = outbound[0] as {
+      resident: { id: string };
+      reasons: Array<{ id: string; kind: string; summary: string }>;
+    };
+    expect(posted.resident.id).toBe(JAN);
+    expect(posted.reasons).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        id: privateQuestion!.id, kind: "uncertainty",
+        summary: expect.stringContaining(standingId),
+      }),
+    ]));
+    for (let i = 0; i < 60 && living.diagnostics().providerInboxCount === 0; i++) {
+      await new Promise(resolve => setTimeout(resolve, 0));
+    }
+    expect(living.diagnostics().providerInboxCount).toBe(1);
+    living.advanceOneWorldTick();
+    expect(living.diagnostics().providerHardBudget.upstreamRequestsStarted).toBe(1);
+    for (let i = 0; i < 90; i++) living.advanceOneWorldTick();
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(life.currentLifeView().matters.filter(m =>
+      m.status === "active" && m.semanticIntent?.kind === "standing_social_commitment",
+    )).toHaveLength(1);
+    // A real private question was delivered. This fixture chose no future.
+    expect(life.body.focusedRunId).toBeNull();
+  });
+
   it("recognizes real private re-encounter with a factual self-spoken standing promise", () => {
     const s=specimen();
     const standingId=establishActualSpokenCommitment(s);
