@@ -168,7 +168,7 @@ function renderPanel(frame: SpcNextResearchFrame): void {
     ? life.matters.find((matter) => matter.activeRun?.runId === life.body.focusedRunId) ?? null
     : null;
   const living = frame.livingDiagnostics;
-  const admittedEvent = living?.recentProviderEvents.findLast(
+  const admittedEvent = living?.recentProviderEvents.slice().reverse().find(
     (event) => event.status === "admitted"
       && event.residentId === frame.selectedResidentId
       && event.admittedChoice !== undefined,
