@@ -89,10 +89,10 @@ export class FiveResidentCausalCognitionHost {
     return collected;
   }
 
-  startReadyRequests(): FiveResidentCausalCognitionRequest[] {
+  startReadyRequests(residentFilter?: readonly FiveResidentId[]): FiveResidentCausalCognitionRequest[] {
     const requests: FiveResidentCausalCognitionRequest[] = [];
 
-    for (const dispatch of this.coordinator.startReady(this.runtime.world.tick)) {
+    for (const dispatch of this.coordinator.startReady(this.runtime.world.tick, residentFilter)) {
       const residentId = dispatch.residentId as FiveResidentId;
       const lane = this.laneFor(residentId);
       if (!lane) {
