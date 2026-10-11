@@ -378,8 +378,13 @@ export class ResidentCausalExecutionCoordinator {
         `delivery place ${intent.objectId} blocked: ${placed.reason}`, false);
     }
     this.clearExecution(runId);
-    return this.finishRun(matter, runId, "succeeded",
+    const finished = this.finishRun(matter, runId, "succeeded",
       `physically delivered ${intent.objectId} to (${intent.destination.x}, ${intent.destination.y})`, true);
+    // REAL ordinary work becoming the resident's ONE private, exact future
+    // question. This is not a heartbeat, invented need, automatic next job,
+    // or provider request. The resident/model may choose not to act.
+    this.life.outcomeReviewBridge.observe(finished.outcomeEvidence, this.life.world.tick);
+    return finished;
   }
 
   private stepCommunicate(matter: ResidentMatter, runId: string): ResidentCausalExecutionStep {

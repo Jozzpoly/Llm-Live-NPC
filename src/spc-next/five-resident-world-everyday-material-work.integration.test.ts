@@ -40,6 +40,18 @@ describe("ordinary work in the ACTUAL five-resident playable World", () => {
     expect(janek.currentLifeView().matters.find(m => m.id === original!.id)?.lastOutcomeEvidence?.summary)
       .toContain("physically delivered");
     expect(life.diagnostics().providerRequestCount).toBe(0);
+    const nextReasons = janek.resident.pendingCognitionReasons().filter(r =>
+      r.kind === "activity_completed"
+        && r.evidenceIds.includes(completed!.lastOutcomeEvidenceId!));
+    expect(nextReasons).toHaveLength(1);
+    expect(nextReasons[0]!.summary).toContain("physically delivered");
+    // A quiet period does not invent a replacement task, repeat pressure
+    // or silently call Luna; the open semantic opportunity is retained.
+    for (let i=0; i<180; i++) life.advanceOneWorldTick();
+    expect(janek.resident.pendingCognitionReasons().filter(r =>
+      r.id === nextReasons[0]!.id)).toHaveLength(1);
+    expect(janek.focus.focusedRun()).toBeNull();
+    expect(life.diagnostics().providerRequestCount).toBe(0);
     expect(life.lifeRuntime.claimedResidentIds().length).toBe(5);
     expect(life.world.materialObjects().length).toBeGreaterThan(1);
     const after=life.world.materialObjects();
