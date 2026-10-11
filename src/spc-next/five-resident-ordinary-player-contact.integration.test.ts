@@ -90,7 +90,7 @@ describe("ordinary five-person SPC player contact, without model roundtrips", ()
     expect(resumed).toBe(true);
     expect(completed).toBe(true);
     expect(living.world.materialObject("crate.workshop.01")?.location).toEqual({
-      kind:"free",position:{x:2980,y:1080}
+      kind:"free",position:{x:3050,y:1080}
     });
     expect(janek.kernel.matter(matterId)?.status).toBe("resolved");
     expect(living.diagnostics().providerRequestCount).toBe(0);

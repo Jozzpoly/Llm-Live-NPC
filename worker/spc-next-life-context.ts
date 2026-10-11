@@ -327,6 +327,21 @@ function sanitizeMatterIntent(value: unknown): ResidentMatterIntent | null {
     };
   }
 
+  if (value.kind === "deliver_material_object") {
+    if (!hasOnlyKeys(value, ["kind", "goal", "objectId", "destination"])
+      || !record(value.destination)
+      || !hasOnlyKeys(value.destination, ["x", "y"])) return null;
+    const goal = boundedText(value.goal, 1_200);
+    const objectId = identifier(value.objectId);
+    const { x, y } = value.destination;
+    if (!goal || !objectId || typeof x !== "number" || typeof y !== "number"
+      || !Number.isFinite(x) || !Number.isFinite(y)
+      || Math.abs(x) > 1_000_000 || Math.abs(y) > 1_000_000) return null;
+    // These are resident-owned intended coordinates, NOT World-verified
+    // presence or proof that placement can succeed. No execution metadata.
+    return { kind: "deliver_material_object", goal, objectId, destination: { x, y } };
+  }
+
   if (value.kind === "standing_social_commitment") {
     if (!hasOnlyKeys(value, ["kind", "goal", "counterpartyActorId", "commitment"])) return null;
     const goal = boundedText(value.goal, 1_200);
