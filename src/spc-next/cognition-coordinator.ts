@@ -32,10 +32,13 @@ export class CognitionCoordinator {
     this.queued.set(batch.residentId, existing ? mergeBatches(existing, batch) : cloneBatch(batch));
   }
 
-  startReady(tick: number): CognitionDispatch[] {
+  startReady(tick: number, permittedResidentIds?: readonly string[]): CognitionDispatch[] {
+    // Operator-selected manual cognition must not consume another resident's
+    // already queued private reason. Omitted filter preserves fair automatic mode.
+    const permitted = permittedResidentIds ? new Set(permittedResidentIds) : null;
     const started: CognitionDispatch[] = [];
     while (this.inFlight.size < this.maxConcurrent) {
-      const candidate = this.bestQueuedCandidate(tick);
+      const candidate = this.bestQueuedCandidate(tick, permitted);
       if (!candidate) break;
       this.queued.delete(candidate.residentId);
       const dispatch: CognitionDispatch = {
@@ -66,8 +69,11 @@ export class CognitionCoordinator {
     };
   }
 
-  private bestQueuedCandidate(tick: number): CognitionBatch | null {
-    const candidates = [...this.queued.values()].filter((batch) => !this.inFlightByResident.has(batch.residentId));
+  private bestQueuedCandidate(tick: number, permitted: ReadonlySet<string> | null): CognitionBatch | null {
+    const candidates = [...this.queued.values()].filter((batch) =>
+      !this.inFlightByResident.has(batch.residentId)
+      && (permitted === null || permitted.has(batch.residentId)),
+    );
     if (candidates.length === 0) return null;
 
     const overdue = candidates.filter((batch) => tick - batch.requestedAtTick >= MAX_FAIR_QUEUE_WAIT_TICKS);
