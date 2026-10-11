@@ -3,6 +3,7 @@ import "./style.css";
 import "./spc-next-research-style.css";
 import type { SpcCanonicalEvidenceSnapshotV1 } from "../evidence/spc-next-canonical-evidence-snapshot";
 import { FIVE_RESIDENT_ROLE_PRESSURES } from "../spc-next/five-resident-region";
+import { buildSpcManualProbeEvidence } from "./spc-next-manual-probe-export";
 import type { ResidentPercept, ResidentTraceEvent, WorldOccurrence } from "../spc-next/contracts";
 import {
   SPC_PLAYER_SPEECH_RADIUS,
@@ -87,15 +88,22 @@ const oneShotStatus = document.createElement("span");
 oneShotStatus.className = "spc-armed-status";
 oneShotStatus.hidden = !armedResearchMode;
 oneShotStatus.textContent = armedResearchMode ? "Luna: bez zapytań" : "";
+const exportProbeButton = document.createElement("button");
+exportProbeButton.type = "button";
+exportProbeButton.className = "spc-chat-send";
+exportProbeButton.textContent = "Zapisz dowody JSON";
+exportProbeButton.title = "Świadomie zapisz lokalnie prywatny kontekst SPC, odpowiedź modelu i stan World. Plik zawiera dane badawcze; nie udostępniaj go publicznie.";
+exportProbeButton.hidden = true;
 
 const headerActions = document.createElement("div");
 headerActions.className = "spc-header-actions";
-headerActions.append(stageNode, chatForm, operatorLoginLink, oneShotButton, oneShotStatus, worldModeButton);
+headerActions.append(stageNode, chatForm, operatorLoginLink, oneShotButton, exportProbeButton, oneShotStatus, worldModeButton);
 header.append(headerActions);
 
 let scene: SpcNextResearchScene;
 let worldOnly = false;
 let lastFrame: SpcNextResearchFrame | null = null;
+let manualProbeBeginning: SpcNextResearchFrame | null = null;
 
 function setWorldOnly(enabled: boolean): void {
   worldOnly = enabled;
@@ -168,6 +176,20 @@ function renderPanel(frame: SpcNextResearchFrame): void {
     ? life.matters.find((matter) => matter.activeRun?.runId === life.body.focusedRunId) ?? null
     : null;
   const living = frame.livingDiagnostics;
+  const admittedEvent = living?.recentProviderEvents.slice().reverse().find(
+    (event) => event.status === "admitted"
+      && event.residentId === frame.selectedResidentId
+      && event.admittedChoice !== undefined,
+  ) ?? null;
+  const admittedChoice = admittedEvent?.admittedChoice ?? null;
+  const chosenMatter = admittedChoice?.matterId
+    ? life?.matters.find((matter) => matter.id === admittedChoice.matterId) ?? null
+    : null;
+  // Outcome is projected from CURRENT resident-owned kernel evidence, not model prose.
+  const chosenOutcome = chosenMatter && admittedChoice?.runId
+    && chosenMatter.lastOutcomeEvidence?.sourceRunId === admittedChoice.runId
+    ? chosenMatter.lastOutcomeEvidence
+    : null;
   const providerEvents = living?.recentProviderEvents.slice(-7).reverse().map((event) => `
     <li>
       <span class="spc-log-main">t${event.tick} · ${escapeHtml(event.status)} · ${escapeHtml(event.residentId)}</span>
@@ -242,6 +264,26 @@ function renderPanel(frame: SpcNextResearchFrame): void {
           <p class="spc-activity-reason"><strong>legacy reason:</strong> ${escapeHtml(activity?.reason ?? "")}</p>
         ` : '<p class="spc-empty">Kliknij residenta w świecie albo wybierz go z listy.</p>'}
       </section>
+
+      ${armedResearchMode ? `
+      <section class="debug-section">
+        <h3 class="debug-section-title">Decyzja cognition → World</h3>
+        ${admittedChoice ? `
+          <dl class="spc-facts">
+            <div><dt>Przyczyna (prywatna)</dt><dd>${escapeHtml(admittedChoice.originReasonId)}</dd></div>
+            <div><dt>Decyzja przyjęta lokalnie</dt><dd>${escapeHtml(admittedChoice.kind)}</dd></div>
+            <div><dt>Uzasadnienie modelu (deklaracja)</dt><dd>${escapeHtml(admittedChoice.declaredRationale ?? "niedostępne")}</dd></div>
+            <div><dt>Nowe zobowiązanie</dt><dd>${escapeHtml(admittedChoice.matterId ?? "brak")}</dd></div>
+            <div><dt>Aktualny stan matter</dt><dd>${escapeHtml(chosenMatter?.status ?? (admittedChoice.matterId ? "poza bieżącą projekcją" : "bez nowego matter"))}</dd></div>
+            <div><dt>Autoryzowany run</dt><dd>${escapeHtml(admittedChoice.runId ?? "brak")}</dd></div>
+          </dl>
+          ${chosenMatter ? `<p class="spc-activity-reason"><strong>Własny cel:</strong> ${escapeHtml(chosenMatter.semanticCourse)}</p>` : ""}
+          <p class="spc-activity-reason"><strong>Faktyczny wynik w World:</strong> ${chosenOutcome
+            ? `t${chosenOutcome.tick} · ${escapeHtml(chosenOutcome.kind)} · ${escapeHtml(chosenOutcome.summary)}`
+            : "Brak potwierdzonego wyniku wykonania."}</p>
+        ` : '<p class="spc-empty">Brak lokalnie przyjętej decyzji dla wybranego SPC. Próba API lub nieprawidłowa propozycja nie są decyzją.</p>'}
+        <p class="debug-note">Uznanie zamiaru nie jest wykonaniem. Nawet factual outcome nie oznacza automatycznie sukcesu; czytaj status, rodzaj i treść dowodu.</p>
+      </section>` : ""}
 
       ${living ? `
       <section class="debug-section">
@@ -370,8 +412,11 @@ if (evidenceMode) {
 
 oneShotButton.addEventListener("click", () => {
   if (!armedResearchMode || oneShotButton.disabled) return;
+  const before = scene.currentFrame();
   const status = scene.requestSelectedResidentCognition();
   if (status === "started") {
+    manualProbeBeginning = structuredClone(before);
+    exportProbeButton.hidden = false;
     oneShotStatus.textContent = "Wysłano 1/1";
     oneShotButton.disabled = true;
   } else if (status === "budget_exhausted") {
@@ -382,6 +427,37 @@ oneShotButton.addEventListener("click", () => {
     oneShotStatus.title = "Brak aktualnego powodu do oceny. Możesz poczekać na prawdziwe wydarzenie w World; nie wymuszaj wypowiedzi gracza tylko po to, aby uruchomić model.";
   } else {
     oneShotStatus.textContent = "Mieszkaniec jeszcze niegotowy";
+  }
+});
+
+exportProbeButton.addEventListener("click", () => {
+  if (!armedResearchMode || !manualProbeBeginning) return;
+  const probe = scene.manualResearchProbe();
+  if (!probe) {
+    oneShotStatus.textContent = "Brak danych próby";
+    return;
+  }
+  const after = scene.currentFrame();
+  if (after.selectedResidentId !== probe.residentId) {
+    oneShotStatus.textContent = "Wybierz ponownie " + probe.residentId;
+    return;
+  }
+  try {
+    const evidence = buildSpcManualProbeEvidence(
+      manualProbeBeginning, after, probe, new Date().toISOString(),
+    );
+    // Browser-local download only. Never POST, never server persistence.
+    const blob = new Blob([JSON.stringify(evidence, null, 2)], {
+      type: "application/json",
+    });
+    const downloadUrl = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = downloadUrl;
+    link.download = `spc-manual-luna-${probe.residentId.replaceAll(".", "-")}-t${probe.dispatchedAtTick}.json`;
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(downloadUrl), 10_000);
+  } catch {
+    oneShotStatus.textContent = "Nie można zapisać: niespójny kontekst";
   }
 });
 

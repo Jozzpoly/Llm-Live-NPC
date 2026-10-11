@@ -7,6 +7,7 @@ import { createCognitionFetchHardBudget } from "../spc-next/cognition-fetch-hard
 import {
   FiveResidentUnifiedLivingRuntime,
   type FiveResidentLivingRuntimeDiagnostics,
+  type FiveResidentManualResearchProbe,
 } from "../spc-next/five-resident-unified-living-runtime";
 import { createFiveResidentRegionComposition, type FiveResidentId } from "../spc-next/five-resident-region";
 import type { SpcWorldRuntime } from "../spc-next/spc-world-runtime";
@@ -64,6 +65,8 @@ export interface SpcNextResearchScenario {
   readonly canonicalEvidenceSupported?: boolean;
   readonly residentLifeView?: (residentId: string) => ResidentLifeCognitionView | null;
   readonly livingDiagnostics?: () => FiveResidentLivingRuntimeDiagnostics | null;
+  /** Read only by explicit local operator export, NEVER automatically transmitted. */
+  readonly manualResearchProbe?: () => FiveResidentManualResearchProbe | null;
   /** Only on the opt-in, one-call, manually dispatched research scenario. */
   readonly requestOneResidentCognition?: (residentId: string) =>
     "started" | "no_reason" | "resident_unavailable" | "budget_exhausted";
@@ -945,6 +948,9 @@ function createUnifiedLivingScenario(manual = false): SpcNextResearchScenario {
       return living.diagnostics();
     },
     ...(manual ? {
+      manualResearchProbe(): FiveResidentManualResearchProbe | null {
+        return living.manualResearchProbe();
+      },
       requestOneResidentCognition(residentId: string) {
         if (!living.world.publicSnapshot().residents.some((actor) => actor.id === residentId)) {
           return "resident_unavailable" as const;

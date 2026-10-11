@@ -39,6 +39,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          # PR default checkout is a synthetic merge commit. Research artifacts
+          # labeled by SOURCE_SHA must be built from that EXACT source commit.
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Use Node 22
         uses: actions/setup-node@v6
@@ -279,6 +283,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          SOURCE_BRANCH: ${{ github.head_ref || github.ref_name }}
         shell: bash
         run: |
           set -euo pipefail
@@ -294,6 +299,14 @@ jobs:
           git add .
           git commit -m "SPC browser evidence for $SOURCE_SHA"
           git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          # Multiple PR commits may run concurrently. An older, slower run
+          # must NEVER replace more recent browser evidence with a stale SHA.
+          # Immutable artifact-per-SHA uploads above remain available regardless.
+          CURRENT_SOURCE_SHA="$(git ls-remote origin "refs/heads/${SOURCE_BRANCH}" | awk '{print $1}')"
+          if [ -z "$CURRENT_SOURCE_SHA" ] || [ "$CURRENT_SOURCE_SHA" != "$SOURCE_SHA" ]; then
+            echo "SKIP_STALE_EVIDENCE_PUBLISH: source branch HEAD moved from $SOURCE_SHA to ${CURRENT_SOURCE_SHA:-unavailable}"
+            exit 0
+          fi
           git push --force origin HEAD:refs/heads/evidence/spc-browser-latest
 
   spc-r6-browser-evidence:
@@ -304,6 +317,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          # PR default checkout is a synthetic merge commit. Research artifacts
+          # labeled by SOURCE_SHA must be built from that EXACT source commit.
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Use Node 22
         uses: actions/setup-node@v6

@@ -1,6 +1,6 @@
 import * as Phaser from "phaser";
 import type { ResidentLifeCognitionView } from "../spc-next/resident-life-cognition-view";
-import type { FiveResidentLivingRuntimeDiagnostics } from "../spc-next/five-resident-unified-living-runtime";
+import type { FiveResidentLivingRuntimeDiagnostics, FiveResidentManualResearchProbe } from "../spc-next/five-resident-unified-living-runtime";
 import type {
   ActorMotionOutcome,
   ActorState,
@@ -244,6 +244,15 @@ export class SpcNextResearchScene extends Phaser.Scene {
 
   currentFrame(): SpcNextResearchFrame {
     return this.buildFrame();
+  }
+
+  /** Private to the explicitly armed browser scenario. Returning it never
+   * writes private data to server, debug DOM, GitHub or any external endpoint.
+   */
+  manualResearchProbe(): FiveResidentManualResearchProbe | null {
+    return this.scenario.kind === "unified-armed"
+      ? this.scenario.manualResearchProbe?.() ?? null
+      : null;
   }
 
   currentCanonicalEvidenceSnapshot(): SpcCanonicalEvidenceSnapshotV1 {
