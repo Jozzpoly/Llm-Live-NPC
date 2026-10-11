@@ -39,6 +39,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          # PR default checkout is a synthetic merge commit. Research artifacts
+          # labeled by SOURCE_SHA must be built from that EXACT source commit.
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Use Node 22
         uses: actions/setup-node@v6
@@ -313,6 +317,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+        with:
+          # PR default checkout is a synthetic merge commit. Research artifacts
+          # labeled by SOURCE_SHA must be built from that EXACT source commit.
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - name: Use Node 22
         uses: actions/setup-node@v6
