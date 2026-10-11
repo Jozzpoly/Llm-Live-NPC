@@ -555,8 +555,8 @@ function createR5MiraLiveSemanticEscalationScenario(): SpcNextResearchScenario {
   let observationSequence = 0;
 
   const observedUpstream = async (
-    input: RequestInfo | URL,
-    init?: RequestInit,
+    _input: RequestInfo | URL,
+    _init?: RequestInit,
   ): Promise<Response> => {
     const startedAtTick = slice.world.tick;
     const startedAt = performance.now();
