@@ -194,8 +194,19 @@ function createMissingCrateInterruptionScenario(): SpcNextResearchScenario {
   };
 }
 
+/** Browser-only policy: legacy live-provider fixtures have no explicit click
+ * consent affordance. Preserve their local fail-closed research World, but
+ * never silently send a paid model request after operator login/page load.
+ * The dedicated unified-armed scenario is the ONLY browser model request path.
+ */
+async function denyImplicitLegacyModelRequest(): Promise<Response> {
+  return Response.json({ ok: false, code: "explicit_operator_action_required" }, {
+    status: 428,
+  });
+}
+
 function createMissingCrateLiveProviderScenario(): SpcNextResearchScenario {
-  const slice = createFiveResidentJanekMissingCrateLiveProviderSlice();
+  const slice = createFiveResidentJanekMissingCrateLiveProviderSlice({ fetcher: denyImplicitLegacyModelRequest });
   return {
     kind: "missing-crate-live-provider",
     evidenceScenarioId: "browser-missing-crate-live-provider",
@@ -206,16 +217,16 @@ function createMissingCrateLiveProviderScenario(): SpcNextResearchScenario {
     materialKnowledge: slice.materialKnowledge,
     authority: slice.authority,
     advanceOneWorldTick(): void {
-      // Unlike deterministic recovery, this path really calls the same-origin
-      // Worker endpoint. Transport completion can only fill the slice's inert
-      // arrival inbox; admission and grounding remain resident/World-tick owned.
+      // This historically live-path specimen is deliberately paused in browser:
+      // it exercises the bounded error path without contacting a paid Worker.
+      // Provider tests that inject their own fetcher remain separate research.
       slice.advanceOneWorldTick();
     },
   };
 }
 
 function createMissingCrateLiveProviderInterruptionScenario(): SpcNextResearchScenario {
-  const slice = createFiveResidentJanekMissingCrateLiveProviderInterruptionSlice();
+  const slice = createFiveResidentJanekMissingCrateLiveProviderInterruptionSlice({ fetcher: denyImplicitLegacyModelRequest });
   return {
     kind: "missing-crate-live-provider-interruption",
     evidenceScenarioId: "browser-missing-crate-live-provider-interruption",
@@ -550,7 +561,9 @@ function createR5MiraLiveSemanticEscalationScenario(): SpcNextResearchScenario {
     const startedAtTick = slice.world.tick;
     const startedAt = performance.now();
     try {
-      const response = await fetch(input, init);
+      // Archived R5 browser specimen cannot silently spend after operator login.
+      // Keep actual provider network only behind deliberate unified-armed control.
+      const response = await denyImplicitLegacyModelRequest();
       let body: unknown = null;
       try {
         body = await response.clone().json();
