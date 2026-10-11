@@ -897,7 +897,14 @@ function createUnifiedLivingScenario(manual = false): SpcNextResearchScenario {
     socialReencounter: true,
     maxConcurrentCognition: 1,
     maxUpstreamRequests: 1,
-  } : {});
+  } : {
+    // The normal browse-only World must NEVER silently spend API tokens after
+    // operator login. Keep the resident's local brain active but provider
+    // dispatch manual, without exposing a manual request control in this mode.
+    providerDispatchMode: "manual",
+    socialReencounter: true,
+    maxUpstreamRequests: 1,
+  });
   const janek = living.life("resident.janek");
   if (!janek) {
     throw new Error("unified living runtime must claim idle Janek at construction");

@@ -144,7 +144,7 @@ describe("real five-resident R6: encounter gains meaning ONLY from personal exis
       m.status === "active" && m.semanticIntent?.kind === "standing_social_commitment",
     )).toHaveLength(1);
     // A real private question was delivered. This fixture chose no future.
-    expect(life.body.focusedRunId).toBeNull();
+    expect(life.focus.focusedRun()).toBeNull();
   });
 
   it("recognizes real private re-encounter with a factual self-spoken standing promise", () => {

@@ -159,6 +159,26 @@ try{
     report.exceptions.length===0,report.exceptions);
   const quietScreenshot=await cdp.send("Page.captureScreenshot",{format:"png"});
   writeFileSync(resolve(dirname(output),"unified-armed-self-future.png"),Buffer.from(quietScreenshot.data,"base64"));
+  // Public browse-only mode: even after an operator has a valid cookie,
+  // opening the living World must NEVER start model traffic on a World tick.
+  const beforeBrowseOnly = report.requests.length;
+  await cdp.send("Page.navigate", {
+    url: base.replace(/[/]$/u, "") + "/?spc=1&evidence=1&scenario=unified-living&case=browse-only"
+  });
+  await until(()=>runIn(cdp,'Boolean(location.search.includes("case=browse-only") && window.__SPC_EVIDENCE__?.ready?.() && document.querySelector("canvas"))'));
+  const browseStart = await runIn(cdp, "window.__SPC_EVIDENCE__.snapshot()");
+  check("browse-only living starts without external cognition",
+    browseStart.livingDiagnostics?.providerRequestCount===0
+    && report.requests.length===beforeBrowseOnly);
+  check("browse-only exposes no manual Luna click",
+    await runIn(cdp,'!Array.from(document.querySelectorAll("button")).some(b=>b.textContent?.includes("Zapytaj Lunę")&&!b.hidden)'));
+  await runIn(cdp, "window.__SPC_EVIDENCE__.stepWorld(3600)");
+  const browseEnd = await runIn(cdp, "window.__SPC_EVIDENCE__.snapshot()");
+  check("3600 browse-only World ticks with real private pressures cannot call any model",
+    report.requests.length===beforeBrowseOnly
+    && browseEnd.livingDiagnostics?.providerRequestCount===0,
+    {newRequests:report.requests.length-beforeBrowseOnly,
+      providerCount:browseEnd.livingDiagnostics?.providerRequestCount});
   report.outcome="PASS";
 }catch(e){report.outcome="FAIL";report.failure=e instanceof Error?e.stack:String(e);process.exitCode=1;}
 finally{
