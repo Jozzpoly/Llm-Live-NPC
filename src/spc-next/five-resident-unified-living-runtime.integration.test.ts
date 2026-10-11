@@ -298,15 +298,29 @@ describe("five-resident unified living runtime", () => {
     while (living.world.tick < 2_600) living.advanceOneWorldTick();
     living.world.speak("player.jozz", "Mira, porozmawiaj ze mną.", 420, ["resident.mira"]);
     living.advanceOneWorldTick();
+    const heardReasonId = living.life("resident.mira")!.resident.pendingCognitionReasons()
+      .find(reason => reason.kind === "heard_speech")?.id;
+    expect(heardReasonId).toBeTruthy();
     expect(upstream).not.toHaveBeenCalled();
     expect(living.requestOneResidentCognition("resident.mira")).toBe("started");
     await flushMicrotasks();
     // Provider completion is inert until the next World boundary.
     expect(living.life("resident.mira")!.matterScope.matterIds()).toEqual([]);
     living.advanceOneWorldTick();
-    expect(living.diagnostics().recentProviderEvents.some(
+    const accepted = living.diagnostics().recentProviderEvents.find(
       e => e.status === "admitted" && e.residentId === "resident.mira",
-    )).toBe(true);
+    );
+    expect(accepted?.admittedChoice).toMatchObject({
+      kind: "accept",
+      originReasonId: heardReasonId,
+      matterId: expect.any(String),
+      runId: expect.any(String),
+    });
+    const acceptedMatterId = accepted?.admittedChoice?.matterId;
+    expect(acceptedMatterId).toBeTruthy();
+    expect(living.life("resident.mira")!.currentLifeView().matters.find(
+      matter => matter.id === acceptedMatterId,
+    )).toMatchObject({ status: "active" });
     let factual = false;
     for(let tick=0; tick<300; tick++) {
       living.advanceOneWorldTick();
@@ -315,6 +329,9 @@ describe("five-resident unified living runtime", () => {
       )) { factual = true; break; }
     }
     expect(factual).toBe(true);
+    expect(living.diagnostics().recentProviderEvents.find(
+      e => e.status === "admitted" && e.residentId === "resident.mira",
+    )?.admittedChoice?.matterId).toBe(acceptedMatterId);
     expect(upstream).toHaveBeenCalledTimes(1);
     expect(living.diagnostics().providerHardBudget.exhausted).toBe(true);
   });
