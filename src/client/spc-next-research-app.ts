@@ -51,7 +51,7 @@ gameNode.setAttribute("aria-label", "SPC Next living-world research scene");
 footer.innerHTML = [
   "<span>Ruch: WASD / strzałki</span>",
   "<span>Wybór SPC: klik / Tab</span>",
-  "<span>Zawołaj: H · mikroskop: R</span>",
+  "<span>Zawołaj: H · mikroskop: R · podnieś/odłóż: E</span>",
   "<span>Śledź SPC: F · gracz: P · cały świat: O</span>",
   "<span>Tylko świat / badania: G · zoom: kółko</span>",
 ].join("");

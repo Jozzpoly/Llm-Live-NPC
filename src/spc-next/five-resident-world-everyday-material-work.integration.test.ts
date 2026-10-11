@@ -32,7 +32,7 @@ describe("ordinary work in the ACTUAL five-resident playable World", () => {
     expect(finished).toBe(true);
     expect(cameBackToWorld).toBe(true);
     expect(life.world.materialObject("crate.workshop.01")?.location).toEqual({
-      kind:"free",position:{x:2980,y:1080},
+      kind:"free",position:{x:3050,y:1080},
     });
     const completed=janek.kernel.matter(original!.id);
     expect(completed?.status).toBe("resolved");
@@ -53,6 +53,18 @@ describe("ordinary work in the ACTUAL five-resident playable World", () => {
     expect(janek.focus.focusedRun()).toBeNull();
     expect(life.diagnostics().providerRequestCount).toBe(0);
     expect(life.lifeRuntime.claimedResidentIds().length).toBe(5);
+    // Ida may know this object's identity, but its current location must
+    // come from her actual sight of Janek's REAL completed delivery.
+    const ida = life.life("resident.ida")!;
+    expect(ida.materialKnowledge?.observation("crate.workshop.01")).toMatchObject({
+      currentlyVisible: true,
+      lastKnownPosition: { x: 3050, y: 1080 },
+    });
+    expect(ida.matterScope.matterIds()).toEqual([]);
+    expect(ida.resident.pendingCognitionReasons().filter(r =>
+      r.kind === "direct_world_change"
+        && r.summary.includes("crate.workshop.01"),
+    )).toEqual([]);
     expect(life.world.materialObjects().length).toBeGreaterThan(1);
     const after=life.world.materialObjects();
     expect(new Set(after.map(x=>x.id)).size).toBe(after.length);
@@ -79,6 +91,7 @@ describe("ordinary work in the ACTUAL five-resident playable World", () => {
       kind:"held", actorId:"player.jozz",
     });
     expect(life.world.materialObject("crate.workshop.02")?.location.kind).toBe("free");
+    expect(life.life("resident.ida")!.materialKnowledge?.observation("crate.workshop.01")).toBeNull();
     expect(life.life("resident.janek")!.kernel.matter("matter.janek.workshop-opening.delivery")?.status)
       .not.toBe("resolved");
     expect(life.diagnostics().providerRequestCount).toBe(0);

@@ -82,7 +82,7 @@ export const FIVE_RESIDENT_MATERIAL_FAMILIARITY: Readonly<
 > = {
   "resident.mira": ["basket.hearth.01"],
   "resident.janek": ["crate.workshop.01", "crate.workshop.02"],
-  "resident.ida": ["parcel.crossroads.01"],
+  "resident.ida": ["parcel.crossroads.01", "crate.workshop.01"],
   "resident.oren": ["bundle.forest.01"],
   "resident.nela": ["fragment.ruins.01"],
 };

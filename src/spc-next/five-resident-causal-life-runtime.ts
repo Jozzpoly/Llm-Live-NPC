@@ -262,7 +262,7 @@ export class FiveResidentCausalLifeRuntime {
             kind: "deliver_material_object",
             goal: "Take the actual workshop crate to the crossroads store and put it down.",
             objectId: "crate.workshop.01",
-            destination: { x: 2_980, y: 1_080 },
+            destination: { x: 3_050, y: 1_080 },
           },
         });
         life.matterScope.track(matterId);
