@@ -8,6 +8,7 @@
     "build": "vite build",
     "test": "vitest run",
     "check": "tsc -p tsconfig.json --noEmit && vitest run && vite build",
+    "check:spc-research": "node scripts/spc-research-build.mjs --dry-run",
     "preview": "vite build && vite preview",
     "deploy": "vite build && wrangler deploy",
     "deploy:preview": "vite build && wrangler versions upload"

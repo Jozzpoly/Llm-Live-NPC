@@ -5,3 +5,8 @@ dist/
 .dev.vars*
 !.dev.vars.example
 .DS_Store
+
+# Never commit local provider keys or one-off deployment secret bundles.
+.env*
+!.env.example
+*.secrets.json

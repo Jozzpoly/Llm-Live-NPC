@@ -38,6 +38,8 @@ interface RateLimitBinding {
 interface Env extends SpcNextSemanticEnv, SpcNextLifeChoiceEnv, SpcNextLifeIntentEnv {
   /** Cloudflare Worker secret, never expose in frontend/client bundle or health. */
   SPC_RESEARCH_OPERATOR_TOKEN?: string;
+  /** Only on the separately named microprobe Worker, never inferred from login. */
+  SPC_RESEARCH_LUNA_ONLY?: string;
   AI: AiBinding;
   AI_PROBE_LIMITER: RateLimitBinding;
 }
@@ -214,6 +216,14 @@ export default {
         ok: false,
         code: "research_operator_access_required",
       }, { status: 403 });
+    }
+
+    // The isolated microprobe must not accept ANY other paid model route,
+    // even from an authenticated operator. Auth above still applies first.
+    if (env.SPC_RESEARCH_LUNA_ONLY === "true"
+      && request.method === "POST" && url.pathname.startsWith("/api/")
+      && url.pathname !== "/api/spc-next/life-intent") {
+      return json({ ok: false, code: "research_route_disabled" }, { status: 404 });
     }
 
     if (url.pathname === "/api/agent/e1/decide") {
