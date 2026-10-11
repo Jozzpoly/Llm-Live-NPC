@@ -71,7 +71,26 @@ chatSend.textContent = "Powiedz";
 chatForm.append(chatInput, chatSend);
 
 // Deliberate one-shot research control. No implicit Luna calls on World ticks.
+const relationalEpisodeMode = params.get("scenario") === "relational-episode";
 const armedResearchMode = params.get("scenario") === "unified-armed";
+const episodeDecision = document.createElement("button");
+episodeDecision.type = "button";
+episodeDecision.className = "spc-chat-send";
+episodeDecision.textContent = "Test: odpowiedz";
+episodeDecision.title = "Jawnie wstrzykuje lokalną decyzję TESTU, nie jest to decyzja Luny ani samodzielna inicjatywa Janka.";
+episodeDecision.hidden = !relationalEpisodeMode;
+episodeDecision.disabled = true;
+const episodeDefer = document.createElement("button");
+episodeDefer.type = "button";
+episodeDefer.className = "spc-chat-send";
+episodeDefer.textContent = "Test: odłóż";
+episodeDefer.title = "Jawnie wstrzykuje lokalną decyzję TESTU o sensownym nie-działaniu; bez modelu.";
+episodeDefer.hidden = !relationalEpisodeMode;
+episodeDefer.disabled = true;
+const episodeStatus = document.createElement("span");
+episodeStatus.className = "spc-episode-status";
+episodeStatus.hidden = !relationalEpisodeMode;
+episodeStatus.textContent = "Pięć SPC · 0 requestów API · ustawienia sytuacji: autorskie";
 const operatorLoginLink = document.createElement("a");
 operatorLoginLink.className = "spc-operator-login";
 operatorLoginLink.href = "/api/operator/login";
@@ -97,7 +116,7 @@ exportProbeButton.hidden = true;
 
 const headerActions = document.createElement("div");
 headerActions.className = "spc-header-actions";
-headerActions.append(stageNode, chatForm, operatorLoginLink, oneShotButton, exportProbeButton, oneShotStatus, worldModeButton);
+headerActions.append(stageNode, chatForm, operatorLoginLink, oneShotButton, exportProbeButton, oneShotStatus, episodeStatus, episodeDecision, episodeDefer, worldModeButton);
 header.append(headerActions);
 
 let scene: SpcNextResearchScene;
@@ -116,6 +135,27 @@ function setWorldOnly(enabled: boolean): void {
 
 function renderPanel(frame: SpcNextResearchFrame): void {
   lastFrame = frame;
+  if (relationalEpisodeMode) {
+    const current = scene?.relationalEpisodeState();
+    if (current) {
+      const labels: Record<typeof current.phase, string> = {
+        approach: "Ida idzie do warsztatu · autorski warunek",
+        promise: "Janek wykonuje wcześniej zadane zobowiązanie",
+        leaving: "Ida odchodzi · autorska trasa",
+        returning: "Ida wraca · World / prywatna pamięć",
+        awaiting_choice: "Janek ma prywatny powód. Niczego nie robi automatycznie.",
+        settling_choice: "Przyjmowanie ręcznej decyzji TESTU",
+        spoken: "World: wypowiedź Janka rzeczywiście zaszła",
+        deferred: "TEST: Janek odkłada sprawę, bez nowego działania",
+        control_complete: "Kontrola: bez dawnej obietnicy nie powstał nowy powód",
+        failed: "Eksperyment nie przeszedł: " + (current.failure ?? "nieznany powód"),
+      };
+      episodeStatus.textContent = labels[current.phase] + " · 0 API · " +
+        (current.withEarlierPromise ? "historia: tak" : "kontrola: bez obietnicy");
+      episodeDecision.disabled = current.phase !== "awaiting_choice";
+      episodeDefer.disabled = current.phase !== "awaiting_choice";
+    }
+  }
   if (armedResearchMode && oneShotButton.disabled) {
     const latest = frame.livingDiagnostics?.recentProviderEvents.at(-1);
     if (latest?.status === "provider_error" || latest?.status === "transport_internal_error") {
@@ -409,6 +449,15 @@ if (evidenceMode) {
     }),
   });
 }
+
+episodeDecision.addEventListener("click", () => {
+  if (!relationalEpisodeMode) return;
+  scene.chooseRelationalTestOutcome("respond");
+});
+episodeDefer.addEventListener("click", () => {
+  if (!relationalEpisodeMode) return;
+  scene.chooseRelationalTestOutcome("defer");
+});
 
 oneShotButton.addEventListener("click", () => {
   if (!armedResearchMode || oneShotButton.disabled) return;
