@@ -49,6 +49,8 @@ export type ResidentCausalCognitionSettlement =
       status: "applied";
       residentId: string;
       decision: ResidentLifeIntentProposal["commitmentDecision"]["kind"];
+      /** Stated model rationale, never evidence of actual World truth or motive. */
+      declaredRationale: string;
       commitment: {
         matterId: string;
         runId: string;
@@ -489,6 +491,7 @@ export class ResidentCausalCognitionLane {
       status: "applied",
       residentId: this.life.residentId,
       decision,
+      declaredRationale: settlement.proposal.commitmentDecision.reason,
       commitment: commitment
         ? { matterId: commitment.matter.id, runId: commitment.runId }
         : null,
