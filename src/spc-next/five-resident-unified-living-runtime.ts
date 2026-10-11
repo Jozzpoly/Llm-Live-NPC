@@ -204,8 +204,8 @@ export class FiveResidentUnifiedLivingRuntime {
           "arrival_ready",
           arrival.status === "proposal"
             ? `proposal arrived from origin ${arrival.originReasonId} (${request.batch.reasons.find(r => r.id === arrival.originReasonId)?.kind ?? "unknown"}); ${arrival.usage ? `usage ${arrival.usage.inputTokens ?? "?"}/${arrival.usage.outputTokens ?? "?"}/${arrival.usage.totalTokens ?? "?"} tokens, ${arrival.usage.model}, ${arrival.usage.elapsedMs}ms` : "usage unavailable"}`
-            : `provider error arrival: ${arrival.code}${arrival.detail ? `; ${arrival.detail}` : ""}`,
-          ...(arrival.status === "proposal" && arrival.usage ? [arrival.usage] : []),
+            : `provider error arrival: ${arrival.code}${arrival.detail ? `; ${arrival.detail}` : ""}; ${arrival.usage ? `usage ${arrival.usage.inputTokens ?? "?"}/${arrival.usage.outputTokens ?? "?"}/${arrival.usage.totalTokens ?? "?"} tokens, ${arrival.usage.model}, ${arrival.usage.elapsedMs}ms` : "usage unavailable"}`,
+          ...(arrival.usage ? [arrival.usage] : []),
         );
       }).catch((error: unknown) => {
         this.providerInFlight.delete(request.id);
@@ -231,6 +231,7 @@ export class FiveResidentUnifiedLivingRuntime {
         arrival.requestId,
         "provider_error",
         `${admission.code}${admission.detail ? `; ${admission.detail}` : ""}; abandonment=${admission.abandonment}`,
+        ...(arrival.status === "provider_error" && arrival.usage ? [arrival.usage] : []),
       );
       return;
     }

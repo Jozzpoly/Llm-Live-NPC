@@ -74,6 +74,51 @@ function upstreamResponse(originReasonId: string, targetRegionId: string): Respo
 afterEach(() => vi.unstubAllGlobals());
 
 describe("Full manual SPC browser-session Worker/World research boundary", () => {
+  it("retains Worker token usage after mock model output fails semantic validation", async () => {
+    const env = workerEnvironment();
+    const upstream = vi.fn(async () => Response.json({
+      id: "mock-invalid-model-shape", status: "completed",
+      output: [{ type: "reasoning" }, {
+        type: "message", role: "assistant", status: "completed",
+        content: [{ type: "output_text", text: "{not a legal commitment}" }],
+      }],
+      usage: { input_tokens: 74, output_tokens: 33, total_tokens: 107 },
+    }));
+    vi.stubGlobal("fetch", upstream);
+    const cookie = await operatorCookie(env);
+    const fetcher = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
+      const headers = new Headers(init?.headers);
+      headers.set("origin", "https://spc.test");
+      headers.set("sec-fetch-site", "same-origin");
+      headers.set("cookie", cookie);
+      return worker.fetch(new Request(new URL(String(input), "https://spc.test"), { ...init, headers }), env);
+    });
+    const living = new FiveResidentUnifiedLivingRuntime({
+      providerDispatchMode: "manual", maxUpstreamRequests: 1,
+      maxConcurrentCognition: 1, fetcher,
+    });
+    while (living.world.tick < 2_600) living.advanceOneWorldTick();
+    expect(living.requestOneResidentCognition("resident.mira")).toBe("started");
+    for (let i = 0; i < 40 && living.diagnostics().providerInboxCount === 0; i++) {
+      await new Promise(resolve => setTimeout(resolve, 0));
+    }
+    expect(living.diagnostics().providerInboxCount).toBe(1);
+    const arrived = living.diagnostics().recentProviderEvents.find(e => e.status === "arrival_ready");
+    expect(arrived?.detail).toContain("HTTP 502");
+    expect(arrived?.detail).toContain("usage 74/33/107 tokens");
+    expect(arrived?.usage).toMatchObject({
+      model: "gpt-5.6-luna", inputTokens: 74, outputTokens: 33,
+      totalTokens: 107, elapsedMs: expect.any(Number),
+    });
+    living.advanceOneWorldTick();
+    const refused = living.diagnostics().recentProviderEvents.find(e => e.status === "provider_error");
+    expect(refused?.usage).toMatchObject({ totalTokens: 107 });
+    expect(living.life("resident.mira")!.matterScope.matterIds()).toEqual([]);
+    for (let step = 0; step < 100; step++) living.advanceOneWorldTick();
+    expect(upstream).toHaveBeenCalledTimes(1);
+    expect(living.diagnostics().providerHardBudget.upstreamRequestsStarted).toBe(1);
+  });
+
   it("bridges real private World pressure through authenticated Worker to a MOCK model and factual body, with no automatic calls", async () => {
     const env = workerEnvironment();
     const calls: Array<{ residentId: string; originReasonId: string; kind: string }> = [];

@@ -35,6 +35,7 @@ export type ResidentCausalProviderArrival = Readonly<
       status: "provider_error";
       code: ResidentCognitionProviderErrorCode;
       detail: string | null;
+      usage?: ResidentCausalProviderUsage;
     }
 >;
 
@@ -119,11 +120,8 @@ export class ResidentCausalProviderTransport<
     }
 
     if (!response.ok) {
-      return this.registerError(
-        request,
-        "http",
-        await safeHttpErrorDetail(response),
-      );
+      const failure = await safeHttpErrorDetail(response);
+      return this.registerError(request, "http", failure.detail, failure.usage);
     }
 
     let raw: unknown;
@@ -153,6 +151,7 @@ export class ResidentCausalProviderTransport<
       );
     }
 
+    const usage = safeProviderUsage(raw.usage);
     return this.register(request, Object.freeze({
       version: 1 as const,
       id: this.nextId(),
@@ -161,7 +160,7 @@ export class ResidentCausalProviderTransport<
       status: "proposal" as const,
       originReasonId: raw.originReasonId,
       proposal: structuredClone(raw.proposal),
-      ...(safeProviderUsage(raw.usage) ? { usage: safeProviderUsage(raw.usage)! } : {}),
+      ...(usage ? { usage } : {}),
     }));
   }
 
@@ -206,6 +205,7 @@ export class ResidentCausalProviderTransport<
     request: Request,
     code: ResidentCognitionProviderErrorCode,
     detail: string | null,
+    usage?: ResidentCausalProviderUsage,
   ): ResidentCausalProviderArrival {
     return this.register(request, Object.freeze({
       version: 1 as const,
@@ -215,6 +215,7 @@ export class ResidentCausalProviderTransport<
       status: "provider_error" as const,
       code,
       detail,
+      ...(usage ? { usage } : {}),
     }));
   }
 
@@ -257,21 +258,29 @@ function safeProviderUsage(value: unknown): ResidentCausalProviderUsage | null {
   });
 }
 
-async function safeHttpErrorDetail(response: Response): Promise<string> {
+async function safeHttpErrorDetail(response: Response): Promise<{
+  detail: string;
+  usage?: ResidentCausalProviderUsage;
+}> {
   const status = response.status;
   let workerCode: string | null = null;
+  let usage: ResidentCausalProviderUsage | null = null;
   try {
     const text = await response.text();
     if (text.length <= MAX_RESPONSE_CHARACTERS) {
       const raw = JSON.parse(text) as unknown;
-      if (isRecord(raw)
-        && typeof raw.code === "string"
-        && /^[A-Za-z0-9_.:-]{1,120}$/u.test(raw.code)) {
-        workerCode = raw.code;
+      if (isRecord(raw)) {
+        if (typeof raw.code === "string" && /^[A-Za-z0-9_.:-]{1,120}$/u.test(raw.code)) {
+          workerCode = raw.code;
+        }
+        usage = safeProviderUsage(raw.usage);
       }
     }
   } catch {
-    // HTTP status remains sufficient bounded diagnostic truth.
+    // The bounded HTTP failure remains meaningful without a valid body.
   }
-  return workerCode ? "HTTP " + status + ": " + workerCode : "HTTP " + status;
+  return {
+    detail: workerCode ? "HTTP " + status + ": " + workerCode : "HTTP " + status,
+    ...(usage ? { usage } : {}),
+  };
 }
