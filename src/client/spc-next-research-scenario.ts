@@ -1,3 +1,4 @@
+import { FiveResidentRelationalWorldDemo, type RelationalEpisodeChoice, type RelationalEpisodeState } from "../spc-next/five-resident-relational-world-demo";
 import type { ResidentContinuityKernel } from "../spc-next/resident-continuity-kernel";
 import type { ResidentMaterialKnowledge } from "../spc-next/resident-material-knowledge";
 import type { ResidentWorldExecutionAuthority } from "../spc-next/resident-world-execution-authority";
@@ -49,7 +50,8 @@ export type SpcNextResearchScenarioKind =
   | "r5-mira-live-semantic-escalation"
   | "r6-mira-standing-social-commitment"
   | "unified-living"
-  | "unified-armed";
+  | "unified-armed"
+  | "relational-episode";
 
 export interface SpcNextResearchScenario {
   readonly kind: SpcNextResearchScenarioKind;
@@ -72,6 +74,9 @@ export interface SpcNextResearchScenario {
     "started" | "no_reason" | "resident_unavailable" | "budget_exhausted";
   /** Optional evidence-only explicit causal boundary for a bounded research fixture. */
   readonly evidenceAction?: (actionId: string) => unknown;
+  /** Exact local authored-condition demonstration; NO model requests. */
+  readonly relationalEpisodeState?: () => RelationalEpisodeState;
+  readonly chooseRelationalTestOutcome?: (choice: RelationalEpisodeChoice) => "accepted" | "not_ready";
   /** Advances exactly one authoritative World tick. */
   advanceOneWorldTick(): void;
 }
@@ -91,6 +96,7 @@ export function createSpcNextResearchScenario(kind: SpcNextResearchScenarioKind)
   if (kind === "r6-mira-standing-social-commitment") return createR6MiraStandingSocialCommitmentScenario();
   if (kind === "unified-living") return createUnifiedLivingScenario();
   if (kind === "unified-armed") return createUnifiedLivingScenario(true);
+  if (kind === "relational-episode") return createRelationalEpisodeScenario();
   return createBaselineDeliveryScenario();
 }
 
@@ -111,6 +117,7 @@ export function researchScenarioKindFromSearch(search: string): SpcNextResearchS
   if (requested === "r6-mira-standing-social-commitment") return "r6-mira-standing-social-commitment";
   if (requested === "unified-living") return "unified-living";
   if (requested === "unified-armed") return "unified-armed";
+  if (requested === "relational-episode") return "relational-episode";
   throw new Error(`unknown SPC Next research scenario: ${requested}`);
 }
 
@@ -961,5 +968,42 @@ function createUnifiedLivingScenario(manual = false): SpcNextResearchScenario {
     advanceOneWorldTick(): void {
       living.advanceOneWorldTick();
     },
+  };
+}
+
+/**
+ * Optical/World research only. Five actual residents keep one shared clock.
+ * The viewer can compare factual prior standing history vs a matched no-
+ * standing return via ?case=no-standing, then explicitly inject (NOT LUNA)
+ * a single semantic act or a genuine no-action/defer judgement.
+ */
+function createRelationalEpisodeScenario(): SpcNextResearchScenario {
+  const withEarlierPromise = new URLSearchParams(location.search).get("case") !== "no-standing";
+  const demo = new FiveResidentRelationalWorldDemo(withEarlierPromise);
+  const janek = demo.host.life("resident.janek");
+  if (!janek) throw new Error("relational demo must claim Janek before rendering");
+  return {
+    kind: "relational-episode",
+    evidenceScenarioId: "browser-five-resident-relational-episode",
+    residentId: "resident.janek",
+    matterId: "matter.relational-episode.multiple-residents",
+    world: demo.world,
+    kernel: janek.kernel,
+    authority: janek.worldAuthority,
+    materialKnowledge: null,
+    canonicalEvidenceSupported: false,
+    residentLifeView(residentId: string) {
+      if (!demo.world.publicSnapshot().residents.some(r => r.id === residentId)) return null;
+      return demo.host.life(residentId as FiveResidentId)?.currentLifeView() ?? null;
+    },
+    relationalEpisodeState: () => demo.state(),
+    chooseRelationalTestOutcome: choice => demo.chooseTestResponse(choice),
+    evidenceAction(actionId: string): unknown {
+      if (actionId === "episode-status") return demo.state();
+      if (actionId === "test-respond") return demo.chooseTestResponse("respond");
+      if (actionId === "test-defer") return demo.chooseTestResponse("defer");
+      throw new Error("unknown relational lab evidence action: " + actionId);
+    },
+    advanceOneWorldTick: () => demo.advanceOneWorldTick(),
   };
 }
