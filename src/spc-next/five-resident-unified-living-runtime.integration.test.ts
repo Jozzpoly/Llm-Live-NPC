@@ -2,6 +2,18 @@ import { describe, expect, it, vi } from "vitest";
 import { FiveResidentUnifiedLivingRuntime } from "./five-resident-unified-living-runtime";
 import { createFiveResidentRegionComposition } from "./five-resident-region";
 
+/** A physically heard addressed player gets a temporary MICRO-CONTACT matter
+ * in real life, but this is NOT a model-admitted semantic commitment.
+ * Thus provider-arrival inertness must distinguish contact from cognition.
+ */
+function expectOnlyFactualLocalContact(life: NonNullable<ReturnType<FiveResidentUnifiedLivingRuntime["life"]>>): void {
+  const ids = life.matterScope.matterIds();
+  expect(ids).toHaveLength(1);
+  expect(ids[0]).toContain(".contact-interrupt:");
+  expect(life.kernel.matter(ids[0]!)?.semanticIntent).toBeNull();
+}
+
+
 describe("five-resident unified living runtime", () => {
   it("keeps five asynchronous provider completions inert until the next World admission boundary", async () => {
     const fetcher = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
@@ -318,7 +330,7 @@ describe("five-resident unified living runtime", () => {
     expect(readyProbe?.providerArrival?.status).toBe("proposal");
     expect(readyProbe?.localSettlement).toBeNull();
     // Provider completion is inert until the next World boundary.
-    expect(living.life("resident.mira")!.matterScope.matterIds()).toEqual([]);
+    expectOnlyFactualLocalContact(living.life("resident.mira")!);
     living.advanceOneWorldTick();
     const accepted = living.diagnostics().recentProviderEvents.find(
       e => e.status === "admitted" && e.residentId === "resident.mira",
@@ -469,7 +481,7 @@ describe("five-resident unified living runtime", () => {
     }));
     await flushMicrotasks();
     expect(living.diagnostics().providerInboxCount).toBe(1);
-    expect(mira.matterScope.matterIds()).toEqual([]);
+    expectOnlyFactualLocalContact(mira);
     living.advanceOneWorldTick();
 
     expect(living.diagnostics().recentProviderEvents.some(
@@ -477,7 +489,7 @@ describe("five-resident unified living runtime", () => {
         && event.status === "admitted"
         && event.detail.includes("stale: semantic_pressure_changed_during_request"),
     )).toBe(true);
-    expect(mira.matterScope.matterIds()).toEqual([]);
+    expectOnlyFactualLocalContact(mira);
     expect(living.diagnostics().recentProviderEvents.some(e => e.admittedChoice)).toBe(false);
     expect(living.manualResearchProbe()?.localSettlement).toMatchObject({
       status: "stale",
