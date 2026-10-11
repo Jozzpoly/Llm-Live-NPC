@@ -79,7 +79,7 @@ if (!dryRun) {
     throw new Error("Refuse first-deploy bootstrap outside exact isolated research Worker");
   }
   delete output.json.secrets;
-  writeFileSync(output.path, JSON.stringify(output.json, null, 2) + "\\n", { mode: 0o600 });
+  writeFileSync(output.path, JSON.stringify(output.json, null, 2), { mode: 0o600 });
   console.log("SPC_RESEARCH_FIRST_DEPLOY_BOOTSTRAP: required-secret declaration temporarily omitted ONLY from generated manifest; runtime authorization unchanged; model calls NOT executed.");
 }
 
