@@ -58,6 +58,23 @@ export interface FiveResidentLivingProviderEvent {
   admittedChoice?: FiveResidentAdmittedCognitionChoice;
 }
 
+/** Opt-in one-shot, local-browser evidence. This contains resident-private context.
+ * Never transmit it to telemetry, static public pages, or GitHub automatically.
+ * It contains no provider API key, login token or session cookie.
+ */
+export interface FiveResidentManualResearchProbe {
+  residentId: FiveResidentId;
+  requestId: string;
+  dispatchedAtTick: number;
+  /** EXACT frozen request payload sent to Worker, not a reconstructed context. */
+  submitted: FiveResidentCausalCognitionRequest["context"];
+  reasons: FiveResidentCausalCognitionRequest["batch"]["reasons"];
+  /** An upstream reply is untrusted data until the LOCAL settlement below. */
+  providerArrival: FiveResidentCausalProviderArrival | null;
+  localSettlement: FiveResidentCausalProviderAdmission | null;
+  transportFailed: boolean;
+}
+
 export interface FiveResidentLivingRuntimeDiagnostics {
   tick: number;
   claimedResidentIds: readonly FiveResidentId[];
@@ -109,6 +126,7 @@ export class FiveResidentUnifiedLivingRuntime {
   private readonly recentProviderEvents: FiveResidentLivingProviderEvent[] = [];
   private providerRequestCount = 0;
   private providerEventSequence = 0;
+  private manualProbe: FiveResidentManualResearchProbe | null = null;
 
   constructor(options: FiveResidentUnifiedLivingRuntimeOptions = {}) {
     this.providerDispatchMode = options.providerDispatchMode ?? "automatic";
@@ -162,6 +180,15 @@ export class FiveResidentUnifiedLivingRuntime {
     return this.lifeRuntime.life(residentId);
   }
 
+  /** Browser operator export ONLY. No secrets, server upload, implicit persistence
+   * or additional upstream calls. The exact resident-private model input is sensitive.
+   */
+  manualResearchProbe(): FiveResidentManualResearchProbe | null {
+    return this.providerDispatchMode === "manual" && this.manualProbe
+      ? structuredClone(this.manualProbe)
+      : null;
+  }
+
   /** Manual research: advance World independently, then initiate at most one
    * resident's already-earned private cognition batch by explicit operator action.
    * No synthetic cognition reason is created and no unanswered batch is fabricated.
@@ -185,6 +212,9 @@ export class FiveResidentUnifiedLivingRuntime {
     const ready = this.arrivalInbox.splice(0, this.arrivalInbox.length);
     for (const arrival of ready) {
       const admission = this.provider.admit(arrival, this.cognition);
+      if (this.manualProbe?.requestId === arrival.requestId) {
+        this.manualProbe.localSettlement = structuredClone(admission);
+      }
       this.recordAdmission(arrival, admission);
     }
   }
@@ -202,6 +232,18 @@ export class FiveResidentUnifiedLivingRuntime {
       started += 1;
       this.providerInFlight.set(request.id, request);
       this.providerRequestCount += 1;
+      if (this.providerDispatchMode === "manual" && residentId !== undefined) {
+        this.manualProbe = {
+          requestId: request.id,
+          residentId: request.residentId,
+          dispatchedAtTick: this.world.tick,
+          submitted: structuredClone(request.context),
+          reasons: structuredClone(request.batch.reasons),
+          providerArrival: null,
+          localSettlement: null,
+          transportFailed: false,
+        };
+      }
       this.recordProviderEvent(
         request.residentId,
         request.id,
@@ -212,6 +254,9 @@ export class FiveResidentUnifiedLivingRuntime {
       void this.provider.request(request).then((arrival) => {
         this.providerInFlight.delete(request.id);
         this.arrivalInbox.push(arrival);
+        if (this.manualProbe?.requestId === request.id) {
+          this.manualProbe.providerArrival = structuredClone(arrival);
+        }
         this.recordProviderEvent(
           request.residentId,
           request.id,
@@ -224,6 +269,9 @@ export class FiveResidentUnifiedLivingRuntime {
       }).catch((error: unknown) => {
         this.providerInFlight.delete(request.id);
         const abandoned = this.cognition.abandon(request);
+        if (this.manualProbe?.requestId === request.id) {
+          this.manualProbe.transportFailed = true;
+        }
         this.recordProviderEvent(
           request.residentId,
           request.id,
