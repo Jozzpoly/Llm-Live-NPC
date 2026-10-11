@@ -45,7 +45,7 @@ export function buildSpcManualProbeEvidence(
     origin: "manual-operator-local-browser-download" as const,
     sourceRevision: null as null, // Git/deployment SHA must be verified separately
     exportedAtUtc,
-    warning: "Contains resident-private model context; no secrets captured. Model statements are not World facts. HTTP usage is not billing proof.",
+    warning: "Private resident/model input. No Worker or API credentials are read, but player speech and resident context can be sensitive. Model statements are not World facts. Reported token usage is not verified billing.",
     subject: {
       residentId: probe.residentId,
       requestId: probe.requestId,
