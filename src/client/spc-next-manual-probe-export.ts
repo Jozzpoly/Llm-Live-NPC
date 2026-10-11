@@ -28,7 +28,7 @@ export function buildSpcManualProbeEvidence(
   ) ?? [];
   const locallyApplied = probe.localSettlement?.status === "applied";
   const admitted = locallyApplied
-    ? events.findLast((event) => event.status === "admitted" && event.admittedChoice)
+    ? events.slice().reverse().find((event) => event.status === "admitted" && event.admittedChoice)
       ?.admittedChoice ?? null
     : null;
   const matter = admitted?.matterId
