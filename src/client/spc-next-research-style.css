@@ -298,3 +298,18 @@
   #app.spc-next-mode .game-shell footer { display: none; }
   .spc-resident-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
+
+/* Explicitly non-autonomous, zero-provider relationship RESEARCH specimen. */
+.spc-episode-status {
+  max-width: 300px;
+  padding: 6px 8px;
+  border-left: 2px solid #7896a5;
+  color: #c1d4dd;
+  font-size: 11px;
+  line-height: 1.4;
+  white-space: normal;
+}
+.spc-header-actions .spc-chat-send:disabled {
+  opacity: .42;
+  cursor: not-allowed;
+}
