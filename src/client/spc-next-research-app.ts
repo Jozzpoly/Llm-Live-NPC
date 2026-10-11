@@ -178,7 +178,8 @@ function renderPanel(frame: SpcNextResearchFrame): void {
     ? life?.matters.find((matter) => matter.id === admittedChoice.matterId) ?? null
     : null;
   // Outcome is projected from CURRENT resident-owned kernel evidence, not model prose.
-  const chosenOutcome = chosenMatter?.lastOutcomeEvidence?.sourceRunId === admittedChoice?.runId
+  const chosenOutcome = chosenMatter && admittedChoice?.runId
+    && chosenMatter.lastOutcomeEvidence?.sourceRunId === admittedChoice.runId
     ? chosenMatter.lastOutcomeEvidence
     : null;
   const providerEvents = living?.recentProviderEvents.slice(-7).reverse().map((event) => `
