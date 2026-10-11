@@ -4,8 +4,8 @@
   "main": "./worker/index.ts",
   "compatibility_date": "2026-09-05",
   "workers_dev": true,
-  "preview_urls": true,
-  "secrets": { "required": ["OPENAI_API_KEY"] },
+  "preview_urls": false,
+  "secrets": { "required": ["OPENAI_API_KEY", "SPC_RESEARCH_OPERATOR_TOKEN"] },
   "observability": {
     "enabled": true
   },

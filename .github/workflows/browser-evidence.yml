@@ -7,6 +7,7 @@ on:
       - "worker/**"
       - "scripts/spc-browser-evidence.mjs"
       - "scripts/spc-browser-manual-control-evidence.mjs"
+      - "scripts/spc-browser-unified-armed-evidence.mjs"
       - "scripts/spc-browser-missing-crate-evidence.mjs"
       - "scripts/spc-browser-missing-crate-recovery-evidence.mjs"
       - "scripts/spc-browser-missing-crate-interruption-evidence.mjs"
@@ -75,6 +76,13 @@ jobs:
           done
           cat /tmp/spc-static.log
           exit 1
+
+      - name: Qualify unified armed operator-once Chromium boundary
+        env:
+          EVIDENCE_BASE_URL: http://127.0.0.1:4173
+          UNIFIED_ARMED_OUTPUT: evidence/browser/unified-armed.json
+          SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: node scripts/spc-browser-unified-armed-evidence.mjs
 
       - name: Collect SPC browser evidence
         env:

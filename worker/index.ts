@@ -6,7 +6,11 @@ import { handleSpcNextCognition } from "./spc-next-cognition";
 import { handleSpcNextLifeChoice, type SpcNextLifeChoiceEnv } from "./spc-next-life-choice";
 import { handleSpcNextLifeIntent, type SpcNextLifeIntentEnv } from "./spc-next-life-intent";
 import { handleSpcNextSemantic, type SpcNextSemanticEnv } from "./spc-next-semantic";
+import { operatorAuthorized, operatorConfigured, operatorLogin } from "./research-operator-auth";
 
+/** All current AND future API POST routes are private by default.
+ * Operator login is handled before this gate, and read-only health stays public.
+ */
 const GATEWAY_ID = "default";
 const LIVE_STAGE = "e1-grounded-notice-fetch";
 const PROBE_PROMPT = "Reply with exactly one short sentence confirming that LLM Live NPC cognition is online.";
@@ -32,6 +36,10 @@ interface RateLimitBinding {
 }
 
 interface Env extends SpcNextSemanticEnv, SpcNextLifeChoiceEnv, SpcNextLifeIntentEnv {
+  /** Cloudflare Worker secret, never expose in frontend/client bundle or health. */
+  SPC_RESEARCH_OPERATOR_TOKEN?: string;
+  /** Only on the separately named microprobe Worker, never inferred from login. */
+  SPC_RESEARCH_LUNA_ONLY?: string;
   AI: AiBinding;
   AI_PROBE_LIMITER: RateLimitBinding;
 }
@@ -163,7 +171,13 @@ export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
 
+    const operatorSession = await operatorLogin(request, env.SPC_RESEARCH_OPERATOR_TOKEN, env.AI_PROBE_LIMITER);
+    if (operatorSession) return operatorSession;
+
     if (url.pathname === "/api/health") {
+      if (request.method !== "GET" && request.method !== "HEAD") {
+        return json({ ok: false, code: "method_not_allowed" }, { status: 405 });
+      }
       return json({
         ok: true,
         service: "llm-live-npc",
@@ -190,9 +204,26 @@ export default {
         spcNextSemanticEndpoint: "/api/spc-next/semantic",
         spcNextSemanticModelConfigured: env.SPC_NEXT_SEMANTIC_MODEL ?? env.HEARTH_COGNITION_MODEL ?? "gpt-5.6-luna",
         hearthKeyConfigured: Boolean(env.OPENAI_API_KEY?.trim()),
+        providerResearchOperatorGateConfigured: operatorConfigured(env.SPC_RESEARCH_OPERATOR_TOKEN),
         transportQualificationEndpoint: "/api/ai/qualify",
         probeCandidates: PROBE_CANDIDATES
       });
+    }
+
+    if (request.method === "POST" && url.pathname.startsWith("/api/")
+      && !(await operatorAuthorized(request, env.SPC_RESEARCH_OPERATOR_TOKEN))) {
+      return json({
+        ok: false,
+        code: "research_operator_access_required",
+      }, { status: 403 });
+    }
+
+    // The isolated microprobe must not accept ANY other paid model route,
+    // even from an authenticated operator. Auth above still applies first.
+    if (env.SPC_RESEARCH_LUNA_ONLY === "true"
+      && request.method === "POST" && url.pathname.startsWith("/api/")
+      && url.pathname !== "/api/spc-next/life-intent") {
+      return json({ ok: false, code: "research_route_disabled" }, { status: 404 });
     }
 
     if (url.pathname === "/api/agent/e1/decide") {

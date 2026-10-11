@@ -8,7 +8,7 @@ import {
   FiveResidentUnifiedLivingRuntime,
   type FiveResidentLivingRuntimeDiagnostics,
 } from "../spc-next/five-resident-unified-living-runtime";
-import type { FiveResidentId } from "../spc-next/five-resident-region";
+import { createFiveResidentRegionComposition, type FiveResidentId } from "../spc-next/five-resident-region";
 import type { SpcWorldRuntime } from "../spc-next/spc-world-runtime";
 import { createFiveResidentJanekMaterialSlice } from "../spc-next/five-resident-material-slice";
 import { createFiveResidentJanekMissingCrateStagedSlice } from "../spc-next/five-resident-missing-crate-slice";
@@ -47,7 +47,8 @@ export type SpcNextResearchScenarioKind =
   | "r5-mira-semantic-escalation"
   | "r5-mira-live-semantic-escalation"
   | "r6-mira-standing-social-commitment"
-  | "unified-living";
+  | "unified-living"
+  | "unified-armed";
 
 export interface SpcNextResearchScenario {
   readonly kind: SpcNextResearchScenarioKind;
@@ -63,6 +64,9 @@ export interface SpcNextResearchScenario {
   readonly canonicalEvidenceSupported?: boolean;
   readonly residentLifeView?: (residentId: string) => ResidentLifeCognitionView | null;
   readonly livingDiagnostics?: () => FiveResidentLivingRuntimeDiagnostics | null;
+  /** Only on the opt-in, one-call, manually dispatched research scenario. */
+  readonly requestOneResidentCognition?: (residentId: string) =>
+    "started" | "no_reason" | "resident_unavailable" | "budget_exhausted";
   /** Optional evidence-only explicit causal boundary for a bounded research fixture. */
   readonly evidenceAction?: (actionId: string) => unknown;
   /** Advances exactly one authoritative World tick. */
@@ -83,6 +87,7 @@ export function createSpcNextResearchScenario(kind: SpcNextResearchScenarioKind)
   if (kind === "r5-mira-live-semantic-escalation") return createR5MiraLiveSemanticEscalationScenario();
   if (kind === "r6-mira-standing-social-commitment") return createR6MiraStandingSocialCommitmentScenario();
   if (kind === "unified-living") return createUnifiedLivingScenario();
+  if (kind === "unified-armed") return createUnifiedLivingScenario(true);
   return createBaselineDeliveryScenario();
 }
 
@@ -102,6 +107,7 @@ export function researchScenarioKindFromSearch(search: string): SpcNextResearchS
   if (requested === "r5-mira-live-semantic-escalation") return "r5-mira-live-semantic-escalation";
   if (requested === "r6-mira-standing-social-commitment") return "r6-mira-standing-social-commitment";
   if (requested === "unified-living") return "unified-living";
+  if (requested === "unified-armed") return "unified-armed";
   throw new Error(`unknown SPC Next research scenario: ${requested}`);
 }
 
@@ -188,8 +194,19 @@ function createMissingCrateInterruptionScenario(): SpcNextResearchScenario {
   };
 }
 
+/** Browser-only policy: legacy live-provider fixtures have no explicit click
+ * consent affordance. Preserve their local fail-closed research World, but
+ * never silently send a paid model request after operator login/page load.
+ * The dedicated unified-armed scenario is the ONLY browser model request path.
+ */
+async function denyImplicitLegacyModelRequest(): Promise<Response> {
+  return Response.json({ ok: false, code: "explicit_operator_action_required" }, {
+    status: 428,
+  });
+}
+
 function createMissingCrateLiveProviderScenario(): SpcNextResearchScenario {
-  const slice = createFiveResidentJanekMissingCrateLiveProviderSlice();
+  const slice = createFiveResidentJanekMissingCrateLiveProviderSlice({ fetcher: denyImplicitLegacyModelRequest });
   return {
     kind: "missing-crate-live-provider",
     evidenceScenarioId: "browser-missing-crate-live-provider",
@@ -200,16 +217,16 @@ function createMissingCrateLiveProviderScenario(): SpcNextResearchScenario {
     materialKnowledge: slice.materialKnowledge,
     authority: slice.authority,
     advanceOneWorldTick(): void {
-      // Unlike deterministic recovery, this path really calls the same-origin
-      // Worker endpoint. Transport completion can only fill the slice's inert
-      // arrival inbox; admission and grounding remain resident/World-tick owned.
+      // This historically live-path specimen is deliberately paused in browser:
+      // it exercises the bounded error path without contacting a paid Worker.
+      // Provider tests that inject their own fetcher remain separate research.
       slice.advanceOneWorldTick();
     },
   };
 }
 
 function createMissingCrateLiveProviderInterruptionScenario(): SpcNextResearchScenario {
-  const slice = createFiveResidentJanekMissingCrateLiveProviderInterruptionSlice();
+  const slice = createFiveResidentJanekMissingCrateLiveProviderInterruptionSlice({ fetcher: denyImplicitLegacyModelRequest });
   return {
     kind: "missing-crate-live-provider-interruption",
     evidenceScenarioId: "browser-missing-crate-live-provider-interruption",
@@ -538,13 +555,15 @@ function createR5MiraLiveSemanticEscalationScenario(): SpcNextResearchScenario {
   let observationSequence = 0;
 
   const observedUpstream = async (
-    input: RequestInfo | URL,
-    init?: RequestInit,
+    _input: RequestInfo | URL,
+    _init?: RequestInit,
   ): Promise<Response> => {
     const startedAtTick = slice.world.tick;
     const startedAt = performance.now();
     try {
-      const response = await fetch(input, init);
+      // Archived R5 browser specimen cannot silently spend after operator login.
+      // Keep actual provider network only behind deliberate unified-armed control.
+      const response = await denyImplicitLegacyModelRequest();
       let body: unknown = null;
       try {
         body = await response.clone().json();
@@ -880,16 +899,33 @@ function createR6MiraStandingSocialCommitmentScenario(): SpcNextResearchScenario
 
 
 
-function createUnifiedLivingScenario(): SpcNextResearchScenario {
-  const living = new FiveResidentUnifiedLivingRuntime();
+function createUnifiedLivingScenario(manual = false): SpcNextResearchScenario {
+  const living = new FiveResidentUnifiedLivingRuntime(manual ? {
+    // Authored encounter setup: start within natural speech range of Mira,
+    // never fabricate a percept, social motive or subsequent response.
+    composition: createFiveResidentRegionComposition({
+      playerStart: { x: 900, y: 680 },
+    }),
+    providerDispatchMode: "manual",
+    socialReencounter: true,
+    maxConcurrentCognition: 1,
+    maxUpstreamRequests: 1,
+  } : {
+    // The normal browse-only World must NEVER silently spend API tokens after
+    // operator login. Keep the resident's local brain active but provider
+    // dispatch manual, without exposing a manual request control in this mode.
+    providerDispatchMode: "manual",
+    socialReencounter: true,
+    maxUpstreamRequests: 1,
+  });
   const janek = living.life("resident.janek");
   if (!janek) {
     throw new Error("unified living runtime must claim idle Janek at construction");
   }
 
   return {
-    kind: "unified-living",
-    evidenceScenarioId: "browser-unified-living",
+    kind: manual ? "unified-armed" : "unified-living",
+    evidenceScenarioId: manual ? "browser-unified-armed" : "browser-unified-living",
     // Compatibility fields exist only because the older research shell is centered
     // on one canonical target. Unified canonical evidence is explicitly disabled.
     residentId: "resident.janek",
@@ -908,6 +944,14 @@ function createUnifiedLivingScenario(): SpcNextResearchScenario {
     livingDiagnostics(): FiveResidentLivingRuntimeDiagnostics {
       return living.diagnostics();
     },
+    ...(manual ? {
+      requestOneResidentCognition(residentId: string) {
+        if (!living.world.publicSnapshot().residents.some((actor) => actor.id === residentId)) {
+          return "resident_unavailable" as const;
+        }
+        return living.requestOneResidentCognition(residentId as FiveResidentId);
+      },
+    } : {}),
     advanceOneWorldTick(): void {
       living.advanceOneWorldTick();
     },

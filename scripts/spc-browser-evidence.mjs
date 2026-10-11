@@ -14,6 +14,49 @@ mkdirSync(join(OUTPUT_DIR, "screenshots"), { recursive: true });
 
 const sleep = (ms) => new Promise((resolveSleep) => setTimeout(resolveSleep, ms));
 
+async function stopChrome(chrome) {
+  if (chrome.exitCode !== null) return;
+  chrome.kill("SIGTERM");
+  for (let attempt = 0; attempt < 20 && chrome.exitCode === null; attempt += 1) {
+    await sleep(50);
+  }
+  if (chrome.exitCode !== null) return;
+  chrome.kill("SIGKILL");
+  for (let attempt = 0; attempt < 20 && chrome.exitCode === null; attempt += 1) {
+    await sleep(50);
+  }
+}
+
+async function removeChromeProfile(userDataDir) {
+  // Chrome may briefly keep recreating/holding files after the child process exits.
+  // Evidence qualification must not become HARNESS_ERROR merely because best-effort
+  // temp-profile cleanup races that OS/browser teardown.
+  let lastError = null;
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    try {
+      rmSync(userDataDir, {
+        recursive: true,
+        force: true,
+        maxRetries: 3,
+        retryDelay: 50,
+      });
+      return true;
+    } catch (error) {
+      lastError = error;
+      const code = error && typeof error === "object" && "code" in error
+        ? String(error.code)
+        : "";
+      if (!["ENOTEMPTY", "EBUSY", "EPERM"].includes(code)) throw error;
+      await sleep(Math.min(500, 50 * (attempt + 1)));
+    }
+  }
+
+  console.warn(
+    `SPC browser evidence could not remove temporary Chrome profile ${userDataDir}: ${lastError instanceof Error ? lastError.message : String(lastError)}`,
+  );
+  return false;
+}
+
 function chromeExecutable() {
   const candidates = [
     process.env.CHROME_PATH,
@@ -312,15 +355,8 @@ async function run() {
     timelineRunning = false;
     await timelinePromise.catch(() => {});
     cdp?.close();
-    chrome.kill("SIGTERM");
-    await sleep(150);
-    if (!chrome.killed) chrome.kill("SIGKILL");
-    rmSync(userDataDir, {
-      recursive: true,
-      force: true,
-      maxRetries: 6,
-      retryDelay: 100,
-    });
+    await stopChrome(chrome);
+    await removeChromeProfile(userDataDir);
   }
 }
 

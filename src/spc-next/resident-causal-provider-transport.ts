@@ -7,6 +7,15 @@ import type {
   ResidentCausalCognitionSettlement,
 } from "./resident-causal-cognition-lane";
 
+/** Bounded server-observed token usage, never a billing or complimentary-quota claim. */
+export interface ResidentCausalProviderUsage {
+  model: string;
+  inputTokens: number | null;
+  outputTokens: number | null;
+  totalTokens: number | null;
+  elapsedMs: number;
+}
+
 export type ResidentCausalProviderArrival = Readonly<
   | {
       version: 1;
@@ -16,6 +25,7 @@ export type ResidentCausalProviderArrival = Readonly<
       status: "proposal";
       originReasonId: string;
       proposal: unknown;
+      usage?: ResidentCausalProviderUsage;
     }
   | {
       version: 1;
@@ -25,6 +35,7 @@ export type ResidentCausalProviderArrival = Readonly<
       status: "provider_error";
       code: ResidentCognitionProviderErrorCode;
       detail: string | null;
+      usage?: ResidentCausalProviderUsage;
     }
 >;
 
@@ -109,11 +120,8 @@ export class ResidentCausalProviderTransport<
     }
 
     if (!response.ok) {
-      return this.registerError(
-        request,
-        "http",
-        await safeHttpErrorDetail(response),
-      );
+      const failure = await safeHttpErrorDetail(response);
+      return this.registerError(request, "http", failure.detail, failure.usage);
     }
 
     let raw: unknown;
@@ -143,6 +151,7 @@ export class ResidentCausalProviderTransport<
       );
     }
 
+    const usage = safeProviderUsage(raw.usage);
     return this.register(request, Object.freeze({
       version: 1 as const,
       id: this.nextId(),
@@ -151,6 +160,7 @@ export class ResidentCausalProviderTransport<
       status: "proposal" as const,
       originReasonId: raw.originReasonId,
       proposal: structuredClone(raw.proposal),
+      ...(usage ? { usage } : {}),
     }));
   }
 
@@ -195,6 +205,7 @@ export class ResidentCausalProviderTransport<
     request: Request,
     code: ResidentCognitionProviderErrorCode,
     detail: string | null,
+    usage?: ResidentCausalProviderUsage,
   ): ResidentCausalProviderArrival {
     return this.register(request, Object.freeze({
       version: 1 as const,
@@ -204,6 +215,7 @@ export class ResidentCausalProviderTransport<
       status: "provider_error" as const,
       code,
       detail,
+      ...(usage ? { usage } : {}),
     }));
   }
 
@@ -225,21 +237,50 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
-async function safeHttpErrorDetail(response: Response): Promise<string> {
+function safeProviderUsage(value: unknown): ResidentCausalProviderUsage | null {
+  if (!isRecord(value)
+    || typeof value.model !== "string"
+    || !/^[A-Za-z0-9][A-Za-z0-9._:/-]{0,119}$/u.test(value.model)) return null;
+  const token = (v: unknown) => v === null ? null
+    : typeof v === "number" && Number.isSafeInteger(v) && v >= 0 ? v : undefined;
+  const inputTokens = token(value.inputTokens);
+  const outputTokens = token(value.outputTokens);
+  const totalTokens = token(value.totalTokens);
+  const elapsedMs = token(value.elapsedMs);
+  if (inputTokens === undefined || outputTokens === undefined
+    || totalTokens === undefined || elapsedMs === null || elapsedMs === undefined) return null;
+  return Object.freeze({
+    model: value.model,
+    inputTokens,
+    outputTokens,
+    totalTokens,
+    elapsedMs,
+  });
+}
+
+async function safeHttpErrorDetail(response: Response): Promise<{
+  detail: string;
+  usage?: ResidentCausalProviderUsage;
+}> {
   const status = response.status;
   let workerCode: string | null = null;
+  let usage: ResidentCausalProviderUsage | null = null;
   try {
     const text = await response.text();
     if (text.length <= MAX_RESPONSE_CHARACTERS) {
       const raw = JSON.parse(text) as unknown;
-      if (isRecord(raw)
-        && typeof raw.code === "string"
-        && /^[A-Za-z0-9_.:-]{1,120}$/u.test(raw.code)) {
-        workerCode = raw.code;
+      if (isRecord(raw)) {
+        if (typeof raw.code === "string" && /^[A-Za-z0-9_.:-]{1,120}$/u.test(raw.code)) {
+          workerCode = raw.code;
+        }
+        usage = safeProviderUsage(raw.usage);
       }
     }
   } catch {
-    // HTTP status remains sufficient bounded diagnostic truth.
+    // The bounded HTTP failure remains meaningful without a valid body.
   }
-  return workerCode ? "HTTP " + status + ": " + workerCode : "HTTP " + status;
+  return {
+    detail: workerCode ? "HTTP " + status + ": " + workerCode : "HTTP " + status,
+    ...(usage ? { usage } : {}),
+  };
 }

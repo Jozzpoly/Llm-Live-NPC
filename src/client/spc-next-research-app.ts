@@ -69,9 +69,28 @@ chatSend.className = "spc-chat-send";
 chatSend.textContent = "Powiedz";
 chatForm.append(chatInput, chatSend);
 
+// Deliberate one-shot research control. No implicit Luna calls on World ticks.
+const armedResearchMode = params.get("scenario") === "unified-armed";
+const operatorLoginLink = document.createElement("a");
+operatorLoginLink.className = "spc-operator-login";
+operatorLoginLink.href = "/api/operator/login";
+operatorLoginLink.textContent = "Logowanie";
+operatorLoginLink.title = "Jednorazowe logowanie operatora do prywatnej sesji (bez Zero Trust).";
+operatorLoginLink.hidden = !armedResearchMode;
+const oneShotButton = document.createElement("button");
+oneShotButton.type = "button";
+oneShotButton.className = "spc-chat-send";
+oneShotButton.textContent = "Zapytaj Lunę (1×)";
+oneShotButton.title = "Wybrany mieszkaniec, jego rzeczywiste prywatne powody i maksymalnie jeden request w tej sesji. Model sam wybiera powód decyzji.";
+oneShotButton.hidden = !armedResearchMode;
+const oneShotStatus = document.createElement("span");
+oneShotStatus.className = "spc-armed-status";
+oneShotStatus.hidden = !armedResearchMode;
+oneShotStatus.textContent = armedResearchMode ? "Luna: bez zapytań" : "";
+
 const headerActions = document.createElement("div");
 headerActions.className = "spc-header-actions";
-headerActions.append(stageNode, chatForm, worldModeButton);
+headerActions.append(stageNode, chatForm, operatorLoginLink, oneShotButton, oneShotStatus, worldModeButton);
 header.append(headerActions);
 
 let scene: SpcNextResearchScene;
@@ -89,6 +108,23 @@ function setWorldOnly(enabled: boolean): void {
 
 function renderPanel(frame: SpcNextResearchFrame): void {
   lastFrame = frame;
+  if (armedResearchMode && oneShotButton.disabled) {
+    const latest = frame.livingDiagnostics?.recentProviderEvents.at(-1);
+    if (latest?.status === "provider_error" || latest?.status === "transport_internal_error") {
+      oneShotStatus.textContent = "Luna: błąd API";
+      oneShotStatus.title = "Próba została wykorzystana. Świat działa dalej, ale odpowiedź modelu nie została przyjęta.";
+    } else if (latest?.status === "admitted") {
+      oneShotStatus.textContent = latest.detail.startsWith("applied ")
+        ? latest.detail.includes("no new matter")
+          ? "Decyzja: bez nowego zadania"
+          : "Zamiar przyjęty; obserwuj World"
+        : "Zamiar odrzucony (szczegóły w logu).";
+    } else if (latest?.status === "arrival_ready") {
+      oneShotStatus.textContent = "Odpowiedź czeka na World";
+    } else if (latest?.status === "request_started") {
+      oneShotStatus.textContent = "Luna: oczekiwanie";
+    }
+  }
   const selected = frame.selectedDiagnostics;
   const selectedActor = frame.selectedResidentId
     ? frame.snapshot.actors.find((actor) => actor.id === frame.selectedResidentId) ?? null
@@ -331,6 +367,23 @@ if (evidenceMode) {
     }),
   });
 }
+
+oneShotButton.addEventListener("click", () => {
+  if (!armedResearchMode || oneShotButton.disabled) return;
+  const status = scene.requestSelectedResidentCognition();
+  if (status === "started") {
+    oneShotStatus.textContent = "Wysłano 1/1";
+    oneShotButton.disabled = true;
+  } else if (status === "budget_exhausted") {
+    oneShotStatus.textContent = "Limit 1/1 wyczerpany";
+    oneShotButton.disabled = true;
+  } else if (status === "no_reason") {
+    oneShotStatus.textContent = "Brak prywatnego powodu";
+    oneShotStatus.title = "Brak aktualnego powodu do oceny. Możesz poczekać na prawdziwe wydarzenie w World; nie wymuszaj wypowiedzi gracza tylko po to, aby uruchomić model.";
+  } else {
+    oneShotStatus.textContent = "Mieszkaniec jeszcze niegotowy";
+  }
+});
 
 chatForm.addEventListener("submit", (event) => {
   event.preventDefault();

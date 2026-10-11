@@ -18,6 +18,7 @@ import {
   type FiveResidentRegionComposition,
 } from "./five-resident-region";
 import type { CognitionFetch } from "./resident-cognition-live-host";
+import type { ResidentCausalProviderUsage } from "./resident-causal-provider-transport";
 import {
   createCognitionFetchHardBudget,
   type CognitionFetchHardBudget,
@@ -41,6 +42,8 @@ export interface FiveResidentLivingProviderEvent {
     | "provider_error"
     | "transport_internal_error";
   detail: string;
+  /** Parsed from Worker output; not proof of billed spend or free-tier eligibility. */
+  usage?: ResidentCausalProviderUsage;
 }
 
 export interface FiveResidentLivingRuntimeDiagnostics {
@@ -61,6 +64,10 @@ export interface FiveResidentUnifiedLivingRuntimeOptions {
   fetcher?: CognitionFetch;
   /** Deliberately finite; raise explicitly for a budgeted research campaign. */
   maxUpstreamRequests?: number;
+  /** Keep the original multi-resident automatic mode unless explicitly researching manual dispatch. */
+  providerDispatchMode?: "automatic" | "manual";
+  /** Tested #158 donor; resident-private relation makes only actual re-encounters reviewable. */
+  socialReencounter?: boolean;
 }
 
 /**
@@ -83,6 +90,7 @@ export class FiveResidentUnifiedLivingRuntime {
   readonly cognition: FiveResidentCausalCognitionHost;
   readonly provider: FiveResidentCausalProviderTransport;
   private readonly providerHardBudget: CognitionFetchHardBudget;
+  private readonly providerDispatchMode: "automatic" | "manual";
 
   private readonly arrivalInbox: FiveResidentCausalProviderArrival[] = [];
   private readonly providerInFlight = new Map<string, FiveResidentCausalCognitionRequest>();
@@ -91,15 +99,20 @@ export class FiveResidentUnifiedLivingRuntime {
   private providerEventSequence = 0;
 
   constructor(options: FiveResidentUnifiedLivingRuntimeOptions = {}) {
+    this.providerDispatchMode = options.providerDispatchMode ?? "automatic";
     this.composition = options.composition ?? createFiveResidentRegionComposition();
-    this.lifeRuntime = new FiveResidentCausalLifeRuntime(this.composition);
+    this.lifeRuntime = new FiveResidentCausalLifeRuntime(this.composition, {
+      socialReencounter: options.socialReencounter ?? false,
+    });
     this.cognition = new FiveResidentCausalCognitionHost(
       this.lifeRuntime,
       options.maxConcurrentCognition ?? 5,
     );
     this.providerHardBudget = createCognitionFetchHardBudget(
       options.fetcher ?? fetch,
-      options.maxUpstreamRequests ?? DEFAULT_UNIFIED_LIVING_MAX_UPSTREAM_REQUESTS,
+      options.maxUpstreamRequests ?? (this.providerDispatchMode === "manual"
+        ? 1
+        : DEFAULT_UNIFIED_LIVING_MAX_UPSTREAM_REQUESTS),
     );
     this.provider = new FiveResidentCausalProviderTransport(
       options.endpoint ?? "/api/spc-next/life-intent",
@@ -114,7 +127,7 @@ export class FiveResidentUnifiedLivingRuntime {
   advanceOneWorldTick(): FiveResidentCausalLifeTick {
     const tick = this.lifeRuntime.advanceOneWorldTick();
     this.admitProviderInbox();
-    this.startReadyProviderRequests();
+    if (this.providerDispatchMode === "automatic") this.startReadyProviderRequests();
     return tick;
   }
 
@@ -137,6 +150,25 @@ export class FiveResidentUnifiedLivingRuntime {
     return this.lifeRuntime.life(residentId);
   }
 
+  /** Manual research: advance World independently, then initiate at most one
+   * resident's already-earned private cognition batch by explicit operator action.
+   * No synthetic cognition reason is created and no unanswered batch is fabricated.
+   * A session hard cap is consumed before any physical fetch.
+   */
+  requestOneResidentCognition(residentId: FiveResidentId):
+    "started" | "no_reason" | "resident_unavailable" | "budget_exhausted" {
+    if (this.providerDispatchMode !== "manual") {
+      throw new Error("manual cognition cannot be invoked in automatic mode");
+    }
+    if (!this.lifeRuntime.claimedResidentIds().includes(residentId)) {
+      return "resident_unavailable";
+    }
+    if (this.providerHardBudget.snapshot().exhausted) return "budget_exhausted";
+    return this.startReadyProviderRequests(residentId) === 1
+      ? "started"
+      : "no_reason";
+  }
+
   private admitProviderInbox(): void {
     const ready = this.arrivalInbox.splice(0, this.arrivalInbox.length);
     for (const arrival of ready) {
@@ -145,20 +177,26 @@ export class FiveResidentUnifiedLivingRuntime {
     }
   }
 
-  private startReadyProviderRequests(): void {
+  private startReadyProviderRequests(residentId?: FiveResidentId): number {
     // A session with exhausted physical upstream authority may keep running its
     // World and local brain, but it must never generate further network attempts
     // or an infinite provider-error/retry treadmill.
-    if (this.providerHardBudget.snapshot().exhausted) return;
-    this.cognition.collectReadyBatches();
+    if (this.providerHardBudget.snapshot().exhausted) return 0;
+    this.cognition.collectReadyBatches(residentId ? [residentId] : undefined);
+    let started = 0;
     for (const request of this.cognition.startReadyRequests()) {
+      if (residentId && request.residentId !== residentId) {
+        this.cognition.abandon(request);
+        continue;
+      }
+      started += 1;
       this.providerInFlight.set(request.id, request);
       this.providerRequestCount += 1;
       this.recordProviderEvent(
         request.residentId,
         request.id,
         "request_started",
-        `provider request started with ${request.batch.reasons.length} reason(s)`,
+        `provider request started with ${request.batch.reasons.length} reason(s): ${request.batch.reasons.slice(0, 12).map(r => `${r.kind}:${r.id}`).join(", ")}`,
       );
 
       void this.provider.request(request).then((arrival) => {
@@ -169,8 +207,9 @@ export class FiveResidentUnifiedLivingRuntime {
           request.id,
           "arrival_ready",
           arrival.status === "proposal"
-            ? `proposal arrived from origin ${arrival.originReasonId}`
-            : `provider error arrival: ${arrival.code}${arrival.detail ? `; ${arrival.detail}` : ""}`,
+            ? `proposal arrived from origin ${arrival.originReasonId} (${request.batch.reasons.find(r => r.id === arrival.originReasonId)?.kind ?? "unknown"}); ${arrival.usage ? `usage ${arrival.usage.inputTokens ?? "?"}/${arrival.usage.outputTokens ?? "?"}/${arrival.usage.totalTokens ?? "?"} tokens, ${arrival.usage.model}, ${arrival.usage.elapsedMs}ms` : "usage unavailable"}`
+            : `provider error arrival: ${arrival.code}${arrival.detail ? `; ${arrival.detail}` : ""}; ${arrival.usage ? `usage ${arrival.usage.inputTokens ?? "?"}/${arrival.usage.outputTokens ?? "?"}/${arrival.usage.totalTokens ?? "?"} tokens, ${arrival.usage.model}, ${arrival.usage.elapsedMs}ms` : "usage unavailable"}`,
+          ...(arrival.usage ? [arrival.usage] : []),
         );
       }).catch((error: unknown) => {
         this.providerInFlight.delete(request.id);
@@ -183,6 +222,7 @@ export class FiveResidentUnifiedLivingRuntime {
         );
       });
     }
+    return started;
   }
 
   private recordAdmission(
@@ -195,6 +235,7 @@ export class FiveResidentUnifiedLivingRuntime {
         arrival.requestId,
         "provider_error",
         `${admission.code}${admission.detail ? `; ${admission.detail}` : ""}; abandonment=${admission.abandonment}`,
+        ...(arrival.status === "provider_error" && arrival.usage ? [arrival.usage] : []),
       );
       return;
     }
@@ -221,6 +262,7 @@ export class FiveResidentUnifiedLivingRuntime {
     requestId: string,
     status: FiveResidentLivingProviderEvent["status"],
     detail: string,
+    usage?: ResidentCausalProviderUsage,
   ): void {
     this.recentProviderEvents.push({
       sequence: this.providerEventSequence++,
@@ -229,6 +271,7 @@ export class FiveResidentUnifiedLivingRuntime {
       requestId,
       status,
       detail,
+      ...(usage ? { usage: structuredClone(usage) } : {}),
     });
     while (this.recentProviderEvents.length > PROVIDER_EVENT_LIMIT) {
       this.recentProviderEvents.shift();

@@ -143,7 +143,16 @@ export class WorldScene extends Phaser.Scene {
     this.currentPresentationSnapshot = this.previousPresentationSnapshot;
     this.debugSink = debugSink;
     this.playerControls = playerControls;
-    this.living = livingMode ? new HearthHost(this.world, createHearthCognitionProvider(), HEARTH_RESIDENTS) : null;
+    // This legacy Hearth browser default previously auto-dispatched paid
+    // cognition on World ticks. Preserve the laboratory and local evolution,
+    // but never silently spend merely by opening the ordinary game URL.
+    // Only the deliberate SPC manual scenario may contact a real provider.
+    const offlineHearthProvider = createHearthCognitionProvider({
+      fetcher: async () => Response.json({
+        ok: false, code: "explicit_operator_action_required",
+      }, { status: 428 }),
+    });
+    this.living = livingMode ? new HearthHost(this.world, offlineHearthProvider, HEARTH_RESIDENTS) : null;
   }
 
   create(): void {
