@@ -457,6 +457,37 @@ export class SpcNextResearchScene extends Phaser.Scene {
       }).setAlpha(0.54).setDepth(-10);
     });
 
+    // Render REAL authored World anchors so settlement places are legible in
+    // the playable scene. These are semantic site markers, NOT solid scenery,
+    // path blockers, automatic resident knowledge, or a second spatial truth.
+    if (this.scenario.kind === "unified-living" || this.scenario.kind === "unified-armed") {
+      const siteColors: Record<string, number> = {
+        home: 0xdd9b58,
+        social: 0xe6aa64,
+        work: 0x7eaece,
+        resource: 0x88ac77,
+        service: 0xe2bf79,
+        exploration: 0xb5a1cd,
+      };
+      for (const anchor of this.world.anchors()) {
+        const color = siteColors[anchor.kind] ?? 0xa9b8c0;
+        const r = Math.max(26, anchor.radius);
+        this.regionGraphics.fillStyle(color, 0.085);
+        this.regionGraphics.fillCircle(anchor.position.x, anchor.position.y, r);
+        this.regionGraphics.lineStyle(2, color, 0.42);
+        this.regionGraphics.strokeCircle(anchor.position.x, anchor.position.y, r);
+        this.regionGraphics.fillStyle(color, 0.62);
+        this.regionGraphics.fillCircle(anchor.position.x, anchor.position.y, 5);
+        this.add.text(anchor.position.x + 16, anchor.position.y - 22, anchor.label, {
+          fontFamily: "Inter, system-ui, sans-serif",
+          fontSize: "14px",
+          color: "#c1d2d9",
+          backgroundColor: "#111820cc",
+          padding: { x: 5, y: 3 },
+        }).setOrigin(0, 1).setDepth(-7);
+      }
+    }
+
     const bounds = this.world.options.bounds;
     this.regionGraphics.lineStyle(8, 0x9fb1bd, 0.24);
     this.regionGraphics.strokeRect(
