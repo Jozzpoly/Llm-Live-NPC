@@ -183,6 +183,47 @@ describe("five-resident unified living runtime", () => {
     expect(living.world.tick).toBe(3_800);
   });
 
+  it("manual selection leaves other residents' genuine queued private reasons untouched", async () => {
+    const calledResidents: string[] = [];
+    const upstream = vi.fn(async (_url: RequestInfo | URL, init?: RequestInit) => {
+      const context = JSON.parse(String(init?.body)) as { resident: { id: string } };
+      calledResidents.push(context.resident.id);
+      return Response.json({ ok: false, code: "global_limit" }, { status: 429 });
+    });
+    const living = new FiveResidentUnifiedLivingRuntime({
+      providerDispatchMode: "manual",
+      maxConcurrentCognition: 5,
+      maxUpstreamRequests: 1,
+      fetcher: upstream,
+    });
+
+    while (living.world.tick < 2_600) living.advanceOneWorldTick();
+    expect(upstream).not.toHaveBeenCalled();
+    // Collect real, previously earned five-resident reasons before choosing.
+    // The old implementation inadvertently dispatched (then abandoned) peers.
+    expect(living.cognition.collectReadyBatches()).toBeGreaterThanOrEqual(2);
+    const before = living.diagnostics().cognition;
+    expect(before.queuedResidents).toContain("resident.mira");
+    const unselected = before.queuedResidents.filter(id => id !== "resident.mira");
+    expect(unselected.length).toBeGreaterThan(0);
+    expect(before.inFlightResidents).toEqual([]);
+
+    expect(living.requestOneResidentCognition("resident.mira")).toBe("started");
+    expect(calledResidents).toEqual(["resident.mira"]);
+    expect(upstream).toHaveBeenCalledTimes(1);
+    const after = living.diagnostics().cognition;
+    expect(after.queuedResidents).toEqual(unselected);
+    expect(after.inFlightResidents).toEqual(["resident.mira"]);
+    expect(after.activeRequestCount).toBe(1);
+    expect(after.retryNotBeforeTick).toEqual({});
+    expect(living.diagnostics().providerHardBudget.upstreamRequestsStarted).toBe(1);
+
+    await flushMicrotasks();
+    living.advanceOneWorldTick();
+    expect(living.diagnostics().cognition.queuedResidents).toEqual(unselected);
+    expect(upstream).toHaveBeenCalledTimes(1);
+  });
+
   it("only a deliberate button request forwards an actually heard player utterance from the shared World", async () => {
     const forwarded: Array<{ resident: { id: string }, reasons: Array<{ kind: string }> }> = [];
     const upstream = vi.fn(async (_url: RequestInfo | URL, init?: RequestInit) => {

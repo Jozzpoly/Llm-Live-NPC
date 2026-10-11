@@ -184,11 +184,9 @@ export class FiveResidentUnifiedLivingRuntime {
     if (this.providerHardBudget.snapshot().exhausted) return 0;
     this.cognition.collectReadyBatches(residentId ? [residentId] : undefined);
     let started = 0;
-    for (const request of this.cognition.startReadyRequests()) {
-      if (residentId && request.residentId !== residentId) {
-        this.cognition.abandon(request);
-        continue;
-      }
+    for (const request of this.cognition.startReadyRequests(residentId ? [residentId] : undefined)) {
+      // Filtering happens BEFORE queue dispatch. A manual operator selection
+      // cannot turn unselected residents into in-flight/abandoned requests.
       started += 1;
       this.providerInFlight.set(request.id, request);
       this.providerRequestCount += 1;
