@@ -1,4 +1,5 @@
 import * as Phaser from "phaser";
+import type { RelationalEpisodeChoice, RelationalEpisodeState } from "../spc-next/five-resident-relational-world-demo";
 import type { ResidentLifeCognitionView } from "../spc-next/resident-life-cognition-view";
 import type { FiveResidentLivingRuntimeDiagnostics, FiveResidentManualResearchProbe } from "../spc-next/five-resident-unified-living-runtime";
 import type {
@@ -105,6 +106,7 @@ export class SpcNextResearchScene extends Phaser.Scene {
     this.scenario = createSpcNextResearchScenario(scenarioKind);
     this.world = this.scenario.world;
     this.snapshot = this.world.publicSnapshot();
+    if (this.scenario.kind === "relational-episode") this.selectedResidentId = "resident.janek";
     if (!this.snapshot.residents.some((resident) => resident.id === this.selectedResidentId)) {
       this.selectedResidentId = this.snapshot.residents[0]?.id ?? null;
     }
@@ -137,8 +139,15 @@ export class SpcNextResearchScene extends Phaser.Scene {
       bounds.maxX - bounds.minX,
       bounds.maxY - bounds.minY,
     );
-    this.followPlayer();
-    this.cameras.main.setZoom(0.72);
+    if (this.scenario.kind === "relational-episode") {
+      this.focusSelected();
+      // The World remains the 8,192-wide canonical World; the camera doesn't
+      // stage a fake relocation or distort actor coordinates.
+      this.cameras.main.setZoom(1.28);
+    } else {
+      this.followPlayer();
+      this.cameras.main.setZoom(0.72);
+    }
     this.captureNewSpeechOccurrences();
     this.created = true;
     this.pushFrame(true);
@@ -188,6 +197,17 @@ export class SpcNextResearchScene extends Phaser.Scene {
     const result = this.scenario.requestOneResidentCognition(this.selectedResidentId);
     this.pushFrame(true);
     return result;
+  }
+
+  relationalEpisodeState(): RelationalEpisodeState | null {
+    return this.scenario.relationalEpisodeState?.() ?? null;
+  }
+
+  /** One explicit, clearly labeled, TEST-INJECTED semantic answer, never Luna. */
+  chooseRelationalTestOutcome(choice: RelationalEpisodeChoice): "accepted" | "not_ready" {
+    const outcome = this.scenario.chooseRelationalTestOutcome?.(choice) ?? "not_ready";
+    this.pushFrame(true);
+    return outcome;
   }
 
   playerCall(text = "Hej!"): void {
