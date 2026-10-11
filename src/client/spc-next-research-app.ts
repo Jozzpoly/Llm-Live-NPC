@@ -81,7 +81,7 @@ const oneShotButton = document.createElement("button");
 oneShotButton.type = "button";
 oneShotButton.className = "spc-chat-send";
 oneShotButton.textContent = "Zapytaj Lunę (1×)";
-oneShotButton.title = "Tylko wybrany mieszkaniec, jeden istniejący prywatny powód, najwyżej jedno zapytanie w tej sesji.";
+oneShotButton.title = "Wybrany mieszkaniec, jego rzeczywiste prywatne powody i maksymalnie jeden request w tej sesji. Model sam wybiera powód decyzji.";
 oneShotButton.hidden = !armedResearchMode;
 const oneShotStatus = document.createElement("span");
 oneShotStatus.className = "spc-armed-status";
@@ -379,7 +379,7 @@ oneShotButton.addEventListener("click", () => {
     oneShotButton.disabled = true;
   } else if (status === "no_reason") {
     oneShotStatus.textContent = "Brak prywatnego powodu";
-    oneShotStatus.title = "Podejdź, odezwij się i odczekaj jeden World tick, a następnie spróbuj ponownie.";
+    oneShotStatus.title = "Brak aktualnego powodu do oceny. Możesz poczekać na prawdziwe wydarzenie w World; nie wymuszaj wypowiedzi gracza tylko po to, aby uruchomić model.";
   } else {
     oneShotStatus.textContent = "Mieszkaniec jeszcze niegotowy";
   }

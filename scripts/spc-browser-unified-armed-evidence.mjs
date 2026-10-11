@@ -80,6 +80,7 @@ try{
         url:request.url,method:request.method,
         residentId:context?.resident?.id??null,
         reasonKinds:Array.isArray(context?.reasons)?context.reasons.map(x=>x.kind):[],
+        reasonIds:Array.isArray(context?.reasons)?context.reasons.map(x=>x.id):[],
       });
     }
   });
@@ -121,6 +122,43 @@ try{
   check("no browser exception",report.exceptions.length===0,report.exceptions);
   const screenshot=await cdp.send("Page.captureScreenshot",{format:"png"});
   writeFileSync(resolve(dirname(output),"unified-armed.png"),Buffer.from(screenshot.data,"base64"));
+  // Separate independent browser-run, intentionally WITHOUT a fresh player action.
+  // The authored opening is a factual starting condition, NOT self-created motive.
+  const beforeQuiet=report.requests.length;
+  await cdp.send("Page.navigate",{
+    url:base.replace(/\\/$/u,"")+"/?spc=1&evidence=1&scenario=unified-armed&case=quiet-self-future"
+  });
+  await until(()=>runIn(cdp,'Boolean(location.search.includes("case=quiet-self-future") && window.__SPC_EVIDENCE__?.ready?.() && document.querySelector("canvas"))'));
+  const quietAtStart=await runIn(cdp,"window.__SPC_EVIDENCE__.snapshot()");
+  check("quiet second run starts a fresh World with zero API",
+    quietAtStart.livingDiagnostics?.providerRequestCount===0&&report.requests.length===beforeQuiet);
+  await runIn(cdp,"window.__SPC_EVIDENCE__.stepWorld(2600)");
+  const quietReady=await runIn(cdp,"window.__SPC_EVIDENCE__.snapshot()");
+  check("Mira and all five finished authored openings without player dialogue or upstream traffic",
+    quietReady.livingDiagnostics?.claimedResidentIds?.length===5
+    &&quietReady.selectedResidentId==="resident.mira"
+    &&report.requests.length===beforeQuiet,
+    {claimed:quietReady.livingDiagnostics?.claimedResidentIds,selected:quietReady.selectedResidentId});
+  const quietClicked=await runIn(cdp,'(()=>{const b=Array.from(document.querySelectorAll("button")).find(b=>b.textContent?.includes("Zapytaj Lunę"));b?.click();return b?.disabled??null;})()');
+  check("operator can explicitly ask Mira without scripting a player utterance",quietClicked===true);
+  await until(()=>report.requests.length===beforeQuiet+1,5000);
+  const quietRequest=report.requests.at(-1);
+  check("self-history request carries genuine private activity completion, no heard player speech",
+    quietRequest?.residentId==="resident.mira"
+    &&quietRequest?.reasonKinds?.includes("activity_completed")
+    &&!quietRequest?.reasonKinds?.includes("heard_speech")
+    &&quietRequest?.reasonIds?.length>0,
+    quietRequest);
+  await runIn(cdp,"window.__SPC_EVIDENCE__.stepWorld(500)");
+  await wait(200);
+  const quietAfter=await runIn(cdp,"window.__SPC_EVIDENCE__.snapshot()");
+  check("quiet self-history trial never auto-retries after rejected static-server provider",
+    report.requests.length===beforeQuiet+1
+    &&quietAfter.livingDiagnostics?.providerHardBudget?.upstreamRequestsStarted===1);
+  check("no browser exceptions across independent speech and quiet runs",
+    report.exceptions.length===0,report.exceptions);
+  const quietScreenshot=await cdp.send("Page.captureScreenshot",{format:"png"});
+  writeFileSync(resolve(dirname(output),"unified-armed-self-future.png"),Buffer.from(quietScreenshot.data,"base64"));
   report.outcome="PASS";
 }catch(e){report.outcome="FAIL";report.failure=e instanceof Error?e.stack:String(e);process.exitCode=1;}
 finally{
