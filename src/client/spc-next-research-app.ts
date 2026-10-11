@@ -72,6 +72,24 @@ chatForm.append(chatInput, chatSend);
 
 // Deliberate one-shot research control. No implicit Luna calls on World ticks.
 const relationalEpisodeMode = params.get("scenario") === "relational-episode";
+if (relationalEpisodeMode) {
+  appNode.classList.add("spc-relational-mode");
+  const history = params.get("case") !== "no-standing";
+  const view = document.createElement("a");
+  view.className = "spc-episode-compare";
+  view.href = history
+    ? "?spc=1&scenario=relational-episode&case=no-standing"
+    : "?spc=1&scenario=relational-episode";
+  view.textContent = history
+    ? "Porównaj: ten sam powrót bez wcześniejszej obietnicy"
+    : "Porównaj: powrót z wcześniejszą obietnicą";
+  const replay = document.createElement("a");
+  replay.className = "spc-episode-compare";
+  replay.href = location.pathname + location.search;
+  replay.textContent = "Odtwórz od początku";
+  footer.append(view, replay);
+}
+
 const armedResearchMode = params.get("scenario") === "unified-armed";
 const episodeDecision = document.createElement("button");
 episodeDecision.type = "button";
