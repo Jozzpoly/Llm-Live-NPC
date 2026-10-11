@@ -313,6 +313,7 @@ describe("five-resident unified living runtime", () => {
     expect(accepted?.admittedChoice).toMatchObject({
       kind: "accept",
       originReasonId: heardReasonId,
+      declaredRationale: "I truly heard addressed player speech and choose one reply.",
       matterId: expect.any(String),
       runId: expect.any(String),
     });
@@ -373,7 +374,10 @@ describe("five-resident unified living runtime", () => {
       e => e.residentId === "resident.mira" && e.status === "admitted",
     );
     expect(admitted?.admittedChoice).toEqual({
-      originReasonId: origin!.id, kind: "decline", matterId: null, runId: null,
+      originReasonId: origin!.id,
+      kind: "decline",
+      declaredRationale: "I choose not to take new work.",
+      matterId: null, runId: null,
     });
     expect(life.matterScope.matterIds()).toEqual([]);
     for (let i = 0; i < 360; i++) living.advanceOneWorldTick();
