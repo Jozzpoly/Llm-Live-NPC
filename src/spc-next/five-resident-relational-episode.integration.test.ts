@@ -217,6 +217,12 @@ describe("R6 five-resident ordinary-history episode / no external model calls", 
     }
     expect(janek.currentLifeView().matters.find(m => m.id === standingId)?.status)
       .toBe("active");
+    // One already reviewed relation cannot generate another cognition pressure
+    // when Ida repeats the SAME physical leave-and-return (Sept stress control).
+    expect(travel(s, "episode.ida-repeat-leaves", "crossroads")).toHaveLength(0);
+    expect(travel(s, "episode.ida-repeat-returns", "workshop")).toHaveLength(0);
+    expect(janek.resident.pendingCognitionReasons()
+      .filter(r => r.id === relevant[0]!.id)).toHaveLength(0);
     // One fixture-chosen response is NOT endogenous personhood. It establishes
     // that the missing decision can be admitted and enacted on the actual World.
     console.info("SPC_FIVE_RESIDENT_RELATIONAL_EPISODE", JSON.stringify({
@@ -251,5 +257,49 @@ describe("R6 five-resident ordinary-history episode / no external model calls", 
     expect(s.world.diagnostics().recentOccurrences.some(o =>
       o.kind === "speech" && o.actorId === JAN
     )).toBe(false);
+  }, 30_000);
+
+  it("accepts meaningful DEFER on a personally grounded encounter without fabricating speech or body work", () => {
+    const s = specimen();
+    travelToFirstMeeting(s);
+    const standingId = actualOpeningPromise(s);
+    travel(s, "episode.defer-ida-leaves", "crossroads");
+    const [relevance] = travel(s, "episode.defer-ida-returns", "workshop");
+    expect(relevance).toMatchObject({ matterId: standingId });
+
+    const janek = s.host.life(JAN)!;
+    const scheduler = new FiveResidentCausalCognitionHost(s.host, 1);
+    let request: ReturnType<typeof scheduler.startReadyRequests>[number] | undefined;
+    for (let i = 0; i < 300 && !request; i += 1) {
+      scheduler.collectReadyBatches([JAN]);
+      request = scheduler.startReadyRequests([JAN])[0];
+      if (!request) s.host.advanceOneWorldTick();
+    }
+    expect(request).toBeDefined();
+    if (!request) return;
+    expect(request.batch.reasons.some(r => r.id === relevance!.reasonId)).toBe(true);
+    const response = scheduler.settleCommitment(request, {
+      version: 1,
+      commitmentDecision: {
+        kind: "defer",
+        reason: "TEST-INJECTED: Ida returned, but I choose not to interrupt our lives now.",
+      },
+      beliefs: [],
+      concerns: [],
+      reviewAfterSeconds: 120,
+    }, relevance!.reasonId);
+    expect(response).toMatchObject({
+      status: "applied", residentId: JAN, decision: "defer", commitment: null,
+    });
+    expect(janek.focus.focusedRun()).toBeNull();
+    expect(janek.currentLifeView().matters.find(m => m.id === standingId)?.status)
+      .toBe("active");
+    for (let i = 0; i < 300; i += 1) s.host.advanceOneWorldTick();
+    expect(s.world.diagnostics().recentOccurrences.some(o =>
+      o.kind === "speech" && o.actorId === JAN && o.text === ACKNOWLEDGEMENT
+    )).toBe(false);
+    expect(janek.currentLifeView().matters.filter(m =>
+      m.semanticIntent?.kind === "communicate_actor" && m.status === "active"
+    )).toHaveLength(0);
   }, 30_000);
 });
