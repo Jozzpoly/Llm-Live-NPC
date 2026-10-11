@@ -313,3 +313,35 @@
   opacity: .42;
   cursor: not-allowed;
 }
+
+/* Keep optional lab intervention controls visible rather than overflowing the
+   small browser game header next to the 390px analysis pane. */
+#app.spc-relational-mode .game-shell header {
+  flex-wrap: wrap;
+  align-content: center;
+  gap: 8px;
+  padding: 10px 14px;
+}
+#app.spc-relational-mode .spc-header-actions {
+  min-width: 0;
+  flex: 1 1 560px;
+  margin-left: 0;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+#app.spc-relational-mode .spc-episode-status {
+  order: -1;
+  flex: 1 1 100%;
+  max-width: none;
+}
+#app.spc-relational-mode .spc-chat-form {
+  flex: 1 1 210px;
+  min-width: 160px;
+  max-width: 300px;
+}
+.spc-episode-compare {
+  color: #9fc4d8;
+  font-size: 11px;
+  text-underline-offset: 2px;
+}
+.spc-episode-compare:hover { color: #d6efff; }
