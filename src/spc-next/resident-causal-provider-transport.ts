@@ -7,6 +7,15 @@ import type {
   ResidentCausalCognitionSettlement,
 } from "./resident-causal-cognition-lane";
 
+/** Bounded server-observed token usage, never a billing or complimentary-quota claim. */
+export interface ResidentCausalProviderUsage {
+  model: string;
+  inputTokens: number | null;
+  outputTokens: number | null;
+  totalTokens: number | null;
+  elapsedMs: number;
+}
+
 export type ResidentCausalProviderArrival = Readonly<
   | {
       version: 1;
@@ -16,6 +25,7 @@ export type ResidentCausalProviderArrival = Readonly<
       status: "proposal";
       originReasonId: string;
       proposal: unknown;
+      usage?: ResidentCausalProviderUsage;
     }
   | {
       version: 1;
@@ -151,6 +161,7 @@ export class ResidentCausalProviderTransport<
       status: "proposal" as const,
       originReasonId: raw.originReasonId,
       proposal: structuredClone(raw.proposal),
+      ...(safeProviderUsage(raw.usage) ? { usage: safeProviderUsage(raw.usage)! } : {}),
     }));
   }
 
@@ -223,6 +234,27 @@ export class ResidentCausalProviderTransport<
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function safeProviderUsage(value: unknown): ResidentCausalProviderUsage | null {
+  if (!isRecord(value)
+    || typeof value.model !== "string"
+    || !/^[A-Za-z0-9][A-Za-z0-9._:/-]{0,119}$/u.test(value.model)) return null;
+  const token = (v: unknown) => v === null ? null
+    : typeof v === "number" && Number.isSafeInteger(v) && v >= 0 ? v : undefined;
+  const inputTokens = token(value.inputTokens);
+  const outputTokens = token(value.outputTokens);
+  const totalTokens = token(value.totalTokens);
+  const elapsedMs = token(value.elapsedMs);
+  if (inputTokens === undefined || outputTokens === undefined
+    || totalTokens === undefined || elapsedMs === null || elapsedMs === undefined) return null;
+  return Object.freeze({
+    model: value.model,
+    inputTokens,
+    outputTokens,
+    totalTokens,
+    elapsedMs,
+  });
 }
 
 async function safeHttpErrorDetail(response: Response): Promise<string> {

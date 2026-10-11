@@ -18,6 +18,7 @@ import {
   type FiveResidentRegionComposition,
 } from "./five-resident-region";
 import type { CognitionFetch } from "./resident-cognition-live-host";
+import type { ResidentCausalProviderUsage } from "./resident-causal-provider-transport";
 import {
   createCognitionFetchHardBudget,
   type CognitionFetchHardBudget,
@@ -41,6 +42,8 @@ export interface FiveResidentLivingProviderEvent {
     | "provider_error"
     | "transport_internal_error";
   detail: string;
+  /** Parsed from Worker output; not proof of billed spend or free-tier eligibility. */
+  usage?: ResidentCausalProviderUsage;
 }
 
 export interface FiveResidentLivingRuntimeDiagnostics {
@@ -189,7 +192,7 @@ export class FiveResidentUnifiedLivingRuntime {
         request.residentId,
         request.id,
         "request_started",
-        `provider request started with ${request.batch.reasons.length} reason(s)`,
+        `provider request started with ${request.batch.reasons.length} reason(s): ${request.batch.reasons.slice(0, 12).map(r => `${r.kind}:${r.id}`).join(", ")}`,
       );
 
       void this.provider.request(request).then((arrival) => {
@@ -200,8 +203,9 @@ export class FiveResidentUnifiedLivingRuntime {
           request.id,
           "arrival_ready",
           arrival.status === "proposal"
-            ? `proposal arrived from origin ${arrival.originReasonId}`
+            ? `proposal arrived from origin ${arrival.originReasonId} (${request.batch.reasons.find(r => r.id === arrival.originReasonId)?.kind ?? "unknown"}); ${arrival.usage ? `usage ${arrival.usage.inputTokens ?? "?"}/${arrival.usage.outputTokens ?? "?"}/${arrival.usage.totalTokens ?? "?"} tokens, ${arrival.usage.model}, ${arrival.usage.elapsedMs}ms` : "usage unavailable"}`
             : `provider error arrival: ${arrival.code}${arrival.detail ? `; ${arrival.detail}` : ""}`,
+          ...(arrival.status === "proposal" && arrival.usage ? [arrival.usage] : []),
         );
       }).catch((error: unknown) => {
         this.providerInFlight.delete(request.id);
@@ -253,6 +257,7 @@ export class FiveResidentUnifiedLivingRuntime {
     requestId: string,
     status: FiveResidentLivingProviderEvent["status"],
     detail: string,
+    usage?: ResidentCausalProviderUsage,
   ): void {
     this.recentProviderEvents.push({
       sequence: this.providerEventSequence++,
@@ -261,6 +266,7 @@ export class FiveResidentUnifiedLivingRuntime {
       requestId,
       status,
       detail,
+      ...(usage ? { usage: structuredClone(usage) } : {}),
     });
     while (this.recentProviderEvents.length > PROVIDER_EVENT_LIMIT) {
       this.recentProviderEvents.shift();

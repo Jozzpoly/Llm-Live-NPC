@@ -155,6 +155,19 @@ describe("Full manual SPC browser-session Worker/World research boundary", () =>
     expect(upstream).toHaveBeenCalledTimes(1);
     expect(calls).toHaveLength(1);
     expect(calls[0]).toMatchObject({ residentId: "resident.mira", kind: "activity_completed" });
+    const arrivalEvent = living.diagnostics().recentProviderEvents.find(
+      e => e.residentId === "resident.mira" && e.status === "arrival_ready",
+    );
+    expect(arrivalEvent?.detail).toContain("activity_completed");
+    expect(arrivalEvent?.detail).toContain("usage 100/50/150 tokens");
+    expect(arrivalEvent?.usage).toMatchObject({
+      model: "gpt-5.6-luna",
+      inputTokens: 100,
+      outputTokens: 50,
+      totalTokens: 150,
+      elapsedMs: expect.any(Number),
+    });
+
 
     living.advanceOneWorldTick();
     expect(living.diagnostics().recentProviderEvents.some(e =>
