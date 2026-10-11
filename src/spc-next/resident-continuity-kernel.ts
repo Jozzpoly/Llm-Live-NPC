@@ -63,6 +63,17 @@ export interface ResidentAcquireMaterialObjectMatterIntent {
   objectId: string;
 }
 
+/** One durable mundane job, not two independent detached API decisions.
+ * Its physical location is authored/current resident intention; World still
+ * exclusively decides whether the object can be picked up and placed.
+ */
+export interface ResidentDeliverMaterialObjectMatterIntent {
+  kind: "deliver_material_object";
+  goal: string;
+  objectId: string;
+  destination: { x: number; y: number };
+}
+
 /**
  * Resident-owned standing social responsibility created by the resident's own
  * factually observed speech act. It deliberately owns no body execution method.
@@ -81,6 +92,7 @@ export type ResidentMatterIntent =
   | ResidentTravelRegionMatterIntent
   | ResidentCommunicateActorMatterIntent
   | ResidentAcquireMaterialObjectMatterIntent
+  | ResidentDeliverMaterialObjectMatterIntent
   | ResidentStandingSocialCommitmentMatterIntent;
 
 export type ResidentMatterHistoricalSupportRelation =
@@ -1432,6 +1444,12 @@ function validateMatterIntent(intent: ResidentMatterIntent): void {
       return;
     case "acquire_material_object":
       assertNonEmpty(intent.objectId, "matter intent material object id");
+      return;
+    case "deliver_material_object":
+      assertNonEmpty(intent.objectId, "matter intent delivered object id");
+      if (!Number.isFinite(intent.destination.x) || !Number.isFinite(intent.destination.y)) {
+        throw new Error("delivery destination must be finite World coordinates");
+      }
       return;
     case "standing_social_commitment":
       assertNonEmpty(intent.counterpartyActorId, "standing social commitment counterparty actor id");

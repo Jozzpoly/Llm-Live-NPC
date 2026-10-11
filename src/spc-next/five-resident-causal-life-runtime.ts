@@ -81,7 +81,7 @@ export class FiveResidentCausalLifeRuntime {
 
   constructor(
     private readonly composition: FiveResidentRegionComposition,
-    private readonly options: { socialReencounter?: boolean } = {},
+    private readonly options: { socialReencounter?: boolean; initialEverydayWork?: boolean } = {},
   ) {
     this.claimReadyResidents();
   }
@@ -240,6 +240,38 @@ export class FiveResidentCausalLifeRuntime {
           ? new ResidentMatterRelevanceBridge(resident)
           : null,
       });
+
+      // One explicit *authored prior job* in the playable settlement. Janek's
+      // real local brain then performs mundane pickup, carrying and placement;
+      // neither an LLM action nor an invented need/loop. Test-only empty-world
+      // baselines keep initialEverydayWork disabled.
+      if (this.options.initialEverydayWork && residentId === "resident.janek") {
+        const origin = life.kernel.recordEvidence({
+          id: "evidence.janek.workshop-opening.authored",
+          tick: this.composition.world.tick,
+          kind: "life_context",
+          summary: "Janek begins the day with a workshop supply delivery to the crossroads store.",
+        });
+        const matterId = "matter.janek.workshop-opening.delivery";
+        const runId = "run.janek.workshop-opening.delivery";
+        life.kernel.openMatter({
+          id: matterId,
+          originEvidenceId: origin.id,
+          semanticCourse: "Finish carrying the workshop crate to crossroads storage.",
+          semanticIntent: {
+            kind: "deliver_material_object",
+            goal: "Take the actual workshop crate to the crossroads store and put it down.",
+            objectId: "crate.workshop.01",
+            destination: { x: 2_980, y: 1_080 },
+          },
+        });
+        life.matterScope.track(matterId);
+        life.kernel.bindRun({ matterId, runId, taskId: "task.janek.workshop-opening.delivery" });
+        const claim = life.arbitrator.request(runId);
+        if (claim.status !== "acquired") {
+          throw new Error("existing workshop job could not acquire Janek's real execution authority");
+        }
+      }
     }
   }
 }

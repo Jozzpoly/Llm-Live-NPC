@@ -97,6 +97,8 @@ export interface FiveResidentUnifiedLivingRuntimeOptions {
   providerDispatchMode?: "automatic" | "manual";
   /** Tested #158 donor; resident-private relation makes only actual re-encounters reviewable. */
   socialReencounter?: boolean;
+  /** Opt-in actual authored opening material work, no automatic cognition. */
+  initialEverydayWork?: boolean;
 }
 
 /**
@@ -133,6 +135,7 @@ export class FiveResidentUnifiedLivingRuntime {
     this.composition = options.composition ?? createFiveResidentRegionComposition();
     this.lifeRuntime = new FiveResidentCausalLifeRuntime(this.composition, {
       socialReencounter: options.socialReencounter ?? false,
+      initialEverydayWork: options.initialEverydayWork ?? false,
     });
     this.cognition = new FiveResidentCausalCognitionHost(
       this.lifeRuntime,

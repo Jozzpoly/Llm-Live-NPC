@@ -32,6 +32,20 @@ export const FIVE_RESIDENT_MATERIAL_OBJECTS: readonly MaterialObjectState[] = [
     radius: 18,
     location: { kind: "free", position: { x: 1_952, y: 720 } },
   },
+  // Each entry is a REAL pickupable/replaceable World identity, not decoration.
+  // Anchors nearby remain separately authored semantic sites, NOT collision.
+  { id: "basket.hearth.01", label: "Hearth Supply Basket", radius: 15,
+    location: { kind: "free", position: { x: 846, y: 794 } } },
+  { id: "crate.workshop.02", label: "Workshop Spare Parts", radius: 17,
+    location: { kind: "free", position: { x: 2_012, y: 838 } } },
+  { id: "parcel.crossroads.01", label: "Crossroads Parcel", radius: 14,
+    location: { kind: "free", position: { x: 3_136, y: 1_055 } } },
+  { id: "bucket.fields.01", label: "Field Water Bucket", radius: 13,
+    location: { kind: "free", position: { x: 2_186, y: 2_400 } } },
+  { id: "bundle.forest.01", label: "Forest Bundle", radius: 16,
+    location: { kind: "free", position: { x: 4_690, y: 2_710 } } },
+  { id: "fragment.ruins.01", label: "Ruins Stone Fragment", radius: 12,
+    location: { kind: "free", position: { x: 7_022, y: 1_198 } } },
 ];
 
 export interface FiveResidentRolePressure {
@@ -66,11 +80,11 @@ export type FiveResidentId =
 export const FIVE_RESIDENT_MATERIAL_FAMILIARITY: Readonly<
   Record<FiveResidentId, readonly string[]>
 > = {
-  "resident.mira": [],
-  "resident.janek": ["crate.workshop.01"],
-  "resident.ida": [],
-  "resident.oren": [],
-  "resident.nela": [],
+  "resident.mira": ["basket.hearth.01"],
+  "resident.janek": ["crate.workshop.01", "crate.workshop.02"],
+  "resident.ida": ["parcel.crossroads.01"],
+  "resident.oren": ["bundle.forest.01"],
+  "resident.nela": ["fragment.ruins.01"],
 };
 
 export type FiveResidentRuntimes = Readonly<Record<FiveResidentId, ResidentRuntime>>;

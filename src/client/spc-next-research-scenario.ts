@@ -918,6 +918,7 @@ function createUnifiedLivingScenario(manual = false): SpcNextResearchScenario {
     }),
     providerDispatchMode: "manual",
     socialReencounter: true,
+    initialEverydayWork: true,
     maxConcurrentCognition: 1,
     maxUpstreamRequests: 1,
   } : {
@@ -926,6 +927,7 @@ function createUnifiedLivingScenario(manual = false): SpcNextResearchScenario {
     // dispatch manual, without exposing a manual request control in this mode.
     providerDispatchMode: "manual",
     socialReencounter: true,
+    initialEverydayWork: true,
     maxUpstreamRequests: 1,
   });
   const janek = living.life("resident.janek");
