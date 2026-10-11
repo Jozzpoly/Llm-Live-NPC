@@ -66,6 +66,8 @@ export interface FiveResidentUnifiedLivingRuntimeOptions {
   maxUpstreamRequests?: number;
   /** Keep the original multi-resident automatic mode unless explicitly researching manual dispatch. */
   providerDispatchMode?: "automatic" | "manual";
+  /** Tested #158 donor; resident-private relation makes only actual re-encounters reviewable. */
+  socialReencounter?: boolean;
 }
 
 /**
@@ -99,7 +101,9 @@ export class FiveResidentUnifiedLivingRuntime {
   constructor(options: FiveResidentUnifiedLivingRuntimeOptions = {}) {
     this.providerDispatchMode = options.providerDispatchMode ?? "automatic";
     this.composition = options.composition ?? createFiveResidentRegionComposition();
-    this.lifeRuntime = new FiveResidentCausalLifeRuntime(this.composition);
+    this.lifeRuntime = new FiveResidentCausalLifeRuntime(this.composition, {
+      socialReencounter: options.socialReencounter ?? false,
+    });
     this.cognition = new FiveResidentCausalCognitionHost(
       this.lifeRuntime,
       options.maxConcurrentCognition ?? 5,

@@ -894,6 +894,7 @@ function createUnifiedLivingScenario(manual = false): SpcNextResearchScenario {
       playerStart: { x: 900, y: 680 },
     }),
     providerDispatchMode: "manual",
+    socialReencounter: true,
     maxConcurrentCognition: 1,
     maxUpstreamRequests: 1,
   } : {});
