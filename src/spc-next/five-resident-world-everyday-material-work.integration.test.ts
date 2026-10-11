@@ -12,7 +12,7 @@ describe("ordinary work in the ACTUAL five-resident playable World", () => {
     const janek = life.life("resident.janek")!;
     const original = janek.kernel.matter("matter.janek.workshop-opening.delivery");
     expect(original?.status).toBe("active");
-    expect(original?.originEvidence?.kind).toBe("life_context");
+    expect(original?.originEvidenceId).toBe("evidence.janek.workshop-opening.authored");
     let carried = false, finished = false, cameBackToWorld = false;
     for (let i=0;i<1700;i++){
       const frame=life.advanceOneWorldTick();
@@ -36,7 +36,9 @@ describe("ordinary work in the ACTUAL five-resident playable World", () => {
     });
     const completed=janek.kernel.matter(original!.id);
     expect(completed?.status).toBe("resolved");
-    expect(completed?.lastOutcomeEvidence?.summary).toContain("physically delivered");
+    expect(completed?.lastOutcomeEvidenceId).toBeTruthy();
+    expect(janek.currentLifeView().matters.find(m => m.id === original!.id)?.lastOutcomeEvidence?.summary)
+      .toContain("physically delivered");
     expect(life.diagnostics().providerRequestCount).toBe(0);
     expect(life.lifeRuntime.claimedResidentIds().length).toBe(5);
     expect(life.world.materialObjects().length).toBeGreaterThan(1);
