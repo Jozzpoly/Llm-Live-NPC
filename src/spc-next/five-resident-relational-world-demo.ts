@@ -105,6 +105,15 @@ export class FiveResidentRelationalWorldDemo {
     const completion = frame.execution[this.phase === "promise" ? JAN : IDA];
     const completed = !!completion && completion.status === "completed"
       && completion.runId === this.activeRunId;
+    // World failure must be observable, never hidden as an endless authored
+    // animation. Player obstruction or changed geometry can falsify the demo.
+    if (completion && "runId" in completion && completion.runId === this.activeRunId
+      && (completion.status === "blocked"
+        || completion.status === "grounding_unavailable"
+        || completion.status === "unsupported_intent"
+        || completion.status === "authority_lost")) {
+      return this.fail("World rejected active " + this.phase + " execution: " + completion.status);
+    }
 
     if (this.phase === "approach" && completed) {
       if (this.withEarlierPromise) {
