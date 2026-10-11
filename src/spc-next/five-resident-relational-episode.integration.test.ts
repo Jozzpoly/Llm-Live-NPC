@@ -145,6 +145,17 @@ describe("R6 five-resident ordinary-history episode / no external model calls", 
     const s = specimen();
     travelToFirstMeeting(s);
     const standingId = actualOpeningPromise(s);
+    // One factual speech is heard from TWO private viewpoints, but social
+    // ownership is NOT copied to the listener. Ida heard Janek's declaration;
+    // she did not thereby promise him anything in return.
+    const idaLife = s.host.life(IDA)!;
+    const idaHeard = idaLife.resident.pendingCognitionReasons().filter(r => r.kind === "heard_speech");
+    expect(idaHeard).toHaveLength(1);
+    expect(idaHeard[0]!.evidenceIds.length).toBeGreaterThan(0);
+    expect(idaLife.currentLifeView().matters.some(m =>
+      m.semanticIntent?.kind === "standing_social_commitment"
+    )).toBe(false);
+    expect(idaLife.focus.focusedRun()).toBeNull();
 
     expect(travel(s, "episode.ida-leaves", "crossroads")).toHaveLength(0);
     const returnObservations = travel(s, "episode.ida-returns", "workshop");
