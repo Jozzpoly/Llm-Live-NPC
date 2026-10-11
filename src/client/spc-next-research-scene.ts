@@ -526,7 +526,14 @@ export class SpcNextResearchScene extends Phaser.Scene {
         }).setOrigin(0.5, 1).setDepth(7);
         this.materialLabels.set(object.id, label);
       }
-      label.setPosition(position.x, position.y - half - 6).setVisible(true);
+      // This one opt-in observation specimen has a real World crate exactly
+      // between two resident bodies. Displace ONLY the readable text label,
+      // never the factual material object's drawn or collision position.
+      if (this.scenario.kind === "relational-episode") {
+        label.setPosition(position.x + 64, position.y + half + 48).setVisible(true);
+      } else {
+        label.setPosition(position.x, position.y - half - 6).setVisible(true);
+      }
     }
 
     for (const [id, label] of this.materialLabels) {
@@ -551,6 +558,12 @@ export class SpcNextResearchScene extends Phaser.Scene {
       backgroundColor: "#111820c7",
       padding: { x: 5, y: 2 },
     }).setOrigin(0.5, 1);
+    // Screen-space name declutter only. Janek and Ida really stand close;
+    // presentation labels must not overwrite each other or invent separation.
+    if (this.scenario.kind === "relational-episode") {
+      if (actor.id === "resident.janek") label.setPosition(-25, -36);
+      if (actor.id === "resident.ida") label.setPosition(30, -36);
+    }
     const stateLabel = this.add.text(0, 28, actor.kind, {
       fontFamily: "Inter, system-ui, sans-serif",
       fontSize: "11px",
@@ -595,7 +608,10 @@ export class SpcNextResearchScene extends Phaser.Scene {
       }
       const actor = this.snapshot.actors.find((candidate) => candidate.id === view.actorId);
       if (!actor) continue;
-      view.text.setPosition(actor.position.x, actor.position.y - 42 / zoom);
+      // Keep an actual World utterance visually distinct from actor identity
+      // labels and the nearby true workshop crate (no speech teleport).
+      const bubbleLift = this.scenario.kind === "relational-episode" ? 108 : 42;
+      view.text.setPosition(actor.position.x, actor.position.y - bubbleLift / zoom);
       view.text.setScale(1 / zoom);
     }
   }
