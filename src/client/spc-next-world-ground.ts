@@ -1,5 +1,6 @@
 import type * as Phaser from "phaser";
 import type { WorldAnchor } from "../spc-next/contracts";
+import { createFiveResidentNavigationGraph } from "../spc-next/five-resident-navigation";
 
 /**
  * World-ground visual language for the existing five-SPC sandbox.
@@ -16,44 +17,56 @@ export function paintFiveResidentGround(
   graphics: Phaser.GameObjects.Graphics,
   anchors: readonly WorldAnchor[],
 ): void {
-  const byId = new Map(anchors.map(anchor => [anchor.id, anchor] as const));
-
-  // Worn human footpaths connect EXISTING named places. They are not a navmesh.
-  const paths: ReadonlyArray<readonly [string, string]> = [
-    ["anchor.hearth.fire", "anchor.workshop.bench"],
-    ["anchor.workshop.bench", "anchor.crossroads.board"],
-    ["anchor.crossroads.board", "anchor.fields.well"],
-    ["anchor.crossroads.board", "anchor.forest.cache"],
-    ["anchor.crossroads.board", "anchor.ruins.threshold"],
-    ["anchor.fields.well", "anchor.forest.cache"],
-    ["anchor.forest.cache", "anchor.wilds.lookout"],
+  // The tracks follow the SAME explicit navigation waypoints that resident
+  // movement uses, not invented straight chords between distant site markers.
+  // Even here they remain non-solid FLOOR marks, not a second navmesh.
+  const navigation = createFiveResidentNavigationGraph();
+  const connectedRegions: ReadonlyArray<readonly [string, string]> = [
+    ["hearth", "workshop"],
+    ["hearth", "fields"],
+    ["workshop", "crossroads"],
+    ["workshop", "fields"],
+    ["crossroads", "old-road"],
+    ["crossroads", "forest-edge"],
+    ["fields", "forest-edge"],
+    ["old-road", "ruins"],
+    ["forest-edge", "deep-wilds"],
+    ["ruins", "deep-wilds"],
   ];
-  for (const [fromId, toId] of paths) {
-    const from = byId.get(fromId)?.position;
-    const to = byId.get(toId)?.position;
-    if (!from || !to) continue;
-
-    graphics.lineStyle(135, 0x382d22, 0.28);
-    graphics.lineBetween(from.x, from.y, to.x, to.y);
-    graphics.lineStyle(106, 0xa78a64, 0.16);
-    graphics.lineBetween(from.x, from.y, to.x, to.y);
-    graphics.lineStyle(64, 0xcfb48a, 0.12);
-    graphics.lineBetween(from.x, from.y, to.x, to.y);
-
-    // Small gravel/worn-edge detail derived from endpoints, never collision.
-    const seed = hash(fromId + toId);
-    for (let i = 0; i < 50; i++) {
-      const t = (i + fraction(seed, i * 3)) / 50;
-      const x = from.x + (to.x - from.x) * t;
-      const y = from.y + (to.y - from.y) * t;
-      const angle = fraction(seed, i * 5 + 1) * Math.PI * 2;
-      const distance = 35 + fraction(seed, i * 7 + 2) * 70;
-      graphics.fillStyle(0xddc49e, 0.08 + fraction(seed, i + 91) * 0.13);
-      graphics.fillCircle(
-        x + Math.cos(angle) * distance,
-        y + Math.sin(angle) * distance,
-        3 + fraction(seed, i + 129) * 7,
-      );
+  for (const [fromRegionId, toRegionId] of connectedRegions) {
+    const start = navigation.destinationPoint(fromRegionId);
+    const path = navigation.route(
+      fromRegionId,
+      toRegionId,
+      new Set([fromRegionId, toRegionId]),
+    );
+    if (!start || !path) continue;
+    const points = [start, ...path.waypoints];
+    const seed = hash(fromRegionId + ":" + toRegionId);
+    for (let segment = 1; segment < points.length; segment++) {
+      const from = points[segment - 1]!;
+      const to = points[segment]!;
+      // Narrow quiet worn trails support legibility without swallowing the
+      // forest, fields or ruins with unrealistic wide highway crossings.
+      graphics.lineStyle(82, 0x4d402d, 0.17);
+      graphics.lineBetween(from.x, from.y, to.x, to.y);
+      graphics.lineStyle(51, 0xa58a68, 0.115);
+      graphics.lineBetween(from.x, from.y, to.x, to.y);
+      graphics.lineStyle(22, 0xd2b38b, 0.075);
+      graphics.lineBetween(from.x, from.y, to.x, to.y);
+      for (let i = 0; i < 20; i++) {
+        const t = (i + fraction(seed, segment * 101 + i)) / 20;
+        const x = from.x + (to.x - from.x) * t;
+        const y = from.y + (to.y - from.y) * t;
+        const angle = fraction(seed, segment * 113 + i * 7 + 1) * Math.PI * 2;
+        const distance = 28 + fraction(seed, segment * 131 + i * 5 + 2) * 38;
+        graphics.fillStyle(0xd1b28a, 0.06 + fraction(seed, i + 91) * 0.09);
+        graphics.fillCircle(
+          x + Math.cos(angle) * distance,
+          y + Math.sin(angle) * distance,
+          2 + fraction(seed, i + 129) * 5,
+        );
+      }
     }
   }
 
