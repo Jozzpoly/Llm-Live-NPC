@@ -93,6 +93,21 @@ describe("shared SPC Next resident-life context sanitizer", () => {
     });
   });
 
+  it("sanitizes only bounded private material sightings, rejecting fake holder/oracle metadata", () => {
+    const record = structuredClone(focusedContext) as any;
+    record.knownMaterials = [{
+      objectId: "basket.hearth.01",
+      lastKnownPosition: { x: 846, y: 794 },
+      observedAtTick: 110, currentlyVisible: false,
+    }];
+    expect(sanitizeSpcNextLifeContext(record)?.knownMaterials).toEqual(record.knownMaterials);
+    record.knownMaterials[0].holderId = "player.jozz";
+    expect(sanitizeSpcNextLifeContext(record)).toBeNull();
+    delete record.knownMaterials[0].holderId;
+    record.knownMaterials[0].observedAtTick = 121;
+    expect(sanitizeSpcNextLifeContext(record)).toBeNull();
+  });
+
   it("preserves bounded structured semantic intent while keeping legacy missing intent readable", () => {
     expect(sanitizeSpcNextLifeContext(focusedContext)?.life.matters[0]?.semanticIntent).toBeNull();
 

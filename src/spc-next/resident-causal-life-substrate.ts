@@ -267,10 +267,14 @@ export class ResidentCausalLifeSubstrate {
     }
     if (this.lifeIntentOwner.state().activeAttemptId !== null) return null;
 
+    // No privileged World material list crosses this cognition boundary.
+    // Even remembered positions must originate from personal sight.
+    const observedMaterials = this.materialKnowledge?.sample();
     const attempt = this.lifeIntentOwner.prepare(
       batch,
       this.currentLifeView(),
       this.options.world.tick,
+      observedMaterials,
     );
     if (!attempt) return null;
     return {

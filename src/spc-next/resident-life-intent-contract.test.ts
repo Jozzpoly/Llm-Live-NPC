@@ -142,6 +142,29 @@ describe("ResidentLifeIntentProposal contract", () => {
     }, context)).toBeNull();
   });
 
+  it("parses resident-origin material delivery as a semantic region choice, never as raw World coordinates", () => {
+    const accepted = {
+      version: 1,
+      commitmentDecision: {
+        kind: "accept", reason: "I saw actual supplies and have a reason to move them.",
+        intent: {
+          kind: "deliver_material_object", goal: "bring my known basket to the workshop",
+          objectId: "basket.hearth.01", targetRegionId: "workshop",
+        },
+      },
+      beliefs: [], concerns: [], reviewAfterSeconds: 30,
+    };
+    expect(parseResidentLifeIntentProposal(accepted, context)?.commitmentDecision)
+      .toEqual(accepted.commitmentDecision);
+    expect(parseResidentLifeIntentProposal({
+      ...accepted,
+      commitmentDecision: {
+        ...accepted.commitmentDecision,
+        intent: { ...accepted.commitmentDecision.intent, destination: { x: 1900, y: 760 } },
+      },
+    }, context)).toBeNull();
+  });
+
   it("accepts an explicit standing social continuation only on grounded communication", () => {
     const socialContext: ResidentCognitionContext = {
       ...context,
