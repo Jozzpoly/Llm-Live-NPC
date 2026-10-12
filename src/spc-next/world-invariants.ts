@@ -2,6 +2,7 @@ import {
   clamp,
   type ActorState,
   type ResidentActivity,
+  type MaterialWorksite,
   type ResidentProfile,
   type SightBlocker,
   type SpcWorldOptions,
@@ -47,6 +48,18 @@ export function validateWorldOptions(options: SpcWorldOptions): void {
     anchorIds.add(anchor.id);
   }
 
+  const siteIds = new Set<string>(), outputs = new Set<string>();
+  for (const site of options.materialWorksites ?? []) {
+    validateMaterialWorksite(site);
+    if (siteIds.has(site.id) || outputs.has(site.output.id)) {
+      throw new Error("duplicate worksite or material output identity");
+    }
+    const anchor = options.anchors?.find(a => a.id === site.anchorId);
+    if (!anchor || anchor.kind !== "work") {
+      throw new Error("worksite requires a real authored work anchor");
+    }
+    siteIds.add(site.id); outputs.add(site.output.id);
+  }
   const sightBlockerIds = new Set<string>();
   for (const blocker of options.sightBlockers ?? []) {
     validateSightBlocker(blocker, options.bounds);
@@ -55,6 +68,18 @@ export function validateWorldOptions(options: SpcWorldOptions): void {
   }
 }
 
+function validateMaterialWorksite(site: MaterialWorksite): void {
+  for (const [name,id] of [["site",site.id],["anchor",site.anchorId],
+    ["source",site.sourceObjectId],["output",site.output.id],["label",site.output.label]] as const) {
+    assertNonEmpty(id,"worksite "+name);
+  }
+  if (site.sourceObjectId === site.output.id
+    || !Number.isFinite(site.output.radius) || site.output.radius <= 0
+    || !Number.isSafeInteger(site.requiredTicks)
+    || site.requiredTicks < 30 || site.requiredTicks > 3600) {
+    throw new Error("invalid worksite conversion contract");
+  }
+}
 export function validateWorldAnchor(anchor: WorldAnchor, worldBounds: WorldBounds): void {
   assertNonEmpty(anchor.id, "world anchor id");
   assertNonEmpty(anchor.label, `world anchor ${anchor.id} label`);

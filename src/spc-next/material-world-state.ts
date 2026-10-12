@@ -94,6 +94,21 @@ export class MaterialWorldState {
       .map((object) => structuredClone(object));
   }
 
+  /** Atomic conversion only after World's actor + site + elapsed-time checks. */
+  consumeHeldAndProduce(
+    actorId: string, sourceId: string, output: MaterialObjectState,
+  ): { source: MaterialObjectState; output: MaterialObjectState } | null {
+    const held = this.objectsById.get(sourceId);
+    if (!held || held.location.kind !== "held" || held.location.actorId !== actorId) return null;
+    if (sourceId === output.id || this.objectsById.has(output.id)
+      || output.location.kind !== "free") return null;
+    validateObject(output, this.bounds);
+    const source = structuredClone(held);
+    const produced = structuredClone(output);
+    this.objectsById.delete(sourceId);
+    this.objectsById.set(produced.id, produced);
+    return {source, output:structuredClone(produced)};
+  }
   heldObjectId(actorId: string): string | null {
     for (const object of this.objectsById.values()) {
       if (object.location.kind === "held" && object.location.actorId === actorId) return object.id;

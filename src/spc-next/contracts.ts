@@ -220,11 +220,20 @@ export interface WorldPublicSnapshot {
   residents: readonly ResidentPublicState[];
 }
 
+/** Explicit finite World affordance; semantic anchor/texture alone gives no powers. */
+export interface MaterialWorksite {
+  id: string;
+  anchorId: string;
+  sourceObjectId: string;
+  output: { id: string; label: string; radius: number };
+  requiredTicks: number;
+}
 export interface SpcWorldOptions {
   bounds: WorldBounds;
   regions: readonly WorldRegion[];
   /** Static addressable authored places; not physical objects or automatic resident knowledge. */
   anchors?: readonly WorldAnchor[];
+  materialWorksites?: readonly MaterialWorksite[];
   /** Optional until authored physical sight geometry is introduced into a specimen. */
   sightBlockers?: readonly SightBlocker[];
   chunkSize: number;

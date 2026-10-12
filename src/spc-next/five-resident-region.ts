@@ -174,6 +174,12 @@ export function createFiveResidentRegionComposition(
     bounds: { minX: 0, minY: 0, maxX: 8_192, maxY: 8_192 },
     regions: FIVE_RESIDENT_REGIONS,
     anchors: FIVE_RESIDENT_ANCHORS,
+    materialWorksites:[{
+      id:"workshop.repair-kit",anchorId:"anchor.workshop.bench",
+      sourceObjectId:"crate.workshop.02",
+      output:{id:"kit.workshop.01",label:"Workshop Repair Kit",radius:14},
+      requiredTicks:180,
+    }],
     chunkSize: 256,
     fixedDeltaSeconds: 1 / 60,
   });
