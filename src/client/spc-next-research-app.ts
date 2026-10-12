@@ -141,13 +141,41 @@ exportProbeButton.textContent = "Zapisz dowody JSON";
 exportProbeButton.title = "Świadomie zapisz lokalnie prywatny kontekst SPC, odpowiedź modelu i stan World. Plik zawiera dane badawcze; nie udostępniaj go publicznie.";
 exportProbeButton.hidden = true;
 
+// First-class World observation, not a hidden debug sidebar requirement.
+// These buttons only change the observer's camera / selected resident;
+// they never move bodies, grant private knowledge or dispatch model requests.
+const worldNavigation = document.createElement("nav");
+worldNavigation.className = "spc-world-navigation";
+worldNavigation.setAttribute("aria-label", "Obserwuj mieszkańców świata");
+worldNavigation.hidden = !(unifiedLivingMode && !evidenceMode);
+const observePlayerButton = document.createElement("button");
+observePlayerButton.type = "button";
+observePlayerButton.textContent = "Gracz";
+observePlayerButton.dataset.worldPlayer = "true";
+observePlayerButton.title = "Wróć kamerą do gracza (P)";
+worldNavigation.append(observePlayerButton);
+for (const resident of FIVE_RESIDENT_ROLE_PRESSURES) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.textContent = resident.name;
+  button.dataset.worldResident = resident.residentId;
+  button.title = `Obserwuj ${resident.name} — kamera, bez zmiany zachowania SPC`;
+  button.setAttribute("aria-pressed", "false");
+  worldNavigation.append(button);
+}
+
 const headerActions = document.createElement("div");
 headerActions.className = "spc-header-actions";
 headerActions.append(stageNode, chatForm, operatorLoginLink, oneShotButton, exportProbeButton, oneShotStatus, episodeStatus, episodeDecision, episodeDefer, worldModeButton);
-header.append(headerActions);
+header.append(worldNavigation, headerActions);
 
 let scene: SpcNextResearchScene;
-let worldOnly = false;
+// The Owner's default opens the World rather than requiring an extra click
+// to hide the research microscope. Evidence and archival routes are untouched.
+let worldOnly = unifiedLivingMode && !evidenceMode;
+appNode.classList.toggle("spc-world-only", worldOnly);
+worldModeButton.textContent = worldOnly ? "Otwórz badania" : "Tylko świat";
+worldModeButton.setAttribute("aria-pressed", String(worldOnly));
 let lastFrame: SpcNextResearchFrame | null = null;
 let manualProbeBeginning: SpcNextResearchFrame | null = null;
 
@@ -156,12 +184,19 @@ function setWorldOnly(enabled: boolean): void {
   appNode.classList.toggle("spc-world-only", enabled);
   worldModeButton.textContent = enabled ? "Otwórz badania" : "Tylko świat";
   worldModeButton.setAttribute("aria-pressed", String(enabled));
-  stageNode.textContent = enabled ? "WORLD VIEW · NO TELEMETRY" : "WORLD / EPISTEMIC LAB";
+  stageNode.textContent = enabled
+    ? unifiedLivingMode ? "ŚWIAT · BEZ AUTOMATYCZNEGO API" : "WORLD VIEW · NO TELEMETRY"
+    : unifiedLivingMode ? "ŚWIAT / BADANIA" : "WORLD / EPISTEMIC LAB";
   if (enabled) scene.setResearchOverlay(false);
 }
 
 function renderPanel(frame: SpcNextResearchFrame): void {
   lastFrame = frame;
+  for (const button of worldNavigation.querySelectorAll<HTMLButtonElement>("[data-world-resident]")) {
+    const selected = button.dataset.worldResident === frame.selectedResidentId;
+    button.classList.toggle("is-selected", selected);
+    button.setAttribute("aria-pressed", String(selected));
+  }
   if (relationalEpisodeMode) {
     const current = scene?.relationalEpisodeState();
     if (current) {
@@ -559,6 +594,20 @@ chatForm.addEventListener("submit", (event) => {
   game.canvas.focus();
 });
 
+worldNavigation.addEventListener("click", (event) => {
+  const button = event.target instanceof Element
+    ? event.target.closest<HTMLButtonElement>("button")
+    : null;
+  if (!button) return;
+  if (button.dataset.worldPlayer === "true") {
+    scene.followPlayer();
+    return;
+  }
+  const residentId = button.dataset.worldResident;
+  if (!residentId) return;
+  scene.selectResident(residentId);
+  scene.focusSelected();
+});
 worldModeButton.addEventListener("click", () => {
   setWorldOnly(!worldOnly);
   game.scale.refresh();

@@ -345,3 +345,60 @@
   text-underline-offset: 2px;
 }
 .spc-episode-compare:hover { color: #d6efff; }
+
+/* The normal SPC entry is a World, not a wall of debug controls.
+   Camera shortcuts stay available even when the microscope is hidden.
+   Buttons change observation only; selected private state is not exposed here. */
+#app.spc-next-mode .game-shell header {
+  min-width: 0;
+}
+.spc-world-navigation {
+  min-width: 0;
+  display: flex;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+.spc-world-navigation[hidden] { display: none; }
+.spc-world-navigation button {
+  padding: 7px 9px;
+  background: #162027;
+  border: 1px solid #35454b;
+  color: #b9c9d0;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1.2;
+}
+.spc-world-navigation button:hover,
+.spc-world-navigation button:focus-visible {
+  border-color: #92b5bd;
+  color: #f1f6f8;
+}
+.spc-world-navigation button.is-selected {
+  border-color: #bfaa68;
+  color: #f1ddb1;
+}
+#app.spc-next-mode.spc-world-only .game-shell header {
+  flex-wrap: wrap;
+  row-gap: 9px;
+  justify-content: space-between;
+}
+#app.spc-next-mode.spc-world-only .spc-header-actions {
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  min-width: 0;
+}
+@media (max-width: 1100px) {
+  #app.spc-next-mode.spc-world-only .spc-world-navigation {
+    order: 3;
+    flex-basis: 100%;
+    justify-content: flex-start;
+  }
+  #app.spc-next-mode.spc-world-only .spc-header-actions {
+    flex: 1 1 400px;
+  }
+}
