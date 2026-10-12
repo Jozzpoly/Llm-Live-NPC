@@ -427,10 +427,15 @@
   white-space: nowrap;
 }
 .spc-owner-art-body {
-  position: absolute;
-  top: calc(100% + 9px);
-  right: 0;
-  width: min(340px, 80vw);
+  /* Header is inside an overflow:hidden game-shell. A regular absolute child
+     is clipped to header height and makes the actual editor unusable.
+     A viewport-fixed panel escapes that clipping without touching Phaser's
+     canvas bounds, the camera or any World coordinates. */
+  position: fixed;
+  top: clamp(105px, 16vh, 165px);
+  right: 18px;
+  z-index: 80;
+  width: min(360px, calc(100vw - 36px));
   max-height: min(72vh, 520px);
   overflow-y: auto;
   display: grid;

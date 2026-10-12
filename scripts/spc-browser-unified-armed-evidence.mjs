@@ -349,6 +349,21 @@ try{
   const localArtFileB64="iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAFklEQVR4nGOMWpD3nwEPYMInOXwUAAB8vgJ36VFsCgAAAABJRU5ErkJggg==";
   check("visual reference is optional and hidden on archival research worlds",
     await runIn(cdp,'Boolean(document.querySelector(".spc-owner-art-preview:not([hidden])"))'));
+  check("Owner artwork panel opens outside the clipped game header",
+    await runIn(cdp,`(() => {
+      const panel = document.querySelector(".spc-owner-art-preview");
+      panel.open = true;
+      const body = panel.querySelector(".spc-owner-art-body");
+      const rect = body.getBoundingClientRect();
+      return getComputedStyle(body).position === "fixed"
+        && rect.width >= 250
+        && rect.top > 80
+        && rect.bottom <= window.innerHeight + 1;
+    })()`));
+  const toolsImage = await cdp.send("Page.captureScreenshot", {format:"png"});
+  writeFileSync(resolve(dirname(output),"unified-living-owner-art-tools-open.png"),
+    Buffer.from(toolsImage.data,"base64"));
+  await runIn(cdp,'(document.querySelector(".spc-owner-art-preview").open=false,true)');
   const uploadEval = `(() => {
     const picker = document.querySelector(".spc-owner-art-preview input[type=file]");
     const raw = atob("${localArtFileB64}");
