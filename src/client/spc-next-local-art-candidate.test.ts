@@ -30,7 +30,9 @@ describe("private site-art candidate round trip", () => {
       source, "anchor.workshop.bench", 480, 0.8, FIVE_RESIDENT_ANCHORS,
     );
     const broken = JSON.parse(packed);
-    broken.image.base64 = broken.image.base64.replace("AQ", "Ag");
+    // Tamper the cryptographic witness itself: this MUST change the input,
+    // unlike a string replace on a Base64 substring that may not exist.
+    broken.image.sha256 = "0".repeat(64);
     await expect(importLocalArtCandidate(JSON.stringify(broken), FIVE_RESIDENT_ANCHORS)).rejects.toThrow();
     const unknown = JSON.parse(packed);
     unknown.world = { actorPositions: [{ id: "resident.janek", x: 0 }] };
