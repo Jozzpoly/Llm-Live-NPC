@@ -270,12 +270,10 @@ export class ResidentCausalExecutionCoordinator {
     // recognized material knowledge. Sampling may reveal current visibility but never
     // hidden holder identity or hidden World position.
     knowledge.sample();
-    const executor = this.material.get(runId) ?? new ResidentMaterialPickupExecutor(
+    const executor = this.material.get(runId) ?? this.createMaterialPickup(
       runId,
       intent.objectId,
       knowledge,
-      this.life.worldAuthority,
-      this.life.world,
     );
     this.material.set(runId, executor);
 
@@ -324,9 +322,7 @@ export class ResidentCausalExecutionCoordinator {
     if (!state) {
       state = {
         stage: "pickup",
-        pickup: new ResidentMaterialPickupExecutor(
-          runId, intent.objectId, knowledge, this.life.worldAuthority, this.life.world,
-        ),
+        pickup: this.createMaterialPickup(runId, intent.objectId, knowledge),
         place: null,
       };
       this.deliveries.set(runId, state);
@@ -399,6 +395,37 @@ export class ResidentCausalExecutionCoordinator {
     // or provider request. The resident/model may choose not to act.
     this.life.outcomeReviewBridge.observe(finished.outcomeEvidence, this.life.world.tick);
     return finished;
+  }
+
+  /**
+   * Material location comes ONLY from this resident's acquired sight memory.
+   * A region-level route can be planned using known regions; no hidden World
+   * material location is ever queried to choose waypoints.
+   */
+  private createMaterialPickup(
+    runId: string,
+    objectId: string,
+    knowledge: NonNullable<ResidentCausalLifeSubstrate["materialKnowledge"]>,
+  ): ResidentMaterialPickupExecutor {
+    const remembered = knowledge.lastKnownPosition(objectId);
+    const materialRegion = remembered
+      ? this.life.world.regionAt(remembered)?.id ?? null
+      : null;
+    const privateContext = this.life.resident.cognitionContext({
+      residentId: this.life.residentId,
+      requestedAtTick: this.life.world.tick,
+      reasons: [],
+    });
+    const currentRegion = privateContext.currentRegionId;
+    const known = new Set(privateContext.knownRegions.map(region => region.id));
+    if (currentRegion) known.add(currentRegion);
+    const route = currentRegion && materialRegion
+      ? this.life.navigation.route(currentRegion, materialRegion, known)
+      : null;
+    return new ResidentMaterialPickupExecutor(
+      runId, objectId, knowledge, this.life.worldAuthority, this.life.world,
+      90, 115, route?.waypoints ?? [],
+    );
   }
 
   private stepCommunicate(matter: ResidentMatter, runId: string): ResidentCausalExecutionStep {
