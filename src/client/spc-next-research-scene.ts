@@ -21,6 +21,7 @@ import {
 } from "./spc-next-research-scenario";
 import { paintFiveResidentGround } from "./spc-next-world-ground";
 import { paintMaterialShape } from "./spc-next-material-shapes";
+import { placeNonOverlappingMaterialLabel, type MaterialLabelRect } from "./spc-next-material-label-layout";
 import {
   projectEpistemicActors,
   projectMotionFeedback,
@@ -552,6 +553,9 @@ export class SpcNextResearchScene extends Phaser.Scene {
   private syncMaterialViews(): void {
     this.materialGraphics.clear();
     const objects = this.world.materialObjects();
+    // Pure observer-only text placement. The REAL world/material position never
+    // changes to make an annotation fit.
+    const materialLabelRects: MaterialLabelRect[] = [];
     const presentIds = new Set(objects.map((object) => object.id));
     for (const object of objects) {
       const position = object.location.kind === "free"
@@ -582,8 +586,20 @@ export class SpcNextResearchScene extends Phaser.Scene {
       // between two resident bodies. Displace ONLY the readable text label,
       // never the factual material object's drawn or collision position.
       if (this.scenario.kind === "relational-episode") {
+        label.setOrigin(0.5, 1);
         label.setPosition(position.x + 64, position.y + half + 48).setVisible(true);
+      } else if (this.scenario.kind === "unified-living"
+        || this.scenario.kind === "unified-armed") {
+        const positioned = placeNonOverlappingMaterialLabel({
+          anchorX: position.x + half + 8,
+          anchorY: position.y,
+          width: label.width,
+          height: label.height,
+        }, materialLabelRects);
+        label.setOrigin(0, 0.5).setPosition(positioned.x, positioned.y).setVisible(true);
+        materialLabelRects.push(positioned);
       } else {
+        label.setOrigin(0.5, 1);
         label.setPosition(position.x, position.y - half - 6).setVisible(true);
       }
     }
