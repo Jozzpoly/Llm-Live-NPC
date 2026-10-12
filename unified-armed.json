@@ -1,0 +1,547 @@
+{
+  "sourceSha": "e1da810da098cb3a64e3a4d9030cc745ca6a2c2c",
+  "assertions": [
+    {
+      "name": "explicit one-shot UI",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "private evidence export hidden BEFORE operator action",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "no API at load",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "five residents claimed and no API through 2600 World ticks",
+      "pass": true,
+      "detail": {
+        "claimed": [
+          "resident.mira",
+          "resident.janek",
+          "resident.ida",
+          "resident.oren",
+          "resident.nela"
+        ],
+        "provider": 0
+      }
+    },
+    {
+      "name": "actual player remains within hearing range after Mira's real shift",
+      "pass": true,
+      "detail": {
+        "player": {
+          "x": 1900,
+          "y": 800
+        },
+        "mira": {
+          "x": 1907.0852007471212,
+          "y": 776.1353104595544
+        }
+      }
+    },
+    {
+      "name": "actual World speech",
+      "pass": true,
+      "detail": {
+        "id": "occurrence:2600:0",
+        "tick": 2600,
+        "kind": "speech",
+        "actorId": "player.jozz",
+        "subjectId": null,
+        "position": {
+          "x": 1900,
+          "y": 800
+        },
+        "radius": 420,
+        "summary": "speech",
+        "text": "Mira, czy możemy chwilę porozmawiać?",
+        "addressedActorIds": [
+          "resident.mira"
+        ]
+      }
+    },
+    {
+      "name": "player utterance not automatically billed",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "one explicit click disables itself",
+      "pass": true,
+      "detail": {
+        "clicked": true
+      }
+    },
+    {
+      "name": "private research export available ONLY after explicit operator attempt",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "exactly one network attempt",
+      "pass": true,
+      "detail": [
+        {
+          "url": "http://127.0.0.1:4173/api/spc-next/life-intent",
+          "method": "POST",
+          "residentId": "resident.mira",
+          "reasonKinds": [
+            "heard_speech",
+            "activity_completed",
+            "activity_completed"
+          ],
+          "reasonIds": [
+            "reason:resident.mira:speech:occurrence:2600:0",
+            "reason-life-outcome:f324cad1f5508471",
+            "reason:resident.mira:completed:0"
+          ]
+        },
+        {
+          "url": "http://127.0.0.1:4173/api/spc-next/life-intent",
+          "method": "POST",
+          "residentId": "resident.mira",
+          "reasonKinds": [
+            "activity_completed",
+            "activity_completed"
+          ],
+          "reasonIds": [
+            "reason-life-outcome:f324cad1f5508471",
+            "reason:resident.mira:completed:0"
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Mira alone forwards genuine heard player speech, not an invented provider reason",
+      "pass": true,
+      "detail": {
+        "url": "http://127.0.0.1:4173/api/spc-next/life-intent",
+        "method": "POST",
+        "residentId": "resident.mira",
+        "reasonKinds": [
+          "heard_speech",
+          "activity_completed",
+          "activity_completed"
+        ],
+        "reasonIds": [
+          "reason:resident.mira:speech:occurrence:2600:0",
+          "reason-life-outcome:f324cad1f5508471",
+          "reason:resident.mira:completed:0"
+        ]
+      }
+    },
+    {
+      "name": "no auto retry after another 500 World ticks",
+      "pass": true,
+      "detail": {
+        "attempts": 1,
+        "budget": {
+          "maxUpstreamRequests": 1,
+          "attemptedRequests": 1,
+          "upstreamRequestsStarted": 1,
+          "blockedRequests": 0,
+          "exhausted": true
+        }
+      }
+    },
+    {
+      "name": "local probe JSON preserves exact dispatched context and genuine private heard speech",
+      "pass": true,
+      "detail": {
+        "subject": {
+          "residentId": "resident.mira",
+          "requestId": "cognition-dispatch:2601:0",
+          "dispatchedAtWorldTick": 2601
+        },
+        "source": "resident.mira"
+      }
+    },
+    {
+      "name": "exported denied-provider attempt is NOT claimed as locally admitted World success",
+      "pass": true,
+      "detail": {
+        "requests": 1
+      }
+    },
+    {
+      "name": "no browser exception",
+      "pass": true,
+      "detail": []
+    },
+    {
+      "name": "quiet second run starts a fresh World with zero API",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "Mira and all five finished authored openings without player dialogue or upstream traffic",
+      "pass": true,
+      "detail": {
+        "claimed": [
+          "resident.mira",
+          "resident.janek",
+          "resident.ida",
+          "resident.oren",
+          "resident.nela"
+        ],
+        "selected": "resident.mira"
+      }
+    },
+    {
+      "name": "operator can explicitly ask Mira without scripting a player utterance",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "self-history request carries genuine private activity completion, no heard player speech",
+      "pass": true,
+      "detail": {
+        "url": "http://127.0.0.1:4173/api/spc-next/life-intent",
+        "method": "POST",
+        "residentId": "resident.mira",
+        "reasonKinds": [
+          "activity_completed",
+          "activity_completed"
+        ],
+        "reasonIds": [
+          "reason-life-outcome:f324cad1f5508471",
+          "reason:resident.mira:completed:0"
+        ]
+      }
+    },
+    {
+      "name": "quiet self-history trial never auto-retries after rejected static-server provider",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "no browser exceptions across independent speech and quiet runs",
+      "pass": true,
+      "detail": []
+    },
+    {
+      "name": "browse-only living starts without external cognition",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "browse-only exposes no manual Luna click",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "browse-only NEVER offers export of private operator cognition",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "a playable resident starts with one actually authorized material delivery",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "Janek is doing ordinary material work in the actual five-resident game",
+      "pass": true,
+      "detail": {
+        "selected": "resident.janek",
+        "focused": "run.janek.workshop-opening.delivery"
+      }
+    },
+    {
+      "name": "Janek actually completes the material delivery into World, not just a fake work badge",
+      "pass": true,
+      "detail": {
+        "selected": "resident.janek",
+        "matters": 1
+      }
+    },
+    {
+      "name": "3600 browse-only World ticks with real private pressures cannot call any model",
+      "pass": true,
+      "detail": {
+        "newRequests": 0,
+        "providerCount": 0
+      }
+    },
+    {
+      "name": "legacy missing-crate-live-provider has zero model POST even when the World advances",
+      "pass": true,
+      "detail": {
+        "route": "missing-crate-live-provider",
+        "attempts": []
+      }
+    },
+    {
+      "name": "legacy missing-crate-live-provider-interruption has zero model POST even when the World advances",
+      "pass": true,
+      "detail": {
+        "route": "missing-crate-live-provider-interruption",
+        "attempts": []
+      }
+    },
+    {
+      "name": "legacy r5-mira-live-semantic-escalation has zero model POST even when the World advances",
+      "pass": true,
+      "detail": {
+        "route": "r5-mira-live-semantic-escalation",
+        "attempts": []
+      }
+    },
+    {
+      "name": "real five residents in a clearly authored, zero-provider browser episode",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "test response control is visible, real Luna operator control hidden",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "actual Ida return becomes one Janek-private grounded question in browser",
+      "pass": true,
+      "detail": {
+        "phase": "awaiting_choice",
+        "tick": 3127,
+        "initialChoicesAuthored": true,
+        "modelCalls": 0,
+        "withEarlierPromise": true,
+        "standingMatterId": "matter-social-commitment:0903b550ebe0f7d7",
+        "privateReturnReasonId": "reason-matter-relevance:5d8cdd00188d6f11",
+        "localDecision": "not_selected",
+        "factualReply": false,
+        "failure": null
+      }
+    },
+    {
+      "name": "no model or response before TEST operator action",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "EXPLICIT test injection accepted",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "Janek factually speaks to Ida from accepted TEST-INJECTED local cognition",
+      "pass": true,
+      "detail": {
+        "phase": "spoken",
+        "tick": 3144,
+        "initialChoicesAuthored": true,
+        "modelCalls": 0,
+        "withEarlierPromise": true,
+        "standingMatterId": "matter-social-commitment:0903b550ebe0f7d7",
+        "privateReturnReasonId": "reason-matter-relevance:5d8cdd00188d6f11",
+        "localDecision": "respond",
+        "factualReply": true,
+        "failure": null
+      }
+    },
+    {
+      "name": "resident↔resident browser scene NEVER posts model API",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "matched physical Ida return without Janek history creates NO personal reason",
+      "pass": true,
+      "detail": {
+        "phase": "control_complete",
+        "tick": 3122,
+        "initialChoicesAuthored": true,
+        "modelCalls": 0,
+        "withEarlierPromise": false,
+        "standingMatterId": null,
+        "privateReturnReasonId": null,
+        "localDecision": "not_selected",
+        "factualReply": false,
+        "failure": null
+      }
+    },
+    {
+      "name": "no-history control cannot invoke test response",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "no API in either authored relational case",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "workshop evidence starts with no fictitious processing",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "real E and U inputs start the actual World-owned workshop execution",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "actual fixed-step workshop transforms the exact held material into one real kit",
+      "pass": true,
+      "detail": {
+        "tick": 180,
+        "actorId": "player.jozz",
+        "siteId": "workshop.repair-kit",
+        "status": "completed",
+        "reason": "worked",
+        "sourceObjectId": "crate.workshop.02",
+        "outputObjectId": "kit.workshop.01",
+        "sourceBefore": {
+          "id": "crate.workshop.02",
+          "label": "Workshop Spare Parts",
+          "radius": 17,
+          "location": {
+            "kind": "held",
+            "actorId": "player.jozz"
+          }
+        },
+        "outputAfter": {
+          "id": "kit.workshop.01",
+          "label": "Workshop Repair Kit",
+          "radius": 14,
+          "location": {
+            "kind": "free",
+            "position": {
+              "x": 1922,
+              "y": 790
+            }
+          },
+          "derivation": {
+            "kind": "worksite_transformation",
+            "sourceObjectId": "crate.workshop.02",
+            "siteId": "workshop.repair-kit",
+            "actorId": "player.jozz",
+            "tick": 180
+          }
+        }
+      }
+    },
+    {
+      "name": "real material work never dispatches hidden upstream cognition",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "normal SPC landing is World-first, not a hidden research sidebar",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "all five independently selectable residents are present in the product header",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "ordinary living World does not expose private browser evidence controls",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "watching Oren and switching cameras cannot cause a model request",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "visual reference is optional and hidden on archival research worlds",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "Owner artwork panel opens outside the clipped game header",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "an actual local file choice reaches the browser image intake",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "decoded user image is visible as a purely visual World-site candidate",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "compare toggle hides the candidate without touching material truth",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "owner can discard a candidate without refreshing World",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "art reference workflow does not POST to cognition/provider",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "workshop authoring entered normal playable World without a hidden auto-job",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "distant player cannot magically work at workshop or trigger provider spending",
+      "pass": true,
+      "detail": null
+    },
+    {
+      "name": "default First Hearth never auto-posts a model after page load",
+      "pass": true,
+      "detail": []
+    }
+  ],
+  "requests": [
+    {
+      "url": "http://127.0.0.1:4173/api/spc-next/life-intent",
+      "method": "POST",
+      "residentId": "resident.mira",
+      "reasonKinds": [
+        "heard_speech",
+        "activity_completed",
+        "activity_completed"
+      ],
+      "reasonIds": [
+        "reason:resident.mira:speech:occurrence:2600:0",
+        "reason-life-outcome:f324cad1f5508471",
+        "reason:resident.mira:completed:0"
+      ]
+    },
+    {
+      "url": "http://127.0.0.1:4173/api/spc-next/life-intent",
+      "method": "POST",
+      "residentId": "resident.mira",
+      "reasonKinds": [
+        "activity_completed",
+        "activity_completed"
+      ],
+      "reasonIds": [
+        "reason-life-outcome:f324cad1f5508471",
+        "reason:resident.mira:completed:0"
+      ]
+    }
+  ],
+  "modelRouteRequests": [
+    {
+      "url": "http://127.0.0.1:4173/api/spc-next/life-intent",
+      "method": "POST"
+    },
+    {
+      "url": "http://127.0.0.1:4173/api/spc-next/life-intent",
+      "method": "POST"
+    }
+  ],
+  "exceptions": [],
+  "outcome": "PASS"
+}

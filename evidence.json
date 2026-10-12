@@ -1,0 +1,3609 @@
+{
+  "schemaVersion": 1,
+  "sourceSha": "e1da810da098cb3a64e3a4d9030cc745ca6a2c2c",
+  "baseUrl": "http://127.0.0.1:4173",
+  "startedAt": "2026-10-12T16:08:47.661Z",
+  "chrome": "Chrome/154.0.8037.97",
+  "checkpoints": [
+    {
+      "name": "01-janek-early-research",
+      "worldOnly": false,
+      "screenshot": "screenshots/01-janek-early-research.jpg",
+      "bytes": 79977,
+      "snapshot": {
+        "tick": 26,
+        "selectedName": "Janek",
+        "role": "future material work interruption and return",
+        "facts": {
+          "region": "workshop",
+          "position": "1937, 725",
+          "body": "moving",
+          "legacy activity": "idle",
+          "motion intent": "90.0",
+          "resolved velocity": "90.0",
+          "resolution": "full",
+          "constraint": "—",
+          "cognition queue": "0",
+          "recovered matters": "1",
+          "focused run": "run.janek.workshop-opening.delivery",
+          "semantic intent": "deliver_material_object",
+          "camera zoom": "1.12×",
+          "recovered residents": "1/5",
+          "provider requests": "0",
+          "provider in flight": "0",
+          "arrival inbox": "0"
+        },
+        "activityReason": "causal matter: Finish carrying the workshop crate to crossroads storage.",
+        "privatePerception": [],
+        "residentTrace": [
+          "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+        ],
+        "publicOccurrences": [
+          "Brak publicznych occurrences."
+        ],
+        "stage": "ŚWIAT · BEZ AUTOMATYCZNEGO API",
+        "worldOnly": true,
+        "canvas": {
+          "x": 13,
+          "y": 122,
+          "width": 1374,
+          "height": 692
+        },
+        "bodyTextLength": 478
+      }
+    },
+    {
+      "name": "02-player-call-mira-research",
+      "worldOnly": false,
+      "screenshot": "screenshots/02-player-call-mira-research.jpg",
+      "bytes": 78651,
+      "snapshot": {
+        "tick": 163,
+        "selectedName": "Mira",
+        "role": "settlement continuity and player contact",
+        "facts": {
+          "region": "hearth",
+          "position": "998, 740",
+          "body": "moving",
+          "legacy activity": "travel",
+          "motion intent": "95.0",
+          "resolved velocity": "95.0",
+          "resolution": "full",
+          "constraint": "—",
+          "cognition queue": "0",
+          "recovered matters": "—",
+          "focused run": "—",
+          "semantic intent": "—",
+          "camera zoom": "1.12×",
+          "recovered residents": "1/5",
+          "provider requests": "0",
+          "provider in flight": "0",
+          "arrival inbox": "0"
+        },
+        "activityReason": "legacy reason: walk through the settlement",
+        "privatePerception": [
+          "t125 · speech / hearing player.jozz · far direction (-1.00, 0.00)",
+          "t1 · actor_sight_enter / sight player.jozz · exact (620, 620)"
+        ],
+        "residentTrace": [
+          "t138 · command travel movement",
+          "t135 · command travel movement",
+          "t132 · command travel movement",
+          "t129 · command travel movement",
+          "t125 · perception speech/hearing: speech",
+          "t123 · command travel movement",
+          "t120 · command travel movement",
+          "t105 · command travel movement"
+        ],
+        "publicOccurrences": [
+          "t125 · speech · player.jozz Hej!"
+        ],
+        "stage": "ŚWIAT / BADANIA",
+        "worldOnly": false,
+        "canvas": {
+          "x": 13,
+          "y": 249.671875,
+          "width": 972,
+          "height": 564
+        },
+        "bodyTextLength": 2212
+      }
+    },
+    {
+      "name": "03-janek-mid-delivery-research",
+      "worldOnly": false,
+      "screenshot": "screenshots/03-janek-mid-delivery-research.jpg",
+      "bytes": 80867,
+      "snapshot": {
+        "tick": 183,
+        "selectedName": "Janek",
+        "role": "future material work interruption and return",
+        "facts": {
+          "region": "workshop",
+          "position": "2171, 756",
+          "body": "moving",
+          "legacy activity": "idle",
+          "motion intent": "90.0",
+          "resolved velocity": "90.0",
+          "resolution": "full",
+          "constraint": "—",
+          "cognition queue": "0",
+          "recovered matters": "1",
+          "focused run": "run.janek.workshop-opening.delivery",
+          "semantic intent": "deliver_material_object",
+          "camera zoom": "1.12×",
+          "recovered residents": "1/5",
+          "provider requests": "0",
+          "provider in flight": "0",
+          "arrival inbox": "0"
+        },
+        "activityReason": "causal matter: Finish carrying the workshop crate to crossroads storage.",
+        "privatePerception": [],
+        "residentTrace": [
+          "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+        ],
+        "publicOccurrences": [
+          "t125 · speech · player.jozz Hej!"
+        ],
+        "stage": "ŚWIAT / BADANIA",
+        "worldOnly": false,
+        "canvas": {
+          "x": 13,
+          "y": 249.671875,
+          "width": 972,
+          "height": 564
+        },
+        "bodyTextLength": 2197
+      }
+    },
+    {
+      "name": "04-janek-mid-delivery-world",
+      "worldOnly": true,
+      "screenshot": "screenshots/04-janek-mid-delivery-world.jpg",
+      "bytes": 44960,
+      "snapshot": {
+        "tick": 183,
+        "selectedName": "Janek",
+        "role": "future material work interruption and return",
+        "facts": {
+          "region": "workshop",
+          "position": "2171, 756",
+          "body": "moving",
+          "legacy activity": "idle",
+          "motion intent": "90.0",
+          "resolved velocity": "90.0",
+          "resolution": "full",
+          "constraint": "—",
+          "cognition queue": "0",
+          "recovered matters": "1",
+          "focused run": "run.janek.workshop-opening.delivery",
+          "semantic intent": "deliver_material_object",
+          "camera zoom": "1.12×",
+          "recovered residents": "1/5",
+          "provider requests": "0",
+          "provider in flight": "0",
+          "arrival inbox": "0"
+        },
+        "activityReason": "causal matter: Finish carrying the workshop crate to crossroads storage.",
+        "privatePerception": [],
+        "residentTrace": [
+          "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+        ],
+        "publicOccurrences": [
+          "t125 · speech · player.jozz Hej!"
+        ],
+        "stage": "ŚWIAT / BADANIA",
+        "worldOnly": false,
+        "canvas": {
+          "x": 13,
+          "y": 249.671875,
+          "width": 972,
+          "height": 564
+        },
+        "bodyTextLength": 2197
+      }
+    },
+    {
+      "name": "05-janek-settled-research",
+      "worldOnly": false,
+      "screenshot": "screenshots/05-janek-settled-research.jpg",
+      "bytes": 74543,
+      "snapshot": {
+        "tick": 941,
+        "selectedName": "Janek",
+        "role": "future material work interruption and return",
+        "facts": {
+          "region": "crossroads",
+          "position": "3077, 1032",
+          "body": "still",
+          "legacy activity": "idle",
+          "motion intent": "0.0",
+          "resolved velocity": "0.0",
+          "resolution": "full",
+          "constraint": "—",
+          "cognition queue": "1",
+          "recovered matters": "1",
+          "focused run": "—",
+          "semantic intent": "—",
+          "camera zoom": "1.12×",
+          "recovered residents": "5/5",
+          "provider requests": "0",
+          "provider in flight": "0",
+          "arrival inbox": "0"
+        },
+        "activityReason": "legacy reason: between tasks at the workshop; no fake work mechanic",
+        "privatePerception": [
+          "t917 · actor_sight_exit / sight resident.ida · no spatial cue",
+          "t916 · actor_sight_update / sight resident.ida · exact (2592, 824)",
+          "t907 · actor_sight_update / sight resident.ida · exact (2605, 826)",
+          "t891 · actor_sight_update / sight resident.ida · exact (2629, 830)",
+          "t875 · actor_sight_update / sight resident.ida · exact (2653, 834)",
+          "t859 · actor_sight_update / sight resident.ida · exact (2676, 838)",
+          "t843 · actor_sight_update / sight resident.ida · exact (2700, 841)",
+          "t826 · actor_sight_update / sight resident.ida · exact (2724, 851)",
+          "t809 · actor_sight_update / sight resident.ida · exact (2747, 861)"
+        ],
+        "residentTrace": [
+          "t934 · cognition_reason Factual run outcome requires resident interpretation: succeeded: physically delivered crate.workshop.01 to (3050, 1080)",
+          "t917 · perception actor_sight_exit/sight: actor resident.ida left sight",
+          "t916 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+          "t907 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+          "t891 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+          "t875 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+          "t859 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+          "t843 · perception actor_sight_update/sight: actor resident.ida moved while visible"
+        ],
+        "publicOccurrences": [
+          "t125 · speech · player.jozz Hej!"
+        ],
+        "stage": "ŚWIAT / BADANIA",
+        "worldOnly": false,
+        "canvas": {
+          "x": 13,
+          "y": 249.671875,
+          "width": 972,
+          "height": 564
+        },
+        "bodyTextLength": 3165
+      }
+    },
+    {
+      "name": "06-janek-settled-world",
+      "worldOnly": true,
+      "screenshot": "screenshots/06-janek-settled-world.jpg",
+      "bytes": 46845,
+      "snapshot": {
+        "tick": 941,
+        "selectedName": "Janek",
+        "role": "future material work interruption and return",
+        "facts": {
+          "region": "crossroads",
+          "position": "3077, 1032",
+          "body": "still",
+          "legacy activity": "idle",
+          "motion intent": "0.0",
+          "resolved velocity": "0.0",
+          "resolution": "full",
+          "constraint": "—",
+          "cognition queue": "1",
+          "recovered matters": "1",
+          "focused run": "—",
+          "semantic intent": "—",
+          "camera zoom": "1.12×",
+          "recovered residents": "5/5",
+          "provider requests": "0",
+          "provider in flight": "0",
+          "arrival inbox": "0"
+        },
+        "activityReason": "legacy reason: between tasks at the workshop; no fake work mechanic",
+        "privatePerception": [
+          "t917 · actor_sight_exit / sight resident.ida · no spatial cue",
+          "t916 · actor_sight_update / sight resident.ida · exact (2592, 824)",
+          "t907 · actor_sight_update / sight resident.ida · exact (2605, 826)",
+          "t891 · actor_sight_update / sight resident.ida · exact (2629, 830)",
+          "t875 · actor_sight_update / sight resident.ida · exact (2653, 834)",
+          "t859 · actor_sight_update / sight resident.ida · exact (2676, 838)",
+          "t843 · actor_sight_update / sight resident.ida · exact (2700, 841)",
+          "t826 · actor_sight_update / sight resident.ida · exact (2724, 851)",
+          "t809 · actor_sight_update / sight resident.ida · exact (2747, 861)"
+        ],
+        "residentTrace": [
+          "t934 · cognition_reason Factual run outcome requires resident interpretation: succeeded: physically delivered crate.workshop.01 to (3050, 1080)",
+          "t917 · perception actor_sight_exit/sight: actor resident.ida left sight",
+          "t916 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+          "t907 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+          "t891 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+          "t875 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+          "t859 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+          "t843 · perception actor_sight_update/sight: actor resident.ida moved while visible"
+        ],
+        "publicOccurrences": [
+          "t125 · speech · player.jozz Hej!"
+        ],
+        "stage": "ŚWIAT / BADANIA",
+        "worldOnly": false,
+        "canvas": {
+          "x": 13,
+          "y": 249.671875,
+          "width": 972,
+          "height": 564
+        },
+        "bodyTextLength": 3165
+      }
+    }
+  ],
+  "timeline": [
+    {
+      "elapsedMs": 1701,
+      "tick": 47,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "1968, 729",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "1",
+        "focused run": "run.janek.workshop-opening.delivery",
+        "semantic intent": "deliver_material_object",
+        "camera zoom": "1.12×",
+        "recovered residents": "1/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "causal matter: Finish carrying the workshop crate to crossroads storage.",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "Brak publicznych occurrences."
+      ],
+      "stage": "ŚWIAT / BADANIA",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 249.671875,
+        "width": 972,
+        "height": 564
+      },
+      "bodyTextLength": 2193
+    },
+    {
+      "elapsedMs": 1959,
+      "tick": 61,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "1989, 732",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "1",
+        "focused run": "run.janek.workshop-opening.delivery",
+        "semantic intent": "deliver_material_object",
+        "camera zoom": "1.12×",
+        "recovered residents": "1/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "causal matter: Finish carrying the workshop crate to crossroads storage.",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "Brak publicznych occurrences."
+      ],
+      "stage": "ŚWIAT / BADANIA",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 249.671875,
+        "width": 972,
+        "height": 564
+      },
+      "bodyTextLength": 2193
+    },
+    {
+      "elapsedMs": 2210,
+      "tick": 75,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "2010, 735",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "1",
+        "focused run": "run.janek.workshop-opening.delivery",
+        "semantic intent": "deliver_material_object",
+        "camera zoom": "1.12×",
+        "recovered residents": "1/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "causal matter: Finish carrying the workshop crate to crossroads storage.",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "Brak publicznych occurrences."
+      ],
+      "stage": "ŚWIAT / BADANIA",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 249.671875,
+        "width": 972,
+        "height": 564
+      },
+      "bodyTextLength": 2193
+    },
+    {
+      "elapsedMs": 2471,
+      "tick": 96,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "2041, 739",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "1",
+        "focused run": "run.janek.workshop-opening.delivery",
+        "semantic intent": "deliver_material_object",
+        "camera zoom": "1.12×",
+        "recovered residents": "1/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "causal matter: Finish carrying the workshop crate to crossroads storage.",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "Brak publicznych occurrences."
+      ],
+      "stage": "ŚWIAT / BADANIA",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 249.671875,
+        "width": 972,
+        "height": 564
+      },
+      "bodyTextLength": 2193
+    },
+    {
+      "elapsedMs": 2725,
+      "tick": 110,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "2062, 742",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "1",
+        "focused run": "run.janek.workshop-opening.delivery",
+        "semantic intent": "deliver_material_object",
+        "camera zoom": "1.12×",
+        "recovered residents": "1/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "causal matter: Finish carrying the workshop crate to crossroads storage.",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "Brak publicznych occurrences."
+      ],
+      "stage": "ŚWIAT / BADANIA",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 249.671875,
+        "width": 972,
+        "height": 564
+      },
+      "bodyTextLength": 2194
+    },
+    {
+      "elapsedMs": 2977,
+      "tick": 125,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "2084, 745",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "1",
+        "focused run": "run.janek.workshop-opening.delivery",
+        "semantic intent": "deliver_material_object",
+        "camera zoom": "1.12×",
+        "recovered residents": "1/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "causal matter: Finish carrying the workshop crate to crossroads storage.",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t125 · speech · player.jozz Hej!"
+      ],
+      "stage": "ŚWIAT / BADANIA",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 249.671875,
+        "width": 972,
+        "height": 564
+      },
+      "bodyTextLength": 2197
+    },
+    {
+      "elapsedMs": 3255,
+      "tick": 143,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "2111, 748",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "1",
+        "focused run": "run.janek.workshop-opening.delivery",
+        "semantic intent": "deliver_material_object",
+        "camera zoom": "1.12×",
+        "recovered residents": "1/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "causal matter: Finish carrying the workshop crate to crossroads storage.",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t125 · speech · player.jozz Hej!"
+      ],
+      "stage": "ŚWIAT / BADANIA",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 249.671875,
+        "width": 972,
+        "height": 564
+      },
+      "bodyTextLength": 2197
+    },
+    {
+      "elapsedMs": 3507,
+      "tick": 156,
+      "selectedName": "Mira",
+      "role": "settlement continuity and player contact",
+      "facts": {
+        "region": "hearth",
+        "position": "988, 736",
+        "body": "moving",
+        "legacy activity": "travel",
+        "motion intent": "95.0",
+        "resolved velocity": "95.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "—",
+        "focused run": "—",
+        "semantic intent": "—",
+        "camera zoom": "1.12×",
+        "recovered residents": "1/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "legacy reason: walk through the settlement",
+      "privatePerception": [
+        "t125 · speech / hearing player.jozz · far direction (-1.00, 0.00)",
+        "t1 · actor_sight_enter / sight player.jozz · exact (620, 620)"
+      ],
+      "residentTrace": [
+        "t138 · command travel movement",
+        "t135 · command travel movement",
+        "t132 · command travel movement",
+        "t129 · command travel movement",
+        "t125 · perception speech/hearing: speech",
+        "t123 · command travel movement",
+        "t120 · command travel movement",
+        "t105 · command travel movement"
+      ],
+      "publicOccurrences": [
+        "t125 · speech · player.jozz Hej!"
+      ],
+      "stage": "ŚWIAT / BADANIA",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 249.671875,
+        "width": 972,
+        "height": 564
+      },
+      "bodyTextLength": 2212
+    },
+    {
+      "elapsedMs": 3759,
+      "tick": 170,
+      "selectedName": "Mira",
+      "role": "settlement continuity and player contact",
+      "facts": {
+        "region": "hearth",
+        "position": "1009, 744",
+        "body": "moving",
+        "legacy activity": "travel",
+        "motion intent": "95.0",
+        "resolved velocity": "95.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "—",
+        "focused run": "—",
+        "semantic intent": "—",
+        "camera zoom": "1.12×",
+        "recovered residents": "1/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "legacy reason: walk through the settlement",
+      "privatePerception": [
+        "t125 · speech / hearing player.jozz · far direction (-1.00, 0.00)",
+        "t1 · actor_sight_enter / sight player.jozz · exact (620, 620)"
+      ],
+      "residentTrace": [
+        "t168 · command travel movement",
+        "t165 · command travel movement",
+        "t138 · command travel movement",
+        "t135 · command travel movement",
+        "t132 · command travel movement",
+        "t129 · command travel movement",
+        "t125 · perception speech/hearing: speech",
+        "t123 · command travel movement"
+      ],
+      "publicOccurrences": [
+        "t125 · speech · player.jozz Hej!"
+      ],
+      "stage": "ŚWIAT / BADANIA",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 249.671875,
+        "width": 972,
+        "height": 564
+      },
+      "bodyTextLength": 2213
+    },
+    {
+      "elapsedMs": 4011,
+      "tick": 189,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "2180, 757",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "1",
+        "focused run": "run.janek.workshop-opening.delivery",
+        "semantic intent": "deliver_material_object",
+        "camera zoom": "1.12×",
+        "recovered residents": "2/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "causal matter: Finish carrying the workshop crate to crossroads storage.",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t125 · speech · player.jozz Hej!"
+      ],
+      "stage": "ŚWIAT / BADANIA",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 249.671875,
+        "width": 972,
+        "height": 564
+      },
+      "bodyTextLength": 2193
+    },
+    {
+      "elapsedMs": 4275,
+      "tick": 201,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "2197, 760",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "1",
+        "focused run": "run.janek.workshop-opening.delivery",
+        "semantic intent": "deliver_material_object",
+        "camera zoom": "1.12×",
+        "recovered residents": "2/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "causal matter: Finish carrying the workshop crate to crossroads storage.",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t125 · speech · player.jozz Hej!"
+      ],
+      "stage": "ŚWIAT · BEZ AUTOMATYCZNEGO API",
+      "worldOnly": true,
+      "canvas": {
+        "x": 13,
+        "y": 122,
+        "width": 1374,
+        "height": 692
+      },
+      "bodyTextLength": 478
+    },
+    {
+      "elapsedMs": 4530,
+      "tick": 220,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "2226, 763",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "1",
+        "focused run": "run.janek.workshop-opening.delivery",
+        "semantic intent": "deliver_material_object",
+        "camera zoom": "1.12×",
+        "recovered residents": "2/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "causal matter: Finish carrying the workshop crate to crossroads storage.",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t125 · speech · player.jozz Hej!"
+      ],
+      "stage": "ŚWIAT / BADANIA",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 249.671875,
+        "width": 984,
+        "height": 564
+      },
+      "bodyTextLength": 2197
+    },
+    {
+      "elapsedMs": 4809,
+      "tick": 234,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "2246, 766",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "1",
+        "focused run": "run.janek.workshop-opening.delivery",
+        "semantic intent": "deliver_material_object",
+        "camera zoom": "1.12×",
+        "recovered residents": "2/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "causal matter: Finish carrying the workshop crate to crossroads storage.",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t125 · speech · player.jozz Hej!"
+      ],
+      "stage": "ŚWIAT / BADANIA",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 249.671875,
+        "width": 972,
+        "height": 564
+      },
+      "bodyTextLength": 2197
+    },
+    {
+      "elapsedMs": 5061,
+      "tick": 247,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "2266, 769",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "1",
+        "focused run": "run.janek.workshop-opening.delivery",
+        "semantic intent": "deliver_material_object",
+        "camera zoom": "1.12×",
+        "recovered residents": "2/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "causal matter: Finish carrying the workshop crate to crossroads storage.",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t125 · speech · player.jozz Hej!"
+      ],
+      "stage": "ŚWIAT / BADANIA",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 249.671875,
+        "width": 972,
+        "height": 564
+      },
+      "bodyTextLength": 2197
+    },
+    {
+      "elapsedMs": 5320,
+      "tick": 266,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "2294, 773",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "1",
+        "focused run": "run.janek.workshop-opening.delivery",
+        "semantic intent": "deliver_material_object",
+        "camera zoom": "1.12×",
+        "recovered residents": "2/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "causal matter: Finish carrying the workshop crate to crossroads storage.",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t125 · speech · player.jozz Hej!"
+      ],
+      "stage": "ŚWIAT / BADANIA",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 249.671875,
+        "width": 972,
+        "height": 564
+      },
+      "bodyTextLength": 2197
+    },
+    {
+      "elapsedMs": 5571,
+      "tick": 279,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "2313, 775",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "1",
+        "focused run": "run.janek.workshop-opening.delivery",
+        "semantic intent": "deliver_material_object",
+        "camera zoom": "1.12×",
+        "recovered residents": "2/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "causal matter: Finish carrying the workshop crate to crossroads storage.",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t125 · speech · player.jozz Hej!"
+      ],
+      "stage": "ŚWIAT / BADANIA",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 249.671875,
+        "width": 972,
+        "height": 564
+      },
+      "bodyTextLength": 2197
+    },
+    {
+      "elapsedMs": 5823,
+      "tick": 293,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "2334, 778",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "1",
+        "focused run": "run.janek.workshop-opening.delivery",
+        "semantic intent": "deliver_material_object",
+        "camera zoom": "1.12×",
+        "recovered residents": "3/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "causal matter: Finish carrying the workshop crate to crossroads storage.",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t125 · speech · player.jozz Hej!"
+      ],
+      "stage": "ŚWIAT / BADANIA",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 249.671875,
+        "width": 972,
+        "height": 564
+      },
+      "bodyTextLength": 2197
+    },
+    {
+      "elapsedMs": 6075,
+      "tick": 312,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "2362, 782",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "1",
+        "focused run": "run.janek.workshop-opening.delivery",
+        "semantic intent": "deliver_material_object",
+        "camera zoom": "1.12×",
+        "recovered residents": "3/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "causal matter: Finish carrying the workshop crate to crossroads storage.",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t125 · speech · player.jozz Hej!"
+      ],
+      "stage": "ŚWIAT / BADANIA",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 249.671875,
+        "width": 972,
+        "height": 564
+      },
+      "bodyTextLength": 2197
+    },
+    {
+      "elapsedMs": 6327,
+      "tick": 326,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "2383, 784",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "1",
+        "focused run": "run.janek.workshop-opening.delivery",
+        "semantic intent": "deliver_material_object",
+        "camera zoom": "1.12×",
+        "recovered residents": "3/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "causal matter: Finish carrying the workshop crate to crossroads storage.",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t125 · speech · player.jozz Hej!"
+      ],
+      "stage": "ŚWIAT / BADANIA",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 249.671875,
+        "width": 972,
+        "height": 564
+      },
+      "bodyTextLength": 2197
+    },
+    {
+      "elapsedMs": 6589,
+      "tick": 338,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "2401, 787",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "1",
+        "focused run": "run.janek.workshop-opening.delivery",
+        "semantic intent": "deliver_material_object",
+        "camera zoom": "1.12×",
+        "recovered residents": "3/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "causal matter: Finish carrying the workshop crate to crossroads storage.",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t125 · speech · player.jozz Hej!"
+      ],
+      "stage": "ŚWIAT / BADANIA",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 249.671875,
+        "width": 972,
+        "height": 564
+      },
+      "bodyTextLength": 2197
+    },
+    {
+      "elapsedMs": 6840,
+      "tick": 357,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "2429, 791",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "1",
+        "focused run": "run.janek.workshop-opening.delivery",
+        "semantic intent": "deliver_material_object",
+        "camera zoom": "1.12×",
+        "recovered residents": "3/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "causal matter: Finish carrying the workshop crate to crossroads storage.",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t125 · speech · player.jozz Hej!"
+      ],
+      "stage": "ŚWIAT / BADANIA",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 249.671875,
+        "width": 972,
+        "height": 564
+      },
+      "bodyTextLength": 2197
+    },
+    {
+      "elapsedMs": 7091,
+      "tick": 370,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "2449, 793",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "1",
+        "focused run": "run.janek.workshop-opening.delivery",
+        "semantic intent": "deliver_material_object",
+        "camera zoom": "1.12×",
+        "recovered residents": "3/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "causal matter: Finish carrying the workshop crate to crossroads storage.",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t125 · speech · player.jozz Hej!"
+      ],
+      "stage": "ŚWIAT / BADANIA",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 249.671875,
+        "width": 972,
+        "height": 564
+      },
+      "bodyTextLength": 2197
+    },
+    {
+      "elapsedMs": 7341,
+      "tick": 384,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "2469, 796",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "1",
+        "focused run": "run.janek.workshop-opening.delivery",
+        "semantic intent": "deliver_material_object",
+        "camera zoom": "1.12×",
+        "recovered residents": "3/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "causal matter: Finish carrying the workshop crate to crossroads storage.",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t125 · speech · player.jozz Hej!"
+      ],
+      "stage": "ŚWIAT / BADANIA",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 249.671875,
+        "width": 972,
+        "height": 564
+      },
+      "bodyTextLength": 2197
+    },
+    {
+      "elapsedMs": 7592,
+      "tick": 403,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "2498, 800",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "1",
+        "focused run": "run.janek.workshop-opening.delivery",
+        "semantic intent": "deliver_material_object",
+        "camera zoom": "1.12×",
+        "recovered residents": "3/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "causal matter: Finish carrying the workshop crate to crossroads storage.",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t125 · speech · player.jozz Hej!"
+      ],
+      "stage": "ŚWIAT / BADANIA",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 249.671875,
+        "width": 972,
+        "height": 564
+      },
+      "bodyTextLength": 2197
+    },
+    {
+      "elapsedMs": 7844,
+      "tick": 416,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "2517, 802",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "1",
+        "focused run": "run.janek.workshop-opening.delivery",
+        "semantic intent": "deliver_material_object",
+        "camera zoom": "1.12×",
+        "recovered residents": "3/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "causal matter: Finish carrying the workshop crate to crossroads storage.",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t125 · speech · player.jozz Hej!"
+      ],
+      "stage": "ŚWIAT / BADANIA",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 249.671875,
+        "width": 972,
+        "height": 564
+      },
+      "bodyTextLength": 2197
+    },
+    {
+      "elapsedMs": 8102,
+      "tick": 434,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "2544, 806",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "1",
+        "focused run": "run.janek.workshop-opening.delivery",
+        "semantic intent": "deliver_material_object",
+        "camera zoom": "1.12×",
+        "recovered residents": "3/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "causal matter: Finish carrying the workshop crate to crossroads storage.",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t125 · speech · player.jozz Hej!"
+      ],
+      "stage": "ŚWIAT / BADANIA",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 249.671875,
+        "width": 972,
+        "height": 564
+      },
+      "bodyTextLength": 2197
+    },
+    {
+      "elapsedMs": 8357,
+      "tick": 448,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "2565, 809",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "1",
+        "focused run": "run.janek.workshop-opening.delivery",
+        "semantic intent": "deliver_material_object",
+        "camera zoom": "1.12×",
+        "recovered residents": "3/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "causal matter: Finish carrying the workshop crate to crossroads storage.",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t125 · speech · player.jozz Hej!"
+      ],
+      "stage": "ŚWIAT / BADANIA",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 249.671875,
+        "width": 972,
+        "height": 564
+      },
+      "bodyTextLength": 2197
+    },
+    {
+      "elapsedMs": 8608,
+      "tick": 462,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "2585, 811",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "1",
+        "focused run": "run.janek.workshop-opening.delivery",
+        "semantic intent": "deliver_material_object",
+        "camera zoom": "1.12×",
+        "recovered residents": "3/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "causal matter: Finish carrying the workshop crate to crossroads storage.",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t125 · speech · player.jozz Hej!"
+      ],
+      "stage": "ŚWIAT / BADANIA",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 249.671875,
+        "width": 972,
+        "height": 564
+      },
+      "bodyTextLength": 2197
+    },
+    {
+      "elapsedMs": 8859,
+      "tick": 475,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "2605, 814",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "1",
+        "focused run": "run.janek.workshop-opening.delivery",
+        "semantic intent": "deliver_material_object",
+        "camera zoom": "1.12×",
+        "recovered residents": "3/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "causal matter: Finish carrying the workshop crate to crossroads storage.",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t125 · speech · player.jozz Hej!"
+      ],
+      "stage": "ŚWIAT / BADANIA",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 249.671875,
+        "width": 972,
+        "height": 564
+      },
+      "bodyTextLength": 2197
+    },
+    {
+      "elapsedMs": 9120,
+      "tick": 494,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "2633, 819",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "1",
+        "focused run": "run.janek.workshop-opening.delivery",
+        "semantic intent": "deliver_material_object",
+        "camera zoom": "1.12×",
+        "recovered residents": "4/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "causal matter: Finish carrying the workshop crate to crossroads storage.",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t125 · speech · player.jozz Hej!"
+      ],
+      "stage": "ŚWIAT / BADANIA",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 249.671875,
+        "width": 972,
+        "height": 564
+      },
+      "bodyTextLength": 2197
+    },
+    {
+      "elapsedMs": 9371,
+      "tick": 507,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "2652, 823",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "1",
+        "focused run": "run.janek.workshop-opening.delivery",
+        "semantic intent": "deliver_material_object",
+        "camera zoom": "1.12×",
+        "recovered residents": "4/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "causal matter: Finish carrying the workshop crate to crossroads storage.",
+      "privatePerception": [],
+      "residentTrace": [
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t125 · speech · player.jozz Hej!"
+      ],
+      "stage": "ŚWIAT / BADANIA",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 249.671875,
+        "width": 972,
+        "height": 564
+      },
+      "bodyTextLength": 2197
+    },
+    {
+      "elapsedMs": 9622,
+      "tick": 521,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "workshop",
+        "position": "2673, 826",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "1",
+        "focused run": "run.janek.workshop-opening.delivery",
+        "semantic intent": "deliver_material_object",
+        "camera zoom": "1.12×",
+        "recovered residents": "4/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "causal matter: Finish carrying the workshop crate to crossroads storage.",
+      "privatePerception": [
+        "t520 · actor_sight_enter / sight resident.ida · exact (3147, 1028)"
+      ],
+      "residentTrace": [
+        "t520 · perception actor_sight_enter/sight: actor resident.ida entered sight",
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t125 · speech · player.jozz Hej!"
+      ],
+      "stage": "ŚWIAT / BADANIA",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 249.671875,
+        "width": 972,
+        "height": 564
+      },
+      "bodyTextLength": 2340
+    },
+    {
+      "elapsedMs": 9873,
+      "tick": 540,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "crossroads",
+        "position": "2701, 831",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "1",
+        "focused run": "run.janek.workshop-opening.delivery",
+        "semantic intent": "deliver_material_object",
+        "camera zoom": "1.12×",
+        "recovered residents": "4/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "causal matter: Finish carrying the workshop crate to crossroads storage.",
+      "privatePerception": [
+        "t537 · actor_sight_update / sight resident.ida · exact (3124, 1018)",
+        "t520 · actor_sight_enter / sight resident.ida · exact (3147, 1028)"
+      ],
+      "residentTrace": [
+        "t537 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t520 · perception actor_sight_enter/sight: actor resident.ida entered sight",
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t125 · speech · player.jozz Hej!"
+      ],
+      "stage": "ŚWIAT / BADANIA",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 249.671875,
+        "width": 972,
+        "height": 564
+      },
+      "bodyTextLength": 2493
+    },
+    {
+      "elapsedMs": 10124,
+      "tick": 553,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "crossroads",
+        "position": "2720, 835",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "1",
+        "focused run": "run.janek.workshop-opening.delivery",
+        "semantic intent": "deliver_material_object",
+        "camera zoom": "1.12×",
+        "recovered residents": "4/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "causal matter: Finish carrying the workshop crate to crossroads storage.",
+      "privatePerception": [
+        "t537 · actor_sight_update / sight resident.ida · exact (3124, 1018)",
+        "t520 · actor_sight_enter / sight resident.ida · exact (3147, 1028)"
+      ],
+      "residentTrace": [
+        "t537 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t520 · perception actor_sight_enter/sight: actor resident.ida entered sight",
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t125 · speech · player.jozz Hej!"
+      ],
+      "stage": "ŚWIAT / BADANIA",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 249.671875,
+        "width": 972,
+        "height": 564
+      },
+      "bodyTextLength": 2493
+    },
+    {
+      "elapsedMs": 10375,
+      "tick": 565,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "crossroads",
+        "position": "2738, 838",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "1",
+        "focused run": "run.janek.workshop-opening.delivery",
+        "semantic intent": "deliver_material_object",
+        "camera zoom": "1.12×",
+        "recovered residents": "4/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "causal matter: Finish carrying the workshop crate to crossroads storage.",
+      "privatePerception": [
+        "t554 · actor_sight_update / sight resident.ida · exact (3100, 1008)",
+        "t537 · actor_sight_update / sight resident.ida · exact (3124, 1018)",
+        "t520 · actor_sight_enter / sight resident.ida · exact (3147, 1028)"
+      ],
+      "residentTrace": [
+        "t554 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t537 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t520 · perception actor_sight_enter/sight: actor resident.ida entered sight",
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t125 · speech · player.jozz Hej!"
+      ],
+      "stage": "ŚWIAT / BADANIA",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 249.671875,
+        "width": 972,
+        "height": 564
+      },
+      "bodyTextLength": 2644
+    },
+    {
+      "elapsedMs": 10627,
+      "tick": 585,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "crossroads",
+        "position": "2767, 843",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "1",
+        "focused run": "run.janek.workshop-opening.delivery",
+        "semantic intent": "deliver_material_object",
+        "camera zoom": "1.12×",
+        "recovered residents": "5/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "causal matter: Finish carrying the workshop crate to crossroads storage.",
+      "privatePerception": [
+        "t571 · actor_sight_update / sight resident.ida · exact (3077, 998)",
+        "t554 · actor_sight_update / sight resident.ida · exact (3100, 1008)",
+        "t537 · actor_sight_update / sight resident.ida · exact (3124, 1018)",
+        "t520 · actor_sight_enter / sight resident.ida · exact (3147, 1028)"
+      ],
+      "residentTrace": [
+        "t571 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t554 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t537 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t520 · perception actor_sight_enter/sight: actor resident.ida entered sight",
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t125 · speech · player.jozz Hej!"
+      ],
+      "stage": "ŚWIAT / BADANIA",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 249.671875,
+        "width": 972,
+        "height": 564
+      },
+      "bodyTextLength": 2794
+    },
+    {
+      "elapsedMs": 10888,
+      "tick": 599,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "crossroads",
+        "position": "2788, 847",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "1",
+        "focused run": "run.janek.workshop-opening.delivery",
+        "semantic intent": "deliver_material_object",
+        "camera zoom": "1.12×",
+        "recovered residents": "5/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "causal matter: Finish carrying the workshop crate to crossroads storage.",
+      "privatePerception": [
+        "t588 · actor_sight_update / sight resident.ida · exact (3053, 989)",
+        "t571 · actor_sight_update / sight resident.ida · exact (3077, 998)",
+        "t554 · actor_sight_update / sight resident.ida · exact (3100, 1008)",
+        "t537 · actor_sight_update / sight resident.ida · exact (3124, 1018)",
+        "t520 · actor_sight_enter / sight resident.ida · exact (3147, 1028)"
+      ],
+      "residentTrace": [
+        "t588 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t571 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t554 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t537 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t520 · perception actor_sight_enter/sight: actor resident.ida entered sight",
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t125 · speech · player.jozz Hej!"
+      ],
+      "stage": "ŚWIAT / BADANIA",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 249.671875,
+        "width": 972,
+        "height": 564
+      },
+      "bodyTextLength": 2944
+    },
+    {
+      "elapsedMs": 11143,
+      "tick": 613,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "crossroads",
+        "position": "2809, 851",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "1",
+        "focused run": "run.janek.workshop-opening.delivery",
+        "semantic intent": "deliver_material_object",
+        "camera zoom": "1.12×",
+        "recovered residents": "5/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "causal matter: Finish carrying the workshop crate to crossroads storage.",
+      "privatePerception": [
+        "t605 · actor_sight_update / sight resident.ida · exact (3030, 979)",
+        "t588 · actor_sight_update / sight resident.ida · exact (3053, 989)",
+        "t571 · actor_sight_update / sight resident.ida · exact (3077, 998)",
+        "t554 · actor_sight_update / sight resident.ida · exact (3100, 1008)",
+        "t537 · actor_sight_update / sight resident.ida · exact (3124, 1018)",
+        "t520 · actor_sight_enter / sight resident.ida · exact (3147, 1028)"
+      ],
+      "residentTrace": [
+        "t605 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t588 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t571 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t554 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t537 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t520 · perception actor_sight_enter/sight: actor resident.ida entered sight",
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t125 · speech · player.jozz Hej!"
+      ],
+      "stage": "ŚWIAT / BADANIA",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 249.671875,
+        "width": 972,
+        "height": 564
+      },
+      "bodyTextLength": 3094
+    },
+    {
+      "elapsedMs": 11404,
+      "tick": 626,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "crossroads",
+        "position": "2828, 854",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "1",
+        "focused run": "run.janek.workshop-opening.delivery",
+        "semantic intent": "deliver_material_object",
+        "camera zoom": "1.12×",
+        "recovered residents": "5/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "causal matter: Finish carrying the workshop crate to crossroads storage.",
+      "privatePerception": [
+        "t622 · actor_sight_update / sight resident.ida · exact (3006, 969)",
+        "t605 · actor_sight_update / sight resident.ida · exact (3030, 979)",
+        "t588 · actor_sight_update / sight resident.ida · exact (3053, 989)",
+        "t571 · actor_sight_update / sight resident.ida · exact (3077, 998)",
+        "t554 · actor_sight_update / sight resident.ida · exact (3100, 1008)",
+        "t537 · actor_sight_update / sight resident.ida · exact (3124, 1018)",
+        "t520 · actor_sight_enter / sight resident.ida · exact (3147, 1028)"
+      ],
+      "residentTrace": [
+        "t622 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t605 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t588 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t571 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t554 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t537 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t520 · perception actor_sight_enter/sight: actor resident.ida entered sight",
+        "t0 · activity_changed idle: between tasks at the workshop; no fake work mechanic"
+      ],
+      "publicOccurrences": [
+        "t125 · speech · player.jozz Hej!"
+      ],
+      "stage": "ŚWIAT / BADANIA",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 249.671875,
+        "width": 972,
+        "height": 564
+      },
+      "bodyTextLength": 3244
+    },
+    {
+      "elapsedMs": 11655,
+      "tick": 646,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "crossroads",
+        "position": "2857, 859",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "1",
+        "focused run": "run.janek.workshop-opening.delivery",
+        "semantic intent": "deliver_material_object",
+        "camera zoom": "1.12×",
+        "recovered residents": "5/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "causal matter: Finish carrying the workshop crate to crossroads storage.",
+      "privatePerception": [
+        "t639 · actor_sight_update / sight resident.ida · exact (2983, 959)",
+        "t622 · actor_sight_update / sight resident.ida · exact (3006, 969)",
+        "t605 · actor_sight_update / sight resident.ida · exact (3030, 979)",
+        "t588 · actor_sight_update / sight resident.ida · exact (3053, 989)",
+        "t571 · actor_sight_update / sight resident.ida · exact (3077, 998)",
+        "t554 · actor_sight_update / sight resident.ida · exact (3100, 1008)",
+        "t537 · actor_sight_update / sight resident.ida · exact (3124, 1018)",
+        "t520 · actor_sight_enter / sight resident.ida · exact (3147, 1028)"
+      ],
+      "residentTrace": [
+        "t639 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t622 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t605 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t588 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t571 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t554 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t537 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t520 · perception actor_sight_enter/sight: actor resident.ida entered sight"
+      ],
+      "publicOccurrences": [
+        "t125 · speech · player.jozz Hej!"
+      ],
+      "stage": "ŚWIAT / BADANIA",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 249.671875,
+        "width": 972,
+        "height": 564
+      },
+      "bodyTextLength": 3313
+    },
+    {
+      "elapsedMs": 11908,
+      "tick": 659,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "crossroads",
+        "position": "2876, 863",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "1",
+        "focused run": "run.janek.workshop-opening.delivery",
+        "semantic intent": "deliver_material_object",
+        "camera zoom": "1.12×",
+        "recovered residents": "5/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "causal matter: Finish carrying the workshop crate to crossroads storage.",
+      "privatePerception": [
+        "t656 · actor_sight_update / sight resident.ida · exact (2959, 949)",
+        "t639 · actor_sight_update / sight resident.ida · exact (2983, 959)",
+        "t622 · actor_sight_update / sight resident.ida · exact (3006, 969)",
+        "t605 · actor_sight_update / sight resident.ida · exact (3030, 979)",
+        "t588 · actor_sight_update / sight resident.ida · exact (3053, 989)",
+        "t571 · actor_sight_update / sight resident.ida · exact (3077, 998)",
+        "t554 · actor_sight_update / sight resident.ida · exact (3100, 1008)",
+        "t537 · actor_sight_update / sight resident.ida · exact (3124, 1018)",
+        "t520 · actor_sight_enter / sight resident.ida · exact (3147, 1028)"
+      ],
+      "residentTrace": [
+        "t656 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t639 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t622 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t605 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t588 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t571 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t554 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t537 · perception actor_sight_update/sight: actor resident.ida moved while visible"
+      ],
+      "publicOccurrences": [
+        "t125 · speech · player.jozz Hej!"
+      ],
+      "stage": "ŚWIAT / BADANIA",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 249.671875,
+        "width": 972,
+        "height": 564
+      },
+      "bodyTextLength": 3387
+    },
+    {
+      "elapsedMs": 12160,
+      "tick": 678,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "crossroads",
+        "position": "2905, 868",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "1",
+        "focused run": "run.janek.workshop-opening.delivery",
+        "semantic intent": "deliver_material_object",
+        "camera zoom": "1.12×",
+        "recovered residents": "5/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "causal matter: Finish carrying the workshop crate to crossroads storage.",
+      "privatePerception": [
+        "t673 · actor_sight_update / sight resident.ida · exact (2936, 939)",
+        "t656 · actor_sight_update / sight resident.ida · exact (2959, 949)",
+        "t639 · actor_sight_update / sight resident.ida · exact (2983, 959)",
+        "t622 · actor_sight_update / sight resident.ida · exact (3006, 969)",
+        "t605 · actor_sight_update / sight resident.ida · exact (3030, 979)",
+        "t588 · actor_sight_update / sight resident.ida · exact (3053, 989)",
+        "t571 · actor_sight_update / sight resident.ida · exact (3077, 998)",
+        "t554 · actor_sight_update / sight resident.ida · exact (3100, 1008)",
+        "t537 · actor_sight_update / sight resident.ida · exact (3124, 1018)"
+      ],
+      "residentTrace": [
+        "t673 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t656 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t639 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t622 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t605 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t588 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t571 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t554 · perception actor_sight_update/sight: actor resident.ida moved while visible"
+      ],
+      "publicOccurrences": [
+        "t125 · speech · player.jozz Hej!"
+      ],
+      "stage": "ŚWIAT / BADANIA",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 249.671875,
+        "width": 972,
+        "height": 564
+      },
+      "bodyTextLength": 3387
+    },
+    {
+      "elapsedMs": 12424,
+      "tick": 691,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "crossroads",
+        "position": "2924, 871",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "1",
+        "focused run": "run.janek.workshop-opening.delivery",
+        "semantic intent": "deliver_material_object",
+        "camera zoom": "1.12×",
+        "recovered residents": "5/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "causal matter: Finish carrying the workshop crate to crossroads storage.",
+      "privatePerception": [
+        "t690 · actor_sight_update / sight resident.ida · exact (2912, 930)",
+        "t673 · actor_sight_update / sight resident.ida · exact (2936, 939)",
+        "t656 · actor_sight_update / sight resident.ida · exact (2959, 949)",
+        "t639 · actor_sight_update / sight resident.ida · exact (2983, 959)",
+        "t622 · actor_sight_update / sight resident.ida · exact (3006, 969)",
+        "t605 · actor_sight_update / sight resident.ida · exact (3030, 979)",
+        "t588 · actor_sight_update / sight resident.ida · exact (3053, 989)",
+        "t571 · actor_sight_update / sight resident.ida · exact (3077, 998)",
+        "t554 · actor_sight_update / sight resident.ida · exact (3100, 1008)"
+      ],
+      "residentTrace": [
+        "t690 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t673 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t656 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t639 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t622 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t605 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t588 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t571 · perception actor_sight_update/sight: actor resident.ida moved while visible"
+      ],
+      "publicOccurrences": [
+        "t125 · speech · player.jozz Hej!"
+      ],
+      "stage": "ŚWIAT / BADANIA",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 249.671875,
+        "width": 972,
+        "height": 564
+      },
+      "bodyTextLength": 3386
+    },
+    {
+      "elapsedMs": 12676,
+      "tick": 704,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "crossroads",
+        "position": "2943, 874",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "1",
+        "focused run": "run.janek.workshop-opening.delivery",
+        "semantic intent": "deliver_material_object",
+        "camera zoom": "1.12×",
+        "recovered residents": "5/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "causal matter: Finish carrying the workshop crate to crossroads storage.",
+      "privatePerception": [
+        "t690 · actor_sight_update / sight resident.ida · exact (2912, 930)",
+        "t673 · actor_sight_update / sight resident.ida · exact (2936, 939)",
+        "t656 · actor_sight_update / sight resident.ida · exact (2959, 949)",
+        "t639 · actor_sight_update / sight resident.ida · exact (2983, 959)",
+        "t622 · actor_sight_update / sight resident.ida · exact (3006, 969)",
+        "t605 · actor_sight_update / sight resident.ida · exact (3030, 979)",
+        "t588 · actor_sight_update / sight resident.ida · exact (3053, 989)",
+        "t571 · actor_sight_update / sight resident.ida · exact (3077, 998)",
+        "t554 · actor_sight_update / sight resident.ida · exact (3100, 1008)"
+      ],
+      "residentTrace": [
+        "t690 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t673 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t656 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t639 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t622 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t605 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t588 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t571 · perception actor_sight_update/sight: actor resident.ida moved while visible"
+      ],
+      "publicOccurrences": [
+        "t125 · speech · player.jozz Hej!"
+      ],
+      "stage": "ŚWIAT / BADANIA",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 249.671875,
+        "width": 972,
+        "height": 564
+      },
+      "bodyTextLength": 3386
+    },
+    {
+      "elapsedMs": 12939,
+      "tick": 723,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "crossroads",
+        "position": "2971, 879",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "1",
+        "focused run": "run.janek.workshop-opening.delivery",
+        "semantic intent": "deliver_material_object",
+        "camera zoom": "1.12×",
+        "recovered residents": "5/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "causal matter: Finish carrying the workshop crate to crossroads storage.",
+      "privatePerception": [
+        "t707 · actor_sight_update / sight resident.ida · exact (2888, 920)",
+        "t690 · actor_sight_update / sight resident.ida · exact (2912, 930)",
+        "t673 · actor_sight_update / sight resident.ida · exact (2936, 939)",
+        "t656 · actor_sight_update / sight resident.ida · exact (2959, 949)",
+        "t639 · actor_sight_update / sight resident.ida · exact (2983, 959)",
+        "t622 · actor_sight_update / sight resident.ida · exact (3006, 969)",
+        "t605 · actor_sight_update / sight resident.ida · exact (3030, 979)",
+        "t588 · actor_sight_update / sight resident.ida · exact (3053, 989)",
+        "t571 · actor_sight_update / sight resident.ida · exact (3077, 998)"
+      ],
+      "residentTrace": [
+        "t707 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t690 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t673 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t656 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t639 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t622 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t605 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t588 · perception actor_sight_update/sight: actor resident.ida moved while visible"
+      ],
+      "publicOccurrences": [
+        "t125 · speech · player.jozz Hej!"
+      ],
+      "stage": "ŚWIAT / BADANIA",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 249.671875,
+        "width": 972,
+        "height": 564
+      },
+      "bodyTextLength": 3385
+    },
+    {
+      "elapsedMs": 13190,
+      "tick": 736,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "crossroads",
+        "position": "2990, 883",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "1",
+        "focused run": "run.janek.workshop-opening.delivery",
+        "semantic intent": "deliver_material_object",
+        "camera zoom": "1.12×",
+        "recovered residents": "5/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "causal matter: Finish carrying the workshop crate to crossroads storage.",
+      "privatePerception": [
+        "t724 · actor_sight_update / sight resident.ida · exact (2865, 910)",
+        "t707 · actor_sight_update / sight resident.ida · exact (2888, 920)",
+        "t690 · actor_sight_update / sight resident.ida · exact (2912, 930)",
+        "t673 · actor_sight_update / sight resident.ida · exact (2936, 939)",
+        "t656 · actor_sight_update / sight resident.ida · exact (2959, 949)",
+        "t639 · actor_sight_update / sight resident.ida · exact (2983, 959)",
+        "t622 · actor_sight_update / sight resident.ida · exact (3006, 969)",
+        "t605 · actor_sight_update / sight resident.ida · exact (3030, 979)",
+        "t588 · actor_sight_update / sight resident.ida · exact (3053, 989)"
+      ],
+      "residentTrace": [
+        "t724 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t707 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t690 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t673 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t656 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t639 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t622 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t605 · perception actor_sight_update/sight: actor resident.ida moved while visible"
+      ],
+      "publicOccurrences": [
+        "t125 · speech · player.jozz Hej!"
+      ],
+      "stage": "ŚWIAT / BADANIA",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 249.671875,
+        "width": 972,
+        "height": 564
+      },
+      "bodyTextLength": 3385
+    },
+    {
+      "elapsedMs": 13442,
+      "tick": 750,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "crossroads",
+        "position": "3011, 886",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "1",
+        "focused run": "run.janek.workshop-opening.delivery",
+        "semantic intent": "deliver_material_object",
+        "camera zoom": "1.12×",
+        "recovered residents": "5/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "causal matter: Finish carrying the workshop crate to crossroads storage.",
+      "privatePerception": [
+        "t741 · actor_sight_update / sight resident.ida · exact (2841, 900)",
+        "t724 · actor_sight_update / sight resident.ida · exact (2865, 910)",
+        "t707 · actor_sight_update / sight resident.ida · exact (2888, 920)",
+        "t690 · actor_sight_update / sight resident.ida · exact (2912, 930)",
+        "t673 · actor_sight_update / sight resident.ida · exact (2936, 939)",
+        "t656 · actor_sight_update / sight resident.ida · exact (2959, 949)",
+        "t639 · actor_sight_update / sight resident.ida · exact (2983, 959)",
+        "t622 · actor_sight_update / sight resident.ida · exact (3006, 969)",
+        "t605 · actor_sight_update / sight resident.ida · exact (3030, 979)"
+      ],
+      "residentTrace": [
+        "t741 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t724 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t707 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t690 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t673 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t656 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t639 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t622 · perception actor_sight_update/sight: actor resident.ida moved while visible"
+      ],
+      "publicOccurrences": [
+        "t125 · speech · player.jozz Hej!"
+      ],
+      "stage": "ŚWIAT / BADANIA",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 249.671875,
+        "width": 972,
+        "height": 564
+      },
+      "bodyTextLength": 3385
+    },
+    {
+      "elapsedMs": 13708,
+      "tick": 770,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "crossroads",
+        "position": "3040, 892",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "1",
+        "focused run": "run.janek.workshop-opening.delivery",
+        "semantic intent": "deliver_material_object",
+        "camera zoom": "1.12×",
+        "recovered residents": "5/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "causal matter: Finish carrying the workshop crate to crossroads storage.",
+      "privatePerception": [
+        "t758 · actor_sight_update / sight resident.ida · exact (2818, 890)",
+        "t741 · actor_sight_update / sight resident.ida · exact (2841, 900)",
+        "t724 · actor_sight_update / sight resident.ida · exact (2865, 910)",
+        "t707 · actor_sight_update / sight resident.ida · exact (2888, 920)",
+        "t690 · actor_sight_update / sight resident.ida · exact (2912, 930)",
+        "t673 · actor_sight_update / sight resident.ida · exact (2936, 939)",
+        "t656 · actor_sight_update / sight resident.ida · exact (2959, 949)",
+        "t639 · actor_sight_update / sight resident.ida · exact (2983, 959)",
+        "t622 · actor_sight_update / sight resident.ida · exact (3006, 969)"
+      ],
+      "residentTrace": [
+        "t758 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t741 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t724 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t707 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t690 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t673 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t656 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t639 · perception actor_sight_update/sight: actor resident.ida moved while visible"
+      ],
+      "publicOccurrences": [
+        "t125 · speech · player.jozz Hej!"
+      ],
+      "stage": "ŚWIAT / BADANIA",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 249.671875,
+        "width": 972,
+        "height": 564
+      },
+      "bodyTextLength": 3385
+    },
+    {
+      "elapsedMs": 13960,
+      "tick": 783,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "crossroads",
+        "position": "3060, 895",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "1",
+        "focused run": "run.janek.workshop-opening.delivery",
+        "semantic intent": "deliver_material_object",
+        "camera zoom": "1.12×",
+        "recovered residents": "5/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "causal matter: Finish carrying the workshop crate to crossroads storage.",
+      "privatePerception": [
+        "t775 · actor_sight_update / sight resident.ida · exact (2794, 880)",
+        "t758 · actor_sight_update / sight resident.ida · exact (2818, 890)",
+        "t741 · actor_sight_update / sight resident.ida · exact (2841, 900)",
+        "t724 · actor_sight_update / sight resident.ida · exact (2865, 910)",
+        "t707 · actor_sight_update / sight resident.ida · exact (2888, 920)",
+        "t690 · actor_sight_update / sight resident.ida · exact (2912, 930)",
+        "t673 · actor_sight_update / sight resident.ida · exact (2936, 939)",
+        "t656 · actor_sight_update / sight resident.ida · exact (2959, 949)",
+        "t639 · actor_sight_update / sight resident.ida · exact (2983, 959)"
+      ],
+      "residentTrace": [
+        "t775 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t758 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t741 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t724 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t707 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t690 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t673 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t656 · perception actor_sight_update/sight: actor resident.ida moved while visible"
+      ],
+      "publicOccurrences": [
+        "t125 · speech · player.jozz Hej!"
+      ],
+      "stage": "ŚWIAT / BADANIA",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 249.671875,
+        "width": 972,
+        "height": 564
+      },
+      "bodyTextLength": 3385
+    },
+    {
+      "elapsedMs": 14221,
+      "tick": 796,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "crossroads",
+        "position": "3079, 898",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "1",
+        "focused run": "run.janek.workshop-opening.delivery",
+        "semantic intent": "deliver_material_object",
+        "camera zoom": "1.12×",
+        "recovered residents": "5/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "causal matter: Finish carrying the workshop crate to crossroads storage.",
+      "privatePerception": [
+        "t792 · actor_sight_update / sight resident.ida · exact (2771, 871)",
+        "t775 · actor_sight_update / sight resident.ida · exact (2794, 880)",
+        "t758 · actor_sight_update / sight resident.ida · exact (2818, 890)",
+        "t741 · actor_sight_update / sight resident.ida · exact (2841, 900)",
+        "t724 · actor_sight_update / sight resident.ida · exact (2865, 910)",
+        "t707 · actor_sight_update / sight resident.ida · exact (2888, 920)",
+        "t690 · actor_sight_update / sight resident.ida · exact (2912, 930)",
+        "t673 · actor_sight_update / sight resident.ida · exact (2936, 939)",
+        "t656 · actor_sight_update / sight resident.ida · exact (2959, 949)"
+      ],
+      "residentTrace": [
+        "t792 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t775 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t758 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t741 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t724 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t707 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t690 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t673 · perception actor_sight_update/sight: actor resident.ida moved while visible"
+      ],
+      "publicOccurrences": [
+        "t125 · speech · player.jozz Hej!"
+      ],
+      "stage": "ŚWIAT / BADANIA",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 249.671875,
+        "width": 972,
+        "height": 564
+      },
+      "bodyTextLength": 3385
+    },
+    {
+      "elapsedMs": 14473,
+      "tick": 815,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "crossroads",
+        "position": "3107, 903",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "1",
+        "focused run": "run.janek.workshop-opening.delivery",
+        "semantic intent": "deliver_material_object",
+        "camera zoom": "1.12×",
+        "recovered residents": "5/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "causal matter: Finish carrying the workshop crate to crossroads storage.",
+      "privatePerception": [
+        "t809 · actor_sight_update / sight resident.ida · exact (2747, 861)",
+        "t792 · actor_sight_update / sight resident.ida · exact (2771, 871)",
+        "t775 · actor_sight_update / sight resident.ida · exact (2794, 880)",
+        "t758 · actor_sight_update / sight resident.ida · exact (2818, 890)",
+        "t741 · actor_sight_update / sight resident.ida · exact (2841, 900)",
+        "t724 · actor_sight_update / sight resident.ida · exact (2865, 910)",
+        "t707 · actor_sight_update / sight resident.ida · exact (2888, 920)",
+        "t690 · actor_sight_update / sight resident.ida · exact (2912, 930)",
+        "t673 · actor_sight_update / sight resident.ida · exact (2936, 939)"
+      ],
+      "residentTrace": [
+        "t809 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t792 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t775 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t758 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t741 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t724 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t707 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t690 · perception actor_sight_update/sight: actor resident.ida moved while visible"
+      ],
+      "publicOccurrences": [
+        "t125 · speech · player.jozz Hej!"
+      ],
+      "stage": "ŚWIAT / BADANIA",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 249.671875,
+        "width": 972,
+        "height": 564
+      },
+      "bodyTextLength": 3385
+    },
+    {
+      "elapsedMs": 14725,
+      "tick": 827,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "crossroads",
+        "position": "3125, 907",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "1",
+        "focused run": "run.janek.workshop-opening.delivery",
+        "semantic intent": "deliver_material_object",
+        "camera zoom": "1.12×",
+        "recovered residents": "5/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "causal matter: Finish carrying the workshop crate to crossroads storage.",
+      "privatePerception": [
+        "t826 · actor_sight_update / sight resident.ida · exact (2724, 851)",
+        "t809 · actor_sight_update / sight resident.ida · exact (2747, 861)",
+        "t792 · actor_sight_update / sight resident.ida · exact (2771, 871)",
+        "t775 · actor_sight_update / sight resident.ida · exact (2794, 880)",
+        "t758 · actor_sight_update / sight resident.ida · exact (2818, 890)",
+        "t741 · actor_sight_update / sight resident.ida · exact (2841, 900)",
+        "t724 · actor_sight_update / sight resident.ida · exact (2865, 910)",
+        "t707 · actor_sight_update / sight resident.ida · exact (2888, 920)",
+        "t690 · actor_sight_update / sight resident.ida · exact (2912, 930)"
+      ],
+      "residentTrace": [
+        "t826 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t809 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t792 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t775 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t758 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t741 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t724 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t707 · perception actor_sight_update/sight: actor resident.ida moved while visible"
+      ],
+      "publicOccurrences": [
+        "t125 · speech · player.jozz Hej!"
+      ],
+      "stage": "ŚWIAT / BADANIA",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 249.671875,
+        "width": 972,
+        "height": 564
+      },
+      "bodyTextLength": 3385
+    },
+    {
+      "elapsedMs": 14977,
+      "tick": 847,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "crossroads",
+        "position": "3141, 918",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "1",
+        "focused run": "run.janek.workshop-opening.delivery",
+        "semantic intent": "deliver_material_object",
+        "camera zoom": "1.12×",
+        "recovered residents": "5/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "causal matter: Finish carrying the workshop crate to crossroads storage.",
+      "privatePerception": [
+        "t843 · actor_sight_update / sight resident.ida · exact (2700, 841)",
+        "t826 · actor_sight_update / sight resident.ida · exact (2724, 851)",
+        "t809 · actor_sight_update / sight resident.ida · exact (2747, 861)",
+        "t792 · actor_sight_update / sight resident.ida · exact (2771, 871)",
+        "t775 · actor_sight_update / sight resident.ida · exact (2794, 880)",
+        "t758 · actor_sight_update / sight resident.ida · exact (2818, 890)",
+        "t741 · actor_sight_update / sight resident.ida · exact (2841, 900)",
+        "t724 · actor_sight_update / sight resident.ida · exact (2865, 910)",
+        "t707 · actor_sight_update / sight resident.ida · exact (2888, 920)"
+      ],
+      "residentTrace": [
+        "t843 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t826 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t809 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t792 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t775 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t758 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t741 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t724 · perception actor_sight_update/sight: actor resident.ida moved while visible"
+      ],
+      "publicOccurrences": [
+        "t125 · speech · player.jozz Hej!"
+      ],
+      "stage": "ŚWIAT / BADANIA",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 249.671875,
+        "width": 972,
+        "height": 564
+      },
+      "bodyTextLength": 3385
+    },
+    {
+      "elapsedMs": 15242,
+      "tick": 860,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "crossroads",
+        "position": "3131, 935",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "1",
+        "focused run": "run.janek.workshop-opening.delivery",
+        "semantic intent": "deliver_material_object",
+        "camera zoom": "1.12×",
+        "recovered residents": "5/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "causal matter: Finish carrying the workshop crate to crossroads storage.",
+      "privatePerception": [
+        "t859 · actor_sight_update / sight resident.ida · exact (2676, 838)",
+        "t843 · actor_sight_update / sight resident.ida · exact (2700, 841)",
+        "t826 · actor_sight_update / sight resident.ida · exact (2724, 851)",
+        "t809 · actor_sight_update / sight resident.ida · exact (2747, 861)",
+        "t792 · actor_sight_update / sight resident.ida · exact (2771, 871)",
+        "t775 · actor_sight_update / sight resident.ida · exact (2794, 880)",
+        "t758 · actor_sight_update / sight resident.ida · exact (2818, 890)",
+        "t741 · actor_sight_update / sight resident.ida · exact (2841, 900)",
+        "t724 · actor_sight_update / sight resident.ida · exact (2865, 910)"
+      ],
+      "residentTrace": [
+        "t859 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t843 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t826 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t809 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t792 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t775 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t758 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t741 · perception actor_sight_update/sight: actor resident.ida moved while visible"
+      ],
+      "publicOccurrences": [
+        "t125 · speech · player.jozz Hej!"
+      ],
+      "stage": "ŚWIAT / BADANIA",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 249.671875,
+        "width": 972,
+        "height": 564
+      },
+      "bodyTextLength": 3385
+    },
+    {
+      "elapsedMs": 15494,
+      "tick": 878,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "crossroads",
+        "position": "3118, 959",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "1",
+        "focused run": "run.janek.workshop-opening.delivery",
+        "semantic intent": "deliver_material_object",
+        "camera zoom": "1.12×",
+        "recovered residents": "5/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "causal matter: Finish carrying the workshop crate to crossroads storage.",
+      "privatePerception": [
+        "t875 · actor_sight_update / sight resident.ida · exact (2653, 834)",
+        "t859 · actor_sight_update / sight resident.ida · exact (2676, 838)",
+        "t843 · actor_sight_update / sight resident.ida · exact (2700, 841)",
+        "t826 · actor_sight_update / sight resident.ida · exact (2724, 851)",
+        "t809 · actor_sight_update / sight resident.ida · exact (2747, 861)",
+        "t792 · actor_sight_update / sight resident.ida · exact (2771, 871)",
+        "t775 · actor_sight_update / sight resident.ida · exact (2794, 880)",
+        "t758 · actor_sight_update / sight resident.ida · exact (2818, 890)",
+        "t741 · actor_sight_update / sight resident.ida · exact (2841, 900)"
+      ],
+      "residentTrace": [
+        "t875 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t859 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t843 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t826 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t809 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t792 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t775 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t758 · perception actor_sight_update/sight: actor resident.ida moved while visible"
+      ],
+      "publicOccurrences": [
+        "t125 · speech · player.jozz Hej!"
+      ],
+      "stage": "ŚWIAT / BADANIA",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 249.671875,
+        "width": 972,
+        "height": 564
+      },
+      "bodyTextLength": 3385
+    },
+    {
+      "elapsedMs": 15759,
+      "tick": 891,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "crossroads",
+        "position": "3109, 976",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "1",
+        "focused run": "run.janek.workshop-opening.delivery",
+        "semantic intent": "deliver_material_object",
+        "camera zoom": "1.12×",
+        "recovered residents": "5/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "causal matter: Finish carrying the workshop crate to crossroads storage.",
+      "privatePerception": [
+        "t891 · actor_sight_update / sight resident.ida · exact (2629, 830)",
+        "t875 · actor_sight_update / sight resident.ida · exact (2653, 834)",
+        "t859 · actor_sight_update / sight resident.ida · exact (2676, 838)",
+        "t843 · actor_sight_update / sight resident.ida · exact (2700, 841)",
+        "t826 · actor_sight_update / sight resident.ida · exact (2724, 851)",
+        "t809 · actor_sight_update / sight resident.ida · exact (2747, 861)",
+        "t792 · actor_sight_update / sight resident.ida · exact (2771, 871)",
+        "t775 · actor_sight_update / sight resident.ida · exact (2794, 880)",
+        "t758 · actor_sight_update / sight resident.ida · exact (2818, 890)"
+      ],
+      "residentTrace": [
+        "t891 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t875 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t859 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t843 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t826 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t809 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t792 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t775 · perception actor_sight_update/sight: actor resident.ida moved while visible"
+      ],
+      "publicOccurrences": [
+        "t125 · speech · player.jozz Hej!"
+      ],
+      "stage": "ŚWIAT / BADANIA",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 249.671875,
+        "width": 972,
+        "height": 564
+      },
+      "bodyTextLength": 3385
+    },
+    {
+      "elapsedMs": 16022,
+      "tick": 904,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "crossroads",
+        "position": "3099, 993",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "1",
+        "focused run": "run.janek.workshop-opening.delivery",
+        "semantic intent": "deliver_material_object",
+        "camera zoom": "1.12×",
+        "recovered residents": "5/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "causal matter: Finish carrying the workshop crate to crossroads storage.",
+      "privatePerception": [
+        "t891 · actor_sight_update / sight resident.ida · exact (2629, 830)",
+        "t875 · actor_sight_update / sight resident.ida · exact (2653, 834)",
+        "t859 · actor_sight_update / sight resident.ida · exact (2676, 838)",
+        "t843 · actor_sight_update / sight resident.ida · exact (2700, 841)",
+        "t826 · actor_sight_update / sight resident.ida · exact (2724, 851)",
+        "t809 · actor_sight_update / sight resident.ida · exact (2747, 861)",
+        "t792 · actor_sight_update / sight resident.ida · exact (2771, 871)",
+        "t775 · actor_sight_update / sight resident.ida · exact (2794, 880)",
+        "t758 · actor_sight_update / sight resident.ida · exact (2818, 890)"
+      ],
+      "residentTrace": [
+        "t891 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t875 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t859 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t843 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t826 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t809 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t792 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t775 · perception actor_sight_update/sight: actor resident.ida moved while visible"
+      ],
+      "publicOccurrences": [
+        "t125 · speech · player.jozz Hej!"
+      ],
+      "stage": "ŚWIAT / BADANIA",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 249.671875,
+        "width": 972,
+        "height": 564
+      },
+      "bodyTextLength": 3385
+    },
+    {
+      "elapsedMs": 16273,
+      "tick": 922,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "crossroads",
+        "position": "3086, 1016",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "1",
+        "focused run": "run.janek.workshop-opening.delivery",
+        "semantic intent": "deliver_material_object",
+        "camera zoom": "1.12×",
+        "recovered residents": "5/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "causal matter: Finish carrying the workshop crate to crossroads storage.",
+      "privatePerception": [
+        "t917 · actor_sight_exit / sight resident.ida · no spatial cue",
+        "t916 · actor_sight_update / sight resident.ida · exact (2592, 824)",
+        "t907 · actor_sight_update / sight resident.ida · exact (2605, 826)",
+        "t891 · actor_sight_update / sight resident.ida · exact (2629, 830)",
+        "t875 · actor_sight_update / sight resident.ida · exact (2653, 834)",
+        "t859 · actor_sight_update / sight resident.ida · exact (2676, 838)",
+        "t843 · actor_sight_update / sight resident.ida · exact (2700, 841)",
+        "t826 · actor_sight_update / sight resident.ida · exact (2724, 851)",
+        "t809 · actor_sight_update / sight resident.ida · exact (2747, 861)"
+      ],
+      "residentTrace": [
+        "t917 · perception actor_sight_exit/sight: actor resident.ida left sight",
+        "t916 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t907 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t891 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t875 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t859 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t843 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t826 · perception actor_sight_update/sight: actor resident.ida moved while visible"
+      ],
+      "publicOccurrences": [
+        "t125 · speech · player.jozz Hej!"
+      ],
+      "stage": "ŚWIAT / BADANIA",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 249.671875,
+        "width": 972,
+        "height": 564
+      },
+      "bodyTextLength": 3370
+    },
+    {
+      "elapsedMs": 16524,
+      "tick": 935,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "crossroads",
+        "position": "3077, 1032",
+        "body": "still",
+        "legacy activity": "idle",
+        "motion intent": "0.0",
+        "resolved velocity": "0.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "1",
+        "recovered matters": "1",
+        "focused run": "—",
+        "semantic intent": "—",
+        "camera zoom": "1.12×",
+        "recovered residents": "5/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "legacy reason: between tasks at the workshop; no fake work mechanic",
+      "privatePerception": [
+        "t917 · actor_sight_exit / sight resident.ida · no spatial cue",
+        "t916 · actor_sight_update / sight resident.ida · exact (2592, 824)",
+        "t907 · actor_sight_update / sight resident.ida · exact (2605, 826)",
+        "t891 · actor_sight_update / sight resident.ida · exact (2629, 830)",
+        "t875 · actor_sight_update / sight resident.ida · exact (2653, 834)",
+        "t859 · actor_sight_update / sight resident.ida · exact (2676, 838)",
+        "t843 · actor_sight_update / sight resident.ida · exact (2700, 841)",
+        "t826 · actor_sight_update / sight resident.ida · exact (2724, 851)",
+        "t809 · actor_sight_update / sight resident.ida · exact (2747, 861)"
+      ],
+      "residentTrace": [
+        "t934 · cognition_reason Factual run outcome requires resident interpretation: succeeded: physically delivered crate.workshop.01 to (3050, 1080)",
+        "t917 · perception actor_sight_exit/sight: actor resident.ida left sight",
+        "t916 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t907 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t891 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t875 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t859 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t843 · perception actor_sight_update/sight: actor resident.ida moved while visible"
+      ],
+      "publicOccurrences": [
+        "t125 · speech · player.jozz Hej!"
+      ],
+      "stage": "ŚWIAT / BADANIA",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 249.671875,
+        "width": 972,
+        "height": 564
+      },
+      "bodyTextLength": 3165
+    },
+    {
+      "elapsedMs": 16776,
+      "tick": 954,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "crossroads",
+        "position": "3077, 1032",
+        "body": "still",
+        "legacy activity": "idle",
+        "motion intent": "0.0",
+        "resolved velocity": "0.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "1",
+        "recovered matters": "1",
+        "focused run": "—",
+        "semantic intent": "—",
+        "camera zoom": "1.12×",
+        "recovered residents": "5/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "legacy reason: between tasks at the workshop; no fake work mechanic",
+      "privatePerception": [
+        "t917 · actor_sight_exit / sight resident.ida · no spatial cue",
+        "t916 · actor_sight_update / sight resident.ida · exact (2592, 824)",
+        "t907 · actor_sight_update / sight resident.ida · exact (2605, 826)",
+        "t891 · actor_sight_update / sight resident.ida · exact (2629, 830)",
+        "t875 · actor_sight_update / sight resident.ida · exact (2653, 834)",
+        "t859 · actor_sight_update / sight resident.ida · exact (2676, 838)",
+        "t843 · actor_sight_update / sight resident.ida · exact (2700, 841)",
+        "t826 · actor_sight_update / sight resident.ida · exact (2724, 851)",
+        "t809 · actor_sight_update / sight resident.ida · exact (2747, 861)"
+      ],
+      "residentTrace": [
+        "t934 · cognition_reason Factual run outcome requires resident interpretation: succeeded: physically delivered crate.workshop.01 to (3050, 1080)",
+        "t917 · perception actor_sight_exit/sight: actor resident.ida left sight",
+        "t916 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t907 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t891 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t875 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t859 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t843 · perception actor_sight_update/sight: actor resident.ida moved while visible"
+      ],
+      "publicOccurrences": [
+        "t125 · speech · player.jozz Hej!"
+      ],
+      "stage": "ŚWIAT · BEZ AUTOMATYCZNEGO API",
+      "worldOnly": true,
+      "canvas": {
+        "x": 13,
+        "y": 122,
+        "width": 1374,
+        "height": 692
+      },
+      "bodyTextLength": 478
+    },
+    {
+      "elapsedMs": 17036,
+      "tick": 968,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "crossroads",
+        "position": "3077, 1032",
+        "body": "still",
+        "legacy activity": "idle",
+        "motion intent": "0.0",
+        "resolved velocity": "0.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "1",
+        "recovered matters": "1",
+        "focused run": "—",
+        "semantic intent": "—",
+        "camera zoom": "1.12×",
+        "recovered residents": "5/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "legacy reason: between tasks at the workshop; no fake work mechanic",
+      "privatePerception": [
+        "t917 · actor_sight_exit / sight resident.ida · no spatial cue",
+        "t916 · actor_sight_update / sight resident.ida · exact (2592, 824)",
+        "t907 · actor_sight_update / sight resident.ida · exact (2605, 826)",
+        "t891 · actor_sight_update / sight resident.ida · exact (2629, 830)",
+        "t875 · actor_sight_update / sight resident.ida · exact (2653, 834)",
+        "t859 · actor_sight_update / sight resident.ida · exact (2676, 838)",
+        "t843 · actor_sight_update / sight resident.ida · exact (2700, 841)",
+        "t826 · actor_sight_update / sight resident.ida · exact (2724, 851)",
+        "t809 · actor_sight_update / sight resident.ida · exact (2747, 861)"
+      ],
+      "residentTrace": [
+        "t934 · cognition_reason Factual run outcome requires resident interpretation: succeeded: physically delivered crate.workshop.01 to (3050, 1080)",
+        "t917 · perception actor_sight_exit/sight: actor resident.ida left sight",
+        "t916 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t907 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t891 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t875 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t859 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t843 · perception actor_sight_update/sight: actor resident.ida moved while visible"
+      ],
+      "publicOccurrences": [
+        "t125 · speech · player.jozz Hej!"
+      ],
+      "stage": "ŚWIAT · BEZ AUTOMATYCZNEGO API",
+      "worldOnly": true,
+      "canvas": {
+        "x": 13,
+        "y": 122,
+        "width": 1374,
+        "height": 692
+      },
+      "bodyTextLength": 478
+    },
+    {
+      "elapsedMs": 17300,
+      "tick": 981,
+      "selectedName": "Janek",
+      "role": "future material work interruption and return",
+      "facts": {
+        "region": "crossroads",
+        "position": "3077, 1032",
+        "body": "still",
+        "legacy activity": "idle",
+        "motion intent": "0.0",
+        "resolved velocity": "0.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "1",
+        "recovered matters": "1",
+        "focused run": "—",
+        "semantic intent": "—",
+        "camera zoom": "1.12×",
+        "recovered residents": "5/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      },
+      "activityReason": "legacy reason: between tasks at the workshop; no fake work mechanic",
+      "privatePerception": [
+        "t917 · actor_sight_exit / sight resident.ida · no spatial cue",
+        "t916 · actor_sight_update / sight resident.ida · exact (2592, 824)",
+        "t907 · actor_sight_update / sight resident.ida · exact (2605, 826)",
+        "t891 · actor_sight_update / sight resident.ida · exact (2629, 830)",
+        "t875 · actor_sight_update / sight resident.ida · exact (2653, 834)",
+        "t859 · actor_sight_update / sight resident.ida · exact (2676, 838)",
+        "t843 · actor_sight_update / sight resident.ida · exact (2700, 841)",
+        "t826 · actor_sight_update / sight resident.ida · exact (2724, 851)",
+        "t809 · actor_sight_update / sight resident.ida · exact (2747, 861)"
+      ],
+      "residentTrace": [
+        "t934 · cognition_reason Factual run outcome requires resident interpretation: succeeded: physically delivered crate.workshop.01 to (3050, 1080)",
+        "t917 · perception actor_sight_exit/sight: actor resident.ida left sight",
+        "t916 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t907 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t891 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t875 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t859 · perception actor_sight_update/sight: actor resident.ida moved while visible",
+        "t843 · perception actor_sight_update/sight: actor resident.ida moved while visible"
+      ],
+      "publicOccurrences": [
+        "t125 · speech · player.jozz Hej!"
+      ],
+      "stage": "ŚWIAT / BADANIA",
+      "worldOnly": false,
+      "canvas": {
+        "x": 13,
+        "y": 249.671875,
+        "width": 972,
+        "height": 564
+      },
+      "bodyTextLength": 3165
+    }
+  ],
+  "console": [
+    {
+      "type": "log",
+      "timestamp": 1791821328152.163,
+      "values": [
+        "%cPhaser v4.2.1 (WebGL | Web Audio)%c https://phaser.io/v4021",
+        "color: #ffffff; background-image: url(\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAOCAYAAAAmL5yKAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAARBJREFUeNpi/P//P0OHsPB/BiCoePuWkYFEwALSXJElzMBgLwE2CNkQxgWr/yMr/p8QimlBu5DQ//+8vBBco/ofzAe6imH+qv/53/6jYJAYSA4ZoxoANYTPKhiuCQZwGcJU+e4dqpMmvsDq14krV2MPAxDha2CMKvoXoiE/PBQUDgQD8j82UFae9B9bOIC8B9UD9gIjjIMN7Ns6lWHn4XMoYu62RgxO3tkMjIyMII2MYAOAtmFVhA+ADHf2ycGMRhANjUq8YO+WKWCvgAORIV8CkpDCrzIwsLIymC1qAtuAD4Bsh3sBmqAY3qcGwL2AC4DCpKtzHlgzOLWihwEuzTCN0GhDJHeYC4gByBphACDAAH2dDIxdjr+VAAAAAElFTkSuQmCC\"), linear-gradient(to bottom, #000814, #001d3d, #003566); background-repeat: no-repeat; background-position: 4px center, 0 0; padding: 2px 6px 2px 24px;",
+        "background: transparent"
+      ]
+    }
+  ],
+  "runtimeExceptions": [],
+  "logErrors": [],
+  "networkFailures": [],
+  "httpErrors": [],
+  "assertions": [
+    {
+      "name": "screenshot 01-janek-early-research is non-empty",
+      "pass": true,
+      "severity": "gate",
+      "detail": {
+        "bytes": 79977
+      }
+    },
+    {
+      "name": "nearby Mira receives player speech through real browser/world path",
+      "pass": true,
+      "severity": "gate",
+      "detail": [
+        "t125 · speech / hearing player.jozz · far direction (-1.00, 0.00)",
+        "t1 · actor_sight_enter / sight player.jozz · exact (620, 620)"
+      ]
+    },
+    {
+      "name": "screenshot 02-player-call-mira-research is non-empty",
+      "pass": true,
+      "severity": "gate",
+      "detail": {
+        "bytes": 78651
+      }
+    },
+    {
+      "name": "Janek produces visible resolved motion during recovered delivery",
+      "pass": true,
+      "severity": "gate",
+      "detail": {
+        "region": "workshop",
+        "position": "2171, 756",
+        "body": "moving",
+        "legacy activity": "idle",
+        "motion intent": "90.0",
+        "resolved velocity": "90.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "0",
+        "recovered matters": "1",
+        "focused run": "run.janek.workshop-opening.delivery",
+        "semantic intent": "deliver_material_object",
+        "camera zoom": "1.12×",
+        "recovered residents": "1/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      }
+    },
+    {
+      "name": "screenshot 03-janek-mid-delivery-research is non-empty",
+      "pass": true,
+      "severity": "gate",
+      "detail": {
+        "bytes": 80867
+      }
+    },
+    {
+      "name": "screenshot 04-janek-mid-delivery-world is non-empty",
+      "pass": true,
+      "severity": "gate",
+      "detail": {
+        "bytes": 44960
+      }
+    },
+    {
+      "name": "Janek delivery reaches a settled physical state in browser",
+      "pass": true,
+      "severity": "gate",
+      "detail": {
+        "region": "crossroads",
+        "position": "3077, 1032",
+        "body": "still",
+        "legacy activity": "idle",
+        "motion intent": "0.0",
+        "resolved velocity": "0.0",
+        "resolution": "full",
+        "constraint": "—",
+        "cognition queue": "1",
+        "recovered matters": "1",
+        "focused run": "—",
+        "semantic intent": "—",
+        "camera zoom": "1.12×",
+        "recovered residents": "5/5",
+        "provider requests": "0",
+        "provider in flight": "0",
+        "arrival inbox": "0"
+      }
+    },
+    {
+      "name": "screenshot 05-janek-settled-research is non-empty",
+      "pass": true,
+      "severity": "gate",
+      "detail": {
+        "bytes": 74543
+      }
+    },
+    {
+      "name": "screenshot 06-janek-settled-world is non-empty",
+      "pass": true,
+      "severity": "gate",
+      "detail": {
+        "bytes": 46845
+      }
+    },
+    {
+      "name": "Phaser canvas is present and non-trivial",
+      "pass": true,
+      "severity": "gate",
+      "detail": {
+        "width": 972,
+        "height": 564,
+        "cssWidth": 972,
+        "cssHeight": 564
+      }
+    },
+    {
+      "name": "no uncaught browser/runtime errors",
+      "pass": true,
+      "severity": "gate",
+      "detail": {
+        "runtimeExceptions": [],
+        "logErrors": []
+      }
+    }
+  ],
+  "performance": {
+    "finalMetrics": {
+      "Timestamp": 76.897153,
+      "AudioHandlers": 3,
+      "AudioWorkletProcessors": 0,
+      "Documents": 1,
+      "Frames": 1,
+      "JSEventListeners": 63,
+      "LayoutObjects": 1346,
+      "MediaKeySessions": 0,
+      "MediaKeys": 0,
+      "Nodes": 3802,
+      "Resources": 10,
+      "ContextLifecycleStateObservers": 7,
+      "V8PerContextDatas": 1,
+      "WorkerGlobalScopes": 0,
+      "UACSSResources": 0,
+      "RTCPeerConnections": 0,
+      "ResourceFetchers": 1,
+      "AdSubframes": 0,
+      "DetachedScriptStates": 0,
+      "ArrayBufferContents": 42,
+      "LayoutCount": 243,
+      "RecalcStyleCount": 253,
+      "LayoutDuration": 0.240963,
+      "RecalcStyleDuration": 0.061628,
+      "DevToolsCommandDuration": 0.08461,
+      "ScriptDuration": 3.089653,
+      "V8CompileDuration": 0,
+      "TaskDuration": 12.275381,
+      "TaskOtherDuration": 8.798527,
+      "ThreadTime": 4.337624,
+      "ProcessTime": 6.34,
+      "JSHeapUsedSize": 12480288,
+      "JSHeapTotalSize": 78643200,
+      "FirstMeaningfulPaint": 62.562454,
+      "DomContentLoaded": 59.846216,
+      "NavigationStart": 59.799624
+    },
+    "canvas": {
+      "width": 972,
+      "height": 564,
+      "cssWidth": 972,
+      "cssHeight": 564
+    }
+  },
+  "finishedAt": "2026-10-12T16:09:05.218Z",
+  "outcome": "PASS"
+}
