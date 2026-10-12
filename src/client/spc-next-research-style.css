@@ -402,3 +402,9 @@
     flex: 1 1 400px;
   }
 }
+
+/* Explicit, finite model session — never enabled by page load or World tick. */
+.spc-live-cognition-button { white-space: nowrap; }
+.spc-live-cognition-status { font-size: 11px; color: #9bb7c2; white-space: nowrap; }
+.spc-live-cognition-status[hidden] { display: none; }
+#app.spc-next-mode.spc-world-only .spc-header-actions { row-gap: 8px; }

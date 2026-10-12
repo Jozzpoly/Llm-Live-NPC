@@ -123,7 +123,7 @@ operatorLoginLink.className = "spc-operator-login";
 operatorLoginLink.href = "/api/operator/login";
 operatorLoginLink.textContent = "Logowanie";
 operatorLoginLink.title = "Jednorazowe logowanie operatora do prywatnej sesji (bez Zero Trust).";
-operatorLoginLink.hidden = !armedResearchMode;
+operatorLoginLink.hidden = !(armedResearchMode || (unifiedLivingMode && !evidenceMode));
 const oneShotButton = document.createElement("button");
 oneShotButton.type = "button";
 oneShotButton.className = "spc-chat-send";
@@ -164,9 +164,20 @@ for (const resident of FIVE_RESIDENT_ROLE_PRESSURES) {
   worldNavigation.append(button);
 }
 
+const operatorCognitionButton = document.createElement("button");
+operatorCognitionButton.type = "button";
+operatorCognitionButton.className = "spc-chat-send spc-live-cognition-button";
+operatorCognitionButton.hidden = !(unifiedLivingMode && !evidenceMode);
+operatorCognitionButton.textContent = "Włącz Lunę (max. 12)";
+operatorCognitionButton.title = "Świadomie włącz maksymalnie 12 rzeczywistych zapytań API dla pięciu SPC. Mogą generować koszty; to NIE limit dolarowy. Po odświeżeniu znów wyłączone.";
+const operatorCognitionStatus = document.createElement("span");
+operatorCognitionStatus.className = "spc-live-cognition-status";
+operatorCognitionStatus.hidden = operatorCognitionButton.hidden;
+operatorCognitionStatus.textContent = "0 API · cognition wyłączone";
+
 const headerActions = document.createElement("div");
 headerActions.className = "spc-header-actions";
-headerActions.append(stageNode, chatForm, operatorLoginLink, oneShotButton, exportProbeButton, oneShotStatus, episodeStatus, episodeDecision, episodeDefer, worldModeButton);
+headerActions.append(stageNode, chatForm, operatorLoginLink, operatorCognitionButton, operatorCognitionStatus, oneShotButton, exportProbeButton, oneShotStatus, episodeStatus, episodeDecision, episodeDefer, worldModeButton);
 header.append(worldNavigation, headerActions);
 
 let scene: SpcNextResearchScene;
@@ -192,6 +203,17 @@ function setWorldOnly(enabled: boolean): void {
 
 function renderPanel(frame: SpcNextResearchFrame): void {
   lastFrame = frame;
+  if (unifiedLivingMode && !evidenceMode && frame.livingDiagnostics) {
+    const usage = frame.livingDiagnostics.providerHardBudget;
+    const running = frame.livingDiagnostics.operatorAutoDispatchEnabled;
+    const latestError = frame.livingDiagnostics.recentProviderEvents.some(event =>
+      event.status === "provider_error" || event.status === "transport_internal_error");
+    operatorCognitionButton.textContent = running ? "Pauzuj Lunę" : "Włącz Lunę";
+    operatorCognitionButton.disabled = usage.exhausted && !running;
+    operatorCognitionStatus.textContent = `${usage.upstreamRequestsStarted}/${usage.maxUpstreamRequests} API · ${
+      running ? "SPC myślą" : latestError ? "pauza po błędzie" : usage.exhausted ? "limit" : "wyłączone"
+    }`;
+  }
   for (const button of worldNavigation.querySelectorAll<HTMLButtonElement>("[data-world-resident]")) {
     const selected = button.dataset.worldResident === frame.selectedResidentId;
     button.classList.toggle("is-selected", selected);
@@ -594,6 +616,19 @@ chatForm.addEventListener("submit", (event) => {
   game.canvas.focus();
 });
 
+operatorCognitionButton.addEventListener("click", () => {
+  if (operatorCognitionButton.disabled || !lastFrame?.livingDiagnostics) return;
+  if (lastFrame.livingDiagnostics.operatorAutoDispatchEnabled) {
+    scene.pauseBoundedCognition();
+    return;
+  }
+  const cap = lastFrame.livingDiagnostics.providerHardBudget.maxUpstreamRequests;
+  const consent = window.confirm(
+    `Uruchomić wyższą cognition pięciu SPC? W tej sesji może rozpocząć się do ${cap} rzeczywistych requestów API. Mogą generować koszty; to NIE jest limit dolarowy. Bez Twojego kliknięcia nie są wysyłane zapytania.`,
+  );
+  if (!consent) return;
+  scene.startBoundedCognition();
+});
 worldNavigation.addEventListener("click", (event) => {
   const button = event.target instanceof Element
     ? event.target.closest<HTMLButtonElement>("button")

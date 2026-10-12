@@ -15,6 +15,46 @@ function expectOnlyFactualLocalContact(life: NonNullable<ReturnType<FiveResident
 
 
 describe("five-resident unified living runtime", () => {
+  it("allows deliberate finite five-resident cognition but zero requests on page load, and pauses on failure", async () => {
+    const upstream = vi.fn(async () => Response.json(
+      { ok: false, code: "operator_login_required" }, { status: 401 },
+    ));
+    const living = new FiveResidentUnifiedLivingRuntime({
+      providerDispatchMode: "manual",
+      initialEverydayWork: true,
+      allowOperatorAutomaticCognition: true,
+      maxUpstreamRequests: 12,
+      maxConcurrentCognition: 1,
+      fetcher: upstream,
+    });
+    for (let tick = 0; tick < 2_600; tick++) living.advanceOneWorldTick();
+    expect(living.lifeRuntime.claimedResidentIds()).toHaveLength(5);
+    expect(living.diagnostics().operatorAutoDispatchEnabled).toBe(false);
+    expect(upstream).not.toHaveBeenCalled();
+    expect(living.startOperatorAutomaticCognition()).toBe("started");
+    expect(living.diagnostics().operatorAutoDispatchEnabled).toBe(true);
+    living.advanceOneWorldTick();
+    expect(upstream).toHaveBeenCalledTimes(1);
+    await flushMicrotasks();
+    living.advanceOneWorldTick();
+    expect(living.diagnostics().operatorAutoDispatchEnabled).toBe(false);
+    expect(living.diagnostics().recentProviderEvents.some(event =>
+      event.status === "provider_error")).toBe(true);
+    for (let tick = 0; tick < 360; tick++) living.advanceOneWorldTick();
+    expect(upstream).toHaveBeenCalledTimes(1);
+    expect(living.diagnostics().providerHardBudget.upstreamRequestsStarted).toBe(1);
+    expect(living.startOperatorAutomaticCognition()).toBe("started");
+    expect(living.pauseOperatorAutomaticCognition()).toBe("paused");
+    for (let tick = 0; tick < 100; tick++) living.advanceOneWorldTick();
+    expect(upstream).toHaveBeenCalledTimes(1);
+  }, 30_000);
+
+  it("cannot turn on operator auto-cognition without explicit construction authority", () => {
+    const living = new FiveResidentUnifiedLivingRuntime({ providerDispatchMode: "manual" });
+    expect(living.startOperatorAutomaticCognition()).toBe("not_authorized");
+    expect(living.pauseOperatorAutomaticCognition()).toBe("not_running");
+    expect(living.diagnostics().operatorAutoDispatchEnabled).toBe(false);
+  });
   it("keeps five asynchronous provider completions inert until the next World admission boundary", async () => {
     const fetcher = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
       const context = JSON.parse(String(init?.body)) as {

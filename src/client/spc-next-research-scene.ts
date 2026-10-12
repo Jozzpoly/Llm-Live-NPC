@@ -189,6 +189,18 @@ export class SpcNextResearchScene extends Phaser.Scene {
   /** A direct player/operator choice; ordinary World ticks never call the provider
    * in the unified-armed research mode.
    */
+  startBoundedCognition(): ReturnType<NonNullable<typeof this.scenario.startBoundedCognition>> | "not_authorized" {
+    const status = this.scenario.startBoundedCognition?.() ?? "not_authorized";
+    this.pushFrame(true);
+    return status;
+  }
+
+  pauseBoundedCognition(): "paused" | "not_running" {
+    const status = this.scenario.pauseBoundedCognition?.() ?? "not_running";
+    this.pushFrame(true);
+    return status;
+  }
+
   requestSelectedResidentCognition():
     "started" | "no_reason" | "resident_unavailable" | "budget_exhausted" {
     if (!this.selectedResidentId || !this.scenario.requestOneResidentCognition) {

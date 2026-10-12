@@ -67,6 +67,9 @@ export interface SpcNextResearchScenario {
   readonly canonicalEvidenceSupported?: boolean;
   readonly residentLifeView?: (residentId: string) => ResidentLifeCognitionView | null;
   readonly livingDiagnostics?: () => FiveResidentLivingRuntimeDiagnostics | null;
+  /** Owner-confirmed bounded multi-resident cognition; absent from archival labs. */
+  readonly startBoundedCognition?: () => ReturnType<FiveResidentUnifiedLivingRuntime["startOperatorAutomaticCognition"]>;
+  readonly pauseBoundedCognition?: () => ReturnType<FiveResidentUnifiedLivingRuntime["pauseOperatorAutomaticCognition"]>;
   /** Read only by explicit local operator export, NEVER automatically transmitted. */
   readonly manualResearchProbe?: () => FiveResidentManualResearchProbe | null;
   /** Only on the opt-in, one-call, manually dispatched research scenario. */
@@ -942,7 +945,11 @@ function createUnifiedLivingScenario(manual = false): SpcNextResearchScenario {
     providerDispatchMode: "manual",
     socialReencounter: true,
     initialEverydayWork: true,
-    maxUpstreamRequests: 1,
+    // Twelve physical upstream calls PER deliberate operator session, never a
+    // dollar/token guarantee. No page-load request or hidden scheduling.
+    maxUpstreamRequests: 12,
+    maxConcurrentCognition: 2,
+    allowOperatorAutomaticCognition: true,
   });
   const janek = living.life("resident.janek");
   if (!janek) {
@@ -970,6 +977,10 @@ function createUnifiedLivingScenario(manual = false): SpcNextResearchScenario {
     livingDiagnostics(): FiveResidentLivingRuntimeDiagnostics {
       return living.diagnostics();
     },
+    ...(!manual ? {
+      startBoundedCognition: () => living.startOperatorAutomaticCognition(),
+      pauseBoundedCognition: () => living.pauseOperatorAutomaticCognition(),
+    } : {}),
     ...(manual ? {
       manualResearchProbe(): FiveResidentManualResearchProbe | null {
         return living.manualResearchProbe();
