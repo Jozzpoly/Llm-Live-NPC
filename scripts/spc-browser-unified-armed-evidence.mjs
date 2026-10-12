@@ -91,7 +91,7 @@ try{
     report.exceptions.push(exceptionDetails?.exception?.description??exceptionDetails?.text??"unknown");
   });
   await Promise.all([cdp.send("Page.enable"),cdp.send("Network.enable"),cdp.send("Runtime.enable")]);
-  await cdp.send("Page.navigate",{url:base.replace(/\/$/u,"")+"/?spc=1&evidence=1&scenario=unified-armed"});
+  await cdp.send("Page.navigate",{url:base.replace(/\/$/u,"")+"/?spc=1&evidence=1&scenario=unified-armed&case=contact-after-shift"});
   await until(()=>runIn(cdp,'Boolean(window.__SPC_EVIDENCE__?.ready?.() && document.querySelector("canvas"))'));
   check("explicit one-shot UI",await runIn(cdp,'Array.from(document.querySelectorAll("button")).some(b=>b.textContent?.includes("Zapytaj Lunę")&&!b.hidden)'));
   check("private evidence export hidden BEFORE operator action",await runIn(cdp,'Array.from(document.querySelectorAll("button")).some(b=>b.textContent?.includes("Zapisz dowody JSON")&&b.hidden)'));
@@ -104,6 +104,12 @@ try{
     &&ready.livingDiagnostics?.providerRequestCount===0
     &&report.requests.length===0,
     {claimed:ready.livingDiagnostics?.claimedResidentIds,provider:ready.livingDiagnostics?.providerRequestCount});
+  const player = ready.snapshot?.actors?.find(a => a.id === "player.jozz");
+  const mira = ready.snapshot?.actors?.find(a => a.id === "resident.mira");
+  check("actual player remains within hearing range after Mira's real shift",
+    Boolean(player && mira && Math.hypot(
+      player.position.x-mira.position.x, player.position.y-mira.position.y,
+    ) < 420), {player:player?.position,mira:mira?.position});
   const speech=await runIn(cdp,'window.__SPC_EVIDENCE__.addressResident("resident.mira","Mira, czy możemy chwilę porozmawiać?")');
   check("actual World speech",speech?.kind==="speech"&&speech?.actorId==="player.jozz",speech);
   await runIn(cdp,"window.__SPC_EVIDENCE__.stepWorld(1)");

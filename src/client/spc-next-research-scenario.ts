@@ -912,11 +912,17 @@ function createR6MiraStandingSocialCommitmentScenario(): SpcNextResearchScenario
 
 
 function createUnifiedLivingScenario(manual = false): SpcNextResearchScenario {
+  // Explicit browser-evidence *initial condition*: when waiting for Mira's
+  // completed material shift before addressing her, the player must already be
+  // physically near the workshop. No runtime teleport and no synthetic hearing.
+  // Ordinary manual/operator opening still begins beside Mira at the hearth.
+  const postShiftContactFixture = manual
+    && new URLSearchParams(location.search).get("case") === "contact-after-shift";
   const living = new FiveResidentUnifiedLivingRuntime(manual ? {
-    // Authored encounter setup: start within natural speech range of Mira,
-    // never fabricate a percept, social motive or subsequent response.
     composition: createFiveResidentRegionComposition({
-      playerStart: { x: 900, y: 680 },
+      playerStart: postShiftContactFixture
+        ? { x: 1_900, y: 800 }
+        : { x: 900, y: 680 },
     }),
     providerDispatchMode: "manual",
     socialReencounter: true,
