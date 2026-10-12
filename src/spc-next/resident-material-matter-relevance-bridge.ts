@@ -344,7 +344,8 @@ function hasOpenMaterialMatter(
 ): boolean {
   return life.matters.some((matter) => (
     (matter.status === "active" || matter.status === "suspended")
-    && matter.semanticIntent?.kind === "acquire_material_object"
+    && (matter.semanticIntent?.kind === "acquire_material_object"
+      || matter.semanticIntent?.kind === "deliver_material_object")
     && matter.semanticIntent.objectId === objectId
   ));
 }
