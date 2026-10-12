@@ -357,8 +357,22 @@ export class ResidentCausalExecutionCoordinator {
       // Keep ONE valid bound run/matter during the entire held-object journey.
       // Pickup did not resolve the resident's original promise to deliver.
       state.stage = "place";
+      const grounded = this.life.resident.cognitionContext({
+        residentId: this.life.residentId,
+        requestedAtTick: this.life.world.tick,
+        reasons: [],
+      });
+      const destinationRegion = this.life.world.regionAt(intent.destination)?.id ?? null;
+      const known = new Set(grounded.knownRegions.map(region => region.id));
+      if (grounded.currentRegionId) known.add(grounded.currentRegionId);
+      const route = grounded.currentRegionId && destinationRegion
+        ? this.life.navigation.route(grounded.currentRegionId, destinationRegion, known)
+        : null;
+      // Existing exact-position errands still work when no regional route is
+      // available. No unseen object, hidden destination or global path is read.
       state.place = new ResidentMaterialPlaceExecutor(
         runId, intent.objectId, intent.destination, this.life.worldAuthority, this.life.world,
+        90, route?.waypoints ?? [],
       );
       return { status: "running", matterId: matter.id, runId, intentKind: intent.kind };
     }
@@ -531,6 +545,9 @@ export class ResidentCausalExecutionCoordinator {
         destination,
         this.life.worldAuthority,
         this.life.world,
+        95,
+        18,
+        route.waypoints,
       ),
       targetRegionId: intent.targetRegionId,
     };

@@ -21,6 +21,8 @@ const DEFAULT_APPROACH_SPEED = 90;
  */
 export class ResidentMaterialPlaceExecutor {
   private terminal: ResidentMaterialPlaceStep | null = null;
+  private readonly routeWaypoints: readonly Vec2[];
+  private routeIndex = 0;
 
   constructor(
     readonly runId: string,
@@ -29,6 +31,7 @@ export class ResidentMaterialPlaceExecutor {
     private readonly authority: ResidentWorldExecutionAuthority,
     private readonly world: SpcWorldRuntime,
     private readonly approachSpeed = DEFAULT_APPROACH_SPEED,
+    routeWaypoints: readonly Vec2[] = [],
   ) {
     if (!runId.trim()) throw new Error("material place runId must be non-empty");
     if (!objectId.trim()) throw new Error("material place objectId must be non-empty");
@@ -38,6 +41,10 @@ export class ResidentMaterialPlaceExecutor {
     if (!Number.isFinite(approachSpeed) || approachSpeed <= 0) {
       throw new Error("material place approachSpeed must be positive and finite");
     }
+    if (routeWaypoints.some(p => !Number.isFinite(p.x) || !Number.isFinite(p.y))) {
+      throw new Error("material place waypoint must be finite");
+    }
+    this.routeWaypoints = routeWaypoints.map(p => ({ ...p }));
   }
 
   step(): ResidentMaterialPlaceStep {
@@ -52,9 +59,20 @@ export class ResidentMaterialPlaceExecutor {
       return this.finishBlocked("material object is not held by this resident", null);
     }
 
+    // Permit immediate factual placement if already at the destination.
+    // Otherwise the carried object and resident traverse the known route's
+    // intermediate points, instead of crossing visible tracks diagonally.
     const distanceSq = distanceSquared(actor.position, this.destination);
+    while (distanceSq > PLACE_ATTEMPT_DISTANCE ** 2
+      && this.routeIndex < this.routeWaypoints.length
+      && distanceSquared(actor.position, this.routeWaypoints[this.routeIndex]!)
+        <= PLACE_ATTEMPT_DISTANCE ** 2) {
+      this.routeIndex += 1;
+    }
+    const intermediate = distanceSq > PLACE_ATTEMPT_DISTANCE ** 2
+      ? this.routeWaypoints[this.routeIndex] : undefined;
     if (distanceSq > PLACE_ATTEMPT_DISTANCE ** 2) {
-      const direction = normalizedDirection(actor.position, this.destination);
+      const direction = normalizedDirection(actor.position, intermediate ?? this.destination);
       const speed = Math.min(actor.maxSpeed, this.approachSpeed);
       const applied = this.authority.apply({
         runId: this.runId,
