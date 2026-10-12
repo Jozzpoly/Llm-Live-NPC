@@ -4,11 +4,21 @@ export type MaterialObjectLocation =
   | { kind: "free"; position: Vec2; actorId?: never }
   | { kind: "held"; actorId: string; position?: never };
 
+/** Authoritative origin of a transformed output, not automatically resident knowledge. */
+export interface MaterialWorkDerivation {
+  kind:"worksite_transformation";
+  sourceObjectId:string;
+  siteId:string;
+  actorId:string;
+  tick:number;
+}
 export interface MaterialObjectState {
   id: string;
   label: string;
   radius: number;
   location: MaterialObjectLocation;
+  /** Only World-owned conversion may assign this to a produced material. */
+  derivation?: MaterialWorkDerivation;
 }
 
 export type MaterialActionRequest =
@@ -97,6 +107,7 @@ export class MaterialWorldState {
   /** Atomic conversion only after World's actor + site + elapsed-time checks. */
   consumeHeldAndProduce(
     actorId: string, sourceId: string, output: MaterialObjectState,
+    siteId:string, tick:number,
   ): { source: MaterialObjectState; output: MaterialObjectState } | null {
     const held = this.objectsById.get(sourceId);
     if (!held || held.location.kind !== "held" || held.location.actorId !== actorId) return null;
@@ -104,7 +115,13 @@ export class MaterialWorldState {
       || output.location.kind !== "free") return null;
     validateObject(output, this.bounds);
     const source = structuredClone(held);
-    const produced = structuredClone(output);
+    if(!siteId.trim() || !Number.isSafeInteger(tick) || tick < 0) {
+      throw new Error("worksite derivation must have factual origin and tick");
+    }
+    const produced:MaterialObjectState = {
+      ...structuredClone(output),
+      derivation:{kind:"worksite_transformation",sourceObjectId:sourceId,siteId,actorId,tick},
+    };
     this.objectsById.delete(sourceId);
     this.objectsById.set(produced.id, produced);
     return {source, output:structuredClone(produced)};
@@ -228,6 +245,13 @@ function validateObject(object: MaterialObjectState, bounds: WorldBounds): void 
   if (!object.id.trim()) throw new Error("material object id must be non-empty");
   if (!object.label.trim()) throw new Error("material object label must be non-empty");
   if (!Number.isFinite(object.radius) || object.radius <= 0) throw new Error("material object radius must be positive and finite");
+  if(object.derivation){
+    const d=object.derivation;
+    if(d.kind!=="worksite_transformation" || !d.sourceObjectId.trim()
+      || !d.siteId.trim() || !d.actorId.trim() || !Number.isSafeInteger(d.tick) || d.tick<0){
+      throw new Error("invalid material origin");
+    }
+  }
   if (object.location.kind === "free") {
     if (!finitePoint(object.location.position)) throw new Error("free material object position must be finite");
     if (!pointFitsBounds(object.location.position, object.radius, bounds)) throw new Error("free material object must fit World bounds");

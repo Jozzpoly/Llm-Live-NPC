@@ -71,6 +71,7 @@ export interface SpcNextResearchFrame {
   playerWork?: { siteId:string; ticks:number; requiredTicks:number } | null;
   recentWorkOutcome?: import("../spc-next/spc-world-runtime").WorldMaterialWorkOutcome | null;
   playerWorkAttempt?: string | null;
+  playerWorkAttemptTick?: number | null;
 }
 
 export interface SpcNextResearchSceneOptions {
@@ -103,6 +104,7 @@ export class SpcNextResearchScene extends Phaser.Scene {
   private selectedResidentId: string | null = "resident.mira";
   private overlayEnabled = false;
   private lastPlayerWorkAttempt: string | null = null;
+  private lastPlayerWorkAttemptTick: number | null = null;
   private created = false;
 
   constructor(
@@ -478,6 +480,7 @@ export class SpcNextResearchScene extends Phaser.Scene {
       wrong_material:"Weź do rąk Workshop Spare Parts (nie pierwszą skrzynię).",
       output_exists:"Zestaw naprawczy został już przygotowany.",
     };
+    this.lastPlayerWorkAttemptTick = this.world.tick;
     this.lastPlayerWorkAttempt = attempt.status === "started"
       ? "Przygotowywanie zestawu — pozostań nieruchomo przez 3 sekundy."
       : failure[attempt.reason] ?? "Nie można rozpocząć pracy.";
@@ -918,6 +921,7 @@ export class SpcNextResearchScene extends Phaser.Scene {
       playerWork:this.world.worksiteProgress(PLAYER_ID),
       recentWorkOutcome:diagnostics.recentWorkOutcomes.at(-1) ?? null,
       playerWorkAttempt:this.lastPlayerWorkAttempt,
+      playerWorkAttemptTick:this.lastPlayerWorkAttemptTick,
     };
   }
 }

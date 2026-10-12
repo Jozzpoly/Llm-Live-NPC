@@ -299,6 +299,10 @@ function renderPanel(frame: SpcNextResearchFrame): void {
   if(unifiedLivingMode && !evidenceMode){
     workStatus.textContent = frame.playerWork
       ? `Warsztat: ${Math.floor(frame.playerWork.ticks / frame.playerWork.requiredTicks * 100)}% · nie ruszaj się`
+      : frame.playerWorkAttempt
+        && frame.playerWorkAttemptTick != null
+        && (frame.recentWorkOutcome?.tick ?? -1) < frame.playerWorkAttemptTick
+        ? frame.playerWorkAttempt
       : frame.recentWorkOutcome?.status === "completed"
         ? "Warsztat: powstał rzeczywisty zestaw naprawczy — można go podnieść."
         : frame.recentWorkOutcome?.status === "interrupted"

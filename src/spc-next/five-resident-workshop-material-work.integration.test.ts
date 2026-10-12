@@ -21,6 +21,10 @@ describe("one actual finite World worksite, no automatic NPC crafting",()=>{
   expect(world.materialObject("crate.workshop.02")).toBeNull();
   expect(world.materialObject("kit.workshop.01")?.location)
     .toEqual({kind:"free",position:{x:1922,y:790}});
+  expect(world.materialObject("kit.workshop.01")?.derivation).toEqual({
+    kind:"worksite_transformation",sourceObjectId:"crate.workshop.02",
+    siteId:"workshop.repair-kit",actorId:"player.jozz",tick:world.tick,
+  });
   expect(world.diagnostics().recentWorkOutcomes.at(-1)).toMatchObject({
     status:"completed",reason:"worked",sourceObjectId:"crate.workshop.02",
     outputObjectId:"kit.workshop.01",sourceBefore:{id:"crate.workshop.02"},

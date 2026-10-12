@@ -230,7 +230,7 @@ export class SpcWorldRuntime {
         session.actorId,site.sourceObjectId,{
           id:site.output.id,label:site.output.label,radius:site.output.radius,
           location:{kind:"free",position:{x:anchor.position.x+22,y:anchor.position.y+30}},
-        });
+        },site.id,this.tickValue);
       if(!converted){
         this.setWorkOutcome({tick:this.tickValue,actorId:session.actorId,siteId:site.id,
           status:"interrupted",reason:"lost_material",sourceObjectId:site.sourceObjectId,
