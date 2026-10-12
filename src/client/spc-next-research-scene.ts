@@ -19,8 +19,8 @@ import {
   type SpcNextResearchScenario,
   type SpcNextResearchScenarioKind,
 } from "./spc-next-research-scenario";
-import { paintFiveResidentGround } from "./spc-next-world-ground";
 import { paintMaterialShape } from "./spc-next-material-shapes";
+import { worldTerrainPresentation } from "./spc-next-terrain-presentation";
 import { placeNonOverlappingMaterialLabel, type MaterialLabelRect } from "./spc-next-material-label-layout";
 import {
   projectEpistemicActors,
@@ -457,7 +457,22 @@ export class SpcNextResearchScene extends Phaser.Scene {
   private drawRegions(): void {
     const palette = [0x253a33, 0x303845, 0x41392d, 0x2d3d46, 0x2c4137, 0x40372e, 0x383145, 0x273841];
     this.regionGraphics.clear();
-    this.world.regions().forEach((region, index) => {
+    const fiveResidentWorld = worldTerrainPresentation(this.scenario.kind, false)
+      !== "legacy-research";
+
+    if (fiveResidentWorld) {
+      // Explicitly UNFINISHED visual substrate, not an approved terrain style.
+      // Leave the map honest, neutral and readable. Semantic World regions
+      // are NOT surface materials, vegetation, walls or geographic biomes.
+      const bounds = this.world.options.bounds;
+      this.regionGraphics.fillStyle(0x1f2a29, 1);
+      this.regionGraphics.fillRect(
+        bounds.minX, bounds.minY,
+        bounds.maxX - bounds.minX, bounds.maxY - bounds.minY,
+      );
+    } else {
+      // Retain archived research scenes' visual evidence unchanged.
+      this.world.regions().forEach((region, index) => {
       const width = region.maxX - region.minX;
       const height = region.maxY - region.minY;
       const color = palette[index % palette.length]!;
@@ -470,14 +485,12 @@ export class SpcNextResearchScene extends Phaser.Scene {
         fontSize: "24px",
         color: "#8fa0ab",
       }).setAlpha(0.54).setDepth(-10);
-    });
-
-    // First environmental ground language: tied to the *actual* World anchors,
-    // deliberately only non-solid FLOOR marks. No invented collision, material
-    // objects, NPC memories, site effects or new spatial truth.
-    if (this.scenario.kind === "unified-living" || this.scenario.kind === "unified-armed") {
-      paintFiveResidentGround(this.regionGraphics, this.world.anchors());
+      });
     }
+
+    // Owner rejected the decorative pseudo-terrain. Do not replace it with
+    // another visual texture generator before an actual in-game art review.
+    // World/region/nav/material truth continues independently of rendering.
 
     // Render REAL authored World anchors so settlement places are legible in
     // the playable scene. These are semantic site markers, NOT solid scenery,
@@ -692,6 +705,18 @@ export class SpcNextResearchScene extends Phaser.Scene {
     if (!actor || !resident) return;
 
     const zoom = this.cameras.main.zoom;
+    if (worldTerrainPresentation(this.scenario.kind, this.overlayEnabled)
+      === "neutral-with-diagnostic-regions") {
+      // Region boundaries are research data, not a physical terrain material.
+      // Display only when the investigator explicitly enables this overlay.
+      this.overlayGraphics.lineStyle(1.5 / zoom, 0x92a6ab, 0.28);
+      for (const region of this.world.regions()) {
+        this.overlayGraphics.strokeRect(
+          region.minX, region.minY,
+          region.maxX - region.minX, region.maxY - region.minY,
+        );
+      }
+    }
     const width = 1.5 / zoom;
     this.overlayGraphics.lineStyle(width, 0x78c6ef, 0.32);
     this.overlayGraphics.strokeCircle(actor.position.x, actor.position.y, actor.sightRadius);
