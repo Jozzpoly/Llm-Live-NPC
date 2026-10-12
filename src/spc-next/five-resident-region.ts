@@ -46,6 +46,17 @@ export const FIVE_RESIDENT_MATERIAL_OBJECTS: readonly MaterialObjectState[] = [
     location: { kind: "free", position: { x: 4_690, y: 2_710 } } },
   { id: "fragment.ruins.01", label: "Ruins Stone Fragment", radius: 12,
     location: { kind: "free", position: { x: 7_022, y: 1_198 } } },
+
+  // Real unassigned opportunities, not scripted second jobs. Only a later
+  // resident-grounded semantic choice can make one into a continuing matter.
+  { id: "kindling.hearth.02", label: "Hearth Kindling", radius: 12,
+    location: { kind: "free", position: { x: 892, y: 848 } } },
+  { id: "satchel.crossroads.02", label: "Crossroads Medicine Satchel", radius: 13,
+    location: { kind: "free", position: { x: 3_208, y: 1_005 } } },
+  { id: "timber.forest.02", label: "Forest Timber", radius: 20,
+    location: { kind: "free", position: { x: 4_736, y: 2_705 } } },
+  { id: "tablet.ruins.02", label: "Ruins Slate Tablet", radius: 15,
+    location: { kind: "free", position: { x: 7_065, y: 1_260 } } },
 ];
 
 export interface FiveResidentRolePressure {
@@ -80,11 +91,11 @@ export type FiveResidentId =
 export const FIVE_RESIDENT_MATERIAL_FAMILIARITY: Readonly<
   Record<FiveResidentId, readonly string[]>
 > = {
-  "resident.mira": ["basket.hearth.01"],
+  "resident.mira": ["basket.hearth.01", "kindling.hearth.02"],
   "resident.janek": ["crate.workshop.01", "crate.workshop.02"],
-  "resident.ida": ["parcel.crossroads.01", "crate.workshop.01"],
-  "resident.oren": ["bundle.forest.01"],
-  "resident.nela": ["fragment.ruins.01"],
+  "resident.ida": ["parcel.crossroads.01", "satchel.crossroads.02", "crate.workshop.01"],
+  "resident.oren": ["bundle.forest.01", "timber.forest.02"],
+  "resident.nela": ["fragment.ruins.01", "tablet.ruins.02"],
 };
 
 /**

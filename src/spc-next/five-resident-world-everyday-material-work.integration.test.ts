@@ -142,6 +142,25 @@ describe("ordinary work in the ACTUAL five-resident playable World", () => {
       expect(matter?.status).toBe("resolved");
       expect(matter?.lastOutcomeEvidenceId).toBeTruthy();
     }
+    // A second material opportunity per person remains REAL and unassigned.
+    // Knowledge is private first-hand sight acquired at genuine spawn, not an
+    // invented global inventory or a second routine that silently starts.
+    const secondChoices = {
+      "resident.mira": "kindling.hearth.02",
+      "resident.janek": "crate.workshop.02",
+      "resident.ida": "satchel.crossroads.02",
+      "resident.oren": "timber.forest.02",
+      "resident.nela": "tablet.ruins.02",
+    } as const;
+    for (const [residentId, objectId] of Object.entries(secondChoices)) {
+      expect(life.world.materialObject(objectId)?.location.kind).toBe("free");
+      const privateSight = life.life(residentId as keyof typeof secondChoices)!
+        .materialKnowledge?.observation(objectId);
+      expect(privateSight).toMatchObject({ objectId });
+      expect(privateSight?.observedAtTick).toBeLessThanOrEqual(life.world.tick);
+      expect(life.life(residentId as keyof typeof secondChoices)?.matterScope.matterIds())
+        .not.toContain(`matter.unassigned.${objectId}`);
+    }
     expect(life.diagnostics().providerRequestCount).toBe(0);
   }, 45_000);
 
