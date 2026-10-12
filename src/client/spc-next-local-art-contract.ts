@@ -35,6 +35,26 @@ export function validateLocalGroundImageSource(file: LocalGroundImageSource): vo
   }
 }
 
+/**
+ * Reject mismatched file signatures: a File.type or extension alone is not
+ * evidence of image content. Browser image decoding still checks the data.
+ */
+export function validateLocalGroundImageSignature(
+  mime: string, bytes: Uint8Array,
+): void {
+  const png = [137, 80, 78, 71, 13, 10, 26, 10];
+  const isPng = bytes.length >= png.length
+    && png.every((byte, index) => bytes[index] === byte);
+  const isWebp = bytes.length >= 12
+    && [82, 73, 70, 70].every((byte, index) => bytes[index] === byte)
+    && [87, 69, 66, 80].every((byte, index) => bytes[index + 8] === byte);
+  if ((mime === "image/png" && !isPng)
+    || (mime === "image/webp" && !isWebp)
+    || (mime !== "image/png" && mime !== "image/webp")) {
+    throw new Error("Zawartość pliku nie odpowiada deklarowanemu PNG/WebP.");
+  }
+}
+
 export function groundVisualPlacement(
   anchors: readonly WorldAnchor[],
   anchorId: string,

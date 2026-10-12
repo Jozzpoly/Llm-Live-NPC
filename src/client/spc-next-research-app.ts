@@ -5,6 +5,7 @@ import type { SpcCanonicalEvidenceSnapshotV1 } from "../evidence/spc-next-canoni
 import { FIVE_RESIDENT_ANCHORS, FIVE_RESIDENT_ROLE_PRESSURES } from "../spc-next/five-resident-region";
 import {
   validateLocalGroundImageSource,
+  validateLocalGroundImageSignature,
 } from "./spc-next-local-art-contract";
 import { buildSpcManualProbeEvidence } from "./spc-next-manual-probe-export";
 import type { ResidentPercept, ResidentTraceEvent, WorldOccurrence } from "../spc-next/contracts";
@@ -629,27 +630,28 @@ artFile.addEventListener("change", () => {
   const file = artFile.files?.[0];
   if (!file) return;
   const revision = ++artImportRevision;
-  try {
+  void (async () => {
     validateLocalGroundImageSource(file);
+    validateLocalGroundImageSignature(file.type, new Uint8Array(await file.arrayBuffer()));
+    if (revision !== artImportRevision) return;
     const url = URL.createObjectURL(file);
-    const image = new Image();
-    image.src = url;
-    void image.decode().then(() => {
-      URL.revokeObjectURL(url);
+    try {
+      const image = new Image();
+      image.src = url;
+      await image.decode();
       if (revision !== artImportRevision) return;
       artDecodedImage = image;
       artVisible = true;
       refreshLocalArtPreview();
       scene.viewWorldSite(artSite.value);
-    }).catch(() => {
+    } finally {
       URL.revokeObjectURL(url);
-      if (revision === artImportRevision) {
-        artStatus.textContent = "Nie udało się odczytać lokalnego obrazu.";
-      }
-    });
-  } catch (error) {
+    }
+  })().catch((error: unknown) => {
+    if (revision !== artImportRevision) return;
+    artFile.value = "";
     artStatus.textContent = error instanceof Error ? error.message : "Plik został odrzucony.";
-  }
+  });
 });
 artSite.addEventListener("change", () => {
   refreshLocalArtPreview();

@@ -342,7 +342,42 @@ try{
     Buffer.from(ownerImage.data,"base64"));
   check("watching Oren and switching cameras cannot cause a model request",
     report.modelRouteRequests.length===beforeOwnerGame);
-  
+
+  // A genuine user-file event, decoded by the browser into a World-anchored
+  // image. This 8×8 TEST SWATCH is NOT approved game art. Its only purpose
+  // is to verify the art-intake -> Phaser-renderer boundary in Chromium.
+  const localArtFileB64="iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAFklEQVR4nGOMWpD3nwEPYMInOXwUAAB8vgJ36VFsCgAAAABJRU5ErkJggg==";
+  check("visual reference is optional and hidden on archival research worlds",
+    await runIn(cdp,'Boolean(document.querySelector(".spc-owner-art-preview:not([hidden])"))'));
+  const uploadEval = `(() => {
+    const picker = document.querySelector(".spc-owner-art-preview input[type=file]");
+    const raw = atob("${localArtFileB64}");
+    const bytes = Uint8Array.from(raw, ch => ch.charCodeAt(0));
+    const file = new File([bytes], "test-ground.png", { type: "image/png" });
+    const transfer = new DataTransfer();
+    transfer.items.add(file);
+    picker.files = transfer.files;
+    picker.dispatchEvent(new Event("change", { bubbles: true }));
+    return true;
+  })()`;
+  check("an actual local file choice reaches the browser image intake",
+    await runIn(cdp,uploadEval));
+  await until(()=>runIn(cdp,
+    'Boolean(document.querySelector(".spc-owner-art-status")?.textContent?.startsWith("Podgląd:"))'
+  ),10000);
+  check("decoded user image is visible as a purely visual World-site candidate",
+    await runIn(cdp,'document.querySelector(".spc-owner-art-status").textContent.includes("Workshop Bench")'));
+  await wait(300);
+  const visualCandidate = await cdp.send("Page.captureScreenshot", {format:"png"});
+  writeFileSync(resolve(dirname(output),"unified-living-owner-local-art-preview-TEST-SWATCH.png"),
+    Buffer.from(visualCandidate.data,"base64"));
+  check("compare toggle hides the candidate without touching material truth",
+    await runIn(cdp,'(document.querySelector(".spc-owner-art-buttons button").click(), document.querySelector(".spc-owner-art-status").textContent.startsWith("Ukryta grafika"))'));
+  check("owner can discard a candidate without refreshing World",
+    await runIn(cdp,'(document.querySelectorAll(".spc-owner-art-buttons button")[2].click(), document.querySelector(".spc-owner-art-status").textContent.startsWith("Podgląd usunięty"))'));
+  check("art reference workflow does not POST to cognition/provider",
+    report.modelRouteRequests.length===beforeOwnerGame);
+
   // The default First Hearth (no ?spc=1) used to invoke its initial
   // model review automatically, including after operator authentication.
   // Waiting real browser time here catches implicit default-route API posts.

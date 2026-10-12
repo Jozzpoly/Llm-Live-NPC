@@ -4,6 +4,7 @@ import {
   SPC_ART_PREVIEW_MAX_BYTES,
   groundVisualPlacement,
   validateLocalGroundImageSource,
+  validateLocalGroundImageSignature,
 } from "./spc-next-local-art-contract";
 
 describe("owner-supplied visual-only SPC World ground reference", () => {
@@ -36,6 +37,16 @@ describe("owner-supplied visual-only SPC World ground reference", () => {
       FIVE_RESIDENT_ANCHORS, "anchor.workshop.bench", 0, 256, 480, 0.7,
     )).toThrow(/Wymiary/);
   });
+  it("rejects fake MIME-labelled files with missing or mismatched PNG/WebP signatures", () => {
+    const png = Uint8Array.from([137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0]);
+    const webp = Uint8Array.from([82, 73, 70, 70, 12, 0, 0, 0, 87, 69, 66, 80]);
+    expect(() => validateLocalGroundImageSignature("image/png", png)).not.toThrow();
+    expect(() => validateLocalGroundImageSignature("image/webp", webp)).not.toThrow();
+    expect(() => validateLocalGroundImageSignature("image/png", webp)).toThrow();
+    expect(() => validateLocalGroundImageSignature("image/webp", png)).toThrow();
+    expect(() => validateLocalGroundImageSignature("image/png", Uint8Array.of(60,115,118,103,62))).toThrow();
+  });
+
   it("accepts only local PNG/WebP with a bounded byte size", () => {
     expect(() => validateLocalGroundImageSource({ type: "image/png", size: 2345 })).not.toThrow();
     expect(() => validateLocalGroundImageSource({ type: "image/webp", size: SPC_ART_PREVIEW_MAX_BYTES })).not.toThrow();
