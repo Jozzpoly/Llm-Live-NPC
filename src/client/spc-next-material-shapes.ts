@@ -63,6 +63,18 @@ export function paintMaterialShape(
     g.fillEllipse(x,y-r*0.4,r*1.22,r*0.36);
     return;
   }
+  if(kind==="kit") {
+    // Readable token for the NEW actual World object. Not a fake workshop solid.
+    g.fillStyle(0x6f8985,0.98);
+    g.fillRoundedRect(x-r*0.85,y-r*0.45,r*1.7,r*1.2,3);
+    g.lineStyle(2,0xc6d7ce,0.94);
+    g.strokeRoundedRect(x-r*0.85,y-r*0.45,r*1.7,r*1.2,3);
+    g.lineBetween(x-r*0.55,y-r*0.48,x+r*0.55,y-r*0.48);
+    g.lineBetween(x-r*0.25,y-r*0.65,x+r*0.25,y-r*0.65);
+    g.lineBetween(x,y-r*0.05,x,y+r*0.4);
+    g.lineBetween(x-r*0.22,y+r*0.17,x+r*0.22,y+r*0.17);
+    return;
+  }
   if(kind==="satchel") {
     g.fillStyle(0x745448,0.98);
     g.fillRoundedRect(x-r*0.82,y-r*0.45,r*1.64,r*1.25,5);

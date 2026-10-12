@@ -59,11 +59,16 @@ gameNode.setAttribute("aria-label", "SPC Next living-world research scene");
 footer.innerHTML = [
   "<span>Ruch: WASD / strzałki</span>",
   "<span>Wybór SPC: klik / Tab</span>",
-  "<span>Zawołaj: H · mikroskop: R · podnieś/odłóż: E</span>",
+  "<span>Zawołaj: H · mikroskop: R · podnieś/odłóż: E · warsztat: U</span>",
   "<span>Śledź SPC: F · gracz: P · cały świat: O</span>",
   "<span>Tylko świat / badania: G · zoom: kółko</span>",
 ].join("");
 
+const workStatus = document.createElement("span");
+workStatus.className = "spc-work-status";
+workStatus.setAttribute("role","status");
+workStatus.textContent = "Warsztat: przenieś Workshop Spare Parts do stanowiska, użyj U.";
+footer.append(workStatus);
 const worldModeButton = document.createElement("button");
 worldModeButton.type = "button";
 worldModeButton.className = "spc-world-mode-toggle";
@@ -291,6 +296,16 @@ function setWorldOnly(enabled: boolean): void {
 
 function renderPanel(frame: SpcNextResearchFrame): void {
   lastFrame = frame;
+  if(unifiedLivingMode && !evidenceMode){
+    workStatus.textContent = frame.playerWork
+      ? `Warsztat: ${Math.floor(frame.playerWork.ticks / frame.playerWork.requiredTicks * 100)}% · nie ruszaj się`
+      : frame.recentWorkOutcome?.status === "completed"
+        ? "Warsztat: powstał rzeczywisty zestaw naprawczy — można go podnieść."
+        : frame.recentWorkOutcome?.status === "interrupted"
+          ? "Warsztat: praca przerwana — materiał pozostał w świecie."
+          : frame.playerWorkAttempt
+            ?? "Warsztat: przenieś Workshop Spare Parts do stanowiska, użyj U.";
+  }
   if (unifiedLivingMode && !evidenceMode && frame.livingDiagnostics) {
     const usage = frame.livingDiagnostics.providerHardBudget;
     const running = frame.livingDiagnostics.operatorAutoDispatchEnabled;

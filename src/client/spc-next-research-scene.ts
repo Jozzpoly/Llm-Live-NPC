@@ -55,7 +55,7 @@ interface SpeechView {
   expiresAtTick: number;
 }
 
-type MovementKeys = Record<"W" | "A" | "S" | "D" | "R" | "F" | "P" | "O" | "H" | "E" | "TAB", Phaser.Input.Keyboard.Key>;
+type MovementKeys = Record<"W" | "A" | "S" | "D" | "R" | "F" | "P" | "O" | "H" | "E" | "U" | "TAB", Phaser.Input.Keyboard.Key>;
 
 export interface SpcNextResearchFrame {
   snapshot: WorldPublicSnapshot;
@@ -68,6 +68,9 @@ export interface SpcNextResearchFrame {
   livingDiagnostics: FiveResidentLivingRuntimeDiagnostics | null;
   overlayEnabled: boolean;
   cameraZoom: number;
+  playerWork?: { siteId:string; ticks:number; requiredTicks:number } | null;
+  recentWorkOutcome?: import("../spc-next/spc-world-runtime").WorldMaterialWorkOutcome | null;
+  playerWorkAttempt?: string | null;
 }
 
 export interface SpcNextResearchSceneOptions {
@@ -99,6 +102,7 @@ export class SpcNextResearchScene extends Phaser.Scene {
   private stateAccumulatorMs = 0;
   private selectedResidentId: string | null = "resident.mira";
   private overlayEnabled = false;
+  private lastPlayerWorkAttempt: string | null = null;
   private created = false;
 
   constructor(
@@ -128,7 +132,7 @@ export class SpcNextResearchScene extends Phaser.Scene {
 
     if (this.input.keyboard) {
       this.cursors = this.input.keyboard.createCursorKeys();
-      this.keys = this.input.keyboard.addKeys("W,A,S,D,R,F,P,O,H,E,TAB") as MovementKeys;
+      this.keys = this.input.keyboard.addKeys("W,A,S,D,R,F,P,O,H,E,U,TAB") as MovementKeys;
     }
 
     this.input.on("wheel", (_pointer: Phaser.Input.Pointer, _objects: unknown, _dx: number, dy: number) => {
@@ -457,7 +461,27 @@ export class SpcNextResearchScene extends Phaser.Scene {
     if (Phaser.Input.Keyboard.JustDown(this.keys.O)) this.overview();
     if (Phaser.Input.Keyboard.JustDown(this.keys.H)) this.playerCall();
     if (Phaser.Input.Keyboard.JustDown(this.keys.E)) this.playerMaterialAction();
+    if (Phaser.Input.Keyboard.JustDown(this.keys.U)) this.playerWorkshopAction();
     if (Phaser.Input.Keyboard.JustDown(this.keys.TAB)) this.cycleResidentSelection();
+  }
+
+  /** The local key is only an attempt; World independently evaluates it. */
+  private playerWorkshopAction(): void {
+    if (this.scenario.kind !== "unified-living") return;
+    const attempt = this.world.beginMaterialWork(PLAYER_ID,"workshop.repair-kit");
+    const failure: Record<string,string> = {
+      unknown_site:"Warsztat nie istnieje w tym świecie.",
+      resident_authority_required:"Tylko działanie gracza; SPC wymaga własnej decyzji.",
+      busy:"Praca już trwa.",
+      too_far:"Podejdź do Workshop Bench.",
+      occluded:"Nie ma bezpośredniego dostępu do stanowiska.",
+      wrong_material:"Weź do rąk Workshop Spare Parts (nie pierwszą skrzynię).",
+      output_exists:"Zestaw naprawczy został już przygotowany.",
+    };
+    this.lastPlayerWorkAttempt = attempt.status === "started"
+      ? "Przygotowywanie zestawu — pozostań nieruchomo przez 3 sekundy."
+      : failure[attempt.reason] ?? "Nie można rozpocząć pracy.";
+    this.pushFrame(true);
   }
 
   private playerMaterialAction(): void {
@@ -891,6 +915,9 @@ export class SpcNextResearchScene extends Phaser.Scene {
       livingDiagnostics: this.scenario.livingDiagnostics?.() ?? null,
       overlayEnabled: this.overlayEnabled,
       cameraZoom: this.cameras.main?.zoom ?? 1,
+      playerWork:this.world.worksiteProgress(PLAYER_ID),
+      recentWorkOutcome:diagnostics.recentWorkOutcomes.at(-1) ?? null,
+      playerWorkAttempt:this.lastPlayerWorkAttempt,
     };
   }
 }
