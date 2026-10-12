@@ -102,8 +102,14 @@ export function createSpcNextResearchScenario(kind: SpcNextResearchScenarioKind)
 
 export function researchScenarioKindFromSearch(search: string): SpcNextResearchScenarioKind {
   const requested = new URLSearchParams(search).get("scenario");
-  // The Owner's default is the actual shared World, not an archived specimen.
-  if (requested === null || requested === "") return "unified-living";
+  // Owner enters the genuine five-resident World by default. Older automated
+  // canonical single-resident evidence deliberately keeps its historical
+  // implicit baseline when ?evidence=1 is present. Explicit scenario= wins.
+  if (requested === null || requested === "") {
+    return new URLSearchParams(search).get("evidence") === "1"
+      ? "baseline-delivery"
+      : "unified-living";
+  }
   if (requested === "baseline-delivery") return "baseline-delivery";
   if (requested === "missing-crate") return "missing-crate";
   if (requested === "missing-crate-recovery") return "missing-crate-recovery";

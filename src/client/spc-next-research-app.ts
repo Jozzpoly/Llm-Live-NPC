@@ -13,6 +13,9 @@ import {
 
 const params = new URLSearchParams(location.search);
 const evidenceMode = params.get("evidence") === "1";
+const unifiedLivingMode = params.get("scenario") === "unified-living"
+  || (!evidenceMode && params.get("scenario") === null);
+const unifiedWorldMode = unifiedLivingMode || params.get("scenario") === "unified-armed";
 
 const appRoot = document.querySelector<HTMLElement>("#app");
 const debugRoot = document.querySelector<HTMLElement>("#debug");
@@ -41,7 +44,7 @@ heading.textContent = "SPC Next";
 eyebrow.textContent = "Living world · embodied cognition research";
 stageNode.textContent = "WORLD / EPISTEMIC LAB";
 stageNode.classList.add("is-active");
-if ((params.get("scenario") === null || params.get("scenario") === "unified-living") && !evidenceMode) {
+if (unifiedLivingMode && !evidenceMode) {
   document.title = "SPC — Świat pięciu mieszkańców";
   heading.textContent = "SPC • Pięciu mieszkańców";
   eyebrow.textContent = "Wspólny świat · codzienne życie · rzeczywiste działania";
@@ -213,7 +216,7 @@ function renderPanel(frame: SpcNextResearchFrame): void {
     const actor = frame.snapshot.actors.find((candidate) => candidate.id === resident.id);
     const speed = actor ? Math.hypot(actor.velocity.x, actor.velocity.y) : 0;
     const embodied = speed > 1 ? `moving ${speed.toFixed(0)}` : "still";
-    const activityLabel = params.get("scenario") === "unified-living"
+    const activityLabel = unifiedLivingMode
       ? `${embodied} · C${resident.pendingCognitionReasonCount}`
       : `${embodied} · legacy ${resident.activity.kind} · C${resident.pendingCognitionReasonCount}`;
     return `<button class="spc-resident-button${active}" data-resident="${escapeHtml(resident.id)}">
@@ -584,8 +587,7 @@ debugNode.addEventListener("click", (event) => {
     // immediately let the Owner *see* their embodied work and whereabouts.
     // Pure selection in an 8,192-unit World otherwise feels like a dead UI.
     // Press P to return the camera to the player.
-    if (params.get("scenario") === "unified-living"
-      || params.get("scenario") === "unified-armed") {
+    if (unifiedWorldMode) {
       scene.focusSelected();
     }
     return;
