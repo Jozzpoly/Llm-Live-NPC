@@ -105,7 +105,12 @@ describe("five-resident unified living runtime", () => {
       await flushMicrotasks();
     }
     expect(living.diagnostics().providerInboxCount).toBe(1);
-    expect(janek.matterScope.matterIds()).toEqual([]);
+    // A resolved matter remains owned terminal history: retaining its ID does
+    // NOT mean the body still has the old authored delivery obligation.
+    expect(janek.matterScope.matterIds()).toEqual([
+      "matter.janek.workshop-opening.delivery",
+    ]);
+    expect(janek.kernel.matter("matter.janek.workshop-opening.delivery")?.status).toBe("resolved");
     living.advanceOneWorldTick();
     const admitted = living.diagnostics().recentProviderEvents.find(e =>
       e.status === "admitted" && e.residentId === "resident.janek");
@@ -173,7 +178,9 @@ describe("five-resident unified living runtime", () => {
     expect(living.diagnostics().recentProviderEvents.some(e =>
       e.status === "admitted" && e.residentId === "resident.janek"
       && e.admittedChoice?.kind === "accept")).toBe(false);
-    expect(living.life("resident.janek")!.matterScope.matterIds()).toEqual([]);
+    expect(living.life("resident.janek")!.matterScope.matterIds()).toEqual([
+      "matter.janek.workshop-opening.delivery",
+    ]);
     expect(living.world.materialObject("bucket.fields.01")?.location).toEqual({
       kind: "free", position: { x: 2186, y: 2400 },
     });
