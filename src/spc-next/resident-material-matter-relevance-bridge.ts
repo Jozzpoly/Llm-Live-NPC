@@ -1,4 +1,5 @@
 import { deriveSpcIdentifier } from "./identity-contract";
+import { distanceSquared } from "./contracts";
 import type { ResidentMaterialKnowledge, ResidentKnownMaterialObject } from "./resident-material-knowledge";
 import type {
   ResidentContinuityKernel,
@@ -28,6 +29,14 @@ export type ResidentMaterialMatterRelevanceObservation =
   | {
       status: "not_relevant";
       objectId: string;
+    }
+  | {
+      status: "unexpected_relocation";
+      objectId: string;
+      reasonId: string;
+      evidence: ResidentKernelEvidence;
+      previousPosition: ResidentKnownMaterialObject["lastKnownPosition"];
+      observedPosition: ResidentKnownMaterialObject["lastKnownPosition"];
     }
   | {
       status: "ambiguous";
@@ -227,6 +236,69 @@ export class ResidentMaterialMatterRelevanceBridge {
       priorOutcomeEvidence: structuredClone(priorOutcomeEvidence),
       reasonId,
       settledAbsencePressure,
+    };
+  }
+
+  /**
+   * Personal, post-occlusion position discrepancy — not omniscient theft detection.
+   *
+   * The observer first saw an IDENTIFIED material at A, then genuinely lost sight
+   * and later saw it again at materially different B. This earns ONE possible
+   * cognition question, not a scripted search/delivery or accusation. Hidden
+   * movement and the identity of whoever moved it remain unknown.
+   *
+   * Raw first sight, continuous visible movement, minor offsets, current owned
+   * material work and ambiguous historical commitments do not promote pressure.
+   */
+  observeUnexpectedRelocation(
+    previous: ResidentKnownMaterialObject | null,
+    current: ResidentKnownMaterialObject | null,
+    life: ResidentLifeCognitionView,
+  ): ResidentMaterialMatterRelevanceObservation {
+    const objectId = current?.objectId ?? previous?.objectId ?? "";
+    if (!previous || !current
+      || previous.objectId !== current.objectId
+      || previous.currentlyVisible !== false
+      || !current.currentlyVisible
+      || current.observedAtTick <= previous.observedAtTick
+      || distanceSquared(previous.lastKnownPosition, current.lastKnownPosition) < 96 ** 2
+      || life.matters.some(m =>
+        (m.status === "active" || m.status === "suspended")
+        && (m.semanticIntent?.kind === "acquire_material_object"
+          || m.semanticIntent?.kind === "deliver_material_object")
+        && m.semanticIntent.objectId === objectId)) {
+      return { status: "not_relevant", objectId };
+    }
+    const id = deriveSpcIdentifier(
+      "material_location_discrepancy",
+      this.resident.profile.id + "|" + objectId,
+      String(previous.observedAtTick) + "-" + String(current.observedAtTick),
+    );
+    const evidence = this.kernel.recordEvidence({
+      id,
+      tick: current.observedAtTick,
+      kind: "material_location_discrepancy_observed",
+      summary: `Resident-private recognition of ${objectId}: last seen at (${previous.lastKnownPosition.x}, ${previous.lastKnownPosition.y}), now visible at (${current.lastKnownPosition.x}, ${current.lastKnownPosition.y}). No mover, cause, ownership or unseen journey established.`,
+    });
+    const reasonId = deriveSpcIdentifier(
+      "reason_material_location_discrepancy",
+      this.resident.profile.id + "|" + objectId,
+    );
+    this.resident.promoteSemanticPressure({
+      id: reasonId,
+      tick: evidence.tick,
+      kind: "direct_world_change",
+      salience: 0.65,
+      summary: `Previously recognized ${objectId} is now visibly in a different location. This is a private observation discrepancy, NOT proof of theft, delivery or anybody's intent.`,
+      evidenceIds: [evidence.id],
+    });
+    return {
+      status: "unexpected_relocation",
+      objectId,
+      reasonId,
+      evidence,
+      previousPosition: { ...previous.lastKnownPosition },
+      observedPosition: { ...current.lastKnownPosition },
     };
   }
 }
