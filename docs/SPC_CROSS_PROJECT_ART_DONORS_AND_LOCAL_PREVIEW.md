@@ -31,3 +31,7 @@ The normal `?spc=1` five-person game can now **opt into an Owner-chosen local PN
 - The higher-value next step is a real authorable site substrate with authenticated source art and independently authored physical affordances, not cosmetic procedural stamps.
 
 No production deployment, PR merge, API request or provider credential changes are authorized by this preview.
+
+### Candidate revision / portability (added after first live preview)
+
+The art inspector can explicitly **Save candidate** to a local `spc-local-art-candidate-v1` JSON containing its exact PNG/WebP bytes, SHA-256 and ONE site-bound visual placement (size, opacity), then **Open candidate** to restore the same renderer-only image after a new page load. This is an intentionally narrow, versioned ephemeral work artifact, **not** a future save-game schema, project-wide map document, asset library nor authorization to use a visual as collision. Import strictly validates known anchor, MIME, byte signature, SHA and payload size before preview. Nothing is sent to Cloudflare or OpenAI. A user-saved file never grants a resident hidden perception or a World matter.

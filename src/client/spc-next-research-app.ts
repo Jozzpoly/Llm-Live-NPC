@@ -7,6 +7,7 @@ import {
   validateLocalGroundImageSource,
   validateLocalGroundImageSignature,
 } from "./spc-next-local-art-contract";
+import { exportLocalArtCandidate, importLocalArtCandidate } from "./spc-next-local-art-candidate";
 import { buildSpcManualProbeEvidence } from "./spc-next-manual-probe-export";
 import type { ResidentPercept, ResidentTraceEvent, WorldOccurrence } from "../spc-next/contracts";
 import {
@@ -228,6 +229,17 @@ artOpacity.value = "0.85";
 artOpacityLabel.append(artOpacity);
 const artButtons = document.createElement("div");
 artButtons.className = "spc-owner-art-buttons";
+const artSaveCandidate = document.createElement("button");
+artSaveCandidate.type = "button";
+artSaveCandidate.textContent = "Zapisz próbkę";
+artSaveCandidate.title = "Lokalny JSON zawiera dokładne bajty obrazu, SHA-256 i jego położenie. Nie tworzy mapy ani nie przesyła plików.";
+const artLoadCandidate = document.createElement("button");
+artLoadCandidate.type = "button";
+artLoadCandidate.textContent = "Otwórz próbkę";
+const artCandidateInput = document.createElement("input");
+artCandidateInput.type = "file";
+artCandidateInput.accept = "application/json,.json";
+artCandidateInput.hidden = true;
 const artShow = document.createElement("button");
 artShow.type = "button";
 artShow.textContent = "Ukryj / pokaż";
@@ -237,16 +249,17 @@ artFocus.textContent = "Zobacz miejsce";
 const artRemove = document.createElement("button");
 artRemove.type = "button";
 artRemove.textContent = "Usuń podgląd";
-artButtons.append(artShow, artFocus, artRemove);
+artButtons.append(artShow, artFocus, artRemove, artSaveCandidate, artLoadCandidate, artCandidateInput);
 const artStatus = document.createElement("p");
 artStatus.className = "spc-owner-art-status";
 artStatus.setAttribute("role", "status");
 artStatus.textContent = "Brak grafiki. Neutralny World jest stanem tymczasowym, nie zatwierdzonym stylem.";
 const artSafety = document.createElement("small");
-artSafety.textContent = "Obraz nie jest zapisywany ani wysyłany. Zachowaj oryginał na swoim komputerze. Odświeżenie usuwa podgląd.";
+artSafety.textContent = "Brak wysyłania do serwera. Odświeżenie usuwa podgląd; Zapisz próbkę pobiera lokalny JSON z dokładnym obrazem i ustawieniami.";
 artBody.append(artExplain, artFile, artSiteLabel, artSizeLabel, artOpacityLabel, artButtons, artStatus, artSafety);
 artPreviewPanel.append(artSummary, artBody);
 let artDecodedImage: HTMLImageElement | null = null;
+let artSourceFile: File | null = null;
 let artVisible = true;
 let artImportRevision = 0;
 
@@ -641,6 +654,7 @@ artFile.addEventListener("change", () => {
       await image.decode();
       if (revision !== artImportRevision) return;
       artDecodedImage = image;
+      artSourceFile = file;
       artVisible = true;
       refreshLocalArtPreview();
       scene.viewWorldSite(artSite.value);
@@ -665,8 +679,70 @@ artShow.addEventListener("click", () => {
   refreshLocalArtPreview();
 });
 artFocus.addEventListener("click", () => scene.viewWorldSite(artSite.value));
+artSaveCandidate.addEventListener("click", () => {
+  if (!artSourceFile || !artDecodedImage) {
+    artStatus.textContent = "Najpierw załaduj własną grafikę.";
+    return;
+  }
+  void exportLocalArtCandidate(
+    artSourceFile, artSite.value,
+    Number(artSize.value), Number(artOpacity.value), FIVE_RESIDENT_ANCHORS,
+  ).then((json) => {
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "spc-art-candidate-local.json";
+    link.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 10_000);
+    artStatus.textContent = "Próbka zapisana lokalnie. World nie został zmieniony.";
+  }).catch((error: unknown) => {
+    artStatus.textContent = error instanceof Error ? error.message : "Błąd eksportu.";
+  });
+});
+artLoadCandidate.addEventListener("click", () => artCandidateInput.click());
+artCandidateInput.addEventListener("change", () => {
+  const selected = artCandidateInput.files?.[0];
+  if (!selected) return;
+  const revision = ++artImportRevision;
+  void (async () => {
+    if (selected.size > 6_000_000 || selected.size <= 0) {
+      throw new Error("Lokalna próbka JSON jest pusta lub przekracza limit.");
+    }
+    const restored = await importLocalArtCandidate(
+      await selected.text(), FIVE_RESIDENT_ANCHORS,
+    );
+    if (revision !== artImportRevision) return;
+    const copy = new Uint8Array(restored.bytes.length);
+    copy.set(restored.bytes);
+    const file = new File([copy.buffer], restored.fileName, { type: restored.mime });
+    const url = URL.createObjectURL(file);
+    let image: HTMLImageElement;
+    try {
+      image = new Image();
+      image.src = url;
+      await image.decode();
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+    if (revision !== artImportRevision) return;
+    // Only the ART UI is restored; this is not a World save/load.
+    artSourceFile = file;
+    artDecodedImage = image;
+    artSite.value = restored.anchorId;
+    artSize.value = String(restored.worldWidth);
+    artOpacity.value = String(restored.opacity);
+    artVisible = true;
+    refreshLocalArtPreview();
+    scene.viewWorldSite(artSite.value);
+  })().catch((error: unknown) => {
+    if (revision !== artImportRevision) return;
+    artStatus.textContent = error instanceof Error ? error.message : "Próbka została odrzucona.";
+  }).finally(() => { artCandidateInput.value = ""; });
+});
 artRemove.addEventListener("click", () => {
   artImportRevision += 1;
+  artSourceFile = null;
   artDecodedImage = null;
   artFile.value = "";
   artVisible = true;
