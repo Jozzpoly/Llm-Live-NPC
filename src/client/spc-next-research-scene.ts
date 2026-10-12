@@ -591,8 +591,8 @@ export class SpcNextResearchScene extends Phaser.Scene {
       } else if (this.scenario.kind === "unified-living"
         || this.scenario.kind === "unified-armed") {
         const positioned = placeNonOverlappingMaterialLabel({
-          anchorX: position.x + half + 8,
-          anchorY: position.y,
+          x: position.x + half + 8,
+          y: position.y,
           width: label.width,
           height: label.height,
         }, materialLabelRects);
