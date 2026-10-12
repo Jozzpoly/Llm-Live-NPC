@@ -11,6 +11,7 @@ import type {
   ResidentPercept,
 } from "./contracts";
 import type { ResidentLifeCognitionView } from "./resident-life-cognition-view";
+import type { ResidentKnownMaterialObject } from "./resident-material-knowledge";
 import {
   cloneResidentLifeSelfContext,
   type ResidentLifeSelfContext,
@@ -42,6 +43,8 @@ export interface ResidentLifeCognitionContext {
   beliefs: readonly ResidentBeliefState[];
   knownActors: readonly KnownActorContext[];
   knownRegions: readonly KnownRegionContext[];
+  /** Observed/remembered only by this resident, never a World inventory. */
+  knownMaterials?: readonly ResidentKnownMaterialObject[];
   life: ResidentLifeCognitionView;
 }
 
@@ -49,6 +52,7 @@ export function composeResidentLifeCognitionContext(
   privateContext: ResidentCognitionContext,
   life: ResidentLifeCognitionView,
   self?: ResidentLifeSelfContext,
+  knownMaterials?: readonly ResidentKnownMaterialObject[],
 ): ResidentLifeCognitionContext {
   return {
     contract: "resident_life_cognition_v1",
@@ -63,6 +67,7 @@ export function composeResidentLifeCognitionContext(
     beliefs: structuredClone(privateContext.beliefs),
     knownActors: structuredClone(privateContext.knownActors),
     knownRegions: structuredClone(privateContext.knownRegions),
+    ...(knownMaterials ? { knownMaterials: structuredClone(knownMaterials) } : {}),
     life: structuredClone(life),
   };
 }

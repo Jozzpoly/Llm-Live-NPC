@@ -41,6 +41,8 @@ export type ResidentGroundedTravelStep =
 export class ResidentGroundedTravelExecutor {
   private terminal: ResidentGroundedTravelStep | null = null;
   private readonly destination: Vec2;
+  private readonly routeWaypoints: readonly Vec2[];
+  private routeIndex = 0;
 
   constructor(
     readonly runId: string,
@@ -49,6 +51,7 @@ export class ResidentGroundedTravelExecutor {
     private readonly world: SpcWorldRuntime,
     private readonly travelSpeed = DEFAULT_TRAVEL_SPEED,
     private readonly arrivalDistance = DEFAULT_ARRIVAL_DISTANCE,
+    routeWaypoints: readonly Vec2[] = [],
   ) {
     if (!runId.trim()) throw new Error("grounded travel runId must be non-empty");
     if (![destination.x, destination.y].every(Number.isFinite)) {
@@ -60,7 +63,11 @@ export class ResidentGroundedTravelExecutor {
     if (!Number.isFinite(arrivalDistance) || arrivalDistance <= 0) {
       throw new Error("grounded travel arrivalDistance must be positive and finite");
     }
+    if (routeWaypoints.some(p => !Number.isFinite(p.x) || !Number.isFinite(p.y))) {
+      throw new Error("grounded travel waypoint must be finite");
+    }
     this.destination = { ...destination };
+    this.routeWaypoints = routeWaypoints.map(p => ({ ...p }));
   }
 
   step(): ResidentGroundedTravelStep {
@@ -105,7 +112,17 @@ export class ResidentGroundedTravelExecutor {
       return structuredClone(this.terminal);
     }
 
-    const direction = normalizedDirection(self.position, this.destination);
+    // The objective stays constant while the LOCAL body follows an accepted
+    // route already grounded by resident-known navigation. Arrival remains
+    // World-factual; waypoints never grant movement or override exact-run authority.
+    while (this.routeIndex < this.routeWaypoints.length
+      && distanceSquared(self.position, this.routeWaypoints[this.routeIndex]!)
+        <= this.arrivalDistance ** 2) {
+      this.routeIndex += 1;
+    }
+    const activeWaypoint = this.routeWaypoints[this.routeIndex];
+    const target = activeWaypoint ?? this.destination;
+    const direction = normalizedDirection(self.position, target);
     const speed = Math.min(self.maxSpeed, this.travelSpeed);
     const applied = this.authority.apply({
       runId: this.runId,
@@ -120,7 +137,7 @@ export class ResidentGroundedTravelExecutor {
       status: "running",
       runId: this.runId,
       destination: { ...this.destination },
-      distanceRemaining: Math.sqrt(distanceRemainingSquared),
+      distanceRemaining: Math.sqrt(distanceSquared(self.position, target)),
     };
   }
 

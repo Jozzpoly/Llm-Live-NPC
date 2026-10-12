@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { sanitizeSpcNextLifeContext } from "./spc-next-life-context";
+import { FiveResidentUnifiedLivingRuntime } from "../src/spc-next/five-resident-unified-living-runtime";
+import { composeResidentLifeCognitionContext } from "../src/spc-next/resident-life-cognition-context";
 
 const focusedContext = {
   contract: "resident_life_cognition_v1",
@@ -89,6 +91,21 @@ describe("shared SPC Next resident-life context sanitizer", () => {
       canMutateWorld: true,
       bodyState: "focused",
     });
+  });
+
+  it("sanitizes only bounded private material sightings, rejecting fake holder/oracle metadata", () => {
+    const record = structuredClone(focusedContext) as any;
+    record.knownMaterials = [{
+      objectId: "basket.hearth.01",
+      lastKnownPosition: { x: 846, y: 794 },
+      observedAtTick: 110, currentlyVisible: false,
+    }];
+    expect(sanitizeSpcNextLifeContext(record)?.knownMaterials).toEqual(record.knownMaterials);
+    record.knownMaterials[0].holderId = "player.jozz";
+    expect(sanitizeSpcNextLifeContext(record)).toBeNull();
+    delete record.knownMaterials[0].holderId;
+    record.knownMaterials[0].observedAtTick = 121;
+    expect(sanitizeSpcNextLifeContext(record)).toBeNull();
   });
 
   it("preserves bounded structured semantic intent while keeping legacy missing intent readable", () => {
@@ -181,6 +198,43 @@ describe("shared SPC Next resident-life context sanitizer", () => {
     const blankGoal = structuredClone(material);
     blankGoal.life.matters[0].semanticIntent.goal = " ";
     expect(sanitizeSpcNextLifeContext(blankGoal)).toBeNull();
+  });
+
+  it("preserves real recovered resident delivery matter across provider boundary without granting global material truth", () => {
+    // Actual playable five-resident Janek, not a free-floating made-up fixture.
+    const living = new FiveResidentUnifiedLivingRuntime({
+      providerDispatchMode: "manual", initialEverydayWork: true,
+    });
+    const janek = living.life("resident.janek")!;
+    const localContext = janek.resident.cognitionContext({
+      residentId: "resident.janek",
+      requestedAtTick: living.world.tick,
+      reasons: [],
+    });
+    const actual = composeResidentLifeCognitionContext(localContext, janek.currentLifeView());
+    const sanitized = sanitizeSpcNextLifeContext(actual);
+    expect(sanitized).not.toBeNull();
+    const intent = sanitized?.life.matters.find(m =>
+      m.id === "matter.janek.workshop-opening.delivery")?.semanticIntent;
+    expect(intent).toEqual({
+      kind: "deliver_material_object",
+      goal: "Take the actual workshop crate to the crossroads store and put it down.",
+      objectId: "crate.workshop.01",
+      destination: { x: 3050, y: 1080 },
+    });
+
+    const forged = structuredClone(actual) as any;
+    forged.life.matters[0].semanticIntent.hiddenWorldObjectPosition = { x: 9999, y: 9999 };
+    expect(sanitizeSpcNextLifeContext(forged)).toBeNull();
+
+    const badDestination = structuredClone(actual) as any;
+    badDestination.life.matters[0].semanticIntent.destination.x = Number.POSITIVE_INFINITY;
+    expect(sanitizeSpcNextLifeContext(badDestination)).toBeNull();
+
+    const extraCoordinate = structuredClone(actual) as any;
+    extraCoordinate.life.matters[0].semanticIntent.destination.z = 4;
+    expect(sanitizeSpcNextLifeContext(extraCoordinate)).toBeNull();
+    expect(living.diagnostics().providerRequestCount).toBe(0);
   });
 
   it("preserves bounded standing social commitment history for higher cognition", () => {

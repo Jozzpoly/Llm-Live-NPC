@@ -43,6 +43,38 @@ describe("resident grounded travel executor", () => {
     expect(authority.enforceMotionAuthority()).toEqual({ status: "revoked", runId: RUN_ID });
   });
 
+  it("follows resident-accepted intermediate track points without granting independent body authority", () => {
+    const { world, authority } = setup();
+    const from = actorPosition(world);
+    const scenic = { x: 900, y: 1_100 };
+    const travel = new ResidentGroundedTravelExecutor(
+      RUN_ID, DESTINATION, authority, world, 95, 18, [scenic],
+    );
+    // On the first 45 ticks, the resident heads toward the known waypoint
+    // to the south, NOT in a direct straight line to the destination.
+    for (let tick = 0; tick < 45; tick++) {
+      expect(travel.step().status).toBe("running");
+      world.step();
+    }
+    const early = actorPosition(world);
+    expect(early.y - from.y).toBeGreaterThan((early.x - from.x) * 2);
+    expect(authority.motionOwner()).toBe(RUN_ID);
+
+    let terminal = travel.step();
+    let guard = 0;
+    while (terminal.status === "running" && guard < 800) {
+      world.step();
+      terminal = travel.step();
+      guard++;
+    }
+    expect(terminal.status).toBe("arrived");
+    expect(guard).toBeLessThan(800);
+    expect(Math.hypot(
+      actorPosition(world).x - DESTINATION.x,
+      actorPosition(world).y - DESTINATION.y,
+    )).toBeLessThanOrEqual(18);
+  });
+
   it("loses body authority immediately when the matter's semantic revision changes", () => {
     const { world, kernel, authority } = setup();
     const executor = new ResidentGroundedTravelExecutor(RUN_ID, DESTINATION, authority, world);

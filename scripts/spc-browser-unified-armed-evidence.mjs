@@ -91,7 +91,7 @@ try{
     report.exceptions.push(exceptionDetails?.exception?.description??exceptionDetails?.text??"unknown");
   });
   await Promise.all([cdp.send("Page.enable"),cdp.send("Network.enable"),cdp.send("Runtime.enable")]);
-  await cdp.send("Page.navigate",{url:base.replace(/\/$/u,"")+"/?spc=1&evidence=1&scenario=unified-armed"});
+  await cdp.send("Page.navigate",{url:base.replace(/\/$/u,"")+"/?spc=1&evidence=1&scenario=unified-armed&case=contact-after-shift"});
   await until(()=>runIn(cdp,'Boolean(window.__SPC_EVIDENCE__?.ready?.() && document.querySelector("canvas"))'));
   check("explicit one-shot UI",await runIn(cdp,'Array.from(document.querySelectorAll("button")).some(b=>b.textContent?.includes("Zapytaj Lunę")&&!b.hidden)'));
   check("private evidence export hidden BEFORE operator action",await runIn(cdp,'Array.from(document.querySelectorAll("button")).some(b=>b.textContent?.includes("Zapisz dowody JSON")&&b.hidden)'));
@@ -104,6 +104,12 @@ try{
     &&ready.livingDiagnostics?.providerRequestCount===0
     &&report.requests.length===0,
     {claimed:ready.livingDiagnostics?.claimedResidentIds,provider:ready.livingDiagnostics?.providerRequestCount});
+  const player = ready.snapshot?.actors?.find(a => a.id === "player.jozz");
+  const mira = ready.snapshot?.actors?.find(a => a.id === "resident.mira");
+  check("actual player remains within hearing range after Mira's real shift",
+    Boolean(player && mira && Math.hypot(
+      player.position.x-mira.position.x, player.position.y-mira.position.y,
+    ) < 420), {player:player?.position,mira:mira?.position});
   const speech=await runIn(cdp,'window.__SPC_EVIDENCE__.addressResident("resident.mira","Mira, czy możemy chwilę porozmawiać?")');
   check("actual World speech",speech?.kind==="speech"&&speech?.actorId==="player.jozz",speech);
   await runIn(cdp,"window.__SPC_EVIDENCE__.stepWorld(1)");
@@ -199,8 +205,31 @@ try{
     await runIn(cdp,'!Array.from(document.querySelectorAll("button")).some(b=>b.textContent?.includes("Zapytaj Lunę")&&!b.hidden)'));
   check("browse-only NEVER offers export of private operator cognition",
     await runIn(cdp,'!Array.from(document.querySelectorAll("button")).some(b=>b.textContent?.includes("Zapisz dowody JSON")&&!b.hidden)'));
+  // REAL playable five-person World, not the authored Janek↔Ida test scene.
+  // Observe Janek in the middle of a genuinely embodied supply job and then
+  // qualify factual completed placement. Never request provider cognition.
+  check("a playable resident starts with one actually authorized material delivery",
+    await runIn(cdp, 'Boolean(window.__SPC_EVIDENCE__.snapshot().snapshot.residents.length===5 && document.querySelector("[data-resident=\\\"resident.janek\\\"]"))'));
+  await runIn(cdp, 'document.querySelector("[data-resident=\\\"resident.janek\\\"]").click()');
+  await runIn(cdp, "window.__SPC_EVIDENCE__.stepWorld(200)");
+  const workingJanek = await runIn(cdp, "window.__SPC_EVIDENCE__.snapshot()");
+  check("Janek is doing ordinary material work in the actual five-resident game",
+    workingJanek.selectedResidentId === "resident.janek"
+      && workingJanek.selectedLife?.body?.focusedRunId === "run.janek.workshop-opening.delivery"
+      && workingJanek.selectedLife?.matters?.some(m =>
+        m.id === "matter.janek.workshop-opening.delivery" && m.status === "active"
+          && m.semanticIntent?.kind === "deliver_material_object"),
+    {selected:workingJanek.selectedResidentId,focused:workingJanek.selectedLife?.body?.focusedRunId});
+  const realWorkImage = await cdp.send("Page.captureScreenshot",{format:"png"});
+  writeFileSync(resolve(dirname(output),"unified-living-janek-material-work.png"),
+    Buffer.from(realWorkImage.data,"base64"));
   await runIn(cdp, "window.__SPC_EVIDENCE__.stepWorld(3600)");
   const browseEnd = await runIn(cdp, "window.__SPC_EVIDENCE__.snapshot()");
+  check("Janek actually completes the material delivery into World, not just a fake work badge",
+    browseEnd.selectedLife?.matters?.some(m =>
+      m.id === "matter.janek.workshop-opening.delivery" && m.status === "resolved"
+      && m.lastOutcomeEvidence?.summary?.includes("physically delivered")),
+    {selected:browseEnd.selectedResidentId,matters:browseEnd.selectedLife?.matters?.length});
   check("3600 browse-only World ticks with real private pressures cannot call any model",
     report.requests.length===beforeBrowseOnly
     && browseEnd.livingDiagnostics?.providerRequestCount===0,
@@ -229,6 +258,208 @@ try{
       report.modelRouteRequests.length===before,
       {route:legacyScenario, attempts:report.modelRouteRequests.slice(before)});
   }
+  // New zero-provider resident↔resident actual-World browser specimen.
+  // This is not a model-generated choice and may not be presented as one.
+  const beforeRelationalNetwork = report.modelRouteRequests.length;
+  await cdp.send("Page.navigate",{
+    url:base.replace(/[/]$/u,"")+"/?spc=1&evidence=1&scenario=relational-episode"
+  });
+  await until(()=>runIn(cdp,
+    'Boolean(location.search.includes("scenario=relational-episode") && window.__SPC_EVIDENCE__?.ready?.() && document.querySelector("canvas"))'),20000);
+  check("real five residents in a clearly authored, zero-provider browser episode",
+    await runIn(cdp,'window.__SPC_EVIDENCE__.snapshot().snapshot.residents.length===5'));
+  check("test response control is visible, real Luna operator control hidden",
+    await runIn(cdp,'Array.from(document.querySelectorAll("button")).some(b=>b.textContent==="Test: odpowiedz"&&!b.hidden) && !Array.from(document.querySelectorAll("button")).some(b=>b.textContent?.includes("Zapytaj Lunę")&&!b.hidden)'));
+  let episode=null;
+  for(let i=0;i<65;i++){
+    await runIn(cdp,"window.__SPC_EVIDENCE__.stepWorld(24)");
+    episode=await runIn(cdp,'window.__SPC_EVIDENCE__.scenarioAction("episode-status")');
+    if(episode?.phase==="awaiting_choice"||episode?.phase==="failed")break;
+  }
+  check("actual Ida return becomes one Janek-private grounded question in browser",
+    episode?.phase==="awaiting_choice"&&!!episode.standingMatterId
+      &&!!episode.privateReturnReasonId &&episode.modelCalls===0,
+    episode);
+  check("no model or response before TEST operator action",
+    report.modelRouteRequests.length===beforeRelationalNetwork
+      &&episode.localDecision==="not_selected"&&!episode.factualReply);
+  const relationalBefore=await cdp.send("Page.captureScreenshot",{format:"png"});
+  writeFileSync(resolve(dirname(output),"relational-episode-before-choice.png"),
+    Buffer.from(relationalBefore.data,"base64"));
+  check("EXPLICIT test injection accepted",
+    await runIn(cdp,'window.__SPC_EVIDENCE__.scenarioAction("test-respond")')==="accepted");
+  for(let i=0;i<35;i++){
+    await runIn(cdp,"window.__SPC_EVIDENCE__.stepWorld(12)");
+    episode=await runIn(cdp,'window.__SPC_EVIDENCE__.scenarioAction("episode-status")');
+    if(episode?.phase==="spoken"||episode?.phase==="failed")break;
+  }
+  check("Janek factually speaks to Ida from accepted TEST-INJECTED local cognition",
+    episode?.phase==="spoken" && episode.factualReply && episode.modelCalls===0,episode);
+  const relationalAfter=await cdp.send("Page.captureScreenshot",{format:"png"});
+  writeFileSync(resolve(dirname(output),"relational-episode-after-test-choice.png"),
+    Buffer.from(relationalAfter.data,"base64"));
+  check("resident↔resident browser scene NEVER posts model API",
+    report.modelRouteRequests.length===beforeRelationalNetwork);
+
+  await cdp.send("Page.navigate",{
+    url:base.replace(/[/]$/u,"")+"/?spc=1&evidence=1&scenario=relational-episode&case=no-standing"
+  });
+  await until(()=>runIn(cdp,
+    'Boolean(location.search.includes("case=no-standing") && window.__SPC_EVIDENCE__?.ready?.() && document.querySelector("canvas"))'),20000);
+  let control=null;
+  for(let i=0;i<65;i++){
+    await runIn(cdp,"window.__SPC_EVIDENCE__.stepWorld(24)");
+    control=await runIn(cdp,'window.__SPC_EVIDENCE__.scenarioAction("episode-status")');
+    if(control?.phase==="control_complete"||control?.phase==="failed")break;
+  }
+  check("matched physical Ida return without Janek history creates NO personal reason",
+    control?.phase==="control_complete"&&!control.standingMatterId
+      &&!control.privateReturnReasonId&&!control.factualReply,control);
+  check("no-history control cannot invoke test response",
+    await runIn(cdp,'window.__SPC_EVIDENCE__.scenarioAction("test-respond")')==="not_ready");
+  check("no API in either authored relational case",
+    report.modelRouteRequests.length===beforeRelationalNetwork);
+
+  // TRUE positive play-through: a special evidence-only initial POSITION
+  // near the real Workshop Bench. No pre-owned material, no fictitious
+  // outcome, no model. Real keyboard E picks up the source and real keyboard U
+  // starts work; only then do 180 authoritative World ticks produce the kit.
+  const beforeWorkshopRequests = report.modelRouteRequests.length;
+  await cdp.send("Page.navigate", {
+    url: base.replace(/[/]$/u, "") + "/?spc=1&evidence=1&scenario=unified-armed&case=workshop-work"
+  });
+  await until(()=>runIn(cdp,
+    'Boolean(window.__SPC_EVIDENCE__?.ready?.() && document.querySelector("#game canvas"))'));
+  const originalWorkshop = await runIn(cdp,"window.__SPC_EVIDENCE__.snapshot()");
+  check("workshop evidence starts with no fictitious processing", 
+    originalWorkshop.snapshot.actors.some(a=>a.id==="player.jozz")
+    && !originalWorkshop.playerWork && !originalWorkshop.recentWorkOutcome);
+  await runIn(cdp,'(document.activeElement?.blur?.(), document.querySelector("#game canvas")?.focus(),true)');
+  async function gameKey(code,key,virtualKey){
+    await cdp.send("Input.dispatchKeyEvent",{
+      type:"keyDown",key,code,windowsVirtualKeyCode:virtualKey,nativeVirtualKeyCode:virtualKey,
+    });
+    await wait(180);
+    await cdp.send("Input.dispatchKeyEvent",{
+      type:"keyUp",key,code,windowsVirtualKeyCode:virtualKey,nativeVirtualKeyCode:virtualKey,
+    });
+    await wait(75);
+  }
+  await gameKey("KeyE","e",69);
+  await gameKey("KeyU","u",85);
+  await until(()=>runIn(cdp,
+    'window.__SPC_EVIDENCE__?.snapshot?.()?.playerWork?.siteId === "workshop.repair-kit"'),8000);
+  check("real E and U inputs start the actual World-owned workshop execution",
+    await runIn(cdp,'window.__SPC_EVIDENCE__.snapshot().playerWork.requiredTicks') === 180);
+  const doneWorkshop = await runIn(cdp,'window.__SPC_EVIDENCE__.stepWorld(180)');
+  check("actual fixed-step workshop transforms the exact held material into one real kit",
+    doneWorkshop.recentWorkOutcome?.status==="completed"
+    && doneWorkshop.recentWorkOutcome?.sourceObjectId==="crate.workshop.02"
+    && doneWorkshop.recentWorkOutcome?.outputObjectId==="kit.workshop.01"
+    && doneWorkshop.recentWorkOutcome?.outputAfter?.derivation?.sourceObjectId==="crate.workshop.02",
+    doneWorkshop.recentWorkOutcome);
+  await wait(250);
+  const workshopScreenshot=await cdp.send("Page.captureScreenshot",{format:"png"});
+  writeFileSync(resolve(dirname(output),"unified-workshop-real-player-work-complete.png"),
+    Buffer.from(workshopScreenshot.data,"base64"));
+  check("real material work never dispatches hidden upstream cognition",
+    report.modelRouteRequests.length===beforeWorkshopRequests);
+
+  // The product landing must now be the FIVE-person World, not the archived
+  // baseline. Verify the actual Owner-facing navigation in Chromium without
+  // access to any private research export or synthetic model decision.
+  const beforeOwnerGame = report.modelRouteRequests.length;
+  await cdp.send("Page.navigate", {
+    url: base.replace(/[/]$/u, "") + "/?spc=1"
+  });
+  await until(()=>runIn(cdp,'Boolean(document.querySelector("#game canvas") && document.querySelector(".spc-world-navigation button[data-world-resident]"))'));
+  check("normal SPC landing is World-first, not a hidden research sidebar",
+    await runIn(cdp,'Boolean(document.querySelector("#app.spc-world-only") && document.querySelector(".spc-world-navigation:not([hidden])"))'));
+  check("all five independently selectable residents are present in the product header",
+    await runIn(cdp,'document.querySelectorAll(".spc-world-navigation button[data-world-resident]").length===5'));
+  check("ordinary living World does not expose private browser evidence controls",
+    await runIn(cdp,'typeof window.__SPC_EVIDENCE__==="undefined"'));
+  await runIn(cdp, 'document.querySelector(".spc-world-navigation button[data-world-resident=\\\"resident.oren\\\"]").click()');
+  await until(()=>runIn(cdp, 'document.querySelector(".spc-world-navigation button[data-world-resident=\\\"resident.oren\\\"]")?.getAttribute("aria-pressed")==="true"'));
+  await wait(450);
+  const ownerImage = await cdp.send("Page.captureScreenshot", {format:"png"});
+  writeFileSync(resolve(dirname(output),"unified-living-world-first.png"),
+    Buffer.from(ownerImage.data,"base64"));
+  check("watching Oren and switching cameras cannot cause a model request",
+    report.modelRouteRequests.length===beforeOwnerGame);
+
+  // A genuine user-file event, decoded by the browser into a World-anchored
+  // image. This 8×8 TEST SWATCH is NOT approved game art. Its only purpose
+  // is to verify the art-intake -> Phaser-renderer boundary in Chromium.
+  const localArtFileB64="iVBORw0KGgoAAAANSUhEUgAAAAgAAAAICAYAAADED76LAAAAFklEQVR4nGOMWpD3nwEPYMInOXwUAAB8vgJ36VFsCgAAAABJRU5ErkJggg==";
+  check("visual reference is optional and hidden on archival research worlds",
+    await runIn(cdp,'Boolean(document.querySelector(".spc-owner-art-preview:not([hidden])"))'));
+  check("Owner artwork panel opens outside the clipped game header",
+    await runIn(cdp,`(() => {
+      const panel = document.querySelector(".spc-owner-art-preview");
+      panel.open = true;
+      const body = panel.querySelector(".spc-owner-art-body");
+      const rect = body.getBoundingClientRect();
+      return getComputedStyle(body).position === "fixed"
+        && rect.width >= 250
+        && rect.top > 80
+        && rect.bottom <= window.innerHeight + 1;
+    })()`));
+  const toolsImage = await cdp.send("Page.captureScreenshot", {format:"png"});
+  writeFileSync(resolve(dirname(output),"unified-living-owner-art-tools-open.png"),
+    Buffer.from(toolsImage.data,"base64"));
+  await runIn(cdp,'(document.querySelector(".spc-owner-art-preview").open=false,true)');
+  const uploadEval = `(() => {
+    const picker = document.querySelector(".spc-owner-art-preview input[type=file]");
+    const raw = atob("${localArtFileB64}");
+    const bytes = Uint8Array.from(raw, ch => ch.charCodeAt(0));
+    const file = new File([bytes], "test-ground.png", { type: "image/png" });
+    const transfer = new DataTransfer();
+    transfer.items.add(file);
+    picker.files = transfer.files;
+    picker.dispatchEvent(new Event("change", { bubbles: true }));
+    return true;
+  })()`;
+  check("an actual local file choice reaches the browser image intake",
+    await runIn(cdp,uploadEval));
+  await until(()=>runIn(cdp,
+    'Boolean(document.querySelector(".spc-owner-art-status")?.textContent?.startsWith("Podgląd:"))'
+  ),10000);
+  check("decoded user image is visible as a purely visual World-site candidate",
+    await runIn(cdp,'document.querySelector(".spc-owner-art-status").textContent.includes("Workshop Bench")'));
+  await wait(300);
+  const visualCandidate = await cdp.send("Page.captureScreenshot", {format:"png"});
+  writeFileSync(resolve(dirname(output),"unified-living-owner-local-art-preview-TEST-SWATCH.png"),
+    Buffer.from(visualCandidate.data,"base64"));
+  check("compare toggle hides the candidate without touching material truth",
+    await runIn(cdp,'(document.querySelector(".spc-owner-art-buttons button").click(), document.querySelector(".spc-owner-art-status").textContent.startsWith("Ukryta grafika"))'));
+  check("owner can discard a candidate without refreshing World",
+    await runIn(cdp,'(document.querySelectorAll(".spc-owner-art-buttons button")[2].click(), document.querySelector(".spc-owner-art-status").textContent.startsWith("Podgląd usunięty"))'));
+  check("art reference workflow does not POST to cognition/provider",
+    report.modelRouteRequests.length===beforeOwnerGame);
+
+  // Use the ACTUAL U keyboard route in normal product mode, rather than
+  // calling a World method through a privileged browser evidence API.
+  // Player is still at the HEARTH and correctly cannot use a remote bench.
+  await runIn(cdp,'(document.activeElement?.blur?.(),document.querySelector("#game canvas")?.focus(),true)');
+  check("workshop authoring entered normal playable World without a hidden auto-job",
+    await runIn(cdp,'Boolean(document.querySelector(".spc-work-status")?.textContent?.includes("Warsztat"))'));
+  await cdp.send("Input.dispatchKeyEvent",{
+    type:"keyDown",key:"u",code:"KeyU",windowsVirtualKeyCode:85,nativeVirtualKeyCode:85,
+  });
+  await wait(190);
+  await cdp.send("Input.dispatchKeyEvent",{
+    type:"keyUp",key:"u",code:"KeyU",windowsVirtualKeyCode:85,nativeVirtualKeyCode:85,
+  });
+  await until(()=>runIn(cdp,
+    'Boolean(document.querySelector(".spc-work-status")?.textContent?.includes("Podejdź do Workshop Bench"))'
+  ),8000);
+  const distantWorkImage = await cdp.send("Page.captureScreenshot",{format:"png"});
+  writeFileSync(resolve(dirname(output),"unified-living-workshop-factual-distance-rejection.png"),
+    Buffer.from(distantWorkImage.data,"base64"));
+  check("distant player cannot magically work at workshop or trigger provider spending",
+    report.modelRouteRequests.length===beforeOwnerGame);
+
   // The default First Hearth (no ?spc=1) used to invoke its initial
   // model review automatically, including after operator authentication.
   // Waiting real browser time here catches implicit default-route API posts.

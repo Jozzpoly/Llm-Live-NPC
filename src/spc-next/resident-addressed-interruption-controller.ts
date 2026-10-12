@@ -7,8 +7,8 @@ export interface ResidentAddressedInterruptionSnapshot {
   originPerceptId: string;
   interruptMatterId: string;
   interruptRunId: string;
-  mainMatterId: string;
-  mainRunId: string;
+  mainMatterId: string | null;
+  mainRunId: string | null;
   responseOccurrenceId: string | null;
   remainingHoldTicks: number;
 }
@@ -31,9 +31,9 @@ interface ActiveInterruption {
   targetActorId: string | null;
   interruptMatterId: string;
   interruptRunId: string;
-  mainMatterId: string;
-  mainRunId: string;
-  mainRunBinding: ResidentTaskRunBinding;
+  mainMatterId: string | null;
+  mainRunId: string | null;
+  mainRunBinding: ResidentTaskRunBinding | null;
   responseOccurrenceId: string | null;
   remainingHoldTicks: number;
   responded: boolean;
@@ -95,6 +95,15 @@ export class ResidentAddressedInterruptionController {
       this.handledPerceptIds.add(percept.id);
       const focusedRunId = this.life.focus.focusedRun();
       if (!focusedRunId) {
+        // A person with no active work can still acknowledge a real nearby
+        // player's address without an external LLM. This is ONLY micro-contact
+        // ("Tak?"), not interpretation, compliance, a free goal or a provider
+        // request. Idle NPC↔NPC dialogue is deliberately NOT auto-echoed:
+        // that would produce an infinite two-resident acknowledgement loop.
+        if (percept.actorId?.startsWith("player.")) {
+          this.active = this.begin(percept, null);
+          return { status: "started", interruption: this.snapshot(this.active, "active") };
+        }
         return { status: "heard_without_preemption", perceptId: percept.id };
       }
 
@@ -163,16 +172,22 @@ export class ResidentAddressedInterruptionController {
     this.life.kernel.resolveMatter(active.interruptMatterId);
     this.life.worldAuthority.enforceMotionAuthority();
 
-    if (!this.life.kernel.resumeMatter(active.mainMatterId)) {
-      throw new Error("addressed interruption failed to resume prior matter");
-    }
-    const restoredBinding = this.life.kernel.runBinding(active.mainRunId);
-    if (JSON.stringify(restoredBinding) !== JSON.stringify(active.mainRunBinding)) {
-      throw new Error("addressed interruption changed exact prior run binding");
-    }
-    const focus = this.life.arbitrator.restoreInterrupted(active.mainRunId);
-    if (focus.status !== "acquired") {
-      throw new Error(`addressed interruption failed to restore prior focus: ${focus.status}`);
+    if (active.mainMatterId && active.mainRunId && active.mainRunBinding) {
+      if (!this.life.kernel.resumeMatter(active.mainMatterId)) {
+        throw new Error("addressed interruption failed to resume prior matter");
+      }
+      const restoredBinding = this.life.kernel.runBinding(active.mainRunId);
+      if (JSON.stringify(restoredBinding) !== JSON.stringify(active.mainRunBinding)) {
+        throw new Error("addressed interruption changed exact prior run binding");
+      }
+      const focus = this.life.arbitrator.restoreInterrupted(active.mainRunId);
+      if (focus.status !== "acquired") {
+        throw new Error(`addressed interruption failed to restore prior focus: ${focus.status}`);
+      }
+    } else {
+      // The contact began in genuine idle, so there is no previous body run
+      // to invent or restore. Retire this one micro-run and return to quiet.
+      this.life.arbitrator.reconcile();
     }
     this.life.worldAuthority.enforceMotionAuthority();
 
@@ -185,7 +200,7 @@ export class ResidentAddressedInterruptionController {
     return this.active ? this.snapshot(this.active, "active") : null;
   }
 
-  private begin(percept: ResidentPercept, mainRunBinding: ResidentTaskRunBinding): ActiveInterruption {
+  private begin(percept: ResidentPercept, mainRunBinding: ResidentTaskRunBinding | null): ActiveInterruption {
     const suffix = percept.id;
     const interruptMatterId = `matter.${this.life.residentId}.contact-interrupt:${suffix}`;
     const interruptRunId = `run.${this.life.residentId}.contact-interrupt:${suffix}.semantic-1`;
@@ -211,8 +226,10 @@ export class ResidentAddressedInterruptionController {
     });
     this.life.matterScope.track(interruptMatterId);
 
-    this.life.kernel.suspendMatter(mainRunBinding.matterId, interruptMatterId);
-    const focus = this.life.arbitrator.claimInterruption(interruptRunId);
+    if (mainRunBinding) this.life.kernel.suspendMatter(mainRunBinding.matterId, interruptMatterId);
+    const focus = mainRunBinding
+      ? this.life.arbitrator.claimInterruption(interruptRunId)
+      : this.life.arbitrator.request(interruptRunId);
     if (focus.status !== "acquired") {
       throw new Error(`addressed interruption failed to acquire body: ${focus.status}`);
     }
@@ -227,9 +244,9 @@ export class ResidentAddressedInterruptionController {
       targetActorId: percept.actorId,
       interruptMatterId,
       interruptRunId,
-      mainMatterId: mainRunBinding.matterId,
-      mainRunId: mainRunBinding.runId,
-      mainRunBinding: structuredClone(mainRunBinding),
+      mainMatterId: mainRunBinding?.matterId ?? null,
+      mainRunId: mainRunBinding?.runId ?? null,
+      mainRunBinding: mainRunBinding ? structuredClone(mainRunBinding) : null,
       responseOccurrenceId: null,
       remainingHoldTicks: this.holdTicks,
       responded: false,

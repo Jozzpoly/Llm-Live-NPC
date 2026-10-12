@@ -257,6 +257,47 @@ describe("ResidentMaterialMatterRelevanceBridge", () => {
     expect(resident.pendingCognitionReasons()).toEqual([]);
   });
 
+  it("keeps a current actual delivery from spawning a second same-object material reason", () => {
+    const resident = new ResidentRuntime({
+      ...DEFAULT_RESIDENT_PROFILE,
+      id: "resident.current-delivery-excludes-duplicates",
+      name: "Delivery owns this object",
+    });
+    const kernel = new ResidentContinuityKernel();
+    terminalBlockedMaterialMatter(kernel,
+      "matter.material.prior", "run.material.prior", "crate.same");
+    kernel.recordEvidence({
+      id: "evidence.material.delivery-origin", tick: 10,
+      kind: "accepted_cognition_commitment", summary: "a resident accepted a real delivery",
+    });
+    kernel.openMatter({
+      id: "matter.material.current-delivery",
+      originEvidenceId: "evidence.material.delivery-origin",
+      semanticCourse: "carry the exact crate",
+      semanticIntent: {
+        kind: "deliver_material_object", goal: "bring it to the hearth",
+        objectId: "crate.same", destination: { x: 250, y: 80 },
+      },
+    });
+    const focus = new ResidentExecutionFocusAuthority(kernel);
+    const arbitrator = new ResidentExecutionArbitrator(kernel, focus);
+    const life = captureResidentLifeCognitionView({
+      kernel, focus, arbitrator,
+      matterIds: ["matter.material.current-delivery"],
+    });
+    const bridge = new ResidentMaterialMatterRelevanceBridge(resident, kernel);
+    const before = { objectId: "crate.same", lastKnownPosition: { x: 20, y: 20 },
+      observedAtTick: 9, currentlyVisible: false };
+    const after = { objectId: "crate.same", lastKnownPosition: { x: 250, y: 80 },
+      observedAtTick: 11, currentlyVisible: true };
+    expect(bridge.observeReacquisition(before, after, life))
+      .toEqual({ status: "not_relevant", objectId: "crate.same" });
+    expect(bridge.observeUnexpectedRelocation(before, after, life))
+      .toEqual({ status: "not_relevant", objectId: "crate.same" });
+    expect(resident.pendingCognitionReasons()).toEqual([]);
+    expect(kernel.matter("matter.material.current-delivery")?.status).toBe("active");
+  });
+
   it("does not use archived history to manufacture another future while a current same-object matter is already open", () => {
     const resident = new ResidentRuntime({
       ...DEFAULT_RESIDENT_PROFILE,

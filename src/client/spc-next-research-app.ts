@@ -2,7 +2,12 @@ import * as Phaser from "phaser";
 import "./style.css";
 import "./spc-next-research-style.css";
 import type { SpcCanonicalEvidenceSnapshotV1 } from "../evidence/spc-next-canonical-evidence-snapshot";
-import { FIVE_RESIDENT_ROLE_PRESSURES } from "../spc-next/five-resident-region";
+import { FIVE_RESIDENT_ANCHORS, FIVE_RESIDENT_ROLE_PRESSURES } from "../spc-next/five-resident-region";
+import {
+  validateLocalGroundImageSource,
+  validateLocalGroundImageSignature,
+} from "./spc-next-local-art-contract";
+import { exportLocalArtCandidate, importLocalArtCandidate } from "./spc-next-local-art-candidate";
 import { buildSpcManualProbeEvidence } from "./spc-next-manual-probe-export";
 import type { ResidentPercept, ResidentTraceEvent, WorldOccurrence } from "../spc-next/contracts";
 import {
@@ -13,6 +18,9 @@ import {
 
 const params = new URLSearchParams(location.search);
 const evidenceMode = params.get("evidence") === "1";
+const unifiedLivingMode = params.get("scenario") === "unified-living"
+  || (!evidenceMode && params.get("scenario") === null);
+const unifiedWorldMode = unifiedLivingMode || params.get("scenario") === "unified-armed";
 
 const appRoot = document.querySelector<HTMLElement>("#app");
 const debugRoot = document.querySelector<HTMLElement>("#debug");
@@ -41,15 +49,27 @@ heading.textContent = "SPC Next";
 eyebrow.textContent = "Living world · embodied cognition research";
 stageNode.textContent = "WORLD / EPISTEMIC LAB";
 stageNode.classList.add("is-active");
+if (unifiedLivingMode && !evidenceMode) {
+  document.title = "SPC — Świat pięciu mieszkańców";
+  heading.textContent = "SPC • Pięciu mieszkańców";
+  eyebrow.textContent = "Wspólny świat · codzienne życie · rzeczywiste działania";
+  stageNode.textContent = "ŚWIAT · BEZ AUTOMATYCZNEGO API";
+}
 gameNode.setAttribute("aria-label", "SPC Next living-world research scene");
 footer.innerHTML = [
   "<span>Ruch: WASD / strzałki</span>",
   "<span>Wybór SPC: klik / Tab</span>",
-  "<span>Zawołaj: H · mikroskop: R</span>",
+  "<span>Zawołaj: H · mikroskop: R · podnieś/odłóż: E · warsztat: U</span>",
   "<span>Śledź SPC: F · gracz: P · cały świat: O</span>",
   "<span>Tylko świat / badania: G · zoom: kółko</span>",
 ].join("");
 
+const workStatus = document.createElement("span");
+workStatus.className = "spc-work-status";
+workStatus.hidden = !((unifiedLivingMode && !evidenceMode) || armedResearchMode);
+workStatus.setAttribute("role","status");
+workStatus.textContent = "Warsztat: przenieś Workshop Spare Parts do stanowiska, użyj U.";
+footer.append(workStatus);
 const worldModeButton = document.createElement("button");
 worldModeButton.type = "button";
 worldModeButton.className = "spc-world-mode-toggle";
@@ -71,13 +91,50 @@ chatSend.textContent = "Powiedz";
 chatForm.append(chatInput, chatSend);
 
 // Deliberate one-shot research control. No implicit Luna calls on World ticks.
+const relationalEpisodeMode = params.get("scenario") === "relational-episode";
+if (relationalEpisodeMode) {
+  appNode.classList.add("spc-relational-mode");
+  const history = params.get("case") !== "no-standing";
+  const view = document.createElement("a");
+  view.className = "spc-episode-compare";
+  view.href = history
+    ? "?spc=1&scenario=relational-episode&case=no-standing"
+    : "?spc=1&scenario=relational-episode";
+  view.textContent = history
+    ? "Porównaj: ten sam powrót bez wcześniejszej obietnicy"
+    : "Porównaj: powrót z wcześniejszą obietnicą";
+  const replay = document.createElement("a");
+  replay.className = "spc-episode-compare";
+  replay.href = location.pathname + location.search;
+  replay.textContent = "Odtwórz od początku";
+  footer.append(view, replay);
+}
+
 const armedResearchMode = params.get("scenario") === "unified-armed";
+const episodeDecision = document.createElement("button");
+episodeDecision.type = "button";
+episodeDecision.className = "spc-chat-send";
+episodeDecision.textContent = "Test: odpowiedz";
+episodeDecision.title = "Jawnie wstrzykuje lokalną decyzję TESTU, nie jest to decyzja Luny ani samodzielna inicjatywa Janka.";
+episodeDecision.hidden = !relationalEpisodeMode;
+episodeDecision.disabled = true;
+const episodeDefer = document.createElement("button");
+episodeDefer.type = "button";
+episodeDefer.className = "spc-chat-send";
+episodeDefer.textContent = "Test: odłóż";
+episodeDefer.title = "Jawnie wstrzykuje lokalną decyzję TESTU o sensownym nie-działaniu; bez modelu.";
+episodeDefer.hidden = !relationalEpisodeMode;
+episodeDefer.disabled = true;
+const episodeStatus = document.createElement("span");
+episodeStatus.className = "spc-episode-status";
+episodeStatus.hidden = !relationalEpisodeMode;
+episodeStatus.textContent = "Pięć SPC · 0 requestów API · ustawienia sytuacji: autorskie";
 const operatorLoginLink = document.createElement("a");
 operatorLoginLink.className = "spc-operator-login";
 operatorLoginLink.href = "/api/operator/login";
 operatorLoginLink.textContent = "Logowanie";
 operatorLoginLink.title = "Jednorazowe logowanie operatora do prywatnej sesji (bez Zero Trust).";
-operatorLoginLink.hidden = !armedResearchMode;
+operatorLoginLink.hidden = !(armedResearchMode || (unifiedLivingMode && !evidenceMode));
 const oneShotButton = document.createElement("button");
 oneShotButton.type = "button";
 oneShotButton.className = "spc-chat-send";
@@ -95,13 +152,135 @@ exportProbeButton.textContent = "Zapisz dowody JSON";
 exportProbeButton.title = "Świadomie zapisz lokalnie prywatny kontekst SPC, odpowiedź modelu i stan World. Plik zawiera dane badawcze; nie udostępniaj go publicznie.";
 exportProbeButton.hidden = true;
 
+// First-class World observation, not a hidden debug sidebar requirement.
+// These buttons only change the observer's camera / selected resident;
+// they never move bodies, grant private knowledge or dispatch model requests.
+const worldNavigation = document.createElement("nav");
+worldNavigation.className = "spc-world-navigation";
+worldNavigation.setAttribute("aria-label", "Obserwuj mieszkańców świata");
+worldNavigation.hidden = !(unifiedLivingMode && !evidenceMode);
+const observePlayerButton = document.createElement("button");
+observePlayerButton.type = "button";
+observePlayerButton.textContent = "Gracz";
+observePlayerButton.dataset.worldPlayer = "true";
+observePlayerButton.title = "Wróć kamerą do gracza (P)";
+worldNavigation.append(observePlayerButton);
+for (const resident of FIVE_RESIDENT_ROLE_PRESSURES) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.textContent = resident.name;
+  button.dataset.worldResident = resident.residentId;
+  button.title = `Obserwuj ${resident.name} — kamera, bez zmiany zachowania SPC`;
+  button.setAttribute("aria-pressed", "false");
+  worldNavigation.append(button);
+}
+
+const operatorCognitionButton = document.createElement("button");
+operatorCognitionButton.type = "button";
+operatorCognitionButton.className = "spc-chat-send spc-live-cognition-button";
+operatorCognitionButton.hidden = !(unifiedLivingMode && !evidenceMode);
+operatorCognitionButton.textContent = "Włącz Lunę (max. 12)";
+operatorCognitionButton.title = "Świadomie włącz maksymalnie 12 rzeczywistych zapytań API dla pięciu SPC. Mogą generować koszty; to NIE limit dolarowy. Po odświeżeniu znów wyłączone.";
+const operatorCognitionStatus = document.createElement("span");
+operatorCognitionStatus.className = "spc-live-cognition-status";
+operatorCognitionStatus.hidden = operatorCognitionButton.hidden;
+operatorCognitionStatus.textContent = "0 API · cognition wyłączone";
+
+
+// Voluntary, LOCAL ONLY visual comparison. The user supplies a real PNG/WebP;
+// no generated noise, no network loading, no World mutation and no persistence.
+const artPreviewPanel = document.createElement("details");
+artPreviewPanel.className = "spc-owner-art-preview";
+artPreviewPanel.hidden = !(unifiedLivingMode && !evidenceMode);
+const artSummary = document.createElement("summary");
+artSummary.textContent = "Grafika świata · podgląd";
+const artBody = document.createElement("div");
+artBody.className = "spc-owner-art-body";
+const artExplain = document.createElement("p");
+artExplain.textContent = "Wyłącznie lokalny PNG/WebP na podłożu przy rzeczywistym miejscu. Bez kolizji i zmian zachowania SPC.";
+const artFile = document.createElement("input");
+artFile.type = "file";
+artFile.accept = "image/png,image/webp";
+artFile.setAttribute("aria-label", "Wybierz obraz podłoża PNG lub WebP");
+const artSiteLabel = document.createElement("label");
+artSiteLabel.textContent = "Miejsce";
+const artSite = document.createElement("select");
+for (const anchor of FIVE_RESIDENT_ANCHORS) {
+  const option = document.createElement("option");
+  option.value = anchor.id;
+  option.textContent = anchor.label;
+  artSite.append(option);
+}
+artSite.value = "anchor.workshop.bench";
+artSiteLabel.append(artSite);
+const artSizeLabel = document.createElement("label");
+artSizeLabel.textContent = "Szerokość w World";
+const artSize = document.createElement("input");
+artSize.type = "range";
+artSize.min = "64";
+artSize.max = "1600";
+artSize.step = "1";
+artSize.value = "480";
+const artSizeValue = document.createElement("span");
+artSizeValue.textContent = "480";
+artSizeLabel.append(artSize, artSizeValue);
+const artOpacityLabel = document.createElement("label");
+artOpacityLabel.textContent = "Krycie podglądu";
+const artOpacity = document.createElement("input");
+artOpacity.type = "range";
+artOpacity.min = "0.1";
+artOpacity.max = "1";
+artOpacity.step = "0.05";
+artOpacity.value = "0.85";
+artOpacityLabel.append(artOpacity);
+const artButtons = document.createElement("div");
+artButtons.className = "spc-owner-art-buttons";
+const artSaveCandidate = document.createElement("button");
+artSaveCandidate.type = "button";
+artSaveCandidate.textContent = "Zapisz próbkę";
+artSaveCandidate.title = "Lokalny JSON zawiera dokładne bajty obrazu, SHA-256 i jego położenie. Nie tworzy mapy ani nie przesyła plików.";
+const artLoadCandidate = document.createElement("button");
+artLoadCandidate.type = "button";
+artLoadCandidate.textContent = "Otwórz próbkę";
+const artCandidateInput = document.createElement("input");
+artCandidateInput.type = "file";
+artCandidateInput.accept = "application/json,.json";
+artCandidateInput.hidden = true;
+const artShow = document.createElement("button");
+artShow.type = "button";
+artShow.textContent = "Ukryj / pokaż";
+const artFocus = document.createElement("button");
+artFocus.type = "button";
+artFocus.textContent = "Zobacz miejsce";
+const artRemove = document.createElement("button");
+artRemove.type = "button";
+artRemove.textContent = "Usuń podgląd";
+artButtons.append(artShow, artFocus, artRemove, artSaveCandidate, artLoadCandidate, artCandidateInput);
+const artStatus = document.createElement("p");
+artStatus.className = "spc-owner-art-status";
+artStatus.setAttribute("role", "status");
+artStatus.textContent = "Brak grafiki. Neutralny World jest stanem tymczasowym, nie zatwierdzonym stylem.";
+const artSafety = document.createElement("small");
+artSafety.textContent = "Brak wysyłania do serwera. Odświeżenie usuwa podgląd; Zapisz próbkę pobiera lokalny JSON z dokładnym obrazem i ustawieniami.";
+artBody.append(artExplain, artFile, artSiteLabel, artSizeLabel, artOpacityLabel, artButtons, artStatus, artSafety);
+artPreviewPanel.append(artSummary, artBody);
+let artDecodedImage: HTMLImageElement | null = null;
+let artSourceFile: File | null = null;
+let artVisible = true;
+let artImportRevision = 0;
+
 const headerActions = document.createElement("div");
 headerActions.className = "spc-header-actions";
-headerActions.append(stageNode, chatForm, operatorLoginLink, oneShotButton, exportProbeButton, oneShotStatus, worldModeButton);
-header.append(headerActions);
+headerActions.append(stageNode, chatForm, operatorLoginLink, operatorCognitionButton, operatorCognitionStatus, oneShotButton, exportProbeButton, oneShotStatus, episodeStatus, episodeDecision, episodeDefer, worldModeButton);
+header.append(worldNavigation, headerActions, artPreviewPanel);
 
 let scene: SpcNextResearchScene;
-let worldOnly = false;
+// The Owner's default opens the World rather than requiring an extra click
+// to hide the research microscope. Evidence and archival routes are untouched.
+let worldOnly = unifiedLivingMode && !evidenceMode;
+appNode.classList.toggle("spc-world-only", worldOnly);
+worldModeButton.textContent = worldOnly ? "Otwórz badania" : "Tylko świat";
+worldModeButton.setAttribute("aria-pressed", String(worldOnly));
 let lastFrame: SpcNextResearchFrame | null = null;
 let manualProbeBeginning: SpcNextResearchFrame | null = null;
 
@@ -110,12 +289,65 @@ function setWorldOnly(enabled: boolean): void {
   appNode.classList.toggle("spc-world-only", enabled);
   worldModeButton.textContent = enabled ? "Otwórz badania" : "Tylko świat";
   worldModeButton.setAttribute("aria-pressed", String(enabled));
-  stageNode.textContent = enabled ? "WORLD VIEW · NO TELEMETRY" : "WORLD / EPISTEMIC LAB";
+  stageNode.textContent = enabled
+    ? unifiedLivingMode ? "ŚWIAT · BEZ AUTOMATYCZNEGO API" : "WORLD VIEW · NO TELEMETRY"
+    : unifiedLivingMode ? "ŚWIAT / BADANIA" : "WORLD / EPISTEMIC LAB";
   if (enabled) scene.setResearchOverlay(false);
 }
 
 function renderPanel(frame: SpcNextResearchFrame): void {
   lastFrame = frame;
+  if((unifiedLivingMode && !evidenceMode) || armedResearchMode){
+    workStatus.textContent = frame.playerWork
+      ? `Warsztat: ${Math.floor(frame.playerWork.ticks / frame.playerWork.requiredTicks * 100)}% · nie ruszaj się`
+      : frame.playerWorkAttempt
+        && frame.playerWorkAttemptTick != null
+        && (frame.recentWorkOutcome?.tick ?? -1) < frame.playerWorkAttemptTick
+        ? frame.playerWorkAttempt
+      : frame.recentWorkOutcome?.status === "completed"
+        ? "Warsztat: powstał rzeczywisty zestaw naprawczy — można go podnieść."
+        : frame.recentWorkOutcome?.status === "interrupted"
+          ? "Warsztat: praca przerwana — materiał pozostał w świecie."
+          : frame.playerWorkAttempt
+            ?? "Warsztat: przenieś Workshop Spare Parts do stanowiska, użyj U.";
+  }
+  if (unifiedLivingMode && !evidenceMode && frame.livingDiagnostics) {
+    const usage = frame.livingDiagnostics.providerHardBudget;
+    const running = frame.livingDiagnostics.operatorAutoDispatchEnabled;
+    const latestError = frame.livingDiagnostics.recentProviderEvents.some(event =>
+      event.status === "provider_error" || event.status === "transport_internal_error");
+    operatorCognitionButton.textContent = running ? "Pauzuj Lunę" : "Włącz Lunę";
+    operatorCognitionButton.disabled = usage.exhausted && !running;
+    operatorCognitionStatus.textContent = `${usage.upstreamRequestsStarted}/${usage.maxUpstreamRequests} API · ${
+      running ? "SPC myślą" : latestError ? "pauza po błędzie" : usage.exhausted ? "limit" : "wyłączone"
+    }`;
+  }
+  for (const button of worldNavigation.querySelectorAll<HTMLButtonElement>("[data-world-resident]")) {
+    const selected = button.dataset.worldResident === frame.selectedResidentId;
+    button.classList.toggle("is-selected", selected);
+    button.setAttribute("aria-pressed", String(selected));
+  }
+  if (relationalEpisodeMode) {
+    const current = scene?.relationalEpisodeState();
+    if (current) {
+      const labels: Record<typeof current.phase, string> = {
+        approach: "Ida idzie do warsztatu · autorski warunek",
+        promise: "Janek wykonuje wcześniej zadane zobowiązanie",
+        leaving: "Ida odchodzi · autorska trasa",
+        returning: "Ida wraca · World / prywatna pamięć",
+        awaiting_choice: "Janek ma prywatny powód. Niczego nie robi automatycznie.",
+        settling_choice: "Przyjmowanie ręcznej decyzji TESTU",
+        spoken: "World: wypowiedź Janka rzeczywiście zaszła",
+        deferred: "TEST: Janek odkłada sprawę, bez nowego działania",
+        control_complete: "Kontrola: bez dawnej obietnicy nie powstał nowy powód",
+        failed: "Eksperyment nie przeszedł: " + (current.failure ?? "nieznany powód"),
+      };
+      episodeStatus.textContent = labels[current.phase] + " · 0 API · " +
+        (current.withEarlierPromise ? "historia: tak" : "kontrola: bez obietnicy");
+      episodeDecision.disabled = current.phase !== "awaiting_choice";
+      episodeDefer.disabled = current.phase !== "awaiting_choice";
+    }
+  }
   if (armedResearchMode && oneShotButton.disabled) {
     const latest = frame.livingDiagnostics?.recentProviderEvents.at(-1);
     if (latest?.status === "provider_error" || latest?.status === "transport_internal_error") {
@@ -149,9 +381,12 @@ function renderPanel(frame: SpcNextResearchFrame): void {
     const actor = frame.snapshot.actors.find((candidate) => candidate.id === resident.id);
     const speed = actor ? Math.hypot(actor.velocity.x, actor.velocity.y) : 0;
     const embodied = speed > 1 ? `moving ${speed.toFixed(0)}` : "still";
+    const activityLabel = unifiedLivingMode
+      ? `${embodied} · C${resident.pendingCognitionReasonCount}`
+      : `${embodied} · legacy ${resident.activity.kind} · C${resident.pendingCognitionReasonCount}`;
     return `<button class="spc-resident-button${active}" data-resident="${escapeHtml(resident.id)}">
       <span>${escapeHtml(resident.name)}</span>
-      <small>${embodied} · legacy ${escapeHtml(resident.activity.kind)} · C${resident.pendingCognitionReasonCount}</small>
+      <small>${escapeHtml(activityLabel)}</small>
     </button>`;
   }).join("");
 
@@ -410,6 +645,140 @@ if (evidenceMode) {
   });
 }
 
+function refreshLocalArtPreview(): void {
+  if (!artDecodedImage) return;
+  try {
+    scene.previewLocalGroundImage(
+      artSite.value, artDecodedImage, Number(artSize.value), Number(artOpacity.value),
+    );
+    scene.setLocalGroundImageVisible(artVisible);
+    artSizeValue.textContent = artSize.value;
+    artStatus.textContent = `${artVisible ? "Podgląd" : "Ukryta grafika"}: ${artSite.selectedOptions[0]?.textContent ?? artSite.value} · tylko warstwa wizualna`;
+  } catch (error) {
+    artStatus.textContent = error instanceof Error ? error.message : "Nie udało się pokazać obrazu.";
+  }
+}
+
+artFile.addEventListener("change", () => {
+  const file = artFile.files?.[0];
+  if (!file) return;
+  const revision = ++artImportRevision;
+  void (async () => {
+    validateLocalGroundImageSource(file);
+    validateLocalGroundImageSignature(file.type, new Uint8Array(await file.arrayBuffer()));
+    if (revision !== artImportRevision) return;
+    const url = URL.createObjectURL(file);
+    try {
+      const image = new Image();
+      image.src = url;
+      await image.decode();
+      if (revision !== artImportRevision) return;
+      artDecodedImage = image;
+      artSourceFile = file;
+      artVisible = true;
+      refreshLocalArtPreview();
+      scene.viewWorldSite(artSite.value);
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+  })().catch((error: unknown) => {
+    if (revision !== artImportRevision) return;
+    artFile.value = "";
+    artStatus.textContent = error instanceof Error ? error.message : "Plik został odrzucony.";
+  });
+});
+artSite.addEventListener("change", () => {
+  refreshLocalArtPreview();
+  scene.viewWorldSite(artSite.value);
+});
+artSize.addEventListener("input", refreshLocalArtPreview);
+artOpacity.addEventListener("input", refreshLocalArtPreview);
+artShow.addEventListener("click", () => {
+  if (!artDecodedImage) return;
+  artVisible = !artVisible;
+  refreshLocalArtPreview();
+});
+artFocus.addEventListener("click", () => scene.viewWorldSite(artSite.value));
+artSaveCandidate.addEventListener("click", () => {
+  if (!artSourceFile || !artDecodedImage) {
+    artStatus.textContent = "Najpierw załaduj własną grafikę.";
+    return;
+  }
+  void exportLocalArtCandidate(
+    artSourceFile, artSite.value,
+    Number(artSize.value), Number(artOpacity.value), FIVE_RESIDENT_ANCHORS,
+  ).then((json) => {
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "spc-art-candidate-local.json";
+    link.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 10_000);
+    artStatus.textContent = "Próbka zapisana lokalnie. World nie został zmieniony.";
+  }).catch((error: unknown) => {
+    artStatus.textContent = error instanceof Error ? error.message : "Błąd eksportu.";
+  });
+});
+artLoadCandidate.addEventListener("click", () => artCandidateInput.click());
+artCandidateInput.addEventListener("change", () => {
+  const selected = artCandidateInput.files?.[0];
+  if (!selected) return;
+  const revision = ++artImportRevision;
+  void (async () => {
+    if (selected.size > 6_000_000 || selected.size <= 0) {
+      throw new Error("Lokalna próbka JSON jest pusta lub przekracza limit.");
+    }
+    const restored = await importLocalArtCandidate(
+      await selected.text(), FIVE_RESIDENT_ANCHORS,
+    );
+    if (revision !== artImportRevision) return;
+    const copy = new Uint8Array(restored.bytes.length);
+    copy.set(restored.bytes);
+    const file = new File([copy.buffer], restored.fileName, { type: restored.mime });
+    const url = URL.createObjectURL(file);
+    let image: HTMLImageElement;
+    try {
+      image = new Image();
+      image.src = url;
+      await image.decode();
+    } finally {
+      URL.revokeObjectURL(url);
+    }
+    if (revision !== artImportRevision) return;
+    // Only the ART UI is restored; this is not a World save/load.
+    artSourceFile = file;
+    artDecodedImage = image;
+    artSite.value = restored.anchorId;
+    artSize.value = String(restored.worldWidth);
+    artOpacity.value = String(restored.opacity);
+    artVisible = true;
+    refreshLocalArtPreview();
+    scene.viewWorldSite(artSite.value);
+  })().catch((error: unknown) => {
+    if (revision !== artImportRevision) return;
+    artStatus.textContent = error instanceof Error ? error.message : "Próbka została odrzucona.";
+  }).finally(() => { artCandidateInput.value = ""; });
+});
+artRemove.addEventListener("click", () => {
+  artImportRevision += 1;
+  artSourceFile = null;
+  artDecodedImage = null;
+  artFile.value = "";
+  artVisible = true;
+  scene.clearLocalGroundImage();
+  artStatus.textContent = "Podgląd usunięty. Świat i jego stan są bez zmian.";
+});
+
+episodeDecision.addEventListener("click", () => {
+  if (!relationalEpisodeMode) return;
+  scene.chooseRelationalTestOutcome("respond");
+});
+episodeDefer.addEventListener("click", () => {
+  if (!relationalEpisodeMode) return;
+  scene.chooseRelationalTestOutcome("defer");
+});
+
 oneShotButton.addEventListener("click", () => {
   if (!armedResearchMode || oneShotButton.disabled) return;
   const before = scene.currentFrame();
@@ -480,6 +849,33 @@ chatForm.addEventListener("submit", (event) => {
   game.canvas.focus();
 });
 
+operatorCognitionButton.addEventListener("click", () => {
+  if (operatorCognitionButton.disabled || !lastFrame?.livingDiagnostics) return;
+  if (lastFrame.livingDiagnostics.operatorAutoDispatchEnabled) {
+    scene.pauseBoundedCognition();
+    return;
+  }
+  const cap = lastFrame.livingDiagnostics.providerHardBudget.maxUpstreamRequests;
+  const consent = window.confirm(
+    `Uruchomić wyższą cognition pięciu SPC? W tej sesji może rozpocząć się do ${cap} rzeczywistych requestów API. Mogą generować koszty; to NIE jest limit dolarowy. Bez Twojego kliknięcia nie są wysyłane zapytania.`,
+  );
+  if (!consent) return;
+  scene.startBoundedCognition();
+});
+worldNavigation.addEventListener("click", (event) => {
+  const button = event.target instanceof Element
+    ? event.target.closest<HTMLButtonElement>("button")
+    : null;
+  if (!button) return;
+  if (button.dataset.worldPlayer === "true") {
+    scene.followPlayer();
+    return;
+  }
+  const residentId = button.dataset.worldResident;
+  if (!residentId) return;
+  scene.selectResident(residentId);
+  scene.focusSelected();
+});
 worldModeButton.addEventListener("click", () => {
   setWorldOnly(!worldOnly);
   game.scale.refresh();
@@ -504,6 +900,13 @@ debugNode.addEventListener("click", (event) => {
   const residentId = target.dataset.resident;
   if (residentId) {
     scene.selectResident(residentId);
+    // In the actual FIVE-person living World, choosing a resident must
+    // immediately let the Owner *see* their embodied work and whereabouts.
+    // Pure selection in an 8,192-unit World otherwise feels like a dead UI.
+    // Press P to return the camera to the player.
+    if (unifiedWorldMode) {
+      scene.focusSelected();
+    }
     return;
   }
   switch (target.dataset.action) {

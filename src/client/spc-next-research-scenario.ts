@@ -1,3 +1,4 @@
+import { FiveResidentRelationalWorldDemo, type RelationalEpisodeChoice, type RelationalEpisodeState } from "../spc-next/five-resident-relational-world-demo";
 import type { ResidentContinuityKernel } from "../spc-next/resident-continuity-kernel";
 import type { ResidentMaterialKnowledge } from "../spc-next/resident-material-knowledge";
 import type { ResidentWorldExecutionAuthority } from "../spc-next/resident-world-execution-authority";
@@ -49,7 +50,8 @@ export type SpcNextResearchScenarioKind =
   | "r5-mira-live-semantic-escalation"
   | "r6-mira-standing-social-commitment"
   | "unified-living"
-  | "unified-armed";
+  | "unified-armed"
+  | "relational-episode";
 
 export interface SpcNextResearchScenario {
   readonly kind: SpcNextResearchScenarioKind;
@@ -65,6 +67,9 @@ export interface SpcNextResearchScenario {
   readonly canonicalEvidenceSupported?: boolean;
   readonly residentLifeView?: (residentId: string) => ResidentLifeCognitionView | null;
   readonly livingDiagnostics?: () => FiveResidentLivingRuntimeDiagnostics | null;
+  /** Owner-confirmed bounded multi-resident cognition; absent from archival labs. */
+  readonly startBoundedCognition?: () => ReturnType<FiveResidentUnifiedLivingRuntime["startOperatorAutomaticCognition"]>;
+  readonly pauseBoundedCognition?: () => ReturnType<FiveResidentUnifiedLivingRuntime["pauseOperatorAutomaticCognition"]>;
   /** Read only by explicit local operator export, NEVER automatically transmitted. */
   readonly manualResearchProbe?: () => FiveResidentManualResearchProbe | null;
   /** Only on the opt-in, one-call, manually dispatched research scenario. */
@@ -72,6 +77,9 @@ export interface SpcNextResearchScenario {
     "started" | "no_reason" | "resident_unavailable" | "budget_exhausted";
   /** Optional evidence-only explicit causal boundary for a bounded research fixture. */
   readonly evidenceAction?: (actionId: string) => unknown;
+  /** Exact local authored-condition demonstration; NO model requests. */
+  readonly relationalEpisodeState?: () => RelationalEpisodeState;
+  readonly chooseRelationalTestOutcome?: (choice: RelationalEpisodeChoice) => "accepted" | "not_ready";
   /** Advances exactly one authoritative World tick. */
   advanceOneWorldTick(): void;
 }
@@ -91,12 +99,21 @@ export function createSpcNextResearchScenario(kind: SpcNextResearchScenarioKind)
   if (kind === "r6-mira-standing-social-commitment") return createR6MiraStandingSocialCommitmentScenario();
   if (kind === "unified-living") return createUnifiedLivingScenario();
   if (kind === "unified-armed") return createUnifiedLivingScenario(true);
+  if (kind === "relational-episode") return createRelationalEpisodeScenario();
   return createBaselineDeliveryScenario();
 }
 
 export function researchScenarioKindFromSearch(search: string): SpcNextResearchScenarioKind {
   const requested = new URLSearchParams(search).get("scenario");
-  if (requested === null || requested === "" || requested === "baseline-delivery") return "baseline-delivery";
+  // Owner enters the genuine five-resident World by default. Older automated
+  // canonical single-resident evidence deliberately keeps its historical
+  // implicit baseline when ?evidence=1 is present. Explicit scenario= wins.
+  if (requested === null || requested === "") {
+    return new URLSearchParams(search).get("evidence") === "1"
+      ? "baseline-delivery"
+      : "unified-living";
+  }
+  if (requested === "baseline-delivery") return "baseline-delivery";
   if (requested === "missing-crate") return "missing-crate";
   if (requested === "missing-crate-recovery") return "missing-crate-recovery";
   if (requested === "missing-crate-interruption") return "missing-crate-interruption";
@@ -111,6 +128,7 @@ export function researchScenarioKindFromSearch(search: string): SpcNextResearchS
   if (requested === "r6-mira-standing-social-commitment") return "r6-mira-standing-social-commitment";
   if (requested === "unified-living") return "unified-living";
   if (requested === "unified-armed") return "unified-armed";
+  if (requested === "relational-episode") return "relational-episode";
   throw new Error(`unknown SPC Next research scenario: ${requested}`);
 }
 
@@ -903,14 +921,27 @@ function createR6MiraStandingSocialCommitmentScenario(): SpcNextResearchScenario
 
 
 function createUnifiedLivingScenario(manual = false): SpcNextResearchScenario {
+  // Explicit browser-evidence *initial condition*: when waiting for Mira's
+  // completed material shift before addressing her, the player must already be
+  // physically near the workshop. No runtime teleport and no synthetic hearing.
+  // Ordinary manual/operator opening still begins beside Mira at the hearth.
+  const evidenceCase = manual ? new URLSearchParams(location.search).get("case") : null;
+  const postShiftContactFixture = evidenceCase === "contact-after-shift";
+  // Evidentiary initial condition ONLY. The normal playable World and all
+  // other research cases keep their original physical player coordinates.
+  // Actual E/U keyboard inputs and 180 true World ticks still do the work.
+  const workshopWorkFixture = evidenceCase === "workshop-work";
   const living = new FiveResidentUnifiedLivingRuntime(manual ? {
-    // Authored encounter setup: start within natural speech range of Mira,
-    // never fabricate a percept, social motive or subsequent response.
     composition: createFiveResidentRegionComposition({
-      playerStart: { x: 900, y: 680 },
+      playerStart: workshopWorkFixture
+        ? {x:1_970,y:805}
+        : postShiftContactFixture
+          ? { x: 1_900, y: 800 }
+          : { x: 900, y: 680 },
     }),
     providerDispatchMode: "manual",
     socialReencounter: true,
+    initialEverydayWork: true,
     maxConcurrentCognition: 1,
     maxUpstreamRequests: 1,
   } : {
@@ -919,7 +950,12 @@ function createUnifiedLivingScenario(manual = false): SpcNextResearchScenario {
     // dispatch manual, without exposing a manual request control in this mode.
     providerDispatchMode: "manual",
     socialReencounter: true,
-    maxUpstreamRequests: 1,
+    initialEverydayWork: true,
+    // Twelve physical upstream calls PER deliberate operator session, never a
+    // dollar/token guarantee. No page-load request or hidden scheduling.
+    maxUpstreamRequests: 12,
+    maxConcurrentCognition: 2,
+    allowOperatorAutomaticCognition: true,
   });
   const janek = living.life("resident.janek");
   if (!janek) {
@@ -947,6 +983,10 @@ function createUnifiedLivingScenario(manual = false): SpcNextResearchScenario {
     livingDiagnostics(): FiveResidentLivingRuntimeDiagnostics {
       return living.diagnostics();
     },
+    ...(!manual ? {
+      startBoundedCognition: () => living.startOperatorAutomaticCognition(),
+      pauseBoundedCognition: () => living.pauseOperatorAutomaticCognition(),
+    } : {}),
     ...(manual ? {
       manualResearchProbe(): FiveResidentManualResearchProbe | null {
         return living.manualResearchProbe();
@@ -961,5 +1001,42 @@ function createUnifiedLivingScenario(manual = false): SpcNextResearchScenario {
     advanceOneWorldTick(): void {
       living.advanceOneWorldTick();
     },
+  };
+}
+
+/**
+ * Optical/World research only. Five actual residents keep one shared clock.
+ * The viewer can compare factual prior standing history vs a matched no-
+ * standing return via ?case=no-standing, then explicitly inject (NOT LUNA)
+ * a single semantic act or a genuine no-action/defer judgement.
+ */
+function createRelationalEpisodeScenario(): SpcNextResearchScenario {
+  const withEarlierPromise = new URLSearchParams(location.search).get("case") !== "no-standing";
+  const demo = new FiveResidentRelationalWorldDemo(withEarlierPromise);
+  const janek = demo.host.life("resident.janek");
+  if (!janek) throw new Error("relational demo must claim Janek before rendering");
+  return {
+    kind: "relational-episode",
+    evidenceScenarioId: "browser-five-resident-relational-episode",
+    residentId: "resident.janek",
+    matterId: "matter.relational-episode.multiple-residents",
+    world: demo.world,
+    kernel: janek.kernel,
+    authority: janek.worldAuthority,
+    materialKnowledge: null,
+    canonicalEvidenceSupported: false,
+    residentLifeView(residentId: string) {
+      if (!demo.world.publicSnapshot().residents.some(r => r.id === residentId)) return null;
+      return demo.host.life(residentId as FiveResidentId)?.currentLifeView() ?? null;
+    },
+    relationalEpisodeState: () => demo.state(),
+    chooseRelationalTestOutcome: choice => demo.chooseTestResponse(choice),
+    evidenceAction(actionId: string): unknown {
+      if (actionId === "episode-status") return demo.state();
+      if (actionId === "test-respond") return demo.chooseTestResponse("respond");
+      if (actionId === "test-defer") return demo.chooseTestResponse("defer");
+      throw new Error("unknown relational lab evidence action: " + actionId);
+    },
+    advanceOneWorldTick: () => demo.advanceOneWorldTick(),
   };
 }

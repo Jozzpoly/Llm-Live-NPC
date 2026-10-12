@@ -82,6 +82,7 @@ export interface FiveResidentLivingRuntimeDiagnostics {
   providerInFlightResidentIds: readonly string[];
   providerInboxCount: number;
   providerRequestCount: number;
+  operatorAutoDispatchEnabled: boolean;
   providerHardBudget: CognitionFetchHardBudgetSnapshot;
   recentProviderEvents: readonly FiveResidentLivingProviderEvent[];
 }
@@ -97,6 +98,10 @@ export interface FiveResidentUnifiedLivingRuntimeOptions {
   providerDispatchMode?: "automatic" | "manual";
   /** Tested #158 donor; resident-private relation makes only actual re-encounters reviewable. */
   socialReencounter?: boolean;
+  /** Opt-in actual authored opening material work, no automatic cognition. */
+  initialEverydayWork?: boolean;
+  /** Allow later explicit operator click to start capped auto cognition. No fetch at construction. */
+  allowOperatorAutomaticCognition?: boolean;
 }
 
 /**
@@ -119,7 +124,9 @@ export class FiveResidentUnifiedLivingRuntime {
   readonly cognition: FiveResidentCausalCognitionHost;
   readonly provider: FiveResidentCausalProviderTransport;
   private readonly providerHardBudget: CognitionFetchHardBudget;
-  private readonly providerDispatchMode: "automatic" | "manual";
+  private providerDispatchMode: "automatic" | "manual";
+  private readonly operatorAutoAllowed: boolean;
+  private operatorAutoEverStarted = false;
 
   private readonly arrivalInbox: FiveResidentCausalProviderArrival[] = [];
   private readonly providerInFlight = new Map<string, FiveResidentCausalCognitionRequest>();
@@ -130,9 +137,14 @@ export class FiveResidentUnifiedLivingRuntime {
 
   constructor(options: FiveResidentUnifiedLivingRuntimeOptions = {}) {
     this.providerDispatchMode = options.providerDispatchMode ?? "automatic";
+    this.operatorAutoAllowed = options.allowOperatorAutomaticCognition ?? false;
+    if (this.operatorAutoAllowed && this.providerDispatchMode !== "manual") {
+      throw new Error("operator-armed auto cognition must start strictly in manual mode");
+    }
     this.composition = options.composition ?? createFiveResidentRegionComposition();
     this.lifeRuntime = new FiveResidentCausalLifeRuntime(this.composition, {
       socialReencounter: options.socialReencounter ?? false,
+      initialEverydayWork: options.initialEverydayWork ?? false,
     });
     this.cognition = new FiveResidentCausalCognitionHost(
       this.lifeRuntime,
@@ -171,6 +183,7 @@ export class FiveResidentUnifiedLivingRuntime {
         .sort(),
       providerInboxCount: this.arrivalInbox.length,
       providerRequestCount: this.providerRequestCount,
+      operatorAutoDispatchEnabled: this.operatorAutoEverStarted && this.providerDispatchMode === "automatic",
       providerHardBudget: this.providerHardBudget.snapshot(),
       recentProviderEvents: this.recentProviderEvents.map((event) => structuredClone(event)),
     };
@@ -178,6 +191,29 @@ export class FiveResidentUnifiedLivingRuntime {
 
   life(residentId: FiveResidentId) {
     return this.lifeRuntime.life(residentId);
+  }
+
+  /**
+   * Operator-controlled cognition in one shared World. This never synthesizes
+   * resident reasons and never bypasses the physical upstream-request ceiling.
+   * Pausing prevents new dispatch but does not falsify existing in-flight work.
+   */
+  startOperatorAutomaticCognition():
+    "started" | "already_running" | "not_authorized" | "budget_exhausted" {
+    if (!this.operatorAutoAllowed) return "not_authorized";
+    if (this.providerDispatchMode === "automatic") return "already_running";
+    if (this.providerHardBudget.snapshot().exhausted) return "budget_exhausted";
+    this.operatorAutoEverStarted = true;
+    this.providerDispatchMode = "automatic";
+    return "started";
+  }
+
+  pauseOperatorAutomaticCognition(): "paused" | "not_running" {
+    if (!this.operatorAutoEverStarted || this.providerDispatchMode !== "automatic") {
+      return "not_running";
+    }
+    this.providerDispatchMode = "manual";
+    return "paused";
   }
 
   /** Browser operator export ONLY. No secrets, server upload, implicit persistence
@@ -268,6 +304,11 @@ export class FiveResidentUnifiedLivingRuntime {
         );
       }).catch((error: unknown) => {
         this.providerInFlight.delete(request.id);
+        // After deliberate opt-in, fail closed on unexpected transport errors;
+        // avoid silently exhausting remaining physical requests on retries.
+        if (this.operatorAutoEverStarted && this.providerDispatchMode === "automatic") {
+          this.providerDispatchMode = "manual";
+        }
         const abandoned = this.cognition.abandon(request);
         if (this.manualProbe?.requestId === request.id) {
           this.manualProbe.transportFailed = true;
@@ -288,6 +329,11 @@ export class FiveResidentUnifiedLivingRuntime {
     admission: FiveResidentCausalProviderAdmission,
   ): void {
     if (admission.status === "provider_error") {
+      // The actual game must not burn its limited session on repeated 401/429
+      // or other rejected provider results. At most already-in-flight calls remain.
+      if (this.operatorAutoEverStarted && this.providerDispatchMode === "automatic") {
+        this.providerDispatchMode = "manual";
+      }
       this.recordProviderEvent(
         arrival.residentId,
         arrival.requestId,

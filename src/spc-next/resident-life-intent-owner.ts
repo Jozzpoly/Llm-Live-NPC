@@ -15,6 +15,7 @@ import {
 import type { ResidentLifeCognitionView } from "./resident-life-cognition-view";
 import type { ResidentLifePlanRevisionGrant } from "./resident-life-choice-owner";
 import type { ResidentLifeSelfContext } from "./resident-life-self-context";
+import type { ResidentKnownMaterialObject } from "./resident-material-knowledge";
 import { ResidentRuntime, type ResidentCognitionRevision } from "./resident-runtime";
 
 export interface ResidentLifeIntentAttempt {
@@ -92,6 +93,7 @@ export class ResidentLifeIntentOwner {
     batch: CognitionBatch,
     life: ResidentLifeCognitionView,
     snapshotTick = batch.requestedAtTick,
+    knownMaterials?: readonly ResidentKnownMaterialObject[],
   ): ResidentLifeIntentAttempt | null {
     if (this.active) return null;
     if (batch.residentId !== this.resident.profile.id) {
@@ -99,7 +101,9 @@ export class ResidentLifeIntentOwner {
     }
 
     const parserContext = this.resident.cognitionContext(batch, snapshotTick);
-    const context = composeResidentLifeCognitionContext(parserContext, life, this.self);
+    const context = composeResidentLifeCognitionContext(
+      parserContext, life, this.self, knownMaterials,
+    );
     const attempt: ResidentLifeIntentAttempt = {
       id: `resident-life-intent:${batch.residentId}:${batch.requestedAtTick}:${this.sequence++}`,
       residentId: batch.residentId,

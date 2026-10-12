@@ -9,6 +9,7 @@ import type {
 import { ResidentGroundedTravelExecutor } from "./resident-grounded-travel-executor";
 import { ResidentMessageDeliveryExecutor } from "./resident-message-delivery-executor";
 import { ResidentMaterialPickupExecutor } from "./resident-material-pickup-executor";
+import { ResidentMaterialPlaceExecutor } from "./resident-material-place-executor";
 import type { ResidentLifeChoiceReviewObservation } from "./resident-life-choice-review-bridge";
 import { ResidentCausalLifeSubstrate } from "./resident-causal-life-substrate";
 
@@ -18,7 +19,7 @@ export type ResidentCausalExecutionStep =
       status: "running";
       matterId: string;
       runId: string;
-      intentKind: "travel_region" | "communicate_actor" | "acquire_material_object";
+      intentKind: "travel_region" | "communicate_actor" | "acquire_material_object" | "deliver_material_object";
     }
   | {
       status: "completed";
@@ -66,6 +67,12 @@ interface CommunicateExecutionState {
   targetActorId: string;
 }
 
+interface DeliveryExecutionState {
+  stage: "pickup" | "place";
+  pickup: ResidentMaterialPickupExecutor;
+  place: ResidentMaterialPlaceExecutor | null;
+}
+
 export type ResidentCausalExecutionReactivation =
   | ({
       matterId: string;
@@ -99,6 +106,7 @@ export class ResidentCausalExecutionCoordinator {
   private readonly travel = new Map<string, TravelExecutionState>();
   private readonly communicate = new Map<string, CommunicateExecutionState>();
   private readonly material = new Map<string, ResidentMaterialPickupExecutor>();
+  private readonly deliveries = new Map<string, DeliveryExecutionState>();
 
   constructor(private readonly life: ResidentCausalLifeSubstrate) {}
 
@@ -114,10 +122,12 @@ export class ResidentCausalExecutionCoordinator {
     if (!matter.semanticIntent
       || (matter.semanticIntent.kind !== "travel_region"
         && matter.semanticIntent.kind !== "communicate_actor"
-        && matter.semanticIntent.kind !== "acquire_material_object")) {
+        && matter.semanticIntent.kind !== "acquire_material_object"
+        && matter.semanticIntent.kind !== "deliver_material_object")) {
       return { status: "rejected", matterId, reason: "unsupported_intent" };
     }
-    if (matter.semanticIntent.kind === "acquire_material_object" && !this.life.materialKnowledge) {
+    if ((matter.semanticIntent.kind === "acquire_material_object"
+      || matter.semanticIntent.kind === "deliver_material_object") && !this.life.materialKnowledge) {
       return { status: "rejected", matterId, reason: "unsupported_intent" };
     }
 
@@ -189,6 +199,9 @@ export class ResidentCausalExecutionCoordinator {
     if (intent.kind === "acquire_material_object") {
       return this.stepMaterial(matter, runId);
     }
+    if (intent.kind === "deliver_material_object") {
+      return this.stepDelivery(matter, runId);
+    }
     if (intent.kind === "standing_social_commitment") {
       // Standing social commitments deliberately own no body executor at all.
       return {
@@ -257,12 +270,10 @@ export class ResidentCausalExecutionCoordinator {
     // recognized material knowledge. Sampling may reveal current visibility but never
     // hidden holder identity or hidden World position.
     knowledge.sample();
-    const executor = this.material.get(runId) ?? new ResidentMaterialPickupExecutor(
+    const executor = this.material.get(runId) ?? this.createMaterialPickup(
       runId,
       intent.objectId,
       knowledge,
-      this.life.worldAuthority,
-      this.life.world,
     );
     this.material.set(runId, executor);
 
@@ -297,6 +308,123 @@ export class ResidentCausalExecutionCoordinator {
       "succeeded",
       `factually picked up ${intent.objectId} through resident-grounded material acquisition`,
       true,
+    );
+  }
+
+  private stepDelivery(matter: ResidentMatter, runId: string): ResidentCausalExecutionStep {
+    const intent = matter.semanticIntent;
+    const knowledge = this.life.materialKnowledge;
+    if (!intent || intent.kind !== "deliver_material_object" || !knowledge) {
+      return { status: "unsupported_intent", matterId: matter.id, runId, intentKind: intent?.kind ?? null };
+    }
+
+    let state = this.deliveries.get(runId);
+    if (!state) {
+      state = {
+        stage: "pickup",
+        pickup: this.createMaterialPickup(runId, intent.objectId, knowledge),
+        place: null,
+      };
+      this.deliveries.set(runId, state);
+    }
+
+    // A resident's actual *own* possession is legitimate knowledge; never use
+    // hidden World object coordinates or another actor's holder as a shortcut.
+    if (state.stage === "pickup") {
+      knowledge.sample();
+      const ownPossession = this.life.world.materialObject(intent.objectId);
+      const alreadyHolding = ownPossession?.location.kind === "held"
+        && ownPossession.location.actorId === this.life.residentId;
+      if (!alreadyHolding) {
+        const pickup = state.pickup.step();
+        if (pickup.status === "running") {
+          return { status: "running", matterId: matter.id, runId, intentKind: intent.kind };
+        }
+        if (pickup.status === "authority_lost") {
+          this.clearExecution(runId);
+          return this.finishAuthorityLost(matter.id, runId);
+        }
+        if (pickup.status === "blocked") {
+          this.clearExecution(runId);
+          return this.finishRun(matter, runId, "blocked",
+            `delivery pickup ${intent.objectId} blocked: ${pickup.reason}`, false);
+        }
+      }
+      // Keep ONE valid bound run/matter during the entire held-object journey.
+      // Pickup did not resolve the resident's original promise to deliver.
+      state.stage = "place";
+      const grounded = this.life.resident.cognitionContext({
+        residentId: this.life.residentId,
+        requestedAtTick: this.life.world.tick,
+        reasons: [],
+      });
+      const destinationRegion = this.life.world.regionAt(intent.destination)?.id ?? null;
+      const known = new Set(grounded.knownRegions.map(region => region.id));
+      if (grounded.currentRegionId) known.add(grounded.currentRegionId);
+      const route = grounded.currentRegionId && destinationRegion
+        ? this.life.navigation.route(grounded.currentRegionId, destinationRegion, known)
+        : null;
+      // Existing exact-position errands still work when no regional route is
+      // available. No unseen object, hidden destination or global path is read.
+      state.place = new ResidentMaterialPlaceExecutor(
+        runId, intent.objectId, intent.destination, this.life.worldAuthority, this.life.world,
+        90, route?.waypoints ?? [],
+      );
+      return { status: "running", matterId: matter.id, runId, intentKind: intent.kind };
+    }
+
+    if (!state.place) throw new Error("resident material delivery lost place executor");
+    const placed = state.place.step();
+    if (placed.status === "running") {
+      return { status: "running", matterId: matter.id, runId, intentKind: intent.kind };
+    }
+    if (placed.status === "authority_lost") {
+      this.clearExecution(runId);
+      return this.finishAuthorityLost(matter.id, runId);
+    }
+    if (placed.status === "blocked") {
+      this.clearExecution(runId);
+      return this.finishRun(matter, runId, "blocked",
+        `delivery place ${intent.objectId} blocked: ${placed.reason}`, false);
+    }
+    this.clearExecution(runId);
+    const finished = this.finishRun(matter, runId, "succeeded",
+      `physically delivered ${intent.objectId} to (${intent.destination.x}, ${intent.destination.y})`, true);
+    // REAL ordinary work becoming the resident's ONE private, exact future
+    // question. This is not a heartbeat, invented need, automatic next job,
+    // or provider request. The resident/model may choose not to act.
+    this.life.outcomeReviewBridge.observe(finished.outcomeEvidence, this.life.world.tick);
+    return finished;
+  }
+
+  /**
+   * Material location comes ONLY from this resident's acquired sight memory.
+   * A region-level route can be planned using known regions; no hidden World
+   * material location is ever queried to choose waypoints.
+   */
+  private createMaterialPickup(
+    runId: string,
+    objectId: string,
+    knowledge: NonNullable<ResidentCausalLifeSubstrate["materialKnowledge"]>,
+  ): ResidentMaterialPickupExecutor {
+    const remembered = knowledge.lastKnownPosition(objectId);
+    const materialRegion = remembered
+      ? this.life.world.regionAt(remembered)?.id ?? null
+      : null;
+    const privateContext = this.life.resident.cognitionContext({
+      residentId: this.life.residentId,
+      requestedAtTick: this.life.world.tick,
+      reasons: [],
+    });
+    const currentRegion = privateContext.currentRegionId;
+    const known = new Set(privateContext.knownRegions.map(region => region.id));
+    if (currentRegion) known.add(currentRegion);
+    const route = currentRegion && materialRegion
+      ? this.life.navigation.route(currentRegion, materialRegion, known)
+      : null;
+    return new ResidentMaterialPickupExecutor(
+      runId, objectId, knowledge, this.life.worldAuthority, this.life.world,
+      90, 115, route?.waypoints ?? [],
     );
   }
 
@@ -415,6 +543,7 @@ export class ResidentCausalExecutionCoordinator {
     this.travel.delete(runId);
     this.communicate.delete(runId);
     this.material.delete(runId);
+    this.deliveries.delete(runId);
   }
 
   private createTravelExecution(matter: ResidentMatter, runId: string): TravelExecutionState | null {
@@ -443,6 +572,9 @@ export class ResidentCausalExecutionCoordinator {
         destination,
         this.life.worldAuthority,
         this.life.world,
+        95,
+        18,
+        route.waypoints,
       ),
       targetRegionId: intent.targetRegionId,
     };

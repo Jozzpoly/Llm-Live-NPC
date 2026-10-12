@@ -32,6 +32,31 @@ export const FIVE_RESIDENT_MATERIAL_OBJECTS: readonly MaterialObjectState[] = [
     radius: 18,
     location: { kind: "free", position: { x: 1_952, y: 720 } },
   },
+  // Each entry is a REAL pickupable/replaceable World identity, not decoration.
+  // Anchors nearby remain separately authored semantic sites, NOT collision.
+  { id: "basket.hearth.01", label: "Hearth Supply Basket", radius: 15,
+    location: { kind: "free", position: { x: 846, y: 794 } } },
+  { id: "crate.workshop.02", label: "Workshop Spare Parts", radius: 17,
+    location: { kind: "free", position: { x: 2_012, y: 838 } } },
+  { id: "parcel.crossroads.01", label: "Crossroads Parcel", radius: 14,
+    location: { kind: "free", position: { x: 3_136, y: 1_055 } } },
+  { id: "bucket.fields.01", label: "Field Water Bucket", radius: 13,
+    location: { kind: "free", position: { x: 2_186, y: 2_400 } } },
+  { id: "bundle.forest.01", label: "Forest Bundle", radius: 16,
+    location: { kind: "free", position: { x: 4_690, y: 2_710 } } },
+  { id: "fragment.ruins.01", label: "Ruins Stone Fragment", radius: 12,
+    location: { kind: "free", position: { x: 7_022, y: 1_198 } } },
+
+  // Real unassigned opportunities, not scripted second jobs. Only a later
+  // resident-grounded semantic choice can make one into a continuing matter.
+  { id: "kindling.hearth.02", label: "Hearth Kindling", radius: 12,
+    location: { kind: "free", position: { x: 892, y: 848 } } },
+  { id: "satchel.crossroads.02", label: "Crossroads Medicine Satchel", radius: 13,
+    location: { kind: "free", position: { x: 3_208, y: 1_005 } } },
+  { id: "timber.forest.02", label: "Forest Timber", radius: 20,
+    location: { kind: "free", position: { x: 4_736, y: 2_705 } } },
+  { id: "tablet.ruins.02", label: "Ruins Slate Tablet", radius: 15,
+    location: { kind: "free", position: { x: 7_065, y: 1_260 } } },
 ];
 
 export interface FiveResidentRolePressure {
@@ -66,12 +91,65 @@ export type FiveResidentId =
 export const FIVE_RESIDENT_MATERIAL_FAMILIARITY: Readonly<
   Record<FiveResidentId, readonly string[]>
 > = {
-  "resident.mira": [],
-  "resident.janek": ["crate.workshop.01"],
-  "resident.ida": [],
-  "resident.oren": [],
-  "resident.nela": [],
+  "resident.mira": ["basket.hearth.01", "kindling.hearth.02"],
+  "resident.janek": ["crate.workshop.01", "crate.workshop.02"],
+  "resident.ida": ["parcel.crossroads.01", "satchel.crossroads.02", "crate.workshop.01"],
+  "resident.oren": ["bundle.forest.01", "timber.forest.02"],
+  "resident.nela": ["fragment.ruins.01", "tablet.ruins.02"],
 };
+
+/**
+ * Finite authored day-opening duties in the playable World, not resident choices
+ * and not an automatic routine generator. Each uses one physical material identity.
+ * After factual completion, the resident has no next job unless a new matter is
+ * separately accepted through legitimate cognition.
+ */
+export interface FiveResidentOpeningMaterialWork {
+  residentId: FiveResidentId;
+  identityStem: string;
+  objectId: string;
+  destination: Vec2;
+  originSummary: string;
+  semanticCourse: string;
+  goal: string;
+}
+export const FIVE_RESIDENT_OPENING_MATERIAL_WORK: readonly FiveResidentOpeningMaterialWork[] = [
+  {
+    residentId: "resident.mira", identityStem: "mira.hearth-opening",
+    objectId: "basket.hearth.01", destination: { x: 1_920, y: 830 },
+    originSummary: "Mira starts with hearth supplies promised to the workshop.",
+    semanticCourse: "Bring the hearth supply basket to the workshop.",
+    goal: "Carry the real hearth supply basket to the workshop and set it down.",
+  },
+  {
+    residentId: "resident.janek", identityStem: "janek.workshop-opening",
+    objectId: "crate.workshop.01", destination: { x: 3_050, y: 1_080 },
+    originSummary: "Janek begins the day with a workshop supply delivery to the crossroads store.",
+    semanticCourse: "Finish carrying the workshop crate to crossroads storage.",
+    goal: "Take the actual workshop crate to the crossroads store and put it down.",
+  },
+  {
+    residentId: "resident.ida", identityStem: "ida.crossroads-opening",
+    objectId: "parcel.crossroads.01", destination: { x: 880, y: 790 },
+    originSummary: "Ida has a parcel to bring back from the crossroads to the hearth.",
+    semanticCourse: "Deliver the crossroads parcel to the common hearth.",
+    goal: "Carry the identified crossroads parcel to the hearth and put it down.",
+  },
+  {
+    residentId: "resident.oren", identityStem: "oren.forest-opening",
+    objectId: "bundle.forest.01", destination: { x: 2_190, y: 2_355 },
+    originSummary: "Oren has gathered a forest bundle for the field stores.",
+    semanticCourse: "Bring the actual forest bundle to the fields.",
+    goal: "Carry the forest bundle to the field stores and set it down.",
+  },
+  {
+    residentId: "resident.nela", identityStem: "nela.ruins-opening",
+    objectId: "fragment.ruins.01", destination: { x: 3_220, y: 1_020 },
+    originSummary: "Nela intends to bring one recovered stone fragment to the crossroads.",
+    semanticCourse: "Transport the identified ruins fragment to the crossroads.",
+    goal: "Carry the ruins stone fragment to the crossroads and set it down.",
+  },
+];
 
 export type FiveResidentRuntimes = Readonly<Record<FiveResidentId, ResidentRuntime>>;
 
@@ -96,6 +174,12 @@ export function createFiveResidentRegionComposition(
     bounds: { minX: 0, minY: 0, maxX: 8_192, maxY: 8_192 },
     regions: FIVE_RESIDENT_REGIONS,
     anchors: FIVE_RESIDENT_ANCHORS,
+    materialWorksites:[{
+      id:"workshop.repair-kit",anchorId:"anchor.workshop.bench",
+      sourceObjectId:"crate.workshop.02",
+      output:{id:"kit.workshop.01",label:"Workshop Repair Kit",radius:14},
+      requiredTicks:180,
+    }],
     chunkSize: 256,
     fixedDeltaSeconds: 1 / 60,
   });

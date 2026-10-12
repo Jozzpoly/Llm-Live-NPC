@@ -6,8 +6,8 @@ import {
   FIVE_RESIDENT_REGIONS,
 } from "./five-resident-region";
 
-describe("R4 affordance-density baseline characterization", () => {
-  it("records that the geographically large five-resident baseline is materially sparse", () => {
+describe("R4 substrate history against a gradually populated five-resident World", () => {
+  it("records that the geographically large five-resident substrate is still sparse, despite meaningful pickupable material additions", () => {
     const world = createFiveResidentRegionWorld();
 
     expect(world.options.bounds).toEqual({
@@ -18,19 +18,30 @@ describe("R4 affordance-density baseline characterization", () => {
     });
     expect(FIVE_RESIDENT_REGIONS).toHaveLength(8);
     expect(FIVE_RESIDENT_ANCHORS).toHaveLength(7);
-    expect(FIVE_RESIDENT_MATERIAL_OBJECTS).toHaveLength(1);
+    // Historical R4 began with one crate; current playable World has eleven
+    // genuinely registered movable identities, four of them uncommitted future
+    // opportunities. This remains sparse in an 8,192² World and does NOT prove
+    // resident-initiated long-term ecology.
+    expect(FIVE_RESIDENT_MATERIAL_OBJECTS).toHaveLength(11);
 
     expect(world.regions()).toHaveLength(8);
     expect(world.anchors()).toHaveLength(7);
-    expect(world.materialObjects()).toEqual([
-      expect.objectContaining({
-        id: "crate.workshop.01",
-        location: {
-          kind: "free",
-          position: { x: 1_952, y: 720 },
-        },
-      }),
+    expect(world.materialObjects().map(object => object.id)).toEqual([
+      "basket.hearth.01",
+      "bucket.fields.01",
+      "bundle.forest.01",
+      "crate.workshop.01",
+      "crate.workshop.02",
+      "fragment.ruins.01",
+      "kindling.hearth.02",
+      "parcel.crossroads.01",
+      "satchel.crossroads.02",
+      "tablet.ruins.02",
+      "timber.forest.02",
     ]);
+    expect(world.materialObject("crate.workshop.01")).toMatchObject({
+      location: { kind: "free", position: { x: 1_952, y: 720 } },
+    });
   });
 
   it("shows that authored opening activities terminate without creating a continuing material-life surface", () => {
@@ -59,7 +70,7 @@ describe("R4 affordance-density baseline characterization", () => {
 
     expect(world.tick).toBe(6_000);
     expect(world.publicSnapshot().residents).toHaveLength(5);
-    expect(world.materialObjects()).toHaveLength(1);
+    expect(world.materialObjects()).toHaveLength(11);
     expect(world.diagnostics().recentMaterialActions).toEqual([]);
 
     // The World remains stable and residents remain present, which is valuable

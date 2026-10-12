@@ -298,3 +298,175 @@
   #app.spc-next-mode .game-shell footer { display: none; }
   .spc-resident-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
+
+/* Explicitly non-autonomous, zero-provider relationship RESEARCH specimen. */
+.spc-episode-status {
+  max-width: 300px;
+  padding: 6px 8px;
+  border-left: 2px solid #7896a5;
+  color: #c1d4dd;
+  font-size: 11px;
+  line-height: 1.4;
+  white-space: normal;
+}
+.spc-header-actions .spc-chat-send:disabled {
+  opacity: .42;
+  cursor: not-allowed;
+}
+
+/* Keep optional lab intervention controls visible rather than overflowing the
+   small browser game header next to the 390px analysis pane. */
+#app.spc-relational-mode .game-shell header {
+  flex-wrap: wrap;
+  align-content: center;
+  gap: 8px;
+  padding: 10px 14px;
+}
+#app.spc-relational-mode .spc-header-actions {
+  min-width: 0;
+  flex: 1 1 560px;
+  margin-left: 0;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+#app.spc-relational-mode .spc-episode-status {
+  order: -1;
+  flex: 1 1 100%;
+  max-width: none;
+}
+#app.spc-relational-mode .spc-chat-form {
+  flex: 1 1 210px;
+  min-width: 160px;
+  max-width: 300px;
+}
+.spc-episode-compare {
+  color: #9fc4d8;
+  font-size: 11px;
+  text-underline-offset: 2px;
+}
+.spc-episode-compare:hover { color: #d6efff; }
+
+/* The normal SPC entry is a World, not a wall of debug controls.
+   Camera shortcuts stay available even when the microscope is hidden.
+   Buttons change observation only; selected private state is not exposed here. */
+#app.spc-next-mode .game-shell header {
+  min-width: 0;
+}
+.spc-world-navigation {
+  min-width: 0;
+  display: flex;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+.spc-world-navigation[hidden] { display: none; }
+.spc-world-navigation button {
+  padding: 7px 9px;
+  background: #162027;
+  border: 1px solid #35454b;
+  color: #b9c9d0;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1.2;
+}
+.spc-world-navigation button:hover,
+.spc-world-navigation button:focus-visible {
+  border-color: #92b5bd;
+  color: #f1f6f8;
+}
+.spc-world-navigation button.is-selected {
+  border-color: #bfaa68;
+  color: #f1ddb1;
+}
+#app.spc-next-mode.spc-world-only .game-shell header {
+  flex-wrap: wrap;
+  row-gap: 9px;
+  justify-content: space-between;
+}
+#app.spc-next-mode.spc-world-only .spc-header-actions {
+  flex: 0 1 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  min-width: 0;
+}
+@media (max-width: 1100px) {
+  #app.spc-next-mode.spc-world-only .spc-world-navigation {
+    order: 3;
+    flex-basis: 100%;
+    justify-content: flex-start;
+  }
+  #app.spc-next-mode.spc-world-only .spc-header-actions {
+    flex: 1 1 400px;
+  }
+}
+
+/* Explicit, finite model session — never enabled by page load or World tick. */
+.spc-live-cognition-button { white-space: nowrap; }
+.spc-live-cognition-status { font-size: 11px; color: #9bb7c2; white-space: nowrap; }
+.spc-live-cognition-status[hidden] { display: none; }
+#app.spc-next-mode.spc-world-only .spc-header-actions { row-gap: 8px; }
+
+/* Owner-supplied visual reference only. No generated terrain and no physical affordances. */
+.spc-owner-art-preview {
+  position: relative;
+  flex: 0 0 auto;
+  color: #d5e3e3;
+  font-size: 12px;
+  z-index: 30;
+}
+.spc-owner-art-preview[hidden] { display: none; }
+.spc-owner-art-preview > summary {
+  cursor: pointer;
+  padding: 7px 10px;
+  border: 1px solid #52706d;
+  border-radius: 7px;
+  background: #142826;
+  white-space: nowrap;
+}
+.spc-owner-art-body {
+  /* Header is inside an overflow:hidden game-shell. A regular absolute child
+     is clipped to header height and makes the actual editor unusable.
+     A viewport-fixed panel escapes that clipping without touching Phaser's
+     canvas bounds, the camera or any World coordinates. */
+  position: fixed;
+  top: clamp(105px, 16vh, 165px);
+  right: 18px;
+  z-index: 80;
+  width: min(360px, calc(100vw - 36px));
+  max-height: min(72vh, 520px);
+  overflow-y: auto;
+  display: grid;
+  gap: 10px;
+  padding: 15px;
+  background: #0f1b1d;
+  border: 1px solid #526b6f;
+  border-radius: 10px;
+  box-shadow: 0 15px 38px #0009;
+}
+.spc-owner-art-body p { margin: 0; line-height: 1.45; }
+.spc-owner-art-body label { display: grid; gap: 5px; }
+.spc-owner-art-body select, .spc-owner-art-body input[type="file"] {
+  width: 100%;
+  max-width: 100%;
+  font: inherit;
+  color: #e5eeee;
+  background: #19282a;
+  border: 1px solid #4b6267;
+  border-radius: 5px;
+  padding: 7px;
+}
+.spc-owner-art-body input[type="range"] { width: 100%; accent-color: #88a9ab; }
+.spc-owner-art-buttons { display: flex; flex-wrap: wrap; gap: 6px; }
+.spc-owner-art-buttons button {
+  cursor: pointer;
+  background: #22373b;
+  border: 1px solid #52717a;
+  color: #e0eded;
+  border-radius: 6px;
+  padding: 7px 8px;
+}
+.spc-owner-art-status { color: #d7e7b8; }
+.spc-owner-art-body small { color: #9db2b5; line-height: 1.45; }

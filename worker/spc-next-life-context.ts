@@ -1,5 +1,6 @@
 import type { ResidentLifeCognitionContext } from "../src/spc-next/resident-life-cognition-context";
 import type { ResidentLifeSelfContext } from "../src/spc-next/resident-life-self-context";
+import type { ResidentKnownMaterialObject } from "../src/spc-next/resident-material-knowledge";
 import type {
   ResidentLifeCognitionView,
   ResidentLifeEvidenceView,
@@ -42,7 +43,8 @@ export type SpcNextLifeContextDiagnosticCode =
   | "outer_shape"
   | "private_context"
   | "life_context"
-  | "self_context";
+  | "self_context"
+  | "material_context";
 
 export interface SpcNextLifeContextSanitization {
   context: ResidentLifeCognitionContext | null;
@@ -58,7 +60,7 @@ export function sanitizeSpcNextLifeContextWithDiagnostic(
   if (!hasRequiredAndOptionalKeys(value, [
     "contract", "resident", "tick", "currentRegionId", "reasons", "localActivity",
     "recentPercepts", "concerns", "beliefs", "knownActors", "knownRegions", "life",
-  ], ["self"])) {
+  ], ["self", "knownMaterials"])) {
     return { context: null, diagnostic: "outer_shape" };
   }
 
@@ -79,6 +81,12 @@ export function sanitizeSpcNextLifeContextWithDiagnostic(
 
   const life = sanitizeLife(value.life, privateContext.tick);
   if (!life) return { context: null, diagnostic: "life_context" };
+  const materials = Object.hasOwn(value, "knownMaterials")
+    ? sanitizeKnownMaterials(value.knownMaterials, privateContext.tick)
+    : null;
+  if (Object.hasOwn(value, "knownMaterials") && materials === null) {
+    return { context: null, diagnostic: "material_context" };
+  }
   const self = Object.hasOwn(value, "self") ? sanitizeSelf(value.self) : null;
   if (Object.hasOwn(value, "self") && !self) {
     return { context: null, diagnostic: "self_context" };
@@ -98,6 +106,7 @@ export function sanitizeSpcNextLifeContextWithDiagnostic(
       beliefs: structuredClone(privateContext.beliefs),
       knownActors: structuredClone(privateContext.knownActors),
       knownRegions: structuredClone(privateContext.knownRegions),
+      ...(materials ? { knownMaterials: materials } : {}),
       life,
     },
     diagnostic: null,
@@ -106,6 +115,39 @@ export function sanitizeSpcNextLifeContextWithDiagnostic(
 
 export function sanitizeSpcNextLifeContext(value: unknown): ResidentLifeCognitionContext | null {
   return sanitizeSpcNextLifeContextWithDiagnostic(value).context;
+}
+
+/**
+ * A private sight-memory record, not an object-oracle. Strictly reject holder
+ * identity, hidden metadata, future sightings, duplicates and unbounded payloads.
+ */
+function sanitizeKnownMaterials(
+  value: unknown, tick: number,
+): ResidentKnownMaterialObject[] | null {
+  if (!Array.isArray(value) || value.length > 24) return null;
+  const seen = new Set<string>();
+  const sanitized: ResidentKnownMaterialObject[] = [];
+  for (const raw of value) {
+    if (!record(raw) || !hasOnlyKeys(raw, [
+      "objectId", "lastKnownPosition", "observedAtTick", "currentlyVisible",
+    ])) return null;
+    const objectId = identifier(raw.objectId);
+    const point = raw.lastKnownPosition;
+    if (!objectId || seen.has(objectId) || !record(point)
+      || !hasOnlyKeys(point, ["x", "y"])
+      || typeof point.x !== "number" || !Number.isFinite(point.x)
+      || typeof point.y !== "number" || !Number.isFinite(point.y)
+      || !safeInt(raw.observedAtTick) || raw.observedAtTick > tick
+      || typeof raw.currentlyVisible !== "boolean") return null;
+    seen.add(objectId);
+    sanitized.push({
+      objectId,
+      lastKnownPosition: { x: point.x, y: point.y },
+      observedAtTick: raw.observedAtTick,
+      currentlyVisible: raw.currentlyVisible,
+    });
+  }
+  return sanitized;
 }
 
 function sanitizeSelf(value: unknown): ResidentLifeSelfContext | null {
@@ -325,6 +367,21 @@ function sanitizeMatterIntent(value: unknown): ResidentMatterIntent | null {
       goal,
       objectId,
     };
+  }
+
+  if (value.kind === "deliver_material_object") {
+    if (!hasOnlyKeys(value, ["kind", "goal", "objectId", "destination"])
+      || !record(value.destination)
+      || !hasOnlyKeys(value.destination, ["x", "y"])) return null;
+    const goal = boundedText(value.goal, 1_200);
+    const objectId = identifier(value.objectId);
+    const { x, y } = value.destination;
+    if (!goal || !objectId || typeof x !== "number" || typeof y !== "number"
+      || !Number.isFinite(x) || !Number.isFinite(y)
+      || Math.abs(x) > 1_000_000 || Math.abs(y) > 1_000_000) return null;
+    // These are resident-owned intended coordinates, NOT World-verified
+    // presence or proof that placement can succeed. No execution metadata.
+    return { kind: "deliver_material_object", goal, objectId, destination: { x, y } };
   }
 
   if (value.kind === "standing_social_commitment") {

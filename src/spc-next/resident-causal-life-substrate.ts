@@ -252,11 +252,24 @@ export class ResidentCausalLifeSubstrate {
     for (const before of previous) {
       const after = currentByObjectId.get(before.objectId) ?? null;
       if (before.currentlyVisible || !after?.currentlyVisible) continue;
-      observations.push(this.materialRelevanceBridge.observeReacquisition(
+      const life = this.currentLifeView();
+      const knownRelevance = this.materialRelevanceBridge.observeReacquisition(
         before,
         after,
-        this.currentLifeView(),
-      ));
+        life,
+      );
+      if (knownRelevance.status !== "not_relevant") {
+        observations.push(knownRelevance);
+        continue;
+      }
+      // A new location without an already-owning matter is real private
+      // discrepancy pressure. No World object position or holder identity leaks.
+      const moved = this.materialRelevanceBridge.observeUnexpectedRelocation(
+        before,
+        after,
+        life,
+      );
+      if (moved.status !== "not_relevant") observations.push(moved);
     }
     return observations.map((entry) => structuredClone(entry));
   }
@@ -267,10 +280,14 @@ export class ResidentCausalLifeSubstrate {
     }
     if (this.lifeIntentOwner.state().activeAttemptId !== null) return null;
 
+    // No privileged World material list crosses this cognition boundary.
+    // Even remembered positions must originate from personal sight.
+    const observedMaterials = this.materialKnowledge?.sample();
     const attempt = this.lifeIntentOwner.prepare(
       batch,
       this.currentLifeView(),
       this.options.world.tick,
+      observedMaterials,
     );
     if (!attempt) return null;
     return {

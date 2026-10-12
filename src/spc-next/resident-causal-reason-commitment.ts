@@ -7,6 +7,7 @@ import type { CognitionReason } from "./contracts";
 import type {
   ResidentAcquireMaterialObjectMatterIntent,
   ResidentCommunicateActorMatterIntent,
+  ResidentDeliverMaterialObjectMatterIntent,
   ResidentContinuityKernel,
   ResidentKernelEvidence,
   ResidentMatter,
@@ -55,6 +56,13 @@ export type GroundedResidentCausalReasonCommitmentIntent =
       semanticCourse: string;
       semanticIntent: ResidentCommunicateActorMatterIntent;
       routeRegionIds: readonly [];
+    }
+  | {
+      originReasonId: string;
+      originReasonKind: CognitionReason["kind"];
+      semanticCourse: string;
+      semanticIntent: ResidentDeliverMaterialObjectMatterIntent;
+      routeRegionIds: readonly string[];
     }
   | {
       originReasonId: string;
@@ -184,6 +192,70 @@ export class ResidentCausalReasonCommitmentAuthority {
           kind: "travel_region" as const,
           goal: acceptedIntent.goal,
           targetRegionId,
+        }),
+        routeRegionIds: Object.freeze([...route.regionIds]),
+      }) satisfies GroundedResidentCausalReasonCommitmentIntent;
+      this.grounded.set(intent, {
+        attempt: input.attempt,
+        originReason: structuredClone(originReason),
+        proposal: input.proposal,
+        identity,
+      });
+      return { status: "accepted", intent };
+    }
+
+    if (acceptedIntent.kind === "deliver_material_object") {
+      const local = this.options.materialKnowledge;
+      const frozen = input.providerContext.knownMaterials?.find(
+        (material) => material.objectId === acceptedIntent.objectId,
+      );
+      if (!local || !frozen
+        || !input.attempt.context.knownMaterials?.some((m) =>
+          m.objectId === frozen.objectId && m.observedAtTick === frozen.observedAtTick
+            && m.lastKnownPosition.x === frozen.lastKnownPosition.x
+            && m.lastKnownPosition.y === frozen.lastKnownPosition.y)) {
+        return { status: "rejected", detail: "delivery object lacks exact frozen resident-private sight history" };
+      }
+      // Reacquire local private visibility only; no use of World object coords,
+      // holder identities or hidden changes for planning.
+      local.sample();
+      const currentlyKnown = local.observation(acceptedIntent.objectId);
+      if (!currentlyKnown || currentlyKnown.observedAtTick < frozen.observedAtTick) {
+        return { status: "rejected", detail: "delivery object lacks current resident-private material knowledge" };
+      }
+      const openSameObject = input.providerContext.life.matters.some(m =>
+        (m.status === "active" || m.status === "suspended")
+        && (m.semanticIntent?.kind === "deliver_material_object"
+          || m.semanticIntent?.kind === "acquire_material_object")
+        && m.semanticIntent.objectId === acceptedIntent.objectId);
+      if (openSameObject) {
+        return { status: "rejected", detail: "delivery object already belongs to an open material matter" };
+      }
+
+      const currentRegionId = input.groundingContext.currentRegionId;
+      const known = new Set(input.groundingContext.knownRegions.map(r => r.id));
+      if (!currentRegionId || !known.has(acceptedIntent.targetRegionId)) {
+        return { status: "rejected", detail: "delivery destination not privately known" };
+      }
+      known.add(currentRegionId);
+      const route = this.options.navigation.route(
+        currentRegionId, acceptedIntent.targetRegionId, known,
+      );
+      const destination = this.options.navigation.destinationPoint(
+        acceptedIntent.targetRegionId,
+      );
+      if (!route || !destination) {
+        return { status: "rejected", detail: "delivery destination has no resident-known route" };
+      }
+      const intent = Object.freeze({
+        originReasonId: originReason.id,
+        originReasonKind: originReason.kind,
+        semanticCourse: `${decision.reason} · ${acceptedIntent.goal}`,
+        semanticIntent: Object.freeze({
+          kind: "deliver_material_object" as const,
+          goal: acceptedIntent.goal,
+          objectId: acceptedIntent.objectId,
+          destination: Object.freeze({ ...destination }),
         }),
         routeRegionIds: Object.freeze([...route.regionIds]),
       }) satisfies GroundedResidentCausalReasonCommitmentIntent;

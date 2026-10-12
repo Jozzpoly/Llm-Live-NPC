@@ -13,6 +13,7 @@ import {
   type ResidentPercept,
   type ResidentProfile,
   type SpcWorldOptions,
+  type MaterialWorksite,
   type Vec2,
   type VisibleActor,
   type WorldAnchor,
@@ -77,11 +78,25 @@ export type SpcMaterialActionIntent =
   | { kind: "pickup"; objectId: string }
   | { kind: "place"; objectId: string; position: Vec2 };
 
+export type WorldWorkStart =
+  | {status:"started"; requiredTicks:number}
+  | {status:"rejected"; reason:"unknown_site"|"resident_authority_required"|"busy"|"too_far"|"occluded"|"wrong_material"|"output_exists"};
+
+export interface WorldMaterialWorkOutcome {
+  tick:number; actorId:string; siteId:string;
+  status:"completed"|"interrupted";
+  reason:"worked"|"moved"|"left_site"|"lost_material"|"output_exists";
+  sourceObjectId:string; outputObjectId:string|null;
+  sourceBefore:MaterialObjectState|null;
+  outputAfter:MaterialObjectState|null;
+}
+interface WorkSession { actorId:string; siteId:string; progressTicks:number; }
 export interface SpcWorldDiagnostics {
   tick: number;
   recentOccurrences: readonly WorldOccurrence[];
   lastMotionOutcomes: readonly ActorMotionOutcome[];
   recentMaterialActions: readonly MaterialActionResult[];
+  recentWorkOutcomes: readonly WorldMaterialWorkOutcome[];
 }
 
 const WORLD_OCCURRENCE_LIMIT = 1_024;
@@ -103,6 +118,8 @@ export class SpcWorldRuntime {
   private pendingOccurrences: PendingOccurrence[] = [];
   private readonly recentOccurrences: WorldOccurrence[] = [];
   private readonly recentMaterialActions: MaterialActionResult[] = [];
+  private readonly workSessions = new Map<string,WorkSession>();
+  private readonly recentWorkOutcomes: WorldMaterialWorkOutcome[] = [];
   private lastMotionOutcomes: ActorMotionOutcome[] = [];
   private readonly activeMotionBlockages = new Map<string, string>();
 
@@ -151,6 +168,88 @@ export class SpcWorldRuntime {
 
   materialObjects(): MaterialObjectState[] {
     return this.materialState.objects();
+  }
+
+  worksite(id: string): MaterialWorksite | null {
+    const found = this.authoredOptions.materialWorksites?.find(site => site.id===id);
+    return found ? structuredClone(found) : null;
+  }
+
+  worksiteProgress(actorId: string): {siteId:string;ticks:number;requiredTicks:number}|null {
+    const session=this.workSessions.get(actorId);
+    if(!session)return null;
+    const site=this.worksite(session.siteId);
+    return site ? {siteId:site.id,ticks:session.progressTicks,requiredTicks:site.requiredTicks}:null;
+  }
+
+  /**
+   * Player route only. Residents must later gain a separately reviewed
+   * run-authorized semantic work effect; this is never a resident bypass.
+   */
+  beginMaterialWork(actorId:string,siteId:string): WorldWorkStart {
+    const site=this.worksite(siteId);
+    if(!site)return {status:"rejected",reason:"unknown_site"};
+    if(this.residents.has(actorId))return {status:"rejected",reason:"resident_authority_required"};
+    const actor=this.requireActor(actorId);
+    if(this.workSessions.has(actorId))return {status:"rejected",reason:"busy"};
+    const anchor=this.anchor(site.anchorId)!;
+    if(distanceSquared(actor.position,anchor.position)>(anchor.radius+40)**2)
+      return {status:"rejected",reason:"too_far"};
+    if(!this.sightGeometry.hasLineOfSight(actor.position,anchor.position))
+      return {status:"rejected",reason:"occluded"};
+    if(this.materialState.heldObjectId(actorId)!==site.sourceObjectId)
+      return {status:"rejected",reason:"wrong_material"};
+    if(this.materialState.object(site.output.id))
+      return {status:"rejected",reason:"output_exists"};
+    this.workSessions.set(actorId,{actorId,siteId,progressTicks:0});
+    this.emitInteraction(actorId,site.sourceObjectId,
+      `began handling ${site.sourceObjectId} at ${anchor.label}`,240);
+    return {status:"started",requiredTicks:site.requiredTicks};
+  }
+
+  private stepMaterialWork():void {
+    for(const session of [...this.workSessions.values()].sort((a,b)=>a.actorId.localeCompare(b.actorId))){
+      const site=this.worksite(session.siteId)!,anchor=this.anchor(site.anchorId)!;
+      const actor=this.requireActor(session.actorId);
+      const reason:WorldMaterialWorkOutcome["reason"]|null =
+        distanceSquared(actor.position,anchor.position)>(anchor.radius+40)**2
+        || !this.sightGeometry.hasLineOfSight(actor.position,anchor.position) ? "left_site"
+        : Math.hypot(actor.velocity.x,actor.velocity.y)>1 ? "moved"
+        : this.materialState.heldObjectId(session.actorId)!==site.sourceObjectId ? "lost_material"
+        : this.materialState.object(site.output.id)!==null ? "output_exists"
+        : null;
+      if(reason){
+        this.setWorkOutcome({tick:this.tickValue,actorId:session.actorId,siteId:site.id,
+          status:"interrupted",reason,sourceObjectId:site.sourceObjectId,
+          outputObjectId:null,sourceBefore:null,outputAfter:null});
+        continue;
+      }
+      session.progressTicks++;
+      if(session.progressTicks<site.requiredTicks)continue;
+      const converted=this.materialState.consumeHeldAndProduce(
+        session.actorId,site.sourceObjectId,{
+          id:site.output.id,label:site.output.label,radius:site.output.radius,
+          location:{kind:"free",position:{x:anchor.position.x+22,y:anchor.position.y+30}},
+        },site.id,this.tickValue);
+      if(!converted){
+        this.setWorkOutcome({tick:this.tickValue,actorId:session.actorId,siteId:site.id,
+          status:"interrupted",reason:"lost_material",sourceObjectId:site.sourceObjectId,
+          outputObjectId:null,sourceBefore:null,outputAfter:null});
+        continue;
+      }
+      this.setWorkOutcome({tick:this.tickValue,actorId:session.actorId,siteId:site.id,
+        status:"completed",reason:"worked",sourceObjectId:site.sourceObjectId,
+        outputObjectId:converted.output.id,
+        sourceBefore:converted.source,outputAfter:converted.output});
+      this.emitInteraction(session.actorId,converted.output.id,
+        `physically made ${converted.output.label} from ${converted.source.id} at ${anchor.label}`,240);
+    }
+  }
+
+  private setWorkOutcome(outcome:WorldMaterialWorkOutcome):void {
+    this.workSessions.delete(outcome.actorId);
+    this.recentWorkOutcomes.push(structuredClone(outcome));
+    while(this.recentWorkOutcomes.length>64)this.recentWorkOutcomes.shift();
   }
 
   /**
@@ -440,6 +539,7 @@ export class SpcWorldRuntime {
       recentOccurrences: structuredClone(this.recentOccurrences),
       lastMotionOutcomes: structuredClone(this.lastMotionOutcomes),
       recentMaterialActions: structuredClone(this.recentMaterialActions),
+      recentWorkOutcomes: structuredClone(this.recentWorkOutcomes),
     };
   }
 
@@ -504,6 +604,7 @@ export class SpcWorldRuntime {
       }
       resident.runtime.syncCurrentRegion(this.regionAt(outcome.after), this.tickValue);
     }
+    this.stepMaterialWork();
   }
 
   private resolveMaterialAction(actorId: string, intent: SpcMaterialActionIntent): MaterialActionResult {

@@ -282,15 +282,53 @@ async function run() {
     if (report.outcome !== "PASS") process.exitCode = 1;
   } finally {
     cdp?.close();
-    chrome.kill("SIGTERM");
-    await sleep(120);
-    if (!chrome.killed) chrome.kill("SIGKILL");
-    rmSync(userDataDir, {
-      recursive: true,
-      force: true,
-      maxRetries: 6,
-      retryDelay: 100,
-    });
+    // child.killed only means that a SIGNAL WAS SENT, not that Chrome exited.
+    // The old 120ms sleep followed by rmSync raced Chromium's profile writers
+    // and could throw ENOTEMPTY AFTER a complete passing R5 witness.
+    async function waitForChromeExit(timeoutMs) {
+      if (chrome.exitCode !== null || chrome.signalCode !== null) return true;
+      return new Promise((resolve) => {
+        let settled = false;
+        const finish = (exited) => {
+          if (settled) return;
+          settled = true;
+          clearTimeout(timer);
+          chrome.off("exit", onExit);
+          resolve(exited);
+        };
+        const onExit = () => finish(true);
+        const timer = setTimeout(() => finish(false), timeoutMs);
+        chrome.once("exit", onExit);
+        if (chrome.exitCode !== null || chrome.signalCode !== null) finish(true);
+      });
+    }
+    if (chrome.exitCode === null && chrome.signalCode === null) {
+      chrome.kill("SIGTERM");
+      if (!await waitForChromeExit(2_400)) {
+        chrome.kill("SIGKILL");
+        await waitForChromeExit(1_600);
+      }
+    }
+    let cleaned = false;
+    for (let attempt = 0; attempt < 12 && !cleaned; attempt++) {
+      try {
+        rmSync(userDataDir, {
+          recursive: true,
+          force: true,
+          maxRetries: 8,
+          retryDelay: 125,
+        });
+        cleaned = true;
+      } catch (error) {
+        if (!["ENOTEMPTY", "EBUSY", "EPERM"].includes(error?.code)) throw error;
+        await sleep(150);
+      }
+    }
+    if (!cleaned) {
+      // GitHub runner is ephemeral; never overwrite the already-written
+      // semantic test result with a transient Chrome profile cleanup failure.
+      console.warn(`WARN: temporary Chrome profile cleanup incomplete: ${userDataDir}`);
+    }
   }
 }
 

@@ -44,6 +44,8 @@ export class ResidentMaterialPickupExecutor {
   private terminal: ResidentMaterialPickupStep | null = null;
   private inspectionOrigin: Vec2 | null = null;
   private inspectionWaypointIndex = 0;
+  private readonly routeWaypoints: readonly Vec2[];
+  private routeIndex = 0;
 
   constructor(
     readonly runId: string,
@@ -53,6 +55,7 @@ export class ResidentMaterialPickupExecutor {
     private readonly world: SpcWorldRuntime,
     private readonly approachSpeed = DEFAULT_APPROACH_SPEED,
     private readonly inspectionSpeed = DEFAULT_INSPECTION_SPEED,
+    routeWaypoints: readonly Vec2[] = [],
   ) {
     if (!runId.trim()) throw new Error("material pickup runId must be non-empty");
     if (!objectId.trim()) throw new Error("material pickup objectId must be non-empty");
@@ -62,6 +65,10 @@ export class ResidentMaterialPickupExecutor {
     if (!Number.isFinite(inspectionSpeed) || inspectionSpeed <= 0) {
       throw new Error("material pickup inspectionSpeed must be positive and finite");
     }
+    if (routeWaypoints.some(p => !Number.isFinite(p.x) || !Number.isFinite(p.y))) {
+      throw new Error("material pickup waypoint must be finite");
+    }
+    this.routeWaypoints = routeWaypoints.map(p => ({ ...p }));
   }
 
   step(): ResidentMaterialPickupStep {
@@ -81,8 +88,21 @@ export class ResidentMaterialPickupExecutor {
     }
 
     const distanceSq = distanceSquared(actor.position, targetPosition);
-    if (distanceSq > PICKUP_ATTEMPT_DISTANCE ** 2) {
-      const direction = normalizedDirection(actor.position, targetPosition);
+    // A current actual sighting within pickup reach takes priority over a
+    // possibly old route; otherwise traverse only previously grounded known
+    // region waypoints before searching the resident's remembered point.
+    const canPickHere = Boolean(observation?.currentlyVisible)
+      && distanceSq <= PICKUP_ATTEMPT_DISTANCE ** 2;
+    if (!canPickHere) {
+      while (this.routeIndex < this.routeWaypoints.length
+        && distanceSquared(actor.position, this.routeWaypoints[this.routeIndex]!)
+          <= PICKUP_ATTEMPT_DISTANCE ** 2) {
+        this.routeIndex += 1;
+      }
+    }
+    const waypoint = canPickHere ? undefined : this.routeWaypoints[this.routeIndex];
+    if (waypoint || distanceSq > PICKUP_ATTEMPT_DISTANCE ** 2) {
+      const direction = normalizedDirection(actor.position, waypoint ?? targetPosition);
       const speed = Math.min(actor.maxSpeed, this.approachSpeed);
       const applied = this.authority.apply({
         runId: this.runId,

@@ -13,9 +13,18 @@ export interface ResidentLifeMaterialAcquisitionIntent {
   objectId: string;
 }
 
+export interface ResidentLifeMaterialDeliveryIntent {
+  kind: "deliver_material_object";
+  goal: string;
+  objectId: string;
+  /** Resident-known semantic destination, never an invented coordinate or execution route. */
+  targetRegionId: string;
+}
+
 export type ResidentLifeAcceptedIntent =
   | ProposedActivity
-  | ResidentLifeMaterialAcquisitionIntent;
+  | ResidentLifeMaterialAcquisitionIntent
+  | ResidentLifeMaterialDeliveryIntent;
 
 export type ResidentLifeCommitmentDecision =
   | {
@@ -78,6 +87,7 @@ const INTENT_KEYS = [
   "text",
 ] as const;
 const MATERIAL_INTENT_KEYS = ["kind", "goal", "objectId"] as const;
+const MATERIAL_DELIVERY_KEYS = ["kind", "goal", "objectId", "targetRegionId"] as const;
 
 /**
  * Strict semantic contract for higher cognition deciding whether a newly perceived
@@ -124,6 +134,33 @@ export function parseResidentLifeIntentProposal(
             kind: "acquire_material_object",
             goal: decision.intent.goal,
             objectId: decision.intent.objectId,
+          },
+        },
+        beliefs: structuredClone(validated.beliefs),
+        concerns: structuredClone(validated.concerns),
+        reviewAfterSeconds: validated.reviewAfterSeconds,
+      };
+    }
+
+    if (decision.intent.kind === "deliver_material_object") {
+      if (hasStandingSocialCommitment
+        || !hasExactKeys(decision.intent, MATERIAL_DELIVERY_KEYS)
+        || !isBoundedString(decision.intent.goal, 1_200)
+        || !isBoundedString(decision.intent.objectId, 128)
+        || !isBoundedString(decision.intent.targetRegionId, 128)) return null;
+      // Schema acceptance is NOT a resident right to move an unknown object.
+      // Actual material/private-known-region grounding is exclusively local.
+      const validated = validateSemanticUpdatesOnly(value, context, decision.reason);
+      if (!validated) return null;
+      return {
+        version: 1,
+        commitmentDecision: {
+          kind: "accept", reason: decision.reason,
+          intent: {
+            kind: "deliver_material_object",
+            goal: decision.intent.goal,
+            objectId: decision.intent.objectId,
+            targetRegionId: decision.intent.targetRegionId,
           },
         },
         beliefs: structuredClone(validated.beliefs),

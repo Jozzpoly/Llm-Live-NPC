@@ -1,4 +1,5 @@
 import * as Phaser from "phaser";
+import type { RelationalEpisodeChoice, RelationalEpisodeState } from "../spc-next/five-resident-relational-world-demo";
 import type { ResidentLifeCognitionView } from "../spc-next/resident-life-cognition-view";
 import type { FiveResidentLivingRuntimeDiagnostics, FiveResidentManualResearchProbe } from "../spc-next/five-resident-unified-living-runtime";
 import type {
@@ -18,6 +19,10 @@ import {
   type SpcNextResearchScenario,
   type SpcNextResearchScenarioKind,
 } from "./spc-next-research-scenario";
+import { paintMaterialShape } from "./spc-next-material-shapes";
+import { worldTerrainPresentation } from "./spc-next-terrain-presentation";
+import { groundVisualPlacement } from "./spc-next-local-art-contract";
+import { placeNonOverlappingMaterialLabel, type MaterialLabelRect } from "./spc-next-material-label-layout";
 import {
   projectEpistemicActors,
   projectMotionFeedback,
@@ -50,7 +55,7 @@ interface SpeechView {
   expiresAtTick: number;
 }
 
-type MovementKeys = Record<"W" | "A" | "S" | "D" | "R" | "F" | "P" | "O" | "H" | "E" | "TAB", Phaser.Input.Keyboard.Key>;
+type MovementKeys = Record<"W" | "A" | "S" | "D" | "R" | "F" | "P" | "O" | "H" | "E" | "U" | "TAB", Phaser.Input.Keyboard.Key>;
 
 export interface SpcNextResearchFrame {
   snapshot: WorldPublicSnapshot;
@@ -63,6 +68,10 @@ export interface SpcNextResearchFrame {
   livingDiagnostics: FiveResidentLivingRuntimeDiagnostics | null;
   overlayEnabled: boolean;
   cameraZoom: number;
+  playerWork?: { siteId:string; ticks:number; requiredTicks:number } | null;
+  recentWorkOutcome?: import("../spc-next/spc-world-runtime").WorldMaterialWorkOutcome | null;
+  playerWorkAttempt?: string | null;
+  playerWorkAttemptTick?: number | null;
 }
 
 export interface SpcNextResearchSceneOptions {
@@ -86,12 +95,16 @@ export class SpcNextResearchScene extends Phaser.Scene {
   private regionGraphics!: Phaser.GameObjects.Graphics;
   private materialGraphics!: Phaser.GameObjects.Graphics;
   private overlayGraphics!: Phaser.GameObjects.Graphics;
+  private localGroundImage: Phaser.GameObjects.Image | null = null;
+  private localGroundSource: HTMLImageElement | null = null;
   private cursors: Phaser.Types.Input.Keyboard.CursorKeys | null = null;
   private keys: MovementKeys | null = null;
   private accumulatorMs = 0;
   private stateAccumulatorMs = 0;
   private selectedResidentId: string | null = "resident.mira";
   private overlayEnabled = false;
+  private lastPlayerWorkAttempt: string | null = null;
+  private lastPlayerWorkAttemptTick: number | null = null;
   private created = false;
 
   constructor(
@@ -105,6 +118,7 @@ export class SpcNextResearchScene extends Phaser.Scene {
     this.scenario = createSpcNextResearchScenario(scenarioKind);
     this.world = this.scenario.world;
     this.snapshot = this.world.publicSnapshot();
+    if (this.scenario.kind === "relational-episode") this.selectedResidentId = "resident.janek";
     if (!this.snapshot.residents.some((resident) => resident.id === this.selectedResidentId)) {
       this.selectedResidentId = this.snapshot.residents[0]?.id ?? null;
     }
@@ -120,7 +134,7 @@ export class SpcNextResearchScene extends Phaser.Scene {
 
     if (this.input.keyboard) {
       this.cursors = this.input.keyboard.createCursorKeys();
-      this.keys = this.input.keyboard.addKeys("W,A,S,D,R,F,P,O,H,E,TAB") as MovementKeys;
+      this.keys = this.input.keyboard.addKeys("W,A,S,D,R,F,P,O,H,E,U,TAB") as MovementKeys;
     }
 
     this.input.on("wheel", (_pointer: Phaser.Input.Pointer, _objects: unknown, _dx: number, dy: number) => {
@@ -137,8 +151,15 @@ export class SpcNextResearchScene extends Phaser.Scene {
       bounds.maxX - bounds.minX,
       bounds.maxY - bounds.minY,
     );
-    this.followPlayer();
-    this.cameras.main.setZoom(0.72);
+    if (this.scenario.kind === "relational-episode") {
+      this.focusSelected();
+      // The World remains the 8,192-wide canonical World; the camera doesn't
+      // stage a fake relocation or distort actor coordinates.
+      this.cameras.main.setZoom(1.28);
+    } else {
+      this.followPlayer();
+      this.cameras.main.setZoom(0.72);
+    }
     this.captureNewSpeechOccurrences();
     this.created = true;
     this.pushFrame(true);
@@ -180,6 +201,18 @@ export class SpcNextResearchScene extends Phaser.Scene {
   /** A direct player/operator choice; ordinary World ticks never call the provider
    * in the unified-armed research mode.
    */
+  startBoundedCognition(): ReturnType<NonNullable<typeof this.scenario.startBoundedCognition>> | "not_authorized" {
+    const status = this.scenario.startBoundedCognition?.() ?? "not_authorized";
+    this.pushFrame(true);
+    return status;
+  }
+
+  pauseBoundedCognition(): "paused" | "not_running" {
+    const status = this.scenario.pauseBoundedCognition?.() ?? "not_running";
+    this.pushFrame(true);
+    return status;
+  }
+
   requestSelectedResidentCognition():
     "started" | "no_reason" | "resident_unavailable" | "budget_exhausted" {
     if (!this.selectedResidentId || !this.scenario.requestOneResidentCognition) {
@@ -188,6 +221,17 @@ export class SpcNextResearchScene extends Phaser.Scene {
     const result = this.scenario.requestOneResidentCognition(this.selectedResidentId);
     this.pushFrame(true);
     return result;
+  }
+
+  relationalEpisodeState(): RelationalEpisodeState | null {
+    return this.scenario.relationalEpisodeState?.() ?? null;
+  }
+
+  /** One explicit, clearly labeled, TEST-INJECTED semantic answer, never Luna. */
+  chooseRelationalTestOutcome(choice: RelationalEpisodeChoice): "accepted" | "not_ready" {
+    const outcome = this.scenario.chooseRelationalTestOutcome?.(choice) ?? "not_ready";
+    this.pushFrame(true);
+    return outcome;
   }
 
   playerCall(text = "Hej!"): void {
@@ -219,7 +263,9 @@ export class SpcNextResearchScene extends Phaser.Scene {
     const view = this.actorViews.get(this.selectedResidentId);
     if (!view) return;
     this.cameras.main.startFollow(view.container, true, 0.12, 0.12);
-    this.cameras.main.setZoom(Math.max(this.cameras.main.zoom, 0.62));
+    // Only the camera changes. A selected living resident must be readable.
+    const minObservableZoom = this.scenario.kind === "unified-living" ? 1.12 : 0.62;
+    this.cameras.main.setZoom(Math.max(this.cameras.main.zoom, minObservableZoom));
     this.pushFrame(true);
   }
 
@@ -239,6 +285,64 @@ export class SpcNextResearchScene extends Phaser.Scene {
     const worldHeight = bounds.maxY - bounds.minY;
     const fitZoom = Math.min(camera.width / worldWidth, camera.height / worldHeight) * 0.92;
     camera.setZoom(Phaser.Math.Clamp(fitZoom, MIN_ZOOM, MAX_ZOOM));
+    this.pushFrame(true);
+  }
+
+  /**
+   * Live in-browser art judgement, not part of the canonical World.
+   * There is exactly ONE temporary user-selected image. No import is ever
+   * sent to a server or exposed to resident perception; no solid is inferred.
+   * This image has lower drawing depth than real material and actor bodies.
+   */
+  previewLocalGroundImage(
+    anchorId: string,
+    source: HTMLImageElement,
+    worldWidth: number,
+    opacity: number,
+  ): void {
+    if (!this.created || (this.scenario.kind !== "unified-living"
+      && this.scenario.kind !== "unified-armed")) {
+      throw new Error("Podgląd grafiki jest dostępny tylko w zwykłym świecie pięciu SPC.");
+    }
+    const placement = groundVisualPlacement(
+      this.world.anchors(), anchorId,
+      source.naturalWidth, source.naturalHeight, worldWidth, opacity,
+    );
+    if (this.localGroundSource !== source) {
+      this.clearLocalGroundImage();
+      // Cache is separate from World identities and other materials.
+      const textureKey = "spc-owner-local-ground-reference";
+      if (this.textures.exists(textureKey)) this.textures.remove(textureKey);
+      this.textures.addImage(textureKey, source);
+      this.localGroundImage = this.add.image(placement.x, placement.y, textureKey)
+        .setDepth(-15);
+      this.localGroundSource = source;
+    }
+    this.localGroundImage?.setPosition(placement.x, placement.y)
+      .setDisplaySize(placement.width, placement.height)
+      .setAlpha(placement.opacity)
+      .setVisible(true);
+  }
+
+  setLocalGroundImageVisible(visible: boolean): void {
+    this.localGroundImage?.setVisible(visible);
+  }
+
+  clearLocalGroundImage(): void {
+    this.localGroundImage?.destroy();
+    this.localGroundImage = null;
+    this.localGroundSource = null;
+    const key = "spc-owner-local-ground-reference";
+    if (this.textures.exists(key)) this.textures.remove(key);
+  }
+
+  viewWorldSite(anchorId: string): void {
+    const anchor = this.world.anchors().find(item => item.id === anchorId);
+    if (!anchor) return;
+    const camera = this.cameras.main;
+    camera.stopFollow();
+    camera.centerOn(anchor.position.x, anchor.position.y);
+    camera.setZoom(Math.max(camera.zoom, 1.12));
     this.pushFrame(true);
   }
 
@@ -359,7 +463,29 @@ export class SpcNextResearchScene extends Phaser.Scene {
     if (Phaser.Input.Keyboard.JustDown(this.keys.O)) this.overview();
     if (Phaser.Input.Keyboard.JustDown(this.keys.H)) this.playerCall();
     if (Phaser.Input.Keyboard.JustDown(this.keys.E)) this.playerMaterialAction();
+    if (Phaser.Input.Keyboard.JustDown(this.keys.U)) this.playerWorkshopAction();
     if (Phaser.Input.Keyboard.JustDown(this.keys.TAB)) this.cycleResidentSelection();
+  }
+
+  /** The local key is only an attempt; World independently evaluates it. */
+  private playerWorkshopAction(): void {
+    if (this.scenario.kind !== "unified-living"
+      && this.scenario.kind !== "unified-armed") return;
+    const attempt = this.world.beginMaterialWork(PLAYER_ID,"workshop.repair-kit");
+    const failure: Record<string,string> = {
+      unknown_site:"Warsztat nie istnieje w tym świecie.",
+      resident_authority_required:"Tylko działanie gracza; SPC wymaga własnej decyzji.",
+      busy:"Praca już trwa.",
+      too_far:"Podejdź do Workshop Bench.",
+      occluded:"Nie ma bezpośredniego dostępu do stanowiska.",
+      wrong_material:"Weź do rąk Workshop Spare Parts (nie pierwszą skrzynię).",
+      output_exists:"Zestaw naprawczy został już przygotowany.",
+    };
+    this.lastPlayerWorkAttemptTick = this.world.tick;
+    this.lastPlayerWorkAttempt = attempt.status === "started"
+      ? "Przygotowywanie zestawu — pozostań nieruchomo przez 3 sekundy."
+      : failure[attempt.reason] ?? "Nie można rozpocząć pracy.";
+    this.pushFrame(true);
   }
 
   private playerMaterialAction(): void {
@@ -420,11 +546,26 @@ export class SpcNextResearchScene extends Phaser.Scene {
   private drawRegions(): void {
     const palette = [0x253a33, 0x303845, 0x41392d, 0x2d3d46, 0x2c4137, 0x40372e, 0x383145, 0x273841];
     this.regionGraphics.clear();
-    this.world.regions().forEach((region, index) => {
+    const fiveResidentWorld = worldTerrainPresentation(this.scenario.kind, false)
+      !== "legacy-research";
+
+    if (fiveResidentWorld) {
+      // Explicitly UNFINISHED visual substrate, not an approved terrain style.
+      // Leave the map honest, neutral and readable. Semantic World regions
+      // are NOT surface materials, vegetation, walls or geographic biomes.
+      const bounds = this.world.options.bounds;
+      this.regionGraphics.fillStyle(0x1f2a29, 1);
+      this.regionGraphics.fillRect(
+        bounds.minX, bounds.minY,
+        bounds.maxX - bounds.minX, bounds.maxY - bounds.minY,
+      );
+    } else {
+      // Retain archived research scenes' visual evidence unchanged.
+      this.world.regions().forEach((region, index) => {
       const width = region.maxX - region.minX;
       const height = region.maxY - region.minY;
       const color = palette[index % palette.length]!;
-      this.regionGraphics.fillStyle(color, 0.42);
+      this.regionGraphics.fillStyle(color, 0.72);
       this.regionGraphics.fillRect(region.minX, region.minY, width, height);
       this.regionGraphics.lineStyle(3, 0x6f8290, 0.16);
       this.regionGraphics.strokeRect(region.minX, region.minY, width, height);
@@ -433,7 +574,43 @@ export class SpcNextResearchScene extends Phaser.Scene {
         fontSize: "24px",
         color: "#8fa0ab",
       }).setAlpha(0.54).setDepth(-10);
-    });
+      });
+    }
+
+    // Owner rejected the decorative pseudo-terrain. Do not replace it with
+    // another visual texture generator before an actual in-game art review.
+    // World/region/nav/material truth continues independently of rendering.
+
+    // Render REAL authored World anchors so settlement places are legible in
+    // the playable scene. These are semantic site markers, NOT solid scenery,
+    // path blockers, automatic resident knowledge, or a second spatial truth.
+    if (this.scenario.kind === "unified-living" || this.scenario.kind === "unified-armed") {
+      const siteColors: Record<string, number> = {
+        home: 0xdd9b58,
+        social: 0xe6aa64,
+        work: 0x7eaece,
+        resource: 0x88ac77,
+        service: 0xe2bf79,
+        exploration: 0xb5a1cd,
+      };
+      for (const anchor of this.world.anchors()) {
+        const color = siteColors[anchor.kind] ?? 0xa9b8c0;
+        const r = Math.max(26, anchor.radius);
+        this.regionGraphics.fillStyle(color, 0.085);
+        this.regionGraphics.fillCircle(anchor.position.x, anchor.position.y, r);
+        this.regionGraphics.lineStyle(2, color, 0.42);
+        this.regionGraphics.strokeCircle(anchor.position.x, anchor.position.y, r);
+        this.regionGraphics.fillStyle(color, 0.62);
+        this.regionGraphics.fillCircle(anchor.position.x, anchor.position.y, 5);
+        this.add.text(anchor.position.x + 16, anchor.position.y - 22, anchor.label, {
+          fontFamily: "Inter, system-ui, sans-serif",
+          fontSize: "14px",
+          color: "#c1d2d9",
+          backgroundColor: "#111820cc",
+          padding: { x: 5, y: 3 },
+        }).setOrigin(0, 1).setDepth(-7);
+      }
+    }
 
     const bounds = this.world.options.bounds;
     this.regionGraphics.lineStyle(8, 0x9fb1bd, 0.24);
@@ -478,6 +655,19 @@ export class SpcNextResearchScene extends Phaser.Scene {
   private syncMaterialViews(): void {
     this.materialGraphics.clear();
     const objects = this.world.materialObjects();
+    // Pure observer-only text placement. The REAL world/material position never
+    // changes to make an annotation fit.
+    // Text annotations may not be laid over the player's or SPC bodies.
+    // These are visual exclusion rectangles only; no actor/object geometry
+    // or world position is edited for the sake of label readability.
+    const livingScene = this.scenario.kind === "unified-living"
+      || this.scenario.kind === "unified-armed";
+    const materialLabelRects: MaterialLabelRect[] = livingScene
+      ? this.snapshot.actors.flatMap(actor => [
+          {x:actor.position.x-26,y:actor.position.y,width:52,height:50},
+          {x:actor.position.x-54,y:actor.position.y-44,width:108,height:28},
+        ])
+      : [];
     const presentIds = new Set(objects.map((object) => object.id));
     for (const object of objects) {
       const position = object.location.kind === "free"
@@ -489,11 +679,9 @@ export class SpcNextResearchScene extends Phaser.Scene {
       if (!position) continue;
 
       const half = Math.max(10, object.radius * 0.9);
-      this.materialGraphics.fillStyle(0xb78652, 0.96);
-      this.materialGraphics.fillRect(position.x - half, position.y - half * 0.72, half * 2, half * 1.44);
-      this.materialGraphics.lineStyle(2, 0xe4c08c, 0.9);
-      this.materialGraphics.strokeRect(position.x - half, position.y - half * 0.72, half * 2, half * 1.44);
-      this.materialGraphics.lineBetween(position.x, position.y - half * 0.72, position.x, position.y + half * 0.72);
+      // Actual World position/holder remains canonical; the token is only a
+      // differentiated depiction of that same pickupable material identity.
+      paintMaterialShape(this.materialGraphics, object.id, position.x, position.y, object.radius);
 
       let label = this.materialLabels.get(object.id);
       if (!label) {
@@ -506,7 +694,26 @@ export class SpcNextResearchScene extends Phaser.Scene {
         }).setOrigin(0.5, 1).setDepth(7);
         this.materialLabels.set(object.id, label);
       }
-      label.setPosition(position.x, position.y - half - 6).setVisible(true);
+      // This one opt-in observation specimen has a real World crate exactly
+      // between two resident bodies. Displace ONLY the readable text label,
+      // never the factual material object's drawn or collision position.
+      if (this.scenario.kind === "relational-episode") {
+        label.setOrigin(0.5, 1);
+        label.setPosition(position.x + 64, position.y + half + 48).setVisible(true);
+      } else if (this.scenario.kind === "unified-living"
+        || this.scenario.kind === "unified-armed") {
+        const positioned = placeNonOverlappingMaterialLabel({
+          x: position.x + half + 8,
+          y: position.y,
+          width: label.width,
+          height: label.height,
+        }, materialLabelRects);
+        label.setOrigin(0, 0.5).setPosition(positioned.x, positioned.y).setVisible(true);
+        materialLabelRects.push(positioned);
+      } else {
+        label.setOrigin(0.5, 1);
+        label.setPosition(position.x, position.y - half - 6).setVisible(true);
+      }
     }
 
     for (const [id, label] of this.materialLabels) {
@@ -531,6 +738,12 @@ export class SpcNextResearchScene extends Phaser.Scene {
       backgroundColor: "#111820c7",
       padding: { x: 5, y: 2 },
     }).setOrigin(0.5, 1);
+    // Screen-space name declutter only. Janek and Ida really stand close;
+    // presentation labels must not overwrite each other or invent separation.
+    if (this.scenario.kind === "relational-episode") {
+      if (actor.id === "resident.janek") label.setPosition(-25, -36);
+      if (actor.id === "resident.ida") label.setPosition(30, -36);
+    }
     const stateLabel = this.add.text(0, 28, actor.kind, {
       fontFamily: "Inter, system-ui, sans-serif",
       fontSize: "11px",
@@ -575,7 +788,10 @@ export class SpcNextResearchScene extends Phaser.Scene {
       }
       const actor = this.snapshot.actors.find((candidate) => candidate.id === view.actorId);
       if (!actor) continue;
-      view.text.setPosition(actor.position.x, actor.position.y - 42 / zoom);
+      // Keep an actual World utterance visually distinct from actor identity
+      // labels and the nearby true workshop crate (no speech teleport).
+      const bubbleLift = this.scenario.kind === "relational-episode" ? 108 : 42;
+      view.text.setPosition(actor.position.x, actor.position.y - bubbleLift / zoom);
       view.text.setScale(1 / zoom);
     }
   }
@@ -588,6 +804,18 @@ export class SpcNextResearchScene extends Phaser.Scene {
     if (!actor || !resident) return;
 
     const zoom = this.cameras.main.zoom;
+    if (worldTerrainPresentation(this.scenario.kind, this.overlayEnabled)
+      === "neutral-with-diagnostic-regions") {
+      // Region boundaries are research data, not a physical terrain material.
+      // Display only when the investigator explicitly enables this overlay.
+      this.overlayGraphics.lineStyle(1.5 / zoom, 0x92a6ab, 0.28);
+      for (const region of this.world.regions()) {
+        this.overlayGraphics.strokeRect(
+          region.minX, region.minY,
+          region.maxX - region.minX, region.maxY - region.minY,
+        );
+      }
+    }
     const width = 1.5 / zoom;
     this.overlayGraphics.lineStyle(width, 0x78c6ef, 0.32);
     this.overlayGraphics.strokeCircle(actor.position.x, actor.position.y, actor.sightRadius);
@@ -701,6 +929,10 @@ export class SpcNextResearchScene extends Phaser.Scene {
       livingDiagnostics: this.scenario.livingDiagnostics?.() ?? null,
       overlayEnabled: this.overlayEnabled,
       cameraZoom: this.cameras.main?.zoom ?? 1,
+      playerWork:this.world.worksiteProgress(PLAYER_ID),
+      recentWorkOutcome:diagnostics.recentWorkOutcomes.at(-1) ?? null,
+      playerWorkAttempt:this.lastPlayerWorkAttempt,
+      playerWorkAttemptTick:this.lastPlayerWorkAttemptTick,
     };
   }
 }

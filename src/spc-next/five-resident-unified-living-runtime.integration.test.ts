@@ -2,7 +2,197 @@ import { describe, expect, it, vi } from "vitest";
 import { FiveResidentUnifiedLivingRuntime } from "./five-resident-unified-living-runtime";
 import { createFiveResidentRegionComposition } from "./five-resident-region";
 
+/** A physically heard addressed player gets a temporary MICRO-CONTACT matter
+ * in real life, but this is NOT a model-admitted semantic commitment.
+ * Thus provider-arrival inertness must distinguish contact from cognition.
+ */
+function expectOnlyFactualLocalContact(life: NonNullable<ReturnType<FiveResidentUnifiedLivingRuntime["life"]>>): void {
+  const ids = life.matterScope.matterIds();
+  expect(ids).toHaveLength(1);
+  expect(ids[0]).toContain(".contact-interrupt:");
+  expect(life.kernel.matter(ids[0]!)?.semanticIntent).toBeNull();
+}
+
+
 describe("five-resident unified living runtime", () => {
+  it("allows deliberate finite five-resident cognition but zero requests on page load, and pauses on failure", async () => {
+    const upstream = vi.fn(async () => Response.json(
+      { ok: false, code: "operator_login_required" }, { status: 401 },
+    ));
+    const living = new FiveResidentUnifiedLivingRuntime({
+      providerDispatchMode: "manual",
+      initialEverydayWork: true,
+      allowOperatorAutomaticCognition: true,
+      maxUpstreamRequests: 12,
+      maxConcurrentCognition: 1,
+      fetcher: upstream,
+    });
+    for (let tick = 0; tick < 2_600; tick++) living.advanceOneWorldTick();
+    expect(living.lifeRuntime.claimedResidentIds()).toHaveLength(5);
+    expect(living.diagnostics().operatorAutoDispatchEnabled).toBe(false);
+    expect(upstream).not.toHaveBeenCalled();
+    expect(living.startOperatorAutomaticCognition()).toBe("started");
+    expect(living.diagnostics().operatorAutoDispatchEnabled).toBe(true);
+    living.advanceOneWorldTick();
+    expect(upstream).toHaveBeenCalledTimes(1);
+    // Transport parses the HTTP body through asynchronous reader stages.
+    // One microtask flush is not an admission boundary; allow the actual
+    // arrival inbox to settle, without relying on wall-clock sleeps.
+    for (let attempt = 0; attempt < 40
+      && living.diagnostics().operatorAutoDispatchEnabled; attempt++) {
+      await flushMicrotasks();
+      living.advanceOneWorldTick();
+    }
+    expect(living.diagnostics().operatorAutoDispatchEnabled).toBe(false);
+    expect(living.diagnostics().recentProviderEvents.some(event =>
+      event.status === "provider_error")).toBe(true);
+    for (let tick = 0; tick < 360; tick++) living.advanceOneWorldTick();
+    expect(upstream).toHaveBeenCalledTimes(1);
+    expect(living.diagnostics().providerHardBudget.upstreamRequestsStarted).toBe(1);
+    expect(living.startOperatorAutomaticCognition()).toBe("started");
+    expect(living.pauseOperatorAutomaticCognition()).toBe("paused");
+    for (let tick = 0; tick < 100; tick++) living.advanceOneWorldTick();
+    expect(upstream).toHaveBeenCalledTimes(1);
+  }, 30_000);
+
+  it("a real Janek outcome can lead to a NEW model-chosen material delivery through remembered private sight, not authored scripting", async () => {
+    const fetcher = vi.fn(async (_url: RequestInfo | URL, init?: RequestInit) => {
+      const context = JSON.parse(String(init?.body)) as {
+        resident: { id: string };
+        reasons: Array<{ id: string; kind: string }>;
+        knownMaterials?: Array<{ objectId: string; observedAtTick: number; lastKnownPosition: { x: number; y: number } }>;
+        knownRegions: Array<{ id: string }>;
+      };
+      expect(context.resident.id).toBe("resident.janek");
+      expect(context.knownRegions.map(r => r.id)).toContain("hearth");
+      expect(context.knownMaterials?.find(m => m.objectId === "crate.workshop.02")).toMatchObject({
+        lastKnownPosition: { x: 2012, y: 838 },
+      });
+      const reason = context.reasons.find(r => r.kind === "activity_completed");
+      expect(reason).toBeDefined();
+      return Response.json({
+        ok: true,
+        originReasonId: reason!.id,
+        proposal: {
+          version: 1,
+          commitmentDecision: {
+            kind: "accept",
+            reason: "My workshop delivery is complete; I choose to take my familiar spare-parts crate to the hearth.",
+            intent: {
+              kind: "deliver_material_object",
+              goal: "Bring the workshop spare parts to the familiar hearth.",
+              objectId: "crate.workshop.02",
+              targetRegionId: "hearth",
+            },
+          },
+          beliefs: [], concerns: [], reviewAfterSeconds: 90,
+        },
+      });
+    });
+    const living = new FiveResidentUnifiedLivingRuntime({
+      initialEverydayWork: true,
+      providerDispatchMode: "manual",
+      maxUpstreamRequests: 1,
+      fetcher,
+    });
+    for (let i = 0; i < 2_600; i++) living.advanceOneWorldTick();
+    const janek = living.life("resident.janek")!;
+    expect(janek.kernel.matter("matter.janek.workshop-opening.delivery")?.status).toBe("resolved");
+    expect(fetcher).not.toHaveBeenCalled();
+    expect(living.requestOneResidentCognition("resident.janek")).toBe("started");
+
+    for (let wait = 0; wait < 40 && living.diagnostics().providerInboxCount === 0; wait++) {
+      await flushMicrotasks();
+    }
+    expect(living.diagnostics().providerInboxCount).toBe(1);
+    // A resolved matter remains owned terminal history: retaining its ID does
+    // NOT mean the body still has the old authored delivery obligation.
+    expect(janek.matterScope.matterIds()).toEqual([
+      "matter.janek.workshop-opening.delivery",
+    ]);
+    expect(janek.kernel.matter("matter.janek.workshop-opening.delivery")?.status).toBe("resolved");
+    living.advanceOneWorldTick();
+    const admitted = living.diagnostics().recentProviderEvents.find(e =>
+      e.status === "admitted" && e.residentId === "resident.janek");
+    expect(admitted?.admittedChoice?.kind).toBe("accept");
+    const newMatterId = admitted?.admittedChoice?.matterId;
+    expect(newMatterId).toBeTruthy();
+    expect(newMatterId).not.toBe("matter.janek.workshop-opening.delivery");
+    expect(janek.kernel.matter(newMatterId!)?.semanticIntent).toMatchObject({
+      kind: "deliver_material_object",
+      objectId: "crate.workshop.02",
+    });
+
+    let carried = false;
+    let resolved = false;
+    for (let step = 0; step < 5_000 && !resolved; step++) {
+      living.advanceOneWorldTick();
+      const object = living.world.materialObject("crate.workshop.02");
+      if (object?.location.kind === "held") {
+        expect(object.location.actorId).toBe("resident.janek");
+        carried = true;
+      }
+      resolved = janek.kernel.matter(newMatterId!)?.status === "resolved";
+    }
+    expect(carried).toBe(true);
+    expect(resolved).toBe(true);
+    expect(living.world.materialObject("crate.workshop.02")?.location.kind).toBe("free");
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  }, 45_000);
+
+  it("rejects a new model-chosen delivery of an object Janek never privately recognized", async () => {
+    const fetcher = vi.fn(async (_url: RequestInfo | URL, init?: RequestInit) => {
+      const context = JSON.parse(String(init?.body)) as {
+        reasons: Array<{ id: string; kind: string }>;
+      };
+      const reason = context.reasons.find(r => r.kind === "activity_completed");
+      if (!reason) throw new Error("fixture missing factual activity outcome");
+      return Response.json({
+        ok: true,
+        originReasonId: reason.id,
+        proposal: {
+          version: 1,
+          commitmentDecision: {
+            kind: "accept", reason: "attempt to smuggle an unfamiliar object identity",
+            intent: {
+              kind: "deliver_material_object",
+              goal: "move an object I have not acquired",
+              objectId: "bucket.fields.01",
+              targetRegionId: "hearth",
+            },
+          },
+          beliefs: [], concerns: [], reviewAfterSeconds: 30,
+        },
+      });
+    });
+    const living = new FiveResidentUnifiedLivingRuntime({
+      initialEverydayWork: true, providerDispatchMode: "manual",
+      maxUpstreamRequests: 1, fetcher,
+    });
+    for (let i = 0; i < 2_600; i++) living.advanceOneWorldTick();
+    expect(living.requestOneResidentCognition("resident.janek")).toBe("started");
+    for (let wait = 0; wait < 40 && living.diagnostics().providerInboxCount === 0; wait++) {
+      await flushMicrotasks();
+    }
+    living.advanceOneWorldTick();
+    expect(living.diagnostics().recentProviderEvents.some(e =>
+      e.status === "admitted" && e.residentId === "resident.janek"
+      && e.admittedChoice?.kind === "accept")).toBe(false);
+    expect(living.life("resident.janek")!.matterScope.matterIds()).toEqual([
+      "matter.janek.workshop-opening.delivery",
+    ]);
+    expect(living.world.materialObject("bucket.fields.01")?.location).toEqual({
+      kind: "free", position: { x: 2186, y: 2400 },
+    });
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  }, 45_000);
+
+  it("cannot turn on operator auto-cognition without explicit construction authority", () => {
+    const living = new FiveResidentUnifiedLivingRuntime({ providerDispatchMode: "manual" });
+    expect(living.startOperatorAutomaticCognition()).toBe("not_authorized");
+    expect(living.pauseOperatorAutomaticCognition()).toBe("not_running");
+    expect(living.diagnostics().operatorAutoDispatchEnabled).toBe(false);
+  });
   it("keeps five asynchronous provider completions inert until the next World admission boundary", async () => {
     const fetcher = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => {
       const context = JSON.parse(String(init?.body)) as {
@@ -97,7 +287,7 @@ describe("five-resident unified living runtime", () => {
     }
     expect(guard).toBeLessThan(5_000);
     expect(firstWaveResolved(living, firstWave)).toBe(true);
-  });
+  }, 20_000);
 
   it("hard-stops upstream traffic even if a live resident has more semantic pressure", async () => {
     // This must be a literal PHYSICAL network-call ceiling, not a count of
@@ -318,7 +508,7 @@ describe("five-resident unified living runtime", () => {
     expect(readyProbe?.providerArrival?.status).toBe("proposal");
     expect(readyProbe?.localSettlement).toBeNull();
     // Provider completion is inert until the next World boundary.
-    expect(living.life("resident.mira")!.matterScope.matterIds()).toEqual([]);
+    expectOnlyFactualLocalContact(living.life("resident.mira")!);
     living.advanceOneWorldTick();
     const accepted = living.diagnostics().recentProviderEvents.find(
       e => e.status === "admitted" && e.residentId === "resident.mira",
@@ -469,7 +659,7 @@ describe("five-resident unified living runtime", () => {
     }));
     await flushMicrotasks();
     expect(living.diagnostics().providerInboxCount).toBe(1);
-    expect(mira.matterScope.matterIds()).toEqual([]);
+    expectOnlyFactualLocalContact(mira);
     living.advanceOneWorldTick();
 
     expect(living.diagnostics().recentProviderEvents.some(
@@ -477,7 +667,7 @@ describe("five-resident unified living runtime", () => {
         && event.status === "admitted"
         && event.detail.includes("stale: semantic_pressure_changed_during_request"),
     )).toBe(true);
-    expect(mira.matterScope.matterIds()).toEqual([]);
+    expectOnlyFactualLocalContact(mira);
     expect(living.diagnostics().recentProviderEvents.some(e => e.admittedChoice)).toBe(false);
     expect(living.manualResearchProbe()?.localSettlement).toMatchObject({
       status: "stale",
