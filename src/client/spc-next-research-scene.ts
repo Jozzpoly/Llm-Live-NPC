@@ -20,6 +20,7 @@ import {
   type SpcNextResearchScenarioKind,
 } from "./spc-next-research-scenario";
 import { paintFiveResidentGround } from "./spc-next-world-ground";
+import { paintMaterialShape } from "./spc-next-material-shapes";
 import {
   projectEpistemicActors,
   projectMotionFeedback,
@@ -562,11 +563,9 @@ export class SpcNextResearchScene extends Phaser.Scene {
       if (!position) continue;
 
       const half = Math.max(10, object.radius * 0.9);
-      this.materialGraphics.fillStyle(0xb78652, 0.96);
-      this.materialGraphics.fillRect(position.x - half, position.y - half * 0.72, half * 2, half * 1.44);
-      this.materialGraphics.lineStyle(2, 0xe4c08c, 0.9);
-      this.materialGraphics.strokeRect(position.x - half, position.y - half * 0.72, half * 2, half * 1.44);
-      this.materialGraphics.lineBetween(position.x, position.y - half * 0.72, position.x, position.y + half * 0.72);
+      // Actual World position/holder remains canonical; the token is only a
+      // differentiated depiction of that same pickupable material identity.
+      paintMaterialShape(this.materialGraphics, object.id, position.x, position.y, object.radius);
 
       let label = this.materialLabels.get(object.id);
       if (!label) {
