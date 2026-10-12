@@ -657,7 +657,17 @@ export class SpcNextResearchScene extends Phaser.Scene {
     const objects = this.world.materialObjects();
     // Pure observer-only text placement. The REAL world/material position never
     // changes to make an annotation fit.
-    const materialLabelRects: MaterialLabelRect[] = [];
+    // Text annotations may not be laid over the player's or SPC bodies.
+    // These are visual exclusion rectangles only; no actor/object geometry
+    // or world position is edited for the sake of label readability.
+    const livingScene = this.scenario.kind === "unified-living"
+      || this.scenario.kind === "unified-armed";
+    const materialLabelRects: MaterialLabelRect[] = livingScene
+      ? this.snapshot.actors.flatMap(actor => [
+          {x:actor.position.x-26,y:actor.position.y,width:52,height:50},
+          {x:actor.position.x-54,y:actor.position.y-44,width:108,height:28},
+        ])
+      : [];
     const presentIds = new Set(objects.map((object) => object.id));
     for (const object of objects) {
       const position = object.location.kind === "free"

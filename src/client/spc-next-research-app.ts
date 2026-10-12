@@ -66,6 +66,7 @@ footer.innerHTML = [
 
 const workStatus = document.createElement("span");
 workStatus.className = "spc-work-status";
+workStatus.hidden = !((unifiedLivingMode && !evidenceMode) || armedResearchMode);
 workStatus.setAttribute("role","status");
 workStatus.textContent = "Warsztat: przenieś Workshop Spare Parts do stanowiska, użyj U.";
 footer.append(workStatus);
@@ -296,7 +297,7 @@ function setWorldOnly(enabled: boolean): void {
 
 function renderPanel(frame: SpcNextResearchFrame): void {
   lastFrame = frame;
-  if(unifiedLivingMode && !evidenceMode){
+  if((unifiedLivingMode && !evidenceMode) || armedResearchMode){
     workStatus.textContent = frame.playerWork
       ? `Warsztat: ${Math.floor(frame.playerWork.ticks / frame.playerWork.requiredTicks * 100)}% · nie ruszaj się`
       : frame.playerWorkAttempt
