@@ -320,6 +320,51 @@ try{
   check("no API in either authored relational case",
     report.modelRouteRequests.length===beforeRelationalNetwork);
 
+  // TRUE positive play-through: a special evidence-only initial POSITION
+  // near the real Workshop Bench. No pre-owned material, no fictitious
+  // outcome, no model. Real keyboard E picks up the source and real keyboard U
+  // starts work; only then do 180 authoritative World ticks produce the kit.
+  const beforeWorkshopRequests = report.modelRouteRequests.length;
+  await cdp.send("Page.navigate", {
+    url: base.replace(/[/]$/u, "") + "/?spc=1&evidence=1&scenario=unified-armed&case=workshop-work"
+  });
+  await until(()=>runIn(cdp,
+    'Boolean(window.__SPC_EVIDENCE__?.ready?.() && document.querySelector("#game canvas"))'));
+  const originalWorkshop = await runIn(cdp,"window.__SPC_EVIDENCE__.snapshot()");
+  check("workshop evidence starts with no fictitious processing", 
+    originalWorkshop.snapshot.actors.some(a=>a.id==="player.jozz")
+    && !originalWorkshop.playerWork && !originalWorkshop.recentWorkOutcome);
+  await runIn(cdp,'(document.activeElement?.blur?.(), document.querySelector("#game canvas")?.focus(),true)');
+  async function gameKey(code,key,virtualKey){
+    await cdp.send("Input.dispatchKeyEvent",{
+      type:"keyDown",key,code,windowsVirtualKeyCode:virtualKey,nativeVirtualKeyCode:virtualKey,
+    });
+    await wait(180);
+    await cdp.send("Input.dispatchKeyEvent",{
+      type:"keyUp",key,code,windowsVirtualKeyCode:virtualKey,nativeVirtualKeyCode:virtualKey,
+    });
+    await wait(75);
+  }
+  await gameKey("KeyE","e",69);
+  await gameKey("KeyU","u",85);
+  await until(()=>runIn(cdp,
+    'window.__SPC_EVIDENCE__?.snapshot?.()?.playerWork?.siteId === "workshop.repair-kit"'),8000);
+  check("real E and U inputs start the actual World-owned workshop execution",
+    await runIn(cdp,'window.__SPC_EVIDENCE__.snapshot().playerWork.requiredTicks') === 180);
+  const doneWorkshop = await runIn(cdp,'window.__SPC_EVIDENCE__.stepWorld(180)');
+  check("actual fixed-step workshop transforms the exact held material into one real kit",
+    doneWorkshop.recentWorkOutcome?.status==="completed"
+    && doneWorkshop.recentWorkOutcome?.sourceObjectId==="crate.workshop.02"
+    && doneWorkshop.recentWorkOutcome?.outputObjectId==="kit.workshop.01"
+    && doneWorkshop.recentWorkOutcome?.outputAfter?.derivation?.sourceObjectId==="crate.workshop.02",
+    doneWorkshop.recentWorkOutcome);
+  await wait(250);
+  const workshopScreenshot=await cdp.send("Page.captureScreenshot",{format:"png"});
+  writeFileSync(resolve(dirname(output),"unified-workshop-real-player-work-complete.png"),
+    Buffer.from(workshopScreenshot.data,"base64"));
+  check("real material work never dispatches hidden upstream cognition",
+    report.modelRouteRequests.length===beforeWorkshopRequests);
+
   // The product landing must now be the FIVE-person World, not the archived
   // baseline. Verify the actual Owner-facing navigation in Chromium without
   // access to any private research export or synthetic model decision.

@@ -469,7 +469,8 @@ export class SpcNextResearchScene extends Phaser.Scene {
 
   /** The local key is only an attempt; World independently evaluates it. */
   private playerWorkshopAction(): void {
-    if (this.scenario.kind !== "unified-living") return;
+    if (this.scenario.kind !== "unified-living"
+      && this.scenario.kind !== "unified-armed") return;
     const attempt = this.world.beginMaterialWork(PLAYER_ID,"workshop.repair-kit");
     const failure: Record<string,string> = {
       unknown_site:"Warsztat nie istnieje w tym świecie.",

@@ -925,13 +925,19 @@ function createUnifiedLivingScenario(manual = false): SpcNextResearchScenario {
   // completed material shift before addressing her, the player must already be
   // physically near the workshop. No runtime teleport and no synthetic hearing.
   // Ordinary manual/operator opening still begins beside Mira at the hearth.
-  const postShiftContactFixture = manual
-    && new URLSearchParams(location.search).get("case") === "contact-after-shift";
+  const evidenceCase = manual ? new URLSearchParams(location.search).get("case") : null;
+  const postShiftContactFixture = evidenceCase === "contact-after-shift";
+  // Evidentiary initial condition ONLY. The normal playable World and all
+  // other research cases keep their original physical player coordinates.
+  // Actual E/U keyboard inputs and 180 true World ticks still do the work.
+  const workshopWorkFixture = evidenceCase === "workshop-work";
   const living = new FiveResidentUnifiedLivingRuntime(manual ? {
     composition: createFiveResidentRegionComposition({
-      playerStart: postShiftContactFixture
-        ? { x: 1_900, y: 800 }
-        : { x: 900, y: 680 },
+      playerStart: workshopWorkFixture
+        ? {x:1_970,y:805}
+        : postShiftContactFixture
+          ? { x: 1_900, y: 800 }
+          : { x: 900, y: 680 },
     }),
     providerDispatchMode: "manual",
     socialReencounter: true,
