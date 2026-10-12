@@ -55,6 +55,131 @@ describe("five-resident unified living runtime", () => {
     expect(upstream).toHaveBeenCalledTimes(1);
   }, 30_000);
 
+  it("a real Janek outcome can lead to a NEW model-chosen material delivery through remembered private sight, not authored scripting", async () => {
+    const fetcher = vi.fn(async (_url: RequestInfo | URL, init?: RequestInit) => {
+      const context = JSON.parse(String(init?.body)) as {
+        resident: { id: string };
+        reasons: Array<{ id: string; kind: string }>;
+        knownMaterials?: Array<{ objectId: string; observedAtTick: number; lastKnownPosition: { x: number; y: number } }>;
+        knownRegions: Array<{ id: string }>;
+      };
+      expect(context.resident.id).toBe("resident.janek");
+      expect(context.knownRegions.map(r => r.id)).toContain("hearth");
+      expect(context.knownMaterials?.find(m => m.objectId === "crate.workshop.02")).toMatchObject({
+        lastKnownPosition: { x: 2012, y: 838 },
+      });
+      const reason = context.reasons.find(r => r.kind === "activity_completed");
+      expect(reason).toBeDefined();
+      return Response.json({
+        ok: true,
+        originReasonId: reason!.id,
+        proposal: {
+          version: 1,
+          commitmentDecision: {
+            kind: "accept",
+            reason: "My workshop delivery is complete; I choose to take my familiar spare-parts crate to the hearth.",
+            intent: {
+              kind: "deliver_material_object",
+              goal: "Bring the workshop spare parts to the familiar hearth.",
+              objectId: "crate.workshop.02",
+              targetRegionId: "hearth",
+            },
+          },
+          beliefs: [], concerns: [], reviewAfterSeconds: 90,
+        },
+      });
+    });
+    const living = new FiveResidentUnifiedLivingRuntime({
+      initialEverydayWork: true,
+      providerDispatchMode: "manual",
+      maxUpstreamRequests: 1,
+      fetcher,
+    });
+    for (let i = 0; i < 2_600; i++) living.advanceOneWorldTick();
+    const janek = living.life("resident.janek")!;
+    expect(janek.kernel.matter("matter.janek.workshop-opening.delivery")?.status).toBe("resolved");
+    expect(fetcher).not.toHaveBeenCalled();
+    expect(living.requestOneResidentCognition("resident.janek")).toBe("started");
+
+    for (let wait = 0; wait < 40 && living.diagnostics().providerInboxCount === 0; wait++) {
+      await flushMicrotasks();
+    }
+    expect(living.diagnostics().providerInboxCount).toBe(1);
+    expect(janek.matterScope.matterIds()).toEqual([]);
+    living.advanceOneWorldTick();
+    const admitted = living.diagnostics().recentProviderEvents.find(e =>
+      e.status === "admitted" && e.residentId === "resident.janek");
+    expect(admitted?.admittedChoice?.kind).toBe("accept");
+    const newMatterId = admitted?.admittedChoice?.matterId;
+    expect(newMatterId).toBeTruthy();
+    expect(newMatterId).not.toBe("matter.janek.workshop-opening.delivery");
+    expect(janek.kernel.matter(newMatterId!)?.semanticIntent).toMatchObject({
+      kind: "deliver_material_object",
+      objectId: "crate.workshop.02",
+    });
+
+    let carried = false;
+    let resolved = false;
+    for (let step = 0; step < 5_000 && !resolved; step++) {
+      living.advanceOneWorldTick();
+      const object = living.world.materialObject("crate.workshop.02");
+      if (object?.location.kind === "held") {
+        expect(object.location.actorId).toBe("resident.janek");
+        carried = true;
+      }
+      resolved = janek.kernel.matter(newMatterId!)?.status === "resolved";
+    }
+    expect(carried).toBe(true);
+    expect(resolved).toBe(true);
+    expect(living.world.materialObject("crate.workshop.02")?.location.kind).toBe("free");
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  }, 45_000);
+
+  it("rejects a new model-chosen delivery of an object Janek never privately recognized", async () => {
+    const fetcher = vi.fn(async (_url: RequestInfo | URL, init?: RequestInit) => {
+      const context = JSON.parse(String(init?.body)) as {
+        reasons: Array<{ id: string; kind: string }>;
+      };
+      const reason = context.reasons.find(r => r.kind === "activity_completed");
+      if (!reason) throw new Error("fixture missing factual activity outcome");
+      return Response.json({
+        ok: true,
+        originReasonId: reason.id,
+        proposal: {
+          version: 1,
+          commitmentDecision: {
+            kind: "accept", reason: "attempt to smuggle an unfamiliar object identity",
+            intent: {
+              kind: "deliver_material_object",
+              goal: "move an object I have not acquired",
+              objectId: "bucket.fields.01",
+              targetRegionId: "hearth",
+            },
+          },
+          beliefs: [], concerns: [], reviewAfterSeconds: 30,
+        },
+      });
+    });
+    const living = new FiveResidentUnifiedLivingRuntime({
+      initialEverydayWork: true, providerDispatchMode: "manual",
+      maxUpstreamRequests: 1, fetcher,
+    });
+    for (let i = 0; i < 2_600; i++) living.advanceOneWorldTick();
+    expect(living.requestOneResidentCognition("resident.janek")).toBe("started");
+    for (let wait = 0; wait < 40 && living.diagnostics().providerInboxCount === 0; wait++) {
+      await flushMicrotasks();
+    }
+    living.advanceOneWorldTick();
+    expect(living.diagnostics().recentProviderEvents.some(e =>
+      e.status === "admitted" && e.residentId === "resident.janek"
+      && e.admittedChoice?.kind === "accept")).toBe(false);
+    expect(living.life("resident.janek")!.matterScope.matterIds()).toEqual([]);
+    expect(living.world.materialObject("bucket.fields.01")?.location).toEqual({
+      kind: "free", position: { x: 2186, y: 2400 },
+    });
+    expect(fetcher).toHaveBeenCalledTimes(1);
+  }, 45_000);
+
   it("cannot turn on operator auto-cognition without explicit construction authority", () => {
     const living = new FiveResidentUnifiedLivingRuntime({ providerDispatchMode: "manual" });
     expect(living.startOperatorAutomaticCognition()).toBe("not_authorized");
