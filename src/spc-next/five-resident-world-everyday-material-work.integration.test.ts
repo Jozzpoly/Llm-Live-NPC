@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { createFiveResidentRegionComposition } from "./five-resident-region";
+import {
+  FIVE_RESIDENT_OPENING_MATERIAL_WORK,
+  createFiveResidentRegionComposition,
+} from "./five-resident-region";
 import { FiveResidentUnifiedLivingRuntime } from "./five-resident-unified-living-runtime";
 
 describe("ordinary work in the ACTUAL five-resident playable World", () => {
@@ -53,14 +56,14 @@ describe("ordinary work in the ACTUAL five-resident playable World", () => {
     expect(janek.focus.focusedRun()).toBeNull();
     expect(life.diagnostics().providerRequestCount).toBe(0);
     expect(life.lifeRuntime.claimedResidentIds().length).toBe(5);
-    // Ida may know this object's identity, but its current location must
-    // come from her actual sight of Janek's REAL completed delivery.
+    // Ida now performs her own real parcel delivery. Any information about
+    // Janek's crate still has to come from Ida's actual personal sight.
     const ida = life.life("resident.ida")!;
-    expect(ida.materialKnowledge?.observation("crate.workshop.01")).toMatchObject({
-      currentlyVisible: true,
-      lastKnownPosition: { x: 3050, y: 1080 },
-    });
-    expect(ida.matterScope.matterIds()).toEqual([]);
+    expect(ida.matterScope.matterIds()).toContain("matter.ida.crossroads-opening.delivery");
+    const idaSight = ida.materialKnowledge?.observation("crate.workshop.01");
+    if (idaSight?.currentlyVisible) {
+      expect(idaSight.lastKnownPosition).toEqual({ x: 3050, y: 1080 });
+    }
     expect(ida.resident.pendingCognitionReasons().filter(r =>
       r.kind === "direct_world_change"
         && r.summary.includes("crate.workshop.01"),
@@ -91,11 +94,56 @@ describe("ordinary work in the ACTUAL five-resident playable World", () => {
       kind:"held", actorId:"player.jozz",
     });
     expect(life.world.materialObject("crate.workshop.02")?.location.kind).toBe("free");
-    expect(life.life("resident.ida")!.materialKnowledge?.observation("crate.workshop.01")).toBeNull();
+    // A genuine later sighting of the stolen object is permissible, but its
+    // hidden holder and position cannot be read magically from the World.
+    const idaStolenSight = life.life("resident.ida")!.materialKnowledge?.observation("crate.workshop.01");
+    if (idaStolenSight) {
+      expect(idaStolenSight.lastKnownPosition).toEqual({ x: 1952, y: 720 });
+    }
     expect(life.life("resident.janek")!.kernel.matter("matter.janek.workshop-opening.delivery")?.status)
       .not.toBe("resolved");
     expect(life.diagnostics().providerRequestCount).toBe(0);
   },30000);
+
+  it("five residents complete distinct finite day-opening deliveries via the actual World, without any provider", () => {
+    const life = new FiveResidentUnifiedLivingRuntime({
+      providerDispatchMode: "manual", initialEverydayWork: true,
+    });
+    expect(FIVE_RESIDENT_OPENING_MATERIAL_WORK).toHaveLength(5);
+    const distinctResidents = new Set(FIVE_RESIDENT_OPENING_MATERIAL_WORK.map(entry => entry.residentId));
+    const distinctObjects = new Set(FIVE_RESIDENT_OPENING_MATERIAL_WORK.map(entry => entry.objectId));
+    expect(distinctResidents.size).toBe(5);
+    expect(distinctObjects.size).toBe(5);
+    const seenHeld = new Set<string>();
+    const completed = new Set<string>();
+
+    for (let step = 0; step < 6_000 && completed.size < 5; step++) {
+      const frame = life.advanceOneWorldTick();
+      for (const entry of FIVE_RESIDENT_OPENING_MATERIAL_WORK) {
+        const object = life.world.materialObject(entry.objectId);
+        if (object?.location.kind === "held") {
+          expect(object.location.actorId).toBe(entry.residentId);
+          seenHeld.add(entry.residentId);
+        }
+        if (frame.execution[entry.residentId]?.status === "completed") {
+          completed.add(entry.residentId);
+        }
+      }
+    }
+
+    expect(life.lifeRuntime.claimedResidentIds()).toHaveLength(5);
+    expect([...seenHeld].sort()).toEqual([...distinctResidents].sort());
+    expect([...completed].sort()).toEqual([...distinctResidents].sort());
+    for (const entry of FIVE_RESIDENT_OPENING_MATERIAL_WORK) {
+      expect(life.world.materialObject(entry.objectId)?.location).toEqual({
+        kind: "free", position: entry.destination,
+      });
+      const matter = life.life(entry.residentId)!.kernel.matter(`matter.${entry.identityStem}.delivery`);
+      expect(matter?.status).toBe("resolved");
+      expect(matter?.lastOutcomeEvidenceId).toBeTruthy();
+    }
+    expect(life.diagnostics().providerRequestCount).toBe(0);
+  }, 45_000);
 
   it("empty baseline is unchanged unless the REAL playable World opts in to ordinary work", () => {
     const life=new FiveResidentUnifiedLivingRuntime({providerDispatchMode:"manual"});

@@ -87,6 +87,59 @@ export const FIVE_RESIDENT_MATERIAL_FAMILIARITY: Readonly<
   "resident.nela": ["fragment.ruins.01"],
 };
 
+/**
+ * Finite authored day-opening duties in the playable World, not resident choices
+ * and not an automatic routine generator. Each uses one physical material identity.
+ * After factual completion, the resident has no next job unless a new matter is
+ * separately accepted through legitimate cognition.
+ */
+export interface FiveResidentOpeningMaterialWork {
+  residentId: FiveResidentId;
+  identityStem: string;
+  objectId: string;
+  destination: Vec2;
+  originSummary: string;
+  semanticCourse: string;
+  goal: string;
+}
+export const FIVE_RESIDENT_OPENING_MATERIAL_WORK: readonly FiveResidentOpeningMaterialWork[] = [
+  {
+    residentId: "resident.mira", identityStem: "mira.hearth-opening",
+    objectId: "basket.hearth.01", destination: { x: 1_920, y: 830 },
+    originSummary: "Mira starts with hearth supplies promised to the workshop.",
+    semanticCourse: "Bring the hearth supply basket to the workshop.",
+    goal: "Carry the real hearth supply basket to the workshop and set it down.",
+  },
+  {
+    residentId: "resident.janek", identityStem: "janek.workshop-opening",
+    objectId: "crate.workshop.01", destination: { x: 3_050, y: 1_080 },
+    originSummary: "Janek begins the day with a workshop supply delivery to the crossroads store.",
+    semanticCourse: "Finish carrying the workshop crate to crossroads storage.",
+    goal: "Take the actual workshop crate to the crossroads store and put it down.",
+  },
+  {
+    residentId: "resident.ida", identityStem: "ida.crossroads-opening",
+    objectId: "parcel.crossroads.01", destination: { x: 880, y: 790 },
+    originSummary: "Ida has a parcel to bring back from the crossroads to the hearth.",
+    semanticCourse: "Deliver the crossroads parcel to the common hearth.",
+    goal: "Carry the identified crossroads parcel to the hearth and put it down.",
+  },
+  {
+    residentId: "resident.oren", identityStem: "oren.forest-opening",
+    objectId: "bundle.forest.01", destination: { x: 2_190, y: 2_355 },
+    originSummary: "Oren has gathered a forest bundle for the field stores.",
+    semanticCourse: "Bring the actual forest bundle to the fields.",
+    goal: "Carry the forest bundle to the field stores and set it down.",
+  },
+  {
+    residentId: "resident.nela", identityStem: "nela.ruins-opening",
+    objectId: "fragment.ruins.01", destination: { x: 3_220, y: 1_020 },
+    originSummary: "Nela intends to bring one recovered stone fragment to the crossroads.",
+    semanticCourse: "Transport the identified ruins fragment to the crossroads.",
+    goal: "Carry the ruins stone fragment to the crossroads and set it down.",
+  },
+];
+
 export type FiveResidentRuntimes = Readonly<Record<FiveResidentId, ResidentRuntime>>;
 
 export interface FiveResidentRegionWorldOptions {

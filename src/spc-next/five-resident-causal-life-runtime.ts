@@ -5,6 +5,7 @@ import {
 } from "./resident-addressed-interruption-controller";
 import {
   FIVE_RESIDENT_MATERIAL_FAMILIARITY,
+  FIVE_RESIDENT_OPENING_MATERIAL_WORK,
   FIVE_RESIDENT_ROLE_PRESSURES,
   type FiveResidentId,
   type FiveResidentRegionComposition,
@@ -77,12 +78,27 @@ export interface FiveResidentPreparedLifeIntent {
  */
 export class FiveResidentCausalLifeRuntime {
   private readonly lanes = new Map<FiveResidentId, ResidentLane>();
+  private readonly openingMaterialKnowledge = new Map<FiveResidentId, ResidentMaterialKnowledge>();
   private readonly navigation = createFiveResidentNavigationGraph();
 
   constructor(
     private readonly composition: FiveResidentRegionComposition,
     private readonly options: { socialReencounter?: boolean; initialEverydayWork?: boolean } = {},
   ) {
+    if (options.initialEverydayWork) {
+      // Genuine private sight at the initial position, before authored opening
+      // travel. Walking away must not erase earlier optical acquisition.
+      // No hidden World coordinates or holder identity enter resident memory.
+      for (const entry of FIVE_RESIDENT_OPENING_MATERIAL_WORK) {
+        const knowledge = new ResidentMaterialKnowledge(
+          entry.residentId,
+          FIVE_RESIDENT_MATERIAL_FAMILIARITY[entry.residentId],
+          composition.world,
+        );
+        knowledge.sample();
+        this.openingMaterialKnowledge.set(entry.residentId, knowledge);
+      }
+    }
     this.claimReadyResidents();
   }
 
@@ -212,13 +228,14 @@ export class FiveResidentCausalLifeRuntime {
       if (resident.publicState().activity.kind !== "idle") continue;
 
       const recognizedMaterialObjectIds = FIVE_RESIDENT_MATERIAL_FAMILIARITY[residentId];
-      const materialKnowledge = recognizedMaterialObjectIds.length > 0
-        ? new ResidentMaterialKnowledge(
-            residentId,
-            recognizedMaterialObjectIds,
-            this.composition.world,
-          )
-        : undefined;
+      const materialKnowledge = this.openingMaterialKnowledge.get(residentId)
+        ?? (recognizedMaterialObjectIds.length > 0
+          ? new ResidentMaterialKnowledge(
+              residentId,
+              recognizedMaterialObjectIds,
+              this.composition.world,
+            )
+          : undefined);
       // Initial sight is acquisition, not reacquisition. Prime private knowledge
       // before the recovered-life substrate begins post-World transition sampling.
       materialKnowledge?.sample();
@@ -241,35 +258,38 @@ export class FiveResidentCausalLifeRuntime {
           : null,
       });
 
-      // One explicit *authored prior job* in the playable settlement. Janek's
-      // real local brain then performs mundane pickup, carrying and placement;
-      // neither an LLM action nor an invented need/loop. Test-only empty-world
-      // baselines keep initialEverydayWork disabled.
-      if (this.options.initialEverydayWork && residentId === "resident.janek") {
+      // Five distinct authored obligations; no recurring scheduler or model claim.
+      // The same resident-generic causal executor handles every real delivery.
+      const opening = this.options.initialEverydayWork
+        ? FIVE_RESIDENT_OPENING_MATERIAL_WORK.find((entry) => entry.residentId === residentId)
+        : undefined;
+      if (opening) {
         const origin = life.kernel.recordEvidence({
-          id: "evidence.janek.workshop-opening.authored",
+          id: `evidence.${opening.identityStem}.authored`,
           tick: this.composition.world.tick,
           kind: "life_context",
-          summary: "Janek begins the day with a workshop supply delivery to the crossroads store.",
+          summary: opening.originSummary,
         });
-        const matterId = "matter.janek.workshop-opening.delivery";
-        const runId = "run.janek.workshop-opening.delivery";
+        const matterId = `matter.${opening.identityStem}.delivery`;
+        const runId = `run.${opening.identityStem}.delivery`;
         life.kernel.openMatter({
           id: matterId,
           originEvidenceId: origin.id,
-          semanticCourse: "Finish carrying the workshop crate to crossroads storage.",
+          semanticCourse: opening.semanticCourse,
           semanticIntent: {
             kind: "deliver_material_object",
-            goal: "Take the actual workshop crate to the crossroads store and put it down.",
-            objectId: "crate.workshop.01",
-            destination: { x: 3_050, y: 1_080 },
+            goal: opening.goal,
+            objectId: opening.objectId,
+            destination: { ...opening.destination },
           },
         });
         life.matterScope.track(matterId);
-        life.kernel.bindRun({ matterId, runId, taskId: "task.janek.workshop-opening.delivery" });
+        life.kernel.bindRun({
+          matterId, runId, taskId: `task.${opening.identityStem}.delivery`,
+        });
         const claim = life.arbitrator.request(runId);
         if (claim.status !== "acquired") {
-          throw new Error("existing workshop job could not acquire Janek's real execution authority");
+          throw new Error(`opening material duty could not acquire ${residentId} execution authority`);
         }
       }
     }

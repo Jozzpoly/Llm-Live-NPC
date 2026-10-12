@@ -41,7 +41,7 @@ heading.textContent = "SPC Next";
 eyebrow.textContent = "Living world · embodied cognition research";
 stageNode.textContent = "WORLD / EPISTEMIC LAB";
 stageNode.classList.add("is-active");
-if (params.get("scenario") === "unified-living" && !evidenceMode) {
+if ((params.get("scenario") === null || params.get("scenario") === "unified-living") && !evidenceMode) {
   document.title = "SPC — Świat pięciu mieszkańców";
   heading.textContent = "SPC • Pięciu mieszkańców";
   eyebrow.textContent = "Wspólny świat · codzienne życie · rzeczywiste działania";

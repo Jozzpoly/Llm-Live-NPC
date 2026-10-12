@@ -102,7 +102,9 @@ export function createSpcNextResearchScenario(kind: SpcNextResearchScenarioKind)
 
 export function researchScenarioKindFromSearch(search: string): SpcNextResearchScenarioKind {
   const requested = new URLSearchParams(search).get("scenario");
-  if (requested === null || requested === "" || requested === "baseline-delivery") return "baseline-delivery";
+  // The Owner's default is the actual shared World, not an archived specimen.
+  if (requested === null || requested === "") return "unified-living";
+  if (requested === "baseline-delivery") return "baseline-delivery";
   if (requested === "missing-crate") return "missing-crate";
   if (requested === "missing-crate-recovery") return "missing-crate-recovery";
   if (requested === "missing-crate-interruption") return "missing-crate-interruption";
