@@ -18,9 +18,11 @@ describe("R4 substrate history against a gradually populated five-resident World
     });
     expect(FIVE_RESIDENT_REGIONS).toHaveLength(8);
     expect(FIVE_RESIDENT_ANCHORS).toHaveLength(7);
-    // Historical R4 began with one crate; later actual playable content
-    // adds six distinct World-registered, physically movable identities.
-    expect(FIVE_RESIDENT_MATERIAL_OBJECTS).toHaveLength(7);
+    // Historical R4 began with one crate; current playable World has eleven
+    // genuinely registered movable identities, four of them uncommitted future
+    // opportunities. This remains sparse in an 8,192² World and does NOT prove
+    // resident-initiated long-term ecology.
+    expect(FIVE_RESIDENT_MATERIAL_OBJECTS).toHaveLength(11);
 
     expect(world.regions()).toHaveLength(8);
     expect(world.anchors()).toHaveLength(7);
@@ -31,7 +33,11 @@ describe("R4 substrate history against a gradually populated five-resident World
       "crate.workshop.01",
       "crate.workshop.02",
       "fragment.ruins.01",
+      "kindling.hearth.02",
       "parcel.crossroads.01",
+      "satchel.crossroads.02",
+      "tablet.ruins.02",
+      "timber.forest.02",
     ]);
     expect(world.materialObject("crate.workshop.01")).toMatchObject({
       location: { kind: "free", position: { x: 1_952, y: 720 } },
@@ -64,7 +70,7 @@ describe("R4 substrate history against a gradually populated five-resident World
 
     expect(world.tick).toBe(6_000);
     expect(world.publicSnapshot().residents).toHaveLength(5);
-    expect(world.materialObjects()).toHaveLength(7);
+    expect(world.materialObjects()).toHaveLength(11);
     expect(world.diagnostics().recentMaterialActions).toEqual([]);
 
     // The World remains stable and residents remain present, which is valuable
