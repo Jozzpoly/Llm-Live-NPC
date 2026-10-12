@@ -71,8 +71,14 @@ describe("material relocation becomes legitimate private situation, not an autho
     expect(changed.previousPosition).toEqual({ x: 220, y: 100 });
     expect(changed.observedPosition).toEqual(player.position);
     expect(changed.evidence.summary).not.toContain("player.jozz");
-    expect(resident.pendingCognitionReasons().some(r =>
-      r.id === changed.reasonId && r.kind === "direct_world_change")).toBe(true);
+    const privateReason = resident.pendingCognitionReasons()
+      .find(r => r.id === changed.reasonId && r.kind === "direct_world_change");
+    expect(privateReason).toBeDefined();
+    expect(privateReason?.summary).toContain("(220, 100)");
+    expect(privateReason?.summary).toContain(
+      `(${player.position.x}, ${player.position.y})`,
+    );
+    expect(privateReason?.summary).not.toContain("player.jozz");
     // Following the change of place is still a choice; no matter/run is born.
     expect(kernel.snapshotCommittedState().matters).toEqual([]);
     expect(world.materialObject("crate.workshop.02")?.location).toMatchObject({

@@ -289,7 +289,7 @@ export class ResidentMaterialMatterRelevanceBridge {
       tick: evidence.tick,
       kind: "direct_world_change",
       salience: 0.65,
-      summary: `Previously recognized ${objectId} is now visibly in a different location. This is a private observation discrepancy, NOT proof of theft, delivery or anybody's intent.`,
+      summary: `I last saw recognized ${objectId} at (${previous.lastKnownPosition.x}, ${previous.lastKnownPosition.y}), lost visual contact, and now personally see it at (${current.lastKnownPosition.x}, ${current.lastKnownPosition.y}). I do not know how it moved: this proves no theft, delivery, actor identity or intent.`,
       evidenceIds: [evidence.id],
     });
     return {
