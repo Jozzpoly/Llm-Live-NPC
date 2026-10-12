@@ -393,6 +393,28 @@ try{
   check("art reference workflow does not POST to cognition/provider",
     report.modelRouteRequests.length===beforeOwnerGame);
 
+  // Use the ACTUAL U keyboard route in normal product mode, rather than
+  // calling a World method through a privileged browser evidence API.
+  // Player is still at the HEARTH and correctly cannot use a remote bench.
+  await runIn(cdp,'(document.activeElement?.blur?.(),document.querySelector("#game canvas")?.focus(),true)');
+  check("workshop authoring entered normal playable World without a hidden auto-job",
+    await runIn(cdp,'Boolean(document.querySelector(".spc-work-status")?.textContent?.includes("Warsztat"))'));
+  await cdp.send("Input.dispatchKeyEvent",{
+    type:"keyDown",key:"u",code:"KeyU",windowsVirtualKeyCode:85,nativeVirtualKeyCode:85,
+  });
+  await wait(190);
+  await cdp.send("Input.dispatchKeyEvent",{
+    type:"keyUp",key:"u",code:"KeyU",windowsVirtualKeyCode:85,nativeVirtualKeyCode:85,
+  });
+  await until(()=>runIn(cdp,
+    'Boolean(document.querySelector(".spc-work-status")?.textContent?.includes("Podejdź do Workshop Bench"))'
+  ),8000);
+  const distantWorkImage = await cdp.send("Page.captureScreenshot",{format:"png"});
+  writeFileSync(resolve(dirname(output),"unified-living-workshop-factual-distance-rejection.png"),
+    Buffer.from(distantWorkImage.data,"base64"));
+  check("distant player cannot magically work at workshop or trigger provider spending",
+    report.modelRouteRequests.length===beforeOwnerGame);
+
   // The default First Hearth (no ?spc=1) used to invoke its initial
   // model review automatically, including after operator authentication.
   // Waiting real browser time here catches implicit default-route API posts.
