@@ -408,3 +408,60 @@
 .spc-live-cognition-status { font-size: 11px; color: #9bb7c2; white-space: nowrap; }
 .spc-live-cognition-status[hidden] { display: none; }
 #app.spc-next-mode.spc-world-only .spc-header-actions { row-gap: 8px; }
+
+/* Owner-supplied visual reference only. No generated terrain and no physical affordances. */
+.spc-owner-art-preview {
+  position: relative;
+  flex: 0 0 auto;
+  color: #d5e3e3;
+  font-size: 12px;
+  z-index: 30;
+}
+.spc-owner-art-preview[hidden] { display: none; }
+.spc-owner-art-preview > summary {
+  cursor: pointer;
+  padding: 7px 10px;
+  border: 1px solid #52706d;
+  border-radius: 7px;
+  background: #142826;
+  white-space: nowrap;
+}
+.spc-owner-art-body {
+  position: absolute;
+  top: calc(100% + 9px);
+  right: 0;
+  width: min(340px, 80vw);
+  max-height: min(72vh, 520px);
+  overflow-y: auto;
+  display: grid;
+  gap: 10px;
+  padding: 15px;
+  background: #0f1b1d;
+  border: 1px solid #526b6f;
+  border-radius: 10px;
+  box-shadow: 0 15px 38px #0009;
+}
+.spc-owner-art-body p { margin: 0; line-height: 1.45; }
+.spc-owner-art-body label { display: grid; gap: 5px; }
+.spc-owner-art-body select, .spc-owner-art-body input[type="file"] {
+  width: 100%;
+  max-width: 100%;
+  font: inherit;
+  color: #e5eeee;
+  background: #19282a;
+  border: 1px solid #4b6267;
+  border-radius: 5px;
+  padding: 7px;
+}
+.spc-owner-art-body input[type="range"] { width: 100%; accent-color: #88a9ab; }
+.spc-owner-art-buttons { display: flex; flex-wrap: wrap; gap: 6px; }
+.spc-owner-art-buttons button {
+  cursor: pointer;
+  background: #22373b;
+  border: 1px solid #52717a;
+  color: #e0eded;
+  border-radius: 6px;
+  padding: 7px 8px;
+}
+.spc-owner-art-status { color: #d7e7b8; }
+.spc-owner-art-body small { color: #9db2b5; line-height: 1.45; }

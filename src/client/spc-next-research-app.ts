@@ -2,7 +2,10 @@ import * as Phaser from "phaser";
 import "./style.css";
 import "./spc-next-research-style.css";
 import type { SpcCanonicalEvidenceSnapshotV1 } from "../evidence/spc-next-canonical-evidence-snapshot";
-import { FIVE_RESIDENT_ROLE_PRESSURES } from "../spc-next/five-resident-region";
+import { FIVE_RESIDENT_ANCHORS, FIVE_RESIDENT_ROLE_PRESSURES } from "../spc-next/five-resident-region";
+import {
+  validateLocalGroundImageSource,
+} from "./spc-next-local-art-contract";
 import { buildSpcManualProbeEvidence } from "./spc-next-manual-probe-export";
 import type { ResidentPercept, ResidentTraceEvent, WorldOccurrence } from "../spc-next/contracts";
 import {
@@ -175,10 +178,81 @@ operatorCognitionStatus.className = "spc-live-cognition-status";
 operatorCognitionStatus.hidden = operatorCognitionButton.hidden;
 operatorCognitionStatus.textContent = "0 API · cognition wyłączone";
 
+
+// Voluntary, LOCAL ONLY visual comparison. The user supplies a real PNG/WebP;
+// no generated noise, no network loading, no World mutation and no persistence.
+const artPreviewPanel = document.createElement("details");
+artPreviewPanel.className = "spc-owner-art-preview";
+artPreviewPanel.hidden = !(unifiedLivingMode && !evidenceMode);
+const artSummary = document.createElement("summary");
+artSummary.textContent = "Grafika świata · podgląd";
+const artBody = document.createElement("div");
+artBody.className = "spc-owner-art-body";
+const artExplain = document.createElement("p");
+artExplain.textContent = "Wyłącznie lokalny PNG/WebP na podłożu przy rzeczywistym miejscu. Bez kolizji i zmian zachowania SPC.";
+const artFile = document.createElement("input");
+artFile.type = "file";
+artFile.accept = "image/png,image/webp";
+artFile.setAttribute("aria-label", "Wybierz obraz podłoża PNG lub WebP");
+const artSiteLabel = document.createElement("label");
+artSiteLabel.textContent = "Miejsce";
+const artSite = document.createElement("select");
+for (const anchor of FIVE_RESIDENT_ANCHORS) {
+  const option = document.createElement("option");
+  option.value = anchor.id;
+  option.textContent = anchor.label;
+  artSite.append(option);
+}
+artSite.value = "anchor.workshop.bench";
+artSiteLabel.append(artSite);
+const artSizeLabel = document.createElement("label");
+artSizeLabel.textContent = "Szerokość w World";
+const artSize = document.createElement("input");
+artSize.type = "range";
+artSize.min = "96";
+artSize.max = "1200";
+artSize.step = "16";
+artSize.value = "480";
+const artSizeValue = document.createElement("span");
+artSizeValue.textContent = "480";
+artSizeLabel.append(artSize, artSizeValue);
+const artOpacityLabel = document.createElement("label");
+artOpacityLabel.textContent = "Krycie podglądu";
+const artOpacity = document.createElement("input");
+artOpacity.type = "range";
+artOpacity.min = "0.1";
+artOpacity.max = "1";
+artOpacity.step = "0.05";
+artOpacity.value = "0.85";
+artOpacityLabel.append(artOpacity);
+const artButtons = document.createElement("div");
+artButtons.className = "spc-owner-art-buttons";
+const artShow = document.createElement("button");
+artShow.type = "button";
+artShow.textContent = "Ukryj / pokaż";
+const artFocus = document.createElement("button");
+artFocus.type = "button";
+artFocus.textContent = "Zobacz miejsce";
+const artRemove = document.createElement("button");
+artRemove.type = "button";
+artRemove.textContent = "Usuń podgląd";
+artButtons.append(artShow, artFocus, artRemove);
+const artStatus = document.createElement("p");
+artStatus.className = "spc-owner-art-status";
+artStatus.setAttribute("role", "status");
+artStatus.textContent = "Brak grafiki. Neutralny World jest stanem tymczasowym, nie zatwierdzonym stylem.";
+const artSafety = document.createElement("small");
+artSafety.textContent = "Obraz nie jest zapisywany ani wysyłany. Zachowaj oryginał na swoim komputerze. Odświeżenie usuwa podgląd.";
+artBody.append(artExplain, artFile, artSiteLabel, artSizeLabel, artOpacityLabel, artButtons, artStatus, artSafety);
+artPreviewPanel.append(artSummary, artBody);
+let artDecodedImage: HTMLImageElement | null = null;
+let artVisible = true;
+let artImportRevision = 0;
+
 const headerActions = document.createElement("div");
 headerActions.className = "spc-header-actions";
 headerActions.append(stageNode, chatForm, operatorLoginLink, operatorCognitionButton, operatorCognitionStatus, oneShotButton, exportProbeButton, oneShotStatus, episodeStatus, episodeDecision, episodeDefer, worldModeButton);
-header.append(worldNavigation, headerActions);
+header.append(worldNavigation, headerActions, artPreviewPanel);
 
 let scene: SpcNextResearchScene;
 // The Owner's default opens the World rather than requiring an extra click
@@ -536,6 +610,67 @@ if (evidenceMode) {
     }),
   });
 }
+
+function refreshLocalArtPreview(): void {
+  if (!artDecodedImage) return;
+  try {
+    scene.previewLocalGroundImage(
+      artSite.value, artDecodedImage, Number(artSize.value), Number(artOpacity.value),
+    );
+    scene.setLocalGroundImageVisible(artVisible);
+    artSizeValue.textContent = artSize.value;
+    artStatus.textContent = `${artVisible ? "Podgląd" : "Ukryta grafika"}: ${artSite.selectedOptions[0]?.textContent ?? artSite.value} · tylko warstwa wizualna`;
+  } catch (error) {
+    artStatus.textContent = error instanceof Error ? error.message : "Nie udało się pokazać obrazu.";
+  }
+}
+
+artFile.addEventListener("change", () => {
+  const file = artFile.files?.[0];
+  if (!file) return;
+  const revision = ++artImportRevision;
+  try {
+    validateLocalGroundImageSource(file);
+    const url = URL.createObjectURL(file);
+    const image = new Image();
+    image.src = url;
+    void image.decode().then(() => {
+      URL.revokeObjectURL(url);
+      if (revision !== artImportRevision) return;
+      artDecodedImage = image;
+      artVisible = true;
+      refreshLocalArtPreview();
+      scene.viewWorldSite(artSite.value);
+    }).catch(() => {
+      URL.revokeObjectURL(url);
+      if (revision === artImportRevision) {
+        artStatus.textContent = "Nie udało się odczytać lokalnego obrazu.";
+      }
+    });
+  } catch (error) {
+    artStatus.textContent = error instanceof Error ? error.message : "Plik został odrzucony.";
+  }
+});
+artSite.addEventListener("change", () => {
+  refreshLocalArtPreview();
+  scene.viewWorldSite(artSite.value);
+});
+artSize.addEventListener("input", refreshLocalArtPreview);
+artOpacity.addEventListener("input", refreshLocalArtPreview);
+artShow.addEventListener("click", () => {
+  if (!artDecodedImage) return;
+  artVisible = !artVisible;
+  refreshLocalArtPreview();
+});
+artFocus.addEventListener("click", () => scene.viewWorldSite(artSite.value));
+artRemove.addEventListener("click", () => {
+  artImportRevision += 1;
+  artDecodedImage = null;
+  artFile.value = "";
+  artVisible = true;
+  scene.clearLocalGroundImage();
+  artStatus.textContent = "Podgląd usunięty. Świat i jego stan są bez zmian.";
+});
 
 episodeDecision.addEventListener("click", () => {
   if (!relationalEpisodeMode) return;

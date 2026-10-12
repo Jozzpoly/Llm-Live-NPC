@@ -21,6 +21,7 @@ import {
 } from "./spc-next-research-scenario";
 import { paintMaterialShape } from "./spc-next-material-shapes";
 import { worldTerrainPresentation } from "./spc-next-terrain-presentation";
+import { groundVisualPlacement } from "./spc-next-local-art-contract";
 import { placeNonOverlappingMaterialLabel, type MaterialLabelRect } from "./spc-next-material-label-layout";
 import {
   projectEpistemicActors,
@@ -90,6 +91,8 @@ export class SpcNextResearchScene extends Phaser.Scene {
   private regionGraphics!: Phaser.GameObjects.Graphics;
   private materialGraphics!: Phaser.GameObjects.Graphics;
   private overlayGraphics!: Phaser.GameObjects.Graphics;
+  private localGroundImage: Phaser.GameObjects.Image | null = null;
+  private localGroundSource: HTMLImageElement | null = null;
   private cursors: Phaser.Types.Input.Keyboard.CursorKeys | null = null;
   private keys: MovementKeys | null = null;
   private accumulatorMs = 0;
@@ -276,6 +279,64 @@ export class SpcNextResearchScene extends Phaser.Scene {
     const worldHeight = bounds.maxY - bounds.minY;
     const fitZoom = Math.min(camera.width / worldWidth, camera.height / worldHeight) * 0.92;
     camera.setZoom(Phaser.Math.Clamp(fitZoom, MIN_ZOOM, MAX_ZOOM));
+    this.pushFrame(true);
+  }
+
+  /**
+   * Live in-browser art judgement, not part of the canonical World.
+   * There is exactly ONE temporary user-selected image. No import is ever
+   * sent to a server or exposed to resident perception; no solid is inferred.
+   * This image has lower drawing depth than real material and actor bodies.
+   */
+  previewLocalGroundImage(
+    anchorId: string,
+    source: HTMLImageElement,
+    worldWidth: number,
+    opacity: number,
+  ): void {
+    if (!this.created || (this.scenario.kind !== "unified-living"
+      && this.scenario.kind !== "unified-armed")) {
+      throw new Error("Podgląd grafiki jest dostępny tylko w zwykłym świecie pięciu SPC.");
+    }
+    const placement = groundVisualPlacement(
+      this.world.anchors(), anchorId,
+      source.naturalWidth, source.naturalHeight, worldWidth, opacity,
+    );
+    if (this.localGroundSource !== source) {
+      this.clearLocalGroundImage();
+      // Cache is separate from World identities and other materials.
+      const textureKey = "spc-owner-local-ground-reference";
+      if (this.textures.exists(textureKey)) this.textures.remove(textureKey);
+      this.textures.addImage(textureKey, source);
+      this.localGroundImage = this.add.image(placement.x, placement.y, textureKey)
+        .setDepth(-15);
+      this.localGroundSource = source;
+    }
+    this.localGroundImage?.setPosition(placement.x, placement.y)
+      .setDisplaySize(placement.width, placement.height)
+      .setAlpha(placement.opacity)
+      .setVisible(true);
+  }
+
+  setLocalGroundImageVisible(visible: boolean): void {
+    this.localGroundImage?.setVisible(visible);
+  }
+
+  clearLocalGroundImage(): void {
+    this.localGroundImage?.destroy();
+    this.localGroundImage = null;
+    this.localGroundSource = null;
+    const key = "spc-owner-local-ground-reference";
+    if (this.textures.exists(key)) this.textures.remove(key);
+  }
+
+  viewWorldSite(anchorId: string): void {
+    const anchor = this.world.anchors().find(item => item.id === anchorId);
+    if (!anchor) return;
+    const camera = this.cameras.main;
+    camera.stopFollow();
+    camera.centerOn(anchor.position.x, anchor.position.y);
+    camera.setZoom(Math.max(camera.zoom, 1.12));
     this.pushFrame(true);
   }
 
