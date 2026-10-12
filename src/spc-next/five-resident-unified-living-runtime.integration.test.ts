@@ -35,8 +35,14 @@ describe("five-resident unified living runtime", () => {
     expect(living.diagnostics().operatorAutoDispatchEnabled).toBe(true);
     living.advanceOneWorldTick();
     expect(upstream).toHaveBeenCalledTimes(1);
-    await flushMicrotasks();
-    living.advanceOneWorldTick();
+    // Transport parses the HTTP body through asynchronous reader stages.
+    // One microtask flush is not an admission boundary; allow the actual
+    // arrival inbox to settle, without relying on wall-clock sleeps.
+    for (let attempt = 0; attempt < 40
+      && living.diagnostics().operatorAutoDispatchEnabled; attempt++) {
+      await flushMicrotasks();
+      living.advanceOneWorldTick();
+    }
     expect(living.diagnostics().operatorAutoDispatchEnabled).toBe(false);
     expect(living.diagnostics().recentProviderEvents.some(event =>
       event.status === "provider_error")).toBe(true);

@@ -320,6 +320,29 @@ try{
   check("no API in either authored relational case",
     report.modelRouteRequests.length===beforeRelationalNetwork);
 
+  // The product landing must now be the FIVE-person World, not the archived
+  // baseline. Verify the actual Owner-facing navigation in Chromium without
+  // access to any private research export or synthetic model decision.
+  const beforeOwnerGame = report.modelRouteRequests.length;
+  await cdp.send("Page.navigate", {
+    url: base.replace(/[/]$/u, "") + "/?spc=1"
+  });
+  await until(()=>runIn(cdp,'Boolean(document.querySelector("#game canvas") && document.querySelector(".spc-world-navigation button[data-world-resident]"))'));
+  check("normal SPC landing is World-first, not a hidden research sidebar",
+    await runIn(cdp,'Boolean(document.querySelector("#app.spc-world-only") && document.querySelector(".spc-world-navigation:not([hidden])"))'));
+  check("all five independently selectable residents are present in the product header",
+    await runIn(cdp,'document.querySelectorAll(".spc-world-navigation button[data-world-resident]").length===5'));
+  check("ordinary living World does not expose private browser evidence controls",
+    await runIn(cdp,'typeof window.__SPC_EVIDENCE__==="undefined"'));
+  await runIn(cdp, 'document.querySelector(".spc-world-navigation button[data-world-resident=\\\"resident.oren\\\"]").click()');
+  await until(()=>runIn(cdp, 'document.querySelector(".spc-world-navigation button[data-world-resident=\\\"resident.oren\\\"]")?.getAttribute("aria-pressed")==="true"'));
+  await wait(450);
+  const ownerImage = await cdp.send("Page.captureScreenshot", {format:"png"});
+  writeFileSync(resolve(dirname(output),"unified-living-world-first.png"),
+    Buffer.from(ownerImage.data,"base64"));
+  check("watching Oren and switching cameras cannot cause a model request",
+    report.modelRouteRequests.length===beforeOwnerGame);
+  
   // The default First Hearth (no ?spc=1) used to invoke its initial
   // model review automatically, including after operator authentication.
   // Waiting real browser time here catches implicit default-route API posts.
