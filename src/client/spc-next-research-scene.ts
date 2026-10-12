@@ -19,6 +19,7 @@ import {
   type SpcNextResearchScenario,
   type SpcNextResearchScenarioKind,
 } from "./spc-next-research-scenario";
+import { paintFiveResidentGround } from "./spc-next-world-ground";
 import {
   projectEpistemicActors,
   projectMotionFeedback,
@@ -458,7 +459,7 @@ export class SpcNextResearchScene extends Phaser.Scene {
       const width = region.maxX - region.minX;
       const height = region.maxY - region.minY;
       const color = palette[index % palette.length]!;
-      this.regionGraphics.fillStyle(color, 0.42);
+      this.regionGraphics.fillStyle(color, 0.72);
       this.regionGraphics.fillRect(region.minX, region.minY, width, height);
       this.regionGraphics.lineStyle(3, 0x6f8290, 0.16);
       this.regionGraphics.strokeRect(region.minX, region.minY, width, height);
@@ -468,6 +469,13 @@ export class SpcNextResearchScene extends Phaser.Scene {
         color: "#8fa0ab",
       }).setAlpha(0.54).setDepth(-10);
     });
+
+    // First environmental ground language: tied to the *actual* World anchors,
+    // deliberately only non-solid FLOOR marks. No invented collision, material
+    // objects, NPC memories, site effects or new spatial truth.
+    if (this.scenario.kind === "unified-living" || this.scenario.kind === "unified-armed") {
+      paintFiveResidentGround(this.regionGraphics, this.world.anchors());
+    }
 
     // Render REAL authored World anchors so settlement places are legible in
     // the playable scene. These are semantic site markers, NOT solid scenery,
