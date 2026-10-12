@@ -74,7 +74,7 @@ describe("material relocation becomes legitimate private situation, not an autho
     expect(resident.pendingCognitionReasons().some(r =>
       r.id === changed.reasonId && r.kind === "direct_world_change")).toBe(true);
     // Following the change of place is still a choice; no matter/run is born.
-    expect(kernel.matterIds()).toEqual([]);
+    expect(kernel.snapshotCommittedState().matters).toEqual([]);
     expect(world.materialObject("crate.workshop.02")?.location).toMatchObject({
       kind: "free", position: player.position,
     });
