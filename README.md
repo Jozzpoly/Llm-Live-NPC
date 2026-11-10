@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> **Repo status (verified 2026-11-10):** Default `main` is the historical **2026-09-05 P0** transport laboratory, **not** the current five-resident SPC implementation. Do not deploy or promote research branches just to make `main` look current. Start with [AGENTS.md](AGENTS.md) and [docs/REPOSITORY_ENTRYPOINT_2026-11-10.md](docs/REPOSITORY_ENTRYPOINT_2026-11-10.md). The newer research code is in unmerged PRs and is **not** Owner-qualified as a living-NPC game. This warning is documentation-only and does not promote any runtime.
+
 # LLM Live NPC
 
 Experimental web laboratory for embodied LLM-driven NPCs.
