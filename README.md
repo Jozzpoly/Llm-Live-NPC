@@ -1,3 +1,6 @@
+> [!IMPORTANT]
+> **Stan na 14 XI 2026 (Opus czatu, tylko dokumentacja).** `main` to historyczne laboratorium transportu P0 z **5 IX 2026**, nie obecna implementacja pięciu mieszkańców SPC. Nowszy kod leży w niescalonych PR-ach i nie jest zakwalifikowany przez właściciela. Mapa repo, wejście dla agentów i audyt gałęzi z 10 XI czekają w szkicu [PR #167](https://github.com/Jozzpoly/Llm-Live-NPC/pull/167) (gałąź `maintenance/vendor-neutral-takeover-2026-11-10`) — czytaj od niego. Nie wdrażaj ani nie promuj gałęzi badawczych tylko po to, żeby `main` wyglądał na aktualny.
+
 # LLM Live NPC
 
 Experimental web laboratory for embodied LLM-driven NPCs.
