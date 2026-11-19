@@ -25,6 +25,9 @@ The dashboard switches are currently OFF, but the repository configurations do n
 - Historical/default `wrangler.jsonc` on `main` for `llm-live-npc`: `workers_dev: true`, `preview_urls: true`.
 - Isolated `wrangler.spc-research.jsonc` on `staging/spc-research-first-luna-20261011`: `name: llm-live-npc-spc-research`, `workers_dev: true`, `preview_urls: false`.
 - The isolated research deploy script verifies the dedicated generated manifest, including the Worker name and `preview_urls: false`, but does not require `workers_dev: false`.
+- Historical `main` `package.json` exposes `"deploy": "wrangler deploy"` and `"check": "tsc -p tsconfig.json --noEmit && wrangler deploy --dry-run"`. The deploy script uses the default Wrangler config without a guard against either public URL flag. Thus a future `npm run deploy` from this historical source can re-enable the production workers.dev route and Preview URLs. This is source-level deploy-path evidence, not evidence that a deployment is scheduled or currently running.
+
+The repository's `AGENTS.md` explicitly says the repo has provider-side configuration debt that the Owner, not an agent, resolves; it also warns that `main` is historical P0 and that branches must not be deleted. Respect that boundary.
 
 Therefore a future deployment from either configuration may re-enable the standard workers.dev production hostname; the default configuration may also re-enable preview URLs. Dashboard state alone is not a durable repository-level policy.
 
